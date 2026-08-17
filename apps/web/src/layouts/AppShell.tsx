@@ -14,6 +14,7 @@ import {
   Bell,
   ChevronRight,
   ChevronLeft,
+  Home,
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store';
 import { clearCredentials } from '../store/slices/authSlice';
@@ -105,6 +106,44 @@ const navCategories: NavCategory[] = [
     ],
   },
 ];
+
+function getBreadcrumbTrail(pathname: string) {
+  const items: { label: string; to: string }[] = [];
+
+  if (pathname === '/admin/dashboard') {
+    items.push({ label: 'Dashboard', to: '/admin/dashboard' });
+    items.push({ label: 'Executive Overview', to: '/admin/dashboard' });
+  } else if (pathname === '/admin/dashboard/sales') {
+    items.push({ label: 'Dashboard', to: '/admin/dashboard' });
+    items.push({ label: 'Sales Performance', to: '/admin/dashboard/sales' });
+  } else if (pathname === '/admin/dashboard/field') {
+    items.push({ label: 'Dashboard', to: '/admin/dashboard' });
+    items.push({ label: 'Field Activity', to: '/admin/dashboard/field' });
+  } else if (pathname === '/admin/dashboard/revenue') {
+    items.push({ label: 'Dashboard', to: '/admin/dashboard' });
+    items.push({ label: 'Revenue Analytics', to: '/admin/dashboard/revenue' });
+  } else if (pathname === '/admin/dashboard/conversions') {
+    items.push({ label: 'Dashboard', to: '/admin/dashboard' });
+    items.push({ label: 'Conversion Funnel', to: '/admin/dashboard/conversions' });
+  } else if (pathname === '/admin/dashboard/live') {
+    items.push({ label: 'Dashboard', to: '/admin/dashboard' });
+    items.push({ label: 'Live Monitoring', to: '/admin/dashboard/live' });
+  } else if (pathname.startsWith('/admin/profile')) {
+    items.push({ label: 'Account', to: '/admin/profile' });
+    if (pathname === '/admin/profile') {
+      items.push({ label: 'My Profile', to: '/admin/profile' });
+    } else if (pathname === '/admin/profile/security') {
+      items.push({ label: 'Security & 2FA', to: '/admin/profile/security' });
+    } else if (pathname === '/admin/profile/sessions') {
+      items.push({ label: 'Active Sessions', to: '/admin/profile/sessions' });
+    }
+  } else {
+    items.push({ label: 'Admin', to: '/admin/dashboard' });
+    items.push({ label: 'Overview', to: pathname });
+  }
+
+  return items;
+}
 
 export default function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
@@ -352,8 +391,31 @@ export default function AppShell() {
       >
         {/* Top Header */}
         <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-sm">
-          <div className="flex items-center gap-3">
-            {/* Left Header Area */}
+          {/* Mandatory Left Header Breadcrumb Navigation */}
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+            <NavLink to="/admin/dashboard" className="flex items-center text-slate-400 hover:text-[#0D1F3D] transition-colors">
+              <Home className="h-4 w-4" />
+            </NavLink>
+            {getBreadcrumbTrail(location.pathname).map((crumb, idx, arr) => {
+              const isLast = idx === arr.length - 1;
+              return (
+                <React.Fragment key={crumb.to + idx}>
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" />
+                  {isLast ? (
+                    <span className="font-extrabold text-[#0D1F3D] bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/60 shadow-xs">
+                      {crumb.label}
+                    </span>
+                  ) : (
+                    <NavLink
+                      to={crumb.to}
+                      className="hover:text-[#0D1F3D] hover:underline transition-colors font-semibold text-slate-600"
+                    >
+                      {crumb.label}
+                    </NavLink>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
 
           <div className="flex items-center gap-4">
