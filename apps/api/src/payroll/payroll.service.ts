@@ -88,7 +88,7 @@ export class PayrollService {
       },
     });
 
-    const payslips = [];
+    const payslips: any[] = [];
 
     for (const struct of usersWithSalary) {
       const attendances = await this.prisma.attendance.findMany({
