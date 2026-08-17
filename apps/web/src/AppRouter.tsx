@@ -15,6 +15,11 @@ import RevenueDashboardPage from './screens/dashboard/RevenueDashboardPage';
 import ConversionDashboardPage from './screens/dashboard/ConversionDashboardPage';
 import RealTimeActivityDashboardPage from './screens/dashboard/RealTimeActivityDashboardPage';
 
+import AllExecutivesPage from './screens/executives/AllExecutivesPage';
+import ExecutiveDetailsPage from './screens/executives/ExecutiveDetailsPage';
+import EditExecutivePage from './screens/executives/EditExecutivePage';
+import SuspendExecutivePage from './screens/executives/SuspendExecutivePage';
+
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { Role, AuthTokensSchema } from '@visiblo/shared';
@@ -152,6 +157,25 @@ export default function AppRouter() {
             <Route path="/admin/profile" element={<ProfilePage />} />
             <Route path="/admin/profile/security" element={<ChangePasswordPage />} />
             <Route path="/admin/profile/sessions" element={<ActiveSessionsPage />} />
+
+            {/* Field Executives & Sales Manager Management Routes */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/executives" element={<AllExecutivesPage />} />
+              <Route path="/admin/executives/:id" element={<ExecutiveDetailsPage />} />
+              <Route path="/admin/executives/:id/edit" element={<EditExecutivePage />} />
+              <Route path="/admin/executives/:id/suspend" element={<SuspendExecutivePage />} />
+            </Route>
           </Route>
         </Route>
 
