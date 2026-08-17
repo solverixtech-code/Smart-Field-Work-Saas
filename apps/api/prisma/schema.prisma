@@ -60,6 +60,12 @@ model User {
   permissionUpdates     UserModulePermission[]  @relation("UserModulePermissionUpdater")
   twoFactorRoleSettingUpdates RoleTwoFactorSetting[] @relation("RoleTwoFactorSettingUpdater")
 
+  userShifts        UserShift[]
+  attendances       Attendance[]
+  punchLogs         PunchLog[]
+  salaryStructure   SalaryStructure?
+  payslips          Payslip[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -198,3 +204,172 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
 }
+
+// ─── Shift & Schedule Management ────────────────────────────────────────────────
+
+model Shift {
+  id                    String      @id @default(uuid())
+  name                  String      // e.g. General Shift, Morning Shift, Night Shift
+  code                  String      @unique
+  startTime             String      // "09:00"
+  endTime               String      // "18:00"
+  gracePeriodMinutes    Int         @default(15)
+  halfDayThresholdHours Float       @default(4.5)
+  breakDurationMinutes  Int         @default(60)
+  isActive              Boolean     @default(true)
+  userShifts            UserShift[]
+  attendances           Attendance[]
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+}
+
+model UserShift {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shiftId   String
+  shift     Shift    @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  startDate DateTime
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([shiftId])
+}
+
+// ─── Attendance & Mobile GPS Punch Logs ───────────────────────────────────────
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  ABSENT
+  HALF_DAY
+  ON_LEAVE
+  WEEKLY_OFF
+  HOLIDAY
+}
+
+enum PunchType {
+  PUNCH_IN
+  PUNCH_OUT
+}
+
+model Attendance {
+  id               String           @id @default(uuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date             DateTime         @db.Date
+  shiftId          String?
+  shift            Shift?           @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  status           AttendanceStatus @default(PRESENT)
+  punchInTime      DateTime?
+  punchOutTime     DateTime?
+  totalWorkMinutes Int              @default(0)
+  overtimeMinutes  Int              @default(0)
+  lateMinutes      Int              @default(0)
+  remarks          String?
+  punchLogs        PunchLog[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@index([status])
+}
+
+model PunchLog {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attendanceId String?
+  attendance   Attendance? @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
+  type         PunchType
+  timestamp    DateTime   @default(now())
+  latitude     Float
+  longitude    Float
+  locationName String?
+  photoUrl     String?
+  deviceId     String?
+  deviceModel  String?
+  ipAddress    String?
+
+  @@index([userId])
+  @@index([attendanceId])
+  @@index([timestamp])
+}
+
+// ─── Payroll & Payslips ─────────────────────────────────────────────────────────
+
+enum PayrollStatus {
+  DRAFT
+  PROCESSED
+  APPROVED
+  PAID
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+}
+
+model SalaryStructure {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  baseSalary  Float
+  hra         Float    @default(0)
+  conveyance  Float    @default(0)
+  allowances  Float    @default(0)
+  pfDeduction Float    @default(0)
+  esiDeduction Float   @default(0)
+  tds         Float    @default(0)
+  netSalary   Float
+  currency    String   @default("INR")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PayrollPeriod {
+  id          String        @id @default(uuid())
+  month       Int           // 1 - 12
+  year        Int           // e.g. 2025
+  status      PayrollStatus @default(DRAFT)
+  processedAt DateTime?
+  paidAt      DateTime?
+  payslips    Payslip[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@unique([month, year])
+}
+
+model Payslip {
+  id              String        @id @default(uuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payrollPeriodId String
+  payrollPeriod   PayrollPeriod @relation(fields: [payrollPeriodId], references: [id], onDelete: Cascade)
+  baseSalary      Float
+  totalAllowances Float         @default(0)
+  totalDeductions Float         @default(0)
+  netPay          Float
+  presentDays     Int           @default(0)
+  absentDays      Int           @default(0)
+  lateDays        Int           @default(0)
+  overtimeHours   Float         @default(0)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentDate     DateTime?
+  transactionRef  String?
+  downloadUrl     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@unique([userId, payrollPeriodId])
+  @@index([userId])
+  @@index([payrollPeriodId])
+  @@index([paymentStatus])
+}
+

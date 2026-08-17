@@ -16,6 +16,9 @@ import {
   ChevronLeft,
   Home,
   Users,
+  Clock,
+  Smartphone,
+  CreditCard,
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store';
 import { clearCredentials } from '../store/slices/authSlice';
@@ -84,8 +87,32 @@ const navCategories: NavCategory[] = [
     ],
   },
   {
-    title: 'Financial Management',
+    title: 'Workforce & Operations',
     items: [
+      {
+        label: 'Shifts & Schedule',
+        icon: Clock,
+        to: '/admin/shifts',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+      },
+      {
+        label: 'Attendance & Punches',
+        icon: Smartphone,
+        to: '/admin/attendance',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: 'GPS Live',
+      },
+    ],
+  },
+  {
+    title: 'Payroll & Finance',
+    items: [
+      {
+        label: 'Payroll & Payslips',
+        icon: CreditCard,
+        to: '/admin/payroll',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE_OPS],
+      },
       {
         label: 'Revenue Dashboard',
         icon: DollarSign,
@@ -135,6 +162,15 @@ function getBreadcrumbTrail(pathname: string) {
     } else {
       items.push({ label: 'Executive Profile', to: pathname });
     }
+  } else if (pathname === '/admin/shifts') {
+    items.push({ label: 'Workforce & Operations', to: '/admin/shifts' });
+    items.push({ label: 'Shift Management & Rostering', to: '/admin/shifts' });
+  } else if (pathname === '/admin/attendance') {
+    items.push({ label: 'Workforce & Operations', to: '/admin/attendance' });
+    items.push({ label: 'Attendance & Mobile GPS Punches', to: '/admin/attendance' });
+  } else if (pathname === '/admin/payroll') {
+    items.push({ label: 'Payroll & Finance', to: '/admin/payroll' });
+    items.push({ label: 'Payroll & Payslip Management', to: '/admin/payroll' });
   } else if (pathname === '/admin/dashboard') {
     items.push({ label: 'Dashboard', to: '/admin/dashboard' });
     items.push({ label: 'Executive Overview', to: '/admin/dashboard' });

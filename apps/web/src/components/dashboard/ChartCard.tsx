@@ -29,8 +29,8 @@ export const ChartCard: React.FC<ChartCardProps> = ({
       {/* Header */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-base font-bold text-[#0B2E6B]">{title}</h3>
-          {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">{title}</h3>
+          {subtitle && <p className="text-xs font-medium text-slate-500">{subtitle}</p>}
         </div>
 
         <div className="flex items-center gap-2">
@@ -39,7 +39,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               <select
                 value={selectedPeriod}
                 onChange={(e) => onPeriodChange(e.target.value)}
-                className="appearance-none rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-1.5 pr-8 text-xs font-semibold text-[#0B2E6B] transition-all focus:border-[#00C2A8] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#00C2A8]"
+                className="appearance-none rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-1.5 pr-8 text-xs font-bold text-[#0D1F3D] transition-all focus:border-[#E20613] focus:bg-white focus:outline-none"
               >
                 {periodOptions.map((opt) => (
                   <option key={opt} value={opt}>
@@ -55,7 +55,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
             <button
               type="button"
               onClick={onActionClick}
-              className="text-xs font-semibold text-[#00C2A8] hover:underline"
+              className="text-xs font-bold text-[#E20613] hover:underline"
             >
               {actionText}
             </button>

@@ -6,6 +6,9 @@ import { validationSchemaForEnv } from './config/environment-variables';
 import { PersistenceModule } from './persistence/persistence.module';
 import { RedisModule } from './redis/redis.module';
 import { AuthModule } from './auth/auth.module';
+import { ShiftModule } from './shift/shift.module';
+import { AttendanceModule } from './attendance/attendance.module';
+import { PayrollModule } from './payroll/payroll.module';
 import { ApiThrottlerGuard } from './common/guards/api-throttler.guard';
 import { RedisThrottlerStorage } from './common/throttling/redis-throttler.storage';
 import { ThrottlingModule } from './common/throttling/throttling.module';
@@ -37,6 +40,9 @@ import { ThrottlingModule } from './common/throttling/throttling.module';
     ThrottlingModule,
     PersistenceModule,
     AuthModule,
+    ShiftModule,
+    AttendanceModule,
+    PayrollModule,
   ],
   providers: [
     {

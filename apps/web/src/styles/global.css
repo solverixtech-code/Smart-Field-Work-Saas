@@ -114,12 +114,17 @@
   }
 }
 
-/* ─── Recharts Tooltip Contrast Fix (Deep Navy #0D1F3D & Corporate Red #E20613) ─── */
+/* ─── Recharts Tooltip Contrast & Elevation Fix (Deep Navy #0D1F3D & Corporate Red #E20613) ─── */
+.recharts-tooltip-wrapper {
+  z-index: 100 !important;
+  pointer-events: none !important;
+}
+
 .recharts-default-tooltip {
   background-color: #0D1F3D !important;
   border-radius: 12px !important;
-  border: 1px solid #1e293b !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 12px 30px -5px rgba(13, 31, 61, 0.4) !important;
   padding: 8px 14px !important;
 }
 

@@ -21,6 +21,10 @@ import ExecutiveDetailsPage from './screens/executives/ExecutiveDetailsPage';
 import EditExecutivePage from './screens/executives/EditExecutivePage';
 import SuspendExecutivePage from './screens/executives/SuspendExecutivePage';
 
+import ShiftManagementPage from './screens/shifts/ShiftManagementPage';
+import AttendanceMonitoringPage from './screens/attendance/AttendanceMonitoringPage';
+import PayrollManagementPage from './screens/payroll/PayrollManagementPage';
+
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { Role, AuthTokensSchema } from '@visiblo/shared';
@@ -177,6 +181,33 @@ export default function AppRouter() {
               <Route path="/admin/executives/:id" element={<ExecutiveDetailsPage />} />
               <Route path="/admin/executives/:id/edit" element={<EditExecutivePage />} />
               <Route path="/admin/executives/:id/suspend" element={<SuspendExecutivePage />} />
+            </Route>
+
+            {/* Workforce, Attendance, and Payroll Routes */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/shifts" element={<ShiftManagementPage />} />
+              <Route path="/admin/attendance" element={<AttendanceMonitoringPage />} />
+            </Route>
+
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE_OPS]}
+                />
+              }
+            >
+              <Route path="/admin/payroll" element={<PayrollManagementPage />} />
             </Route>
           </Route>
         </Route>

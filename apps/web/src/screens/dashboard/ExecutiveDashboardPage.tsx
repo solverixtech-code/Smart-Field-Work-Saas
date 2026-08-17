@@ -174,20 +174,23 @@ export default function ExecutiveDashboardPage() {
 
         {/* New Customers Interactive Bar Chart */}
         <ChartCard title="New Customers" subtitle="1,248 New Customers this week" className="lg:col-span-3">
-          <div className="h-64 w-full pt-4">
+          <div className="h-64 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={newCustomersData}>
+              <BarChart data={newCustomersData} margin={{ top: 25, right: 10, left: 10, bottom: 20 }}>
                 <XAxis dataKey="day" stroke="#94A3B8" fontSize={11} tickLine={false} />
                 <YAxis hide />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#061838', borderRadius: '12px', border: 'none' }}
-                  labelStyle={{ color: '#00C2A8', fontWeight: 700, fontSize: '12px' }}
+                  cursor={{ fill: 'rgba(13, 31, 61, 0.04)' }}
+                  position={{ y: -15 }}
+                  allowEscapeViewBox={{ x: true, y: true }}
+                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)', padding: '8px 12px' }}
+                  labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px', marginBottom: '2px' }}
                   itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                   formatter={(val: any) => [`${val || 0} Customers`, 'New']}
                 />
                 <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                   {newCustomersData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={index === newCustomersData.length - 1 ? '#00C2A8' : '#94E2D5'} />
+                    <Cell key={`cell-${index}`} fill={index === newCustomersData.length - 1 ? '#E20613' : '#0D1F3D'} />
                   ))}
                 </Bar>
               </BarChart>
