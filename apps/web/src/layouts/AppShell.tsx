@@ -15,6 +15,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Home,
+  Users,
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store';
 import { clearCredentials } from '../store/slices/authSlice';
@@ -54,6 +55,13 @@ const navCategories: NavCategory[] = [
   {
     title: 'Sales & Field',
     items: [
+      {
+        label: 'Field Executives',
+        icon: Users,
+        to: '/admin/executives',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '156 Team',
+      },
       {
         label: 'Sales Dashboard',
         icon: TrendingUp,
@@ -110,7 +118,21 @@ const navCategories: NavCategory[] = [
 function getBreadcrumbTrail(pathname: string) {
   const items: { label: string; to: string }[] = [];
 
-  if (pathname === '/admin/dashboard') {
+  if (pathname === '/admin/executives') {
+    items.push({ label: 'Field Operations', to: '/admin/executives' });
+    items.push({ label: 'All Field Executives', to: '/admin/executives' });
+  } else if (pathname.startsWith('/admin/executives/')) {
+    items.push({ label: 'Field Executives', to: '/admin/executives' });
+    if (pathname.endsWith('/edit')) {
+      items.push({ label: 'Rahul Verma (FE-1001)', to: '/admin/executives/FE-1001' });
+      items.push({ label: 'Edit Profile', to: pathname });
+    } else if (pathname.endsWith('/suspend')) {
+      items.push({ label: 'Rahul Verma (FE-1001)', to: '/admin/executives/FE-1001' });
+      items.push({ label: 'Access Control', to: pathname });
+    } else {
+      items.push({ label: 'Executive Profile', to: pathname });
+    }
+  } else if (pathname === '/admin/dashboard') {
     items.push({ label: 'Dashboard', to: '/admin/dashboard' });
     items.push({ label: 'Executive Overview', to: '/admin/dashboard' });
   } else if (pathname === '/admin/dashboard/sales') {
