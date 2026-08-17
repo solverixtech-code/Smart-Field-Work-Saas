@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Roles ──────────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  SALES_MANAGER
+  TEAM_LEADER
+  FINANCE_OPS
+  SUPPORT
+}
+
+enum DataScope {
+  ALL
+  ASSIGNED_CITY
+  ASSIGNED_TEAM
+  SELF_AND_ASSIGNED_LEADS
+}
+
+// ─── Users ──────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid())
+  employeeCode  String    @unique
+  fullName      String
+  email         String    @unique
+  mobile        String?
+  passwordHash  String
+  avatarUrl     String?
+  role          Role
+  dataScope     DataScope @default(ALL)
+  teamId        String?
+  team          Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  managerId     String?
+  manager       User?     @relation("UserManager", fields: [managerId], references: [id], onDelete: SetNull)
+  subordinates  User[]    @relation("UserManager")
+  defaultTerritoryId String?
+  status        String    @default("ACTIVE")
+  preferredLanguage  String @default("en")
+  twoFactorEnabled   Boolean @default(false)
+
+  lastLoginAt            DateTime?
+  lastPasswordChangeAt   DateTime?
+  passwordResetTokenHash String?
+  passwordResetExpiresAt DateTime?
+  joinedAt               DateTime  @default(now())
+
+  sessions              UserSession[]
+  otpChallenges         OtpChallenge[]
+  auditLogs             AuditLog[]
+  modulePermissions     UserModulePermission[]  @relation("UserModulePermissions")
+  permissionUpdates     UserModulePermission[]  @relation("UserModulePermissionUpdater")
+  twoFactorRoleSettingUpdates RoleTwoFactorSetting[] @relation("RoleTwoFactorSettingUpdater")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([role])
+  @@index([teamId])
+}
+
+// ─── Teams ──────────────────────────────────────────────────────────────────────
+
+model Team {
+  id          String  @id @default(uuid())
+  name        String
+  code        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+  members     User[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── RBAC ───────────────────────────────────────────────────────────────────────
+
+model Permission {
+  id          String  @id @default(uuid())
+  moduleKey   String
+  action      String  // view, create, update, delete
+  description String?
+
+  rolePermissions RolePermission[]
+  createdAt       DateTime @default(now())
+
+  @@unique([moduleKey, action])
+  @@index([moduleKey])
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  role         Role
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([role, permissionId])
+  @@index([role])
+}
+
+model UserModulePermission {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation("UserModulePermissions", fields: [userId], references: [id], onDelete: Cascade)
+  moduleKey   String
+  canView     Boolean  @default(false)
+  canCreate   Boolean  @default(false)
+  canUpdate   Boolean  @default(false)
+  canDelete   Boolean  @default(false)
+  updatedById String?
+  updatedBy   User?    @relation("UserModulePermissionUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, moduleKey])
+  @@index([userId])
+}
+
+model RoleTwoFactorSetting {
+  id          String   @id @default(uuid())
+  role        Role     @unique
+  enabled     Boolean  @default(false)
+  updatedById String?
+  updatedBy   User?    @relation("RoleTwoFactorSettingUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── Sessions / Devices ─────────────────────────────────────────────────────────
+
+model UserSession {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash String
+  platform         String?
+  ip               String?
+  userAgent        String?
+  location         String?
+  status           String    @default("ACTIVE") // ACTIVE, REVOKED
+  lastSeenAt       DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([userId, refreshTokenHash])
+}
+
+// ─── OTP Challenges ─────────────────────────────────────────────────────────────
+
+model OtpChallenge {
+  id               String    @id @default(uuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeToken   String    @unique
+  codeHash         String
+  channel          String    // EMAIL, SMS
+  expiresAt        DateTime
+  attemptCount     Int       @default(0)
+  consumedAt       DateTime?
+  requestIp        String?
+  userAgent        String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([challengeToken])
+  @@index([expiresAt])
+}
+
+// ─── Audit Logs ─────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String?
+  actorUser   User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  action      String
+  entityType  String?
+  entityId    String?
+  beforeJson  Json?
+  afterJson   Json?
+  ip          String?
+  userAgent   String?
+  sessionId   String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorUserId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}

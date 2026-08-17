@@ -1,0 +1,141 @@
+@import '@fontsource/poppins/latin-400.css';
+@import '@fontsource/poppins/latin-500.css';
+@import '@fontsource/poppins/latin-600.css';
+@import '@fontsource/poppins/latin-700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ─── SFW Moodboard palette: Deep Navy #0D1F3D & Corporate Red #E20613 ─── */
+    --background: 216 20% 97%;       /* #F3F5F7 Light Gray */
+    --foreground: 218 65% 15%;       /* #0D1F3D Deep Navy */
+    --primary: 218 65% 15%;          /* #0D1F3D Deep Navy */
+    --primary-hover: 218 65% 10%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 218 65% 15%;        /* #0D1F3D Deep Navy */
+    --secondary-foreground: 0 0% 100%;
+    --accent: 356 95% 45%;           /* #E20613 Corporate Red */
+    --accent-foreground: 0 0% 100%;
+    --muted: 216 20% 95%;
+    --muted-foreground: 215 16% 47%;
+    --card: 0 0% 100%;
+    --card-foreground: 218 65% 15%;
+    --border: 214 20% 90%;
+    --input: 214 20% 90%;
+    --ring: 356 95% 45%;
+    --destructive: 356 95% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 76% 36%;
+    --success-soft: 142 76% 96%;
+    --warning: 25 95% 53%;
+    --info: 218 65% 15%;
+    --info-soft: 218 65% 96%;
+    --radius-control: 10px;
+    --radius-card: 12px;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: Poppins, sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply min-h-screen bg-background text-foreground;
+  }
+
+  ::selection {
+    background-color: rgba(0, 194, 168, 0.25);
+    color: inherit;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+/* ─── Auth Layout ─── */
+@layer components {
+  .auth-gradient-bg {
+    background: linear-gradient(135deg, hsl(219 81% 24%) 0%, hsl(219 81% 18%) 50%, hsl(223 78% 31%) 100%);
+  }
+
+  .auth-card {
+    @apply w-full max-w-md rounded-lg bg-card p-8 shadow-auth-card;
+  }
+
+  .auth-input {
+    @apply flex h-12 w-full rounded-md border border-input bg-background px-4 py-2 pl-11 text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .auth-btn {
+    @apply flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .auth-btn-primary {
+    @apply auth-btn text-white;
+    background: linear-gradient(135deg, hsl(223 78% 31%), hsl(170 100% 39%));
+  }
+
+  .auth-btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, hsl(223 78% 26%), hsl(170 100% 34%));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgb(18 58 143 / 0.25);
+  }
+
+  .auth-btn-outline {
+    @apply auth-btn border border-border bg-card text-foreground hover:bg-muted;
+  }
+
+  /* ─── Sidebar ─── */
+  .crm-sidebar {
+    @apply bg-gradient-to-b from-sidebar to-sidebar-deep text-sidebar-foreground;
+  }
+
+  .crm-sidebar-item {
+    @apply flex h-11 items-center gap-3 rounded-md px-3 text-[14px] font-medium transition-colors;
+  }
+
+  .crm-sidebar-item-active {
+    @apply bg-sidebar-active text-sidebar-active-foreground;
+  }
+
+  /* ─── OTP Input ─── */
+  .otp-input {
+    @apply flex h-14 w-12 items-center justify-center rounded-md border-2 border-input bg-background text-center text-xl font-semibold text-foreground transition-colors focus:border-primary focus:ring-1 focus:ring-primary;
+  }
+}
+
+/* ─── Recharts Tooltip Contrast Fix (Deep Navy #0D1F3D & Corporate Red #E20613) ─── */
+.recharts-default-tooltip {
+  background-color: #0D1F3D !important;
+  border-radius: 12px !important;
+  border: 1px solid #1e293b !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4) !important;
+  padding: 8px 14px !important;
+}
+
+.recharts-tooltip-label {
+  color: #E20613 !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  margin-bottom: 4px !important;
+}
+
+.recharts-tooltip-item,
+.recharts-tooltip-item-name,
+.recharts-tooltip-item-value,
+.recharts-tooltip-item-separator {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+}
+
