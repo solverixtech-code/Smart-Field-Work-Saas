@@ -16,6 +16,7 @@ import ConversionDashboardPage from './screens/dashboard/ConversionDashboardPage
 import RealTimeActivityDashboardPage from './screens/dashboard/RealTimeActivityDashboardPage';
 
 import AllExecutivesPage from './screens/executives/AllExecutivesPage';
+import AddExecutivePage from './screens/executives/AddExecutivePage';
 import ExecutiveDetailsPage from './screens/executives/ExecutiveDetailsPage';
 import EditExecutivePage from './screens/executives/EditExecutivePage';
 import SuspendExecutivePage from './screens/executives/SuspendExecutivePage';
@@ -172,6 +173,7 @@ export default function AppRouter() {
               }
             >
               <Route path="/admin/executives" element={<AllExecutivesPage />} />
+              <Route path="/admin/executives/new" element={<AddExecutivePage />} />
               <Route path="/admin/executives/:id" element={<ExecutiveDetailsPage />} />
               <Route path="/admin/executives/:id/edit" element={<EditExecutivePage />} />
               <Route path="/admin/executives/:id/suspend" element={<SuspendExecutivePage />} />

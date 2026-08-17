@@ -121,6 +121,9 @@ function getBreadcrumbTrail(pathname: string) {
   if (pathname === '/admin/executives') {
     items.push({ label: 'Field Operations', to: '/admin/executives' });
     items.push({ label: 'All Field Executives', to: '/admin/executives' });
+  } else if (pathname === '/admin/executives/new') {
+    items.push({ label: 'Field Executives', to: '/admin/executives' });
+    items.push({ label: 'Add New Executive', to: '/admin/executives/new' });
   } else if (pathname.startsWith('/admin/executives/')) {
     items.push({ label: 'Field Executives', to: '/admin/executives' });
     if (pathname.endsWith('/edit')) {

@@ -212,7 +212,7 @@ export default function AllExecutivesPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => navigate('/admin/executives/FE-1001/edit')}
+            onClick={() => navigate('/admin/executives/new')}
             className="flex items-center gap-2 font-bold shadow-sm"
           >
             <UserPlus className="h-4 w-4" /> Add Executive
@@ -557,7 +557,7 @@ export default function AllExecutivesPage() {
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Quick Actions</h3>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => navigate('/admin/executives/FE-1001/edit')}
+                onClick={() => navigate('/admin/executives/new')}
                 className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
               >
                 <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-[#0D1F3D]/10 text-[#0D1F3D]">
