@@ -226,38 +226,38 @@ export default function SalesTeamsPage() {
   };
 
   return (
-    <div className="space-y-6 font-sans pb-12">
+    <div className="space-y-3 font-sans pb-10">
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Sales Teams Management</h1>
-          <p className="mt-1 text-sm font-normal text-slate-600">
+          <h1 className="text-2xl font-bold text-[#0D1F3D]">Sales Teams Management</h1>
+          <p className="text-xs font-normal text-slate-500">
             Configure sales team structures, assign team leaders, track monthly targets, and monitor overall performance.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <Button
             variant="outline"
             size="sm"
             onClick={() => alert('Exporting Teams Data...')}
-            className="flex items-center gap-2 border-slate-300 text-slate-800 hover:bg-slate-50 font-semibold shadow-none"
+            className="flex items-center gap-1.5 font-bold border-slate-200 text-slate-700 hover:bg-slate-50 shadow-xs"
           >
-            <Download className="h-4 w-4 text-slate-700" /> Export Data
+            <Download className="h-4 w-4 text-emerald-600" /> Export Data
           </Button>
           <Button
             variant="accent"
             size="sm"
             onClick={() => navigate('/admin/teams/create')}
-            className="flex items-center gap-2 font-semibold shadow-xs"
+            className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white"
           >
             <Plus className="h-4 w-4" /> Create Team
           </Button>
         </div>
       </div>
 
-      {/* 5 Top Metric KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {/* 5 Top Metric KPI Cards Row */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 sm:grid-cols-3">
         <KpiCard
           title="Total Teams"
           value="8"
@@ -306,19 +306,19 @@ export default function SalesTeamsPage() {
         />
       </div>
 
-      {/* Full-Width Main Data Table Section */}
-      <div className="space-y-4">
-        {/* Toolbar & Filters */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
+      {/* Main Table Section */}
+      <div className="space-y-3">
+        {/* Search & Filter Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200/80 bg-white p-3 shadow-xs">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[240px]">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="text"
               placeholder="Search teams by name, code, leader..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-xs font-medium text-slate-900 placeholder-slate-400 focus:border-slate-800 focus:outline-none"
+              className="w-full rounded-md border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
             />
           </div>
 
@@ -326,7 +326,7 @@ export default function SalesTeamsPage() {
           <select
             value={regionFilter}
             onChange={(e) => setRegionFilter(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-900 focus:border-slate-800 focus:outline-none cursor-pointer"
+            className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
           >
             <option value="All">All Regions</option>
             <option value="Mumbai">Mumbai</option>
@@ -341,7 +341,7 @@ export default function SalesTeamsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-900 focus:border-slate-800 focus:outline-none cursor-pointer"
+            className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
           >
             <option value="All">All Statuses</option>
             <option value="Active">Active</option>
@@ -349,8 +349,8 @@ export default function SalesTeamsPage() {
           </select>
         </div>
 
-        {/* Table Card Container with High-Contrast Typography & Aligned Columns */}
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs flex flex-col justify-between">
+        {/* Table Card Container */}
+        <div className="overflow-hidden rounded-md border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
           <div>
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs border-collapse">
