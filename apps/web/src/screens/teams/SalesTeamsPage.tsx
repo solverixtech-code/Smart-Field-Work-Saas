@@ -4,11 +4,8 @@ import {
   Users,
   Plus,
   Search,
-  Filter,
   Eye,
   MoreVertical,
-  CheckCircle2,
-  TrendingUp,
   Target,
   ChevronRight,
   ChevronLeft,
@@ -17,7 +14,6 @@ import {
   BarChart3,
   Clock,
   Download,
-  Edit,
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
@@ -223,12 +219,12 @@ export default function SalesTeamsPage() {
   };
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans pb-12">
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Sales Teams Management</h1>
-          <p className="text-xs font-medium text-slate-500">
+          <h1 className="text-2xl font-bold text-slate-900">Sales Teams Management</h1>
+          <p className="mt-1 text-sm font-normal text-slate-600">
             Configure sales team structures, assign team leaders, track monthly targets, and monitor overall performance.
           </p>
         </div>
@@ -238,15 +234,15 @@ export default function SalesTeamsPage() {
             variant="outline"
             size="sm"
             onClick={() => alert('Exporting Teams Data...')}
-            className="flex items-center gap-2 border-slate-200 text-slate-700 hover:bg-slate-100 font-bold"
+            className="flex items-center gap-2 border-slate-300 text-slate-800 hover:bg-slate-50 font-semibold shadow-none"
           >
-            <Download className="h-4 w-4 text-[#0D1F3D]" /> Export Data
+            <Download className="h-4 w-4 text-slate-700" /> Export Data
           </Button>
           <Button
             variant="accent"
             size="sm"
             onClick={() => navigate('/admin/teams/create')}
-            className="flex items-center gap-2 font-bold shadow-sm"
+            className="flex items-center gap-2 font-semibold shadow-xs"
           >
             <Plus className="h-4 w-4" /> Create Team
           </Button>
@@ -305,17 +301,17 @@ export default function SalesTeamsPage() {
 
       {/* Full-Width Main Data Table Section */}
       <div className="space-y-4">
-        {/* Toolbar & Filters matching All Executives Page */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs">
+        {/* Toolbar & Filters */}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xs">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[240px]">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
             <input
               type="text"
               placeholder="Search teams by name, code, leader..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
+              className="w-full rounded-lg border border-slate-300 bg-white pl-9 pr-3 py-2 text-xs font-medium text-slate-900 placeholder-slate-400 focus:border-slate-800 focus:outline-none"
             />
           </div>
 
@@ -323,7 +319,7 @@ export default function SalesTeamsPage() {
           <select
             value={regionFilter}
             onChange={(e) => setRegionFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-900 focus:border-slate-800 focus:outline-none cursor-pointer"
           >
             <option value="All">All Regions</option>
             <option value="Mumbai">Mumbai</option>
@@ -338,7 +334,7 @@ export default function SalesTeamsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-900 focus:border-slate-800 focus:outline-none cursor-pointer"
           >
             <option value="All">All Statuses</option>
             <option value="Active">Active</option>
@@ -346,33 +342,33 @@ export default function SalesTeamsPage() {
           </select>
         </div>
 
-        {/* Table Card Container */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
+        {/* Table Card Container with High-Contrast Typography & Aligned Columns */}
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs flex flex-col justify-between">
           <div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-semibold">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                    <th className="p-3.5 text-center">
+                  <tr className="border-b border-slate-200 bg-slate-100/90 text-xs font-semibold text-slate-800">
+                    <th className="p-3.5 text-center w-10">
                       <input
                         type="checkbox"
                         onChange={handleSelectAll}
                         checked={selectedIds.length === filteredTeams.length && filteredTeams.length > 0}
-                        className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                       />
                     </th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Team Name</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Team Leader</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Members</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Department</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Target (Monthly)</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Achieved (This Month)</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Performance</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Status</th>
-                    <th className="px-4 py-3.5 text-right whitespace-nowrap">Actions</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap min-w-[200px]">Team Name</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap min-w-[180px]">Team Leader</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap text-center min-w-[90px]">Members</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap min-w-[120px]">Department</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap text-right min-w-[140px]">Monthly Target</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap text-right min-w-[160px]">Achieved (This Month)</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap text-center min-w-[130px]">Performance</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap text-center min-w-[100px]">Status</th>
+                    <th className="px-4 py-3.5 text-right whitespace-nowrap min-w-[90px]">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
+                <tbody className="divide-y divide-slate-100 text-slate-800">
                   {filteredTeams.map((t) => {
                     const isSelected = selectedIds.includes(t.id);
                     return (
@@ -382,24 +378,24 @@ export default function SalesTeamsPage() {
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleSelectOne(t.id)}
-                            className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                            className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
                           />
                         </td>
 
                         {/* Team Name */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className={`flex h-8 w-8 items-center justify-center rounded-xl font-extrabold text-xs flex-shrink-0 ${t.avatarBg}`}>
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-lg font-bold text-xs shrink-0 ${t.avatarBg}`}>
                               {t.avatarText}
                             </div>
                             <div>
                               <button
                                 onClick={() => navigate(`/admin/teams/${t.id}`)}
-                                className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline text-left block whitespace-nowrap"
+                                className="font-semibold text-slate-900 hover:text-blue-700 hover:underline text-left block whitespace-nowrap"
                               >
                                 {t.name}
                               </button>
-                              <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{t.region}</p>
+                              <p className="text-xs text-slate-600 font-normal whitespace-nowrap">{t.region}</p>
                             </div>
                           </div>
                         </td>
@@ -410,22 +406,22 @@ export default function SalesTeamsPage() {
                             <img
                               src={t.leaderAvatar}
                               alt={t.leaderName}
-                              className="h-7 w-7 rounded-full object-cover border border-slate-200 flex-shrink-0"
+                              className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0"
                             />
                             <div>
-                              <p className="font-extrabold text-[#0D1F3D] whitespace-nowrap">{t.leaderName}</p>
-                              <p className="text-[10px] text-slate-400 font-mono whitespace-nowrap">{t.leaderCode}</p>
+                              <p className="font-semibold text-slate-900 whitespace-nowrap">{t.leaderName}</p>
+                              <p className="text-xs text-slate-600 font-mono whitespace-nowrap">{t.leaderCode}</p>
                             </div>
                           </div>
                         </td>
 
                         {/* Members */}
-                        <td className="px-4 py-3.5 whitespace-nowrap">
+                        <td className="px-4 py-3.5 whitespace-nowrap text-center">
                           <div>
-                            <span className="font-extrabold text-[#0D1F3D]">{t.memberCount}</span>
+                            <span className="font-semibold text-slate-900">{t.memberCount}</span>
                             <button
                               onClick={() => navigate(`/admin/teams/${t.id}/members`)}
-                              className="block text-[10px] text-blue-600 font-bold hover:underline whitespace-nowrap"
+                              className="block text-xs text-blue-700 font-medium hover:underline whitespace-nowrap mx-auto"
                             >
                               View Members
                             </button>
@@ -433,20 +429,20 @@ export default function SalesTeamsPage() {
                         </td>
 
                         {/* Department */}
-                        <td className="px-4 py-3.5 font-bold text-slate-600 whitespace-nowrap">
+                        <td className="px-4 py-3.5 font-medium text-slate-700 whitespace-nowrap">
                           {t.department}
                         </td>
 
-                        {/* Target */}
-                        <td className="px-4 py-3.5 font-bold text-[#0D1F3D] whitespace-nowrap">
+                        {/* Target (Monthly) - Aligned Right */}
+                        <td className="px-4 py-3.5 font-semibold text-slate-900 whitespace-nowrap text-right">
                           ₹{t.monthlyTarget.toLocaleString()}
                         </td>
 
-                        {/* Achieved */}
-                        <td className="px-4 py-3.5 whitespace-nowrap">
+                        {/* Achieved (This Month) - Aligned Right */}
+                        <td className="px-4 py-3.5 whitespace-nowrap text-right">
                           <div>
-                            <p className="font-extrabold text-[#0D1F3D]">₹{t.achievedAmount.toLocaleString()}</p>
-                            <p className={`text-[10px] font-bold ${t.achievedPercent >= 75 ? 'text-emerald-600' : t.achievedPercent >= 50 ? 'text-amber-600' : 'text-[#E20613]'}`}>
+                            <p className="font-semibold text-slate-900">₹{t.achievedAmount.toLocaleString()}</p>
+                            <p className={`text-xs font-semibold ${t.achievedPercent >= 75 ? 'text-emerald-700' : t.achievedPercent >= 50 ? 'text-amber-700' : 'text-rose-600'}`}>
                               {t.achievedPercent}%
                             </p>
                           </div>
@@ -454,15 +450,15 @@ export default function SalesTeamsPage() {
 
                         {/* Performance Bar */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <div className="w-24">
-                            <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                          <div className="w-24 mx-auto">
+                            <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                               <div
                                 className={`h-full rounded-full ${
                                   t.achievedPercent >= 75
-                                    ? 'bg-emerald-500'
+                                    ? 'bg-emerald-600'
                                     : t.achievedPercent >= 50
                                       ? 'bg-amber-500'
-                                      : 'bg-[#E20613]'
+                                      : 'bg-rose-600'
                                 }`}
                                 style={{ width: `${Math.min(t.achievedPercent, 100)}%` }}
                               />
@@ -470,13 +466,13 @@ export default function SalesTeamsPage() {
                           </div>
                         </td>
 
-                        {/* Status Badge matching All Executives Page */}
-                        <td className="px-4 py-3.5 whitespace-nowrap">
+                        {/* Status Badge */}
+                        <td className="px-4 py-3.5 whitespace-nowrap text-center">
                           <span
-                            className={`inline-block rounded-md px-2.5 py-0.5 text-[10px] font-extrabold ${
+                            className={`inline-block rounded-md px-2.5 py-0.5 text-xs font-semibold border ${
                               t.status === 'Active'
-                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
-                                : 'bg-red-50 text-[#E20613] border border-red-200/60'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : 'bg-slate-100 text-slate-700 border-slate-300'
                             }`}
                           >
                             {t.status}
@@ -489,14 +485,14 @@ export default function SalesTeamsPage() {
                             <button
                               onClick={() => navigate(`/admin/teams/${t.id}`)}
                               title="View Team Details"
-                              className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
+                              className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors border border-slate-200 shadow-xs"
                             >
                               <Eye className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => navigate(`/admin/teams/${t.id}/leader`)}
                               title="Assign Leader"
-                              className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
+                              className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors border border-slate-200 shadow-xs"
                             >
                               <MoreVertical className="h-4 w-4" />
                             </button>
@@ -510,22 +506,22 @@ export default function SalesTeamsPage() {
             </div>
           </div>
 
-          {/* Table Footer Pagination matching All Executives Page */}
-          <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold bg-slate-50/40">
+          {/* Table Footer Pagination */}
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-700 font-medium bg-slate-50">
             <p>Showing 1 to {filteredTeams.length} of {teams.length} teams</p>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
-                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
+                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0D1F3D] text-xs font-bold text-white">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-xs font-semibold text-white">
                   1
                 </span>
-                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
+                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50">
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
-              <select className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-[#0D1F3D]">
+              <select className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-900">
                 <option>10 / page</option>
                 <option>25 / page</option>
                 <option>50 / page</option>
@@ -535,11 +531,11 @@ export default function SalesTeamsPage() {
         </div>
       </div>
 
-      {/* Bottom Grid: Team Distribution + Top Performing Teams + Quick Actions (3 Column Grid below table) */}
+      {/* Bottom Grid: Team Distribution + Top Performing Teams + Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Team Distribution Donut Chart */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
-          <h3 className="text-base font-extrabold text-[#0D1F3D]">Team Distribution</h3>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+          <h3 className="text-base font-bold text-slate-900">Team Distribution</h3>
           <div className="flex flex-col items-center">
             <div className="h-44 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
@@ -568,19 +564,19 @@ export default function SalesTeamsPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xl font-extrabold text-[#0D1F3D]">8</span>
-                <span className="text-[10px] font-bold text-slate-400">Total Teams</span>
+                <span className="text-xl font-bold text-slate-900">8</span>
+                <span className="text-xs font-normal text-slate-600">Total Teams</span>
               </div>
             </div>
 
-            <div className="mt-2 w-full space-y-1.5 text-[11px] font-semibold text-slate-600">
+            <div className="mt-2 w-full space-y-1.5 text-xs font-medium text-slate-700">
               {teamDistributionData.map((d) => (
                 <div key={d.name} className="flex justify-between items-center">
                   <span className="flex items-center gap-1.5 truncate">
-                    <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-                    <span className="truncate">{d.name}</span>
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
+                    <span className="truncate text-slate-700">{d.name}</span>
                   </span>
-                  <span className="font-extrabold text-[#0D1F3D] ml-2">{d.value}</span>
+                  <span className="font-semibold text-slate-900 ml-2">{d.value}</span>
                 </div>
               ))}
             </div>
@@ -588,77 +584,77 @@ export default function SalesTeamsPage() {
         </div>
 
         {/* Top Performing Teams Leaderboard */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Top Performing Teams</h3>
-            <span className="text-[10px] font-bold text-slate-400">This Month</span>
+            <h3 className="text-base font-bold text-slate-900">Top Performing Teams</h3>
+            <span className="text-xs font-normal text-slate-600">This Month</span>
           </div>
 
           <div className="space-y-3">
             {[
-              { rank: 1, name: 'Mumbai North Team', pct: 83, amount: '₹12,45,000 / ₹15,00,000', color: 'bg-emerald-500' },
-              { rank: 2, name: 'Mumbai East Team', pct: 82, amount: '₹10,60,000 / ₹13,00,000', color: 'bg-emerald-500' },
+              { rank: 1, name: 'Mumbai North Team', pct: 83, amount: '₹12,45,000 / ₹15,00,000', color: 'bg-emerald-600' },
+              { rank: 2, name: 'Mumbai East Team', pct: 82, amount: '₹10,60,000 / ₹13,00,000', color: 'bg-emerald-600' },
               { rank: 3, name: 'Thane Team', pct: 78, amount: '₹7,80,000 / ₹10,00,000', color: 'bg-amber-500' },
               { rank: 4, name: 'Mumbai West Team', pct: 76, amount: '₹9,10,000 / ₹12,00,000', color: 'bg-amber-500' },
               { rank: 5, name: 'Pune Team', pct: 74, amount: '₹6,70,000 / ₹9,00,000', color: 'bg-amber-500' },
             ].map((t) => (
-              <div key={t.rank} className="space-y-1.5 text-xs font-semibold">
+              <div key={t.rank} className="space-y-1.5 text-xs font-medium">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[10px] font-extrabold text-[#0D1F3D]">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-800 border border-slate-200">
                       {t.rank}
                     </span>
-                    <span className="font-extrabold text-[#0D1F3D]">{t.name}</span>
+                    <span className="font-semibold text-slate-900">{t.name}</span>
                   </div>
-                  <span className="font-extrabold text-slate-700">{t.pct}%</span>
+                  <span className="font-semibold text-slate-900">{t.pct}%</span>
                 </div>
-                <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                   <div className={`h-full ${t.color} rounded-full`} style={{ width: `${t.pct}%` }} />
                 </div>
-                <p className="text-[10px] text-right text-slate-400 font-medium">{t.amount}</p>
+                <p className="text-xs text-right text-slate-600 font-normal">{t.amount}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Quick Actions Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-          <h3 className="text-base font-extrabold text-[#0D1F3D]">Quick Actions</h3>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+          <h3 className="text-base font-bold text-slate-900">Quick Actions</h3>
           <div className="space-y-2">
             <button
               onClick={() => navigate('/admin/teams/create')}
-              className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+              className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
             >
               <div className="flex items-center gap-2.5">
-                <Plus className="h-4 w-4 text-[#E20613]" />
+                <Plus className="h-4 w-4 text-slate-900" />
                 <div>
-                  <p className="font-extrabold text-[#0D1F3D]">Create New Team</p>
-                  <p className="text-[10px] text-slate-400 font-medium">Add a new sales team</p>
+                  <p className="font-bold text-slate-900">Create New Team</p>
+                  <p className="text-xs text-slate-600 font-normal">Add a new sales team</p>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
+              <ChevronRight className="h-4 w-4 text-slate-500" />
             </button>
 
             <button
               onClick={() => navigate('/admin/teams/targets')}
-              className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+              className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
             >
               <div className="flex items-center gap-2.5">
-                <Users className="h-4 w-4 text-blue-600" />
+                <Users className="h-4 w-4 text-slate-900" />
                 <div>
-                  <p className="font-extrabold text-[#0D1F3D]">Team Targets Matrix</p>
-                  <p className="text-[10px] text-slate-400 font-medium">View overall target structure & performance</p>
+                  <p className="font-bold text-slate-900">Team Targets Matrix</p>
+                  <p className="text-xs text-slate-600 font-normal">View overall target structure & performance</p>
                 </div>
               </div>
-              <ChevronRight className="h-4 w-4 text-slate-400" />
+              <ChevronRight className="h-4 w-4 text-slate-500" />
             </button>
           </div>
         </div>
       </div>
 
       {/* Real-time Status Notice Footer */}
-      <div className="flex items-center justify-center gap-2 pt-2 text-center text-xs font-semibold text-slate-400">
-        <Clock className="h-4 w-4 text-slate-400" />
+      <div className="flex items-center justify-center gap-2 pt-2 text-center text-xs font-normal text-slate-600">
+        <Clock className="h-4 w-4 text-slate-500" />
         <span>Team targets and performance are updated in real-time.</span>
       </div>
     </div>
