@@ -240,7 +240,7 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
       </div>
 
       {/* Category Filter Sub-Tabs Bar */}
-      <div className="flex overflow-x-auto gap-1 border-b border-slate-200 bg-white p-1.5 rounded-2xl shadow-xs scrollbar-none">
+      <div className="flex overflow-x-auto gap-1 border-b border-slate-200 bg-white p-1.5 rounded-md shadow-xs scrollbar-none">
         {[
           { id: 'all', label: 'All Leads', path: '/admin/leads', count: leads.length },
           { id: 'hot', label: '🔥 Hot Leads', path: '/admin/leads/hot', count: hotLeadsCount },
@@ -256,7 +256,7 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
             <button
               key={tab.id}
               onClick={() => navigate(tab.path)}
-              className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-extrabold transition-all whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-2 rounded-md px-3.5 py-2 text-xs font-extrabold transition-all whitespace-nowrap cursor-pointer ${
                 isActive
                   ? 'bg-[#0D1F3D] text-white shadow-xs'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D]'
@@ -278,7 +278,7 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
       {/* Main Table Section */}
       <div className="space-y-3">
         {/* Search & Filter Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-3 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200/80 bg-white p-3 shadow-xs">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[240px]">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -287,7 +287,7 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
               placeholder="Search by company, contact person, lead ID, phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
+              className="w-full rounded-md border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
             />
           </div>
 
@@ -295,7 +295,7 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
           <select
             value={regionFilter}
             onChange={(e) => setRegionFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+            className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
           >
             <option value="All">All Regions</option>
             <option value="North Mumbai">North Mumbai</option>
@@ -309,7 +309,7 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+            className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
           >
             <option value="All">All Priorities</option>
             <option value="Urgent">Urgent</option>
@@ -322,7 +322,7 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
           <select
             value={stageFilter}
             onChange={(e) => setStageFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+            className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
           >
             <option value="All">All Lead Stages</option>
             <option value="New / Fresh">New / Fresh</option>
@@ -337,7 +337,7 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
         </div>
 
         {/* Leads Data Table Container */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
+        <div className="overflow-hidden rounded-md border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
           <div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-semibold">
