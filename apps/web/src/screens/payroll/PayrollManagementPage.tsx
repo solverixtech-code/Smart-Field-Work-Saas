@@ -874,7 +874,7 @@ export default function PayrollManagementPage() {
                         <div className="flex justify-between items-start">
                           <div>
                             <p className="font-extrabold text-emerald-900">Included in this payslip</p>
-                            <p className="text-[10px] text-emerald-700 font-medium">Approved and finalized booking incentives.</p>
+                            <p className="text-[10px] text-emerald-700 font-medium">Approved and finalized closed won incentives.</p>
                           </div>
                           <span className="font-extrabold text-emerald-800 text-xs">
                             +₹{processModalEntry.incentiveItems.reduce((a, b) => a + b.amount, 0).toLocaleString()}
@@ -983,54 +983,174 @@ export default function PayrollManagementPage() {
                   </div>
                 </div>
               ) : (
-                /* MODE 2: PDF PREVIEW */
-                <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-5">
-                  <div className="flex flex-wrap items-center justify-between border-b-2 border-[#0D1F3D] pb-4 gap-4">
-                    <div>
-                      <h2 className="text-xl font-extrabold text-[#0D1F3D]">Visiblo Field Executive</h2>
-                      <p className="text-xs text-slate-500 font-medium">SaaS Field Operations & Sales Management</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="rounded-lg bg-[#0D1F3D] px-3 py-1 text-xs font-extrabold text-white">
-                        PAYSLIP — {selectedMonth.toUpperCase()}
-                      </span>
-                      <p className="text-[11px] text-slate-400 font-mono mt-1">{processModalEntry.id}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 rounded-xl bg-slate-50 p-4 border border-slate-100 text-xs">
-                    <div><span className="text-slate-400 block font-medium">Employee Name</span><span className="font-extrabold text-[#0D1F3D]">{processModalEntry.user}</span></div>
-                    <div><span className="text-slate-400 block font-medium">Employee Code</span><span className="font-extrabold text-[#0D1F3D]">{processModalEntry.empId}</span></div>
-                    <div><span className="text-slate-400 block font-medium">Designation</span><span className="font-bold text-slate-700">{processModalEntry.designation}</span></div>
-                    <div><span className="text-slate-400 block font-medium">Team Name</span><span className="font-bold text-slate-700">{processModalEntry.teamName}</span></div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 text-xs">
-                    <div className="space-y-2">
-                      <h4 className="font-extrabold text-emerald-700 border-b border-slate-200 pb-1">Earnings</h4>
-                      <div className="space-y-1.5 font-semibold text-slate-700">
-                        <div className="flex justify-between"><span>Basic & Allowances</span><span>₹{processModalEntry.gross.toLocaleString()}</span></div>
-                        <div className="flex justify-between"><span>Approved Incentives</span><span>+₹{Number(processIncentiveInput || 0).toLocaleString()}</span></div>
+                /* MODE 2: EXACT TRUEROOT PAYSLIP PDF PREVIEW */
+                <div className="rounded-xl border border-slate-200 bg-slate-100/70 p-4 sm:p-6 print:p-0 print:border-none print:bg-white space-y-4">
+                  <div className="mx-auto max-w-[920px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm print:border-none print:shadow-none space-y-0">
+                    {/* Header with Smart Field Work Logo */}
+                    <div className="border-b-4 border-[#0D1F3D] bg-white px-6 py-5">
+                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                        <div>
+                          <img
+                            src="/assets/sfw-logo.png"
+                            alt="Smart Field Work"
+                            className="h-10 w-auto object-contain"
+                          />
+                          <p className="mt-2 text-[11px] font-semibold text-slate-500">
+                            Smart Field Work • Institutional Payroll Statement
+                          </p>
+                        </div>
+                        <div className="md:text-right">
+                          <p className="text-[11px] font-bold text-[#0D1F3D] uppercase tracking-wider">
+                            {processModalEntry.status === 'Paid' ? 'Official Disbursed Payslip' : processModalEntry.status === 'Finalized' ? 'Finalized Payslip' : 'Draft Preview'}
+                          </p>
+                          <h3 className="mt-0.5 text-2xl font-extrabold tracking-tight text-[#0D1F3D]">
+                            Payslip for {selectedMonth}
+                          </h3>
+                          <p className="mt-1 text-[11px] font-mono text-slate-400">Ref: {processModalEntry.id}</p>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <h4 className="font-extrabold text-[#E20613] border-b border-slate-200 pb-1">Deductions</h4>
-                      <div className="space-y-1.5 font-semibold text-slate-700">
-                        <div className="flex justify-between"><span>PF Amount</span><span>-₹{Number(processPfInput || 0).toLocaleString()}</span></div>
-                        <div className="flex justify-between"><span>TDS / Income Tax</span><span>-₹{processModalEntry.tds.toLocaleString()}</span></div>
-                      </div>
-                    </div>
-                  </div>
+                    <div className="space-y-5 px-6 py-6 text-xs">
+                      {/* Employee Details vs Payroll Details Cards */}
+                      <div className="grid gap-4 lg:grid-cols-2">
+                        {/* Employee Details Table */}
+                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                          <div className="border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+                            <h4 className="font-extrabold text-[#0D1F3D]">Employee Details</h4>
+                          </div>
+                          <div className="grid grid-cols-2 divide-x divide-y divide-slate-100">
+                            <div className="p-3">
+                              <p className="text-[10px] font-semibold text-slate-400">Employee Name</p>
+                              <p className="mt-0.5 font-extrabold text-[#0D1F3D]">{processModalEntry.user}</p>
+                            </div>
+                            <div className="p-3">
+                              <p className="text-[10px] font-semibold text-slate-400">Employee Code</p>
+                              <p className="mt-0.5 font-extrabold text-[#0D1F3D]">{processModalEntry.empId}</p>
+                            </div>
+                            <div className="p-3">
+                              <p className="text-[10px] font-semibold text-slate-400">Designation</p>
+                              <p className="mt-0.5 font-bold text-slate-700">{processModalEntry.designation}</p>
+                            </div>
+                            <div className="p-3">
+                              <p className="text-[10px] font-semibold text-slate-400">Department / Team</p>
+                              <p className="mt-0.5 font-bold text-slate-700">{processModalEntry.teamName}</p>
+                            </div>
+                          </div>
+                        </div>
 
-                  <div className="flex items-center justify-between rounded-xl bg-[#0D1F3D] p-4 text-white">
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-300 uppercase">Net Payable Amount</p>
-                      <p className="text-xs text-slate-400 font-medium mt-0.5">Status: <span className="text-emerald-400 font-bold">{processModalEntry.status}</span></p>
+                        {/* Payroll Details Table */}
+                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                          <div className="border-b border-slate-200 bg-slate-50 px-4 py-2.5">
+                            <h4 className="font-extrabold text-[#0D1F3D]">Payroll Details</h4>
+                          </div>
+                          <div className="grid grid-cols-2 divide-x divide-y divide-slate-100">
+                            <div className="p-3">
+                              <p className="text-[10px] font-semibold text-slate-400">Pay Period</p>
+                              <p className="mt-0.5 font-extrabold text-[#0D1F3D]">{selectedMonth}</p>
+                            </div>
+                            <div className="p-3">
+                              <p className="text-[10px] font-semibold text-slate-400">Payable Days</p>
+                              <p className="mt-0.5 font-extrabold text-[#0D1F3D]">{processModalEntry.payableDays} Days</p>
+                            </div>
+                            <div className="p-3">
+                              <p className="text-[10px] font-semibold text-slate-400">Salary Divisor</p>
+                              <p className="mt-0.5 font-bold text-slate-700">{processModalEntry.salaryDivisorDays} Days</p>
+                            </div>
+                            <div className="p-3">
+                              <p className="text-[10px] font-semibold text-slate-400">Payslip Status</p>
+                              <p className="mt-0.5 font-bold text-emerald-700">{processModalEntry.status}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Earnings vs Deductions Table */}
+                      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <div className="grid grid-cols-2 bg-[#0D1F3D] text-white font-extrabold px-4 py-2.5">
+                          <div>Earnings</div>
+                          <div>Deductions</div>
+                        </div>
+                        <div className="grid grid-cols-2 divide-x divide-slate-200">
+                          {/* Earnings Column */}
+                          <div className="space-y-0 divide-y divide-slate-100">
+                            <div className="flex justify-between p-3">
+                              <span className="font-semibold text-slate-700">Basic Salary & Allowances</span>
+                              <span className="font-bold text-[#0D1F3D]">₹{Number(processCalculatedBaseInput || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between p-3">
+                              <span className="font-semibold text-slate-700">Approved Closed Won Incentives</span>
+                              <span className="font-bold text-emerald-600">+₹{Number(processIncentiveInput || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between p-3 bg-emerald-50 text-emerald-900 font-extrabold">
+                              <span>Total Earnings</span>
+                              <span>₹{(Number(processCalculatedBaseInput || 0) + Number(processIncentiveInput || 0)).toLocaleString()}</span>
+                            </div>
+                          </div>
+
+                          {/* Deductions Column */}
+                          <div className="space-y-0 divide-y divide-slate-100">
+                            <div className="flex justify-between p-3">
+                              <span className="font-semibold text-slate-700">PF Amount</span>
+                              <span className="font-bold text-[#E20613]">₹{Number(processPfInput || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between p-3">
+                              <span className="font-semibold text-slate-700">TDS / Income Tax</span>
+                              <span className="font-bold text-[#E20613]">₹{processModalEntry.tds.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between p-3 bg-rose-50 text-rose-900 font-extrabold">
+                              <span>Total Deductions</span>
+                              <span>₹{(Number(processPfInput || 0) + processModalEntry.tds).toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Net Payable Highlight Banner */}
+                        <div className="flex items-center justify-between border-t border-blue-200 bg-blue-50/70 p-4">
+                          <div>
+                            <p className="text-[11px] font-bold text-blue-900 uppercase">Net Payable Amount</p>
+                            <p className="text-[11px] font-medium text-blue-700 mt-0.5">Total earnings minus attendance and statutory deductions.</p>
+                          </div>
+                          <span className="text-3xl font-extrabold text-[#0D1F3D]">
+                            ₹{(Number(processCalculatedBaseInput || 0) + Number(processIncentiveInput || 0) - Number(processPfInput || 0) - processModalEntry.tds).toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Attendance Summary */}
+                      <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+                        <div>
+                          <h4 className="font-extrabold text-[#0D1F3D]">Attendance Summary</h4>
+                          <p className="text-[11px] text-slate-400 font-medium">Used to calculate payable salary for the period.</p>
+                        </div>
+                        <div className="grid grid-cols-4 gap-2 text-center font-extrabold">
+                          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-emerald-800">
+                            <p className="text-[10px]">Present</p>
+                            <p className="text-sm mt-0.5">{processModalEntry.presentDays} Days</p>
+                          </div>
+                          <div className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-800">
+                            <p className="text-[10px]">Absent / LOP</p>
+                            <p className="text-sm mt-0.5">{processModalEntry.absentDays} Days</p>
+                          </div>
+                          <div className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-blue-800">
+                            <p className="text-[10px]">Holiday</p>
+                            <p className="text-sm mt-0.5">{processModalEntry.holidayDays} Days</p>
+                          </div>
+                          <div className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-800">
+                            <p className="text-[10px]">Leave</p>
+                            <p className="text-sm mt-0.5">{processModalEntry.leaveDays} Days</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Override Reason Callout */}
+                      {processOverrideReason && (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 space-y-1">
+                          <p className="font-extrabold">Amendment Override Reason</p>
+                          <p className="text-[11px] font-medium leading-relaxed">{processOverrideReason}</p>
+                        </div>
+                      )}
                     </div>
-                    <span className="text-2xl font-extrabold text-[#E20613]">
-                      ₹{(Number(processCalculatedBaseInput || 0) + Number(processIncentiveInput || 0) - Number(processPfInput || 0) - processModalEntry.tds).toLocaleString()}
-                    </span>
                   </div>
                 </div>
               )}
