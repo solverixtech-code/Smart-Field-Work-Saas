@@ -557,7 +557,7 @@ export default function AppShell() {
 
         {/* Main Page Render in Single Unified Shell Container */}
         <main className="flex-1 overflow-y-auto bg-[#F3F5F7]">
-          <div className="mx-auto w-full max-w-[1720px] p-6 lg:p-8 space-y-6 font-sans">
+          <div key={location.pathname} className="mx-auto w-full max-w-[1720px] p-6 lg:p-8 space-y-6 font-sans animate-page-enter">
             <Outlet />
           </div>
         </main>

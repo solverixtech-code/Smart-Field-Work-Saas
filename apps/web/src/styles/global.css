@@ -173,20 +173,18 @@
   animation: modalScaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* ─── Smooth Page Navigation Route Transition ─── */
+/* ─── Smooth Pure Opacity Fade Page Route Transition (Invisible to Visible) ─── */
 @keyframes pageFadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 .animate-page-enter {
-  animation: pageFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pageFadeIn 0.2s ease-out forwards;
 }
 
 
