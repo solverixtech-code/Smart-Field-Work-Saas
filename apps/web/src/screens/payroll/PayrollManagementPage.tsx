@@ -15,7 +15,7 @@ import {
   Send,
 } from 'lucide-react';
 import { KpiCard } from '../../components/dashboard/KpiCard';
-import { Button } from '../../components/ui/Button';
+import { Button, Modal } from '../../components/ui';
 
 const mockPayslips = [
   {
@@ -376,9 +376,9 @@ export default function PayrollManagementPage() {
       </div>
 
       {/* Printable Payslip Statement Modal */}
-      {selectedPayslipModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl space-y-6 text-slate-800 font-sans my-8">
+      <Modal isOpen={!!selectedPayslipModal} onClose={() => setSelectedPayslipModal(null)} maxWidth="max-w-2xl">
+        {selectedPayslipModal && (
+          <>
             {/* Payslip Header */}
             <div className="flex items-start justify-between border-b border-slate-200 pb-4">
               <div className="flex items-center gap-3">
@@ -486,9 +486,9 @@ export default function PayrollManagementPage() {
                 <Printer className="h-4 w-4" /> Print / Save PDF
               </Button>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </div>
   );
 }

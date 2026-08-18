@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Users,
   CheckSquare,
@@ -6,8 +6,8 @@ import {
   Trophy,
   Percent,
   Clock,
-  ChevronDown,
   Filter,
+  ArrowUpRight,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -24,6 +24,7 @@ import { useAppSelector } from '../../store';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { ChartCard } from '../../components/dashboard/ChartCard';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { Button } from '../../components/ui/Button';
 
 const conversionTrendData = [
   { date: '14 May', rate: 9.4, won: 24 },
@@ -36,94 +37,100 @@ const conversionTrendData = [
 ];
 
 const sourceData = [
-  { name: 'Website', value: 776, color: '#2563EB' },
-  { name: 'Google Ads', value: 542, color: '#00C2A8' },
-  { name: 'Social Media', value: 458, color: '#F59E0B' },
-  { name: 'Referral', value: 286, color: '#8B5CF6' },
+  { name: 'Direct Field Contact', value: 776, color: '#0D1F3D' },
+  { name: 'Web Campaign', value: 542, color: '#2563EB' },
+  { name: 'Partner Referral', value: 458, color: '#F59E0B' },
+  { name: 'Inbound Leads', value: 286, color: '#10B981' },
 ];
 
 export default function ConversionDashboardPage() {
-  const user = useAppSelector((s) => s.auth.user);
+  const [selectedTeam, setSelectedTeam] = useState('All');
 
   return (
     <div className="space-y-6 font-sans">
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0B2E6B]">Conversion Dashboard</h1>
+          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Conversion Funnel & Analytics</h1>
           <p className="text-xs font-medium text-slate-500">
-            Track and analyze your sales conversions across all stages.
+            Track lead velocity, conversion progression, deal win rates, and stage drop-offs.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <DateRangePicker />
-          <div className="relative">
-            <select className="appearance-none rounded-xl border border-slate-200 bg-white px-3.5 py-2 pr-8 text-xs font-bold text-[#0B2E6B] shadow-sm focus:outline-none cursor-pointer">
-              <option>👥 All Teams</option>
-              <option>👥 North Team</option>
-              <option>👥 West Team</option>
-              <option>👥 South Team</option>
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-          </div>
-          <button className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-[#0B2E6B] shadow-sm hover:bg-slate-50">
-            <Filter className="h-3.5 w-3.5" /> Filters
-          </button>
+          <select
+            value={selectedTeam}
+            onChange={(e) => setSelectedTeam(e.target.value)}
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-[#0D1F3D] shadow-xs focus:outline-none cursor-pointer"
+          >
+            <option value="All">👥 All Field Teams</option>
+            <option value="North">👥 North Field Team</option>
+            <option value="West">👥 West Regional Team</option>
+            <option value="South">👥 South Tech Team</option>
+          </select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => alert('Filtering Conversion Metrics...')}
+            className="flex items-center gap-2 font-bold"
+          >
+            <Filter className="h-4 w-4 text-[#0D1F3D]" /> Filter Funnel
+          </Button>
         </div>
       </div>
 
-      {/* 6 Top KPI Cards */}
+      {/* 6 Top Metric Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <KpiCard
           title="Total Leads"
           value="2,418"
-          change="18.6%"
+          change="+18.6%"
           changeType="positive"
           timeframe="vs last month"
           icon={Users}
-          iconBgColor="bg-blue-50"
-          iconTextColor="text-blue-600"
+          iconBgColor="bg-[#0D1F3D]/10"
+          iconTextColor="text-[#0D1F3D]"
         />
         <KpiCard
           title="Qualified Leads"
           value="1,326"
-          change="16.3%"
+          change="+16.3%"
           changeType="positive"
           timeframe="vs last month"
           icon={CheckSquare}
-          iconBgColor="bg-emerald-50"
-          iconTextColor="text-emerald-600"
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
         />
         <KpiCard
           title="Proposals Sent"
           value="842"
-          change="14.8%"
+          change="+14.8%"
           changeType="positive"
           timeframe="vs last month"
           icon={Send}
-          iconBgColor="bg-amber-50"
+          iconBgColor="bg-amber-500/10"
           iconTextColor="text-amber-600"
         />
         <KpiCard
           title="Won Deals"
           value="286"
-          change="20.4%"
+          change="+20.4%"
           changeType="positive"
           timeframe="vs last month"
           icon={Trophy}
-          iconBgColor="bg-teal-50"
-          iconTextColor="text-[#00C2A8]"
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
         />
         <KpiCard
           title="Conversion Rate"
           value="11.83%"
-          change="2.15%"
+          change="+2.15%"
           changeType="positive"
           timeframe="vs last month"
           icon={Percent}
-          iconBgColor="bg-purple-50"
-          iconTextColor="text-purple-600"
+          iconBgColor="bg-red-500/10"
+          iconTextColor="text-[#E20613]"
         />
         <KpiCard
           title="Avg. Sales Cycle"
@@ -132,25 +139,25 @@ export default function ConversionDashboardPage() {
           changeType="positive"
           timeframe="vs last month"
           icon={Clock}
-          iconBgColor="bg-indigo-50"
-          iconTextColor="text-indigo-600"
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
         />
       </div>
 
       {/* Middle Row: Conversion Funnel, Conversion Trend, Conversion by Source */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Conversion Funnel */}
-        <ChartCard title="Conversion Funnel" className="lg:col-span-5">
+        <ChartCard title="Stage Conversion Funnel" className="lg:col-span-5">
           <div className="space-y-3 pt-2">
             {[
-              { stage: 'Total Leads', count: '2,418', pct: '100%', drop: '-', color: 'bg-blue-600' },
-              { stage: 'Qualified Leads', count: '1,326', pct: '54.85%', drop: '45.15%', color: 'bg-teal-500' },
+              { stage: 'Total Leads Acquired', count: '2,418', pct: '100%', drop: '-', color: 'bg-[#0D1F3D]' },
+              { stage: 'Qualified Leads', count: '1,326', pct: '54.85%', drop: '45.15%', color: 'bg-blue-600' },
               { stage: 'Proposals Sent', count: '842', pct: '34.83%', drop: '20.02%', color: 'bg-amber-500' },
-              { stage: 'Negotiation', count: '452', pct: '18.70%', drop: '16.13%', color: 'bg-purple-500' },
-              { stage: 'Won Deals', count: '286', pct: '11.83%', drop: '6.87%', color: 'bg-emerald-600' },
+              { stage: 'In Negotiation', count: '452', pct: '18.70%', drop: '16.13%', color: 'bg-purple-500' },
+              { stage: 'Closed & Won Deals', count: '286', pct: '11.83%', drop: '6.87%', color: 'bg-[#E20613]' },
             ].map((f) => (
               <div key={f.stage} className="space-y-1 text-xs">
-                <div className="flex justify-between font-bold text-[#0B2E6B]">
+                <div className="flex justify-between font-extrabold text-[#0D1F3D]">
                   <span>{f.stage}</span>
                   <span>{f.count} ({f.pct})</span>
                 </div>
@@ -161,38 +168,40 @@ export default function ConversionDashboardPage() {
             ))}
 
             <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-center text-xs font-semibold text-slate-700">
-              Overall Conversion Rate: <span className="font-extrabold text-[#00C2A8]">11.83%</span> (+2.15% vs last month)
+              Overall Funnel Conversion Rate: <span className="font-extrabold text-[#E20613]">11.83%</span> (+2.15% vs last month)
             </div>
           </div>
         </ChartCard>
 
         {/* Conversion Trend Interactive Line Chart */}
-        <ChartCard title="Conversion Trend" subtitle="Conversion Rate (%) vs Won Deals" className="lg:col-span-4">
+        <ChartCard title="Conversion Rate Trend" subtitle="Daily conversion percentage (%)" className="lg:col-span-4">
           <div className="h-64 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={conversionTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="convGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00C2A8" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#00C2A8" stopOpacity={0} />
+                  <linearGradient id="convGradSfw" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#E20613" stopOpacity={0.25} />
+                    <stop offset="95%" stopColor="#E20613" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} tickLine={false} />
                 <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} tickFormatter={(val) => `${val}%`} />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#061838', borderRadius: '12px', border: 'none' }}
-                  labelStyle={{ color: '#00C2A8', fontWeight: 700, fontSize: '12px' }}
+                  position={{ y: -15 }}
+                  wrapperStyle={{ zIndex: 100 }}
+                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                  labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                   itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                   formatter={(val: any, name: any) => [name === 'Conversion Rate' ? `${val}%` : `${val} deals`, name]}
                 />
-                <Area type="monotone" dataKey="rate" name="Conversion Rate" stroke="#00C2A8" strokeWidth={3} fillOpacity={1} fill="url(#convGrad)" />
+                <Area type="monotone" dataKey="rate" name="Conversion Rate" stroke="#E20613" strokeWidth={3} fillOpacity={1} fill="url(#convGradSfw)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </ChartCard>
 
         {/* Conversion by Source Donut Chart */}
-        <ChartCard title="Conversion by Source" className="lg:col-span-3">
+        <ChartCard title="Lead Channel Distribution" className="lg:col-span-3">
           <div className="flex flex-col items-center pt-2">
             <div className="h-44 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -211,8 +220,10 @@ export default function ConversionDashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#061838', borderRadius: '12px', border: 'none' }}
-                    labelStyle={{ color: '#00C2A8', fontWeight: 700, fontSize: '12px' }}
+                    position={{ y: -15 }}
+                    wrapperStyle={{ zIndex: 100 }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                     formatter={(val: any) => [`${val} Leads`, 'Leads']}
                   />
@@ -226,7 +237,7 @@ export default function ConversionDashboardPage() {
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
                     {s.name}
                   </span>
-                  <span>{s.value} ({((s.value / 2418) * 100).toFixed(1)}%)</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{s.value} ({((s.value / 2418) * 100).toFixed(1)}%)</span>
                 </div>
               ))}
             </div>
@@ -238,20 +249,20 @@ export default function ConversionDashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Conversion by Sales Team */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
-          <h3 className="mb-4 text-base font-bold text-[#0B2E6B]">Conversion by Sales Team</h3>
+          <h3 className="mb-4 text-base font-extrabold text-[#0D1F3D]">Conversion by Field Team</h3>
           <div className="space-y-3 text-xs font-semibold">
             {[
-              { team: 'North Team', leads: 812, won: 118, rate: '14.53%' },
-              { team: 'West Team', leads: 654, won: 82, rate: '12.54%' },
-              { team: 'South Team', leads: 512, won: 54, rate: '10.55%' },
-              { team: 'East Team', leads: 440, won: 32, rate: '7.27%' },
+              { team: 'North Field Team', leads: 812, won: 118, rate: '14.53%' },
+              { team: 'West Regional Team', leads: 654, won: 82, rate: '12.54%' },
+              { team: 'South Tech Team', leads: 512, won: 54, rate: '10.55%' },
+              { team: 'East Territory Team', leads: 440, won: 32, rate: '7.27%' },
             ].map((t) => (
               <div key={t.team} className="flex justify-between items-center rounded-xl border border-slate-100 bg-slate-50/60 p-3">
                 <div>
-                  <p className="font-bold text-[#0B2E6B]">{t.team}</p>
+                  <p className="font-extrabold text-[#0D1F3D]">{t.team}</p>
                   <p className="text-[11px] text-slate-400">{t.won} won out of {t.leads} leads</p>
                 </div>
-                <span className="font-bold text-emerald-600">{t.rate}</span>
+                <span className="font-extrabold text-emerald-600">{t.rate}</span>
               </div>
             ))}
           </div>
@@ -259,7 +270,7 @@ export default function ConversionDashboardPage() {
 
         {/* Stage Conversion Analysis */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
-          <h3 className="mb-4 text-base font-bold text-[#0B2E6B]">Stage Conversion Analysis</h3>
+          <h3 className="mb-4 text-base font-extrabold text-[#0D1F3D]">Stage Transition Velocity</h3>
           <div className="space-y-3 text-xs font-semibold">
             {[
               { stage: 'Lead → Qualified', rate: '54.85%', target: '50%', status: 'Above Target' },
@@ -269,12 +280,12 @@ export default function ConversionDashboardPage() {
             ].map((s) => (
               <div key={s.stage} className="flex justify-between items-center rounded-xl border border-slate-100 bg-slate-50/60 p-3">
                 <div>
-                  <p className="font-bold text-[#0B2E6B]">{s.stage}</p>
+                  <p className="font-extrabold text-[#0D1F3D]">{s.stage}</p>
                   <p className="text-[11px] text-slate-400">Benchmark: {s.target}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-[#0B2E6B]">{s.rate}</p>
-                  <span className="inline-block rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                  <p className="font-extrabold text-[#0D1F3D]">{s.rate}</p>
+                  <span className="inline-block rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[10px] font-extrabold text-emerald-600">
                     {s.status}
                   </span>
                 </div>
@@ -285,7 +296,12 @@ export default function ConversionDashboardPage() {
 
         {/* Top Performing Sales Reps */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
-          <h3 className="mb-4 text-base font-bold text-[#0B2E6B]">Top Performing Sales Reps</h3>
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-base font-extrabold text-[#0D1F3D]">Top Field Converters</h3>
+            <button className="text-xs font-bold text-[#E20613] hover:underline flex items-center gap-1">
+              View All <ArrowUpRight className="h-3 w-3" />
+            </button>
+          </div>
           <div className="space-y-3 text-xs font-semibold">
             {[
               { name: 'Rahul Verma', won: 48, rate: '16.45%' },
@@ -295,10 +311,10 @@ export default function ConversionDashboardPage() {
             ].map((rep) => (
               <div key={rep.name} className="flex justify-between items-center rounded-xl border border-slate-100 bg-slate-50/60 p-3">
                 <div>
-                  <p className="font-bold text-[#0B2E6B]">{rep.name}</p>
+                  <p className="font-extrabold text-[#0D1F3D]">{rep.name}</p>
                   <p className="text-[11px] text-slate-400">{rep.won} won deals</p>
                 </div>
-                <span className="font-bold text-[#00C2A8]">{rep.rate}</span>
+                <span className="font-extrabold text-[#E20613]">{rep.rate}</span>
               </div>
             ))}
           </div>

@@ -7,6 +7,7 @@ import {
   BarChart3,
   CheckCircle2,
   AlertTriangle,
+  ArrowUpRight,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -25,6 +26,7 @@ import { useAppSelector } from '../../store';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { ChartCard } from '../../components/dashboard/ChartCard';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { Button } from '../../components/ui/Button';
 
 const revenueData = [
   { date: '14 May', mrr: 2400000, totalRevenue: 3800000 },
@@ -47,10 +49,10 @@ const newCustomersData = [
 ];
 
 const subscriptionStatusData = [
-  { name: 'Active', value: 8742, color: '#00C2A8' },
+  { name: 'Active', value: 8742, color: '#0D1F3D' },
   { name: 'Trial', value: 1248, color: '#2563EB' },
   { name: 'Expired', value: 1023, color: '#F59E0B' },
-  { name: 'Cancelled', value: 1511, color: '#F43F5E' },
+  { name: 'Cancelled', value: 1511, color: '#E20613' },
 ];
 
 export default function ExecutiveDashboardPage() {
@@ -61,9 +63,9 @@ export default function ExecutiveDashboardPage() {
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0B2E6B]">Executive Dashboard</h1>
+          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Executive Command Dashboard</h1>
           <p className="text-xs font-medium text-slate-500">
-            Welcome back, <span className="font-bold text-[#0B2E6B]">{user?.fullName || 'Amit Sharma'}</span>! Here's what's happening with VisibloAI today.
+            Welcome back, <span className="font-extrabold text-[#0D1F3D]">{user?.fullName || 'Amit Sharma'}</span>! Here is your real-time SaaS performance overview.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -74,62 +76,62 @@ export default function ExecutiveDashboardPage() {
       {/* 5 Top KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KpiCard
-          title="Total Customers"
+          title="Total Executives & Staff"
           value="12,524"
-          change="18.6%"
+          change="+18.6%"
           changeType="positive"
-          timeframe="from last week"
+          timeframe="vs last week"
           icon={Users}
-          iconBgColor="bg-blue-50"
-          iconTextColor="text-blue-600"
+          iconBgColor="bg-[#0D1F3D]/10"
+          iconTextColor="text-[#0D1F3D]"
         />
         <KpiCard
-          title="Active Subscriptions"
+          title="Active Field Subscriptions"
           value="8,742"
-          change="14.3%"
+          change="+14.3%"
           changeType="positive"
-          timeframe="from last week"
+          timeframe="vs last week"
           icon={CreditCard}
-          iconBgColor="bg-emerald-50"
+          iconBgColor="bg-emerald-500/10"
           iconTextColor="text-emerald-600"
         />
         <KpiCard
           title="Monthly Recurring Revenue"
           value="₹48,76,320"
-          change="21.7%"
+          change="+21.7%"
           changeType="positive"
-          timeframe="from last month"
+          timeframe="vs last month"
           icon={DollarSign}
-          iconBgColor="bg-amber-50"
-          iconTextColor="text-amber-600"
+          iconBgColor="bg-[#E20613]/10"
+          iconTextColor="text-[#E20613]"
         />
         <KpiCard
-          title="Total Revenue"
+          title="Total Gross Revenue"
           value="₹1,92,45,620"
-          change="16.2%"
+          change="+16.2%"
           changeType="positive"
-          timeframe="from last month"
+          timeframe="vs last month"
           icon={ShoppingBag}
-          iconBgColor="bg-purple-50"
+          iconBgColor="bg-purple-500/10"
           iconTextColor="text-purple-600"
         />
         <KpiCard
-          title="AI Usage This Month"
+          title="AI Field Punch Audits"
           value="2.45M"
-          change="23.8%"
+          change="+23.8%"
           changeType="positive"
-          timeframe="from last month"
+          timeframe="vs last month"
           icon={BarChart3}
-          iconBgColor="bg-teal-50"
-          iconTextColor="text-[#00C2A8]"
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
         />
       </div>
 
-      {/* Middle Row: Interactive Revenue Overview, New Customers, Subscription Status */}
+      {/* Middle Row: Revenue Overview, New Customers, Subscription Status */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Revenue Overview Interactive Area Chart */}
         <ChartCard
-          title="Revenue Overview"
+          title="Revenue Overview & Trajectory"
           subtitle="MRR vs Total Revenue trend"
           className="lg:col-span-6"
         >
@@ -138,8 +140,8 @@ export default function ExecutiveDashboardPage() {
               <span className="flex items-center gap-2 text-blue-600">
                 <span className="h-3 w-3 rounded-full bg-blue-600" /> MRR
               </span>
-              <span className="flex items-center gap-2 text-[#00C2A8]">
-                <span className="h-3 w-3 rounded-full bg-[#00C2A8]" /> Total Revenue
+              <span className="flex items-center gap-2 text-[#0D1F3D]">
+                <span className="h-3 w-3 rounded-full bg-[#0D1F3D]" /> Total Revenue
               </span>
             </div>
 
@@ -147,25 +149,27 @@ export default function ExecutiveDashboardPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="mrrGrad" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="mrrGradSfw" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
                     </linearGradient>
-                    <linearGradient id="totalGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00C2A8" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#00C2A8" stopOpacity={0} />
+                    <linearGradient id="totalGradSfw" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0D1F3D" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#0D1F3D" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} tickLine={false} />
                   <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} tickFormatter={(val) => `₹${val / 100000}L`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#061838', borderRadius: '12px', border: 'none' }}
-                    labelStyle={{ color: '#00C2A8', fontWeight: 700, fontSize: '12px' }}
+                    position={{ y: -15 }}
+                    wrapperStyle={{ zIndex: 100 }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                    labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                    formatter={(val: any) => [`₹${Number(val || 0).toLocaleString()}`, '']}
+                    formatter={(val: any, name: any) => [`₹${Number(val || 0).toLocaleString()}`, name]}
                   />
-                  <Area type="monotone" dataKey="totalRevenue" name="Total Revenue" stroke="#00C2A8" strokeWidth={3} fillOpacity={1} fill="url(#totalGrad)" />
-                  <Area type="monotone" dataKey="mrr" name="MRR" stroke="#2563EB" strokeWidth={3} fillOpacity={1} fill="url(#mrrGrad)" />
+                  <Area type="monotone" dataKey="totalRevenue" name="Total Revenue" stroke="#0D1F3D" strokeWidth={3} fillOpacity={1} fill="url(#totalGradSfw)" />
+                  <Area type="monotone" dataKey="mrr" name="MRR" stroke="#2563EB" strokeWidth={2} fillOpacity={1} fill="url(#mrrGradSfw)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -173,7 +177,7 @@ export default function ExecutiveDashboardPage() {
         </ChartCard>
 
         {/* New Customers Interactive Bar Chart */}
-        <ChartCard title="New Customers" subtitle="1,248 New Customers this week" className="lg:col-span-3">
+        <ChartCard title="Executive Onboarding" subtitle="1,248 Field Staff Onboarded this week" className="lg:col-span-3">
           <div className="h-64 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={newCustomersData} margin={{ top: 25, right: 10, left: 10, bottom: 20 }}>
@@ -182,11 +186,11 @@ export default function ExecutiveDashboardPage() {
                 <Tooltip
                   cursor={{ fill: 'rgba(13, 31, 61, 0.04)' }}
                   position={{ y: -15 }}
-                  allowEscapeViewBox={{ x: true, y: true }}
-                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)', padding: '8px 12px' }}
-                  labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px', marginBottom: '2px' }}
+                  wrapperStyle={{ zIndex: 100 }}
+                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                  labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                   itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                  formatter={(val: any) => [`${val || 0} Customers`, 'New']}
+                  formatter={(val: any) => [`${val || 0} Staff`, 'Onboarded']}
                 />
                 <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                   {newCustomersData.map((_, index) => (
@@ -199,7 +203,7 @@ export default function ExecutiveDashboardPage() {
         </ChartCard>
 
         {/* Subscription Status Donut Chart */}
-        <ChartCard title="Subscription Status" actionText="View All" className="lg:col-span-3">
+        <ChartCard title="Subscription Health" className="lg:col-span-3">
           <div className="flex flex-col items-center pt-2">
             <div className="h-44 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -218,10 +222,12 @@ export default function ExecutiveDashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#061838', borderRadius: '12px', border: 'none' }}
-                    labelStyle={{ color: '#00C2A8', fontWeight: 700, fontSize: '12px' }}
+                    position={{ y: -15 }}
+                    wrapperStyle={{ zIndex: 100 }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                    formatter={(val: any) => [`${Number(val || 0).toLocaleString()} Subscribers`, '']}
+                    formatter={(val: any) => [`${Number(val || 0).toLocaleString()} Subscribers`, 'Count']}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -231,7 +237,7 @@ export default function ExecutiveDashboardPage() {
               {subscriptionStatusData.map((item) => (
                 <div key={item.name} className="flex items-center gap-1.5">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-slate-600">{item.name} ({((item.value / 12524) * 100).toFixed(1)}%)</span>
+                  <span className="text-slate-600 font-extrabold">{item.name} ({((item.value / 12524) * 100).toFixed(1)}%)</span>
                 </div>
               ))}
             </div>
@@ -244,24 +250,26 @@ export default function ExecutiveDashboardPage() {
         {/* Top Performing Plans */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-bold text-[#0B2E6B]">Top Performing Plans</h3>
-            <button className="text-xs font-semibold text-[#00C2A8] hover:underline">View All</button>
+            <h3 className="text-base font-extrabold text-[#0D1F3D]">Top Performing Tiers</h3>
+            <button className="text-xs font-bold text-[#E20613] hover:underline flex items-center gap-1">
+              View All <ArrowUpRight className="h-3 w-3" />
+            </button>
           </div>
           <div className="space-y-3">
             {[
-              { name: 'Pro Plan', subs: '4,231', mrr: '₹21,15,500', growth: '+22.5%' },
+              { name: 'Enterprise Plan', subs: '4,231', mrr: '₹21,15,500', growth: '+22.5%' },
               { name: 'Business Plan', subs: '3,142', mrr: '₹15,71,000', growth: '+18.3%' },
-              { name: 'Basic Plan', subs: '2,156', mrr: '₹6,46,800', growth: '+11.7%' },
-              { name: 'Enterprise Plan', subs: '1,213', mrr: '₹5,43,020', growth: '+24.8%' },
+              { name: 'Field Executive Pack', subs: '2,156', mrr: '₹6,46,800', growth: '+11.7%' },
+              { name: 'Starter Plan', subs: '1,213', mrr: '₹5,43,020', growth: '+24.8%' },
             ].map((plan) => (
               <div key={plan.name} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs">
                 <div>
-                  <p className="font-bold text-[#0B2E6B]">{plan.name}</p>
-                  <p className="text-[11px] text-slate-400">{plan.subs} subscribers</p>
+                  <p className="font-extrabold text-[#0D1F3D]">{plan.name}</p>
+                  <p className="text-[11px] font-semibold text-slate-400">{plan.subs} active teams</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-[#0B2E6B]">{plan.mrr}</p>
-                  <p className="font-semibold text-emerald-600">{plan.growth}</p>
+                  <p className="font-extrabold text-[#0D1F3D]">{plan.mrr}</p>
+                  <p className="font-bold text-emerald-600">{plan.growth}</p>
                 </div>
               </div>
             ))}
@@ -271,8 +279,10 @@ export default function ExecutiveDashboardPage() {
         {/* Recent Payments */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-bold text-[#0B2E6B]">Recent Payments</h3>
-            <button className="text-xs font-semibold text-[#00C2A8] hover:underline">View All</button>
+            <h3 className="text-base font-extrabold text-[#0D1F3D]">Recent Transactions</h3>
+            <button className="text-xs font-bold text-[#E20613] hover:underline flex items-center gap-1">
+              View All <ArrowUpRight className="h-3 w-3" />
+            </button>
           </div>
           <div className="space-y-3">
             {[
@@ -283,13 +293,13 @@ export default function ExecutiveDashboardPage() {
             ].map((pmt) => (
               <div key={pmt.inv} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs">
                 <div>
-                  <p className="font-bold text-[#0B2E6B]">{pmt.company}</p>
-                  <p className="text-[11px] text-slate-400">{pmt.inv} • {pmt.time}</p>
+                  <p className="font-extrabold text-[#0D1F3D]">{pmt.company}</p>
+                  <p className="text-[11px] font-semibold text-slate-400">{pmt.inv} • {pmt.time}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-[#0B2E6B]">{pmt.amount}</p>
-                  <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-bold ${
-                    pmt.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                  <p className="font-extrabold text-[#0D1F3D]">{pmt.amount}</p>
+                  <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-extrabold ${
+                    pmt.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'
                   }`}>
                     {pmt.status}
                   </span>
@@ -302,21 +312,21 @@ export default function ExecutiveDashboardPage() {
         {/* System Health */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-bold text-[#0B2E6B]">System Health</h3>
-            <button className="text-xs font-semibold text-[#00C2A8] hover:underline">View All</button>
+            <h3 className="text-base font-extrabold text-[#0D1F3D]">System Infrastructure Health</h3>
+            <button className="text-xs font-bold text-[#E20613] hover:underline">Details</button>
           </div>
           <div className="space-y-3 text-xs">
             {[
-              { label: 'Server Status', val: 'All Systems Operational', ok: true },
-              { label: 'Database', val: 'Healthy', ok: true },
-              { label: 'API Services', val: 'Healthy', ok: true },
-              { label: 'Queue Jobs', val: '128 Pending', warning: true },
-              { label: 'Storage Usage', val: '64% Used', info: true },
-              { label: 'AI Service Credits', val: '78% Remaining', info: true },
+              { label: 'Core API Gateway', val: 'All Systems Operational', ok: true },
+              { label: 'PostgreSQL & Prisma DB', val: 'Healthy (0.4ms)', ok: true },
+              { label: 'GPS Tracking Stream', val: 'Active (24,102 connected)', ok: true },
+              { label: 'Async Queue Jobs', val: '128 Jobs Processing', warning: true },
+              { label: 'AWS S3 Asset Storage', val: '64% Allocated', info: true },
+              { label: 'Mobile Sync Engine', val: '99.98% Uptime', info: true },
             ].map((sys) => (
               <div key={sys.label} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3">
-                <span className="font-medium text-slate-700">{sys.label}</span>
-                <span className={`font-bold flex items-center gap-1 ${
+                <span className="font-semibold text-slate-700">{sys.label}</span>
+                <span className={`font-extrabold flex items-center gap-1 ${
                   sys.ok ? 'text-emerald-600' : sys.warning ? 'text-amber-600' : 'text-blue-600'
                 }`}>
                   {sys.ok && <CheckCircle2 className="h-3.5 w-3.5" />}

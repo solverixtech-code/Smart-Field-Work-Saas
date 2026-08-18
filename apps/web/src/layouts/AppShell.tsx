@@ -100,7 +100,7 @@ const navCategories: NavCategory[] = [
         icon: Smartphone,
         to: '/admin/attendance',
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
-        badge: 'GPS Live',
+        badge: 'Live',
       },
     ],
   },
@@ -252,7 +252,7 @@ export default function AppShell() {
       {/* Refined Enterprise White Theme Sidebar */}
       <aside
         className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-slate-200 bg-white text-slate-700 shadow-xs transition-all duration-300 ease-in-out ${
-          showBigLogo ? 'w-[260px]' : 'w-[80px]'
+          showBigLogo ? 'w-[275px]' : 'w-[80px]'
         }`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -337,12 +337,18 @@ export default function AppShell() {
                       <div className="flex flex-1 items-center justify-between overflow-hidden">
                         <span className="truncate">{item.label}</span>
                         {item.badge && (
-                          <span className="rounded-md bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-[#E20613] border border-red-200/60">
+                          <span
+                            className={`ml-2 shrink-0 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-extrabold transition-colors ${
+                              isActive
+                                ? 'bg-[#E20613] text-white border border-[#E20613]'
+                                : 'bg-red-50 text-[#E20613] border border-red-200/60'
+                            }`}
+                          >
                             {item.badge}
                           </span>
                         )}
                         {!isAllowed && (
-                          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                          <span className="ml-2 shrink-0 whitespace-nowrap rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
                             Locked
                           </span>
                         )}
@@ -447,7 +453,7 @@ export default function AppShell() {
       {/* Main Content Area */}
       <div
         className={`flex flex-1 flex-col overflow-hidden transition-all duration-300 ${
-          collapsed ? 'ml-[80px]' : 'ml-[260px]'
+          collapsed ? 'ml-[80px]' : 'ml-[275px]'
         }`}
       >
         {/* Top Header */}
@@ -551,7 +557,7 @@ export default function AppShell() {
 
         {/* Main Page Render in Single Unified Shell Container */}
         <main className="flex-1 overflow-y-auto bg-[#F3F5F7]">
-          <div className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-[1720px] p-6 lg:p-8 space-y-6 font-sans">
             <Outlet />
           </div>
         </main>

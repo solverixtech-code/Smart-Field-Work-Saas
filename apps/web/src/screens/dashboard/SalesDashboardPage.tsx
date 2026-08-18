@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   DollarSign,
   Briefcase,
@@ -6,7 +6,7 @@ import {
   Award,
   Download,
   Plus,
-  ChevronDown,
+  ArrowUpRight,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -25,6 +25,7 @@ import { useAppSelector } from '../../store';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { ChartCard } from '../../components/dashboard/ChartCard';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { Button } from '../../components/ui/Button';
 
 const salesTrendData = [
   { date: '14 May', deals: 12, revenue: 140000 },
@@ -37,108 +38,120 @@ const salesTrendData = [
 ];
 
 const stageData = [
-  { name: 'Lead', value: 22, color: '#2563EB' },
-  { name: 'Qualification', value: 18, color: '#00C2A8' },
+  { name: 'Lead', value: 22, color: '#0D1F3D' },
+  { name: 'Qualification', value: 18, color: '#2563EB' },
   { name: 'Proposal', value: 15, color: '#F59E0B' },
   { name: 'Negotiation', value: 12, color: '#8B5CF6' },
   { name: 'Won', value: 14, color: '#10B981' },
-  { name: 'Lost', value: 5, color: '#F43F5E' },
+  { name: 'Lost', value: 5, color: '#E20613' },
 ];
 
 const productRevenueData = [
-  { product: 'Pro', revenue: 900000, color: '#2563EB' },
-  { product: 'Business', revenue: 650000, color: '#00C2A8' },
-  { product: 'Enterprise', revenue: 450000, color: '#F59E0B' },
-  { product: 'Other', revenue: 250000, color: '#8B5CF6' },
+  { product: 'Pro Plan', revenue: 900000, color: '#0D1F3D' },
+  { product: 'Business', revenue: 650000, color: '#E20613' },
+  { product: 'Enterprise', revenue: 450000, color: '#2563EB' },
+  { product: 'Custom Pack', revenue: 250000, color: '#10B981' },
 ];
 
 export default function SalesDashboardPage() {
-  const user = useAppSelector((s) => s.auth.user);
+  const [territory, setTerritory] = useState('All');
 
   return (
     <div className="space-y-6 font-sans">
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0B2E6B]">Sales Dashboard</h1>
+          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Sales Performance Dashboard</h1>
           <p className="text-xs font-medium text-slate-500">
-            Track your sales performance, pipeline and revenue at a glance.
+            Track sales revenue, deal stages, win rates, and field executive sales performance.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <DateRangePicker />
-          <div className="relative">
-            <select className="appearance-none rounded-xl border border-slate-200 bg-white px-3.5 py-2 pr-8 text-xs font-bold text-[#0B2E6B] shadow-sm focus:outline-none cursor-pointer">
-              <option>📍 Mumbai Territory</option>
-              <option>📍 Delhi Territory</option>
-              <option>📍 Bangalore Territory</option>
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
-          </div>
-          <button className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-[#0B2E6B] shadow-sm hover:bg-slate-50">
-            <Download className="h-3.5 w-3.5" /> Export
-          </button>
-          <button className="flex items-center gap-1.5 rounded-xl bg-[#0B2E6B] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#0B2E6B]/20 hover:bg-[#123A8F]">
-            <Plus className="h-3.5 w-3.5" /> New Opportunity
-          </button>
+          <select
+            value={territory}
+            onChange={(e) => setTerritory(e.target.value)}
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-[#0D1F3D] shadow-xs focus:outline-none cursor-pointer"
+          >
+            <option value="All">📍 All Territories</option>
+            <option value="Mumbai">📍 Mumbai North</option>
+            <option value="Delhi">📍 Delhi NCR</option>
+            <option value="Bangalore">📍 Bangalore Tech Corridor</option>
+          </select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => alert('Exporting Sales Summary...')}
+            className="flex items-center gap-2 font-bold"
+          >
+            <Download className="h-4 w-4 text-[#0D1F3D]" /> Export Summary
+          </Button>
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => alert('Opening New Deal Opportunity Form...')}
+            className="flex items-center gap-2 font-bold shadow-xs"
+          >
+            <Plus className="h-4 w-4" /> New Opportunity
+          </Button>
         </div>
       </div>
 
-      {/* 4 Top KPI Cards */}
+      {/* 4 Top Metric Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Total Sales Revenue"
           value="₹12,48,320"
-          change="18.6%"
+          change="+18.6%"
           changeType="positive"
-          timeframe="from last week"
+          timeframe="vs last week"
           icon={DollarSign}
-          iconBgColor="bg-blue-50"
-          iconTextColor="text-blue-600"
+          iconBgColor="bg-[#0D1F3D]/10"
+          iconTextColor="text-[#0D1F3D]"
         />
         <KpiCard
-          title="Total Deals"
-          value="86"
-          change="12.4%"
+          title="Total Deals Closed"
+          value="86 Deals"
+          change="+12.4%"
           changeType="positive"
-          timeframe="from last week"
+          timeframe="vs last week"
           icon={Briefcase}
-          iconBgColor="bg-emerald-50"
+          iconBgColor="bg-emerald-500/10"
           iconTextColor="text-emerald-600"
         />
         <KpiCard
           title="Average Deal Size"
           value="₹14,520"
-          change="6.8%"
+          change="+6.8%"
           changeType="positive"
-          timeframe="from last week"
+          timeframe="vs last week"
           icon={TrendingUp}
-          iconBgColor="bg-purple-50"
-          iconTextColor="text-purple-600"
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
         />
         <KpiCard
-          title="Win Rate"
+          title="Conversion Win Rate"
           value="68.2%"
-          change="4.3%"
+          change="+4.3%"
           changeType="positive"
-          timeframe="from last week"
+          timeframe="vs last week"
           icon={Award}
-          iconBgColor="bg-amber-50"
+          iconBgColor="bg-amber-500/10"
           iconTextColor="text-amber-600"
         />
       </div>
 
-      {/* Middle Row: Interactive Revenue Trend, Sales by Stage, Revenue by Product */}
+      {/* Middle Row: Revenue Trend, Sales by Stage, Revenue by Product */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <ChartCard title="Sales Revenue Trend" subtitle="Revenue vs Deals" className="lg:col-span-6">
+        <ChartCard title="Sales Revenue & Deal Volume Trend" subtitle="Daily revenue progression" className="lg:col-span-6">
           <div className="space-y-4 pt-2">
             <div className="flex items-center gap-6 text-xs font-semibold">
-              <span className="flex items-center gap-2 text-blue-600">
-                <span className="h-3 w-3 rounded-full bg-blue-600" /> Revenue
+              <span className="flex items-center gap-2 text-[#0D1F3D]">
+                <span className="h-3 w-3 rounded-full bg-[#0D1F3D]" /> Revenue (₹)
               </span>
-              <span className="flex items-center gap-2 text-[#00C2A8]">
-                <span className="h-3 w-3 rounded-full bg-[#00C2A8]" /> Deals
+              <span className="flex items-center gap-2 text-emerald-600">
+                <span className="h-3 w-3 rounded-full bg-emerald-600" /> Closed Deals
               </span>
             </div>
 
@@ -146,20 +159,22 @@ export default function SalesDashboardPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={salesTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0} />
+                    <linearGradient id="salesGradSfw" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#0D1F3D" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#0D1F3D" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} tickLine={false} />
                   <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} tickFormatter={(val) => `₹${val / 1000}k`} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#061838', borderRadius: '12px', border: 'none' }}
-                    labelStyle={{ color: '#00C2A8', fontWeight: 700, fontSize: '12px' }}
+                    position={{ y: -15 }}
+                    wrapperStyle={{ zIndex: 100 }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                    labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                     formatter={(val: any, name: any) => [name === 'Revenue' ? `₹${Number(val || 0).toLocaleString()}` : `${val} deals`, name]}
                   />
-                  <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#2563EB" strokeWidth={3} fillOpacity={1} fill="url(#salesGrad)" />
+                  <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#0D1F3D" strokeWidth={3} fillOpacity={1} fill="url(#salesGradSfw)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -167,7 +182,7 @@ export default function SalesDashboardPage() {
         </ChartCard>
 
         {/* Sales by Stage Donut Chart */}
-        <ChartCard title="Sales by Stage" className="lg:col-span-3">
+        <ChartCard title="Sales Pipeline by Stage" className="lg:col-span-3">
           <div className="flex flex-col items-center pt-2">
             <div className="h-44 w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -186,8 +201,10 @@ export default function SalesDashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ backgroundColor: '#061838', borderRadius: '12px', border: 'none' }}
-                    labelStyle={{ color: '#00C2A8', fontWeight: 700, fontSize: '12px' }}
+                    position={{ y: -15 }}
+                    wrapperStyle={{ zIndex: 100 }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                     formatter={(val: any) => [`${val} Deals`, 'Count']}
                   />
@@ -201,7 +218,7 @@ export default function SalesDashboardPage() {
                     <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
                     {s.name}
                   </span>
-                  <span>{s.value} ({((s.value / 86) * 100).toFixed(1)}%)</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{s.value} ({((s.value / 86) * 100).toFixed(1)}%)</span>
                 </div>
               ))}
             </div>
@@ -209,7 +226,7 @@ export default function SalesDashboardPage() {
         </ChartCard>
 
         {/* Revenue by Product Bar Chart */}
-        <ChartCard title="Revenue by Product" className="lg:col-span-3">
+        <ChartCard title="Revenue Tier Split" className="lg:col-span-3">
           <div className="h-64 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={productRevenueData} margin={{ top: 25, right: 10, left: 10, bottom: 20 }}>
@@ -218,9 +235,9 @@ export default function SalesDashboardPage() {
                 <Tooltip
                   cursor={{ fill: 'rgba(13, 31, 61, 0.04)' }}
                   position={{ y: -15 }}
-                  allowEscapeViewBox={{ x: true, y: true }}
-                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)', padding: '8px 12px' }}
-                  labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px', marginBottom: '2px' }}
+                  wrapperStyle={{ zIndex: 100 }}
+                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                  labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                   itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                   formatter={(val: any) => [`₹${Number(val || 0).toLocaleString()}`, 'Revenue']}
                 />
@@ -235,13 +252,15 @@ export default function SalesDashboardPage() {
         </ChartCard>
       </div>
 
-      {/* Bottom Row: Top Performing Sales Team, Recent Deals, Sales Targets */}
+      {/* Bottom Row: Top Performing Sales Representatives, Recent Deals, Sales Target Gauge */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Top Performing Sales Team */}
+        {/* Top Performing Sales Reps */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-bold text-[#0B2E6B]">Top Performing Sales Team</h3>
-            <button className="text-xs font-semibold text-[#00C2A8] hover:underline">View All</button>
+            <h3 className="text-base font-extrabold text-[#0D1F3D]">Top Sales Executives</h3>
+            <button className="text-xs font-bold text-[#E20613] hover:underline flex items-center gap-1">
+              View All <ArrowUpRight className="h-3 w-3" />
+            </button>
           </div>
           <div className="space-y-3">
             {[
@@ -252,17 +271,17 @@ export default function SalesDashboardPage() {
             ].map((rep) => (
               <div key={rep.name} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0B2E6B] text-[10px] font-bold text-white">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0D1F3D] text-[10px] font-extrabold text-white">
                     {rep.rank}
                   </span>
                   <div>
-                    <p className="font-bold text-[#0B2E6B]">{rep.name}</p>
-                    <p className="text-[11px] text-slate-400">{rep.deals} deals • {rep.win} win rate</p>
+                    <p className="font-extrabold text-[#0D1F3D]">{rep.name}</p>
+                    <p className="text-[11px] font-semibold text-slate-400">{rep.deals} deals • {rep.win} win</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-[#0B2E6B]">{rep.rev}</p>
-                  <p className="font-semibold text-emerald-600">{rep.growth}</p>
+                  <p className="font-extrabold text-[#0D1F3D]">{rep.rev}</p>
+                  <p className="font-bold text-emerald-600">{rep.growth}</p>
                 </div>
               </div>
             ))}
@@ -272,25 +291,27 @@ export default function SalesDashboardPage() {
         {/* Recent Deals */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-bold text-[#0B2E6B]">Recent Deals</h3>
-            <button className="text-xs font-semibold text-[#00C2A8] hover:underline">View All</button>
+            <h3 className="text-base font-extrabold text-[#0D1F3D]">Recent Deals</h3>
+            <button className="text-xs font-bold text-[#E20613] hover:underline flex items-center gap-1">
+              View All <ArrowUpRight className="h-3 w-3" />
+            </button>
           </div>
           <div className="space-y-3">
             {[
-              { client: 'TechCorp Ltd.', product: 'VisibloAI Pro', value: '₹85,000', stage: 'Won', date: '20 May 2025' },
-              { client: 'Global Solutions', product: 'VisibloAI Business', value: '₹1,20,000', stage: 'Proposal', date: '19 May 2025' },
-              { client: 'BrightMind Inc.', product: 'VisibloAI Pro', value: '₹62,000', stage: 'Negotiation', date: '18 May 2025' },
+              { client: 'TechCorp Ltd.', product: 'SFW Pro', value: '₹85,000', stage: 'Won', date: '20 May 2025' },
+              { client: 'Global Solutions', product: 'SFW Business', value: '₹1,20,000', stage: 'Proposal', date: '19 May 2025' },
+              { client: 'BrightMind Inc.', product: 'SFW Pro', value: '₹62,000', stage: 'Negotiation', date: '18 May 2025' },
               { client: 'FutureTech', product: 'Enterprise', value: '₹2,40,000', stage: 'Qualification', date: '17 May 2025' },
             ].map((deal) => (
               <div key={deal.client} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs">
                 <div>
-                  <p className="font-bold text-[#0B2E6B]">{deal.client}</p>
-                  <p className="text-[11px] text-slate-400">{deal.product} • {deal.date}</p>
+                  <p className="font-extrabold text-[#0D1F3D]">{deal.client}</p>
+                  <p className="text-[11px] font-semibold text-slate-400">{deal.product} • {deal.date}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-[#0B2E6B]">{deal.value}</p>
-                  <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-bold ${
-                    deal.stage === 'Won' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'
+                  <p className="font-extrabold text-[#0D1F3D]">{deal.value}</p>
+                  <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-extrabold ${
+                    deal.stage === 'Won' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-blue-50 text-blue-600 border border-blue-200'
                   }`}>
                     {deal.stage}
                   </span>
@@ -300,33 +321,33 @@ export default function SalesDashboardPage() {
           </div>
         </div>
 
-        {/* Sales Targets */}
+        {/* Sales Targets Gauge */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-bold text-[#0B2E6B]">Sales Targets</h3>
-            <button className="text-xs font-semibold text-[#00C2A8] hover:underline">View Details</button>
+            <h3 className="text-base font-extrabold text-[#0D1F3D]">Monthly Target Progress</h3>
+            <button className="text-xs font-bold text-[#E20613] hover:underline">Details</button>
           </div>
           <div className="flex flex-col items-center pt-2">
             <div className="relative flex h-32 w-32 items-center justify-center">
               <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E2E8F0" strokeWidth="4" />
-                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#00C2A8" strokeWidth="4" strokeDasharray="78, 100" />
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#E20613" strokeWidth="4" strokeDasharray="78, 100" />
               </svg>
               <div className="absolute flex flex-col items-center">
-                <span className="text-2xl font-extrabold text-[#0B2E6B]">78%</span>
-                <span className="text-[10px] font-semibold text-slate-400">Target Achieved</span>
+                <span className="text-2xl font-extrabold text-[#0D1F3D]">78%</span>
+                <span className="text-[10px] font-extrabold text-slate-400">Target Achieved</span>
               </div>
             </div>
 
             <div className="mt-4 w-full text-center">
-              <p className="text-sm font-bold text-[#0B2E6B]">₹12,48,320 / ₹16,00,000</p>
+              <p className="text-sm font-extrabold text-[#0D1F3D]">₹12,48,320 / ₹16,00,000</p>
               <div className="mt-3 space-y-2 text-xs font-semibold">
                 <div className="flex justify-between text-slate-600">
-                  <span>Completed</span>
-                  <span className="text-[#00C2A8]">78%</span>
+                  <span>Target Completion</span>
+                  <span className="font-extrabold text-[#E20613]">78%</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-[#00C2A8] rounded-full" style={{ width: '78%' }} />
+                  <div className="h-full bg-[#E20613] rounded-full" style={{ width: '78%' }} />
                 </div>
               </div>
             </div>

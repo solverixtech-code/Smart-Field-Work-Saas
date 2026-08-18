@@ -15,7 +15,8 @@ import {
   Eye,
 } from 'lucide-react';
 import { KpiCard } from '../../components/dashboard/KpiCard';
-import { Button } from '../../components/ui/Button';
+import { Button, Modal } from '../../components/ui';
+import { DateRangePicker } from '../../components/ui/DateRangePicker';
 
 const todayPunches = [
   {
@@ -116,9 +117,7 @@ export default function AttendanceMonitoringPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-[#0D1F3D] shadow-xs">
-            📅 {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-          </div>
+          <DateRangePicker />
         </div>
       </div>
 
@@ -318,21 +317,19 @@ export default function AttendanceMonitoringPage() {
       </div>
 
       {/* Selfie Photo Verification Dialog Modal */}
-      {showPhotoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="relative max-w-sm w-full rounded-2xl bg-white p-5 shadow-2xl space-y-3 text-center">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Selfie Photo Verification</h3>
-              <button onClick={() => setShowPhotoModal(null)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
-            </div>
-            <img src={showPhotoModal} alt="Punch Selfie" className="h-64 w-full rounded-xl object-cover border border-slate-200 shadow-sm" />
-            <p className="text-xs font-extrabold text-[#0D1F3D]">GPS Verified Mobile Punch In</p>
-            <Button variant="outline" size="sm" fullWidth onClick={() => setShowPhotoModal(null)}>
-              Close Preview
-            </Button>
-          </div>
+      <Modal isOpen={!!showPhotoModal} onClose={() => setShowPhotoModal(null)} maxWidth="max-w-sm">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Selfie Photo Verification</h3>
+          <button onClick={() => setShowPhotoModal(null)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
         </div>
-      )}
+        {showPhotoModal && (
+          <img src={showPhotoModal} alt="Punch Selfie" className="h-64 w-full rounded-xl object-cover border border-slate-200 shadow-sm" />
+        )}
+        <p className="text-xs font-extrabold text-[#0D1F3D]">GPS Verified Mobile Punch In</p>
+        <Button variant="outline" size="sm" fullWidth onClick={() => setShowPhotoModal(null)}>
+          Close Preview
+        </Button>
+      </Modal>
     </div>
   );
 }
