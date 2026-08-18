@@ -93,7 +93,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
 
       {/* RIGHT SIDE: Auth Card Container (Over the white side of background image) */}
       <div className="flex flex-1 items-center justify-center p-6 sm:p-10 z-10">
-        <div className="w-full max-w-md space-y-6">
+        <div className="w-[460px] max-w-full">
           {children}
         </div>
       </div>

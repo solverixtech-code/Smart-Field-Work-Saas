@@ -75,7 +75,7 @@ export default function VerifyOtpPage() {
 
   return (
     <AuthLayout>
-      <div className="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-xl space-y-6">
+      <div className="w-full min-h-[580px] flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-xl space-y-6">
         {/* Top Brand Logo & Shield Lock Icon */}
         <div className="flex flex-col items-center text-center">
           <img
