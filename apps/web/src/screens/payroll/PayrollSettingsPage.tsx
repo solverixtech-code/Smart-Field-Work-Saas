@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
   ArrowLeft,
   Settings,
@@ -96,7 +97,7 @@ Visiblo Finance & HR Operations Team`,
     setIsSaving(true);
     setTimeout(() => {
       setIsSaving(false);
-      alert('Payroll Settings & Policy Rules saved successfully!');
+      toast.success('Payroll Settings & Policy Rules saved successfully!');
     }, 800);
   };
 

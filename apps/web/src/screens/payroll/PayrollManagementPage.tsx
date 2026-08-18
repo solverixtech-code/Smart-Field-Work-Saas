@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
   IndianRupee,
   FileText,
@@ -22,6 +23,12 @@ import {
   Info,
   Check,
   UserCheck,
+  Calculator,
+  CircleDollarSign,
+  TrendingUp,
+  TrendingDown,
+  User,
+  History,
 } from 'lucide-react';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button, Modal } from '../../components/ui';
@@ -52,6 +59,7 @@ interface PayrollRecord {
   absencePenalty: number;
   incentives: number;
   incentiveItems: IncentiveItem[];
+  pendingIncentiveItems: IncentiveItem[];
   totalDeductions: number;
   netPay: number;
   presentDays: number;
@@ -62,7 +70,7 @@ interface PayrollRecord {
   payableDays: number;
   salaryDivisorDays: number;
   overtimeHours: number;
-  status: 'Paid' | 'Draft';
+  status: 'Paid' | 'Finalized' | 'Draft';
   paidDate: string;
   txnRef: string;
   overrideReason?: string;
@@ -72,7 +80,7 @@ const mockPayrollRecords: PayrollRecord[] = [
   {
     id: 'PAY-2025-05-101',
     user: 'Rahul Verma',
-    empId: 'FE-1001',
+    empId: 'KM-EMP-98421',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
     designation: 'Field Executive',
     teamName: 'Mumbai North Team',
@@ -87,9 +95,10 @@ const mockPayrollRecords: PayrollRecord[] = [
     absencePenalty: 1000,
     incentives: 4500,
     incentiveItems: [
-      { id: 'inc-1', title: 'Booking Incentive', amount: 3000, customerName: 'Rohan Sharma', projectName: 'Skyline Towers' },
+      { id: 'inc-1', title: 'Closed Won Deal Commission', amount: 3000, customerName: 'Rohan Sharma', projectName: 'Skyline Towers' },
       { id: 'inc-2', title: 'Target Milestone Bonus', amount: 1500, customerName: 'Vikas Shah', projectName: 'Ocean Heights' },
     ],
+    pendingIncentiveItems: [],
     totalDeductions: 6100,
     netPay: 45400,
     presentDays: 26,
@@ -107,7 +116,7 @@ const mockPayrollRecords: PayrollRecord[] = [
   {
     id: 'PAY-2025-05-102',
     user: 'Priya Mehta',
-    empId: 'FE-1002',
+    empId: 'KM-EMP-98422',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
     designation: 'Senior Executive',
     teamName: 'Mumbai North Team',
@@ -122,7 +131,10 @@ const mockPayrollRecords: PayrollRecord[] = [
     absencePenalty: 0,
     incentives: 6000,
     incentiveItems: [
-      { id: 'inc-3', title: 'High Value Booking Bonus', amount: 6000, customerName: 'Sunil Patil', projectName: 'Green Park Villas' },
+      { id: 'inc-3', title: 'High Value Closed Won Bonus', amount: 6000, customerName: 'Sunil Patil', projectName: 'Green Park Villas' },
+    ],
+    pendingIncentiveItems: [
+      { id: 'inc-p1', title: 'Quarterly Sales Qualifier Bonus', amount: 2500, customerName: 'Pending Approval', projectName: 'Green Park Villas' },
     ],
     totalDeductions: 5640,
     netPay: 50660,
@@ -141,7 +153,7 @@ const mockPayrollRecords: PayrollRecord[] = [
   {
     id: 'PAY-2025-05-103',
     user: 'Sanjay Yadav',
-    empId: 'FE-1003',
+    empId: 'KM-EMP-98423',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
     designation: 'Team Leader',
     teamName: 'Mumbai North Team',
@@ -158,6 +170,7 @@ const mockPayrollRecords: PayrollRecord[] = [
     incentiveItems: [
       { id: 'inc-4', title: 'Team Target Commission (0.5%)', amount: 7500, customerName: 'North Region Team', projectName: 'All Projects' },
     ],
+    pendingIncentiveItems: [],
     totalDeductions: 8900,
     netPay: 69100,
     presentDays: 28,
@@ -168,14 +181,14 @@ const mockPayrollRecords: PayrollRecord[] = [
     payableDays: 30,
     salaryDivisorDays: 30,
     overtimeHours: 12.0,
-    status: 'Draft',
+    status: 'Finalized',
     paidDate: '-',
     txnRef: '-',
   },
   {
     id: 'PAY-2025-05-104',
     user: 'Kavita Singh',
-    empId: 'FE-1004',
+    empId: 'KM-EMP-98424',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80',
     designation: 'Field Executive',
     teamName: 'Western Suburbs Team',
@@ -191,6 +204,9 @@ const mockPayrollRecords: PayrollRecord[] = [
     incentives: 1500,
     incentiveItems: [
       { id: 'inc-5', title: 'Follow-up Conversion Bonus', amount: 1500, customerName: 'Amit Deshmukh', projectName: 'Palm Crest' },
+    ],
+    pendingIncentiveItems: [
+      { id: 'inc-p2', title: 'Site Visit Bonus', amount: 800, customerName: 'Ramesh Sen', projectName: 'Palm Crest' },
     ],
     totalDeductions: 7160,
     netPay: 38040,
@@ -209,7 +225,7 @@ const mockPayrollRecords: PayrollRecord[] = [
   {
     id: 'PAY-2025-05-105',
     user: 'Arun Kumar',
-    empId: 'FE-1005',
+    empId: 'KM-EMP-98425',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
     designation: 'Field Executive',
     teamName: 'Thane Team',
@@ -226,6 +242,7 @@ const mockPayrollRecords: PayrollRecord[] = [
     incentiveItems: [
       { id: 'inc-6', title: 'Site Visit Closure Bonus', amount: 3000, customerName: 'Meena Kulkarni', projectName: 'Solitaire Bay' },
     ],
+    pendingIncentiveItems: [],
     totalDeductions: 6200,
     netPay: 51800,
     presentDays: 27,
@@ -280,7 +297,11 @@ export default function PayrollManagementPage() {
     setProcessPfInput(String(record.pf));
     setProcessCalculatedBaseInput(String(record.gross - record.absencePenalty));
     setProcessOverrideReason(record.overrideReason || '');
-    setProcessModalMode('edit');
+    if (record.status === 'Finalized' || record.status === 'Paid') {
+      setProcessModalMode('preview');
+    } else {
+      setProcessModalMode('edit');
+    }
   };
 
   const handleRunPayrollSubmit = () => {
@@ -288,7 +309,7 @@ export default function PayrollManagementPage() {
     setTimeout(() => {
       setIsProcessingRun(false);
       setRunPayrollModalOpen(false);
-      alert(`Payroll for ${selectedMonth} ran successfully! Generated draft payslips.`);
+      toast.success(`Payroll is ready for processing for ${selectedMonth}`);
     }, 1000);
   };
 
@@ -303,32 +324,44 @@ export default function PayrollManagementPage() {
       (newInc !== processModalEntry.incentives || newPf !== processModalEntry.pf) &&
       !processOverrideReason.trim()
     ) {
-      alert('Please provide an override reason for changing amounts.');
+      toast.error('Please provide an override reason for changing amounts.');
       return;
     }
 
+    const updated = {
+      ...processModalEntry,
+      incentives: newInc,
+      pf: newPf,
+      netPay: newNet,
+      overrideReason: processOverrideReason,
+    };
+
     setRecords((prev) =>
-      prev.map((r) =>
-        r.id === processModalEntry.id
-          ? {
-              ...r,
-              incentives: newInc,
-              pf: newPf,
-              netPay: newNet,
-              overrideReason: processOverrideReason,
-            }
-          : r,
-      ),
+      prev.map((r) => (r.id === processModalEntry.id ? updated : r)),
     );
     setProcessModalEntry(null);
-    alert(`Draft payslip updated for ${processModalEntry.user}`);
+    toast.success(`Draft payslip amendments saved for ${processModalEntry.user}`);
   };
 
   const handleFinalizePayslip = () => {
     if (!processModalEntry) return;
+    const finalizedRecord: PayrollRecord = {
+      ...processModalEntry,
+      status: 'Finalized',
+    };
+    setRecords((prev) =>
+      prev.map((r) => (r.id === processModalEntry.id ? finalizedRecord : r)),
+    );
+    setProcessModalEntry(finalizedRecord);
+    setProcessModalMode('preview');
+    toast.success(`Finalized payslip for ${processModalEntry.user}`);
+  };
+
+  const handleMarkPaid = (recordId: string, userName: string) => {
+    const updatedRecord = records.find((r) => r.id === recordId);
     setRecords((prev) =>
       prev.map((r) =>
-        r.id === processModalEntry.id
+        r.id === recordId
           ? {
               ...r,
               status: 'Paid',
@@ -338,8 +371,20 @@ export default function PayrollManagementPage() {
           : r,
       ),
     );
-    setProcessModalEntry(null);
-    alert(`Payslip finalized and email notification sent for ${processModalEntry.user}!`);
+    if (processModalEntry?.id === recordId) {
+      setProcessModalEntry((prev) =>
+        prev
+          ? {
+              ...prev,
+              status: 'Paid',
+              paidDate: new Date().toLocaleDateString('en-GB'),
+              txnRef: `TXN-${Math.floor(10000000 + Math.random() * 90000000)}`,
+            }
+          : null,
+      );
+      setProcessModalMode('preview');
+    }
+    toast.success(`Marked as paid for ${userName}`);
   };
 
   // Stats calculation
@@ -353,9 +398,9 @@ export default function PayrollManagementPage() {
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Payroll & Payslip Management</h1>
+          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Payroll Management</h1>
           <p className="text-xs font-medium text-slate-500">
-            Process monthly salaries, manage allowances & deductions, auto-calculate attendance penalties, and issue official payslips.
+            Institutional salary disbursement, incentives, and net payouts.
           </p>
         </div>
 
@@ -366,13 +411,13 @@ export default function PayrollManagementPage() {
             onClick={() => navigate('/admin/payroll/settings')}
             className="flex items-center gap-2 font-bold"
           >
-            <Settings className="h-4 w-4 text-slate-500" /> Payroll Settings
+            <Settings className="h-4 w-4 text-slate-500" /> Settings
           </Button>
 
           <Button
             variant="outline"
             size="sm"
-            onClick={() => alert('Exporting Payroll Summary...')}
+            onClick={() => toast.success('Exporting Payroll Summary...')}
             className="flex items-center gap-2 border-slate-200 text-slate-700 font-bold"
           >
             <Download className="h-4 w-4 text-[#0D1F3D]" /> Export Summary
@@ -384,7 +429,7 @@ export default function PayrollManagementPage() {
             onClick={() => setRunPayrollModalOpen(true)}
             className="flex items-center gap-2 font-bold shadow-sm"
           >
-            <CreditCard className="h-4 w-4" /> Run Monthly Payroll
+            <CreditCard className="h-4 w-4" /> Run Payroll
           </Button>
         </div>
       </div>
@@ -394,34 +439,34 @@ export default function PayrollManagementPage() {
         <KpiCard
           title="Total Net Payout"
           value={`₹${totalPayout.toLocaleString()}`}
-          subValue="+2.4% vs last month"
+          subValue="+2.4% Trend"
           icon={IndianRupee}
-          iconBgColor="bg-[#0D1F3D]/10"
-          iconTextColor="text-[#0D1F3D]"
+          iconBgColor="bg-emerald-50"
+          iconTextColor="text-emerald-600"
         />
         <KpiCard
-          title="Approved Incentives"
+          title="Incentives"
           value={`₹${totalIncentives.toLocaleString()}`}
-          subValue="Booking commissions"
-          icon={CreditCard}
-          iconBgColor="bg-blue-500/10"
+          subValue="+5.1% Growth"
+          icon={CircleDollarSign}
+          iconBgColor="bg-blue-50"
           iconTextColor="text-blue-600"
         />
         <KpiCard
-          title="Total Deductions"
+          title="Deductions"
           value={`₹${totalDeductions.toLocaleString()}`}
-          subValue="PF + LOP Penalties"
-          icon={AlertCircle}
-          iconBgColor="bg-red-500/10"
-          iconTextColor="text-[#E20613]"
+          subValue="Tax & PF"
+          icon={TrendingDown}
+          iconBgColor="bg-amber-50"
+          iconTextColor="text-amber-600"
         />
         <KpiCard
-          title="Processing Progress"
+          title="Progress"
           value={`${paidCount}/${records.length}`}
-          subValue={paidCount === records.length ? 'All Finalized' : 'Pending rows'}
-          icon={CheckCircle2}
-          iconBgColor="bg-emerald-500/10"
-          iconTextColor="text-emerald-600"
+          subValue={paidCount === records.length ? 'All Processed' : 'Pending rows'}
+          icon={RefreshCw}
+          iconBgColor="bg-red-50"
+          iconTextColor="text-[#E20613]"
         />
       </div>
 
@@ -448,7 +493,7 @@ export default function PayrollManagementPage() {
             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
             <input
               type="text"
-              placeholder="Search executive, ID, payslip..."
+              placeholder="Search by name, email or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-8 pr-3 py-1.5 text-xs font-semibold text-[#0D1F3D] focus:outline-none"
@@ -461,8 +506,9 @@ export default function PayrollManagementPage() {
             className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none"
           >
             <option value="All">All Statuses</option>
-            <option value="Paid">Finalized & Paid</option>
-            <option value="Draft">Draft Pending</option>
+            <option value="Draft">Draft</option>
+            <option value="Finalized">Finalized</option>
+            <option value="Paid">Paid</option>
           </select>
         </div>
       </div>
@@ -473,11 +519,12 @@ export default function PayrollManagementPage() {
           <table className="w-full text-left text-xs font-semibold">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold text-slate-600">
-                <th className="px-4 py-3.5">Executive Staff</th>
-                <th className="px-4 py-3.5">Payable / Divisor</th>
-                <th className="px-4 py-3.5">Basic + HRA</th>
-                <th className="px-4 py-3.5">Incentives</th>
-                <th className="px-4 py-3.5">Deductions (PF/LOP)</th>
+                <th className="px-4 py-3.5">Employee</th>
+                <th className="px-4 py-3.5">Position</th>
+                <th className="px-4 py-3.5">Base Salary</th>
+                <th className="px-4 py-3.5">Attendance</th>
+                <th className="px-4 py-3.5">Incentive</th>
+                <th className="px-4 py-3.5">Deductions</th>
                 <th className="px-4 py-3.5">Net Payable</th>
                 <th className="px-4 py-3.5">Status</th>
                 <th className="px-4 py-3.5 text-right">Actions</th>
@@ -491,16 +538,17 @@ export default function PayrollManagementPage() {
                       <img src={p.avatar} alt={p.user} className="h-8 w-8 rounded-full object-cover border border-slate-200" />
                       <div>
                         <p className="font-extrabold text-[#0D1F3D]">{p.user}</p>
-                        <p className="text-[10px] text-slate-400 font-bold">{p.empId} • {p.designation}</p>
+                        <p className="text-[10px] text-slate-400 font-mono">{p.empId}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3.5">
-                    <span className="font-bold text-slate-700">{p.payableDays} / {p.salaryDivisorDays} Days</span>
-                    <p className="text-[10px] text-slate-400 font-medium">{p.presentDays} Present • {p.absentDays} LOP</p>
-                  </td>
+                  <td className="px-4 py-3.5 font-semibold text-slate-600">{p.designation}</td>
                   <td className="px-4 py-3.5 font-bold text-[#0D1F3D]">₹{p.gross.toLocaleString()}</td>
-                  <td className="px-4 py-3.5 font-bold text-blue-600">
+                  <td className="px-4 py-3.5">
+                    <span className="font-bold text-slate-700">{p.payableDays}d</span>
+                    <p className="text-[10px] text-slate-400 font-medium">Payable {p.payableDays}d · Divisor {p.salaryDivisorDays}d</p>
+                  </td>
+                  <td className="px-4 py-3.5 font-bold text-emerald-600">
                     +₹{p.incentives.toLocaleString()}
                   </td>
                   <td className="px-4 py-3.5 text-[#E20613] font-bold">
@@ -510,22 +558,62 @@ export default function PayrollManagementPage() {
                     ₹{p.netPay.toLocaleString()}
                   </td>
                   <td className="px-4 py-3.5">
-                    <span className={`inline-block rounded-md px-2.5 py-0.5 text-[10px] font-extrabold ${
-                      p.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'
+                    <span className={`inline-block rounded-md px-2.5 py-0.5 text-[10px] font-extrabold border ${
+                      p.status === 'Paid'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : p.status === 'Finalized'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-slate-100 text-slate-600 border-slate-200'
                     }`}>
                       {p.status}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenProcessModal(p)}
-                      className="!px-2.5 !py-1 text-xs font-bold flex items-center gap-1.5 ml-auto"
-                    >
-                      {p.status === 'Draft' ? <Edit className="h-3.5 w-3.5 text-[#E20613]" /> : <Eye className="h-3.5 w-3.5 text-slate-500" />}
-                      {p.status === 'Draft' ? 'Process / Amend' : 'View Payslip'}
-                    </Button>
+                    <div className="flex items-center justify-end gap-2">
+                      {p.status === 'Draft' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenProcessModal(p)}
+                          className="!px-2.5 !py-1 text-xs font-bold flex items-center gap-1.5"
+                        >
+                          <Send className="h-3.5 w-3.5 text-[#0D1F3D]" /> Process Draft
+                        </Button>
+                      )}
+
+                      {p.status === 'Finalized' && (
+                        <>
+                          <Button
+                            variant="accent"
+                            size="sm"
+                            onClick={() => handleMarkPaid(p.id, p.user)}
+                            className="!px-2.5 !py-1 text-xs font-bold flex items-center gap-1"
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Mark Paid
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenProcessModal(p)}
+                            className="!px-2.5 !py-1 text-xs font-bold flex items-center gap-1.5"
+                          >
+                            <Eye className="h-3.5 w-3.5 text-slate-500" /> View Payslip
+                          </Button>
+                        </>
+                      )}
+
+                      {p.status === 'Paid' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenProcessModal(p)}
+                          className="!px-2.5 !py-1 text-xs font-bold flex items-center gap-1.5 ml-auto"
+                        >
+                          <Eye className="h-3.5 w-3.5 text-slate-500" /> View Payslip
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -535,98 +623,109 @@ export default function PayrollManagementPage() {
       </div>
 
       {/* TRUEROOT MODAL 1: Run Monthly Payroll Modal */}
-      <Modal isOpen={runPayrollModalOpen} onClose={() => setRunPayrollModalOpen(false)} maxWidth="max-w-lg">
-        <div className="space-y-4 font-sans">
+      <Modal isOpen={runPayrollModalOpen} onClose={() => setRunPayrollModalOpen(false)} maxWidth="max-w-md">
+        <div className="space-y-4 font-sans text-xs">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Run Monthly Payroll</h3>
+            <div>
+              <h3 className="text-lg font-extrabold text-[#0D1F3D]">Run Payroll</h3>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">Finalize calculations and prepare payslips for the selected period.</p>
+            </div>
             <button onClick={() => setRunPayrollModalOpen(false)} className="text-slate-400 hover:text-slate-600">
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="space-y-4 text-xs">
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">Select Pay Period</label>
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold text-[#0D1F3D]"
-              >
-                <option value="May 2025">May 2025</option>
-                <option value="April 2025">April 2025</option>
-                <option value="March 2025">March 2025</option>
-              </select>
-            </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Month</label>
+                <select
+                  value={selectedMonth.split(' ')[0]}
+                  onChange={(e) => setSelectedMonth(`${e.target.value} ${selectedMonth.split(' ')[1]}`)}
+                  className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold text-[#0D1F3D]"
+                >
+                  <option value="May">May</option>
+                  <option value="April">April</option>
+                  <option value="March">March</option>
+                </select>
+              </div>
 
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">Payroll Scope</label>
-              <div className="grid grid-cols-2 gap-2">
-                <label
-                  onClick={() => setRunPayrollScope('all')}
-                  className={`flex items-center gap-2 rounded-xl border p-3 cursor-pointer ${
-                    runPayrollScope === 'all' ? 'border-[#0D1F3D] bg-blue-50/40 font-bold text-[#0D1F3D]' : 'border-slate-200'
-                  }`}
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Year</label>
+                <select
+                  value={selectedMonth.split(' ')[1]}
+                  onChange={(e) => setSelectedMonth(`${selectedMonth.split(' ')[0]} ${e.target.value}`)}
+                  className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold text-[#0D1F3D]"
                 >
-                  <input type="radio" checked={runPayrollScope === 'all'} onChange={() => {}} className="text-[#0D1F3D]" />
-                  <span>All Staff</span>
-                </label>
-                <label
-                  onClick={() => setRunPayrollScope('employee')}
-                  className={`flex items-center gap-2 rounded-xl border p-3 cursor-pointer ${
-                    runPayrollScope === 'employee' ? 'border-[#0D1F3D] bg-blue-50/40 font-bold text-[#0D1F3D]' : 'border-slate-200'
-                  }`}
-                >
-                  <input type="radio" checked={runPayrollScope === 'employee'} onChange={() => {}} className="text-[#0D1F3D]" />
-                  <span>Specific Executive</span>
-                </label>
+                  <option value="2025">2025</option>
+                  <option value="2026">2026</option>
+                </select>
               </div>
             </div>
 
-            {/* Executive Selection Slot - Constant Height Container */}
-            <div className="space-y-1 min-h-[68px] transition-all">
-              <label className="font-bold text-slate-700 block">
-                Select Executive Staff {runPayrollScope === 'employee' ? '*' : <span className="text-slate-400 font-normal">(All Active Roster)</span>}
-              </label>
-              {runPayrollScope === 'employee' ? (
-                <select
-                  value={selectedEmployeeScope}
-                  onChange={(e) => setSelectedEmployeeScope(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold text-[#0D1F3D] focus:outline-none focus:border-[#0D1F3D] cursor-pointer"
-                >
-                  <option value="">Select Executive Staff...</option>
-                  <option value="Rahul Verma">Rahul Verma (FE-1001)</option>
-                  <option value="Priya Mehta">Priya Mehta (FE-1002)</option>
-                  <option value="Sanjay Yadav">Sanjay Yadav (FE-1003)</option>
-                  <option value="Kavita Singh">Kavita Singh (FE-1004)</option>
-                  <option value="Arun Kumar">Arun Kumar (FE-1005)</option>
-                </select>
-              ) : (
-                <div className="w-full rounded-xl border border-slate-200 bg-slate-50/80 p-2.5 text-xs font-semibold text-slate-400 flex items-center justify-between cursor-not-allowed">
-                  <span>Applies to all active executives (5 staff members)</span>
-                  <span className="text-[10px] rounded bg-slate-200/80 px-2 py-0.5 font-bold text-slate-500">All Staff</span>
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 space-y-3">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Payroll Scope</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRunPayrollScope('all');
+                      setSelectedEmployeeScope('');
+                    }}
+                    className={`rounded-xl border px-3 py-2 text-xs font-extrabold transition-all ${
+                      runPayrollScope === 'all' ? 'border-[#0D1F3D] bg-[#0D1F3D] text-white' : 'border-slate-200 bg-white text-slate-700'
+                    }`}
+                  >
+                    All Employees
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRunPayrollScope('employee')}
+                    className={`rounded-xl border px-3 py-2 text-xs font-extrabold transition-all ${
+                      runPayrollScope === 'employee' ? 'border-[#0D1F3D] bg-[#0D1F3D] text-white' : 'border-slate-200 bg-white text-slate-700'
+                    }`}
+                  >
+                    Specific Employee
+                  </button>
                 </div>
-              )}
-              <p className="text-[10px] text-slate-400 font-medium">
-                {runPayrollScope === 'employee' ? 'Targeted payroll run for selected executive only.' : 'Payroll will be calculated for all active employees.'}
-              </p>
-            </div>
+              </div>
 
-            <div className="pt-2 border-t border-slate-100">
-              <label className="flex items-center gap-2.5 cursor-pointer">
+              {/* Constant Height Reserved Container Slot */}
+              <div className="min-h-[64px] flex flex-col justify-center">
+                {runPayrollScope === 'employee' ? (
+                  <div>
+                    <label className="font-bold text-slate-700 block mb-1">Employee *</label>
+                    <select
+                      value={selectedEmployeeScope}
+                      onChange={(e) => setSelectedEmployeeScope(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold text-[#0D1F3D]"
+                    >
+                      <option value="">Select Employee Staff...</option>
+                      <option value="Rahul Verma">Rahul Verma (KM-EMP-98421)</option>
+                      <option value="Priya Mehta">Priya Mehta (KM-EMP-98422)</option>
+                      <option value="Sanjay Yadav">Sanjay Yadav (KM-EMP-98423)</option>
+                      <option value="Kavita Singh">Kavita Singh (KM-EMP-98424)</option>
+                      <option value="Arun Kumar">Arun Kumar (KM-EMP-98425)</option>
+                    </select>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-slate-200 bg-slate-100/70 p-2.5 text-xs text-slate-500 font-semibold flex items-center justify-between">
+                    <span>Target: All 5 active roster employees</span>
+                    <span className="text-[10px] font-bold rounded bg-slate-200 px-2 py-0.5">All Staff</span>
+                  </div>
+                )}
+              </div>
+
+              <label className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-[11px] font-semibold text-amber-900 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={rerunExisting}
                   onChange={(e) => setRerunExisting(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-[#E20613]"
+                  className="mt-0.5 h-4 w-4 rounded border-amber-300 text-[#E20613]"
                 />
-                <span className="font-bold text-slate-700">Rerun existing payroll for this period</span>
+                <span>Run again and recalculate existing Draft/Finalized rows. Paid rows are protected and will be skipped.</span>
               </label>
-              <p className="text-[10px] text-slate-400 ml-6 mt-0.5">Recalculates draft rows. Already finalized paid payslips will be skipped.</p>
-            </div>
-
-            <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3 flex items-center gap-2 text-blue-900 font-semibold">
-              <Info className="h-4 w-4 flex-shrink-0 text-blue-600" />
-              <span>Running payroll automatically fetches attendance present days and approved booking incentives.</span>
             </div>
           </div>
 
@@ -639,152 +738,253 @@ export default function PayrollManagementPage() {
               size="sm"
               isLoading={isProcessingRun}
               onClick={handleRunPayrollSubmit}
-              className="font-bold shadow-xs"
+              className="font-bold shadow-xs px-6"
             >
-              Run Payroll
+              {rerunExisting ? 'Run Payroll Again' : 'Run Payroll'}
             </Button>
           </div>
         </div>
       </Modal>
 
-      {/* TRUEROOT MODAL 2: Process / Amend Draft & Official Payslip PDF Preview Drawer Modal */}
-      <Modal isOpen={!!processModalEntry} onClose={() => setProcessModalEntry(null)} maxWidth="max-w-4xl">
+      {/* TRUEROOT MODAL 2: Process Payroll Entry Modal matching Trueroot DialogContent */}
+      <Modal isOpen={!!processModalEntry} onClose={() => setProcessModalEntry(null)} maxWidth="max-w-5xl">
         {processModalEntry && (
           <div className="space-y-4 font-sans text-xs">
-            {/* Modal Navigation Bar */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-extrabold text-[#0D1F3D]">
-                  {processModalMode === 'edit' ? `Process Draft Payslip — ${processModalEntry.user}` : `Payslip PDF Preview — ${processModalEntry.user}`}
-                </h3>
-                <p className="text-[11px] text-slate-400 font-mono mt-0.5">{processModalEntry.id} • {selectedMonth}</p>
+            {/* Trueroot Process Header Bar */}
+            <div className="flex items-start gap-3 border-b border-slate-100 bg-[#FCF6F6] -mx-6 -mt-6 p-5 rounded-t-2xl">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white text-[#0D1F3D] shadow-xs">
+                <Calculator className="h-5 w-5" />
               </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-lg font-extrabold text-[#0D1F3D]">Process payroll entry</h3>
+                <p className="text-xs font-medium text-slate-500 mt-0.5">
+                  Amend the draft, preview the payslip, then finalize only when the numbers are correct.
+                </p>
+              </div>
+              <button onClick={() => setProcessModalEntry(null)} className="text-slate-400 hover:text-slate-600">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
-              {/* Mode Switch Tabs */}
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl font-bold">
-                <button
-                  onClick={() => setProcessModalMode('edit')}
-                  className={`px-3 py-1 rounded-lg transition-all ${processModalMode === 'edit' ? 'bg-white text-[#0D1F3D] shadow-xs' : 'text-slate-500'}`}
-                >
-                  Edit Draft
-                </button>
-                <button
-                  onClick={() => setProcessModalMode('preview')}
-                  className={`px-3 py-1 rounded-lg transition-all ${processModalMode === 'preview' ? 'bg-white text-[#0D1F3D] shadow-xs' : 'text-slate-500'}`}
-                >
-                  PDF Payslip Preview
-                </button>
+            {/* Trueroot Employee Identity Card */}
+            <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3.5">
+              <img src={processModalEntry.avatar} alt={processModalEntry.user} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-extrabold text-[#0D1F3D]">{processModalEntry.user}</p>
+                <p className="text-[11px] font-mono text-slate-400">{processModalEntry.empId} • {processModalEntry.designation}</p>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-slate-400 block font-bold">Current Status</span>
+                <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-extrabold border ${
+                  processModalEntry.status === 'Paid'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : processModalEntry.status === 'Finalized'
+                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                    : 'bg-slate-100 text-slate-600 border-slate-200'
+                }`}>
+                  {processModalEntry.status}
+                </span>
               </div>
             </div>
 
-            {/* MODE 1: EDIT DRAFT FORM */}
-            {processModalMode === 'edit' && (
-              <div className="space-y-4">
-                {/* Executive Info Banner */}
-                <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3.5">
-                  <div className="flex items-center gap-3">
-                    <img src={processModalEntry.avatar} alt={processModalEntry.user} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
-                    <div>
-                      <p className="text-sm font-extrabold text-[#0D1F3D]">{processModalEntry.user}</p>
-                      <p className="text-[11px] text-slate-500 font-medium">{processModalEntry.empId} • {processModalEntry.designation} • {processModalEntry.teamName}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 block font-bold">Payable Days</span>
-                    <span className="font-extrabold text-[#0D1F3D]">{processModalEntry.payableDays} / {processModalEntry.salaryDivisorDays} Days</span>
-                  </div>
+            {/* Trueroot 6 Attendance Stat Pills */}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6 text-center">
+              {[
+                { label: 'Present', val: `${processModalEntry.presentDays}d`, cls: 'text-emerald-600' },
+                { label: 'Absent', val: `${processModalEntry.absentDays}d`, cls: 'text-[#E20613]' },
+                { label: 'Holiday', val: `${processModalEntry.holidayDays}d`, cls: 'text-blue-600' },
+                { label: 'Leave', val: `${processModalEntry.leaveDays}d`, cls: 'text-amber-600' },
+                { label: 'Payable', val: `${processModalEntry.payableDays}d`, cls: 'text-[#0D1F3D]' },
+                { label: 'Divisor', val: `${processModalEntry.salaryDivisorDays}d`, cls: 'text-slate-600' },
+              ].map((s) => (
+                <div key={s.label} className="rounded-xl bg-slate-50/80 p-2 border border-slate-100">
+                  <p className="text-[11px] font-semibold text-slate-500">{s.label}</p>
+                  <p className={`mt-0.5 text-sm font-extrabold ${s.cls}`}>{s.val}</p>
                 </div>
+              ))}
+            </div>
 
-                {/* Form Fields Grid */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 block">Base Salary + Allowances (₹)</label>
-                    <input
-                      type="number"
-                      value={processCalculatedBaseInput}
-                      onChange={(e) => setProcessCalculatedBaseInput(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold text-[#0D1F3D]"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 block">Approved Incentives (₹)</label>
-                    <input
-                      type="number"
-                      value={processIncentiveInput}
-                      onChange={(e) => setProcessIncentiveInput(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold text-blue-600"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 block">PF Amount Deduction (₹)</label>
-                    <input
-                      type="number"
-                      value={processPfInput}
-                      onChange={(e) => setProcessPfInput(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-bold text-[#E20613]"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 block">TDS Tax Deduction (₹)</label>
-                    <input
-                      type="number"
-                      disabled
-                      value={processModalEntry.tds}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-100 p-2.5 font-bold text-slate-500 cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-
-                {/* Booking Incentive Items Breakdown */}
-                {processModalEntry.incentiveItems.length > 0 && (
-                  <div className="space-y-2 pt-2 border-t border-slate-100">
-                    <h4 className="font-extrabold text-[#0D1F3D]">Included Deal Booking Incentives</h4>
-                    <div className="space-y-1.5">
-                      {processModalEntry.incentiveItems.map((inc) => (
-                        <div key={inc.id} className="flex justify-between items-center bg-blue-50/50 p-2.5 rounded-xl border border-blue-100">
-                          <div>
-                            <p className="font-bold text-[#0D1F3D]">{inc.title}</p>
-                            <p className="text-[10px] text-slate-500 font-medium">{inc.customerName} • {inc.projectName}</p>
-                          </div>
-                          <span className="font-extrabold text-blue-700">+₹{inc.amount.toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Override Reason */}
-                <div className="space-y-1 pt-2 border-t border-slate-100">
-                  <label className="font-bold text-slate-700 block">Amendment / Override Reason <span className="text-slate-400 font-normal">(Required if modifying amounts)</span></label>
-                  <textarea
-                    rows={2}
-                    placeholder="Enter reason for modifying incentives or deductions..."
-                    value={processOverrideReason}
-                    onChange={(e) => setProcessOverrideReason(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-medium text-[#0D1F3D]"
-                  />
-                </div>
-
-                {/* Net Payable Highlight Banner */}
-                <div className="flex items-center justify-between rounded-xl bg-[#0D1F3D] p-4 text-white">
-                  <div>
-                    <p className="text-[10px] text-slate-300 uppercase font-bold">Calculated Net Payable Amount</p>
-                    <p className="text-xs text-slate-400 font-medium mt-0.5">Base + Incentives − Deductions</p>
-                  </div>
-                  <span className="text-2xl font-extrabold text-[#E20613]">
-                    ₹{(Number(processCalculatedBaseInput || 0) + Number(processIncentiveInput || 0) - Number(processPfInput || 0) - processModalEntry.tds).toLocaleString()}
-                  </span>
-                </div>
+            {/* Step Switch Bar for Draft Mode */}
+            {processModalEntry.status === 'Draft' && (
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
+                {[
+                  { id: 'edit', label: '1. Amend draft' },
+                  { id: 'preview', label: '2. Preview payslip' },
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setProcessModalMode(item.id as any)}
+                    className={`h-8 rounded-lg px-4 text-xs font-bold transition-all ${
+                      processModalMode === item.id ? 'bg-white text-[#0D1F3D] shadow-xs' : 'text-slate-500'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+                <p className="ml-auto text-[11px] font-medium text-slate-500 px-2">Drafts can be saved without generating the payslip.</p>
               </div>
             )}
 
-            {/* MODE 2: FULL OFFICIAL PAYSLIP PDF PREVIEW */}
-            {processModalMode === 'preview' && (
-              <div className="space-y-4">
-                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm space-y-5">
+            {/* MAIN EDIT / PREVIEW CONTENT SLOT - CONSTANT HEIGHT CONTAINER */}
+            <div className="min-h-[460px] max-h-[60vh] overflow-y-auto pr-1">
+              {processModalMode === 'edit' ? (
+                <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
+                  {/* Left Side Input & Incentive Cards */}
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1">
+                        <p className="text-[11px] font-semibold text-slate-500">Incentive Amount (₹)</p>
+                        <input
+                          type="number"
+                          value={processIncentiveInput}
+                          onChange={(e) => setProcessIncentiveInput(e.target.value)}
+                          disabled={processModalEntry.status === 'Paid'}
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-extrabold text-blue-600 focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1">
+                        <p className="text-[11px] font-semibold text-slate-500">PF Amount (₹)</p>
+                        <input
+                          type="number"
+                          value={processPfInput}
+                          onChange={(e) => setProcessPfInput(e.target.value)}
+                          disabled={processModalEntry.status === 'Paid'}
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-extrabold text-[#E20613] focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1">
+                        <p className="text-[11px] font-semibold text-slate-500">Calculated Base (₹)</p>
+                        <input
+                          type="number"
+                          value={processCalculatedBaseInput}
+                          onChange={(e) => setProcessCalculatedBaseInput(e.target.value)}
+                          disabled={processModalEntry.status === 'Paid'}
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-extrabold text-[#0D1F3D] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Included vs Pending Incentives Dual Box */}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {/* Included in this payslip */}
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3 space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-extrabold text-emerald-900">Included in this payslip</p>
+                            <p className="text-[10px] text-emerald-700 font-medium">Approved and finalized booking incentives.</p>
+                          </div>
+                          <span className="font-extrabold text-emerald-800 text-xs">
+                            +₹{processModalEntry.incentiveItems.reduce((a, b) => a + b.amount, 0).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {processModalEntry.incentiveItems.length > 0 ? (
+                            processModalEntry.incentiveItems.map((item) => (
+                              <div key={item.id} className="rounded-lg border border-emerald-100 bg-white p-2 flex justify-between items-center">
+                                <div>
+                                  <p className="font-bold text-[#0D1F3D]">{item.title}</p>
+                                  <p className="text-[10px] text-slate-400 font-medium">{item.customerName} • {item.projectName}</p>
+                                </div>
+                                <span className="font-extrabold text-emerald-700">+₹{item.amount.toLocaleString()}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="rounded-lg border border-dashed border-emerald-200 bg-white p-2.5 text-[11px] text-emerald-700 font-medium">
+                              No approved incentives included.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Promised, not paid yet */}
+                      <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-3 space-y-2">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-extrabold text-amber-900">Promised, not paid yet</p>
+                            <p className="text-[10px] text-amber-700 font-medium">Pending incentives stay out of payroll.</p>
+                          </div>
+                          <span className="font-extrabold text-amber-800 text-xs">
+                            ₹{processModalEntry.pendingIncentiveItems.reduce((a, b) => a + b.amount, 0).toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="space-y-1.5">
+                          {processModalEntry.pendingIncentiveItems.length > 0 ? (
+                            processModalEntry.pendingIncentiveItems.map((item) => (
+                              <div key={item.id} className="rounded-lg border border-amber-100 bg-white p-2 flex justify-between items-center">
+                                <div>
+                                  <p className="font-bold text-[#0D1F3D]">{item.title}</p>
+                                  <p className="text-[10px] text-slate-400 font-medium">{item.customerName} • {item.projectName}</p>
+                                </div>
+                                <span className="font-extrabold text-amber-800">₹{item.amount.toLocaleString()}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="rounded-lg border border-dashed border-amber-200 bg-white p-2.5 text-[11px] text-amber-700 font-medium">
+                              No pending promised incentives.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Override Reason */}
+                    <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1">
+                      <label className="font-bold text-slate-700 block">Override reason</label>
+                      <textarea
+                        rows={2}
+                        value={processOverrideReason}
+                        onChange={(e) => setProcessOverrideReason(e.target.value)}
+                        placeholder="Required only if you change incentive, PF, or calculated salary."
+                        disabled={processModalEntry.status === 'Paid'}
+                        className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs font-semibold text-[#0D1F3D]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Right Trueroot Sidebar */}
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-4 space-y-1">
+                      <p className="text-[10px] font-bold text-blue-700 uppercase">Net Payable Amount</p>
+                      <p className="text-2xl font-extrabold text-[#0D1F3D]">
+                        ₹{(Number(processCalculatedBaseInput || 0) + Number(processIncentiveInput || 0) - Number(processPfInput || 0) - processModalEntry.tds).toLocaleString()}
+                      </p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2.5 font-semibold text-slate-600">
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Original Net Payable</span>
+                        <span className="font-extrabold text-[#0D1F3D]">₹{processModalEntry.netPay.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">PF Amount</span>
+                        <span className="font-bold text-[#E20613]">-₹{Number(processPfInput || 0).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Current Status</span>
+                        <span className="font-bold text-[#0D1F3D]">{processModalEntry.status}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Salary Divisor</span>
+                        <span className="font-bold text-[#0D1F3D]">{processModalEntry.salaryDivisorDays} Days</span>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 space-y-1">
+                      <p className="font-extrabold">Next action</p>
+                      <p className="text-[11px] font-medium leading-snug">
+                        {processModalEntry.status === 'Draft' && 'This will finalize the payslip and lock the amounts. Manual edits will no longer be possible.'}
+                        {processModalEntry.status === 'Finalized' && 'This will mark the payroll as paid.'}
+                        {processModalEntry.status === 'Paid' && 'This payroll entry is marked as paid.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* MODE 2: PDF PREVIEW */
+                <div className="rounded-xl border border-slate-200 bg-white p-6 space-y-5">
                   <div className="flex flex-wrap items-center justify-between border-b-2 border-[#0D1F3D] pb-4 gap-4">
                     <div>
                       <h2 className="text-xl font-extrabold text-[#0D1F3D]">Visiblo Field Executive</h2>
@@ -798,27 +998,13 @@ export default function PayrollManagementPage() {
                     </div>
                   </div>
 
-                  {/* Details Grid */}
                   <div className="grid grid-cols-2 gap-4 rounded-xl bg-slate-50 p-4 border border-slate-100 text-xs">
-                    <div>
-                      <span className="text-slate-400 block font-medium">Employee Name</span>
-                      <span className="font-extrabold text-[#0D1F3D]">{processModalEntry.user}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block font-medium">Employee ID</span>
-                      <span className="font-extrabold text-[#0D1F3D]">{processModalEntry.empId}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block font-medium">Designation</span>
-                      <span className="font-bold text-slate-700">{processModalEntry.designation}</span>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 block font-medium">Team Name</span>
-                      <span className="font-bold text-slate-700">{processModalEntry.teamName}</span>
-                    </div>
+                    <div><span className="text-slate-400 block font-medium">Employee Name</span><span className="font-extrabold text-[#0D1F3D]">{processModalEntry.user}</span></div>
+                    <div><span className="text-slate-400 block font-medium">Employee Code</span><span className="font-extrabold text-[#0D1F3D]">{processModalEntry.empId}</span></div>
+                    <div><span className="text-slate-400 block font-medium">Designation</span><span className="font-bold text-slate-700">{processModalEntry.designation}</span></div>
+                    <div><span className="text-slate-400 block font-medium">Team Name</span><span className="font-bold text-slate-700">{processModalEntry.teamName}</span></div>
                   </div>
 
-                  {/* Earnings vs Deductions Table */}
                   <div className="grid grid-cols-2 gap-4 text-xs">
                     <div className="space-y-2">
                       <h4 className="font-extrabold text-emerald-700 border-b border-slate-200 pb-1">Earnings</h4>
@@ -837,27 +1023,6 @@ export default function PayrollManagementPage() {
                     </div>
                   </div>
 
-                  {/* Attendance Summary Cards */}
-                  <div className="grid grid-cols-4 gap-2 text-center text-xs font-extrabold">
-                    <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-2.5 text-emerald-800">
-                      <p className="text-[10px]">Present</p>
-                      <p className="text-sm mt-0.5">{processModalEntry.presentDays}</p>
-                    </div>
-                    <div className="rounded-xl border border-red-100 bg-red-50 p-2.5 text-red-800">
-                      <p className="text-[10px]">Absent / LOP</p>
-                      <p className="text-sm mt-0.5">{processModalEntry.absentDays}</p>
-                    </div>
-                    <div className="rounded-xl border border-blue-100 bg-blue-50 p-2.5 text-blue-800">
-                      <p className="text-[10px]">Holidays</p>
-                      <p className="text-sm mt-0.5">{processModalEntry.holidayDays}</p>
-                    </div>
-                    <div className="rounded-xl border border-amber-100 bg-amber-50 p-2.5 text-amber-800">
-                      <p className="text-[10px]">Leaves</p>
-                      <p className="text-sm mt-0.5">{processModalEntry.leaveDays}</p>
-                    </div>
-                  </div>
-
-                  {/* Net Payable Highlight */}
                   <div className="flex items-center justify-between rounded-xl bg-[#0D1F3D] p-4 text-white">
                     <div>
                       <p className="text-[10px] font-bold text-slate-300 uppercase">Net Payable Amount</p>
@@ -868,32 +1033,47 @@ export default function PayrollManagementPage() {
                     </span>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            {/* Modal Bottom Actions */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            {/* Bottom Actions Bar */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
               <Button variant="outline" size="sm" onClick={() => setProcessModalEntry(null)}>
                 Cancel
               </Button>
 
-              <div className="flex items-center gap-2">
-                {processModalEntry.status === 'Draft' && (
-                  <>
-                    <Button variant="outline" size="sm" onClick={handleSaveDraft} className="font-bold">
-                      Save Draft
-                    </Button>
-                    <Button variant="accent" size="sm" onClick={handleFinalizePayslip} className="font-bold shadow-xs flex items-center gap-1">
-                      <Check className="h-4 w-4" /> Finalize & Disburse
-                    </Button>
-                  </>
-                )}
-                {processModalEntry.status === 'Paid' && (
-                  <Button variant="accent" size="sm" onClick={() => window.print()} className="font-bold shadow-xs flex items-center gap-1">
-                    <Printer className="h-4 w-4" /> Print / Save PDF
+              {processModalEntry.status === 'Draft' && (
+                <>
+                  <Button variant="outline" size="sm" onClick={handleSaveDraft} className="font-bold">
+                    Save Draft
                   </Button>
-                )}
-              </div>
+                  <Button variant="accent" size="sm" onClick={handleFinalizePayslip} className="font-bold shadow-xs flex items-center gap-1">
+                    <Check className="h-4 w-4" /> Finalize
+                  </Button>
+                </>
+              )}
+
+              {processModalEntry.status === 'Finalized' && (
+                <>
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    onClick={() => handleMarkPaid(processModalEntry.id, processModalEntry.user)}
+                    className="font-bold shadow-xs flex items-center gap-1"
+                  >
+                    <CheckCircle2 className="h-4 w-4" /> Mark as Paid
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => window.print()} className="font-bold flex items-center gap-1">
+                    <Printer className="h-4 w-4" /> Print PDF
+                  </Button>
+                </>
+              )}
+
+              {processModalEntry.status === 'Paid' && (
+                <Button variant="accent" size="sm" onClick={() => window.print()} className="font-bold shadow-xs flex items-center gap-1">
+                  <Printer className="h-4 w-4" /> Print PDF
+                </Button>
+              )}
             </div>
           </div>
         )}
