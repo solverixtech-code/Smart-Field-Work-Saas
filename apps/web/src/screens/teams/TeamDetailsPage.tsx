@@ -171,53 +171,78 @@ export default function TeamDetailsPage() {
         </div>
       </div>
 
-      {/* TEAM LEADER & QUICK SUMMARY BAR */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
-        <div className="lg:col-span-6 flex items-center gap-3 border-b lg:border-b-0 lg:border-r border-slate-100 pb-3 lg:pb-0 lg:pr-4">
-          <img
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-            alt="Team Leader"
-            className="h-11 w-11 rounded-full object-cover border border-slate-200 shrink-0"
-          />
-          <div className="text-xs min-w-0 flex-1">
-            <span className="text-xs font-medium text-slate-500 block mb-0.5">Team Leader</span>
-            <p className="font-semibold text-slate-900 truncate">
-              Sanjay Yadav <span className="text-xs font-mono font-semibold text-slate-600">(TL-1003)</span>
-            </p>
-            <p className="text-xs font-normal text-slate-600 flex items-center gap-1 mt-0.5">
-              <Phone className="h-3 w-3 text-slate-500" /> +91 98765 43210
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/leader`)}
-            className="!px-2.5 !py-1 text-xs font-semibold text-slate-800 border-slate-300 shrink-0"
-          >
-            Reassign
-          </Button>
+      {/* Team Operational Hierarchy Card: Sales Manager -> Team Leader -> Field Executives */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3.5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-bold text-[#0D1F3D]">
+            Team Operational Hierarchy
+          </h3>
+          <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1">
+            Sales Manager → Team Leader → Field Executives
+          </span>
         </div>
 
-        <div className="lg:col-span-6 flex items-center justify-between text-xs text-slate-700 px-2">
-          <div className="flex items-center gap-2">
-            <Briefcase className="h-4 w-4 text-slate-500" />
-            <div>
-              <span className="text-xs font-medium text-slate-500 block">Department</span>
-              <span className="font-semibold text-slate-900">Sales</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+          {/* Level 1: Sales Manager */}
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0D1F3D] text-white font-bold text-xs shadow-xs">
+              SM
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="inline-block text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-md mb-1">
+                Sales Manager
+              </span>
+              <p className="text-xs font-bold text-[#0D1F3D] truncate">Amit Sharma</p>
+              <p className="text-[11px] text-slate-600 font-medium">Regional Sales Head</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-slate-500" />
-            <div>
-              <span className="text-xs font-medium text-slate-500 block">Region</span>
-              <span className="font-semibold text-slate-900">North Mumbai</span>
+          {/* Level 2: Team Leader */}
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+            <img
+              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
+              alt="Team Leader"
+              className="h-10 w-10 rounded-xl object-cover shrink-0 border border-slate-200 shadow-xs"
+            />
+            <div className="min-w-0 flex-1">
+              <span className="inline-block text-[11px] font-bold text-[#E20613] bg-red-50 border border-red-200/80 px-2 py-0.5 rounded-md mb-1">
+                Team Leader
+              </span>
+              <p className="text-xs font-bold text-[#0D1F3D] truncate">
+                Sanjay Yadav <span className="font-mono text-[11px] text-slate-600">(TL-1003)</span>
+              </p>
+              <p className="text-[11px] text-slate-600 font-medium">North Mumbai Territory</p>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/leader`)}
+              className="!px-2.5 !py-1 text-xs font-semibold text-slate-800 border-slate-300 shrink-0 hover:bg-slate-100"
+            >
+              Reassign
+            </Button>
           </div>
 
-          <div>
-            <span className="text-xs font-medium text-slate-500 block">Created On</span>
-            <span className="font-semibold text-slate-900">12 Apr 2024</span>
+          {/* Level 3: Field Executives */}
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white font-bold text-xs shadow-xs">
+              8 FE
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="inline-block text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md mb-1">
+                Field Executives
+              </span>
+              <p className="text-xs font-bold text-[#0D1F3D] truncate">8 Active Executives</p>
+              <p className="text-[11px] text-slate-600 font-medium">100% Territory Coverage</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/members`)}
+              className="!px-2.5 !py-1 text-xs font-semibold text-slate-800 border-slate-300 shrink-0 hover:bg-slate-100"
+            >
+              Members
+            </Button>
           </div>
         </div>
       </div>
