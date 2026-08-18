@@ -132,23 +132,14 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
 
   return (
     <div className="space-y-3 font-sans pb-10">
-      {/* Breadcrumbs & Page Header */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-          <span>Leads & Businesses</span>
-          <span>&gt;</span>
-          <span>Leads</span>
-          <span>&gt;</span>
-          <span className="font-bold text-[#0D1F3D]">All Leads</span>
+      {/* Page Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-[#0D1F3D]">All Leads</h1>
+          <p className="text-xs font-normal text-slate-500">
+            Manage and track all incoming leads from multiple sources.
+          </p>
         </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-          <div>
-            <h1 className="text-2xl font-bold text-[#0D1F3D]">All Leads</h1>
-            <p className="text-xs font-normal text-slate-500">
-              Manage and track all incoming leads from multiple sources.
-            </p>
-          </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
             <Button
@@ -188,7 +179,6 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
             </Button>
           </div>
         </div>
-      </div>
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 sm:grid-cols-3">

@@ -119,23 +119,14 @@ export default function AddLeadPage() {
 
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2">
-      {/* Breadcrumbs & Header Bar */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-          <span>Leads & Businesses</span>
-          <span>&gt;</span>
-          <span>Leads</span>
-          <span>&gt;</span>
-          <span className="font-bold text-[#0D1F3D]">Add Lead</span>
+      {/* Header Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-[#0D1F3D]">Add Lead</h1>
+          <p className="text-xs font-normal text-slate-500">
+            Add a new lead or business to your CRM.
+          </p>
         </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-          <div>
-            <h1 className="text-2xl font-bold text-[#0D1F3D]">Add Lead</h1>
-            <p className="text-xs font-normal text-slate-500">
-              Add a new lead or business to your CRM.
-            </p>
-          </div>
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Date Indicator Button */}
@@ -165,7 +156,6 @@ export default function AddLeadPage() {
             </Button>
           </div>
         </div>
-      </div>
 
       {/* Main Two-Column Grid Layout (matching moodboard screenshot) */}
       <form onSubmit={(e) => handleSubmit(e, false)} className="grid grid-cols-1 gap-4 lg:grid-cols-12">
