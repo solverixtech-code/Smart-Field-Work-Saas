@@ -33,6 +33,7 @@ import {
 } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
+import { AddMemberModal } from '../../components/teams/AddMemberModal';
 
 const salesTrendData = [
   { date: '14 May', sales: 620000, target: 1125000 },
@@ -68,6 +69,7 @@ export default function TeamDetailsPage() {
   const navigate = useNavigate();
   const { teamId } = useParams();
   const [activeTab, setActiveTab] = useState('Overview');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -161,12 +163,20 @@ export default function TeamDetailsPage() {
             <Edit className="h-4 w-4 text-slate-700" /> Edit Team
           </Button>
           <Button
-            variant="accent"
+            variant="outline"
             size="sm"
             onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/members`)}
-            className="flex items-center gap-2 font-semibold shadow-xs"
+            className="flex items-center gap-2 font-semibold text-slate-800 border-slate-300 shadow-none hover:bg-slate-50"
           >
             <Users className="h-4 w-4" /> Manage Members
+          </Button>
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 font-semibold shadow-xs"
+          >
+            <Plus className="h-4 w-4" /> Add Member
           </Button>
         </div>
       </div>
@@ -674,6 +684,13 @@ export default function TeamDetailsPage() {
           </div>
         </div>
       )}
+
+      {/* Add Member Modal */}
+      <AddMemberModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        teamName="Mumbai North Team"
+      />
     </div>
   );
 }

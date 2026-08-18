@@ -20,6 +20,7 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
+import { AddMemberModal } from '../../components/teams/AddMemberModal';
 
 interface TeamMemberItem {
   id: string;
@@ -156,6 +157,7 @@ export default function TeamMembersPage() {
   const [activeFilter, setActiveFilter] = useState<'All' | 'Active' | 'Inactive'>('All');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const filteredMembers = membersData.filter((m) => {
     const matchesFilter = activeFilter === 'All' || m.status === activeFilter;
@@ -203,7 +205,7 @@ export default function TeamMembersPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => alert('Opening Add Member form...')}
+            onClick={() => setIsAddModalOpen(true)}
             className="flex items-center gap-2 font-bold shadow-sm"
           >
             <Plus className="h-4 w-4" /> Add Member
@@ -590,6 +592,13 @@ export default function TeamMembersPage() {
           </div>
         </div>
       </div>
+
+      {/* Add Member Modal */}
+      <AddMemberModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        teamName="Mumbai North Team"
+      />
     </div>
   );
 }
