@@ -304,14 +304,14 @@ export default function AppShell() {
         {/* Brand Header */}
         <div className="flex h-20 flex-none items-center justify-between border-b border-slate-100 px-3">
           <NavLink to="/admin/dashboard" className="flex items-center">
-            <div className="relative flex h-16 w-[205px] items-center justify-start overflow-hidden">
+            <div className="relative flex h-16 w-[225px] items-center justify-start overflow-hidden">
               <img
                 src={bigLogo}
                 alt="Smart Field Work Logo"
                 className={`absolute transition-opacity duration-300 ease-in-out ${
                   showBigLogo ? 'opacity-100' : 'opacity-0'
                 }`}
-                style={{ width: '195px', maxHeight: '52px', objectFit: 'contain' }}
+                style={{ width: '220px', maxHeight: '60px', objectFit: 'contain' }}
               />
               <img
                 src={smallLogo}
