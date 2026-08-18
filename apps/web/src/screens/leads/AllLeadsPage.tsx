@@ -132,51 +132,61 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
 
   return (
     <div className="space-y-3 font-sans pb-10">
-      {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-extrabold text-[#0D1F3D]">{getCategoryTitle()}</h1>
-          <p className="text-xs font-medium text-slate-500">
-            Track lead lifecycle stages, geotagged field interactions, executive assignments, and pipeline revenue.
-          </p>
+      {/* Breadcrumbs & Page Header */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+          <span>Leads & Businesses</span>
+          <span>&gt;</span>
+          <span>Leads</span>
+          <span>&gt;</span>
+          <span className="font-bold text-[#0D1F3D]">All Leads</span>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/admin/leads/import')}
-            className="flex items-center gap-1.5 font-bold"
-          >
-            <Upload className="h-4 w-4 text-blue-600" /> Import Leads
-          </Button>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div>
+            <h1 className="text-2xl font-bold text-[#0D1F3D]">All Leads</h1>
+            <p className="text-xs font-normal text-slate-500">
+              Manage and track all incoming leads from multiple sources.
+            </p>
+          </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/admin/leads/export')}
-            className="flex items-center gap-1.5 font-bold"
-          >
-            <Download className="h-4 w-4 text-emerald-600" /> Export Data
-          </Button>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/admin/leads/import')}
+              className="flex items-center gap-1.5 font-bold"
+            >
+              <Upload className="h-4 w-4 text-blue-600" /> Import Leads
+            </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/admin/leads/bulk-assign')}
-            className="flex items-center gap-1.5 font-bold"
-          >
-            <UserCheck className="h-4 w-4 text-purple-600" /> Bulk Assign
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/admin/leads/export')}
+              className="flex items-center gap-1.5 font-bold"
+            >
+              <Download className="h-4 w-4 text-emerald-600" /> Export Data
+            </Button>
 
-          <Button
-            variant="accent"
-            size="sm"
-            onClick={() => navigate('/admin/leads/create')}
-            className="flex items-center gap-1.5 font-bold shadow-xs"
-          >
-            <UserPlus className="h-4 w-4" /> Add New Lead
-          </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/admin/leads/bulk-assign')}
+              className="flex items-center gap-1.5 font-bold"
+            >
+              <UserCheck className="h-4 w-4 text-purple-600" /> Bulk Assign
+            </Button>
+
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => navigate('/admin/leads/create')}
+              className="flex items-center gap-1.5 font-bold shadow-xs"
+            >
+              <UserPlus className="h-4 w-4" /> Add New Lead
+            </Button>
+          </div>
         </div>
       </div>
 

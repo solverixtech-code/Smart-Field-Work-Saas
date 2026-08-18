@@ -13,6 +13,7 @@ import {
   Save,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
 import { mockLeadsData, LeadItem } from './leadsData';
 
 export default function EditLeadPage() {
@@ -152,36 +153,36 @@ export default function EditLeadPage() {
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="font-bold text-slate-700 block">Lead Stage</label>
-            <select
+          <div>
+            <Select
+              label="Lead Stage"
               value={stage}
               onChange={(e) => setStage(e.target.value as any)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 font-bold text-[#0D1F3D]"
-            >
-              <option>New / Fresh</option>
-              <option>Contacted</option>
-              <option>Meeting Scheduled</option>
-              <option>Demo Completed</option>
-              <option>Proposal Sent</option>
-              <option>Negotiation</option>
-              <option>Won / Converted</option>
-              <option>Lost</option>
-            </select>
+              options={[
+                { value: 'New / Fresh', label: 'New / Fresh' },
+                { value: 'Contacted', label: 'Contacted' },
+                { value: 'Meeting Scheduled', label: 'Meeting Scheduled' },
+                { value: 'Demo Completed', label: 'Demo Completed' },
+                { value: 'Proposal Sent', label: 'Proposal Sent' },
+                { value: 'Negotiation', label: 'Negotiation' },
+                { value: 'Won / Converted', label: 'Won / Converted' },
+                { value: 'Lost', label: 'Lost' },
+              ]}
+            />
           </div>
 
-          <div className="space-y-1">
-            <label className="font-bold text-slate-700 block">Priority Level</label>
-            <select
+          <div>
+            <Select
+              label="Priority Level"
               value={priority}
               onChange={(e) => setPriority(e.target.value as any)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 font-bold text-[#0D1F3D]"
-            >
-              <option>Urgent</option>
-              <option>High</option>
-              <option>Medium</option>
-              <option>Low</option>
-            </select>
+              options={[
+                { value: 'Urgent', label: 'Urgent' },
+                { value: 'High', label: 'High' },
+                { value: 'Medium', label: 'Medium' },
+                { value: 'Low', label: 'Low' },
+              ]}
+            />
           </div>
         </div>
 

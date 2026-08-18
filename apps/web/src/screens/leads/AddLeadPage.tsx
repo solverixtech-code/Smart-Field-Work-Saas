@@ -16,6 +16,7 @@ import {
   CloudUpload,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
 
 export default function AddLeadPage() {
   const navigate = useNavigate();
@@ -297,20 +298,20 @@ export default function AddLeadPage() {
               </div>
 
               {/* Industry / Category */}
-              <div className="space-y-1 sm:col-span-1">
-                <label className="font-bold text-slate-700 block">Industry / Category</label>
-                <select
+              <div className="sm:col-span-1">
+                <Select
+                  label="Industry / Category"
                   value={industry}
                   onChange={(e) => setIndustry(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-700 focus:border-purple-600 focus:outline-none"
-                >
-                  <option value="">Select industry or category</option>
-                  <option value="Real Estate">Real Estate & Infrastructure</option>
-                  <option value="Healthcare">Healthcare & Pharma</option>
-                  <option value="FMCG">FMCG & Consumer Goods</option>
-                  <option value="Logistics">Logistics & Supply Chain</option>
-                  <option value="BFSI">Banking & Finance</option>
-                </select>
+                  options={[
+                    { value: '', label: 'Select industry or category' },
+                    { value: 'Real Estate', label: 'Real Estate & Infrastructure' },
+                    { value: 'Healthcare', label: 'Healthcare & Pharma' },
+                    { value: 'FMCG', label: 'FMCG & Consumer Goods' },
+                    { value: 'Logistics', label: 'Logistics & Supply Chain' },
+                    { value: 'BFSI', label: 'Banking & Finance' },
+                  ]}
+                />
               </div>
             </div>
           </div>
@@ -321,43 +322,39 @@ export default function AddLeadPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Lead Source */}
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">
-                  Lead Source <span className="text-red-500">*</span>
-                </label>
-                <select
+              <div>
+                <Select
+                  label="Lead Source *"
                   value={leadSource}
                   onChange={(e) => setLeadSource(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-700 focus:border-purple-600 focus:outline-none"
-                >
-                  <option value="">Select lead source</option>
-                  <option value="Website">Website</option>
-                  <option value="Field Visit">Field Visit</option>
-                  <option value="Referral">Referral</option>
-                  <option value="LinkedIn">LinkedIn</option>
-                  <option value="Inbound Call">Inbound Call</option>
-                  <option value="Cold Outreach">Cold Outreach</option>
-                </select>
+                  options={[
+                    { value: '', label: 'Select lead source' },
+                    { value: 'Website', label: 'Website' },
+                    { value: 'Field Visit', label: 'Field Visit' },
+                    { value: 'Referral', label: 'Referral' },
+                    { value: 'LinkedIn', label: 'LinkedIn' },
+                    { value: 'Inbound Call', label: 'Inbound Call' },
+                    { value: 'Cold Outreach', label: 'Cold Outreach' },
+                  ]}
+                />
               </div>
 
               {/* Lead Stage */}
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">
-                  Lead Stage <span className="text-red-500">*</span>
-                </label>
-                <select
+              <div>
+                <Select
+                  label="Lead Stage *"
                   value={leadStage}
                   onChange={(e) => setLeadStage(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-700 focus:border-purple-600 focus:outline-none"
-                >
-                  <option value="New">New</option>
-                  <option value="Contacted">Contacted</option>
-                  <option value="Meeting Scheduled">Meeting Scheduled</option>
-                  <option value="Demo Completed">Demo Completed</option>
-                  <option value="Proposal Sent">Proposal Sent</option>
-                  <option value="Negotiation">Negotiation</option>
-                  <option value="Won / Converted">Won / Converted</option>
-                </select>
+                  options={[
+                    { value: 'New', label: 'New' },
+                    { value: 'Contacted', label: 'Contacted' },
+                    { value: 'Meeting Scheduled', label: 'Meeting Scheduled' },
+                    { value: 'Demo Completed', label: 'Demo Completed' },
+                    { value: 'Proposal Sent', label: 'Proposal Sent' },
+                    { value: 'Negotiation', label: 'Negotiation' },
+                    { value: 'Won / Converted', label: 'Won / Converted' },
+                  ]}
+                />
               </div>
 
               {/* Lead Priority Segmented Pills */}
@@ -471,19 +468,19 @@ export default function AddLeadPage() {
                   />
                 </div>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700 block">State</label>
-                  <select
+                <div>
+                  <Select
+                    label="State"
                     value={state}
                     onChange={(e) => setState(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-700 focus:border-purple-600 focus:outline-none"
-                  >
-                    <option value="">Select state</option>
-                    <option value="Maharashtra">Maharashtra</option>
-                    <option value="Gujarat">Gujarat</option>
-                    <option value="Karnataka">Karnataka</option>
-                    <option value="Delhi">Delhi</option>
-                  </select>
+                    options={[
+                      { value: '', label: 'Select state' },
+                      { value: 'Maharashtra', label: 'Maharashtra' },
+                      { value: 'Gujarat', label: 'Gujarat' },
+                      { value: 'Karnataka', label: 'Karnataka' },
+                      { value: 'Delhi', label: 'Delhi' },
+                    ]}
+                  />
                 </div>
 
                 <div className="space-y-1">
@@ -554,47 +551,45 @@ export default function AddLeadPage() {
             <h3 className="text-sm font-bold text-[#0D1F3D]">Assign & Ownership</h3>
 
             <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">
-                  Assign To <span className="text-red-500">*</span>
-                </label>
-                <select
+              <div>
+                <Select
+                  label="Assign To *"
                   value={assignTo}
                   onChange={(e) => setAssignTo(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-700 focus:border-purple-600 focus:outline-none"
-                >
-                  <option value="">Select executive</option>
-                  <option value="Rahul Verma">Rahul Verma (FE-1001)</option>
-                  <option value="Priya Mehta">Priya Mehta (FE-1002)</option>
-                  <option value="Sanjay Yadav">Sanjay Yadav (FE-1003)</option>
-                </select>
+                  options={[
+                    { value: '', label: 'Select executive' },
+                    { value: 'Rahul Verma', label: 'Rahul Verma (FE-1001)' },
+                    { value: 'Priya Mehta', label: 'Priya Mehta (FE-1002)' },
+                    { value: 'Sanjay Yadav', label: 'Sanjay Yadav (FE-1003)' },
+                  ]}
+                />
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Assign Team</label>
-                <select
+              <div>
+                <Select
+                  label="Assign Team"
                   value={assignTeam}
                   onChange={(e) => setAssignTeam(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-700 focus:border-purple-600 focus:outline-none"
-                >
-                  <option value="">Select team</option>
-                  <option value="Mumbai North Team">Mumbai North Team</option>
-                  <option value="Mumbai West Team">Mumbai West Team</option>
-                  <option value="Thane Team">Thane Central</option>
-                </select>
+                  options={[
+                    { value: '', label: 'Select team' },
+                    { value: 'Mumbai North Team', label: 'Mumbai North Team' },
+                    { value: 'Mumbai West Team', label: 'Mumbai West Team' },
+                    { value: 'Thane Team', label: 'Thane Central' },
+                  ]}
+                />
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Assign Team Leader</label>
-                <select
+              <div>
+                <Select
+                  label="Assign Team Leader"
                   value={assignTeamLeader}
                   onChange={(e) => setAssignTeamLeader(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-700 focus:border-purple-600 focus:outline-none"
-                >
-                  <option value="">Select team leader</option>
-                  <option value="Sanjay Yadav">Sanjay Yadav (TL-1003)</option>
-                  <option value="Priya Mehta">Priya Mehta (TL-1007)</option>
-                </select>
+                  options={[
+                    { value: '', label: 'Select team leader' },
+                    { value: 'Sanjay Yadav', label: 'Sanjay Yadav (TL-1003)' },
+                    { value: 'Priya Mehta', label: 'Priya Mehta (TL-1007)' },
+                  ]}
+                />
               </div>
             </div>
           </div>
@@ -645,19 +640,19 @@ export default function AddLeadPage() {
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">How did they hear about us?</label>
-                <select
+              <div>
+                <Select
+                  label="How did they hear about us?"
                   value={howHeard}
                   onChange={(e) => setHowHeard(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-700 focus:border-purple-600 focus:outline-none"
-                >
-                  <option value="">Select an option</option>
-                  <option value="Google Search">Google Search</option>
-                  <option value="Social Media">Social Media</option>
-                  <option value="Event / Expo">Event / Expo</option>
-                  <option value="Word of Mouth">Word of Mouth</option>
-                </select>
+                  options={[
+                    { value: '', label: 'Select an option' },
+                    { value: 'Google Search', label: 'Google Search' },
+                    { value: 'Social Media', label: 'Social Media' },
+                    { value: 'Event / Expo', label: 'Event / Expo' },
+                    { value: 'Word of Mouth', label: 'Word of Mouth' },
+                  ]}
+                />
               </div>
 
               <div className="space-y-1">
