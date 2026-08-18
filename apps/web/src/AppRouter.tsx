@@ -33,6 +33,7 @@ import AssignTeamLeaderPage from './screens/teams/AssignTeamLeaderPage';
 import TeamMembersPage from './screens/teams/TeamMembersPage';
 import TeamPerformancePage from './screens/teams/TeamPerformancePage';
 import TeamTargetsPage from './screens/teams/TeamTargetsPage';
+import MasterManagementPage from './screens/admin/masters/MasterManagementPage';
 
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
@@ -241,6 +242,24 @@ export default function AppRouter() {
             >
               <Route path="/admin/payroll" element={<PayrollManagementPage />} />
               <Route path="/admin/payroll/settings" element={<PayrollSettingsPage />} />
+            </Route>
+
+            {/* System Masters Management Route */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                    Role.FINANCE_OPS,
+                    Role.SUPPORT,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/masters" element={<MasterManagementPage />} />
             </Route>
           </Route>
         </Route>

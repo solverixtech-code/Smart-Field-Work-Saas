@@ -373,3 +373,23 @@ model Payslip {
   @@index([paymentStatus])
 }
 
+// ─── Master Data Management ───────────────────────────────────────────────────
+
+model MasterRecord {
+  id              String   @id @default(uuid())
+  category        String   // designation, team, incentive_type, allowance_type, deduction_type, shift, territory, expense_category, lead_stage, lead_source
+  name            String
+  code            String
+  description     String?
+  displayColor    String?  // hex code or tailwind color class
+  sortOrder       Int      @default(0)
+  isActive        Boolean  @default(true)
+  isSystemDefault Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([category, code])
+  @@index([category])
+  @@index([category, isActive])
+}
+

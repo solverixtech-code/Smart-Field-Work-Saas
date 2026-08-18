@@ -20,6 +20,7 @@ import {
   Smartphone,
   CreditCard,
   Building2,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store';
 import { clearCredentials } from '../store/slices/authSlice';
@@ -130,8 +131,22 @@ const navCategories: NavCategory[] = [
     ],
   },
   {
-    title: 'System & Analytics',
+    title: 'System & Masters',
     items: [
+      {
+        label: 'System Masters',
+        icon: SlidersHorizontal,
+        to: '/admin/masters',
+        allowed: [
+          Role.SUPER_ADMIN,
+          Role.ADMIN,
+          Role.SALES_MANAGER,
+          Role.TEAM_LEADER,
+          Role.FINANCE_OPS,
+          Role.SUPPORT,
+        ],
+        badge: '9 Masters',
+      },
       {
         label: 'Real-time Activity',
         icon: Radio,
@@ -343,6 +358,11 @@ export default function AppShell() {
                   <NavLink
                     key={item.to}
                     to={item.to}
+                    onClick={(e) => {
+                      if (!isAllowed) {
+                        e.preventDefault();
+                      }
+                    }}
                     title={!showBigLogo ? item.label : undefined}
                     className={`group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ${
                       isActive
