@@ -139,7 +139,7 @@ export default function AddLeadPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             {/* Date Indicator Button */}
-            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs">
+            <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs">
               <Calendar className="h-4 w-4 text-slate-500" />
               <span>May 18, 2025</span>
               <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
@@ -172,7 +172,7 @@ export default function AddLeadPage() {
         {/* LEFT COLUMN (8 COLS) */}
         <div className="space-y-4 lg:col-span-8">
           {/* Card 1: Lead Type */}
-          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3">
+          <div className="rounded-lg border border-slate-200/80 bg-white p-5 shadow-xs space-y-3">
             <label className="text-xs font-bold text-[#0D1F3D] block">
               Lead Type <span className="text-red-500">*</span>
             </label>
@@ -180,7 +180,7 @@ export default function AddLeadPage() {
               {/* Option 1: Business / Company */}
               <label
                 onClick={() => setLeadType('business')}
-                className={`flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer transition-all ${
+                className={`flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${
                   leadType === 'business'
                     ? 'border-purple-600 bg-purple-50/20 ring-1 ring-purple-600'
                     : 'border-slate-200 bg-white hover:bg-slate-50'
@@ -200,7 +200,7 @@ export default function AddLeadPage() {
               {/* Option 2: Individual / Person */}
               <label
                 onClick={() => setLeadType('individual')}
-                className={`flex items-center gap-3 rounded-xl border p-3.5 cursor-pointer transition-all ${
+                className={`flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${
                   leadType === 'individual'
                     ? 'border-purple-600 bg-purple-50/20 ring-1 ring-purple-600'
                     : 'border-slate-200 bg-white hover:bg-slate-50'
@@ -220,7 +220,7 @@ export default function AddLeadPage() {
           </div>
 
           {/* Card 2: Basic Information */}
-          <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold">
+          <div className="rounded-lg border border-slate-200/80 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold">
             <h3 className="text-sm font-bold text-[#0D1F3D]">Basic Information</h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -234,7 +234,7 @@ export default function AddLeadPage() {
                   placeholder="Enter business or company name"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:border-purple-600 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:border-purple-600 focus:outline-none"
                 />
               </div>
 
@@ -248,7 +248,7 @@ export default function AddLeadPage() {
                   placeholder="Enter full name"
                   value={contactPerson}
                   onChange={(e) => setContactPerson(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:border-purple-600 focus:outline-none"
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:border-purple-600 focus:outline-none"
                 />
               </div>
 
@@ -257,7 +257,7 @@ export default function AddLeadPage() {
                 <label className="font-bold text-slate-700 block">
                   Mobile Number <span className="text-red-500">*</span>
                 </label>
-                <div className="flex rounded-xl border border-slate-200 bg-white overflow-hidden focus-within:border-purple-600">
+                <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden focus-within:border-purple-600">
                   <div className="flex items-center gap-1 bg-slate-50 px-2.5 py-2 border-r border-slate-200 text-slate-600 font-bold">
                     <span>🇮🇳</span>
                     <span>+91</span>

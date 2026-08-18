@@ -32,7 +32,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           <select
             id={id}
             ref={ref}
-            className={`w-full appearance-none rounded-xl border bg-white py-2.5 text-xs font-semibold text-[#0D1F3D] transition-all cursor-pointer placeholder:text-slate-400 focus:border-purple-600 focus:outline-none ${
+            className={`w-full appearance-none rounded-lg border bg-white py-2.5 text-xs font-semibold text-[#0D1F3D] transition-all cursor-pointer placeholder:text-slate-400 focus:border-purple-600 focus:outline-none ${
               leftIcon ? 'pl-10 pr-9' : 'pl-3.5 pr-9'
             } ${
               error ? 'border-rose-300 focus:border-rose-500' : 'border-slate-200'
