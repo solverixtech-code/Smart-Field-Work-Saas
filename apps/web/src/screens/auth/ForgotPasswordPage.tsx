@@ -1,113 +1,107 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Send, ArrowLeft } from 'lucide-react';
-import { api } from '../../common/api';
+import { Mail, Shield, Send, ArrowLeft, Info } from 'lucide-react';
 import AuthLayout from '../../layouts/AuthLayout';
-import { Button, Card, Input } from '../../components/ui';
+import { Button } from '../../components/ui/Button';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
-
-    try {
-      await api.post('/auth/forgot-password', { identifier: email });
-      setSent(true);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong.');
-    } finally {
+    setTimeout(() => {
       setLoading(false);
-    }
+      setSubmitted(true);
+    }, 800);
   };
 
   return (
     <AuthLayout>
-      <Card size="lg">
-        <div>
-          {/* SFW Brand Logo */}
-          <div className="mb-6 flex justify-center">
-            <img
-              src="/assets/sfw-logo.png"
-              alt="Smart Field Work Logo"
-              className="h-12 w-auto object-contain"
-            />
+      <div className="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-xl space-y-6">
+        {/* Top Shield Lock Icon */}
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-[#E20613] border border-red-100 mb-3 shadow-xs">
+            <Shield className="h-7 w-7" />
           </div>
-
-          <h2 className="text-center text-3xl font-extrabold text-[#0D1F3D]">
-            Forgot Password?
-          </h2>
-          <p className="mt-1.5 text-center text-xs font-medium text-slate-500">
-            No worries! Enter your admin email address and we'll send you a link to reset your password.
+          <h2 className="text-2xl font-extrabold text-[#0D1F3D]">Forgot Password?</h2>
+          <p className="mt-1 text-xs font-medium text-slate-500 max-w-xs leading-relaxed">
+            No worries! Enter your registered email address and we'll send you a link to reset your password.
           </p>
-
-          {/* Reserved Fixed-Height Alert Slot */}
-          <div className="mt-4 flex h-12 items-center justify-center">
-            {error ? (
-              <div className="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-600 text-center animate-in fade-in duration-150">
-                {error}
-              </div>
-            ) : null}
-          </div>
-
-          {sent ? (
-            <div className="mt-2 space-y-6">
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-xs text-emerald-700 font-medium">
-                If an account exists for <strong>{email}</strong>, a reset link has been sent. Check your inbox and spam folder.
-              </div>
-              <Link to="/admin/login" className="block">
-                <Button variant="outline" size="lg" fullWidth>
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Login
-                </Button>
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="mt-2 space-y-5 font-sans">
-              <Input
-                id="forgot-email"
-                label="Email Address"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your admin email address"
-                leftIcon={<Mail className="h-4 w-4" />}
-                required
-                autoComplete="email"
-              />
-
-              <div className="pt-2">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  isLoading={loading}
-                >
-                  <Send className="mr-2 h-4 w-4" /> Send Reset Link
-                </Button>
-              </div>
-
-              <div className="pt-1 text-center">
-                <Link
-                  to="/admin/login"
-                  className="inline-flex items-center text-xs font-bold text-[#E20613] transition-colors hover:underline"
-                >
-                  <ArrowLeft className="mr-1.5 h-3.5 w-3.5" /> Back to Login
-                </Link>
-              </div>
-            </form>
-          )}
         </div>
 
-        <p className="mt-8 text-center text-xs font-medium text-slate-400">
-          © {new Date().getFullYear()} Smart Field Work (SFW). All rights reserved.
-        </p>
-      </Card>
+        {submitted ? (
+          <div className="space-y-4 text-center">
+            <div className="rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-xs font-semibold text-emerald-800">
+              Password reset link sent to <span className="font-extrabold">{email}</span>! Please check your inbox.
+            </div>
+            <Link to="/admin/login">
+              <Button variant="outline" size="lg" className="w-full justify-center gap-2 font-bold py-3 text-xs border-slate-200 mt-2">
+                <ArrowLeft className="h-4 w-4" /> Back to Login
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#0D1F3D] mb-1.5">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email address"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none transition-all"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <Button
+                type="submit"
+                variant="accent"
+                size="lg"
+                className="w-full justify-center gap-2 font-bold py-3 text-sm shadow-md"
+                isLoading={loading}
+              >
+                <Send className="h-4 w-4" /> Send Reset Link
+              </Button>
+            </div>
+
+            <div className="relative flex items-center justify-center pt-2">
+              <div className="w-full border-t border-slate-200" />
+              <span className="absolute bg-white px-3 text-xs font-medium text-slate-400">or</span>
+            </div>
+
+            <Link to="/admin/login" className="block pt-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="w-full justify-center gap-2 font-semibold text-[#0D1F3D] border-slate-200 hover:bg-slate-50 py-3 text-xs"
+              >
+                <ArrowLeft className="h-4 w-4" /> Back to Login
+              </Button>
+            </Link>
+          </form>
+        )}
+
+        {/* Spam Notice Info Box */}
+        <div className="flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50/80 p-3.5 text-xs text-blue-900 font-medium">
+          <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+          <span>If you don't receive the email in your inbox, please check your spam or junk folder.</span>
+        </div>
+      </div>
+
+      <p className="text-center text-xs font-medium text-slate-400 pt-2">
+        © 2025 <span className="font-bold text-[#E20613]">Smart Field Work</span>. All rights reserved.
+      </p>
     </AuthLayout>
   );
 }

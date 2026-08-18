@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Shield, ArrowRightCircle, ShieldCheck } from 'lucide-react';
 import { useAppDispatch } from '../../store';
 import { setCredentials } from '../../store/slices/authSlice';
 import { saveRefreshToken } from '../../common/authSession';
 import { api } from '../../common/api';
 import { AuthTokensSchema, OtpRequiredResponseSchema } from '@visiblo/shared';
 import AuthLayout from '../../layouts/AuthLayout';
-import { Button, Card, Input, Checkbox } from '../../components/ui';
+import { Button } from '../../components/ui/Button';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@visibloai.com');
+  const [password, setPassword] = useState('Visiblo@2025');
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const dispatch = useAppDispatch();
@@ -47,7 +47,7 @@ export default function LoginPage() {
       dispatch(setCredentials({ accessToken: tokens.accessToken, user: tokens.user }));
       navigate('/admin/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      setError(err.response?.data?.message || 'Login failed. Please check credentials.');
     } finally {
       setLoading(false);
     }
@@ -55,113 +55,129 @@ export default function LoginPage() {
 
   return (
     <AuthLayout>
-      <Card size="lg">
-        <div>
-          {/* SFW Brand Logo */}
-          <div className="mb-6 flex justify-center">
-            <img
-              src="/assets/sfw-logo.png"
-              alt="Smart Field Work Logo"
-              className="h-12 w-auto object-contain"
-            />
+      <div className="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-xl space-y-6">
+        {/* Top Shield Lock Icon */}
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-[#E20613] border border-red-100 mb-3 shadow-xs">
+            <Shield className="h-7 w-7" />
           </div>
-
-          {/* Heading */}
-          <h2 className="text-center text-3xl font-extrabold text-[#0D1F3D]">
-            Welcome Back!
-          </h2>
-          <p className="mt-1.5 text-center text-xs font-medium text-slate-500">
-            Login to your Smart Field Work Admin Panel
+          <h2 className="text-2xl font-extrabold text-[#0D1F3D]">Admin Login</h2>
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Welcome back! Please login to your admin account to continue.
           </p>
+        </div>
 
-          {/* Reserved Fixed-Height Alert Slot */}
-          <div className="mt-4 flex h-12 items-center justify-center">
-            {error ? (
-              <div className="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-600 text-center animate-in fade-in duration-150">
-                {error}
-              </div>
-            ) : null}
+        {/* Error Alert */}
+        {error && (
+          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-600 text-center animate-in fade-in">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email Input */}
+          <div>
+            <label className="block text-xs font-semibold text-[#0D1F3D] mb-1.5">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email address"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none transition-all"
+                required
+              />
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-2 space-y-4 font-sans">
-            {/* Email */}
-            <Input
-              id="login-email"
-              label="Email Address"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              leftIcon={<Mail className="h-4 w-4" />}
-              required
-              autoComplete="email"
-            />
-
-            {/* Password */}
-            <div>
-              <div className="mb-1.5 flex items-center justify-between">
-                <label htmlFor="login-password" className="text-xs font-semibold text-[#0D1F3D]">
-                  Password
-                </label>
-                <Link
-                  to="/admin/forgot-password"
-                  className="text-[11px] font-bold text-[#E20613] transition-colors hover:underline"
-                >
-                  Forgot Password?
-                </Link>
-              </div>
-              <Input
-                id="login-password"
+          {/* Password Input */}
+          <div>
+            <label className="block text-xs font-semibold text-[#0D1F3D] mb-1.5">
+              Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+              <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                leftIcon={<Lock className="h-4 w-4" />}
-                rightIcon={
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="hover:text-slate-600"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                }
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-10 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none transition-all"
                 required
-                autoComplete="current-password"
               />
-            </div>
-
-            {/* Custom Designed Checkbox */}
-            <div className="pt-1">
-              <Checkbox
-                id="remember"
-                checked={remember}
-                onChange={setRemember}
-                label="Remember me"
-              />
-            </div>
-
-            {/* Solid Primary Button */}
-            <div className="pt-2">
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                fullWidth
-                isLoading={loading}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600"
               >
-                Login
-              </Button>
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
-          </form>
+          </div>
+
+          {/* Remember Me & Forgot Password */}
+          <div className="flex items-center justify-between pt-1 text-xs">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+              />
+              <span className="font-semibold text-slate-700">Remember Me</span>
+            </label>
+            <Link
+              to="/admin/forgot-password"
+              className="font-bold text-[#E20613] hover:underline"
+            >
+              Forgot Password?
+            </Link>
+          </div>
+
+          {/* Login Button */}
+          <div className="pt-2">
+            <Button
+              type="submit"
+              variant="accent"
+              size="lg"
+              className="w-full justify-center gap-2 font-bold py-3 text-sm shadow-md"
+              isLoading={loading}
+            >
+              <ArrowRightCircle className="h-4 w-4" /> Login
+            </Button>
+          </div>
+        </form>
+
+        {/* Divider */}
+        <div className="relative flex items-center justify-center">
+          <div className="w-full border-t border-slate-200" />
+          <span className="absolute bg-white px-3 text-xs font-medium text-slate-400">or</span>
         </div>
 
-        {/* Footer pinned at bottom */}
-        <p className="mt-8 text-center text-xs font-medium text-slate-400">
-          © {new Date().getFullYear()} Smart Field Work (SFW). All rights reserved.
-        </p>
-      </Card>
+        {/* Login with SSO */}
+        <Button
+          type="button"
+          variant="outline"
+          size="lg"
+          onClick={() => alert('Redirecting to Single Sign-On (SSO)...')}
+          className="w-full justify-center gap-2 font-semibold text-[#0D1F3D] border-slate-200 hover:bg-slate-50 py-3 text-xs"
+        >
+          <ShieldCheck className="h-4 w-4 text-blue-600" /> Login with SSO
+        </Button>
+
+        {/* Security Footer Note */}
+        <div className="flex items-center justify-center gap-2 text-[11px] font-medium text-slate-500 pt-2 border-t border-slate-100">
+          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+          <span>Secure admin access. All data is encrypted and protected.</span>
+        </div>
+      </div>
+
+      <p className="text-center text-xs font-medium text-slate-400 pt-2">
+        © 2025 <span className="font-bold text-[#E20613]">Smart Field Work</span>. All rights reserved.
+      </p>
     </AuthLayout>
   );
 }
