@@ -21,6 +21,8 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
+import { SetTeamTargetsModal } from '../../components/teams/SetTeamTargetsModal';
+import { EditSingleTargetModal } from '../../components/teams/EditSingleTargetModal';
 
 const teamTargetItems = [
   { id: '1', metric: 'Revenue', sub: 'Total revenue in ₹', target: '₹15,00,000', achieved: '₹12,45,000', pct: 83, status: 'On Track', statusBadge: 'bg-emerald-50 text-emerald-600 border border-emerald-200' },
@@ -54,6 +56,8 @@ export default function TeamTargetsPage() {
   const isAllTeams = !teamId || teamId === 'all' || teamId === 'targets';
 
   const [activeTab, setActiveTab] = useState<'Team Targets' | 'Member Targets'>('Team Targets');
+  const [isSetTargetsModalOpen, setIsSetTargetsModalOpen] = useState(false);
+  const [editingMetric, setEditingMetric] = useState<any>(null);
 
   return (
     <div className="space-y-6 font-sans">
@@ -90,7 +94,7 @@ export default function TeamTargetsPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => alert('Opening Target Setter Modal...')}
+            onClick={() => setIsSetTargetsModalOpen(true)}
             className="flex items-center gap-2 font-bold shadow-xs"
           >
             <Plus className="h-4 w-4" /> Set Team Targets
@@ -308,7 +312,11 @@ export default function TeamTargetsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <button onClick={() => alert(`Edit target for ${item.metric}`)} className="p-1 text-slate-400 hover:text-[#0D1F3D]">
+                        <button
+                          onClick={() => setEditingMetric(item)}
+                          title="Edit target metric"
+                          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs"
+                        >
                           <Edit className="h-4 w-4" />
                         </button>
                       </td>
@@ -454,6 +462,20 @@ export default function TeamTargetsPage() {
           </div>
         </div>
       )}
+
+      {/* Set Team Targets Modal */}
+      <SetTeamTargetsModal
+        isOpen={isSetTargetsModalOpen}
+        onClose={() => setIsSetTargetsModalOpen(false)}
+        teamName="Mumbai North Team"
+      />
+
+      {/* Edit Single Target Metric Modal */}
+      <EditSingleTargetModal
+        isOpen={!!editingMetric}
+        onClose={() => setEditingMetric(null)}
+        metricItem={editingMetric}
+      />
     </div>
   );
 }
