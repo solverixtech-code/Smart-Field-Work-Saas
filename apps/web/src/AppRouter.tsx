@@ -24,6 +24,7 @@ import SuspendExecutivePage from './screens/executives/SuspendExecutivePage';
 import ShiftManagementPage from './screens/shifts/ShiftManagementPage';
 import AttendanceMonitoringPage from './screens/attendance/AttendanceMonitoringPage';
 import PayrollManagementPage from './screens/payroll/PayrollManagementPage';
+import PayrollSettingsPage from './screens/payroll/PayrollSettingsPage';
 
 import SalesTeamsPage from './screens/teams/SalesTeamsPage';
 import CreateTeamPage from './screens/teams/CreateTeamPage';
@@ -239,6 +240,7 @@ export default function AppRouter() {
               }
             >
               <Route path="/admin/payroll" element={<PayrollManagementPage />} />
+              <Route path="/admin/payroll/settings" element={<PayrollSettingsPage />} />
             </Route>
           </Route>
         </Route>
