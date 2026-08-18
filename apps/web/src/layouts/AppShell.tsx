@@ -19,6 +19,7 @@ import {
   Clock,
   Smartphone,
   CreditCard,
+  Building2,
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store';
 import { clearCredentials } from '../store/slices/authSlice';
@@ -58,6 +59,13 @@ const navCategories: NavCategory[] = [
   {
     title: 'Sales & Field',
     items: [
+      {
+        label: 'Sales Teams',
+        icon: Building2,
+        to: '/admin/teams',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '8 Teams',
+      },
       {
         label: 'Field Executives',
         icon: Users,
@@ -145,7 +153,28 @@ const navCategories: NavCategory[] = [
 function getBreadcrumbTrail(pathname: string) {
   const items: { label: string; to: string }[] = [];
 
-  if (pathname === '/admin/executives') {
+  if (pathname === '/admin/teams') {
+    items.push({ label: 'Teams & Hierarchy', to: '/admin/teams' });
+    items.push({ label: 'Sales Teams', to: '/admin/teams' });
+  } else if (pathname === '/admin/teams/create') {
+    items.push({ label: 'Teams & Hierarchy', to: '/admin/teams' });
+    items.push({ label: 'Create Team', to: '/admin/teams/create' });
+  } else if (pathname === '/admin/teams/targets') {
+    items.push({ label: 'Teams & Hierarchy', to: '/admin/teams' });
+    items.push({ label: 'All Teams Target Overview', to: '/admin/teams/targets' });
+  } else if (pathname.startsWith('/admin/teams/')) {
+    items.push({ label: 'Teams & Hierarchy', to: '/admin/teams' });
+    items.push({ label: 'Mumbai North Team', to: '/admin/teams/MN-001' });
+    if (pathname.endsWith('/leader')) {
+      items.push({ label: 'Assign Team Leader', to: pathname });
+    } else if (pathname.endsWith('/members')) {
+      items.push({ label: 'Team Members', to: pathname });
+    } else if (pathname.endsWith('/performance')) {
+      items.push({ label: 'Team Performance', to: pathname });
+    } else if (pathname.endsWith('/targets')) {
+      items.push({ label: 'Team Targets', to: pathname });
+    }
+  } else if (pathname === '/admin/executives') {
     items.push({ label: 'Field Operations', to: '/admin/executives' });
     items.push({ label: 'All Field Executives', to: '/admin/executives' });
   } else if (pathname === '/admin/executives/new') {

@@ -25,6 +25,14 @@ import ShiftManagementPage from './screens/shifts/ShiftManagementPage';
 import AttendanceMonitoringPage from './screens/attendance/AttendanceMonitoringPage';
 import PayrollManagementPage from './screens/payroll/PayrollManagementPage';
 
+import SalesTeamsPage from './screens/teams/SalesTeamsPage';
+import CreateTeamPage from './screens/teams/CreateTeamPage';
+import TeamDetailsPage from './screens/teams/TeamDetailsPage';
+import AssignTeamLeaderPage from './screens/teams/AssignTeamLeaderPage';
+import TeamMembersPage from './screens/teams/TeamMembersPage';
+import TeamPerformancePage from './screens/teams/TeamPerformancePage';
+import TeamTargetsPage from './screens/teams/TeamTargetsPage';
+
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { Role, AuthTokensSchema } from '@visiblo/shared';
@@ -198,6 +206,29 @@ export default function AppRouter() {
             >
               <Route path="/admin/shifts" element={<ShiftManagementPage />} />
               <Route path="/admin/attendance" element={<AttendanceMonitoringPage />} />
+            </Route>
+
+            {/* Teams & Hierarchy Management Routes */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/teams" element={<SalesTeamsPage />} />
+              <Route path="/admin/teams/create" element={<CreateTeamPage />} />
+              <Route path="/admin/teams/targets" element={<TeamTargetsPage />} />
+              <Route path="/admin/teams/:teamId" element={<TeamDetailsPage />} />
+              <Route path="/admin/teams/:teamId/leader" element={<AssignTeamLeaderPage />} />
+              <Route path="/admin/teams/:teamId/members" element={<TeamMembersPage />} />
+              <Route path="/admin/teams/:teamId/performance" element={<TeamPerformancePage />} />
+              <Route path="/admin/teams/:teamId/targets" element={<TeamTargetsPage />} />
             </Route>
 
             <Route
