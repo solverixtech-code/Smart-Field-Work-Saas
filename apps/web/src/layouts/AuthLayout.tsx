@@ -19,14 +19,11 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
 
         {/* TOP BRAND HEADER */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white border border-white/15 shadow-sm">
-              <span className="font-extrabold text-lg text-white tracking-tighter">S<span className="text-[#E20613]">F</span>W</span>
-            </div>
-            <div className="text-left">
-              <span className="text-xl font-bold tracking-tight text-white">Smart <span className="text-[#E20613]">Field</span> Work</span>
-            </div>
-          </div>
+          <img
+            src="/assets/sfw-logo.png"
+            alt="Smart Field Work Logo"
+            className="h-11 w-auto object-contain brightness-0 invert"
+          />
         </div>
 
         {/* MIDDLE SLOGAN & FEATURES SECTION */}

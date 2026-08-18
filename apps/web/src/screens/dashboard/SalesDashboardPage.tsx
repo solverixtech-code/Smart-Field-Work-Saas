@@ -5,190 +5,233 @@ import {
   TrendingUp,
   Award,
   Download,
-  Plus,
+  Target,
   ArrowUpRight,
+  Activity,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
   PieChart,
   Pie,
   Cell,
-  BarChart,
-  Bar,
 } from 'recharts';
-import { useAppSelector } from '../../store';
 import { KpiCard } from '../../components/dashboard/KpiCard';
-import { ChartCard } from '../../components/dashboard/ChartCard';
-import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { Button } from '../../components/ui/Button';
 
-const salesTrendData = [
-  { date: '14 May', deals: 12, revenue: 140000 },
-  { date: '15 May', deals: 15, revenue: 190000 },
-  { date: '16 May', deals: 18, revenue: 230000 },
-  { date: '17 May', deals: 14, revenue: 180000 },
-  { date: '18 May', deals: 21, revenue: 290000 },
-  { date: '19 May', deals: 24, revenue: 340000 },
-  { date: '20 May', deals: 28, revenue: 410000 },
+const salesTrendComparisonData = [
+  { date: 'May 12', thisWeek: 42, lastWeek: 28 },
+  { date: 'May 13', thisWeek: 60, lastWeek: 38 },
+  { date: 'May 14', thisWeek: 58, lastWeek: 38 },
+  { date: 'May 15', thisWeek: 68, lastWeek: 44 },
+  { date: 'May 16', thisWeek: 62, lastWeek: 41 },
+  { date: 'May 17', thisWeek: 40, lastWeek: 25 },
+  { date: 'May 18', thisWeek: 66, lastWeek: 40 },
 ];
 
-const stageData = [
-  { name: 'Lead', value: 22, color: '#0D1F3D' },
-  { name: 'Qualification', value: 18, color: '#2563EB' },
-  { name: 'Proposal', value: 15, color: '#F59E0B' },
-  { name: 'Negotiation', value: 12, color: '#8B5CF6' },
-  { name: 'Won', value: 14, color: '#10B981' },
-  { name: 'Lost', value: 5, color: '#E20613' },
+const salesBySourceData = [
+  { name: 'Website', pct: '32.1%', count: 219, value: 219, color: '#2563EB' },
+  { name: 'Referral', pct: '24.3%', count: 166, value: 166, color: '#10B981' },
+  { name: 'Walk-In', pct: '18.5%', count: 126, value: 126, color: '#E20613' },
+  { name: 'Meta Ads', pct: '12.6%', count: 86, value: 86, color: '#F59E0B' },
+  { name: 'Google Ads', pct: '7.3%', count: 50, value: 50, color: '#8B5CF6' },
+  { name: 'Others', pct: '5.2%', count: 35, value: 35, color: '#64748B' },
 ];
 
-const productRevenueData = [
-  { product: 'Pro Plan', revenue: 900000, color: '#0D1F3D' },
-  { product: 'Business', revenue: 650000, color: '#E20613' },
-  { product: 'Enterprise', revenue: 450000, color: '#2563EB' },
-  { product: 'Custom Pack', revenue: 250000, color: '#10B981' },
+const teamPerformanceData = [
+  { team: 'Central Mumbai', leader: 'Amit Verma', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80', target: '₹8,00,000', achieved: '₹6,85,400', pct: 85.7, deals: 42, conversion: '19.6%' },
+  { team: 'Western Suburbs', leader: 'Neha Singh', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80', target: '₹7,00,000', achieved: '₹5,95,200', pct: 85.0, deals: 32, conversion: '17.4%' },
+  { team: 'Navi Mumbai', leader: 'Vikram Patil', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80', target: '₹6,00,000', achieved: '₹4,75,300', pct: 79.2, deals: 26, conversion: '16.8%' },
+  { team: 'Thane & Beyond', leader: 'Prakash Yadav', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80', target: '₹5,00,000', achieved: '₹3,74,100', pct: 74.8, deals: 18, conversion: '15.2%' },
+];
+
+const topSalesExecs = [
+  { name: 'Amit Verma', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80', sales: '₹5,24,000', deals: 28, conversion: '21.7%' },
+  { name: 'Neha Singh', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80', sales: '₹4,85,600', deals: 25, conversion: '20.5%' },
+  { name: 'Vikram Patil', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80', sales: '₹4,21,300', deals: 22, conversion: '18.9%' },
+  { name: 'Prakash Yadav', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80', sales: '₹3,68,200', deals: 20, conversion: '17.1%' },
+  { name: 'Anita Kumari', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80', sales: '₹2,86,500', deals: 16, conversion: '16.3%' },
 ];
 
 export default function SalesDashboardPage() {
-  const [territory, setTerritory] = useState('All');
+  const [selectedTeam, setSelectedTeam] = useState('All Teams');
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans pb-12">
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Sales Performance Dashboard</h1>
-          <p className="text-xs font-medium text-slate-500">
-            Track sales revenue, deal stages, win rates, and field executive sales performance.
+          <h1 className="text-2xl font-bold text-[#0D1F3D]">Sales Dashboard</h1>
+          <p className="text-xs font-normal text-slate-600 mt-0.5">
+            Track your sales performance and team activities in real-time.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <DateRangePicker />
-          <select
-            value={territory}
-            onChange={(e) => setTerritory(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-[#0D1F3D] shadow-xs focus:outline-none cursor-pointer"
-          >
-            <option value="All">📍 All Territories</option>
-            <option value="Mumbai">📍 Mumbai North</option>
-            <option value="Delhi">📍 Delhi NCR</option>
-            <option value="Bangalore">📍 Bangalore Tech Corridor</option>
+          <select className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#0D1F3D]">
+            <option>May 12 – May 18, 2025</option>
           </select>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => alert('Exporting Sales Summary...')}
-            className="flex items-center gap-2 font-bold"
+
+          <select
+            value={selectedTeam}
+            onChange={(e) => setSelectedTeam(e.target.value)}
+            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-[#0D1F3D]"
           >
-            <Download className="h-4 w-4 text-[#0D1F3D]" /> Export Summary
-          </Button>
+            <option>All Teams</option>
+            <option>Central Mumbai</option>
+            <option>Western Suburbs</option>
+            <option>Navi Mumbai</option>
+          </select>
+
           <Button
             variant="accent"
             size="sm"
-            onClick={() => alert('Opening New Deal Opportunity Form...')}
-            className="flex items-center gap-2 font-bold shadow-xs"
+            onClick={() => alert('Exporting Sales Report...')}
+            className="flex items-center gap-2 font-semibold shadow-xs"
           >
-            <Plus className="h-4 w-4" /> New Opportunity
+            <Download className="h-4 w-4" /> Export Report
           </Button>
         </div>
       </div>
 
-      {/* 4 Top Metric Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* 6 TOP KPI CARDS */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <KpiCard
-          title="Total Sales Revenue"
-          value="₹12,48,320"
+          title="Total Sales"
+          value="₹24,85,600"
           change="+18.6%"
           changeType="positive"
           timeframe="vs last week"
           icon={DollarSign}
-          iconBgColor="bg-[#0D1F3D]/10"
-          iconTextColor="text-[#0D1F3D]"
+          iconBgColor="bg-blue-50"
+          iconTextColor="text-blue-700"
         />
         <KpiCard
-          title="Total Deals Closed"
-          value="86 Deals"
-          change="+12.4%"
+          title="Sales Target"
+          value="₹30,00,000"
+          subValue="82.9% Achieved"
+          icon={Target}
+          iconBgColor="bg-emerald-50"
+          iconTextColor="text-emerald-700"
+        />
+        <KpiCard
+          title="Deals Closed"
+          value="128 Deals"
+          change="+15.2%"
           changeType="positive"
           timeframe="vs last week"
           icon={Briefcase}
-          iconBgColor="bg-emerald-500/10"
-          iconTextColor="text-emerald-600"
+          iconBgColor="bg-purple-50"
+          iconTextColor="text-purple-700"
         />
         <KpiCard
-          title="Average Deal Size"
-          value="₹14,520"
-          change="+6.8%"
-          changeType="positive"
-          timeframe="vs last week"
-          icon={TrendingUp}
-          iconBgColor="bg-blue-500/10"
-          iconTextColor="text-blue-600"
-        />
-        <KpiCard
-          title="Conversion Win Rate"
-          value="68.2%"
-          change="+4.3%"
+          title="Conversion Rate"
+          value="18.6%"
+          change="+2.4%"
           changeType="positive"
           timeframe="vs last week"
           icon={Award}
-          iconBgColor="bg-amber-500/10"
-          iconTextColor="text-amber-600"
+          iconBgColor="bg-amber-50"
+          iconTextColor="text-amber-700"
+        />
+        <KpiCard
+          title="Avg. Deal Value"
+          value="₹1,94,200"
+          change="+10.7%"
+          changeType="positive"
+          timeframe="vs last week"
+          icon={TrendingUp}
+          iconBgColor="bg-red-50"
+          iconTextColor="text-[#E20613]"
+        />
+        <KpiCard
+          title="Sales Activities"
+          value="542"
+          change="+12.3%"
+          changeType="positive"
+          timeframe="vs last week"
+          icon={Activity}
+          iconBgColor="bg-blue-50"
+          iconTextColor="text-blue-700"
         />
       </div>
 
-      {/* Middle Row: Revenue Trend, Sales by Stage, Revenue by Product */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <ChartCard title="Sales Revenue & Deal Volume Trend" subtitle="Daily revenue progression" className="lg:col-span-6">
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center gap-6 text-xs font-semibold">
-              <span className="flex items-center gap-2 text-[#0D1F3D]">
-                <span className="h-3 w-3 rounded-full bg-[#0D1F3D]" /> Revenue (₹)
-              </span>
-              <span className="flex items-center gap-2 text-emerald-600">
-                <span className="h-3 w-3 rounded-full bg-emerald-600" /> Closed Deals
-              </span>
-            </div>
-
-            <div className="h-64 w-full pt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={salesTrendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="salesGradSfw" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0D1F3D" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#0D1F3D" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} tickLine={false} />
-                  <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} tickFormatter={(val) => `₹${val / 1000}k`} />
-                  <Tooltip
-                    position={{ y: -15 }}
-                    wrapperStyle={{ zIndex: 100 }}
-                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}
-                    labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
-                    itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                    formatter={(val: any, name: any) => [name === 'Revenue' ? `₹${Number(val || 0).toLocaleString()}` : `${val} deals`, name]}
-                  />
-                  <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#0D1F3D" strokeWidth={3} fillOpacity={1} fill="url(#salesGradSfw)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+      {/* MIDDLE SECTION: Sales Trend + Sales by Stage Funnel + Sales by Source */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+        {/* Sales Trend Line Chart (5 Cols) */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-[#0D1F3D]">Sales Trend</h3>
+            <select className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-[#0D1F3D]">
+              <option>This Week</option>
+            </select>
           </div>
-        </ChartCard>
 
-        {/* Sales by Stage Donut Chart */}
-        <ChartCard title="Sales Pipeline by Stage" className="lg:col-span-3">
-          <div className="flex flex-col items-center pt-2">
-            <div className="h-44 w-full">
+          <div className="flex items-center gap-4 text-xs font-semibold">
+            <span className="flex items-center gap-1.5 text-blue-600"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> This Week</span>
+            <span className="flex items-center gap-1.5 text-slate-500"><span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> Last Week</span>
+          </div>
+
+          <div className="h-60 w-full pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={salesTrendComparisonData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} tickLine={false} />
+                <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} />
+                <Tooltip
+                  position={{ y: -15 }}
+                  wrapperStyle={{ zIndex: 100 }}
+                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                  labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
+                  itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
+                />
+                <Line type="monotone" dataKey="thisWeek" name="This Week" stroke="#2563EB" strokeWidth={3} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="lastWeek" name="Last Week" stroke="#94A3B8" strokeWidth={2} strokeDasharray="4 4" dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Sales by Stage Funnel Diagram (4 Cols) */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
+          <h3 className="text-base font-bold text-[#0D1F3D]">Sales by Stage</h3>
+
+          <div className="space-y-2 pt-1 text-xs">
+            {[
+              { stage: 'New Lead (536)', deals: '236', val: '₹8,45,000', color: 'bg-blue-600' },
+              { stage: 'Qualified (354)', deals: '156', val: '₹6,25,400', color: 'bg-emerald-600' },
+              { stage: 'Proposal (198)', deals: '98', val: '₹4,85,600', color: 'bg-amber-500' },
+              { stage: 'Negotiation (112)', deals: '64', val: '₹3,25,800', color: 'bg-purple-600' },
+              { stage: 'Won (128)', deals: '128', val: '₹24,85,600', color: 'bg-red-600' },
+            ].map((f) => (
+              <div key={f.stage} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-2.5 font-semibold text-slate-800">
+                <span className="flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${f.color}`} />
+                  {f.stage}
+                </span>
+                <span className="text-slate-500 font-medium">{f.deals} deals</span>
+                <span className="font-bold text-[#0D1F3D]">{f.val}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Sales by Source Donut Chart (3 Cols) */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-[#0D1F3D]">Sales by Source</h3>
+            <button className="text-xs font-bold text-[#E20613] hover:underline">View All</button>
+          </div>
+
+          <div className="flex flex-col items-center">
+            <div className="h-44 w-full relative">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={stageData}
+                    data={salesBySourceData}
                     cx="50%"
                     cy="50%"
                     innerRadius={45}
@@ -196,7 +239,7 @@ export default function SalesDashboardPage() {
                     paddingAngle={3}
                     dataKey="value"
                   >
-                    {stageData.map((entry, index) => (
+                    {salesBySourceData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -206,151 +249,127 @@ export default function SalesDashboardPage() {
                     contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
                     labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                    formatter={(val: any) => [`${val} Deals`, 'Count']}
                   />
                 </PieChart>
               </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-lg font-bold text-[#0D1F3D]">682</span>
+                <span className="text-[10px] font-semibold text-slate-500">Total Leads</span>
+              </div>
             </div>
-            <div className="mt-2 w-full space-y-1 text-[11px] font-semibold text-slate-600">
-              {stageData.map((s) => (
+
+            <div className="w-full space-y-1.5 text-xs font-semibold text-slate-700 mt-2">
+              {salesBySourceData.map((s) => (
                 <div key={s.name} className="flex justify-between">
                   <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
                     {s.name}
                   </span>
-                  <span className="font-extrabold text-[#0D1F3D]">{s.value} ({((s.value / 86) * 100).toFixed(1)}%)</span>
+                  <span className="font-bold text-[#0D1F3D]">{s.pct} ({s.count})</span>
                 </div>
               ))}
             </div>
           </div>
-        </ChartCard>
-
-        {/* Revenue by Product Bar Chart */}
-        <ChartCard title="Revenue Tier Split" className="lg:col-span-3">
-          <div className="h-64 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={productRevenueData} margin={{ top: 25, right: 10, left: 10, bottom: 20 }}>
-                <XAxis dataKey="product" stroke="#94A3B8" fontSize={11} tickLine={false} />
-                <YAxis hide />
-                <Tooltip
-                  cursor={{ fill: 'rgba(13, 31, 61, 0.04)' }}
-                  position={{ y: -15 }}
-                  wrapperStyle={{ zIndex: 100 }}
-                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
-                  labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
-                  itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                  formatter={(val: any) => [`₹${Number(val || 0).toLocaleString()}`, 'Revenue']}
-                />
-                <Bar dataKey="revenue" radius={[6, 6, 0, 0]}>
-                  {productRevenueData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </ChartCard>
+        </div>
       </div>
 
-      {/* Bottom Row: Top Performing Sales Representatives, Recent Deals, Sales Target Gauge */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Top Performing Sales Reps */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Top Sales Executives</h3>
-            <button className="text-xs font-bold text-[#E20613] hover:underline flex items-center gap-1">
-              View All <ArrowUpRight className="h-3 w-3" />
+      {/* BOTTOM SECTION: Team Performance + Top Performing Executives + Target Gauge */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+        {/* Team Performance Table (5 Cols) */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
+          <h3 className="text-base font-bold text-[#0D1F3D]">Team Performance</h3>
+
+          <div className="overflow-x-auto custom-scrollbar">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/60 text-xs font-semibold text-slate-800">
+                  <th className="py-2.5 px-3">Team</th>
+                  <th className="py-2.5 px-3">Team Leader</th>
+                  <th className="py-2.5 px-3 text-right">Target</th>
+                  <th className="py-2.5 px-3 text-right">Achieved</th>
+                  <th className="py-2.5 px-3 text-center">Achievement %</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-800">
+                {teamPerformanceData.map((t) => (
+                  <tr key={t.team} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-2.5 px-3 font-semibold text-[#0D1F3D]">{t.team}</td>
+                    <td className="py-2.5 px-3">
+                      <div className="flex items-center gap-2">
+                        <img src={t.avatar} alt={t.leader} className="h-6 w-6 rounded-full object-cover shrink-0" />
+                        <span>{t.leader}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-medium text-slate-600">{t.target}</td>
+                    <td className="py-2.5 px-3 text-right font-bold text-slate-900">{t.achieved}</td>
+                    <td className="py-2.5 px-3 text-center">
+                      <span className="font-bold text-emerald-700">{t.pct}%</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100 text-right">
+            <button className="text-xs font-bold text-[#E20613] hover:underline inline-flex items-center gap-1">
+              View Full Team Report <ArrowUpRight className="h-3 w-3" />
             </button>
           </div>
-          <div className="space-y-3">
-            {[
-              { rank: 1, name: 'Rohit Mehta', deals: 24, rev: '₹4,28,000', win: '75.0%', growth: '+22.4%' },
-              { rank: 2, name: 'Priya Nair', deals: 22, rev: '₹3,92,000', win: '68.2%', growth: '+18.1%' },
-              { rank: 3, name: 'Vikram Singh', deals: 18, rev: '₹2,76,000', win: '61.1%', growth: '+12.3%' },
-              { rank: 4, name: 'Neha Kapoor', deals: 14, rev: '₹2,18,000', win: '57.1%', growth: '+9.8%' },
-            ].map((rep) => (
-              <div key={rep.name} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0D1F3D] text-[10px] font-extrabold text-white">
-                    {rep.rank}
-                  </span>
+        </div>
+
+        {/* Top Performing Executives (4 Cols) */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-[#0D1F3D]">Top Performing Executives</h3>
+            <button className="text-xs font-bold text-[#E20613] hover:underline">View All</button>
+          </div>
+
+          <div className="space-y-3 font-semibold text-xs">
+            {topSalesExecs.map((exec) => (
+              <div key={exec.name} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+                <div className="flex items-center gap-2.5">
+                  <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover shrink-0 border border-slate-200" />
                   <div>
-                    <p className="font-extrabold text-[#0D1F3D]">{rep.name}</p>
-                    <p className="text-[11px] font-semibold text-slate-400">{rep.deals} deals • {rep.win} win</p>
+                    <p className="font-bold text-[#0D1F3D]">{exec.name}</p>
+                    <p className="text-[10px] text-slate-500 font-medium">{exec.deals} Deals • {exec.conversion} Conv.</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-extrabold text-[#0D1F3D]">{rep.rev}</p>
-                  <p className="font-bold text-emerald-600">{rep.growth}</p>
-                </div>
+                <span className="font-extrabold text-[#0D1F3D]">{exec.sales}</span>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Recent Deals */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Recent Deals</h3>
-            <button className="text-xs font-bold text-[#E20613] hover:underline flex items-center gap-1">
-              View All <ArrowUpRight className="h-3 w-3" />
+          <div className="pt-2 border-t border-slate-100 text-right">
+            <button className="text-xs font-bold text-[#E20613] hover:underline inline-flex items-center gap-1">
+              View All Executives <ArrowUpRight className="h-3 w-3" />
             </button>
           </div>
-          <div className="space-y-3">
-            {[
-              { client: 'TechCorp Ltd.', product: 'SFW Pro', value: '₹85,000', stage: 'Won', date: '20 May 2025' },
-              { client: 'Global Solutions', product: 'SFW Business', value: '₹1,20,000', stage: 'Proposal', date: '19 May 2025' },
-              { client: 'BrightMind Inc.', product: 'SFW Pro', value: '₹62,000', stage: 'Negotiation', date: '18 May 2025' },
-              { client: 'FutureTech', product: 'Enterprise', value: '₹2,40,000', stage: 'Qualification', date: '17 May 2025' },
-            ].map((deal) => (
-              <div key={deal.client} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-xs">
-                <div>
-                  <p className="font-extrabold text-[#0D1F3D]">{deal.client}</p>
-                  <p className="text-[11px] font-semibold text-slate-400">{deal.product} • {deal.date}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-extrabold text-[#0D1F3D]">{deal.value}</p>
-                  <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-extrabold ${
-                    deal.stage === 'Won' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-blue-50 text-blue-600 border border-blue-200'
-                  }`}>
-                    {deal.stage}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
 
-        {/* Sales Targets Gauge */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Monthly Target Progress</h3>
-            <button className="text-xs font-bold text-[#E20613] hover:underline">Details</button>
-          </div>
-          <div className="flex flex-col items-center pt-2">
-            <div className="relative flex h-32 w-32 items-center justify-center">
+        {/* Sales Target Overview Gauge (3 Cols) */}
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+          <h3 className="text-base font-bold text-[#0D1F3D]">Sales Target Overview</h3>
+
+          <div className="flex flex-col items-center">
+            <div className="relative flex h-36 w-36 items-center justify-center">
               <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E2E8F0" strokeWidth="4" />
-                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#E20613" strokeWidth="4" strokeDasharray="78, 100" />
+                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#10B981" strokeWidth="4" strokeDasharray="83, 100" />
               </svg>
-              <div className="absolute flex flex-col items-center">
-                <span className="text-2xl font-extrabold text-[#0D1F3D]">78%</span>
-                <span className="text-[10px] font-extrabold text-slate-400">Target Achieved</span>
+              <div className="absolute flex flex-col items-center text-center">
+                <span className="text-2xl font-extrabold text-[#0D1F3D]">82.9%</span>
+                <span className="text-[10px] font-semibold text-slate-500">Overall Achievement</span>
               </div>
             </div>
 
-            <div className="mt-4 w-full text-center">
-              <p className="text-sm font-extrabold text-[#0D1F3D]">₹12,48,320 / ₹16,00,000</p>
-              <div className="mt-3 space-y-2 text-xs font-semibold">
-                <div className="flex justify-between text-slate-600">
-                  <span>Target Completion</span>
-                  <span className="font-extrabold text-[#E20613]">78%</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-[#E20613] rounded-full" style={{ width: '78%' }} />
-                </div>
-              </div>
-            </div>
+            <p className="mt-3 text-xs font-extrabold text-[#0D1F3D]">₹24,85,600 / ₹30,00,000</p>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100 text-right">
+            <button className="text-xs font-bold text-[#E20613] hover:underline inline-flex items-center gap-1">
+              View Target Details <ArrowUpRight className="h-3 w-3" />
+            </button>
           </div>
         </div>
       </div>

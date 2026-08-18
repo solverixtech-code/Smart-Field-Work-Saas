@@ -7,30 +7,20 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
-  Info,
   Shield,
-  ArrowLeft,
+  Key,
+  RefreshCw,
 } from 'lucide-react';
 import { api } from '../../common/api';
 import { Button } from '../../components/ui/Button';
 
 const rules = [
-  { label: 'Use at least 8 characters', test: (p: string) => p.length >= 8 },
-  { label: 'Include uppercase and lowercase letters', test: (p: string) => /[A-Z]/.test(p) && /[a-z]/.test(p) },
-  { label: 'Add at least one number', test: (p: string) => /[0-9]/.test(p) },
-  { label: 'Include a special character', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
-  { label: 'Avoid using personal information', test: (p: string) => p.length > 0 },
-  { label: 'Do not reuse old passwords', test: (p: string) => p.length > 0 },
+  { label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
+  { label: 'One uppercase letter', test: (p: string) => /[A-Z]/.test(p) },
+  { label: 'One number', test: (p: string) => /[0-9]/.test(p) },
+  { label: 'One lowercase letter', test: (p: string) => /[a-z]/.test(p) },
+  { label: 'One special character', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
 ];
-
-function getStrength(password: string): { label: string; color: string; fillSegments: number } {
-  const passed = rules.slice(0, 4).filter((r) => r.test(password)).length;
-  if (!password) return { label: '', color: 'text-slate-400', fillSegments: 0 };
-  if (passed <= 1) return { label: 'Weak', color: 'text-rose-500', fillSegments: 1 };
-  if (passed === 2) return { label: 'Medium', color: 'text-amber-500', fillSegments: 2 };
-  if (passed === 3) return { label: 'Good', color: 'text-blue-500', fillSegments: 3 };
-  return { label: 'Strong', color: 'text-emerald-500', fillSegments: 4 };
-}
 
 export default function ChangePasswordPage() {
   const navigate = useNavigate();
@@ -46,7 +36,8 @@ export default function ChangePasswordPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const strength = useMemo(() => getStrength(newPassword), [newPassword]);
+  const passedCount = useMemo(() => rules.filter((r) => r.test(newPassword)).length, [newPassword]);
+  const isStrong = passedCount >= 4;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,105 +68,62 @@ export default function ChangePasswordPage() {
   };
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Account Security & Password</h1>
-          <p className="text-xs font-medium text-slate-500">
-            Update your account password and review security requirements.
-          </p>
+    <div className="space-y-6 font-sans pb-12">
+      {/* Page Title & Breadcrumbs */}
+      <div>
+        <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Change Password</h1>
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mt-1">
+          <span className="cursor-pointer hover:text-[#0D1F3D]" onClick={() => navigate('/admin/dashboard')}>Dashboard</span>
+          <span>&gt;</span>
+          <span className="cursor-pointer hover:text-[#0D1F3D]" onClick={() => navigate('/admin/profile')}>My Profile</span>
+          <span>&gt;</span>
+          <span className="text-[#E20613] font-bold">Change Password</span>
         </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 font-bold"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Profile
-        </Button>
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Left Column: Security Tips Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm lg:col-span-4 space-y-6">
-          <div className="flex flex-col items-center text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-blue-600 mb-4 shadow-xs">
-              <ShieldCheck className="h-8 w-8" />
-            </div>
-            <h2 className="text-base font-extrabold text-[#0D1F3D]">Keep Your Account Secure</h2>
-            <p className="mt-1 text-xs font-medium text-slate-500">
-              Create a strong password that you don't use on other websites.
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+        {/* Left Column: Update Your Password Form (8 Cols) */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-sm lg:col-span-8 space-y-6">
+          <div>
+            <h2 className="text-lg font-extrabold text-[#0D1F3D]">Update Your Password</h2>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">
+              For your security, please choose a strong password that you don't use for other accounts.
             </p>
           </div>
 
-          <div className="border-t border-slate-100 pt-5 space-y-3">
-            <p className="text-xs font-extrabold text-[#0D1F3D]">Password Tips</p>
-            {rules.map((rule) => {
-              const passed = newPassword ? rule.test(newPassword) : false;
-              return (
-                <div key={rule.label} className="flex items-center gap-2.5 text-xs font-medium">
-                  <CheckCircle2
-                    className={`h-4 w-4 flex-shrink-0 ${
-                      passed ? 'text-emerald-500' : 'text-slate-300'
-                    }`}
-                  />
-                  <span className={passed ? 'font-semibold text-slate-700' : 'text-slate-500'}>
-                    {rule.label}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Bottom Info Container */}
-          <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 space-y-1">
-            <div className="flex items-center gap-2 text-xs font-extrabold text-blue-700">
-              <Info className="h-4 w-4 text-blue-600" />
-              <span>Security Guarantee</span>
-            </div>
-            <p className="text-[11px] font-medium text-slate-600 pl-6">
-              Your password is encrypted and stored securely using salted hash algorithms.
-            </p>
-          </div>
-        </div>
-
-        {/* Right Column: Change Password Form */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm lg:col-span-8">
           {success && (
-            <div className="mb-6 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-700">
-              <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-600" />
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-700">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
               Your password has been changed successfully.
             </div>
           )}
 
           {error && (
-            <div className="mb-6 flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-700">
-              <AlertCircle className="h-4 w-4 flex-shrink-0 text-rose-600" />
+            <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-bold text-rose-700">
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Current Password */}
             <div className="space-y-1.5">
               <label className="text-xs font-extrabold text-[#0D1F3D]">Current Password</label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                 <input
                   type={showCurrent ? 'text' : 'password'}
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="Enter your current password"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#0D1F3D] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-10 py-3 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none transition-all"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowCurrent(!showCurrent)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600"
                 >
                   {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -186,46 +134,55 @@ export default function ChangePasswordPage() {
             <div className="space-y-1.5">
               <label className="text-xs font-extrabold text-[#0D1F3D]">New Password</label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                 <input
                   type={showNew ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Enter your new password"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#0D1F3D] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-10 py-3 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none transition-all"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowNew(!showNew)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600"
                 >
                   {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
 
-              {/* Password Strength Bar */}
-              <div className="pt-2">
-                <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
-                  <span className="text-slate-500">Password Strength</span>
-                  <span className={`font-bold ${strength.color}`}>{strength.label || 'Medium'}</span>
+              {/* Password Strength Meter */}
+              {newPassword.length > 0 && (
+                <div className="pt-2 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="text-slate-500">Password Strength:</span>
+                    <span className={`font-bold ${isStrong ? 'text-emerald-600' : 'text-[#E20613]'}`}>
+                      {isStrong ? 'Strong' : 'Weak'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5 h-1.5">
+                    <div className={`rounded-full ${passedCount >= 1 ? (isStrong ? 'bg-emerald-500' : 'bg-[#E20613]') : 'bg-slate-200'}`} />
+                    <div className={`rounded-full ${passedCount >= 3 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                    <div className={`rounded-full ${passedCount >= 4 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                    <div className={`rounded-full ${passedCount >= 5 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+                  </div>
                 </div>
-                <div className="grid grid-cols-4 gap-2">
-                  {[1, 2, 3, 4].map((seg) => (
-                    <div
-                      key={seg}
-                      className={`h-2 rounded-full transition-all ${
-                        seg <= strength.fillSegments
-                          ? strength.fillSegments <= 1
-                            ? 'bg-rose-500'
-                            : strength.fillSegments === 2
-                              ? 'bg-amber-500'
-                              : 'bg-emerald-500'
-                          : 'bg-slate-100'
-                      }`}
-                    />
-                  ))}
-                </div>
+              )}
+            </div>
+
+            {/* Rules checklist container */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50/60 p-4 space-y-2 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600">
+                {rules.map((rule) => {
+                  const passed = newPassword ? rule.test(newPassword) : false;
+                  return (
+                    <div key={rule.label} className="flex items-center gap-2">
+                      <CheckCircle2 className={`h-4 w-4 shrink-0 ${passed ? 'text-emerald-600' : 'text-slate-300'}`} />
+                      <span className={passed ? 'font-bold text-[#0D1F3D]' : 'text-slate-500'}>{rule.label}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -233,54 +190,90 @@ export default function ChangePasswordPage() {
             <div className="space-y-1.5">
               <label className="text-xs font-extrabold text-[#0D1F3D]">Confirm New Password</label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
                 <input
                   type={showConfirm ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm your new password"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-10 py-3 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#0D1F3D] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-10 py-3 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none transition-all"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600"
                 >
                   {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Soft Green Info Notice Box */}
-            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 text-xs font-semibold text-emerald-800">
-              <Shield className="h-4 w-4 flex-shrink-0 text-emerald-600" />
-              <span>Make sure your new password is different from previous passwords.</span>
-            </div>
-
-            {/* Action Buttons using reusable Button component */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => navigate(-1)}
-                className="font-bold"
-              >
-                Cancel
-              </Button>
-
+            {/* Buttons */}
+            <div className="flex items-center gap-3 pt-4">
               <Button
                 type="submit"
                 variant="accent"
-                size="sm"
+                size="lg"
                 isLoading={loading}
-                className="flex items-center gap-2 font-bold shadow-xs"
+                className="flex items-center gap-2 font-bold px-6 py-2.5 shadow-md text-xs"
               >
-                {!loading && <Lock className="h-4 w-4" />} Update Password
+                <Lock className="h-4 w-4" /> Update Password
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => navigate('/admin/profile')}
+                className="font-semibold text-slate-700 border-slate-200 hover:bg-slate-50 px-6 py-2.5 text-xs"
+              >
+                Cancel
               </Button>
             </div>
           </form>
+        </div>
+
+        {/* Right Column: Password Tips (4 Cols) */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm lg:col-span-4 space-y-6">
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Password Tips</h3>
+
+          <div className="space-y-6">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-[#E20613] border border-red-100">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-[#0D1F3D]">Use a strong password</h4>
+                <p className="text-[11px] font-medium text-slate-500 mt-0.5 leading-relaxed">
+                  A strong password protects your account from unauthorized access.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3.5 border-t border-slate-100 pt-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                <Key className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-[#0D1F3D]">Don't reuse passwords</h4>
+                <p className="text-[11px] font-medium text-slate-500 mt-0.5 leading-relaxed">
+                  Avoid using the same password across multiple websites or apps.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3.5 border-t border-slate-100 pt-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100">
+                <RefreshCw className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-[#0D1F3D]">Change regularly</h4>
+                <p className="text-[11px] font-medium text-slate-500 mt-0.5 leading-relaxed">
+                  Update your password periodically to keep your account secure.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

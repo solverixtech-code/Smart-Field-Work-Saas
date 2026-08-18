@@ -76,10 +76,15 @@ export default function VerifyOtpPage() {
   return (
     <AuthLayout>
       <div className="rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-xl space-y-6">
-        {/* Top Shield Lock Icon */}
+        {/* Top Brand Logo & Shield Lock Icon */}
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-[#E20613] border border-red-100 mb-3 shadow-xs">
-            <Shield className="h-7 w-7" />
+          <img
+            src="/assets/sfw-logo.png"
+            alt="Smart Field Work Logo"
+            className="h-10 w-auto object-contain mb-3"
+          />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-[#E20613] border border-red-100 mb-3 shadow-xs">
+            <Shield className="h-6 w-6" />
           </div>
           <h2 className="text-2xl font-extrabold text-[#0D1F3D]">Verify It's You</h2>
           <p className="mt-1 text-xs font-medium text-slate-500 max-w-xs leading-relaxed">
