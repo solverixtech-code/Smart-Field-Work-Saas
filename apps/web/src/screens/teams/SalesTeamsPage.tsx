@@ -11,11 +11,13 @@ import {
   TrendingUp,
   Target,
   ChevronRight,
+  ChevronLeft,
   UserCheck,
   Building2,
-  PieChart as PieIcon,
   BarChart3,
   Clock,
+  Download,
+  Edit,
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
@@ -190,15 +192,35 @@ const teamDistributionData = [
 export default function SalesTeamsPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [regionFilter, setRegionFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [teams] = useState<SalesTeamItem[]>(mockTeams);
 
-  const filteredTeams = teams.filter(
-    (t) =>
+  const filteredTeams = teams.filter((t) => {
+    const matchesSearch =
       t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.leaderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.code.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+      t.code.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRegion = regionFilter === 'All' || t.region.includes(regionFilter);
+    const matchesStatus = statusFilter === 'All' || t.status === statusFilter;
+    return matchesSearch && matchesRegion && matchesStatus;
+  });
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(filteredTeams.map((t) => t.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectOne = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  };
 
   return (
     <div className="space-y-6 font-sans">
@@ -211,14 +233,24 @@ export default function SalesTeamsPage() {
           </p>
         </div>
 
-        <Button
-          variant="accent"
-          size="sm"
-          onClick={() => navigate('/admin/teams/create')}
-          className="flex items-center gap-2 font-bold shadow-xs"
-        >
-          <Plus className="h-4 w-4" /> Create Team
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => alert('Exporting Teams Data...')}
+            className="flex items-center gap-2 border-slate-200 text-slate-700 hover:bg-slate-100 font-bold"
+          >
+            <Download className="h-4 w-4 text-[#0D1F3D]" /> Export Data
+          </Button>
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => navigate('/admin/teams/create')}
+            className="flex items-center gap-2 font-bold shadow-sm"
+          >
+            <Plus className="h-4 w-4" /> Create Team
+          </Button>
+        </div>
       </div>
 
       {/* 5 Top Metric KPI Cards */}
@@ -226,9 +258,7 @@ export default function SalesTeamsPage() {
         <KpiCard
           title="Total Teams"
           value="8"
-          change="+2"
-          changeType="positive"
-          timeframe="vs last month"
+          subValue="100% active operational"
           icon={Building2}
           iconBgColor="bg-[#0D1F3D]/10"
           iconTextColor="text-[#0D1F3D]"
@@ -236,9 +266,7 @@ export default function SalesTeamsPage() {
         <KpiCard
           title="Total Members"
           value="56"
-          change="+12"
-          changeType="positive"
-          timeframe="vs last month"
+          subValue="82.05% active"
           icon={Users}
           iconBgColor="bg-emerald-500/10"
           iconTextColor="text-emerald-600"
@@ -246,9 +274,7 @@ export default function SalesTeamsPage() {
         <KpiCard
           title="Active Teams"
           value="7"
-          change="+1"
-          changeType="positive"
-          timeframe="vs last month"
+          subValue="87.5% operational"
           icon={Target}
           iconBgColor="bg-purple-500/10"
           iconTextColor="text-purple-600"
@@ -256,9 +282,7 @@ export default function SalesTeamsPage() {
         <KpiCard
           title="Avg Team Size"
           value="7 Staff"
-          change="-1"
-          changeType="positive"
-          timeframe="vs last month"
+          subValue="Executives per team"
           icon={UserCheck}
           iconBgColor="bg-amber-500/10"
           iconTextColor="text-amber-600"
@@ -266,194 +290,243 @@ export default function SalesTeamsPage() {
         <KpiCard
           title="Total Deals (This Month)"
           value="142 Deals"
-          change="+16%"
-          changeType="positive"
-          timeframe="vs last month"
+          subValue="+16% vs last month"
           icon={BarChart3}
           iconBgColor="bg-blue-500/10"
           iconTextColor="text-blue-600"
         />
       </div>
 
-      {/* Main Row: Teams List Table (Left 8 Cols) + Distribution & Leaderboard (Right 4 Cols) */}
+      {/* Main Grid: Data Table (Left 8 Cols) + Distribution & Leaderboard (Right 4 Cols) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Left Column: Teams List Table */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm lg:col-span-8 overflow-hidden flex flex-col justify-between">
-          <div>
-            {/* Toolbar Header */}
-            <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-base font-extrabold text-[#0D1F3D]">Teams List</h2>
+        {/* Left Column: Data Table & Toolbar */}
+        <div className="space-y-4 lg:col-span-8">
+          {/* Toolbar & Filters matching All Executives Page */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs">
+            {/* Search Input */}
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search teams by name, code, leader..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
+              />
+            </div>
 
-              <div className="flex items-center gap-3">
-                <div className="relative w-64">
-                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search teams, leaders..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-8 pr-3 py-1.5 text-xs font-semibold text-[#0D1F3D] focus:outline-none focus:border-[#0D1F3D]"
-                  />
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => alert('Filtering options...')}
-                  className="flex items-center gap-1.5 font-bold"
-                >
-                  <Filter className="h-3.5 w-3.5 text-slate-500" /> More Filters
-                </Button>
+            {/* Region Dropdown */}
+            <select
+              value={regionFilter}
+              onChange={(e) => setRegionFilter(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+            >
+              <option value="All">All Regions</option>
+              <option value="Mumbai">Mumbai</option>
+              <option value="Thane">Thane</option>
+              <option value="Pune">Pune</option>
+              <option value="Nagpur">Nagpur</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="Bangalore">Bangalore</option>
+            </select>
+
+            {/* Status Dropdown */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+            >
+              <option value="All">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+
+          {/* Table Card Container matching All Executives Page */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-semibold">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                      <th className="p-3.5 text-center">
+                        <input
+                          type="checkbox"
+                          onChange={handleSelectAll}
+                          checked={selectedIds.length === filteredTeams.length && filteredTeams.length > 0}
+                          className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                        />
+                      </th>
+                      <th className="px-4 py-3.5">Team Name</th>
+                      <th className="px-4 py-3.5">Team Leader</th>
+                      <th className="px-4 py-3.5">Members</th>
+                      <th className="px-4 py-3.5">Department</th>
+                      <th className="px-4 py-3.5">Target (Monthly)</th>
+                      <th className="px-4 py-3.5">Achieved (This Month)</th>
+                      <th className="px-4 py-3.5">Performance</th>
+                      <th className="px-4 py-3.5">Status</th>
+                      <th className="px-4 py-3.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {filteredTeams.map((t) => {
+                      const isSelected = selectedIds.includes(t.id);
+                      return (
+                        <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="p-3.5 text-center">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleSelectOne(t.id)}
+                              className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                            />
+                          </td>
+
+                          {/* Team Name */}
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-3">
+                              <div className={`flex h-8 w-8 items-center justify-center rounded-xl font-extrabold text-xs ${t.avatarBg}`}>
+                                {t.avatarText}
+                              </div>
+                              <div>
+                                <button
+                                  onClick={() => navigate(`/admin/teams/${t.id}`)}
+                                  className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline text-left block"
+                                >
+                                  {t.name}
+                                </button>
+                                <p className="text-[10px] text-slate-400 font-medium">{t.region}</p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Team Leader */}
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2.5">
+                              <img
+                                src={t.leaderAvatar}
+                                alt={t.leaderName}
+                                className="h-7 w-7 rounded-full object-cover border border-slate-200"
+                              />
+                              <div>
+                                <p className="font-extrabold text-[#0D1F3D]">{t.leaderName}</p>
+                                <p className="text-[10px] text-slate-400 font-mono">{t.leaderCode}</p>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Members */}
+                          <td className="px-4 py-3.5">
+                            <div>
+                              <span className="font-extrabold text-[#0D1F3D]">{t.memberCount}</span>
+                              <button
+                                onClick={() => navigate(`/admin/teams/${t.id}/members`)}
+                                className="block text-[10px] text-blue-600 font-bold hover:underline"
+                              >
+                                View Members
+                              </button>
+                            </div>
+                          </td>
+
+                          {/* Department */}
+                          <td className="px-4 py-3.5 font-bold text-slate-600">
+                            {t.department}
+                          </td>
+
+                          {/* Target */}
+                          <td className="px-4 py-3.5 font-bold text-[#0D1F3D]">
+                            ₹{t.monthlyTarget.toLocaleString()}
+                          </td>
+
+                          {/* Achieved */}
+                          <td className="px-4 py-3.5">
+                            <div>
+                              <p className="font-extrabold text-[#0D1F3D]">₹{t.achievedAmount.toLocaleString()}</p>
+                              <p className={`text-[10px] font-bold ${t.achievedPercent >= 75 ? 'text-emerald-600' : t.achievedPercent >= 50 ? 'text-amber-600' : 'text-[#E20613]'}`}>
+                                {t.achievedPercent}%
+                              </p>
+                            </div>
+                          </td>
+
+                          {/* Performance Bar */}
+                          <td className="px-4 py-3.5">
+                            <div className="w-20">
+                              <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${
+                                    t.achievedPercent >= 75
+                                      ? 'bg-emerald-500'
+                                      : t.achievedPercent >= 50
+                                        ? 'bg-amber-500'
+                                        : 'bg-[#E20613]'
+                                  }`}
+                                  style={{ width: `${Math.min(t.achievedPercent, 100)}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Status Badge matching All Executives Page */}
+                          <td className="px-4 py-3.5">
+                            <span
+                              className={`inline-block rounded-md px-2.5 py-0.5 text-[10px] font-extrabold ${
+                                t.status === 'Active'
+                                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
+                                  : 'bg-red-50 text-[#E20613] border border-red-200/60'
+                              }`}
+                            >
+                              {t.status}
+                            </span>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-4 py-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => navigate(`/admin/teams/${t.id}`)}
+                                title="View Team Details"
+                                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => navigate(`/admin/teams/${t.id}/leader`)}
+                                title="Assign Leader"
+                                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
 
-            {/* Teams Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-semibold">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                    <th className="px-4 py-3.5">Team Name</th>
-                    <th className="px-4 py-3.5">Team Leader</th>
-                    <th className="px-4 py-3.5">Members</th>
-                    <th className="px-4 py-3.5">Department</th>
-                    <th className="px-4 py-3.5">Target (Monthly)</th>
-                    <th className="px-4 py-3.5">Achieved (This Month)</th>
-                    <th className="px-4 py-3.5">Performance</th>
-                    <th className="px-4 py-3.5">Status</th>
-                    <th className="px-4 py-3.5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {filteredTeams.map((t) => (
-                    <tr key={t.id} className="hover:bg-slate-50/60 transition-colors">
-                      {/* Team Name */}
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className={`flex h-9 w-9 items-center justify-center rounded-xl font-extrabold ${t.avatarBg}`}>
-                            {t.avatarText}
-                          </div>
-                          <div>
-                            <button
-                              onClick={() => navigate(`/admin/teams/${t.id}`)}
-                              className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline text-left block"
-                            >
-                              {t.name}
-                            </button>
-                            <p className="text-[10px] text-slate-400 font-medium">{t.region}</p>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Team Leader */}
-                      <td className="px-4 py-3.5">
-                        <div className="flex items-center gap-2.5">
-                          <img
-                            src={t.leaderAvatar}
-                            alt={t.leaderName}
-                            className="h-7 w-7 rounded-full object-cover border border-slate-200"
-                          />
-                          <div>
-                            <p className="font-bold text-[#0D1F3D]">{t.leaderName}</p>
-                            <p className="text-[10px] text-slate-400 font-mono">{t.leaderCode}</p>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Members */}
-                      <td className="px-4 py-3.5">
-                        <div>
-                          <span className="font-extrabold text-[#0D1F3D]">{t.memberCount}</span>
-                          <button
-                            onClick={() => navigate(`/admin/teams/${t.id}/members`)}
-                            className="block text-[10px] text-blue-600 font-bold hover:underline"
-                          >
-                            View Members
-                          </button>
-                        </div>
-                      </td>
-
-                      {/* Department */}
-                      <td className="px-4 py-3.5 font-bold text-slate-600">
-                        {t.department}
-                      </td>
-
-                      {/* Target */}
-                      <td className="px-4 py-3.5 font-bold text-[#0D1F3D]">
-                        ₹{t.monthlyTarget.toLocaleString()}
-                      </td>
-
-                      {/* Achieved */}
-                      <td className="px-4 py-3.5">
-                        <div>
-                          <p className="font-extrabold text-[#0D1F3D]">₹{t.achievedAmount.toLocaleString()}</p>
-                          <p className={`text-[10px] font-bold ${t.achievedPercent >= 75 ? 'text-emerald-600' : t.achievedPercent >= 50 ? 'text-amber-600' : 'text-[#E20613]'}`}>
-                            {t.achievedPercent}%
-                          </p>
-                        </div>
-                      </td>
-
-                      {/* Performance Bar */}
-                      <td className="px-4 py-3.5">
-                        <div className="w-20">
-                          <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${
-                                t.achievedPercent >= 75
-                                  ? 'bg-emerald-500'
-                                  : t.achievedPercent >= 50
-                                    ? 'bg-amber-500'
-                                    : 'bg-[#E20613]'
-                              }`}
-                              style={{ width: `${Math.min(t.achievedPercent, 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-4 py-3.5">
-                        <span
-                          className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-extrabold ${
-                            t.status === 'Active'
-                              ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                              : 'bg-slate-100 text-slate-500 border border-slate-200'
-                          }`}
-                        >
-                          {t.status}
-                        </span>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-4 py-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => navigate(`/admin/teams/${t.id}`)}
-                            title="View Team Details"
-                            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => navigate(`/admin/teams/${t.id}/leader`)}
-                            title="Assign Leader"
-                            className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Table Footer Pagination */}
-          <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold bg-slate-50/40">
-            <p>Showing 1 to {filteredTeams.length} of {teams.length} teams</p>
-            <div className="flex items-center gap-2">
-              <span className="rounded-lg bg-white border border-slate-200 px-3 py-1 font-bold text-[#0D1F3D]">1</span>
-              <span>10 / page</span>
+            {/* Table Footer Pagination matching All Executives Page */}
+            <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold bg-slate-50/40">
+              <p>Showing 1 to {filteredTeams.length} of {teams.length} teams</p>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1">
+                  <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0D1F3D] text-xs font-bold text-white">
+                    1
+                  </span>
+                  <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+                <select className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-[#0D1F3D]">
+                  <option>10 / page</option>
+                  <option>25 / page</option>
+                  <option>50 / page</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
