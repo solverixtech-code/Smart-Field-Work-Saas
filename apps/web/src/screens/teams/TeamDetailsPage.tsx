@@ -145,7 +145,7 @@ export default function TeamDetailsPage() {
               className="h-10 w-10 rounded-full object-cover border border-slate-200"
             />
             <div className="text-xs">
-              <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Team Leader</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Team Leader</span>
               <p className="font-extrabold text-[#0D1F3D]">Sanjay Yadav <span className="text-[10px] font-mono text-slate-400">(TL-1003)</span></p>
               <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1 mt-0.5">
                 <Phone className="h-3 w-3 text-slate-400" /> +91 98765 43210
@@ -166,29 +166,29 @@ export default function TeamDetailsPage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 text-xs font-semibold text-slate-600">
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 lg:col-span-8 bg-slate-50/60 p-4 rounded-xl border border-slate-100">
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Department</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Department</span>
               <span className="font-extrabold text-[#0D1F3D]">Sales</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Region / Area</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Region / Area</span>
               <span className="font-extrabold text-[#0D1F3D]">North Mumbai</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Team Type</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Team Type</span>
               <span className="font-extrabold text-[#0D1F3D]">Field Sales</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Created On</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Created On</span>
               <span className="font-extrabold text-[#0D1F3D]">12 Apr 2024</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Team Code</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Team Code</span>
               <span className="font-mono font-extrabold text-[#0D1F3D]">MN-001</span>
             </div>
           </div>
 
           <div className="lg:col-span-4 bg-blue-50/40 p-4 rounded-xl border border-blue-100/60">
-            <span className="text-[10px] text-blue-700 block font-bold uppercase tracking-wider mb-1">Team Description</span>
+            <span className="text-xs font-semibold text-blue-800 block mb-1">Team Description</span>
             <p className="text-xs font-medium text-slate-600 leading-relaxed">
               Handles sales and business development for North Mumbai region including Andheri, Borivali and Malad areas.
             </p>

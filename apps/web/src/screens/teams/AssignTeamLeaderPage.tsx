@@ -160,19 +160,19 @@ export default function AssignTeamLeaderPage() {
 
           <div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600">
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Team Type</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Team Type</span>
               <span className="font-extrabold text-[#0D1F3D]">Sales Team</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Department</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Department</span>
               <span className="font-extrabold text-[#0D1F3D]">Sales</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Region / Area</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Region / Area</span>
               <span className="font-extrabold text-[#0D1F3D]">North Mumbai Region</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Total Members</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Total Members</span>
               <span className="font-extrabold text-[#0D1F3D]">8 Executive Staff</span>
             </div>
           </div>
@@ -216,15 +216,15 @@ export default function AssignTeamLeaderPage() {
               {/* Stats pill row */}
               <div className="flex items-center gap-4 text-xs font-semibold">
                 <div className="text-center px-3 border-r border-slate-200">
-                  <span className="text-[10px] text-slate-400 font-bold block uppercase">Deals (This Month)</span>
+                  <span className="text-xs font-semibold text-slate-500 block mb-0.5">Deals (This Month)</span>
                   <span className="text-sm font-extrabold text-[#0D1F3D]">8</span>
                 </div>
                 <div className="text-center px-3 border-r border-slate-200">
-                  <span className="text-[10px] text-slate-400 font-bold block uppercase">Achieved</span>
+                  <span className="text-xs font-semibold text-slate-500 block mb-0.5">Achieved</span>
                   <span className="text-sm font-extrabold text-emerald-600">₹3,25,000</span>
                 </div>
                 <div className="text-center px-3">
-                  <span className="text-[10px] text-slate-400 font-bold block uppercase">Win Rate</span>
+                  <span className="text-xs font-semibold text-slate-500 block mb-0.5">Win Rate</span>
                   <span className="text-sm font-extrabold text-blue-600">81%</span>
                 </div>
               </div>
@@ -258,7 +258,7 @@ export default function AssignTeamLeaderPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs font-semibold">
                   <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                    <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold text-slate-600">
                       <th className="px-4 py-3.5">Select</th>
                       <th className="px-4 py-3.5">Employee</th>
                       <th className="px-4 py-3.5">Role</th>

@@ -316,7 +316,7 @@ export default function TeamPerformancePage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-semibold">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold text-slate-600">
                   <th className="px-4 py-3.5">#</th>
                   <th className="px-4 py-3.5">Member</th>
                   <th className="px-4 py-3.5">Total Leads</th>

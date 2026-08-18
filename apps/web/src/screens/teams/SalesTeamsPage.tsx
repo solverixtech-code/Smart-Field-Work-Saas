@@ -258,7 +258,8 @@ export default function SalesTeamsPage() {
         <KpiCard
           title="Total Teams"
           value="8"
-          subValue="100% active operational"
+          subValue="Active & Operational"
+          timeframe=""
           icon={Building2}
           iconBgColor="bg-[#0D1F3D]/10"
           iconTextColor="text-[#0D1F3D]"
@@ -266,7 +267,8 @@ export default function SalesTeamsPage() {
         <KpiCard
           title="Total Members"
           value="56"
-          subValue="82.05% active"
+          subValue="Active Field Staff"
+          timeframe=""
           icon={Users}
           iconBgColor="bg-emerald-500/10"
           iconTextColor="text-emerald-600"
@@ -274,7 +276,8 @@ export default function SalesTeamsPage() {
         <KpiCard
           title="Active Teams"
           value="7"
-          subValue="87.5% operational"
+          subValue="87.5% Active"
+          timeframe=""
           icon={Target}
           iconBgColor="bg-purple-500/10"
           iconTextColor="text-purple-600"
@@ -282,7 +285,8 @@ export default function SalesTeamsPage() {
         <KpiCard
           title="Avg Team Size"
           value="7 Staff"
-          subValue="Executives per team"
+          subValue="Staff Per Team"
+          timeframe=""
           icon={UserCheck}
           iconBgColor="bg-amber-500/10"
           iconTextColor="text-amber-600"
@@ -290,365 +294,364 @@ export default function SalesTeamsPage() {
         <KpiCard
           title="Total Deals (This Month)"
           value="142 Deals"
-          subValue="+16% vs last month"
+          change="+16%"
+          changeType="positive"
+          timeframe="vs last month"
           icon={BarChart3}
           iconBgColor="bg-blue-500/10"
           iconTextColor="text-blue-600"
         />
       </div>
 
-      {/* Main Grid: Data Table (Left 8 Cols) + Distribution & Leaderboard (Right 4 Cols) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Left Column: Data Table & Toolbar */}
-        <div className="space-y-4 lg:col-span-8">
-          {/* Toolbar & Filters matching All Executives Page */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs">
-            {/* Search Input */}
-            <div className="relative flex-1 min-w-[220px]">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search teams by name, code, leader..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
-              />
-            </div>
-
-            {/* Region Dropdown */}
-            <select
-              value={regionFilter}
-              onChange={(e) => setRegionFilter(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
-            >
-              <option value="All">All Regions</option>
-              <option value="Mumbai">Mumbai</option>
-              <option value="Thane">Thane</option>
-              <option value="Pune">Pune</option>
-              <option value="Nagpur">Nagpur</option>
-              <option value="Gujarat">Gujarat</option>
-              <option value="Bangalore">Bangalore</option>
-            </select>
-
-            {/* Status Dropdown */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+      {/* Full-Width Main Data Table Section */}
+      <div className="space-y-4">
+        {/* Toolbar & Filters matching All Executives Page */}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search teams by name, code, leader..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
+            />
           </div>
 
-          {/* Table Card Container matching All Executives Page */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs font-semibold">
-                  <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                      <th className="p-3.5 text-center">
-                        <input
-                          type="checkbox"
-                          onChange={handleSelectAll}
-                          checked={selectedIds.length === filteredTeams.length && filteredTeams.length > 0}
-                          className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
-                        />
-                      </th>
-                      <th className="px-4 py-3.5">Team Name</th>
-                      <th className="px-4 py-3.5">Team Leader</th>
-                      <th className="px-4 py-3.5">Members</th>
-                      <th className="px-4 py-3.5">Department</th>
-                      <th className="px-4 py-3.5">Target (Monthly)</th>
-                      <th className="px-4 py-3.5">Achieved (This Month)</th>
-                      <th className="px-4 py-3.5">Performance</th>
-                      <th className="px-4 py-3.5">Status</th>
-                      <th className="px-4 py-3.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {filteredTeams.map((t) => {
-                      const isSelected = selectedIds.includes(t.id);
-                      return (
-                        <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="p-3.5 text-center">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handleSelectOne(t.id)}
-                              className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
-                            />
-                          </td>
+          {/* Region Dropdown */}
+          <select
+            value={regionFilter}
+            onChange={(e) => setRegionFilter(e.target.value)}
+            className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+          >
+            <option value="All">All Regions</option>
+            <option value="Mumbai">Mumbai</option>
+            <option value="Thane">Thane</option>
+            <option value="Pune">Pune</option>
+            <option value="Nagpur">Nagpur</option>
+            <option value="Gujarat">Gujarat</option>
+            <option value="Bangalore">Bangalore</option>
+          </select>
 
-                          {/* Team Name */}
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-3">
-                              <div className={`flex h-8 w-8 items-center justify-center rounded-xl font-extrabold text-xs ${t.avatarBg}`}>
-                                {t.avatarText}
-                              </div>
-                              <div>
-                                <button
-                                  onClick={() => navigate(`/admin/teams/${t.id}`)}
-                                  className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline text-left block"
-                                >
-                                  {t.name}
-                                </button>
-                                <p className="text-[10px] text-slate-400 font-medium">{t.region}</p>
-                              </div>
+          {/* Status Dropdown */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+
+        {/* Table Card Container */}
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-semibold">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                    <th className="p-3.5 text-center">
+                      <input
+                        type="checkbox"
+                        onChange={handleSelectAll}
+                        checked={selectedIds.length === filteredTeams.length && filteredTeams.length > 0}
+                        className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                      />
+                    </th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Team Name</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Team Leader</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Members</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Department</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Target (Monthly)</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Achieved (This Month)</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Performance</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Status</th>
+                    <th className="px-4 py-3.5 text-right whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {filteredTeams.map((t) => {
+                    const isSelected = selectedIds.includes(t.id);
+                    return (
+                      <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-3.5 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleSelectOne(t.id)}
+                            className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                          />
+                        </td>
+
+                        {/* Team Name */}
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-xl font-extrabold text-xs flex-shrink-0 ${t.avatarBg}`}>
+                              {t.avatarText}
                             </div>
-                          </td>
-
-                          {/* Team Leader */}
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-2.5">
-                              <img
-                                src={t.leaderAvatar}
-                                alt={t.leaderName}
-                                className="h-7 w-7 rounded-full object-cover border border-slate-200"
-                              />
-                              <div>
-                                <p className="font-extrabold text-[#0D1F3D]">{t.leaderName}</p>
-                                <p className="text-[10px] text-slate-400 font-mono">{t.leaderCode}</p>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Members */}
-                          <td className="px-4 py-3.5">
                             <div>
-                              <span className="font-extrabold text-[#0D1F3D]">{t.memberCount}</span>
-                              <button
-                                onClick={() => navigate(`/admin/teams/${t.id}/members`)}
-                                className="block text-[10px] text-blue-600 font-bold hover:underline"
-                              >
-                                View Members
-                              </button>
-                            </div>
-                          </td>
-
-                          {/* Department */}
-                          <td className="px-4 py-3.5 font-bold text-slate-600">
-                            {t.department}
-                          </td>
-
-                          {/* Target */}
-                          <td className="px-4 py-3.5 font-bold text-[#0D1F3D]">
-                            ₹{t.monthlyTarget.toLocaleString()}
-                          </td>
-
-                          {/* Achieved */}
-                          <td className="px-4 py-3.5">
-                            <div>
-                              <p className="font-extrabold text-[#0D1F3D]">₹{t.achievedAmount.toLocaleString()}</p>
-                              <p className={`text-[10px] font-bold ${t.achievedPercent >= 75 ? 'text-emerald-600' : t.achievedPercent >= 50 ? 'text-amber-600' : 'text-[#E20613]'}`}>
-                                {t.achievedPercent}%
-                              </p>
-                            </div>
-                          </td>
-
-                          {/* Performance Bar */}
-                          <td className="px-4 py-3.5">
-                            <div className="w-20">
-                              <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full ${
-                                    t.achievedPercent >= 75
-                                      ? 'bg-emerald-500'
-                                      : t.achievedPercent >= 50
-                                        ? 'bg-amber-500'
-                                        : 'bg-[#E20613]'
-                                  }`}
-                                  style={{ width: `${Math.min(t.achievedPercent, 100)}%` }}
-                                />
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Status Badge matching All Executives Page */}
-                          <td className="px-4 py-3.5">
-                            <span
-                              className={`inline-block rounded-md px-2.5 py-0.5 text-[10px] font-extrabold ${
-                                t.status === 'Active'
-                                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
-                                  : 'bg-red-50 text-[#E20613] border border-red-200/60'
-                              }`}
-                            >
-                              {t.status}
-                            </span>
-                          </td>
-
-                          {/* Actions */}
-                          <td className="px-4 py-3.5 text-right">
-                            <div className="flex items-center justify-end gap-1">
                               <button
                                 onClick={() => navigate(`/admin/teams/${t.id}`)}
-                                title="View Team Details"
-                                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
+                                className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline text-left block whitespace-nowrap"
                               >
-                                <Eye className="h-4 w-4" />
+                                {t.name}
                               </button>
-                              <button
-                                onClick={() => navigate(`/admin/teams/${t.id}/leader`)}
-                                title="Assign Leader"
-                                className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </button>
+                              <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{t.region}</p>
                             </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                          </div>
+                        </td>
 
-            {/* Table Footer Pagination matching All Executives Page */}
-            <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold bg-slate-50/40">
-              <p>Showing 1 to {filteredTeams.length} of {teams.length} teams</p>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0D1F3D] text-xs font-bold text-white">
-                    1
-                  </span>
-                  <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-                <select className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-[#0D1F3D]">
-                  <option>10 / page</option>
-                  <option>25 / page</option>
-                  <option>50 / page</option>
-                </select>
+                        {/* Team Leader */}
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              src={t.leaderAvatar}
+                              alt={t.leaderName}
+                              className="h-7 w-7 rounded-full object-cover border border-slate-200 flex-shrink-0"
+                            />
+                            <div>
+                              <p className="font-extrabold text-[#0D1F3D] whitespace-nowrap">{t.leaderName}</p>
+                              <p className="text-[10px] text-slate-400 font-mono whitespace-nowrap">{t.leaderCode}</p>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Members */}
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <div>
+                            <span className="font-extrabold text-[#0D1F3D]">{t.memberCount}</span>
+                            <button
+                              onClick={() => navigate(`/admin/teams/${t.id}/members`)}
+                              className="block text-[10px] text-blue-600 font-bold hover:underline whitespace-nowrap"
+                            >
+                              View Members
+                            </button>
+                          </div>
+                        </td>
+
+                        {/* Department */}
+                        <td className="px-4 py-3.5 font-bold text-slate-600 whitespace-nowrap">
+                          {t.department}
+                        </td>
+
+                        {/* Target */}
+                        <td className="px-4 py-3.5 font-bold text-[#0D1F3D] whitespace-nowrap">
+                          ₹{t.monthlyTarget.toLocaleString()}
+                        </td>
+
+                        {/* Achieved */}
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <div>
+                            <p className="font-extrabold text-[#0D1F3D]">₹{t.achievedAmount.toLocaleString()}</p>
+                            <p className={`text-[10px] font-bold ${t.achievedPercent >= 75 ? 'text-emerald-600' : t.achievedPercent >= 50 ? 'text-amber-600' : 'text-[#E20613]'}`}>
+                              {t.achievedPercent}%
+                            </p>
+                          </div>
+                        </td>
+
+                        {/* Performance Bar */}
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <div className="w-24">
+                            <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${
+                                  t.achievedPercent >= 75
+                                    ? 'bg-emerald-500'
+                                    : t.achievedPercent >= 50
+                                      ? 'bg-amber-500'
+                                      : 'bg-[#E20613]'
+                                }`}
+                                style={{ width: `${Math.min(t.achievedPercent, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Status Badge matching All Executives Page */}
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span
+                            className={`inline-block rounded-md px-2.5 py-0.5 text-[10px] font-extrabold ${
+                              t.status === 'Active'
+                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
+                                : 'bg-red-50 text-[#E20613] border border-red-200/60'
+                            }`}
+                          >
+                            {t.status}
+                          </span>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => navigate(`/admin/teams/${t.id}`)}
+                              title="View Team Details"
+                              className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => navigate(`/admin/teams/${t.id}/leader`)}
+                              title="Assign Leader"
+                              className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Table Footer Pagination matching All Executives Page */}
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold bg-slate-50/40">
+            <p>Showing 1 to {filteredTeams.length} of {teams.length} teams</p>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0D1F3D] text-xs font-bold text-white">
+                  1
+                </span>
+                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
+              <select className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-[#0D1F3D]">
+                <option>10 / page</option>
+                <option>25 / page</option>
+                <option>50 / page</option>
+              </select>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Right Column: Team Distribution + Top Performing Teams + Quick Actions */}
-        <div className="space-y-6 lg:col-span-4">
-          {/* Team Distribution Donut Chart */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Team Distribution</h3>
-            <div className="flex flex-col items-center">
-              <div className="h-44 w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={teamDistributionData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={48}
-                      outerRadius={68}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {teamDistributionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      position={{ y: -15 }}
-                      wrapperStyle={{ zIndex: 100 }}
-                      contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
-                      labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
-                      itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                      formatter={(val: any) => [`${val} Teams`, 'Count']}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-xl font-extrabold text-[#0D1F3D]">8</span>
-                  <span className="text-[10px] font-bold text-slate-400">Total Teams</span>
-                </div>
-              </div>
-
-              <div className="mt-2 w-full space-y-1.5 text-[11px] font-semibold text-slate-600">
-                {teamDistributionData.map((d) => (
-                  <div key={d.name} className="flex justify-between items-center">
-                    <span className="flex items-center gap-1.5 truncate">
-                      <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
-                      <span className="truncate">{d.name}</span>
-                    </span>
-                    <span className="font-extrabold text-[#0D1F3D] ml-2">{d.value}</span>
-                  </div>
-                ))}
+      {/* Bottom Grid: Team Distribution + Top Performing Teams + Quick Actions (3 Column Grid below table) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Team Distribution Donut Chart */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Team Distribution</h3>
+          <div className="flex flex-col items-center">
+            <div className="h-44 w-full relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={teamDistributionData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={48}
+                    outerRadius={68}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {teamDistributionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    position={{ y: -15 }}
+                    wrapperStyle={{ zIndex: 100 }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
+                    itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
+                    formatter={(val: any) => [`${val} Teams`, 'Count']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-xl font-extrabold text-[#0D1F3D]">8</span>
+                <span className="text-[10px] font-bold text-slate-400">Total Teams</span>
               </div>
             </div>
-          </div>
 
-          {/* Top Performing Teams Leaderboard */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-extrabold text-[#0D1F3D]">Top Performing Teams</h3>
-              <span className="text-[10px] font-bold text-slate-400">This Month</span>
-            </div>
-
-            <div className="space-y-3">
-              {[
-                { rank: 1, name: 'Mumbai North Team', pct: 83, amount: '₹12,45,000 / ₹15,00,000', color: 'bg-emerald-500' },
-                { rank: 2, name: 'Mumbai East Team', pct: 82, amount: '₹10,60,000 / ₹13,00,000', color: 'bg-emerald-500' },
-                { rank: 3, name: 'Thane Team', pct: 78, amount: '₹7,80,000 / ₹10,00,000', color: 'bg-amber-500' },
-                { rank: 4, name: 'Mumbai West Team', pct: 76, amount: '₹9,10,000 / ₹12,00,000', color: 'bg-amber-500' },
-                { rank: 5, name: 'Pune Team', pct: 74, amount: '₹6,70,000 / ₹9,00,000', color: 'bg-amber-500' },
-              ].map((t) => (
-                <div key={t.rank} className="space-y-1.5 text-xs font-semibold">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[10px] font-extrabold text-[#0D1F3D]">
-                        {t.rank}
-                      </span>
-                      <span className="font-extrabold text-[#0D1F3D]">{t.name}</span>
-                    </div>
-                    <span className="font-extrabold text-slate-700">{t.pct}%</span>
-                  </div>
-                  <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                    <div className={`h-full ${t.color} rounded-full`} style={{ width: `${t.pct}%` }} />
-                  </div>
-                  <p className="text-[10px] text-right text-slate-400 font-medium">{t.amount}</p>
+            <div className="mt-2 w-full space-y-1.5 text-[11px] font-semibold text-slate-600">
+              {teamDistributionData.map((d) => (
+                <div key={d.name} className="flex justify-between items-center">
+                  <span className="flex items-center gap-1.5 truncate">
+                    <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+                    <span className="truncate">{d.name}</span>
+                  </span>
+                  <span className="font-extrabold text-[#0D1F3D] ml-2">{d.value}</span>
                 </div>
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Quick Actions Card */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Quick Actions</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => navigate('/admin/teams/create')}
-                className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Plus className="h-4 w-4 text-[#E20613]" />
-                  <div>
-                    <p className="font-extrabold text-[#0D1F3D]">Create New Team</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Add a new sales team</p>
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-slate-400" />
-              </button>
+        {/* Top Performing Teams Leaderboard */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-extrabold text-[#0D1F3D]">Top Performing Teams</h3>
+            <span className="text-[10px] font-bold text-slate-400">This Month</span>
+          </div>
 
-              <button
-                onClick={() => navigate('/admin/teams/targets')}
-                className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Users className="h-4 w-4 text-blue-600" />
-                  <div>
-                    <p className="font-extrabold text-[#0D1F3D]">Team Targets Matrix</p>
-                    <p className="text-[10px] text-slate-400 font-medium">View overall target structure & performance</p>
+          <div className="space-y-3">
+            {[
+              { rank: 1, name: 'Mumbai North Team', pct: 83, amount: '₹12,45,000 / ₹15,00,000', color: 'bg-emerald-500' },
+              { rank: 2, name: 'Mumbai East Team', pct: 82, amount: '₹10,60,000 / ₹13,00,000', color: 'bg-emerald-500' },
+              { rank: 3, name: 'Thane Team', pct: 78, amount: '₹7,80,000 / ₹10,00,000', color: 'bg-amber-500' },
+              { rank: 4, name: 'Mumbai West Team', pct: 76, amount: '₹9,10,000 / ₹12,00,000', color: 'bg-amber-500' },
+              { rank: 5, name: 'Pune Team', pct: 74, amount: '₹6,70,000 / ₹9,00,000', color: 'bg-amber-500' },
+            ].map((t) => (
+              <div key={t.rank} className="space-y-1.5 text-xs font-semibold">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[10px] font-extrabold text-[#0D1F3D]">
+                      {t.rank}
+                    </span>
+                    <span className="font-extrabold text-[#0D1F3D]">{t.name}</span>
                   </div>
+                  <span className="font-extrabold text-slate-700">{t.pct}%</span>
                 </div>
-                <ChevronRight className="h-4 w-4 text-slate-400" />
-              </button>
-            </div>
+                <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                  <div className={`h-full ${t.color} rounded-full`} style={{ width: `${t.pct}%` }} />
+                </div>
+                <p className="text-[10px] text-right text-slate-400 font-medium">{t.amount}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions Card */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Quick Actions</h3>
+          <div className="space-y-2">
+            <button
+              onClick={() => navigate('/admin/teams/create')}
+              className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                <Plus className="h-4 w-4 text-[#E20613]" />
+                <div>
+                  <p className="font-extrabold text-[#0D1F3D]">Create New Team</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Add a new sales team</p>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-slate-400" />
+            </button>
+
+            <button
+              onClick={() => navigate('/admin/teams/targets')}
+              className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                <Users className="h-4 w-4 text-blue-600" />
+                <div>
+                  <p className="font-extrabold text-[#0D1F3D]">Team Targets Matrix</p>
+                  <p className="text-[10px] text-slate-400 font-medium">View overall target structure & performance</p>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-slate-400" />
+            </button>
           </div>
         </div>
       </div>

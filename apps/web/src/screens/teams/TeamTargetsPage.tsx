@@ -119,19 +119,19 @@ export default function TeamTargetsPage() {
 
             <div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600">
               <div>
-                <span className="text-[10px] text-slate-400 block font-bold uppercase">Department</span>
+                <span className="text-xs font-semibold text-slate-500 block mb-0.5">Department</span>
                 <span className="font-extrabold text-[#0D1F3D]">Sales</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 block font-bold uppercase">Region / Area</span>
+                <span className="text-xs font-semibold text-slate-500 block mb-0.5">Region / Area</span>
                 <span className="font-extrabold text-[#0D1F3D]">North Mumbai Region</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 block font-bold uppercase">Total Members</span>
+                <span className="text-xs font-semibold text-slate-500 block mb-0.5">Total Members</span>
                 <span className="font-extrabold text-[#0D1F3D]">8 Executive Staff</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 block font-bold uppercase">Team Code</span>
+                <span className="text-xs font-semibold text-slate-500 block mb-0.5">Team Code</span>
                 <span className="font-mono font-extrabold text-[#0D1F3D]">MN-001</span>
               </div>
             </div>
@@ -198,7 +198,7 @@ export default function TeamTargetsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-semibold">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold text-slate-600">
                     <th className="px-4 py-3.5">#</th>
                     <th className="px-4 py-3.5">Team / Manager</th>
                     <th className="px-4 py-3.5">Team Leader</th>
@@ -266,7 +266,7 @@ export default function TeamTargetsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-semibold">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold text-slate-600">
                     <th className="px-4 py-3.5">#</th>
                     <th className="px-4 py-3.5">Target Metric</th>
                     <th className="px-4 py-3.5">Target (This Month)</th>

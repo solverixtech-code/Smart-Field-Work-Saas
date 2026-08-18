@@ -231,19 +231,19 @@ export default function TeamMembersPage() {
 
           <div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600">
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Department</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Department</span>
               <span className="font-extrabold text-[#0D1F3D]">Sales</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Region / Area</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Region / Area</span>
               <span className="font-extrabold text-[#0D1F3D]">North Mumbai Region</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Total Members</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Total Members</span>
               <span className="font-extrabold text-[#0D1F3D]">8 Executive Staff</span>
             </div>
             <div>
-              <span className="text-[10px] text-slate-400 block font-bold uppercase">Team Code</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Team Code</span>
               <span className="font-mono font-extrabold text-[#0D1F3D]">MN-001</span>
             </div>
           </div>
@@ -255,7 +255,8 @@ export default function TeamMembersPage() {
         <KpiCard
           title="Total Members"
           value="8"
-          subValue="100% of roster"
+          subValue="Active Roster"
+          timeframe=""
           icon={Users}
           iconBgColor="bg-[#0D1F3D]/10"
           iconTextColor="text-[#0D1F3D]"
@@ -263,7 +264,8 @@ export default function TeamMembersPage() {
         <KpiCard
           title="Active Members"
           value="7"
-          subValue="87.5% active"
+          subValue="87.5% Active"
+          timeframe=""
           icon={UserCheck}
           iconBgColor="bg-emerald-500/10"
           iconTextColor="text-emerald-600"
@@ -271,7 +273,8 @@ export default function TeamMembersPage() {
         <KpiCard
           title="Inactive Members"
           value="1"
-          subValue="12.5% inactive"
+          subValue="12.5% Inactive"
+          timeframe=""
           icon={UserX}
           iconBgColor="bg-red-500/10"
           iconTextColor="text-[#E20613]"
@@ -279,312 +282,310 @@ export default function TeamMembersPage() {
         <KpiCard
           title="New This Month"
           value="2"
-          subValue="25.0% new joins"
+          subValue="25.0% New Joins"
+          timeframe=""
           icon={UserPlus}
           iconBgColor="bg-blue-500/10"
           iconTextColor="text-blue-600"
         />
       </div>
 
-      {/* Main Grid: Data Table (Left 8 Cols) + Summary & Donut (Right 4 Cols) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Left Column */}
-        <div className="space-y-4 lg:col-span-8">
-          {/* Toolbar & Filters matching All Executives Page */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs">
-            {/* Search Input */}
-            <div className="relative flex-1 min-w-[220px]">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by name, employee ID, role..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
-              />
-            </div>
+      {/* Full-Width Main Data Table Section */}
+      <div className="space-y-4">
+        {/* Toolbar & Filters matching All Executives Page */}
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by name, employee ID, role..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
+            />
+          </div>
 
-            {/* Status Filter Tabs */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-extrabold">
-              {(['All', 'Active', 'Inactive'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveFilter(tab)}
-                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                    activeFilter === tab
-                      ? 'bg-white text-[#0D1F3D] shadow-xs'
-                      : 'text-slate-500 hover:text-[#0D1F3D]'
-                  }`}
-                >
-                  {tab === 'All' ? 'All (8)' : tab === 'Active' ? 'Active (7)' : 'Inactive (1)'}
-                </button>
-              ))}
+          {/* Status Filter Tabs */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-extrabold">
+            {(['All', 'Active', 'Inactive'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveFilter(tab)}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  activeFilter === tab
+                    ? 'bg-white text-[#0D1F3D] shadow-xs'
+                    : 'text-slate-500 hover:text-[#0D1F3D]'
+                }`}
+              >
+                {tab === 'All' ? 'All (8)' : tab === 'Active' ? 'Active (7)' : 'Inactive (1)'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Table Card Container */}
+        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
+          <div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs font-semibold">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold text-slate-600">
+                    <th className="p-3.5 text-center">
+                      <input
+                        type="checkbox"
+                        onChange={handleSelectAll}
+                        checked={selectedIds.length === filteredMembers.length && filteredMembers.length > 0}
+                        className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                      />
+                    </th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Member</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Employee ID</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Role</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Joined On</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Targets (Monthly)</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Performance</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Status</th>
+                    <th className="px-4 py-3.5 text-right whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {filteredMembers.map((m) => {
+                    const isSelected = selectedIds.includes(m.id);
+                    return (
+                      <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-3.5 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleSelectOne(m.id)}
+                            className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                          />
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <img src={m.avatar} alt={m.name} className="h-8 w-8 rounded-full object-cover border border-slate-200 flex-shrink-0" />
+                            <p className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline cursor-pointer whitespace-nowrap">{m.name}</p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 font-mono text-slate-500 font-bold whitespace-nowrap">{m.employeeId}</td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-extrabold whitespace-nowrap ${m.roleBadgeColor}`}>
+                            {m.role}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 font-medium text-slate-500 whitespace-nowrap">{m.joinedOn}</td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <div>
+                            <p className="font-extrabold text-[#0D1F3D]">
+                              {m.monthlyDealsTarget} Deals / ₹{m.monthlyAmountTarget.toLocaleString()}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-bold text-xs ${m.performancePercent >= 75 ? 'text-emerald-600' : m.performancePercent >= 50 ? 'text-amber-600' : 'text-[#E20613]'}`}>
+                              {m.performancePercent}%
+                            </span>
+                            <div className="w-20 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${m.performancePercent >= 75 ? 'bg-emerald-500' : m.performancePercent >= 50 ? 'bg-amber-500' : 'bg-[#E20613]'}`}
+                                style={{ width: `${m.performancePercent}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <span
+                            className={`inline-block rounded-md px-2.5 py-0.5 text-[10px] font-extrabold ${
+                              m.status === 'Active'
+                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
+                                : 'bg-red-50 text-[#E20613] border border-red-200/60'
+                            }`}
+                          >
+                            {m.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1">
+                            <button title="View Profile" className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D]">
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button title="More Actions" className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D]">
+                              <MoreVertical className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* Table Card Container matching All Executives Page */}
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs font-semibold">
-                  <thead>
-                    <tr className="border-b border-slate-100 bg-slate-50/60 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                      <th className="p-3.5 text-center">
-                        <input
-                          type="checkbox"
-                          onChange={handleSelectAll}
-                          checked={selectedIds.length === filteredMembers.length && filteredMembers.length > 0}
-                          className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
-                        />
-                      </th>
-                      <th className="px-4 py-3.5">Member</th>
-                      <th className="px-4 py-3.5">Employee ID</th>
-                      <th className="px-4 py-3.5">Role</th>
-                      <th className="px-4 py-3.5">Joined On</th>
-                      <th className="px-4 py-3.5">Targets (Monthly)</th>
-                      <th className="px-4 py-3.5">Performance</th>
-                      <th className="px-4 py-3.5">Status</th>
-                      <th className="px-4 py-3.5 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {filteredMembers.map((m) => {
-                      const isSelected = selectedIds.includes(m.id);
-                      return (
-                        <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="p-3.5 text-center">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handleSelectOne(m.id)}
-                              className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
-                            />
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-3">
-                              <img src={m.avatar} alt={m.name} className="h-8 w-8 rounded-full object-cover border border-slate-200" />
-                              <p className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline cursor-pointer">{m.name}</p>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5 font-mono text-slate-500 font-bold">{m.employeeId}</td>
-                          <td className="px-4 py-3.5">
-                            <span className={`rounded-md px-2 py-0.5 text-[10px] font-extrabold ${m.roleBadgeColor}`}>
-                              {m.role}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3.5 font-medium text-slate-500">{m.joinedOn}</td>
-                          <td className="px-4 py-3.5">
-                            <div>
-                              <p className="font-extrabold text-[#0D1F3D]">
-                                {m.monthlyDealsTarget} Deals / ₹{m.monthlyAmountTarget.toLocaleString()}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-2">
-                              <span className={`font-bold text-xs ${m.performancePercent >= 75 ? 'text-emerald-600' : m.performancePercent >= 50 ? 'text-amber-600' : 'text-[#E20613]'}`}>
-                                {m.performancePercent}%
-                              </span>
-                              <div className="w-16 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full ${m.performancePercent >= 75 ? 'bg-emerald-500' : m.performancePercent >= 50 ? 'bg-amber-500' : 'bg-[#E20613]'}`}
-                                  style={{ width: `${m.performancePercent}%` }}
-                                />
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3.5">
-                            <span
-                              className={`inline-block rounded-md px-2.5 py-0.5 text-[10px] font-extrabold ${
-                                m.status === 'Active'
-                                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
-                                  : 'bg-red-50 text-[#E20613] border border-red-200/60'
-                              }`}
-                            >
-                              {m.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3.5 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <button title="View Profile" className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D]">
-                                <Eye className="h-4 w-4" />
-                              </button>
-                              <button title="More Actions" className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D]">
-                                <MoreVertical className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+          {/* Table Footer Pagination matching All Executives Page */}
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold bg-slate-50/40">
+            <p>Showing 1 to {filteredMembers.length} of {membersData.length} members</p>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0D1F3D] text-xs font-bold text-white">
+                  1
+                </span>
+                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
               </div>
+              <select className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-[#0D1F3D]">
+                <option>10 / page</option>
+                <option>25 / page</option>
+                <option>50 / page</option>
+              </select>
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Table Footer Pagination matching All Executives Page */}
-            <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold bg-slate-50/40">
-              <p>Showing 1 to {filteredMembers.length} of {membersData.length} members</p>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0D1F3D] text-xs font-bold text-white">
-                    1
-                  </span>
-                  <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 hover:bg-slate-50">
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-                <select className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-[#0D1F3D]">
-                  <option>10 / page</option>
-                  <option>25 / page</option>
-                  <option>50 / page</option>
-                </select>
-              </div>
+      {/* Bottom Grid: Team Summary + Quick Actions + Role Donut (3 Column Grid below table) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Team Summary Card */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3 text-xs">
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Team Summary</h3>
+          <div className="space-y-2 font-semibold text-slate-600">
+            <div className="flex justify-between border-b border-slate-100 pb-2">
+              <span className="text-slate-400 font-medium">Team Leader</span>
+              <span className="font-extrabold text-[#0D1F3D]">Sanjay Yadav (TL-1003)</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-100 pb-2">
+              <span className="text-slate-400 font-medium">Department</span>
+              <span className="font-bold text-slate-700">Sales</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-100 pb-2">
+              <span className="text-slate-400 font-medium">Region / Area</span>
+              <span className="font-bold text-slate-700">North Mumbai Region</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-100 pb-2">
+              <span className="text-slate-400 font-medium">Team Type</span>
+              <span className="font-bold text-slate-700">Sales Team</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-100 pb-2">
+              <span className="text-slate-400 font-medium">Created On</span>
+              <span className="font-bold text-slate-700">12 Apr 2024</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400 font-medium">Last Updated</span>
+              <span className="font-bold text-slate-700">19 May 2025 04:15 PM</span>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Summary, Quick Actions, Role Donut */}
-        <div className="space-y-6 lg:col-span-4">
-          {/* Team Summary Card */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3 text-xs">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Team Summary</h3>
-            <div className="space-y-2 font-semibold text-slate-600">
-              <div className="flex justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-400 font-medium">Team Leader</span>
-                <span className="font-extrabold text-[#0D1F3D]">Sanjay Yadav (TL-1003)</span>
+        {/* Quick Actions Card */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Quick Actions</h3>
+          <div className="space-y-2">
+            <button
+              onClick={() => alert('Opening Add Member Modal...')}
+              className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                <UserPlus className="h-4 w-4 text-blue-600" />
+                <div>
+                  <p className="font-extrabold text-[#0D1F3D]">Add New Member</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Add a new executive to this team</p>
+                </div>
               </div>
-              <div className="flex justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-400 font-medium">Department</span>
-                <span className="font-bold text-slate-700">Sales</span>
+            </button>
+
+            <button
+              onClick={() => alert('Importing members from Excel...')}
+              className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                <Upload className="h-4 w-4 text-purple-600" />
+                <div>
+                  <p className="font-extrabold text-[#0D1F3D]">Import Members</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Bulk import members via Excel</p>
+                </div>
               </div>
-              <div className="flex justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-400 font-medium">Region / Area</span>
-                <span className="font-bold text-slate-700">North Mumbai Region</span>
+            </button>
+
+            <button
+              onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/targets`)}
+              className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                <Target className="h-4 w-4 text-[#E20613]" />
+                <div>
+                  <p className="font-extrabold text-[#0D1F3D]">Update Targets</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Set or update monthly targets</p>
+                </div>
               </div>
-              <div className="flex justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-400 font-medium">Team Type</span>
-                <span className="font-bold text-slate-700">Sales Team</span>
+            </button>
+
+            <button
+              onClick={() => alert('Exporting members list...')}
+              className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+            >
+              <div className="flex items-center gap-2.5">
+                <Download className="h-4 w-4 text-emerald-600" />
+                <div>
+                  <p className="font-extrabold text-[#0D1F3D]">Export Members</p>
+                  <p className="text-[10px] text-slate-400 font-medium">Download members list as Excel</p>
+                </div>
               </div>
-              <div className="flex justify-between border-b border-slate-100 pb-2">
-                <span className="text-slate-400 font-medium">Created On</span>
-                <span className="font-bold text-slate-700">12 Apr 2024</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400 font-medium">Last Updated</span>
-                <span className="font-bold text-slate-700">19 May 2025 04:15 PM</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Role Distribution Donut Chart */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Role Distribution</h3>
+          <div className="flex flex-col items-center">
+            <div className="h-44 w-full relative">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={roleDistributionData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={45}
+                    outerRadius={65}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {roleDistributionData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    position={{ y: -15 }}
+                    wrapperStyle={{ zIndex: 100 }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
+                    itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
+                    formatter={(val: any) => [`${val} Staff`, 'Count']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-lg font-extrabold text-[#0D1F3D]">8</span>
+                <span className="text-[10px] font-bold text-slate-400">Total Staff</span>
               </div>
             </div>
-          </div>
 
-          {/* Quick Actions Card */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Quick Actions</h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => alert('Opening Add Member Modal...')}
-                className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  <UserPlus className="h-4 w-4 text-blue-600" />
-                  <div>
-                    <p className="font-extrabold text-[#0D1F3D]">Add New Member</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Add a new executive to this team</p>
-                  </div>
+            <div className="mt-2 w-full space-y-1.5 text-[11px] font-semibold text-slate-600">
+              {roleDistributionData.map((r) => (
+                <div key={r.name} className="flex justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: r.color }} />
+                    {r.name}
+                  </span>
+                  <span className="font-extrabold text-[#0D1F3D]">{r.value} ({((r.value / 8) * 100).toFixed(1)}%)</span>
                 </div>
-              </button>
-
-              <button
-                onClick={() => alert('Importing members from Excel...')}
-                className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Upload className="h-4 w-4 text-purple-600" />
-                  <div>
-                    <p className="font-extrabold text-[#0D1F3D]">Import Members</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Bulk import members via Excel</p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/targets`)}
-                className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Target className="h-4 w-4 text-[#E20613]" />
-                  <div>
-                    <p className="font-extrabold text-[#0D1F3D]">Update Targets</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Set or update monthly targets</p>
-                  </div>
-                </div>
-              </button>
-
-              <button
-                onClick={() => alert('Exporting members list...')}
-                className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
-              >
-                <div className="flex items-center gap-2.5">
-                  <Download className="h-4 w-4 text-emerald-600" />
-                  <div>
-                    <p className="font-extrabold text-[#0D1F3D]">Export Members</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Download members list as Excel</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Role Distribution Donut Chart */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Role Distribution</h3>
-            <div className="flex flex-col items-center">
-              <div className="h-44 w-full relative">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={roleDistributionData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={45}
-                      outerRadius={65}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {roleDistributionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      position={{ y: -15 }}
-                      wrapperStyle={{ zIndex: 100 }}
-                      contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
-                      labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
-                      itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                      formatter={(val: any) => [`${val} Staff`, 'Count']}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-lg font-extrabold text-[#0D1F3D]">8</span>
-                  <span className="text-[10px] font-bold text-slate-400">Total Staff</span>
-                </div>
-              </div>
-
-              <div className="mt-2 w-full space-y-1.5 text-[11px] font-semibold text-slate-600">
-                {roleDistributionData.map((r) => (
-                  <div key={r.name} className="flex justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: r.color }} />
-                      {r.name}
-                    </span>
-                    <span className="font-extrabold text-[#0D1F3D]">{r.value} ({((r.value / 8) * 100).toFixed(1)}%)</span>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         </div>

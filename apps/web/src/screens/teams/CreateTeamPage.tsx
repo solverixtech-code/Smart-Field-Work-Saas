@@ -314,7 +314,7 @@ export default function CreateTeamPage() {
         <div className="space-y-6 lg:col-span-4">
           {/* Live Team Preview Box */}
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4 text-center">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D] uppercase tracking-wider text-left">Team Preview</h3>
+            <h3 className="text-base font-extrabold text-[#0D1F3D] text-left">Team Preview</h3>
 
             <div className="flex flex-col items-center pt-2">
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100 text-purple-600 shadow-xs mb-3">
