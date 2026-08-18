@@ -192,6 +192,13 @@ export default function SalesTeamsPage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [teams] = useState<SalesTeamItem[]>(mockTeams);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const handleGlobalClick = () => setActiveMenuId(null);
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
 
   const filteredTeams = teams.filter((t) => {
     const matchesSearch =
@@ -479,23 +486,98 @@ export default function SalesTeamsPage() {
                           </span>
                         </td>
 
-                        {/* Actions */}
-                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        {/* Actions Column with Floating Dropdown Menu */}
+                        <td className="px-4 py-3.5 text-right whitespace-nowrap relative">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => navigate(`/admin/teams/${t.id}`)}
                               title="View Team Details"
-                              className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors border border-slate-200 shadow-xs"
+                              className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs"
                             >
                               <Eye className="h-4 w-4" />
                             </button>
-                            <button
-                              onClick={() => navigate(`/admin/teams/${t.id}/leader`)}
-                              title="Assign Leader"
-                              className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors border border-slate-200 shadow-xs"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
+
+                            <div className="relative">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMenuId(activeMenuId === t.id ? null : t.id);
+                                }}
+                                title="Team Actions Menu"
+                                className={`p-1.5 rounded-lg transition-colors border shadow-xs ${
+                                  activeMenuId === t.id
+                                    ? 'bg-[#0D1F3D] text-white border-[#0D1F3D]'
+                                    : 'text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-[#0D1F3D]'
+                                }`}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+
+                              {/* Floating Dropdown Action Menu */}
+                              {activeMenuId === t.id && (
+                                <div
+                                  className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl space-y-1 text-left animate-fadeIn"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <button
+                                    onClick={() => {
+                                      setActiveMenuId(null);
+                                      navigate(`/admin/teams/${t.id}/leader`);
+                                    }}
+                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-[#0D1F3D] hover:bg-red-50 hover:text-[#E20613] transition-colors"
+                                  >
+                                    <UserCheck className="h-4 w-4 text-[#E20613]" />
+                                    <span>Assign / Change Leader</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      setActiveMenuId(null);
+                                      navigate(`/admin/teams/${t.id}/members`);
+                                    }}
+                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                  >
+                                    <Users className="h-4 w-4 text-blue-600" />
+                                    <span>Manage Members ({t.memberCount})</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      setActiveMenuId(null);
+                                      navigate(`/admin/teams/${t.id}/performance`);
+                                    }}
+                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                  >
+                                    <BarChart3 className="h-4 w-4 text-emerald-600" />
+                                    <span>View Team Performance</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      setActiveMenuId(null);
+                                      navigate(`/admin/teams/${t.id}/targets`);
+                                    }}
+                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                  >
+                                    <Target className="h-4 w-4 text-purple-600" />
+                                    <span>Manage Team Targets</span>
+                                  </button>
+
+                                  <div className="border-t border-slate-100 pt-1">
+                                    <button
+                                      onClick={() => {
+                                        setActiveMenuId(null);
+                                        navigate(`/admin/teams/${t.id}`);
+                                      }}
+                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                    >
+                                      <Eye className="h-4 w-4 text-slate-500" />
+                                      <span>Team Full Details</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </td>
                       </tr>
