@@ -15,8 +15,8 @@ import {
   Download,
   Plus,
   ChevronRight,
-  Activity,
   MapPin,
+  Briefcase,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -77,24 +77,31 @@ export default function TeamDetailsPage() {
 
   return (
     <div className="space-y-6 font-sans pb-12">
-      {/* Page Header Bar */}
+      {/* UNIFIED PAGE HEADER & BREADCRUMB */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Team Details — Mumbai North Team</h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/admin/teams')}
+              className="text-slate-500 hover:text-slate-900 transition-colors"
+              title="Back to Teams"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h1 className="text-2xl font-bold text-slate-900">Mumbai North Team</h1>
+            <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+              Active
+            </span>
+            <span className="font-mono text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+              MN-001
+            </span>
+          </div>
           <p className="mt-1 text-sm font-normal text-slate-600">
-            Comprehensive overview, sales analytics, member performance, and target tracking.
+            Sales & business development for North Mumbai region (Andheri, Borivali, Malad).
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/admin/teams')}
-            className="flex items-center gap-2 font-semibold text-slate-800 border-slate-300 shadow-none hover:bg-slate-50"
-          >
-            <ArrowLeft className="h-4 w-4 text-slate-700" /> Back to Teams
-          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -114,152 +121,100 @@ export default function TeamDetailsPage() {
         </div>
       </div>
 
-      {/* Team Header Banner Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-6">
-        <div className="flex flex-wrap items-start justify-between gap-6 border-b border-slate-100 pb-5">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-blue-100 text-blue-800 text-xl font-bold shadow-xs">
-              MN
-            </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-xl font-bold text-slate-900">Mumbai North Team</h2>
-                <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                  Active
-                </span>
-              </div>
-              <p className="text-xs font-normal text-slate-600 mt-0.5">North Mumbai Region</p>
-            </div>
+      {/* TEAM LEADER & QUICK SUMMARY BAR */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 bg-white rounded-xl border border-slate-200 p-4 shadow-xs">
+        <div className="lg:col-span-6 flex items-center gap-3 border-b lg:border-b-0 lg:border-r border-slate-100 pb-3 lg:pb-0 lg:pr-4">
+          <img
+            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
+            alt="Team Leader"
+            className="h-11 w-11 rounded-full object-cover border border-slate-200 shrink-0"
+          />
+          <div className="text-xs min-w-0 flex-1">
+            <span className="text-xs font-medium text-slate-500 block mb-0.5">Team Leader</span>
+            <p className="font-semibold text-slate-900 truncate">
+              Sanjay Yadav <span className="text-xs font-mono font-semibold text-slate-600">(TL-1003)</span>
+            </p>
+            <p className="text-xs font-normal text-slate-600 flex items-center gap-1 mt-0.5">
+              <Phone className="h-3 w-3 text-slate-500" /> +91 98765 43210
+            </p>
           </div>
-
-          {/* Team Leader Banner Info */}
-          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-              alt="Team Leader"
-              className="h-10 w-10 rounded-full object-cover border border-slate-200"
-            />
-            <div className="text-xs">
-              <span className="text-xs font-medium text-slate-600 block mb-0.5">Team Leader</span>
-              <p className="font-semibold text-slate-900">Sanjay Yadav <span className="text-xs font-mono font-semibold text-slate-600">(TL-1003)</span></p>
-              <p className="text-xs font-normal text-slate-600 flex items-center gap-1 mt-0.5">
-                <Phone className="h-3 w-3 text-slate-500" /> +91 98765 43210
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/leader`)}
-              className="!px-2.5 !py-1 text-xs font-semibold text-slate-800 border-slate-300 ml-2"
-            >
-              Reassign
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/leader`)}
+            className="!px-2.5 !py-1 text-xs font-semibold text-slate-800 border-slate-300 shrink-0"
+          >
+            Reassign
+          </Button>
         </div>
 
-        {/* Team Meta Grid + Description */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 text-xs text-slate-700">
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 lg:col-span-8 bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div className="lg:col-span-6 flex items-center justify-between text-xs text-slate-700 px-2">
+          <div className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4 text-slate-500" />
             <div>
-              <span className="text-xs font-medium text-slate-600 block mb-0.5">Department</span>
+              <span className="text-xs font-medium text-slate-500 block">Department</span>
               <span className="font-semibold text-slate-900">Sales</span>
-            </div>
-            <div>
-              <span className="text-xs font-medium text-slate-600 block mb-0.5">Region / Area</span>
-              <span className="font-semibold text-slate-900">North Mumbai</span>
-            </div>
-            <div>
-              <span className="text-xs font-medium text-slate-600 block mb-0.5">Team Type</span>
-              <span className="font-semibold text-slate-900">Field Sales</span>
-            </div>
-            <div>
-              <span className="text-xs font-medium text-slate-600 block mb-0.5">Created On</span>
-              <span className="font-semibold text-slate-900">12 Apr 2024</span>
-            </div>
-            <div>
-              <span className="text-xs font-medium text-slate-600 block mb-0.5">Team Code</span>
-              <span className="font-mono font-semibold text-slate-900">MN-001</span>
             </div>
           </div>
 
-          <div className="lg:col-span-4 bg-blue-50/60 p-4 rounded-xl border border-blue-200">
-            <span className="text-xs font-semibold text-blue-900 block mb-1">Team Description</span>
-            <p className="text-xs font-normal text-slate-700 leading-relaxed">
-              Handles sales and business development for North Mumbai region including Andheri, Borivali and Malad areas.
-            </p>
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-slate-500" />
+            <div>
+              <span className="text-xs font-medium text-slate-500 block">Region</span>
+              <span className="font-semibold text-slate-900">North Mumbai</span>
+            </div>
+          </div>
+
+          <div>
+            <span className="text-xs font-medium text-slate-500 block">Created On</span>
+            <span className="font-semibold text-slate-900">12 Apr 2024</span>
           </div>
         </div>
       </div>
 
-      {/* 6 Top Metric Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+      {/* 4 ESSENTIAL KPI METRIC CARDS */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          title="Total Members"
-          value="8"
-          subValue="Team Members"
+          title="Team Members"
+          value="8 Staff"
+          subValue="7 Active Field Execs"
           icon={Users}
-          iconBgColor="bg-[#0D1F3D]/10"
-          iconTextColor="text-[#0D1F3D]"
+          iconBgColor="bg-slate-100"
+          iconTextColor="text-slate-800"
         />
         <KpiCard
-          title="Active Members"
-          value="7"
-          subValue="Currently Active"
-          icon={UserCheck}
-          iconBgColor="bg-emerald-500/10"
-          iconTextColor="text-emerald-600"
-        />
-        <KpiCard
-          title="Total Leads"
-          value="1,245"
-          change="+18%"
-          changeType="positive"
-          timeframe="vs last month"
+          title="Monthly Target"
+          value="₹15,00,000"
+          subValue="83% Target Achieved"
           icon={Target}
-          iconBgColor="bg-blue-500/10"
-          iconTextColor="text-blue-600"
+          iconBgColor="bg-blue-50"
+          iconTextColor="text-blue-700"
         />
         <KpiCard
-          title="Total Deals"
-          value="89"
-          change="+24%"
-          changeType="positive"
-          timeframe="vs last month"
-          icon={CheckCircle2}
-          iconBgColor="bg-amber-500/10"
-          iconTextColor="text-amber-600"
-        />
-        <KpiCard
-          title="Total Sales"
+          title="Total Sales Achieved"
           value="₹12,45,000"
           change="+22%"
           changeType="positive"
           timeframe="vs last month"
           icon={TrendingUp}
-          iconBgColor="bg-purple-500/10"
-          iconTextColor="text-purple-600"
+          iconBgColor="bg-emerald-50"
+          iconTextColor="text-emerald-700"
         />
         <KpiCard
-          title="Target Achieved"
-          value="83%"
-          subValue="vs 80% target"
-          icon={Activity}
-          iconBgColor="bg-red-500/10"
-          iconTextColor="text-[#E20613]"
+          title="Deals Closed"
+          value="89 Deals"
+          subValue="1,245 Total Leads"
+          icon={CheckCircle2}
+          iconBgColor="bg-amber-50"
+          iconTextColor="text-amber-700"
         />
       </div>
 
-      {/* Navigation Tabs Bar */}
+      {/* RELEVANT CORE NAVIGATION TABS */}
       <div className="border-b border-slate-200 flex items-center gap-1 overflow-x-auto custom-scrollbar">
         {[
           'Overview',
           'Team Members',
-          'Leads & Deals',
-          'Performance',
-          'Attendance',
-          'Visits & Route',
-          'Incentives',
-          'Activity Log',
         ].map((tab) => (
           <button
             key={tab}
@@ -275,7 +230,7 @@ export default function TeamDetailsPage() {
         ))}
       </div>
 
-      {/* Tab Content: Overview */}
+      {/* TAB CONTENT: OVERVIEW */}
       {activeTab === 'Overview' && (
         <div className="space-y-6">
           {/* Charts Row */}
@@ -397,11 +352,11 @@ export default function TeamDetailsPage() {
 
           {/* Members Table & Leaderboard Grid */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            {/* Left: Team Members Table */}
+            {/* Team Members Table */}
             <div className="rounded-xl border border-slate-200 bg-white shadow-xs lg:col-span-8 overflow-hidden flex flex-col justify-between">
               <div>
                 <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-base font-bold text-slate-900">Team Members</h3>
+                  <h3 className="text-base font-bold text-slate-900">Team Members Performance</h3>
 
                   <div className="flex items-center gap-3">
                     <div className="relative w-56">
@@ -427,48 +382,54 @@ export default function TeamDetailsPage() {
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="border-b border-slate-200 bg-slate-100/90 text-xs font-semibold text-slate-800">
-                        <th className="px-4 py-3 w-8 text-center">#</th>
-                        <th className="px-4 py-3">Member Name</th>
-                        <th className="px-4 py-3">Role</th>
-                        <th className="px-4 py-3">Location</th>
-                        <th className="px-4 py-3 text-center">Active Leads</th>
-                        <th className="px-4 py-3 text-center">Deals Won</th>
-                        <th className="px-4 py-3 text-right">Sales (This Month)</th>
-                        <th className="px-4 py-3 text-center">Target Achv.</th>
-                        <th className="px-4 py-3 text-center">Status</th>
-                        <th className="px-4 py-3 text-right">Actions</th>
+                        <th className="px-4 py-3 w-8 text-center whitespace-nowrap">#</th>
+                        <th className="px-4 py-3 whitespace-nowrap min-w-[180px]">Member Name</th>
+                        <th className="px-4 py-3 whitespace-nowrap min-w-[130px]">Role</th>
+                        <th className="px-4 py-3 whitespace-nowrap min-w-[110px]">Location</th>
+                        <th className="px-4 py-3 text-center whitespace-nowrap min-w-[90px]">Active Leads</th>
+                        <th className="px-4 py-3 text-center whitespace-nowrap min-w-[90px]">Deals Won</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap min-w-[140px]">Sales (This Month)</th>
+                        <th className="px-4 py-3 text-center whitespace-nowrap min-w-[100px]">Target Achv.</th>
+                        <th className="px-4 py-3 text-center whitespace-nowrap min-w-[110px]">Status</th>
+                        <th className="px-4 py-3 text-right whitespace-nowrap min-w-[80px]">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-800">
                       {filteredMembers.map((m, idx) => (
                         <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="px-4 py-3 text-slate-500 font-semibold text-center">{idx + 1}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 text-slate-500 font-semibold text-center whitespace-nowrap">{idx + 1}</td>
+                          <td className="px-4 py-3 whitespace-nowrap">
                             <div className="flex items-center gap-2.5">
-                              <img src={m.avatar} alt={m.name} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                              <img src={m.avatar} alt={m.name} className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0" />
                               <div>
-                                <p className="font-semibold text-slate-900">{m.name}</p>
-                                <p className="text-xs font-mono font-semibold text-slate-600">{m.code}</p>
+                                <p className="font-semibold text-slate-900 whitespace-nowrap">{m.name}</p>
+                                <p className="text-xs font-mono font-semibold text-slate-600 whitespace-nowrap">{m.code}</p>
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-slate-700 font-normal">{m.role}</td>
-                          <td className="px-4 py-3 font-medium text-slate-800">{m.location}</td>
-                          <td className="px-4 py-3 font-semibold text-slate-900 text-center">{m.leads}</td>
-                          <td className="px-4 py-3 font-semibold text-slate-900 text-center">{m.deals}</td>
-                          <td className="px-4 py-3 font-semibold text-slate-900 text-right">₹{m.sales.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-4 py-3 text-slate-700 font-normal whitespace-nowrap">{m.role}</td>
+                          <td className="px-4 py-3 font-medium text-slate-800 whitespace-nowrap">{m.location}</td>
+                          <td className="px-4 py-3 font-semibold text-slate-900 text-center whitespace-nowrap">{m.leads}</td>
+                          <td className="px-4 py-3 font-semibold text-slate-900 text-center whitespace-nowrap">{m.deals}</td>
+                          <td className="px-4 py-3 font-semibold text-slate-900 text-right whitespace-nowrap">₹{m.sales.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-center whitespace-nowrap">
                             <span className={`font-semibold ${m.achv >= 80 ? 'text-emerald-700' : 'text-amber-700'}`}>
                               {m.achv}%
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-center">
-                            <span className={`rounded-md px-2.5 py-0.5 text-xs font-semibold border ${m.status === 'Active' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-100 text-slate-700 border-slate-300'}`}>
+                          <td className="px-4 py-3 text-center whitespace-nowrap">
+                            <span className={`inline-block rounded-md px-2.5 py-0.5 text-xs font-semibold border whitespace-nowrap ${
+                              m.status === 'Active'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : m.status === 'On Leave'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : 'bg-slate-100 text-slate-700 border-slate-300'
+                            }`}>
                               {m.status}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right">
-                            <button className="text-slate-600 hover:text-slate-900 p-1 border border-slate-200 rounded-md bg-white">
+                          <td className="px-4 py-3 text-right whitespace-nowrap">
+                            <button className="text-slate-600 hover:text-slate-900 p-1 border border-slate-200 rounded-md bg-white shadow-xs">
                               <MoreVertical className="h-4 w-4" />
                             </button>
                           </td>
@@ -492,9 +453,8 @@ export default function TeamDetailsPage() {
               </div>
             </div>
 
-            {/* Right: Top Performers + Recent Activities + Quick Actions */}
+            {/* Right: Top Performers */}
             <div className="space-y-6 lg:col-span-4">
-              {/* Top Performers */}
               <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-bold text-slate-900">Top Performers</h3>
@@ -522,58 +482,51 @@ export default function TeamDetailsPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Recent Activities Timeline */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-base font-bold text-slate-900">Recent Activities</h3>
-                  <button className="text-xs font-semibold text-blue-700 hover:underline">View All</button>
-                </div>
-
-                <div className="space-y-3 text-xs">
-                  {[
-                    { title: 'New deal won by Rahul Sharma', desc: 'VisibloAI Pro Plan - ₹45,000', time: '2 hours ago', icon: CheckCircle2, color: 'text-emerald-700 bg-emerald-50' },
-                    { title: 'Priya Mehta completed 5 visits', desc: 'Andheri East territory', time: '4 hours ago', icon: MapPin, color: 'text-blue-700 bg-blue-50' },
-                    { title: 'New lead assigned to Amit Patil', desc: 'Website - ABC Traders', time: '6 hours ago', icon: Users, color: 'text-purple-700 bg-purple-50' },
-                  ].map((act, i) => {
-                    const IconComp = act.icon;
-                    return (
-                      <div key={i} className="flex items-start gap-3">
-                        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${act.color}`}>
-                          <IconComp className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-slate-900">{act.title}</p>
-                          <p className="text-xs text-slate-600 font-normal">{act.desc}</p>
-                          <p className="text-xs text-slate-500 mt-0.5 font-normal">{act.time}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Quick Actions */}
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-                <h3 className="text-base font-bold text-slate-900">Quick Actions</h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/members`)}
-                    className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors text-center text-xs space-y-1"
-                  >
-                    <Plus className="h-5 w-5 text-slate-900" />
-                    <span className="font-bold text-slate-900">Add Member</span>
-                  </button>
-                  <button
-                    onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/targets`)}
-                    className="flex flex-col items-center justify-center p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors text-center text-xs space-y-1"
-                  >
-                    <Target className="h-5 w-5 text-slate-900" />
-                    <span className="font-bold text-slate-900">Create Target</span>
-                  </button>
-                </div>
-              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT: TEAM MEMBERS */}
+      {activeTab === 'Team Members' && (
+        <div className="rounded-xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Team Roster</h3>
+              <p className="text-xs text-slate-600">All field executives assigned to Mumbai North Team</p>
+            </div>
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/members`)}
+              className="flex items-center gap-1.5 font-semibold"
+            >
+              <Plus className="h-4 w-4" /> Add Executive
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {teamMembers.map((m) => (
+              <div key={m.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <img src={m.avatar} alt={m.name} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
+                  <div>
+                    <p className="font-semibold text-slate-900">{m.name}</p>
+                    <p className="text-xs text-slate-600 font-mono">{m.code}</p>
+                  </div>
+                </div>
+                <div className="text-xs space-y-1 pt-2 border-t border-slate-200 text-slate-700">
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Location:</span>
+                    <span className="font-medium">{m.location}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500">Sales Achieved:</span>
+                    <span className="font-semibold text-slate-900">₹{m.sales.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
