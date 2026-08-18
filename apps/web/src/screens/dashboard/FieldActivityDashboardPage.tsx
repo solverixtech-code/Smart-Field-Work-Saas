@@ -2,47 +2,160 @@ import React, { useState } from 'react';
 import {
   Users,
   MapPin,
-  Store,
   CheckCircle2,
   Clock,
-  Flame,
   Globe,
   Layers,
   Search,
+  Battery,
+  Navigation,
+  RefreshCw,
+  Download,
+  PhoneCall,
+  MessageSquare,
 } from 'lucide-react';
 import { KpiCard } from '../../components/dashboard/KpiCard';
+import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { Button } from '../../components/ui/Button';
 
-const executiveMarkers = [
-  { id: 1, name: 'Rohit Mehta', store: 'Supermart Retail', status: 'Checked-in', area: 'Andheri West, Mumbai', lat: 19.1197, lng: 72.8464, avatar: 'RM' },
-  { id: 2, name: 'Priya Nair', store: 'Apex Retail Hub', status: 'Demoing', area: 'Bandra West, Mumbai', lat: 19.0596, lng: 72.8295, avatar: 'PN' },
-  { id: 3, name: 'Vikram Singh', store: 'In Transit', status: 'En Route', area: 'BKC, Mumbai', lat: 19.0657, lng: 72.8687, avatar: 'VS' },
-  { id: 4, name: 'Neha Kapoor', store: 'Metro Traders', status: 'Checked-in', area: 'Powai, Mumbai', lat: 19.1176, lng: 72.9060, avatar: 'NK' },
+interface FieldExecutive {
+  id: string;
+  name: string;
+  avatar: string;
+  role: string;
+  status: 'Checked-in' | 'In Transit' | 'Demo Completed' | 'On Break';
+  area: string;
+  lat: number;
+  lng: number;
+  battery: string;
+  speed: string;
+  lastUpdated: string;
+  phone: string;
+}
+
+const executivesData: FieldExecutive[] = [
+  {
+    id: 'ex-1',
+    name: 'Amit Verma',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
+    role: 'Sr. Field Executive',
+    status: 'Checked-in',
+    area: 'Andheri West, Mumbai',
+    lat: 19.1197,
+    lng: 72.8464,
+    battery: '88%',
+    speed: '0 km/h',
+    lastUpdated: 'Just now',
+    phone: '+91 98765 43210',
+  },
+  {
+    id: 'ex-2',
+    name: 'Neha Singh',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
+    role: 'Field Specialist',
+    status: 'In Transit',
+    area: 'Bandra West, Mumbai',
+    lat: 19.0596,
+    lng: 72.8295,
+    battery: '74%',
+    speed: '28 km/h',
+    lastUpdated: '1 min ago',
+    phone: '+91 98765 43211',
+  },
+  {
+    id: 'ex-3',
+    name: 'Vikram Patil',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
+    role: 'Field Lead',
+    status: 'Demo Completed',
+    area: 'BKC, Mumbai',
+    lat: 19.0657,
+    lng: 72.8687,
+    battery: '92%',
+    speed: '0 km/h',
+    lastUpdated: '3 mins ago',
+    phone: '+91 98765 43212',
+  },
+  {
+    id: 'ex-4',
+    name: 'Prakash Yadav',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
+    role: 'Field Officer',
+    status: 'On Break',
+    area: 'Powai, Mumbai',
+    lat: 19.1176,
+    lng: 72.906,
+    battery: '65%',
+    speed: '0 km/h',
+    lastUpdated: '5 mins ago',
+    phone: '+91 98765 43213',
+  },
+  {
+    id: 'ex-5',
+    name: 'Anita Kumari',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80',
+    role: 'Sr. Field Executive',
+    status: 'Checked-in',
+    area: 'Lower Parel, Mumbai',
+    lat: 18.9953,
+    lng: 72.8288,
+    battery: '81%',
+    speed: '0 km/h',
+    lastUpdated: 'Just now',
+    phone: '+91 98765 43214',
+  },
 ];
 
 export default function FieldActivityDashboardPage() {
   const [mapType, setMapType] = useState<'roadmap' | 'satellite'>('roadmap');
-  const [selectedMarker, setSelectedMarker] = useState(executiveMarkers[0]);
+  const [selectedExec, setSelectedExec] = useState<FieldExecutive>(executivesData[0]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [mapSearchQuery, setMapSearchQuery] = useState('');
+  const [showMapSearchResults, setShowMapSearchResults] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState('All');
 
-  // Dynamic Google Map Embed URL (Centered on Mumbai with Satellite/Roadmap toggle)
-  const mapEmbedUrl = `https://maps.google.com/maps?q=${selectedMarker.lat},${selectedMarker.lng}&t=${
+  const filteredExecutives = executivesData.filter((e) => {
+    const matchesSearch = e.name.toLowerCase().includes(searchQuery.toLowerCase()) || e.area.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = selectedFilter === 'All' || e.status === selectedFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  const matchingMapExecs = executivesData.filter((e) =>
+    e.name.toLowerCase().includes(mapSearchQuery.toLowerCase()) ||
+    e.area.toLowerCase().includes(mapSearchQuery.toLowerCase()),
+  );
+
+  // Dynamic Google Map Embed URL centered on selected executive GPS
+  const googleMapUrl = `https://maps.google.com/maps?q=${selectedExec.lat},${selectedExec.lng}&t=${
     mapType === 'satellite' ? 'k' : 'm'
-  }&z=14&ie=UTF8&iwloc=&output=embed`;
+  }&z=13&ie=UTF8&iwloc=&output=embed`;
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-6 font-sans pb-12">
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Field Activity Dashboard</h1>
-          <p className="text-xs font-medium text-slate-500">
-            Monitor field executives, live GPS visits, demo completions, and territory routes.
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-[#0D1F3D]">Live Field Tracking</h1>
+            <span className="flex items-center gap-1.5 rounded-full bg-red-50 border border-red-200 px-3 py-1 text-xs font-bold text-[#E20613]">
+              <span className="h-2 w-2 rounded-full bg-[#E20613] animate-ping" /> Live GPS Stream
+            </span>
+          </div>
+          <p className="text-xs font-normal text-slate-600 mt-0.5">
+            Real-time GPS tracking and live status monitoring of all field executives on Google Maps.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-[#E20613] shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-[#E20613] animate-pulse" /> Live GPS Tracking Active
-          </span>
+        <div className="flex flex-wrap items-center gap-3">
+          <DateRangePicker />
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => alert('Exporting Live GPS Tracking Logs...')}
+            className="flex items-center gap-2 font-semibold shadow-xs"
+          >
+            <Download className="h-4 w-4" /> Export GPS Log
+          </Button>
         </div>
       </div>
 
@@ -50,54 +163,171 @@ export default function FieldActivityDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Executives Online"
-          value="48"
-          subValue="Active in field"
+          value="48 Active"
+          subValue="Real-time Stream"
           icon={Users}
-          iconBgColor="bg-[#0D1F3D]/10"
-          iconTextColor="text-[#0D1F3D]"
+          iconBgColor="bg-blue-50"
+          iconTextColor="text-blue-700"
         />
         <KpiCard
           title="Checked-in Executives"
-          value="36"
-          subValue="At shop locations"
+          value="36 Checked-in"
+          subValue="At Store Locations"
           icon={MapPin}
-          iconBgColor="bg-red-500/10"
-          iconTextColor="text-[#E20613]"
+          iconBgColor="bg-emerald-50"
+          iconTextColor="text-emerald-700"
         />
         <KpiCard
           title="Shops Visited Today"
-          value="342"
+          value="342 Visited"
           change="+24%"
           changeType="positive"
-          timeframe="from yesterday"
-          icon={Store}
-          iconBgColor="bg-red-500/10"
-          iconTextColor="text-[#E20613]"
+          timeframe="vs yesterday"
+          icon={CheckCircle2}
+          iconBgColor="bg-purple-50"
+          iconTextColor="text-purple-700"
         />
         <KpiCard
-          title="Demos Completed"
-          value="128"
-          subValue="84% success rate"
-          icon={CheckCircle2}
-          iconBgColor="bg-[#0D1F3D]/10"
-          iconTextColor="text-[#0D1F3D]"
+          title="Avg. Battery Level"
+          value="82%"
+          subValue="All Devices Active"
+          icon={Battery}
+          iconBgColor="bg-amber-50"
+          iconTextColor="text-amber-700"
         />
       </div>
 
-      {/* Middle Row: Live Google Maps Container & Activity Feed */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Actual Google Maps Container */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-8 flex flex-col justify-between">
+      {/* MAIN LIVE TRACKING SECTION: Executive List Sidebar (Left) + Google Maps Canvas with Profile Pins (Right) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+        {/* Left 4 Cols: Executives Selection & Filter Panel */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4 space-y-4 flex flex-col justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-extrabold text-[#0D1F3D]">Field Executives</h3>
+              <button
+                onClick={() => alert('Refreshing live GPS coordinates...')}
+                className="flex items-center gap-1 text-xs font-bold text-[#E20613] hover:underline"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Refresh
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search executive or location..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 py-2 text-xs font-medium text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
+              />
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs font-bold">
+              {['All', 'Checked-in', 'In Transit', 'Demo Completed', 'On Break'].map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setSelectedFilter(st)}
+                  className={`rounded-lg px-2.5 py-1 transition-all whitespace-nowrap ${
+                    selectedFilter === st
+                      ? 'bg-[#0D1F3D] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Executive Items List */}
+          <div className="space-y-2.5 max-h-[460px] overflow-y-auto custom-scrollbar pr-1">
+            {filteredExecutives.map((exec) => {
+              const isSelected = selectedExec.id === exec.id;
+              return (
+                <div
+                  key={exec.id}
+                  onClick={() => setSelectedExec(exec)}
+                  className={`flex items-center justify-between rounded-xl border p-3 cursor-pointer transition-all ${
+                    isSelected
+                      ? 'border-[#E20613] bg-red-50/40 shadow-xs'
+                      : 'border-slate-100 bg-slate-50/60 hover:bg-slate-100/80'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="relative shrink-0">
+                      <img
+                        src={exec.avatar}
+                        alt={exec.name}
+                        className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-xs"
+                      />
+                      <span
+                        className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white ${
+                          exec.status === 'Checked-in'
+                            ? 'bg-emerald-500'
+                            : exec.status === 'In Transit'
+                            ? 'bg-blue-500'
+                            : exec.status === 'Demo Completed'
+                            ? 'bg-purple-500'
+                            : 'bg-amber-500'
+                        }`}
+                      />
+                    </div>
+
+                    <div>
+                      <h4 className="font-extrabold text-[#0D1F3D] text-xs">{exec.name}</h4>
+                      <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-slate-400" /> {exec.area}
+                      </p>
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 mt-0.5">
+                        <span className="flex items-center gap-0.5 text-slate-600">
+                          <Battery className="h-3 w-3 text-emerald-600" /> {exec.battery}
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-0.5 text-blue-600">
+                          <Navigation className="h-3 w-3" /> {exec.speed}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span
+                      className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-extrabold border ${
+                        exec.status === 'Checked-in'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : exec.status === 'In Transit'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : exec.status === 'Demo Completed'
+                          ? 'bg-purple-50 text-purple-700 border-purple-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}
+                    >
+                      {exec.status}
+                    </span>
+                    <p className="text-[9px] text-slate-400 font-medium mt-1">{exec.lastUpdated}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right 8 Cols: Interactive Google Maps Canvas with Custom Profile Picture Map Pins */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-8 flex flex-col justify-between relative">
+          {/* Google Maps Controls Bar */}
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <Globe className="h-4 w-4 text-[#E20613]" />
-                <h3 className="text-base font-extrabold text-[#0D1F3D]">Live GPS Field Map (Google Maps)</h3>
+                <Globe className="h-4.5 w-4.5 text-[#E20613]" />
+                <h3 className="text-base font-extrabold text-[#0D1F3D]">Live Google Maps View</h3>
               </div>
-              <p className="text-xs text-slate-500">Real-time GPS coordinates & store visit tracking</p>
+              <p className="text-xs text-slate-500">Search any executive from the map search bar below to center Google Maps</p>
             </div>
 
-            {/* Google Maps Layer Toggle Buttons */}
+            {/* Map Layer Toggle */}
             <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
               <button
                 type="button"
@@ -124,162 +354,222 @@ export default function FieldActivityDashboardPage() {
             </div>
           </div>
 
-          {/* Actual Google Map Render */}
-          <div className="relative h-[380px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
+          {/* Actual Google Maps Render Container */}
+          <div className="relative h-[520px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
             <iframe
-              title="Actual Google Maps Live Field Tracking"
+              title="Google Maps Live GPS Field Executive Tracking"
               width="100%"
               height="100%"
               frameBorder="0"
               scrolling="no"
               marginHeight={0}
               marginWidth={0}
-              src={mapEmbedUrl}
+              src={googleMapUrl}
               className="h-full w-full border-0 transition-opacity duration-300"
             />
 
-            {/* Interactive Live Executives Overlay Bar on Top of Google Maps */}
-            <div className="absolute top-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white/90 p-2.5 shadow-lg backdrop-blur-md border border-white/50">
-              <div className="flex items-center gap-2 text-xs font-extrabold text-[#0D1F3D]">
-                <Search className="h-4 w-4 text-[#E20613]" />
-                <span>Select Executive to Focus:</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {executiveMarkers.map((m) => (
+            {/* Interactive Live Search Box & Executive Selection Bar on Top of Map */}
+            <div className="absolute top-3 left-3 right-3 z-30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 rounded-2xl bg-white/95 p-2.5 shadow-xl backdrop-blur-md border border-white/80">
+              {/* Search Box Input with Clear Button */}
+              <div className="relative flex-1 max-w-xs">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search executive or location..."
+                  value={mapSearchQuery}
+                  onChange={(e) => {
+                    setMapSearchQuery(e.target.value);
+                    setShowMapSearchResults(true);
+                  }}
+                  onFocus={() => setShowMapSearchResults(true)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50/80 pl-9 pr-8 py-1.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:outline-none transition-all"
+                />
+                {mapSearchQuery && (
                   <button
-                    key={m.id}
-                    onClick={() => setSelectedMarker(m)}
-                    className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
-                      selectedMarker.id === m.id
-                        ? 'bg-[#E20613] text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                    }`}
+                    onClick={() => {
+                      setMapSearchQuery('');
+                      setShowMapSearchResults(false);
+                    }}
+                    className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 font-bold text-xs"
                   >
-                    📍 {m.name}
+                    ✕
                   </button>
-                ))}
+                )}
+
+                {/* Autocomplete Search Dropdown */}
+                {showMapSearchResults && mapSearchQuery && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-40 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl space-y-1 custom-scrollbar">
+                    {matchingMapExecs.length > 0 ? (
+                      matchingMapExecs.map((exec) => (
+                        <div
+                          key={exec.id}
+                          onClick={() => {
+                            setSelectedExec(exec);
+                            setShowMapSearchResults(false);
+                          }}
+                          className="flex items-center justify-between rounded-lg p-2 hover:bg-slate-50 cursor-pointer transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover shrink-0 border border-slate-200" />
+                            <div>
+                              <p className="text-xs font-bold text-[#0D1F3D]">{exec.name}</p>
+                              <p className="text-[10px] text-slate-500 font-medium">{exec.area}</p>
+                            </div>
+                          </div>
+                          <span className="rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
+                            {exec.status}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-3 text-center text-xs font-medium text-slate-400">
+                        No executives found matching "{mapSearchQuery}"
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Executive Profile Chips */}
+              <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-0.5 max-w-full">
+                {executivesData.map((exec) => {
+                  const isSelected = selectedExec.id === exec.id;
+                  return (
+                    <button
+                      key={exec.id}
+                      onClick={() => setSelectedExec(exec)}
+                      className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-bold transition-all shrink-0 ${
+                        isSelected
+                          ? 'bg-[#E20613] text-white shadow-sm ring-2 ring-[#E20613]/20'
+                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      }`}
+                    >
+                      <img src={exec.avatar} alt={exec.name} className="h-5 w-5 rounded-full object-cover border border-white" />
+                      <span className="truncate max-w-[90px]">{exec.name}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Selected Executive Info Overlay Card */}
-            <div className="absolute bottom-3 left-3 right-3 sm:right-auto rounded-xl border border-slate-200/80 bg-white/95 p-3.5 shadow-xl backdrop-blur-md space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0D1F3D] text-xs font-bold text-white">
-                  {selectedMarker.avatar}
+            {/* Dynamic Profile Avatar Pins Overlay Layer on Top of Google Maps */}
+            <div className="absolute inset-0 pointer-events-none p-4">
+              <div className="relative w-full h-full">
+                {executivesData.map((exec) => {
+                  const isSelected = selectedExec.id === exec.id;
+
+                  // Calculate dynamic viewport offset relative to selected executive GPS center
+                  const dLat = exec.lat - selectedExec.lat;
+                  const dLng = exec.lng - selectedExec.lng;
+
+                  // Zoom level 13 distance scale factor
+                  const topPos = 50 - dLat * 1800;
+                  const leftPos = 50 + dLng * 1800;
+
+                  // Hide if outside map viewport boundaries
+                  if (topPos < 5 || topPos > 95 || leftPos < 5 || leftPos > 95) {
+                    return null;
+                  }
+
+                  return (
+                    <div
+                      key={exec.id}
+                      onClick={() => setSelectedExec(exec)}
+                      className={`pointer-events-auto absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 ${
+                        isSelected ? 'z-30 scale-110' : 'z-20 hover:scale-105'
+                      }`}
+                      style={{
+                        top: `${topPos}%`,
+                        left: `${leftPos}%`,
+                      }}
+                    >
+                      {/* Profile Picture Map Pin Component */}
+                      <div className="relative flex flex-col items-center group">
+                        <div
+                          className={`mb-1 flex flex-col items-center rounded-xl bg-[#0D1F3D] px-3 py-1.5 text-xs font-bold text-white shadow-2xl border border-white/20 whitespace-nowrap transition-all ${
+                            isSelected ? 'opacity-100 scale-105' : 'opacity-85 group-hover:opacity-100'
+                          }`}
+                        >
+                          <span className="text-xs font-extrabold">{exec.name}</span>
+                          <span className="text-[10px] text-emerald-400 font-semibold">{exec.status} • {exec.area}</span>
+                        </div>
+
+                        <div
+                          className={`relative h-12 w-12 rounded-full p-0.5 bg-white shadow-2xl ring-4 ${
+                            isSelected ? 'ring-[#E20613] scale-110' : 'ring-blue-600'
+                          }`}
+                        >
+                          <img
+                            src={exec.avatar}
+                            alt={exec.name}
+                            className="h-full w-full rounded-full object-cover"
+                          />
+                          <span
+                            className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${
+                              exec.status === 'Checked-in'
+                                ? 'bg-emerald-500'
+                                : exec.status === 'In Transit'
+                                ? 'bg-blue-500'
+                                : exec.status === 'Demo Completed'
+                                ? 'bg-purple-500'
+                                : 'bg-amber-500'
+                            }`}
+                          />
+                        </div>
+
+                        <div className={`h-3 w-3 rotate-45 transform -mt-1.5 ${isSelected ? 'bg-[#E20613]' : 'bg-blue-600'}`} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Floating Info Overlay Card for Selected Executive */}
+            <div className="absolute bottom-4 left-4 right-4 sm:right-auto rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-2xl backdrop-blur-md space-y-3 min-w-[280px]">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={selectedExec.avatar}
+                    alt={selectedExec.name}
+                    className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-xs"
+                  />
+                  <div>
+                    <h4 className="text-sm font-extrabold text-[#0D1F3D]">{selectedExec.name}</h4>
+                    <p className="text-[11px] font-semibold text-slate-500">{selectedExec.role}</p>
+                  </div>
+                </div>
+                <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700">
+                  {selectedExec.status}
                 </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-700">
                 <div>
-                  <p className="text-xs font-extrabold text-[#0D1F3D]">{selectedMarker.name}</p>
-                  <p className="text-[10px] font-semibold text-[#E20613]">{selectedMarker.store}</p>
+                  <span className="text-[10px] font-bold text-slate-400 block">Area Location</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{selectedExec.area}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 block">Live Speed & Battery</span>
+                  <span className="font-extrabold text-blue-600">{selectedExec.speed} • {selectedExec.battery}</span>
                 </div>
               </div>
-              <p className="text-[11px] font-medium text-slate-500 pl-9">
-                Location: {selectedMarker.area} ({selectedMarker.lat}, {selectedMarker.lng})
-              </p>
+
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => alert(`Calling ${selectedExec.name} at ${selectedExec.phone}...`)}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#0D1F3D] py-2 text-xs font-bold text-white shadow-xs hover:bg-[#07152E]"
+                >
+                  <PhoneCall className="h-3.5 w-3.5" /> Call Executive
+                </button>
+                <button
+                  onClick={() => alert(`Opening chat with ${selectedExec.name}...`)}
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50"
+                >
+                  <MessageSquare className="h-3.5 w-3.5 text-[#E20613]" /> Send Message
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-
-        {/* Live Activity Feed */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Live Activity Feed</h3>
-            <span className="text-[11px] font-bold text-[#E20613]">Auto-updating</span>
-          </div>
-
-          <div className="space-y-3.5 text-xs">
-            {[
-              { exec: 'Rohit Mehta', action: 'Checked-in at Supermart Retail', time: '2 mins ago' },
-              { exec: 'Priya Nair', action: 'Completed Pro Demo at Apex Retail', time: '8 mins ago' },
-              { exec: 'Vikram Singh', action: 'Collected ₹15,000 Payment', time: '14 mins ago' },
-              { exec: 'Neha Kapoor', action: 'Added New Lead: Metro Traders', time: '22 mins ago' },
-            ].map((act, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-[#E20613]">
-                  <Clock className="h-4 w-4" />
-                </div>
-                <div className="flex-1 space-y-0.5">
-                  <p className="font-extrabold text-[#0D1F3D]">{act.exec}</p>
-                  <p className="text-slate-600 font-medium">{act.action}</p>
-                  <p className="text-[10px] font-bold text-slate-400">{act.time}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Row: Field Executive Leaderboard & Hot Prospects */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Executive Performance Table */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-8">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Executive Field Leaderboard</h3>
-            <button className="text-xs font-bold text-[#E20613] hover:underline">View All</button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-semibold">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
-                  <th className="px-4 py-3.5">Executive</th>
-                  <th className="px-4 py-3.5">Territory</th>
-                  <th className="px-4 py-3.5">Check-ins</th>
-                  <th className="px-4 py-3.5">Demos</th>
-                  <th className="px-4 py-3.5">Route %</th>
-                  <th className="px-4 py-3.5">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {[
-                  { name: 'Rohit Mehta', area: 'Mumbai West', checkins: 14, demos: 6, route: '92%', status: 'Checked-in' },
-                  { name: 'Priya Nair', area: 'Mumbai South', checkins: 12, demos: 5, route: '88%', status: 'Checked-in' },
-                  { name: 'Vikram Singh', area: 'Navi Mumbai', checkins: 10, demos: 4, route: '75%', status: 'In Transit' },
-                  { name: 'Neha Kapoor', area: 'Thane Central', checkins: 9, demos: 3, route: '70%', status: 'Checked-in' },
-                ].map((row) => (
-                  <tr key={row.name} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-4 py-3.5 font-extrabold text-[#0D1F3D]">{row.name}</td>
-                    <td className="px-4 py-3.5 text-slate-500">{row.area}</td>
-                    <td className="px-4 py-3.5">{row.checkins} visits</td>
-                    <td className="px-4 py-3.5">{row.demos} demos</td>
-                    <td className="px-4 py-3.5 text-[#E20613] font-bold">{row.route}</td>
-                    <td className="px-4 py-3.5">
-                      <span className={`inline-block rounded-md px-2.5 py-0.5 text-[10px] font-extrabold ${
-                        row.status === 'Checked-in' ? 'bg-red-100 text-[#E20613]' : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {row.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Hot Prospects & Due Follow-ups */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Hot Prospects & Follow-ups</h3>
-            <button className="text-xs font-bold text-[#E20613] hover:underline">View All</button>
-          </div>
-          <div className="space-y-3">
-            {[
-              { client: 'Apex Supermarket', tag: 'Hot Prospect', exec: 'Priya Nair', action: 'Final Pricing Call' },
-              { client: 'Royal Mart Stores', tag: 'High Intent', exec: 'Rohit Mehta', action: 'Contract Signing' },
-              { client: 'Grand Retail Hub', tag: 'Follow-up Due', exec: 'Vikram Singh', action: 'Demo Follow-up' },
-            ].map((item) => (
-              <div key={item.client} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3.5 text-xs">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-[#E20613]">
-                  <Flame className="h-4 w-4" />
-                </div>
-                <div className="flex-1 space-y-0.5">
-                  <p className="font-extrabold text-[#0D1F3D]">{item.client}</p>
-                  <p className="text-slate-600 font-medium">{item.action} • {item.exec}</p>
-                  <span className="inline-block rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-[#E20613]">
-                    {item.tag}
-                  </span>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
