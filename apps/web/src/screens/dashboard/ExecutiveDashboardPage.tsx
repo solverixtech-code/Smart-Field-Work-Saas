@@ -30,6 +30,7 @@ import {
 } from 'recharts';
 import { useAppSelector } from '../../store';
 import { KpiCard } from '../../components/dashboard/KpiCard';
+import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { Button } from '../../components/ui/Button';
 
 const performanceOverviewData = [
@@ -90,10 +91,7 @@ export default function ExecutiveDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#0D1F3D]">
-            <Calendar className="h-4 w-4 text-slate-500" />
-            <span>May 12 – May 18, 2025</span>
-          </div>
+          <DateRangePicker />
           <Button
             variant="accent"
             size="sm"

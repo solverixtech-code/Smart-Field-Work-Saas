@@ -25,6 +25,7 @@ import {
   Bar,
 } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
+import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { Button } from '../../components/ui/Button';
 
 const revenueVsCollectionsData = [
@@ -98,9 +99,7 @@ export default function RevenueDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <select className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#0D1F3D]">
-            <option>May 12 – May 18, 2025</option>
-          </select>
+          <DateRangePicker />
 
           <select
             value={selectedBusiness}
