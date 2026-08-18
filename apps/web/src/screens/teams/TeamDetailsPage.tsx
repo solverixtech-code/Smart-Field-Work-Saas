@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import {
   ArrowLeft,
   Edit,
@@ -17,6 +18,7 @@ import {
   ChevronRight,
   MapPin,
   Briefcase,
+  RotateCcw,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -66,14 +68,62 @@ export default function TeamDetailsPage() {
   const navigate = useNavigate();
   const { teamId } = useParams();
   const [activeTab, setActiveTab] = useState('Overview');
-  const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredMembers = teamMembers.filter(
-    (m) =>
-      m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.code.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  // Search & Filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [locationFilter, setLocationFilter] = useState('All');
+
+  const filteredMembers = useMemo(() => {
+    return teamMembers.filter((m) => {
+      const matchesSearch =
+        searchTerm.trim() === '' ||
+        m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.code.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus = statusFilter === 'All' || m.status === statusFilter;
+      const matchesLocation = locationFilter === 'All' || m.location === locationFilter;
+
+      return matchesSearch && matchesStatus && matchesLocation;
+    });
+  }, [searchTerm, statusFilter, locationFilter]);
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('All');
+    setLocationFilter('All');
+    setShowFilters(false);
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['#', 'Employee Code', 'Member Name', 'Role', 'Location', 'Active Leads', 'Deals Won', 'Sales (INR)', 'Target Achieved %', 'Status'];
+    const rows = filteredMembers.map((m, idx) => [
+      idx + 1,
+      m.code,
+      `"${m.name}"`,
+      `"${m.role}"`,
+      `"${m.location}"`,
+      m.leads,
+      m.deals,
+      m.sales,
+      `${m.achv}%`,
+      `"${m.status}"`,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `Mumbai_North_Team_Members_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success(`Exported ${filteredMembers.length} team members to CSV`);
+  };
 
   return (
     <div className="space-y-6 font-sans pb-12">
@@ -355,11 +405,12 @@ export default function TeamDetailsPage() {
             {/* Team Members Table */}
             <div className="rounded-xl border border-slate-200 bg-white shadow-xs lg:col-span-8 overflow-hidden flex flex-col justify-between">
               <div>
+                {/* Table Header & Toolbar */}
                 <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
                   <h3 className="text-base font-bold text-slate-900">Team Members Performance</h3>
 
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-56">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative w-48 sm:w-56">
                       <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
                       <input
                         type="text"
@@ -369,14 +420,74 @@ export default function TeamDetailsPage() {
                         className="w-full rounded-lg border border-slate-300 bg-white pl-8 pr-3 py-1.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
                       />
                     </div>
-                    <Button variant="outline" size="sm" className="font-semibold text-slate-800 border-slate-300 flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowFilters(!showFilters)}
+                      className={`font-semibold text-slate-800 border-slate-300 flex items-center gap-1 ${
+                        showFilters || statusFilter !== 'All' || locationFilter !== 'All'
+                          ? 'bg-slate-100 border-slate-400'
+                          : ''
+                      }`}
+                    >
                       <Filter className="h-3.5 w-3.5" /> Filter
                     </Button>
-                    <Button variant="outline" size="sm" className="font-semibold text-slate-800 border-slate-300 flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportCSV}
+                      className="font-semibold text-slate-800 border-slate-300 flex items-center gap-1 shadow-xs"
+                    >
                       <Download className="h-3.5 w-3.5" /> Export
                     </Button>
                   </div>
                 </div>
+
+                {/* Collapsible Filter Panel */}
+                {showFilters && (
+                  <div className="p-4 bg-slate-50 border-b border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <label className="font-semibold text-slate-700 block mb-1">Status Filter</label>
+                      <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
+                      >
+                        <option value="All">All Statuses</option>
+                        <option value="Active">Active</option>
+                        <option value="On Leave">On Leave</option>
+                        <option value="Inactive">Inactive</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="font-semibold text-slate-700 block mb-1">Location Area</label>
+                      <select
+                        value={locationFilter}
+                        onChange={(e) => setLocationFilter(e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
+                      >
+                        <option value="All">All Locations</option>
+                        <option value="Andheri">Andheri</option>
+                        <option value="Borivali">Borivali</option>
+                        <option value="Malad">Malad</option>
+                        <option value="Kandivali">Kandivali</option>
+                        <option value="Goregaon">Goregaon</option>
+                      </select>
+                    </div>
+
+                    <div className="flex items-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResetFilters}
+                        className="w-full font-semibold text-slate-800 border-slate-300 flex items-center justify-center gap-1.5 h-9"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" /> Reset Filters
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="overflow-x-auto custom-scrollbar">
                   <table className="w-full text-left text-xs border-collapse">
@@ -395,46 +506,54 @@ export default function TeamDetailsPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 text-slate-800">
-                      {filteredMembers.map((m, idx) => (
-                        <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="px-4 py-3 text-slate-500 font-semibold text-center whitespace-nowrap">{idx + 1}</td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="flex items-center gap-2.5">
-                              <img src={m.avatar} alt={m.name} className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0" />
-                              <div>
-                                <p className="font-semibold text-slate-900 whitespace-nowrap">{m.name}</p>
-                                <p className="text-xs font-mono font-semibold text-slate-600 whitespace-nowrap">{m.code}</p>
+                      {filteredMembers.length > 0 ? (
+                        filteredMembers.map((m, idx) => (
+                          <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="px-4 py-3 text-slate-500 font-semibold text-center whitespace-nowrap">{idx + 1}</td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="flex items-center gap-2.5">
+                                <img src={m.avatar} alt={m.name} className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0" />
+                                <div>
+                                  <p className="font-semibold text-slate-900 whitespace-nowrap">{m.name}</p>
+                                  <p className="text-xs font-mono font-semibold text-slate-600 whitespace-nowrap">{m.code}</p>
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-slate-700 font-normal whitespace-nowrap">{m.role}</td>
-                          <td className="px-4 py-3 font-medium text-slate-800 whitespace-nowrap">{m.location}</td>
-                          <td className="px-4 py-3 font-semibold text-slate-900 text-center whitespace-nowrap">{m.leads}</td>
-                          <td className="px-4 py-3 font-semibold text-slate-900 text-center whitespace-nowrap">{m.deals}</td>
-                          <td className="px-4 py-3 font-semibold text-slate-900 text-right whitespace-nowrap">₹{m.sales.toLocaleString()}</td>
-                          <td className="px-4 py-3 text-center whitespace-nowrap">
-                            <span className={`font-semibold ${m.achv >= 80 ? 'text-emerald-700' : 'text-amber-700'}`}>
-                              {m.achv}%
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center whitespace-nowrap">
-                            <span className={`inline-block rounded-md px-2.5 py-0.5 text-xs font-semibold border whitespace-nowrap ${
-                              m.status === 'Active'
-                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                : m.status === 'On Leave'
-                                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                                : 'bg-slate-100 text-slate-700 border-slate-300'
-                            }`}>
-                              {m.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right whitespace-nowrap">
-                            <button className="text-slate-600 hover:text-slate-900 p-1 border border-slate-200 rounded-md bg-white shadow-xs">
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
+                            </td>
+                            <td className="px-4 py-3 text-slate-700 font-normal whitespace-nowrap">{m.role}</td>
+                            <td className="px-4 py-3 font-medium text-slate-800 whitespace-nowrap">{m.location}</td>
+                            <td className="px-4 py-3 font-semibold text-slate-900 text-center whitespace-nowrap">{m.leads}</td>
+                            <td className="px-4 py-3 font-semibold text-slate-900 text-center whitespace-nowrap">{m.deals}</td>
+                            <td className="px-4 py-3 font-semibold text-slate-900 text-right whitespace-nowrap">₹{m.sales.toLocaleString()}</td>
+                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                              <span className={`font-semibold ${m.achv >= 80 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                                {m.achv}%
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                              <span className={`inline-block rounded-md px-2.5 py-0.5 text-xs font-semibold border whitespace-nowrap ${
+                                m.status === 'Active'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                  : m.status === 'On Leave'
+                                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                  : 'bg-slate-100 text-slate-700 border-slate-300'
+                              }`}>
+                                {m.status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right whitespace-nowrap">
+                              <button className="text-slate-600 hover:text-slate-900 p-1 border border-slate-200 rounded-md bg-white shadow-xs">
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={10} className="px-4 py-8 text-center text-slate-500 font-medium">
+                            No team members match the selected filters. Try resetting filters.
                           </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -506,7 +625,7 @@ export default function TeamDetailsPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {teamMembers.map((m) => (
+            {filteredMembers.map((m) => (
               <div key={m.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <img src={m.avatar} alt={m.name} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
