@@ -81,7 +81,7 @@ export default function VerifyOtpPage() {
           <img
             src="/assets/sfw-logo.png"
             alt="Smart Field Work Logo"
-            className="h-10 w-auto object-contain mb-3"
+            className="h-14 sm:h-16 w-auto object-contain mb-4"
           />
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-[#E20613] border border-red-100 mb-3 shadow-xs">
             <Shield className="h-6 w-6" />
