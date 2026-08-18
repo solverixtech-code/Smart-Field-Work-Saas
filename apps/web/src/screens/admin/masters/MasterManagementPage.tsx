@@ -232,9 +232,9 @@ export default function MasterManagementPage() {
   };
 
   return (
-    <div className="space-y-6 font-sans pb-12">
+    <div className="space-y-3 font-sans pb-12">
       {/* PAGE HEADER */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5">
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-slate-900">System Masters</h1>
@@ -266,9 +266,9 @@ export default function MasterManagementPage() {
       </header>
 
       {/* TWO-COLUMN WORKSPACE LAYOUT */}
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
         {/* LEFT COLUMN: MASTER CATEGORY PANEL & HELP CARD */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
           {/* MasterCategoryPanel */}
           <div className="shrink-0 rounded-xl border border-slate-200 bg-white py-2 shadow-xs lg:w-[260px] xl:w-[280px]">
             <div className="px-4 py-3 border-b border-slate-100 mb-1">

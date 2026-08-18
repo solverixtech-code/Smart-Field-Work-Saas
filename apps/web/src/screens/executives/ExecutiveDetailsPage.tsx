@@ -31,9 +31,9 @@ export default function ExecutiveDetailsPage() {
   const [actionMenuOpen, setActionMenuOpen] = useState(false);
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-3 font-sans">
       {/* Top Header Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => navigate('/admin/executives')}

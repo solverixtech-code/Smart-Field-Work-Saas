@@ -190,11 +190,11 @@ export default function AllExecutivesPage() {
   };
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-3 font-sans">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">All Field Executives</h1>
+          <h1 className="text-xl font-extrabold text-[#0D1F3D]">All Field Executives</h1>
           <p className="text-xs font-medium text-slate-500">
             Manage field staff, view live statuses, performance stats, and territory teams.
           </p>
@@ -221,7 +221,7 @@ export default function AllExecutivesPage() {
       </div>
 
       {/* Top 6 KPI Cards Grid */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-6 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6 sm:grid-cols-3">
         <KpiCard
           title="Total Executives"
           value="156"
@@ -279,7 +279,7 @@ export default function AllExecutivesPage() {
       </div>
 
       {/* Full-Width Main Data Table Section */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Filters & Search Toolbar */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs">
           {/* Search Input */}
@@ -476,7 +476,7 @@ export default function AllExecutivesPage() {
       </div>
 
       {/* Bottom Grid: Team Overview Donut, Top Performers, Quick Actions (3 Column Grid below table) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Team Overview Donut Chart */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">

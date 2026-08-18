@@ -424,11 +424,11 @@ export default function PayrollManagementPage() {
   const paidCount = records.filter((r) => r.status === 'Paid').length;
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-3 font-sans">
       {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Payroll Management</h1>
+          <h1 className="text-xl font-extrabold text-[#0D1F3D]">Payroll Management</h1>
           <p className="text-xs font-medium text-slate-500">
             Institutional salary disbursement, incentives, and net payouts.
           </p>
@@ -459,13 +459,13 @@ export default function PayrollManagementPage() {
             onClick={() => setRunPayrollModalOpen(true)}
             className="flex items-center gap-2 font-bold shadow-sm"
           >
-            <CreditCard className="h-4 w-4" /> Run Payroll
+            <Calculator className="h-4 w-4" /> Run Payroll
           </Button>
         </div>
       </div>
 
-      {/* 4 Top Stat Cards matching Trueroot */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* KPI Cards Row */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Total Net Payout"
           value={`₹${totalPayout.toLocaleString()}`}

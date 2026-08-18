@@ -102,11 +102,11 @@ Visiblo Finance & HR Operations Team`,
   };
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-3 font-sans">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Payroll Settings & Policy Rules</h1>
+          <h1 className="text-xl font-extrabold text-[#0D1F3D]">Payroll Settings & Policy Rules</h1>
           <p className="text-xs font-medium text-slate-500">
             Configure salary calculation divisors, attendance loss of pay rules, shift penalties, incentive rates, statutory taxes, and payslip mail templates.
           </p>
@@ -164,7 +164,7 @@ Visiblo Finance & HR Operations Team`,
 
       {/* TAB 1: General & Pay Cycle */}
       {activeTab === 'general' && (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-8">
             <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5 text-xs">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">General Payroll Calculation Rules</h3>
