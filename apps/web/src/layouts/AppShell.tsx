@@ -21,6 +21,7 @@ import {
   CreditCard,
   Building2,
   SlidersHorizontal,
+  Target,
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store';
 import { clearCredentials } from '../store/slices/authSlice';
@@ -60,6 +61,13 @@ const navCategories: NavCategory[] = [
   {
     title: 'Sales & Field',
     items: [
+      {
+        label: 'Leads Management',
+        icon: Target,
+        to: '/admin/leads',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '1,250 Leads',
+      },
       {
         label: 'Sales Teams',
         icon: Building2,

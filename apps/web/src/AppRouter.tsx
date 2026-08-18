@@ -35,6 +35,14 @@ import TeamPerformancePage from './screens/teams/TeamPerformancePage';
 import TeamTargetsPage from './screens/teams/TeamTargetsPage';
 import MasterManagementPage from './screens/admin/masters/MasterManagementPage';
 
+import AllLeadsPage from './screens/leads/AllLeadsPage';
+import AddLeadPage from './screens/leads/AddLeadPage';
+import EditLeadPage from './screens/leads/EditLeadPage';
+import LeadDetailsPage from './screens/leads/LeadDetailsPage';
+import BulkAssignLeadsPage from './screens/leads/BulkAssignLeadsPage';
+import LeadImportPage from './screens/leads/LeadImportPage';
+import LeadExportPage from './screens/leads/LeadExportPage';
+
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { Role, AuthTokensSchema } from '@visiblo/shared';
@@ -242,6 +250,42 @@ export default function AppRouter() {
             >
               <Route path="/admin/payroll" element={<PayrollManagementPage />} />
               <Route path="/admin/payroll/settings" element={<PayrollSettingsPage />} />
+            </Route>
+
+            {/* Leads Management Routes (Screens 33 to 53) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/leads" element={<AllLeadsPage viewMode="all" />} />
+              <Route path="/admin/leads/create" element={<AddLeadPage />} />
+              <Route path="/admin/leads/bulk-assign" element={<BulkAssignLeadsPage />} />
+              <Route path="/admin/leads/import" element={<LeadImportPage />} />
+              <Route path="/admin/leads/export" element={<LeadExportPage />} />
+              <Route path="/admin/leads/unassigned" element={<AllLeadsPage viewMode="unassigned" />} />
+              <Route path="/admin/leads/hot" element={<AllLeadsPage viewMode="hot" />} />
+              <Route path="/admin/leads/follow-up" element={<AllLeadsPage viewMode="follow-up" />} />
+              <Route path="/admin/leads/converted" element={<AllLeadsPage viewMode="converted" />} />
+              <Route path="/admin/leads/lost" element={<AllLeadsPage viewMode="lost" />} />
+              <Route path="/admin/leads/not-interested" element={<AllLeadsPage viewMode="not-interested" />} />
+              <Route path="/admin/leads/duplicates" element={<AllLeadsPage viewMode="duplicates" />} />
+              <Route path="/admin/leads/:leadId" element={<LeadDetailsPage />} />
+              <Route path="/admin/leads/:leadId/edit" element={<EditLeadPage />} />
+              <Route path="/admin/leads/:leadId/timeline" element={<LeadDetailsPage />} />
+              <Route path="/admin/leads/:leadId/visits" element={<LeadDetailsPage />} />
+              <Route path="/admin/leads/:leadId/follow-ups" element={<LeadDetailsPage />} />
+              <Route path="/admin/leads/:leadId/demos" element={<LeadDetailsPage />} />
+              <Route path="/admin/leads/:leadId/communications" element={<LeadDetailsPage />} />
+              <Route path="/admin/leads/:leadId/payments" element={<LeadDetailsPage />} />
+              <Route path="/admin/leads/:leadId/assignment" element={<LeadDetailsPage />} />
             </Route>
 
             {/* System Masters Management Route */}
