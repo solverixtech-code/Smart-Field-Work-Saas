@@ -750,9 +750,9 @@ export default function PayrollManagementPage() {
       <Modal isOpen={!!processModalEntry} onClose={() => setProcessModalEntry(null)} maxWidth="max-w-4xl">
         {processModalEntry && (
           <div className="space-y-3 font-sans text-xs">
-            {/* Trueroot Process Header Bar */}
-            <div className="flex items-start gap-3 border-b border-slate-100 bg-[#FCF6F6] -mx-6 -mt-6 p-4 rounded-t-2xl">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white text-[#0D1F3D] shadow-xs">
+            {/* Header Bar */}
+            <div className="flex items-center gap-3 border-b border-slate-100 bg-white -mx-6 -mt-6 p-4 rounded-t-2xl">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#0D1F3D] text-white shadow-xs">
                 <Calculator className="h-4 w-4" />
               </div>
               <div className="min-w-0 flex-1">
@@ -766,133 +766,137 @@ export default function PayrollManagementPage() {
               </button>
             </div>
 
-            {/* Trueroot Employee Identity Card */}
-            <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-2.5">
-              <img src={processModalEntry.avatar} alt={processModalEntry.user} className="h-9 w-9 rounded-full object-cover border border-slate-200" />
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-extrabold text-[#0D1F3D]">{processModalEntry.user}</p>
-                <p className="text-[10px] font-mono text-slate-400">{processModalEntry.empId} • {processModalEntry.designation}</p>
-              </div>
-              <div className="text-right">
-                <span className="text-[9px] text-slate-400 block font-bold">Current Status</span>
-                <span className={`inline-block rounded-md px-2 py-0.5 text-[9px] font-extrabold border ${
-                  processModalEntry.status === 'Paid'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    : processModalEntry.status === 'Finalized'
-                    ? 'bg-amber-50 text-amber-700 border-amber-200'
-                    : 'bg-slate-100 text-slate-600 border-slate-200'
-                }`}>
-                  {processModalEntry.status}
-                </span>
-              </div>
-            </div>
-
-            {/* Trueroot 6 Attendance Stat Pills */}
-            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6 text-center">
-              {[
-                { label: 'Present', val: `${processModalEntry.presentDays}d`, cls: 'text-emerald-600' },
-                { label: 'Absent', val: `${processModalEntry.absentDays}d`, cls: 'text-[#E20613]' },
-                { label: 'Holiday', val: `${processModalEntry.holidayDays}d`, cls: 'text-blue-600' },
-                { label: 'Leave', val: `${processModalEntry.leaveDays}d`, cls: 'text-amber-600' },
-                { label: 'Payable', val: `${processModalEntry.payableDays}d`, cls: 'text-[#0D1F3D]' },
-                { label: 'Divisor', val: `${processModalEntry.salaryDivisorDays}d`, cls: 'text-slate-600' },
-              ].map((s) => (
-                <div key={s.label} className="rounded-lg bg-slate-50/80 p-1.5 border border-slate-100">
-                  <p className="text-[10px] font-semibold text-slate-500">{s.label}</p>
-                  <p className={`mt-0.5 text-xs font-extrabold ${s.cls}`}>{s.val}</p>
+            {/* Executive Summary Banner (Employee Identity + Attendance Stat Pills) */}
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+              <div className="flex items-center gap-3">
+                <img src={processModalEntry.avatar} alt={processModalEntry.user} className="h-9 w-9 rounded-full object-cover border border-slate-200" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-extrabold text-[#0D1F3D]">{processModalEntry.user}</p>
+                    <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-extrabold border ${
+                      processModalEntry.status === 'Paid'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : processModalEntry.status === 'Finalized'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-slate-100 text-slate-600 border-slate-200'
+                    }`}>
+                      {processModalEntry.status}
+                    </span>
+                  </div>
+                  <p className="text-[10px] font-mono text-slate-400 mt-0.5">{processModalEntry.empId} • {processModalEntry.designation}</p>
                 </div>
-              ))}
+              </div>
+
+              {/* 6 Stat Badges */}
+              <div className="flex flex-wrap items-center gap-1.5 text-center">
+                {[
+                  { label: 'Present', val: `${processModalEntry.presentDays}d`, cls: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+                  { label: 'Absent', val: `${processModalEntry.absentDays}d`, cls: 'bg-rose-50 text-rose-700 border-rose-200' },
+                  { label: 'Holiday', val: `${processModalEntry.holidayDays}d`, cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+                  { label: 'Leave', val: `${processModalEntry.leaveDays}d`, cls: 'bg-amber-50 text-amber-700 border-amber-200' },
+                  { label: 'Payable', val: `${processModalEntry.payableDays}d`, cls: 'bg-slate-900 text-white border-slate-900' },
+                  { label: 'Divisor', val: `${processModalEntry.salaryDivisorDays}d`, cls: 'bg-slate-100 text-slate-700 border-slate-200' },
+                ].map((s) => (
+                  <div key={s.label} className={`rounded-lg px-2.5 py-1 border text-center ${s.cls}`}>
+                    <p className="text-[9px] font-medium opacity-80">{s.label}</p>
+                    <p className="text-xs font-extrabold leading-tight">{s.val}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Step Switch Bar for Draft Mode */}
             {processModalEntry.status === 'Draft' && (
-              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
-                {[
-                  { id: 'edit', label: '1. Amend draft' },
-                  { id: 'preview', label: '2. Preview payslip' },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setProcessModalMode(item.id as any)}
-                    className={`h-7 rounded-lg px-3 text-[11px] font-bold transition-all ${
-                      processModalMode === item.id ? 'bg-white text-[#0D1F3D] shadow-xs' : 'text-slate-500'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-                <p className="ml-auto text-[10px] font-medium text-slate-500 px-2">Drafts can be saved without generating the payslip.</p>
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-100/70 p-1">
+                <div className="flex items-center gap-1">
+                  {[
+                    { id: 'edit', label: '1. Amend draft' },
+                    { id: 'preview', label: '2. Preview payslip' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setProcessModalMode(item.id as any)}
+                      className={`h-7 rounded-lg px-3.5 text-[11px] font-extrabold transition-all ${
+                        processModalMode === item.id ? 'bg-white text-[#0D1F3D] shadow-xs' : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[10px] font-medium text-slate-500 px-3">Drafts can be saved without generating the payslip.</p>
               </div>
             )}
 
-            {/* MAIN EDIT / PREVIEW CONTENT SLOT - FIXED CONSTANT HEIGHT */}
-            <div className="h-[460px] overflow-y-auto pr-1">
+            {/* MAIN EDIT / PREVIEW CONTENT SLOT - FIXED 470px CONSTANT HEIGHT */}
+            <div className="h-[470px] overflow-y-auto pr-1">
               {processModalMode === 'edit' ? (
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-                  {/* Left Side Input & Incentive Cards */}
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_310px]">
+                  {/* Left Side Inputs & Incentives */}
                   <div className="space-y-3">
+                    {/* 3 Input Cards */}
                     <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
-                      <div className="rounded-xl border border-slate-200 bg-white p-2.5 space-y-1">
-                        <p className="text-[10px] font-semibold text-slate-500">Incentive Amount (₹)</p>
+                      <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1.5 shadow-xs">
+                        <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Incentive Amount (₹)</label>
                         <input
                           type="number"
                           value={processIncentiveInput}
                           onChange={(e) => setProcessIncentiveInput(e.target.value)}
                           disabled={processModalEntry.status === 'Paid'}
-                          className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-extrabold text-blue-600 focus:outline-none"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-extrabold text-blue-600 focus:border-blue-500 focus:outline-none"
                         />
                       </div>
 
-                      <div className="rounded-xl border border-slate-200 bg-white p-2.5 space-y-1">
-                        <p className="text-[10px] font-semibold text-slate-500">PF Amount (₹)</p>
+                      <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1.5 shadow-xs">
+                        <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">PF Amount (₹)</label>
                         <input
                           type="number"
                           value={processPfInput}
                           onChange={(e) => setProcessPfInput(e.target.value)}
                           disabled={processModalEntry.status === 'Paid'}
-                          className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-extrabold text-[#E20613] focus:outline-none"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-extrabold text-[#E20613] focus:border-[#E20613] focus:outline-none"
                         />
                       </div>
 
-                      <div className="rounded-xl border border-slate-200 bg-white p-2.5 space-y-1">
-                        <p className="text-[10px] font-semibold text-slate-500">Calculated Base (₹)</p>
+                      <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1.5 shadow-xs">
+                        <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Calculated Base (₹)</label>
                         <input
                           type="number"
                           value={processCalculatedBaseInput}
                           onChange={(e) => setProcessCalculatedBaseInput(e.target.value)}
                           disabled={processModalEntry.status === 'Paid'}
-                          className="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-extrabold text-[#0D1F3D] focus:outline-none"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
                         />
                       </div>
                     </div>
 
-                    {/* Included vs Pending Incentives Dual Box */}
+                    {/* Dual Incentive Boxes */}
                     <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                       {/* Included in this payslip */}
-                      <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-2.5 space-y-1.5">
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3 space-y-2">
                         <div className="flex justify-between items-start">
                           <div>
                             <p className="font-extrabold text-emerald-900 text-xs">Included in this payslip</p>
                             <p className="text-[9px] text-emerald-700 font-medium">Approved closed won incentives.</p>
                           </div>
-                          <span className="font-extrabold text-emerald-800 text-[11px]">
+                          <span className="font-extrabold text-emerald-800 text-xs">
                             +₹{processModalEntry.incentiveItems.reduce((a, b) => a + b.amount, 0).toLocaleString()}
                           </span>
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                           {processModalEntry.incentiveItems.length > 0 ? (
                             processModalEntry.incentiveItems.map((item) => (
-                              <div key={item.id} className="rounded-lg border border-emerald-100 bg-white p-1.5 flex justify-between items-center text-[11px]">
+                              <div key={item.id} className="rounded-lg border border-emerald-100 bg-white p-2 flex justify-between items-center text-[11px] shadow-2xs">
                                 <div>
-                                  <p className="font-bold text-[#0D1F3D]">{item.title}</p>
+                                  <p className="font-extrabold text-[#0D1F3D]">{item.title}</p>
                                   <p className="text-[9px] text-slate-400 font-medium">{item.customerName} • {item.projectName}</p>
                                 </div>
                                 <span className="font-extrabold text-emerald-700">+₹{item.amount.toLocaleString()}</span>
                               </div>
                             ))
                           ) : (
-                            <p className="rounded-lg border border-dashed border-emerald-200 bg-white p-2 text-[10px] text-emerald-700 font-medium">
+                            <p className="rounded-lg border border-dashed border-emerald-200 bg-white p-2.5 text-[10px] text-emerald-700 font-medium text-center">
                               No approved incentives included.
                             </p>
                           )}
@@ -900,29 +904,29 @@ export default function PayrollManagementPage() {
                       </div>
 
                       {/* Promised, not paid yet */}
-                      <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-2.5 space-y-1.5">
+                      <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-3 space-y-2">
                         <div className="flex justify-between items-start">
                           <div>
                             <p className="font-extrabold text-amber-900 text-xs">Promised, not paid yet</p>
                             <p className="text-[9px] text-amber-700 font-medium">Pending incentives stay out of payroll.</p>
                           </div>
-                          <span className="font-extrabold text-amber-800 text-[11px]">
+                          <span className="font-extrabold text-amber-800 text-xs">
                             ₹{processModalEntry.pendingIncentiveItems.reduce((a, b) => a + b.amount, 0).toLocaleString()}
                           </span>
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                           {processModalEntry.pendingIncentiveItems.length > 0 ? (
                             processModalEntry.pendingIncentiveItems.map((item) => (
-                              <div key={item.id} className="rounded-lg border border-amber-100 bg-white p-1.5 flex justify-between items-center text-[11px]">
+                              <div key={item.id} className="rounded-lg border border-amber-100 bg-white p-2 flex justify-between items-center text-[11px] shadow-2xs">
                                 <div>
-                                  <p className="font-bold text-[#0D1F3D]">{item.title}</p>
+                                  <p className="font-extrabold text-[#0D1F3D]">{item.title}</p>
                                   <p className="text-[9px] text-slate-400 font-medium">{item.customerName} • {item.projectName}</p>
                                 </div>
                                 <span className="font-extrabold text-amber-800">₹{item.amount.toLocaleString()}</span>
                               </div>
                             ))
                           ) : (
-                            <p className="rounded-lg border border-dashed border-amber-200 bg-white p-2 text-[10px] text-amber-700 font-medium">
+                            <p className="rounded-lg border border-dashed border-amber-200 bg-white p-2.5 text-[10px] text-amber-700 font-medium text-center">
                               No pending promised incentives.
                             </p>
                           )}
@@ -931,50 +935,50 @@ export default function PayrollManagementPage() {
                     </div>
 
                     {/* Override Reason */}
-                    <div className="rounded-xl border border-slate-200 bg-white p-2.5 space-y-1">
-                      <label className="font-bold text-slate-700 block text-[11px]">Override reason</label>
+                    <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1.5 shadow-xs">
+                      <label className="font-extrabold text-[#0D1F3D] block text-xs">Override reason</label>
                       <textarea
                         rows={2}
                         value={processOverrideReason}
                         onChange={(e) => setProcessOverrideReason(e.target.value)}
                         placeholder="Required only if you change incentive, PF, or calculated salary."
                         disabled={processModalEntry.status === 'Paid'}
-                        className="w-full rounded-lg border border-slate-200 bg-white p-2 text-xs font-semibold text-[#0D1F3D]"
+                        className="w-full rounded-lg border border-slate-200 bg-white p-2.5 text-xs font-medium text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
                       />
                     </div>
                   </div>
 
-                  {/* Right Trueroot Sidebar */}
-                  <div className="space-y-2.5">
-                    <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3 space-y-0.5">
-                      <p className="text-[9px] font-bold text-blue-700 uppercase">Net Payable Amount</p>
-                      <p className="text-xl font-extrabold text-[#0D1F3D]">
+                  {/* Right Sidebar */}
+                  <div className="space-y-3">
+                    <div className="rounded-xl bg-[#0D1F3D] text-white p-4 space-y-1 shadow-sm">
+                      <p className="text-[10px] font-extrabold text-slate-300 uppercase tracking-wider">Net Payable Amount</p>
+                      <p className="text-2xl font-extrabold text-white">
                         ₹{(Number(processCalculatedBaseInput || 0) + Number(processIncentiveInput || 0) - Number(processPfInput || 0) - processModalEntry.tds).toLocaleString()}
                       </p>
                     </div>
 
-                    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3 space-y-2 text-[11px] font-semibold text-slate-600">
-                      <div className="flex justify-between">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-2.5 text-[11px] font-semibold text-slate-600">
+                      <div className="flex justify-between items-center">
                         <span className="text-slate-400">Original Net Payable</span>
                         <span className="font-extrabold text-[#0D1F3D]">₹{processModalEntry.netPay.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span className="text-slate-400">PF Amount</span>
                         <span className="font-bold text-[#E20613]">-₹{Number(processPfInput || 0).toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span className="text-slate-400">Current Status</span>
                         <span className="font-bold text-[#0D1F3D]">{processModalEntry.status}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between items-center">
                         <span className="text-slate-400">Salary Divisor</span>
                         <span className="font-bold text-[#0D1F3D]">{processModalEntry.salaryDivisorDays} Days</span>
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-2.5 text-[11px] text-amber-900 space-y-0.5">
+                    <div className="rounded-xl border border-amber-200 bg-amber-50/80 p-3 text-[11px] text-amber-900 space-y-1">
                       <p className="font-extrabold">Next action</p>
-                      <p className="text-[10px] font-medium leading-snug">
+                      <p className="text-[10px] font-medium leading-relaxed">
                         {processModalEntry.status === 'Draft' && 'This will finalize the payslip and lock the amounts. Manual edits will no longer be possible.'}
                         {processModalEntry.status === 'Finalized' && 'This will mark the payroll as paid.'}
                         {processModalEntry.status === 'Paid' && 'This payroll entry is marked as paid.'}
@@ -986,7 +990,7 @@ export default function PayrollManagementPage() {
                 /* MODE 2: CLEAN SINGLE-BORDER PAYSLIP PDF PREVIEW */
                 <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-xs space-y-0 text-xs">
                   {/* Header with Smart Field Work Logo */}
-                  <div className="border-b-2 border-[#0D1F3D] bg-white px-5 py-3">
+                  <div className="border-b-2 border-[#0D1F3D] bg-white px-5 py-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <img
@@ -994,7 +998,7 @@ export default function PayrollManagementPage() {
                           alt="Smart Field Work"
                           className="h-8 w-auto object-contain"
                         />
-                        <p className="mt-1 text-[10px] font-semibold text-slate-500">
+                        <p className="mt-1.5 text-[10px] font-semibold text-slate-500">
                           Smart Field Work • Institutional Payroll Statement
                         </p>
                       </div>
@@ -1005,60 +1009,60 @@ export default function PayrollManagementPage() {
                         <h3 className="mt-0.5 text-lg font-extrabold tracking-tight text-[#0D1F3D]">
                           Payslip for {selectedMonth}
                         </h3>
-                        <p className="text-[10px] font-mono text-slate-400">Ref: {processModalEntry.id}</p>
+                        <p className="text-[10px] font-mono text-slate-400 mt-0.5">Ref: {processModalEntry.id}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-4 p-4 text-xs">
+                  <div className="space-y-4 p-5 text-xs">
                     {/* Employee Details vs Payroll Details Cards */}
                     <div className="grid gap-3 sm:grid-cols-2">
                       {/* Employee Details Table */}
                       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                        <div className="border-b border-slate-200 bg-slate-50 px-3 py-1.5">
+                        <div className="border-b border-slate-200 bg-slate-50 px-3.5 py-2">
                           <h4 className="font-extrabold text-[#0D1F3D] text-[11px]">Employee Details</h4>
                         </div>
                         <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 text-[11px]">
-                          <div className="p-2">
+                          <div className="p-2.5">
                             <p className="text-[9px] font-semibold text-slate-400">Employee Name</p>
-                            <p className="font-extrabold text-[#0D1F3D]">{processModalEntry.user}</p>
+                            <p className="font-extrabold text-[#0D1F3D] mt-0.5">{processModalEntry.user}</p>
                           </div>
-                          <div className="p-2">
+                          <div className="p-2.5">
                             <p className="text-[9px] font-semibold text-slate-400">Employee Code</p>
-                            <p className="font-extrabold text-[#0D1F3D]">{processModalEntry.empId}</p>
+                            <p className="font-extrabold text-[#0D1F3D] mt-0.5">{processModalEntry.empId}</p>
                           </div>
-                          <div className="p-2">
+                          <div className="p-2.5">
                             <p className="text-[9px] font-semibold text-slate-400">Designation</p>
-                            <p className="font-bold text-slate-700">{processModalEntry.designation}</p>
+                            <p className="font-bold text-slate-700 mt-0.5">{processModalEntry.designation}</p>
                           </div>
-                          <div className="p-2">
+                          <div className="p-2.5">
                             <p className="text-[9px] font-semibold text-slate-400">Department / Team</p>
-                            <p className="font-bold text-slate-700">{processModalEntry.teamName}</p>
+                            <p className="font-bold text-slate-700 mt-0.5">{processModalEntry.teamName}</p>
                           </div>
                         </div>
                       </div>
 
                       {/* Payroll Details Table */}
                       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                        <div className="border-b border-slate-200 bg-slate-50 px-3 py-1.5">
+                        <div className="border-b border-slate-200 bg-slate-50 px-3.5 py-2">
                           <h4 className="font-extrabold text-[#0D1F3D] text-[11px]">Payroll Details</h4>
                         </div>
                         <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 text-[11px]">
-                          <div className="p-2">
+                          <div className="p-2.5">
                             <p className="text-[9px] font-semibold text-slate-400">Pay Period</p>
-                            <p className="font-extrabold text-[#0D1F3D]">{selectedMonth}</p>
+                            <p className="font-extrabold text-[#0D1F3D] mt-0.5">{selectedMonth}</p>
                           </div>
-                          <div className="p-2">
+                          <div className="p-2.5">
                             <p className="text-[9px] font-semibold text-slate-400">Payable Days</p>
-                            <p className="font-extrabold text-[#0D1F3D]">{processModalEntry.payableDays} Days</p>
+                            <p className="font-extrabold text-[#0D1F3D] mt-0.5">{processModalEntry.payableDays} Days</p>
                           </div>
-                          <div className="p-2">
+                          <div className="p-2.5">
                             <p className="text-[9px] font-semibold text-slate-400">Salary Divisor</p>
-                            <p className="font-bold text-slate-700">{processModalEntry.salaryDivisorDays} Days</p>
+                            <p className="font-bold text-slate-700 mt-0.5">{processModalEntry.salaryDivisorDays} Days</p>
                           </div>
-                          <div className="p-2">
+                          <div className="p-2.5">
                             <p className="text-[9px] font-semibold text-slate-400">Payslip Status</p>
-                            <p className="font-bold text-emerald-700">{processModalEntry.status}</p>
+                            <p className="font-bold text-emerald-700 mt-0.5">{processModalEntry.status}</p>
                           </div>
                         </div>
                       </div>
@@ -1066,22 +1070,22 @@ export default function PayrollManagementPage() {
 
                     {/* Earnings vs Deductions Table */}
                     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white text-[11px]">
-                      <div className="grid grid-cols-2 bg-[#0D1F3D] text-white font-extrabold px-3 py-1.5">
+                      <div className="grid grid-cols-2 bg-[#0D1F3D] text-white font-extrabold px-3.5 py-2">
                         <div>Earnings</div>
                         <div>Deductions</div>
                       </div>
                       <div className="grid grid-cols-2 divide-x divide-slate-200">
                         {/* Earnings Column */}
                         <div className="space-y-0 divide-y divide-slate-100">
-                          <div className="flex justify-between p-2">
+                          <div className="flex justify-between p-2.5">
                             <span className="font-semibold text-slate-700">Basic Salary & Allowances</span>
                             <span className="font-bold text-[#0D1F3D]">₹{Number(processCalculatedBaseInput || 0).toLocaleString()}</span>
                           </div>
-                          <div className="flex justify-between p-2">
+                          <div className="flex justify-between p-2.5">
                             <span className="font-semibold text-slate-700">Approved Closed Won Incentives</span>
                             <span className="font-bold text-emerald-600">+₹{Number(processIncentiveInput || 0).toLocaleString()}</span>
                           </div>
-                          <div className="flex justify-between p-2 bg-emerald-50 text-emerald-900 font-extrabold">
+                          <div className="flex justify-between p-2.5 bg-emerald-50 text-emerald-900 font-extrabold">
                             <span>Total Earnings</span>
                             <span>₹{(Number(processCalculatedBaseInput || 0) + Number(processIncentiveInput || 0)).toLocaleString()}</span>
                           </div>
@@ -1089,15 +1093,15 @@ export default function PayrollManagementPage() {
 
                         {/* Deductions Column */}
                         <div className="space-y-0 divide-y divide-slate-100">
-                          <div className="flex justify-between p-2">
+                          <div className="flex justify-between p-2.5">
                             <span className="font-semibold text-slate-700">PF Amount</span>
                             <span className="font-bold text-[#E20613]">₹{Number(processPfInput || 0).toLocaleString()}</span>
                           </div>
-                          <div className="flex justify-between p-2">
+                          <div className="flex justify-between p-2.5">
                             <span className="font-semibold text-slate-700">TDS / Income Tax</span>
                             <span className="font-bold text-[#E20613]">₹{processModalEntry.tds.toLocaleString()}</span>
                           </div>
-                          <div className="flex justify-between p-2 bg-rose-50 text-rose-900 font-extrabold">
+                          <div className="flex justify-between p-2.5 bg-rose-50 text-rose-900 font-extrabold">
                             <span>Total Deductions</span>
                             <span>₹{(Number(processPfInput || 0) + processModalEntry.tds).toLocaleString()}</span>
                           </div>
@@ -1105,9 +1109,9 @@ export default function PayrollManagementPage() {
                       </div>
 
                       {/* Net Payable Highlight Banner */}
-                      <div className="flex items-center justify-between border-t border-blue-200 bg-blue-50/70 p-3">
+                      <div className="flex items-center justify-between border-t border-blue-200 bg-blue-50/70 p-3.5">
                         <div>
-                          <p className="text-[10px] font-bold text-blue-900 uppercase">NET PAYABLE AMOUNT</p>
+                          <p className="text-[10px] font-extrabold text-blue-900 uppercase tracking-wider">NET PAYABLE AMOUNT</p>
                           <p className="text-[10px] font-medium text-blue-700 mt-0.5">Total earnings minus attendance and statutory deductions.</p>
                         </div>
                         <span className="text-2xl font-extrabold text-[#0D1F3D]">
@@ -1117,24 +1121,24 @@ export default function PayrollManagementPage() {
                     </div>
 
                     {/* Attendance Summary */}
-                    <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-2">
+                    <div className="rounded-xl border border-slate-200 bg-white p-3.5 space-y-2">
                       <div>
                         <h4 className="font-extrabold text-[#0D1F3D] text-[11px]">Attendance Summary</h4>
                       </div>
                       <div className="grid grid-cols-4 gap-2 text-center font-extrabold text-[11px]">
-                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-1.5 text-emerald-800">
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-2 text-emerald-800">
                           <p className="text-[9px]">Present</p>
                           <p className="mt-0.5">{processModalEntry.presentDays} Days</p>
                         </div>
-                        <div className="rounded-lg border border-rose-200 bg-rose-50 p-1.5 text-rose-800">
+                        <div className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-800">
                           <p className="text-[9px]">Absent / LOP</p>
                           <p className="mt-0.5">{processModalEntry.absentDays} Days</p>
                         </div>
-                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-1.5 text-blue-800">
+                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-blue-800">
                           <p className="text-[9px]">Holiday</p>
                           <p className="mt-0.5">{processModalEntry.holidayDays} Days</p>
                         </div>
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-1.5 text-amber-800">
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-amber-800">
                           <p className="text-[9px]">Leave</p>
                           <p className="mt-0.5">{processModalEntry.leaveDays} Days</p>
                         </div>
@@ -1143,7 +1147,7 @@ export default function PayrollManagementPage() {
 
                     {/* Override Reason Callout */}
                     {processOverrideReason && (
-                      <div className="rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-[11px] text-amber-900 space-y-0.5">
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-[11px] text-amber-900 space-y-0.5">
                         <p className="font-extrabold">Amendment Override Reason</p>
                         <p className="font-medium leading-relaxed">{processOverrideReason}</p>
                       </div>
@@ -1180,8 +1184,13 @@ export default function PayrollManagementPage() {
                   >
                     <CheckCircle2 className="h-4 w-4" /> Mark as Paid
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => window.print()} className="font-bold flex items-center gap-1">
-                    <Printer className="h-4 w-4" /> Print PDF
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.print()}
+                    className="font-bold border-slate-200 flex items-center gap-1"
+                  >
+                    <Printer className="h-3.5 w-3.5" /> Print PDF
                   </Button>
                 </>
               )}
