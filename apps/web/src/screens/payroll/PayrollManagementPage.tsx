@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 import {
   IndianRupee,
   FileText,
@@ -302,6 +304,34 @@ export default function PayrollManagementPage() {
     } else {
       setProcessModalMode('edit');
     }
+  };
+
+  const handleDownloadPdf = () => {
+    const element = document.getElementById('payslip-pdf-content');
+    if (!element) {
+      toast.error('Payslip preview element not found');
+      return;
+    }
+
+    const filename = `Payslip_${(processModalEntry?.user || 'Employee').replace(/\s+/g, '_')}_${selectedMonth.replace(/\s+/g, '_')}.pdf`;
+
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    toast.promise(
+      // @ts-ignore
+      html2pdf().set(opt).from(element).save(),
+      {
+        loading: 'Generating PDF file...',
+        success: `Downloaded ${filename}!`,
+        error: 'Failed to generate PDF document.'
+      }
+    );
   };
 
   const handleRunPayrollSubmit = () => {
@@ -988,7 +1018,7 @@ export default function PayrollManagementPage() {
                 </div>
               ) : (
                 /* MODE 2: CLEAN SINGLE-BORDER PAYSLIP PDF PREVIEW */
-                <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-xs space-y-0 text-xs">
+                <div id="payslip-pdf-content" className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-xs space-y-0 text-xs">
                   {/* Header with Smart Field Work Logo */}
                   <div className="border-b-2 border-[#0D1F3D] bg-white px-5 py-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -1187,17 +1217,17 @@ export default function PayrollManagementPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.print()}
-                    className="font-bold border-slate-200 flex items-center gap-1"
+                    onClick={handleDownloadPdf}
+                    className="font-bold border-slate-200 flex items-center gap-1 text-[#0D1F3D]"
                   >
-                    <Printer className="h-3.5 w-3.5" /> Print PDF
+                    <Download className="h-3.5 w-3.5 text-[#0D1F3D]" /> Download PDF
                   </Button>
                 </>
               )}
 
               {processModalEntry.status === 'Paid' && (
-                <Button variant="accent" size="sm" onClick={() => window.print()} className="font-bold shadow-xs flex items-center gap-1">
-                  <Printer className="h-4 w-4" /> Print PDF
+                <Button variant="accent" size="sm" onClick={handleDownloadPdf} className="font-bold shadow-xs flex items-center gap-1">
+                  <Download className="h-4 w-4" /> Download PDF
                 </Button>
               )}
             </div>
