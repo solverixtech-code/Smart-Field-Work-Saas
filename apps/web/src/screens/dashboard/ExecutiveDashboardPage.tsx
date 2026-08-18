@@ -128,14 +128,14 @@ export default function ExecutiveDashboardPage() {
       </div>
 
       {/* Middle Row: Revenue Overview, New Customers, Subscription Status */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
         {/* Revenue Overview Interactive Area Chart */}
         <ChartCard
           title="Revenue Overview & Trajectory"
           subtitle="MRR vs Total Revenue trend"
-          className="lg:col-span-6"
+          className="lg:col-span-6 flex flex-col justify-between"
         >
-          <div className="space-y-4 pt-2">
+          <div className="flex flex-col justify-between h-full space-y-4 pt-2">
             <div className="flex items-center gap-6 text-xs font-semibold">
               <span className="flex items-center gap-2 text-blue-600">
                 <span className="h-3 w-3 rounded-full bg-blue-600" /> MRR
@@ -145,9 +145,9 @@ export default function ExecutiveDashboardPage() {
               </span>
             </div>
 
-            <div className="h-64 w-full pt-2">
+            <div className="h-60 w-full pt-1">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="mrrGradSfw" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3} />
@@ -177,43 +177,45 @@ export default function ExecutiveDashboardPage() {
         </ChartCard>
 
         {/* New Customers Interactive Bar Chart */}
-        <ChartCard title="Executive Onboarding" subtitle="1,248 Field Staff Onboarded this week" className="lg:col-span-3">
-          <div className="h-64 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={newCustomersData} margin={{ top: 25, right: 10, left: 10, bottom: 20 }}>
-                <XAxis dataKey="day" stroke="#94A3B8" fontSize={11} tickLine={false} />
-                <YAxis hide />
-                <Tooltip
-                  cursor={{ fill: 'rgba(13, 31, 61, 0.04)' }}
-                  position={{ y: -15 }}
-                  wrapperStyle={{ zIndex: 100 }}
-                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
-                  labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
-                  itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                  formatter={(val: any) => [`${val || 0} Staff`, 'Onboarded']}
-                />
-                <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                  {newCustomersData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={index === newCustomersData.length - 1 ? '#E20613' : '#0D1F3D'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+        <ChartCard title="Executive Onboarding" subtitle="1,248 Field Staff Onboarded this week" className="lg:col-span-3 flex flex-col justify-between">
+          <div className="flex flex-col justify-between h-full pt-2">
+            <div className="h-60 w-full flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={newCustomersData} margin={{ top: 20, right: 15, left: 15, bottom: 0 }} barCategoryGap="15%" barSize={22}>
+                  <XAxis dataKey="day" stroke="#94A3B8" fontSize={11} tickLine={false} axisLine={{ stroke: '#E2E8F0' }} />
+                  <YAxis hide />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(13, 31, 61, 0.04)' }}
+                    position={{ y: -15 }}
+                    wrapperStyle={{ zIndex: 100 }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
+                    itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
+                    formatter={(val: any) => [`${val || 0} Staff`, 'Onboarded']}
+                  />
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                    {newCustomersData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={index === newCustomersData.length - 1 ? '#E20613' : '#0D1F3D'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </ChartCard>
 
         {/* Subscription Status Donut Chart */}
-        <ChartCard title="Subscription Health" className="lg:col-span-3">
-          <div className="flex flex-col items-center pt-2">
-            <div className="h-44 w-full">
+        <ChartCard title="Subscription Health" className="lg:col-span-3 flex flex-col justify-between">
+          <div className="flex flex-col justify-between h-full pt-2">
+            <div className="h-44 w-full flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={subscriptionStatusData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={50}
-                    outerRadius={70}
+                    innerRadius={48}
+                    outerRadius={68}
                     paddingAngle={4}
                     dataKey="value"
                   >
@@ -233,11 +235,11 @@ export default function ExecutiveDashboardPage() {
               </ResponsiveContainer>
             </div>
 
-            <div className="mt-2 grid w-full grid-cols-2 gap-2 text-[11px] font-semibold">
+            <div className="mt-3 grid w-full grid-cols-2 gap-2 text-xs font-medium">
               {subscriptionStatusData.map((item) => (
                 <div key={item.name} className="flex items-center gap-1.5">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-slate-600 font-extrabold">{item.name} ({((item.value / 12524) * 100).toFixed(1)}%)</span>
+                  <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                  <span className="text-slate-700 font-semibold truncate">{item.name} ({((item.value / 12524) * 100).toFixed(1)}%)</span>
                 </div>
               ))}
             </div>
