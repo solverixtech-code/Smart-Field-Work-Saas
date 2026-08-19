@@ -20,12 +20,14 @@ import {
   CalendarRange,
   ChevronRight,
   TrendingUp,
+  Building2,
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DataTable, ColumnDef } from '../../components/ui/DataTable';
+import { GoogleMapPicker } from '../../components/ui/GoogleMapPicker';
 import { mockVisits, mockGpsExceptions, VisitItem, GpsExceptionItem } from './visitsData';
 import GpsExceptionsPage from './GpsExceptionsPage';
 
@@ -52,11 +54,21 @@ const visitsTypeDistribution = [
 
 export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) {
   const navigate = useNavigate();
+  const [activeActionId, setActiveActionId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const handleClose = () => setActiveActionId(null);
+    window.addEventListener('click', handleClose);
+    return () => window.removeEventListener('click', handleClose);
+  }, []);
   const [searchTerm, setSearchTerm] = useState('');
   const [executiveFilter, setExecutiveFilter] = useState('All');
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [areaFilter, setAreaFilter] = useState('All');
+  const [selectedVisitId, setSelectedVisitId] = useState<string>(mockVisits[0].id);
+
+  const selectedVisit = mockVisits.find((v) => v.id === selectedVisitId) || mockVisits[0];
 
   const visitTabs = [
     { key: 'all', label: 'All Visits', badge: '128', path: '/admin/visits' },
@@ -154,7 +166,15 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
       header: 'Business / Shop',
       cell: (v) => (
         <div>
-          <p className="font-bold text-[#0D1F3D]">{v.businessName}</p>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/admin/businesses/${v.businessId}`);
+            }}
+            className="font-bold text-[#0D1F3D] hover:text-[#E20613] hover:underline text-left cursor-pointer block"
+          >
+            {v.businessName}
+          </button>
           <p className="text-[11px] text-slate-500 font-normal truncate max-w-[180px]">{v.location}</p>
         </div>
       ),
@@ -244,23 +264,91 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
     {
       header: 'Actions',
       align: 'right',
-      cell: (v) => (
-        <div className="flex items-center justify-end gap-1">
-          <button
-            onClick={() => navigate(`/admin/visits/${v.id}`)}
-            className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
-            title="View Visit Details"
-          >
-            <Eye className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => toast.info(`Actions for visit ${v.id}`)}
-            className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
-          >
-            <MoreVertical className="h-4 w-4" />
-          </button>
-        </div>
-      ),
+      cell: (v) => {
+        const isOpen = activeActionId === v.id;
+        return (
+          <div className="relative flex items-center justify-end gap-1">
+            <button
+              onClick={() => navigate(`/admin/visits/${v.id}`)}
+              className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
+              title="View Visit Details"
+            >
+              <Eye className="h-4 w-4" />
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveActionId(isOpen ? null : v.id);
+              }}
+              className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
+              title="Actions"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+
+            {/* Action Dropdown Card */}
+            {isOpen && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="absolute right-0 top-full mt-1 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl z-50 text-left font-semibold text-xs space-y-0.5 animate-dropdown"
+              >
+                <button
+                  onClick={() => {
+                    setActiveActionId(null);
+                    navigate(`/admin/visits/${v.id}`);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-slate-100 text-[#0D1F3D] cursor-pointer"
+                >
+                  <Eye className="h-3.5 w-3.5 text-blue-600" /> View Details
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveActionId(null);
+                    navigate('/admin/visits/schedule');
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-slate-100 text-[#0D1F3D] cursor-pointer"
+                >
+                  <Calendar className="h-3.5 w-3.5 text-emerald-600" /> Reschedule Visit
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveActionId(null);
+                    navigate(`/admin/businesses/${v.businessId}`);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-slate-100 text-[#0D1F3D] cursor-pointer"
+                >
+                  <Building2 className="h-3.5 w-3.5 text-slate-500" /> View Business
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveActionId(null);
+                    toast.success(`Outcome logged for visit ${v.id}`);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-slate-100 text-[#0D1F3D] cursor-pointer"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Log Outcome
+                </button>
+
+                <div className="my-1 border-t border-slate-100" />
+
+                <button
+                  onClick={() => {
+                    setActiveActionId(null);
+                    toast.error(`Visit ${v.id} marked as cancelled`);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-red-50 text-red-600 cursor-pointer"
+                >
+                  <XCircle className="h-3.5 w-3.5 text-red-600" /> Cancel Visit
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -446,92 +534,152 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
             </div>
           </div>
 
-          {/* Main Grid: Datatable (8 Cols) + Right Analytics Sidebar (4 Cols) */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            {/* Left Column Datatable */}
-            <div className="space-y-4 lg:col-span-8">
-              <DataTable
-                data={filteredVisits}
-                columns={columns}
-                keyExtractor={(v) => v.id}
-                density="relaxed"
-              />
+          {/* Full-width Datatable */}
+          <div className="space-y-4">
+            <DataTable
+              data={filteredVisits}
+              columns={columns}
+              keyExtractor={(v) => v.id}
+              density="relaxed"
+            />
+          </div>
+
+          {/* 3 Side-by-Side Inspection & Analytics Cards directly next to Datatable */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+            {/* Card 1: Selected Visit Location Map (4 Cols) */}
+            <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs lg:col-span-4 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center justify-between">
+                  <span>Visit Location & Map</span>
+                  <span className="font-mono text-[#E20613]">{selectedVisit.id}</span>
+                </h3>
+
+                <div className="pt-3">
+                  <GoogleMapPicker
+                    address={`${selectedVisit.businessName}, ${selectedVisit.routeArea}`}
+                    height="h-44"
+                    readOnly
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1 text-[11px] font-semibold pt-2 border-t border-slate-100">
+                <p className="text-[#0D1F3D] font-extrabold">{selectedVisit.businessName}</p>
+                <p className="text-slate-500 font-medium">{selectedVisit.routeArea} • GPS Verified Check-in</p>
+              </div>
             </div>
 
-            {/* Right Analytics Sidebar */}
-            <div className="space-y-6 lg:col-span-4">
-              {/* Visits Trend Chart */}
-              <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                  <h3 className="text-xs font-extrabold text-[#0D1F3D]">Visits Trend (Next 7 Days)</h3>
+            {/* Card 2: Selected Visit Details (5 Cols) */}
+            <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-2 text-xs font-semibold lg:col-span-5 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center justify-between">
+                  <span>Selected Visit Details</span>
+                  <span className="rounded-sm bg-blue-50 px-2 py-0.5 text-[10px] font-extrabold text-blue-700 border border-blue-200">
+                    {selectedVisit.visitType}
+                  </span>
+                </h3>
+
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-2">
+                  <div className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500 font-medium">Visit ID</span>
+                    <span className="font-bold text-[#E20613] font-mono">{selectedVisit.id}</span>
+                  </div>
+
+                  <div className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500 font-medium">Executive</span>
+                    <span className="font-bold text-[#0D1F3D]">{selectedVisit.executiveName}</span>
+                  </div>
+
+                  <div className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500 font-medium">Business / Store</span>
+                    <span className="font-bold text-[#0D1F3D]">{selectedVisit.businessName}</span>
+                  </div>
+
+                  <div className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500 font-medium">Scheduled Date</span>
+                    <span className="font-bold text-slate-800">{selectedVisit.scheduledDateTime}</span>
+                  </div>
+
+                  <div className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500 font-medium">Check-in</span>
+                    <span className="font-bold text-emerald-700">{selectedVisit.checkInTime || 'Not checked in'}</span>
+                  </div>
+
+                  <div className="flex justify-between py-1 border-b border-slate-100">
+                    <span className="text-slate-500 font-medium">Check-out</span>
+                    <span className="font-bold text-slate-800">{selectedVisit.checkOutTime || '-'}</span>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <span className="text-slate-400 text-[10.5px] block font-medium mb-1">Outcome & Notes</span>
+                  <p className="text-slate-700 font-bold bg-slate-50 p-2 rounded-sm border border-slate-200">
+                    {selectedVisit.outcome || 'Visit scheduled. Awaiting executive check-in.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-slate-500 text-[11px]">Duration: <strong className="text-[#0D1F3D]">{selectedVisit.duration || '45m'}</strong></span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/admin/visits/${selectedVisit.id}`)}
+                  className="font-bold text-blue-700 border-blue-200 hover:bg-blue-50 text-[11px]"
+                >
+                  <Eye className="h-3.5 w-3.5" /> Full Visit Details
+                </Button>
+              </div>
+            </div>
+
+            {/* Card 3: Visits Trend & Actions (3 Cols) */}
+            <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs lg:col-span-3 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <h3 className="text-xs font-extrabold text-[#0D1F3D]">Visits Trend</h3>
                   <TrendingUp className="h-4 w-4 text-blue-600" />
                 </div>
 
-                <div className="h-44 w-full">
+                <div className="h-28 w-full pt-1">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={visitsTrendData}>
-                      <XAxis dataKey="day" stroke="#94A3B8" fontSize={10} tickLine={false} />
-                      <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} />
+                      <XAxis dataKey="day" stroke="#94A3B8" fontSize={9} tickLine={false} />
+                      <YAxis stroke="#94A3B8" fontSize={9} tickLine={false} />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: '#0D1F3D',
                           borderRadius: '4px',
                           color: '#FFF',
-                          fontSize: '11px',
+                          fontSize: '10px',
                           fontWeight: 'bold',
                         }}
                       />
-                      <Line type="monotone" dataKey="visits" stroke="#2563EB" strokeWidth={2.5} dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="visits" stroke="#2563EB" strokeWidth={2} dot={{ r: 2 }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
-              {/* Visits by Type Donut Chart */}
-              <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                  <h3 className="text-xs font-extrabold text-[#0D1F3D]">Visits by Type</h3>
-                  <span className="text-[11px] font-bold text-slate-400">Total: 128</span>
-                </div>
+              <div className="space-y-2 pt-2 border-t border-slate-100">
+                <Button
+                  variant="accent"
+                  size="sm"
+                  fullWidth
+                  onClick={() => navigate('/admin/visits/schedule')}
+                  className="flex items-center justify-center gap-1.5 font-bold bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm h-8"
+                >
+                  <Calendar className="h-3.5 w-3.5" /> Schedule New Visit
+                </Button>
 
-                <div className="flex items-center justify-center h-44">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={visitsTypeDistribution}
-                        innerRadius={42}
-                        outerRadius={65}
-                        paddingAngle={3}
-                        dataKey="value"
-                      >
-                        {visitsTypeDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#0D1F3D',
-                          borderRadius: '4px',
-                          color: '#FFF',
-                          fontSize: '11px',
-                          fontWeight: 'bold',
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs font-semibold pt-1">
-                  {visitsTypeDistribution.map((item) => (
-                    <div key={item.name} className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                        <span className="text-slate-600">{item.name}</span>
-                      </div>
-                      <span className="font-bold text-[#0D1F3D]">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  fullWidth
+                  onClick={() => navigate(`/admin/businesses/${selectedVisit.businessId}`)}
+                  className="flex items-center justify-center gap-1.5 font-bold text-slate-700 border-slate-200 hover:bg-slate-100 rounded-sm h-8"
+                >
+                  <Building2 className="h-3.5 w-3.5 text-slate-500" /> Business Profile
+                </Button>
               </div>
             </div>
           </div>

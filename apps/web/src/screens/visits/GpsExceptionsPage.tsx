@@ -23,10 +23,19 @@ import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DataTable, ColumnDef } from '../../components/ui/DataTable';
+import { GoogleMapPicker } from '../../components/ui/GoogleMapPicker';
 import { mockGpsExceptions, GpsExceptionItem } from './visitsData';
 
 export default function GpsExceptionsPage() {
   const navigate = useNavigate();
+  const [activeActionId, setActiveActionId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const handleClose = () => setActiveActionId(null);
+    window.addEventListener('click', handleClose);
+    return () => window.removeEventListener('click', handleClose);
+  }, []);
+
   const [activeTab, setActiveTab] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'overdue'>('all');
   const [selectedId, setSelectedId] = useState<string>(mockGpsExceptions[0].id);
 
@@ -135,27 +144,83 @@ export default function GpsExceptionsPage() {
     {
       header: 'Actions',
       align: 'right',
-      cell: (r) => (
-        <div className="flex items-center justify-end gap-1">
-          <button
-            onClick={() => {
-              setSelectedId(r.id);
-              navigate(`/admin/visits/gps-exceptions/${r.id}`);
-            }}
-            className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
-            title="View Exception Details"
-          >
-            <Eye className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setSelectedId(r.id)}
-            className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
-            title="Preview Request"
-          >
-            <MoreVertical className="h-4 w-4" />
-          </button>
-        </div>
-      ),
+      cell: (r) => {
+        const isOpen = activeActionId === r.id;
+        return (
+          <div className="relative flex items-center justify-end gap-1">
+            <button
+              onClick={() => {
+                setSelectedId(r.id);
+                navigate(`/admin/visits/gps-exceptions/${r.id}`);
+              }}
+              className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
+              title="View Exception Details"
+            >
+              <Eye className="h-4 w-4" />
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedId(r.id);
+                setActiveActionId(isOpen ? null : r.id);
+              }}
+              className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
+              title="Actions"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+
+            {/* Action Dropdown Card */}
+            {isOpen && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="absolute right-0 top-full mt-1 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl z-50 text-left font-semibold text-xs space-y-0.5 animate-dropdown"
+              >
+                <button
+                  onClick={() => {
+                    setActiveActionId(null);
+                    navigate(`/admin/visits/gps-exceptions/${r.id}`);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-slate-100 text-[#0D1F3D] cursor-pointer"
+                >
+                  <Eye className="h-3.5 w-3.5 text-blue-600" /> View Exception Details
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveActionId(null);
+                    toast.success(`Approved GPS exception request ${r.id}`);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-emerald-50 text-emerald-700 cursor-pointer"
+                >
+                  <Check className="h-3.5 w-3.5 text-emerald-600" /> Approve Request
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveActionId(null);
+                    toast.error(`Rejected GPS exception request ${r.id}`);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-red-50 text-red-600 cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5 text-red-600" /> Reject Request
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveActionId(null);
+                    toast.info(`Adding comment for exception ${r.id}`);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-slate-100 text-slate-700 cursor-pointer"
+                >
+                  <MessageSquare className="h-3.5 w-3.5 text-blue-600" /> Add Comment
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -324,147 +389,150 @@ export default function GpsExceptionsPage() {
         </div>
       </div>
 
-      {/* Main Grid: Datatable (8 Cols) + Right Location Preview & Action Sidebar (4 Cols) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        {/* Left Column Datatable */}
-        <div className="space-y-4 lg:col-span-8">
-          <DataTable
-            data={filteredRequests}
-            columns={columns}
-            keyExtractor={(r) => r.id}
-            density="relaxed"
-          />
-        </div>
+      {/* Full-width Datatable */}
+      <div className="space-y-4">
+        <DataTable
+          data={filteredRequests}
+          columns={columns}
+          keyExtractor={(r) => r.id}
+          density="relaxed"
+        />
+      </div>
 
-        {/* Right Preview Sidebar */}
-        <div className="space-y-6 lg:col-span-4 sticky top-4 self-start">
-          {/* Location Preview Map Card */}
-          <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-4 text-xs">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
-              Location Preview
+      {/* 3 Inspection Cards Side-by-Side directly next to Datatable */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {/* Card 1: Location Preview Map (4 Cols) */}
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs lg:col-span-4 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center justify-between">
+              <span>Location Preview</span>
+              <span className="font-mono text-[#E20613]">{selectedRequest.id}</span>
             </h3>
 
-            <div className="relative h-56 w-full rounded-sm border border-slate-200 bg-slate-100 overflow-hidden shadow-xs">
-              <iframe
-                title="GPS Exception Map Preview"
-                src={`https://maps.google.com/maps?q=${selectedRequest.expectedLatitude},${selectedRequest.expectedLongitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                className="w-full h-full border-0"
-                loading="lazy"
-                allowFullScreen
+            <div className="pt-3">
+              <GoogleMapPicker
+                lat={selectedRequest.expectedLatitude}
+                lng={selectedRequest.expectedLongitude}
+                address={selectedRequest.businessAddress}
+                height="h-44"
+                readOnly
               />
-            </div>
-
-            <div className="space-y-2 text-[11px] font-semibold">
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-blue-600 shrink-0" />
-                <span className="text-slate-600">Expected Location ({selectedRequest.allowedRadiusMeters}m radius)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-red-600 shrink-0" />
-                <span className="text-slate-600">Actual Location ({selectedRequest.capturedDistanceMeters}m away)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full bg-emerald-600 shrink-0" />
-                <span className="text-slate-600">Business Location</span>
-              </div>
             </div>
           </div>
 
-          {/* Request Details Live Card */}
-          <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs font-semibold">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
-              Request Details
-            </h3>
-
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500 font-medium">Request ID</span>
-              <span className="font-bold text-[#E20613] font-mono">{selectedRequest.id}</span>
+          <div className="space-y-1.5 text-[11px] font-semibold pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-blue-600 shrink-0" />
+              <span className="text-slate-600">Expected Location ({selectedRequest.allowedRadiusMeters}m radius)</span>
             </div>
-
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500 font-medium">Executive</span>
-              <span className="font-bold text-[#0D1F3D]">{selectedRequest.executiveName}</span>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-red-600 shrink-0" />
+              <span className="text-slate-600">Actual Location ({selectedRequest.capturedDistanceMeters}m away)</span>
             </div>
-
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500 font-medium">Phone</span>
-              <span className="font-bold text-[#0D1F3D]">{selectedRequest.executivePhone}</span>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-600 shrink-0" />
+              <span className="text-slate-600">Business Location ({selectedRequest.businessName})</span>
             </div>
+          </div>
+        </div>
 
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500 font-medium">Visit / Business</span>
-              <span className="font-bold text-[#0D1F3D]">{selectedRequest.businessName}</span>
-            </div>
-
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500 font-medium">Scheduled Time</span>
-              <span className="font-bold text-slate-800">{selectedRequest.scheduledTime}</span>
-            </div>
-
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500 font-medium">Requested At</span>
-              <span className="font-bold text-slate-800">{selectedRequest.requestedAt}</span>
-            </div>
-
-            <div className="flex justify-between py-1 border-b border-slate-100">
-              <span className="text-slate-500 font-medium">Exception Type</span>
+        {/* Card 2: Request Details Live Card (5 Cols) */}
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-2 text-xs font-semibold lg:col-span-5 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center justify-between">
+              <span>Request Details</span>
               <span className="rounded-sm bg-orange-50 px-2 py-0.5 text-[10px] font-extrabold text-orange-700 border border-orange-200">
                 {selectedRequest.exceptionType}
               </span>
+            </h3>
+
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-2">
+              <div className="flex justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Request ID</span>
+                <span className="font-bold text-[#E20613] font-mono">{selectedRequest.id}</span>
+              </div>
+
+              <div className="flex justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Executive</span>
+                <span className="font-bold text-[#0D1F3D]">{selectedRequest.executiveName}</span>
+              </div>
+
+              <div className="flex justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Phone</span>
+                <span className="font-bold text-[#0D1F3D]">{selectedRequest.executivePhone}</span>
+              </div>
+
+              <div className="flex justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Visit / Business</span>
+                <span className="font-bold text-[#0D1F3D]">{selectedRequest.businessName}</span>
+              </div>
+
+              <div className="flex justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Scheduled Time</span>
+                <span className="font-bold text-slate-800">{selectedRequest.scheduledTime}</span>
+              </div>
+
+              <div className="flex justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-500 font-medium">Requested At</span>
+                <span className="font-bold text-slate-800">{selectedRequest.requestedAt}</span>
+              </div>
             </div>
 
-            <div className="py-1 border-b border-slate-100">
+            <div className="pt-2">
               <span className="text-slate-400 text-[10.5px] block font-medium mb-1">Reason</span>
               <p className="text-slate-700 font-bold bg-slate-50 p-2 rounded-sm border border-slate-200">
                 {selectedRequest.detailedReason}
               </p>
             </div>
-
-            <div className="py-1">
-              <span className="text-slate-400 text-[10.5px] block font-medium mb-1">Notes by Executive</span>
-              <p className="text-slate-600 font-medium italic bg-slate-50 p-2 rounded-sm border border-slate-100">
-                "{selectedRequest.notesByExecutive}"
-              </p>
-            </div>
           </div>
 
-          {/* Quick Actions Card */}
-          <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs">
+          <div className="pt-2 border-t border-slate-100">
+            <span className="text-slate-400 text-[10.5px] block font-medium mb-1">Notes by Executive</span>
+            <p className="text-slate-600 font-medium italic bg-slate-50 p-2 rounded-sm border border-slate-100">
+              "{selectedRequest.notesByExecutive}"
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3: Quick Actions Card (3 Cols) */}
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs lg:col-span-3 flex flex-col justify-between">
+          <div>
             <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
               Quick Actions
             </h3>
+            <p className="text-[11px] text-slate-500 pt-2 font-medium">Review and take immediate action on request <strong className="text-[#0D1F3D] font-mono">{selectedRequest.id}</strong>.</p>
+          </div>
 
-            <div className="space-y-2">
-              <Button
-                variant="accent"
-                size="sm"
-                fullWidth
-                onClick={() => toast.success(`Approved GPS exception ${selectedRequest.id}`)}
-                className="flex items-center justify-center gap-1.5 font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm h-9"
-              >
-                <Check className="h-4 w-4" /> Approve Request
-              </Button>
+          <div className="space-y-2 pt-2">
+            <Button
+              variant="accent"
+              size="sm"
+              fullWidth
+              onClick={() => toast.success(`Approved GPS exception ${selectedRequest.id}`)}
+              className="flex items-center justify-center gap-1.5 font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-sm h-9"
+            >
+              <Check className="h-4 w-4" /> Approve Request
+            </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                fullWidth
-                onClick={() => toast.error(`Rejected GPS exception ${selectedRequest.id}`)}
-                className="flex items-center justify-center gap-1.5 font-bold text-red-600 border-red-200 hover:bg-red-50 rounded-sm h-9"
-              >
-                <X className="h-4 w-4" /> Reject Request
-              </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              fullWidth
+              onClick={() => toast.error(`Rejected GPS exception ${selectedRequest.id}`)}
+              className="flex items-center justify-center gap-1.5 font-bold text-red-600 border-red-200 hover:bg-red-50 rounded-sm h-9"
+            >
+              <X className="h-4 w-4" /> Reject Request
+            </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                fullWidth
-                onClick={() => toast.info(`Adding comment to ${selectedRequest.id}`)}
-                className="flex items-center justify-center gap-1.5 font-bold text-slate-700 border-slate-200 hover:bg-slate-100 rounded-sm h-9"
-              >
-                <MessageSquare className="h-4 w-4 text-blue-600" /> Add Note / Comment
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              fullWidth
+              onClick={() => toast.info(`Adding comment to ${selectedRequest.id}`)}
+              className="flex items-center justify-center gap-1.5 font-bold text-slate-700 border-slate-200 hover:bg-slate-100 rounded-sm h-9"
+            >
+              <MessageSquare className="h-4 w-4 text-blue-600" /> Add Note / Comment
+            </Button>
           </div>
         </div>
       </div>
