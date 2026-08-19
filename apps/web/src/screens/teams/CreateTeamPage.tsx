@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Users,
@@ -39,7 +40,7 @@ export default function CreateTeamPage() {
 
     setTimeout(() => {
       setIsSubmitting(false);
-      alert(`Team "${formData.name || 'New Team'}" has been created successfully!`);
+      toast.success(`Team "${formData.name || 'New Team'}" has been created successfully!`);
       navigate('/admin/teams');
     }, 800);
   };

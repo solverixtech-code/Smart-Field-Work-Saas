@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   Monitor,
   Smartphone,
@@ -143,7 +144,7 @@ export default function ActiveSessionsPage() {
             <div className="p-5 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Your Active Sessions</h3>
               <button
-                onClick={() => alert('Refreshing active sessions...')}
+                onClick={() => toast.info('Refreshing active sessions...')}
                 className="flex items-center gap-1.5 text-xs font-bold text-[#0D1F3D] hover:text-[#E20613] transition-colors"
               >
                 <RefreshCw className="h-3.5 w-3.5" /> Refresh

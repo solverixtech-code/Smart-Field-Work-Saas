@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Plus,
@@ -489,7 +490,7 @@ export default function TeamMembersPage() {
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Quick Actions</h3>
           <div className="space-y-2">
             <button
-              onClick={() => alert('Opening Add Member Modal...')}
+              onClick={() => setIsAddModalOpen(true)}
               className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
             >
               <div className="flex items-center gap-2.5">
@@ -502,7 +503,7 @@ export default function TeamMembersPage() {
             </button>
 
             <button
-              onClick={() => alert('Importing members from Excel...')}
+              onClick={() => toast.info('Select Excel file to import team members...')}
               className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
             >
               <div className="flex items-center gap-2.5">
@@ -528,7 +529,7 @@ export default function TeamMembersPage() {
             </button>
 
             <button
-              onClick={() => alert('Exporting members list...')}
+              onClick={() => toast.success('Exporting team members list...')}
               className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
             >
               <div className="flex items-center gap-2.5">

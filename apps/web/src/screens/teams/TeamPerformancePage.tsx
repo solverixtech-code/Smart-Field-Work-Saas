@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Download,
@@ -86,7 +87,7 @@ export default function TeamPerformancePage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => alert('Exporting team performance report...')}
+            onClick={() => toast.success('Exporting team performance report...')}
             className="flex items-center gap-2 font-bold"
           >
             <Download className="h-4 w-4 text-slate-500" /> Export Report

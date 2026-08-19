@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Mail, Lock, Eye, EyeOff, Shield, ArrowRightCircle, ShieldCheck } from 'lucide-react';
 import { useAppDispatch } from '../../store';
 import { setCredentials } from '../../store/slices/authSlice';
@@ -167,7 +168,7 @@ export default function LoginPage() {
           type="button"
           variant="outline"
           size="lg"
-          onClick={() => alert('Redirecting to Single Sign-On (SSO)...')}
+          onClick={() => toast.info('Redirecting to Single Sign-On (SSO)...')}
           className="w-full justify-center gap-2 font-semibold text-[#0D1F3D] border-slate-200 hover:bg-slate-50 py-3 text-xs"
         >
           <ShieldCheck className="h-4 w-4 text-blue-600" /> Login with SSO

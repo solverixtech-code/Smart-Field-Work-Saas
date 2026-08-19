@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Save,
@@ -378,10 +379,10 @@ export default function EditExecutivePage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button type="button" onClick={() => alert(`Viewing ${doc.name}`)} className="p-1 text-blue-600 hover:bg-blue-50 rounded">
+                    <button type="button" onClick={() => toast.info(`Viewing ${doc.name}`)} className="p-1 text-blue-600 hover:bg-blue-50 rounded">
                       <Eye className="h-3.5 w-3.5" />
                     </button>
-                    <button type="button" onClick={() => alert(`Removing ${doc.name}`)} className="p-1 text-rose-600 hover:bg-rose-50 rounded">
+                    <button type="button" onClick={() => toast.success(`Removed ${doc.name}`)} className="p-1 text-rose-600 hover:bg-rose-50 rounded">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>

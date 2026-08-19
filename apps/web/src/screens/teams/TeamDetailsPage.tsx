@@ -157,7 +157,7 @@ export default function TeamDetailsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => alert('Editing team info...')}
+            onClick={() => toast.info('Opening team edit form...')}
             className="flex items-center gap-2 font-semibold text-slate-800 border-slate-300 shadow-none hover:bg-slate-50"
           >
             <Edit className="h-4 w-4 text-slate-700" /> Edit Team

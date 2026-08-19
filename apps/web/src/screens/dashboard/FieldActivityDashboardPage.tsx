@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Users,
   MapPin,
@@ -13,6 +14,7 @@ import {
   Download,
   PhoneCall,
   MessageSquare,
+  AlertCircle,
 } from 'lucide-react';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
@@ -151,7 +153,7 @@ export default function FieldActivityDashboardPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => alert('Exporting Live GPS Tracking Logs...')}
+            onClick={() => toast.success('Exporting Live GPS Tracking Logs...')}
             className="flex items-center gap-2 font-semibold shadow-xs"
           >
             <Download className="h-4 w-4" /> Export GPS Log
@@ -163,37 +165,39 @@ export default function FieldActivityDashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Executives Online"
-          value="48 Active"
-          subValue="Real-time Stream"
+          value="42 / 56"
+          subValue="75% Active Now"
+          timeframe=""
           icon={Users}
-          iconBgColor="bg-blue-50"
-          iconTextColor="text-blue-700"
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
         />
         <KpiCard
-          title="Checked-in Executives"
-          value="36 Checked-in"
-          subValue="At Store Locations"
+          title="Field Visits Today"
+          value="184 Visits"
+          subValue="128 Verified"
+          timeframe=""
           icon={MapPin}
-          iconBgColor="bg-emerald-50"
-          iconTextColor="text-emerald-700"
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
         />
         <KpiCard
-          title="Shops Visited Today"
-          value="342 Visited"
-          change="+24%"
-          changeType="positive"
-          timeframe="vs yesterday"
-          icon={CheckCircle2}
-          iconBgColor="bg-purple-50"
-          iconTextColor="text-purple-700"
+          title="Total Distance Covered"
+          value="482 km"
+          subValue="Citywide Total"
+          timeframe=""
+          icon={Navigation}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
         />
         <KpiCard
-          title="Avg. Battery Level"
-          value="82%"
-          subValue="All Devices Active"
-          icon={Battery}
-          iconBgColor="bg-amber-50"
-          iconTextColor="text-amber-700"
+          title="Geofence Alerts"
+          value="3 Alerts"
+          subValue="Out of Bounds"
+          timeframe=""
+          icon={AlertCircle}
+          iconBgColor="bg-red-500/10"
+          iconTextColor="text-[#E20613]"
         />
       </div>
 
@@ -205,7 +209,7 @@ export default function FieldActivityDashboardPage() {
             <div className="flex items-center justify-between">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Field Executives</h3>
               <button
-                onClick={() => alert('Refreshing live GPS coordinates...')}
+                onClick={() => toast.info('Refreshing live GPS coordinates...')}
                 className="flex items-center gap-1 text-xs font-bold text-[#E20613] hover:underline"
               >
                 <RefreshCw className="h-3.5 w-3.5" /> Refresh
@@ -557,13 +561,13 @@ export default function FieldActivityDashboardPage() {
 
               <div className="flex items-center gap-2 pt-1">
                 <button
-                  onClick={() => alert(`Calling ${selectedExec.name} at ${selectedExec.phone}...`)}
+                  onClick={() => toast.info(`Calling ${selectedExec.name} at ${selectedExec.phone}...`)}
                   className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#0D1F3D] py-2 text-xs font-bold text-white shadow-xs hover:bg-[#07152E]"
                 >
                   <PhoneCall className="h-3.5 w-3.5" /> Call Executive
                 </button>
                 <button
-                  onClick={() => alert(`Opening chat with ${selectedExec.name}...`)}
+                  onClick={() => toast.info(`Opening chat with ${selectedExec.name}...`)}
                   className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50"
                 >
                   <MessageSquare className="h-3.5 w-3.5 text-[#E20613]" /> Send Message

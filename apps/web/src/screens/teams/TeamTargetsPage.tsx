@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Plus,
@@ -86,7 +87,7 @@ export default function TeamTargetsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => alert('Downloading Target Report...')}
+            onClick={() => toast.success('Downloading Target Report...')}
             className="flex items-center gap-2 font-bold"
           >
             <Download className="h-4 w-4 text-slate-500" /> Download Report
@@ -384,7 +385,7 @@ export default function TeamTargetsPage() {
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Quick Actions</h3>
               <div className="space-y-2">
                 <button
-                  onClick={() => alert('Opening Target Configuration Modal...')}
+                  onClick={() => setIsSetTargetsModalOpen(true)}
                   className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
                 >
                   <div className="flex items-center gap-2.5">
@@ -397,7 +398,7 @@ export default function TeamTargetsPage() {
                 </button>
 
                 <button
-                  onClick={() => alert('Copying targets from previous month...')}
+                  onClick={() => toast.success('Targets copied from last month successfully!')}
                   className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
                 >
                   <div className="flex items-center gap-2.5">
@@ -410,7 +411,7 @@ export default function TeamTargetsPage() {
                 </button>
 
                 <button
-                  onClick={() => alert('Importing targets...')}
+                  onClick={() => toast.info('Select Excel file to import targets...')}
                   className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
                 >
                   <div className="flex items-center gap-2.5">
@@ -423,7 +424,7 @@ export default function TeamTargetsPage() {
                 </button>
 
                 <button
-                  onClick={() => alert('Viewing target history...')}
+                  onClick={() => toast.info('Loading target history...')}
                   className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
                 >
                   <div className="flex items-center gap-2.5">

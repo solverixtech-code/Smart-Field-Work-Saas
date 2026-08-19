@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Edit,
@@ -46,7 +47,7 @@ export default function ExecutiveDetailsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => alert('Exporting Executive Report...')}
+            onClick={() => toast.success('Exporting Executive Report...')}
             className="flex items-center gap-2 border-slate-200 text-slate-700 hover:bg-slate-100 font-bold"
           >
             <Download className="h-4 w-4 text-[#0D1F3D]" /> Export Report

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Shield, ShieldCheck, Lock, CheckCircle2 } from 'lucide-react';
 import { useAppDispatch } from '../../store';
 import { setCredentials } from '../../store/slices/authSlice';
@@ -157,7 +158,7 @@ export default function VerifyOtpPage() {
             type="button"
             variant="outline"
             size="lg"
-            onClick={() => alert('Enter Backup Code form...')}
+            onClick={() => toast.info('Please enter your 8-character backup security code.')}
             className="w-full justify-center gap-2 font-semibold text-[#0D1F3D] border-slate-200 hover:bg-slate-50 py-3 text-xs"
           >
             <ShieldCheck className="h-4 w-4 text-blue-600" /> Use Backup Code

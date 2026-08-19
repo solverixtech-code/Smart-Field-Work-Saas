@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Clock,
   Calendar,
@@ -383,7 +384,7 @@ export default function ShiftManagementPage() {
                     <td className="px-3.5 py-3 text-right">
                       <button
                         type="button"
-                        onClick={() => alert(`Reassign shift for ${a.name}`)}
+                        onClick={() => toast.info(`Reassigning shift schedule for ${a.name}...`)}
                         className="rounded-lg bg-slate-100 hover:bg-slate-200 px-2.5 py-1 text-[11px] font-bold text-[#0D1F3D]"
                       >
                         Reassign

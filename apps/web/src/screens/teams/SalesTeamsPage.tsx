@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   Users,
   Plus,
@@ -240,7 +241,7 @@ export default function SalesTeamsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => alert('Exporting Teams Data...')}
+            onClick={() => toast.success('Exporting Teams Data...')}
             className="flex items-center gap-1.5 font-bold border-slate-200 text-slate-700 hover:bg-slate-50 shadow-xs"
           >
             <Download className="h-4 w-4 text-emerald-600" /> Export Data

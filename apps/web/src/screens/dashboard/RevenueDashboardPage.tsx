@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import {
   DollarSign,
   CreditCard,
@@ -115,7 +116,7 @@ export default function RevenueDashboardPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => alert('Exporting Financial Report...')}
+            onClick={() => toast.success('Exporting Financial Report...')}
             className="flex items-center gap-2 font-semibold shadow-xs"
           >
             <Download className="h-4 w-4" /> Export Report

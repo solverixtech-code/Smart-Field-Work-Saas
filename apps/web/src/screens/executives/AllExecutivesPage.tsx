@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   Users,
   UserCheck,
@@ -204,7 +205,7 @@ export default function AllExecutivesPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => alert('Exporting Executives Data...')}
+            onClick={() => toast.success('Exporting Executives Data...')}
             className="flex items-center gap-2 border-slate-200 text-slate-700 hover:bg-slate-100 font-bold"
           >
             <Download className="h-4 w-4 text-[#0D1F3D]" /> Export Data
@@ -573,7 +574,7 @@ export default function AllExecutivesPage() {
             </button>
 
             <button
-              onClick={() => alert('Bulk Upload Dialog')}
+              onClick={() => toast.info('Select Excel file for bulk executive upload...')}
               className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
             >
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600">
@@ -583,7 +584,7 @@ export default function AllExecutivesPage() {
             </button>
 
             <button
-              onClick={() => alert('Assign Leads')}
+              onClick={() => navigate('/admin/leads/bulk-assign')}
               className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
             >
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/10 text-[#E20613]">
@@ -593,7 +594,7 @@ export default function AllExecutivesPage() {
             </button>
 
             <button
-              onClick={() => alert('Exporting Data...')}
+              onClick={() => toast.success('Exporting Data...')}
               className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
             >
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Users,
   UserCheck,
@@ -95,7 +96,7 @@ export default function ExecutiveDashboardPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => alert('Exporting Executive Report...')}
+            onClick={() => toast.success('Exporting Executive Report...')}
             className="flex items-center gap-2 font-semibold shadow-xs"
           >
             <Download className="h-4 w-4" /> Export Report

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import {
   Users,
   CheckSquare,
@@ -72,7 +73,7 @@ export default function ConversionDashboardPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => alert('Filtering Conversion Metrics...')}
+            onClick={() => toast.info('Filtering Conversion Metrics...')}
             className="flex items-center gap-2 font-bold"
           >
             <Filter className="h-4 w-4 text-[#0D1F3D]" /> Filter Funnel

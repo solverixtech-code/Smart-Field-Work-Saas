@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import {
   DollarSign,
   Briefcase,
@@ -89,7 +90,7 @@ export default function SalesDashboardPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => alert('Exporting Sales Report...')}
+            onClick={() => toast.success('Exporting Sales Report...')}
             className="flex items-center gap-2 font-semibold shadow-xs"
           >
             <Download className="h-4 w-4" /> Export Report

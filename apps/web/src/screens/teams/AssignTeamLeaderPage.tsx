@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Info,
@@ -108,7 +109,7 @@ export default function AssignTeamLeaderPage() {
     setIsSubmitting(true);
     setTimeout(() => {
       setIsSubmitting(false);
-      alert(`Team leader successfully assigned to ${selectedCandidate?.name || 'selected executive'}!`);
+      toast.success(`Team leader successfully assigned to ${selectedCandidate?.name || 'selected executive'}!`);
       navigate(`/admin/teams/${teamId || 'MN-001'}`);
     }, 800);
   };
