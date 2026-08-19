@@ -327,50 +327,58 @@ export default function AppShell() {
     <div className="flex h-screen overflow-hidden bg-slate-50 font-sans">
       {/* Refined Enterprise White Theme Sidebar */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-slate-200 bg-white text-slate-700 shadow-xs transition-all duration-300 ease-in-out ${
+        className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-slate-200 bg-white text-slate-700 shadow-xs transition-all duration-300 ease-in-out overflow-x-hidden ${
           showBigLogo ? 'w-[275px]' : 'w-[80px]'
         }`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Brand Header */}
-        <div className="flex h-20 flex-none items-center justify-between border-b border-slate-100 px-3">
-          <NavLink to="/admin/dashboard" className="flex items-center">
-            <div className="relative flex h-16 w-[225px] items-center justify-start overflow-hidden">
-              <img
-                src={bigLogo}
-                alt="Smart Field Work Logo"
-                className={`absolute transition-opacity duration-300 ease-in-out ${
-                  showBigLogo ? 'opacity-100' : 'opacity-0'
-                }`}
-                style={{ width: '220px', maxHeight: '60px', objectFit: 'contain' }}
-              />
+        <div
+          className={`flex h-20 flex-none items-center border-b border-slate-100 transition-all duration-300 ${
+            showBigLogo ? 'justify-between px-3' : 'justify-center px-2'
+          }`}
+        >
+          {showBigLogo ? (
+            <>
+              <NavLink to="/admin/dashboard" className="flex items-center">
+                <img
+                  src={bigLogo}
+                  alt="Smart Field Work Logo"
+                  style={{ width: '180px', maxHeight: '55px', objectFit: 'contain' }}
+                />
+              </NavLink>
+              <button
+                type="button"
+                onClick={() => setCollapsed(!collapsed)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition duration-200"
+                title="Collapse Sidebar"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setCollapsed(!collapsed)}
+              className="flex items-center justify-center p-1 rounded-lg hover:bg-slate-100 transition duration-200"
+              title="Expand Sidebar"
+            >
               <img
                 src={smallLogo}
                 alt="Smart Field Work Favicon"
-                className={`absolute transition-opacity duration-300 ease-in-out ${
-                  showBigLogo ? 'opacity-0' : 'opacity-100'
-                }`}
-                style={{ width: '56px', height: '56px', objectFit: 'contain' }}
+                style={{ width: '42px', height: '42px', objectFit: 'contain' }}
               />
-            </div>
-          </NavLink>
-          <button
-            type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition duration-200"
-            title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
-          >
-            <ChevronLeft
-              className={`h-5 w-5 transition-transform duration-300 ${
-                collapsed ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
+            </button>
+          )}
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4 scrollbar-thin scrollbar-thumb-slate-200">
+        <nav
+          className={`flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-2.5 py-4 ${
+            showBigLogo ? 'scrollbar-thin scrollbar-thumb-slate-200' : 'scrollbar-none'
+          }`}
+        >
           {navCategories.map((cat, idx) => (
             <div key={idx} className="space-y-0.5">
               {showBigLogo && (
@@ -396,7 +404,9 @@ export default function AppShell() {
                       }
                     }}
                     title={!showBigLogo ? item.label : undefined}
-                    className={`group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ${
+                    className={`group relative flex items-center rounded-lg py-2 text-[13px] font-medium transition-all duration-150 ${
+                      showBigLogo ? 'px-3 gap-3 justify-start' : 'w-11 mx-auto justify-center px-0'
+                    } ${
                       isActive
                         ? 'bg-[#0D1F3D] text-white shadow-xs font-semibold'
                         : isAllowed
@@ -405,9 +415,9 @@ export default function AppShell() {
                     }`}
                   >
                     <Icon
-                      className={`h-4 w-4 flex-shrink-0 transition-colors ${
+                      className={`h-4.5 w-4.5 flex-shrink-0 transition-colors ${
                         isActive
-                          ? 'text-[#E20613]'
+                          ? 'text-white'
                           : isAllowed
                             ? 'text-slate-400 group-hover:text-slate-700'
                             : 'text-slate-300'
@@ -450,16 +460,18 @@ export default function AppShell() {
         </nav>
 
         {/* User Footer Profile Card in Sidebar */}
-        <div className="border-t border-slate-100 p-2.5" ref={sidebarRef}>
+        <div className="border-t border-slate-100 p-2.5 overflow-x-hidden" ref={sidebarRef}>
           {user && (
             <div className="relative">
               <div
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className={`flex items-center justify-between rounded-xl p-2 transition-all cursor-pointer ${
+                className={`flex items-center rounded-xl p-2 transition-all cursor-pointer ${
+                  showBigLogo ? 'justify-between' : 'justify-center'
+                } ${
                   userMenuOpen ? 'bg-slate-100' : 'hover:bg-slate-50'
                 }`}
               >
-                <div className="flex items-center gap-2.5 overflow-hidden">
+                <div className={`flex items-center gap-2.5 ${showBigLogo ? 'overflow-hidden' : 'justify-center'}`}>
                   {user.image ? (
                     <img
                       src={user.image}

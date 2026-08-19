@@ -31,6 +31,8 @@ import {
   FileText,
   MessageSquare,
   Video,
+  CalendarClock,
+  Ban,
 } from 'lucide-react';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
@@ -233,16 +235,17 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
       {/* Category Filter Sub-Tabs Bar */}
       <div className="flex overflow-x-auto gap-1 border-b border-slate-200 bg-white p-1.5 rounded-md shadow-xs scrollbar-none">
         {[
-          { id: 'all', label: 'All Leads', path: '/admin/leads', count: leads.length },
-          { id: 'hot', label: '🔥 Hot Leads', path: '/admin/leads/hot', count: hotLeadsCount },
-          { id: 'follow-up', label: '⏳ Follow-ups', path: '/admin/leads/follow-up', count: followUpCount },
-          { id: 'unassigned', label: '👤 Unassigned', path: '/admin/leads/unassigned', count: unassignedCount },
-          { id: 'converted', label: '✅ Won / Converted', path: '/admin/leads/converted', count: convertedCount },
-          { id: 'lost', label: '❌ Lost Leads', path: '/admin/leads/lost', count: leads.filter((l) => l.status === 'Lost').length },
-          { id: 'not-interested', label: '🚫 Not Interested', path: '/admin/leads/not-interested', count: leads.filter((l) => l.status === 'Not Interested').length },
-          { id: 'duplicates', label: '📋 Duplicates', path: '/admin/leads/duplicates', count: leads.filter((l) => l.status === 'Duplicate').length },
+          { id: 'all', label: 'All Leads', path: '/admin/leads', count: leads.length, icon: Target },
+          { id: 'hot', label: 'Hot Leads', path: '/admin/leads/hot', count: hotLeadsCount, icon: Flame },
+          { id: 'follow-up', label: 'Follow-ups', path: '/admin/leads/follow-up', count: followUpCount, icon: CalendarClock },
+          { id: 'unassigned', label: 'Unassigned', path: '/admin/leads/unassigned', count: unassignedCount, icon: UserPlus },
+          { id: 'converted', label: 'Won / Converted', path: '/admin/leads/converted', count: convertedCount, icon: TrendingUp },
+          { id: 'lost', label: 'Lost Leads', path: '/admin/leads/lost', count: leads.filter((l) => l.status === 'Lost').length, icon: XCircle },
+          { id: 'not-interested', label: 'Not Interested', path: '/admin/leads/not-interested', count: leads.filter((l) => l.status === 'Not Interested').length, icon: Ban },
+          { id: 'duplicates', label: 'Duplicates', path: '/admin/leads/duplicates', count: leads.filter((l) => l.status === 'Duplicate').length, icon: Copy },
         ].map((tab) => {
           const isActive = activeCategory === tab.id;
+          const Icon = tab.icon;
           return (
             <button
               key={tab.id}
@@ -253,6 +256,7 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
                   : 'text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D]'
               }`}
             >
+              <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
               <span>{tab.label}</span>
               <span
                 className={`rounded-full px-2 py-0.5 text-[10px] ${
