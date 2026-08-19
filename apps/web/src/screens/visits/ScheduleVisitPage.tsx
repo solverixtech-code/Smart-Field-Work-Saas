@@ -23,6 +23,7 @@ import {
 import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { ClockTimePickerModal } from "../../components/ui/ClockTimePickerModal";
+import { GoogleMapPicker } from "../../components/ui/GoogleMapPicker";
 import { mockBusinesses } from "../businesses/businessesData";
 
 export default function ScheduleVisitPage() {
@@ -268,13 +269,14 @@ export default function ScheduleVisitPage() {
                 />
               </div>
 
-              {/* Embedded Interactive Google Map Preview */}
-              <div className="relative h-44 w-full rounded-sm border border-slate-200 bg-slate-100 overflow-hidden shadow-xs">
-                <iframe
-                  title="Merchant Location Preview"
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                  className="w-full h-full border-0"
-                  loading="lazy"
+              {/* Interactive Google Maps API Geolocator Component */}
+              <div className="pt-2">
+                <label className="block text-[11px] font-bold text-slate-700 mb-1.5">Map Location & Geolocator (Google Maps API)</label>
+                <GoogleMapPicker
+                  address={address}
+                  onAddressChange={(newAddr) => setAddress(newAddr)}
+                  height="h-56"
+                  showLocateMe
                 />
               </div>
             </div>

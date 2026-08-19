@@ -16,6 +16,7 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
+import { GoogleMapPicker } from '../../components/ui/GoogleMapPicker';
 import { mockBusinesses } from './businessesData';
 
 interface AddBusinessPageProps {
@@ -386,22 +387,16 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
 
               {/* Right Google Maps Container (5 Cols) */}
               <div className="space-y-2 lg:col-span-5 flex flex-col justify-between">
-                <div className="relative overflow-hidden rounded-sm border border-slate-200 bg-slate-100 h-60 flex flex-col justify-between shadow-xs">
-                  <iframe
-                    title="Google Maps Location Preview"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    allowFullScreen
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                      formData.address1 || formData.city
-                        ? `${formData.address1 ? formData.address1 + ', ' : ''}${formData.city || ''}, ${formData.state || 'Maharashtra'}`
-                        : 'Mumbai, Maharashtra',
-                    )}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-                    className="w-full h-full rounded-sm"
-                  />
-                </div>
+                <GoogleMapPicker
+                  address={
+                    formData.address1 || formData.city
+                      ? `${formData.address1 ? formData.address1 + ', ' : ''}${formData.city || ''}, ${formData.state || 'Maharashtra'}`
+                      : 'Mumbai, Maharashtra'
+                  }
+                  onAddressChange={(newAddr) => handleInputChange('address1', newAddr)}
+                  height="h-64"
+                  showLocateMe
+                />
 
                 <div className="flex items-center gap-2 rounded-sm border border-blue-200/80 bg-blue-50/70 p-2.5 text-[11px] font-semibold text-blue-900">
                   <Info className="h-4 w-4 text-blue-600 shrink-0" />
