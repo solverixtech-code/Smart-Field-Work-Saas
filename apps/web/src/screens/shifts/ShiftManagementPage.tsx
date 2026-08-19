@@ -296,13 +296,13 @@ export default function ShiftManagementPage() {
             {shifts.map((shift) => (
               <div
                 key={shift.id}
-                className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3 hover:shadow-md transition-all"
+                className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm space-y-3 hover:shadow-md transition-all"
               >
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-extrabold text-[#0D1F3D]">{shift.name}</h4>
-                      <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-600">
+                      <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-600">
                         {shift.code}
                       </span>
                     </div>
@@ -354,7 +354,7 @@ export default function ShiftManagementPage() {
         </div>
 
         {/* Right Column: Executive Shift Roster Table */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-6 space-y-4">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Executive Shift Roster</h3>
             <span className="text-xs font-bold text-[#E20613]">Live Roster</span>
@@ -385,7 +385,7 @@ export default function ShiftManagementPage() {
                       <button
                         type="button"
                         onClick={() => toast.info(`Reassigning shift schedule for ${a.name}...`)}
-                        className="rounded-lg bg-slate-100 hover:bg-slate-200 px-2.5 py-1 text-[11px] font-bold text-[#0D1F3D]"
+                        className="rounded-sm bg-slate-100 hover:bg-slate-200 px-2.5 py-1 text-[11px] font-bold text-[#0D1F3D]"
                       >
                         Reassign
                       </button>
@@ -403,7 +403,7 @@ export default function ShiftManagementPage() {
         {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-[#0D1F3D]">
+                <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-slate-100 text-[#0D1F3D]">
                   <Clock className="h-5 w-5 text-[#E20613]" />
                 </div>
                 <div>
@@ -418,7 +418,7 @@ export default function ShiftManagementPage() {
 
             <form onSubmit={handleSaveShift} className="space-y-4 text-xs font-semibold">
               {/* TrueRoot Live Rule Preview Box */}
-              <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-3.5 space-y-1">
+              <div className="rounded-sm border border-blue-100 bg-blue-50/70 p-3.5 space-y-1">
                 <div className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wider text-blue-700">
                   <Activity className="h-3.5 w-3.5 text-blue-700" /> Live Rule Preview
                 </div>
@@ -440,7 +440,7 @@ export default function ShiftManagementPage() {
                     placeholder="e.g. General Shift"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
+                    className="w-full rounded-sm border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
                     required
                   />
                 </div>
@@ -451,7 +451,7 @@ export default function ShiftManagementPage() {
                     placeholder="e.g. GEN-01"
                     value={form.code}
                     onChange={(e) => setForm({ ...form, code: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
+                    className="w-full rounded-sm border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
                   />
                 </div>
               </div>
@@ -463,7 +463,7 @@ export default function ShiftManagementPage() {
                   <select
                     value={form.startTime}
                     onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
+                    className="w-full rounded-sm border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
                   >
                     {shiftTimeOptions.map((t) => (
                       <option key={t} value={t}>{t}</option>
@@ -475,7 +475,7 @@ export default function ShiftManagementPage() {
                   <select
                     value={form.endTime}
                     onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
+                    className="w-full rounded-sm border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
                   >
                     {shiftTimeOptions.map((t) => (
                       <option key={t} value={t}>{t}</option>
@@ -507,7 +507,7 @@ export default function ShiftManagementPage() {
                             };
                           })
                         }
-                        className={`h-9 rounded-xl border text-xs font-bold transition-colors ${
+                        className={`h-9 rounded-sm border text-xs font-bold transition-colors ${
                           isSelected
                             ? 'border-[#0D1F3D] bg-[#0D1F3D] text-white'
                             : 'border-slate-200 bg-white text-slate-500 hover:border-slate-400'
@@ -529,7 +529,7 @@ export default function ShiftManagementPage() {
                     min="0"
                     value={form.lateGraceMinutes}
                     onChange={(e) => setForm({ ...form, lateGraceMinutes: Number(e.target.value || 0) })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
+                    className="w-full rounded-sm border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
                   />
                 </div>
                 <div>
@@ -539,7 +539,7 @@ export default function ShiftManagementPage() {
                     min="1"
                     value={form.lateThresholdCount}
                     onChange={(e) => setForm({ ...form, lateThresholdCount: Number(e.target.value || 1) })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
+                    className="w-full rounded-sm border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
                   />
                 </div>
               </div>
@@ -550,7 +550,7 @@ export default function ShiftManagementPage() {
                 <select
                   value={form.latePenaltyStatus}
                   onChange={(e) => setForm({ ...form, latePenaltyStatus: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
+                  className="w-full rounded-sm border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
                 >
                   <option value="Half Day">Half Day (Penalty)</option>
                   <option value="Absent">Absent (Penalty)</option>
@@ -559,7 +559,7 @@ export default function ShiftManagementPage() {
               </div>
 
               {/* Active Toggle Checkbox */}
-              <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-bold text-[#0D1F3D] cursor-pointer">
+              <label className="flex items-center gap-3 rounded-sm border border-slate-200 bg-slate-50 p-3 text-xs font-bold text-[#0D1F3D] cursor-pointer">
                 <input
                   type="checkbox"
                   checked={form.isActive}

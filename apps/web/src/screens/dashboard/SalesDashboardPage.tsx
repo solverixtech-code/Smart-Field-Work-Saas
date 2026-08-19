@@ -63,8 +63,8 @@ export default function SalesDashboardPage() {
   const [selectedTeam, setSelectedTeam] = useState('All Teams');
 
   return (
-    <div className="space-y-6 font-sans pb-12">
-      {/* Page Header */}
+    <div className="space-y-4 font-sans pb-12">
+      {/* Page Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <h1 className="text-2xl font-bold text-[#0D1F3D]">Sales Dashboard</h1>
@@ -79,7 +79,7 @@ export default function SalesDashboardPage() {
           <select
             value={selectedTeam}
             onChange={(e) => setSelectedTeam(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-[#0D1F3D]"
+            className="rounded-sm border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-[#0D1F3D]"
           >
             <option>All Teams</option>
             <option>Central Mumbai</option>
@@ -161,7 +161,7 @@ export default function SalesDashboardPage() {
       </div>
 
       {/* MIDDLE SECTION: Sales Trend + Sales by Stage Funnel + Sales by Source */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-stretch">
         {/* Sales Trend Line Chart (5 Cols) */}
         <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
@@ -274,7 +274,7 @@ export default function SalesDashboardPage() {
       </div>
 
       {/* BOTTOM SECTION: Team Performance + Top Performing Executives + Target Gauge */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-stretch">
         {/* Team Performance Table (5 Cols) */}
         <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
           <h3 className="text-base font-bold text-[#0D1F3D]">Team Performance</h3>

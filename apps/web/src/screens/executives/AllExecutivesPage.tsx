@@ -282,7 +282,7 @@ export default function AllExecutivesPage() {
       {/* Full-Width Main Data Table Section */}
       <div className="space-y-3">
         {/* Filters & Search Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[240px]">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -291,7 +291,7 @@ export default function AllExecutivesPage() {
               placeholder="Search executives by name, email, phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
+              className="w-full rounded-sm border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
             />
           </div>
 
@@ -299,7 +299,7 @@ export default function AllExecutivesPage() {
           <select
             value={regionFilter}
             onChange={(e) => setRegionFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+            className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
           >
             <option value="All">All Regions</option>
             <option value="Mumbai">Mumbai</option>
@@ -312,7 +312,7 @@ export default function AllExecutivesPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+            className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
           >
             <option value="All">All Statuses</option>
             <option value="Active">Active</option>
@@ -323,7 +323,7 @@ export default function AllExecutivesPage() {
         </div>
 
         {/* Table Card Container */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
+        <div className="overflow-hidden rounded-sm border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
           <div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-semibold">
@@ -334,7 +334,7 @@ export default function AllExecutivesPage() {
                         type="checkbox"
                         onChange={handleSelectAll}
                         checked={selectedIds.length === filteredExecutives.length && filteredExecutives.length > 0}
-                        className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                        className="rounded-sm border-slate-300 text-[#E20613] focus:ring-[#E20613]"
                       />
                     </th>
                     <th className="px-4 py-3.5 whitespace-nowrap">Executive</th>
@@ -357,7 +357,7 @@ export default function AllExecutivesPage() {
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleSelectOne(exec.id)}
-                            className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                            className="rounded-sm border-slate-300 text-[#E20613] focus:ring-[#E20613]"
                           />
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
@@ -387,7 +387,7 @@ export default function AllExecutivesPage() {
                         <td className="px-4 py-3.5 font-semibold text-slate-600 whitespace-nowrap">{exec.mobile}</td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span
-                            className={`inline-block rounded-md px-2.5 py-0.5 text-[10px] font-extrabold whitespace-nowrap ${
+                            className={`inline-block rounded-sm px-2.5 py-0.5 text-[10px] font-extrabold whitespace-nowrap ${
                               exec.status === 'Active'
                                 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200/60'
                                 : exec.status === 'On Field'
@@ -412,7 +412,7 @@ export default function AllExecutivesPage() {
                             <NavLink
                               to={`/admin/executives/${exec.id}`}
                               title="View Executive Profile"
-                              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition duration-150"
+                              className="rounded-sm p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition duration-150"
                             >
                               <Eye className="h-4 w-4" />
                             </NavLink>
@@ -420,29 +420,29 @@ export default function AllExecutivesPage() {
                             <button
                               type="button"
                               onClick={() => setActiveMenuId(activeMenuId === exec.id ? null : exec.id)}
-                              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                              className="rounded-sm p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                             >
                               <MoreVertical className="h-4 w-4" />
                             </button>
 
                             {/* Dropdown Quick Actions */}
                             {activeMenuId === exec.id && (
-                              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl space-y-0.5 text-left">
+                              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl space-y-0.5 text-left">
                                 <NavLink
                                   to={`/admin/executives/${exec.id}`}
-                                  className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                                  className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                                 >
                                   <Eye className="h-3.5 w-3.5 text-blue-600" /> View Profile
                                 </NavLink>
                                 <NavLink
                                   to={`/admin/executives/${exec.id}/edit`}
-                                  className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                                  className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                                 >
                                   <Edit className="h-3.5 w-3.5 text-emerald-600" /> Edit Profile
                                 </NavLink>
                                 <NavLink
                                   to={`/admin/executives/${exec.id}/suspend`}
-                                  className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#E20613] hover:bg-red-50"
+                                  className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-[#E20613] hover:bg-red-50"
                                 >
                                   <ShieldAlert className="h-3.5 w-3.5" /> Access Control
                                 </NavLink>
@@ -462,13 +462,13 @@ export default function AllExecutivesPage() {
           <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-xs font-medium text-slate-500 bg-slate-50/40">
             <span>Showing 1 to {filteredExecutives.length} of 156 results</span>
             <div className="flex items-center gap-2">
-              <button className="rounded-lg border border-slate-200 p-1 hover:bg-slate-100 text-slate-400">
+              <button className="rounded-sm border border-slate-200 p-1 hover:bg-slate-100 text-slate-400">
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="rounded-lg bg-[#0D1F3D] px-3 py-1 font-bold text-white">1</span>
+              <span className="rounded-sm bg-[#0D1F3D] px-3 py-1 font-bold text-white">1</span>
               <span className="px-1 text-slate-400">2</span>
               <span className="px-1 text-slate-400">3</span>
-              <button className="rounded-lg border border-slate-200 p-1 hover:bg-slate-100 text-slate-600">
+              <button className="rounded-sm border border-slate-200 p-1 hover:bg-slate-100 text-slate-600">
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -479,7 +479,7 @@ export default function AllExecutivesPage() {
       {/* Bottom Grid: Team Overview Donut, Top Performers, Quick Actions (3 Column Grid below table) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Team Overview Donut Chart */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Team Overview</h3>
             <span className="text-[11px] font-bold text-[#E20613]">156 Total</span>
@@ -502,7 +502,7 @@ export default function AllExecutivesPage() {
                   ))}
                 </Pie>
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                   labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                   itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                 />
@@ -526,7 +526,7 @@ export default function AllExecutivesPage() {
         </div>
 
         {/* Top Performers This Month */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Award className="h-4 w-4 text-[#E20613]" />
@@ -543,7 +543,7 @@ export default function AllExecutivesPage() {
               { rank: 4, name: 'Neha Patil', leads: '27 Leads', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80' },
               { rank: 5, name: 'Arun Kumar', leads: '24 Leads', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80' },
             ].map((perf) => (
-              <div key={perf.rank} className="flex items-center justify-between rounded-xl bg-slate-50/70 p-2.5 border border-slate-100">
+              <div key={perf.rank} className="flex items-center justify-between rounded-sm bg-slate-50/70 p-2.5 border border-slate-100">
                 <div className="flex items-center gap-3">
                   <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
                     perf.rank === 1 ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-700'
@@ -560,14 +560,14 @@ export default function AllExecutivesPage() {
         </div>
 
         {/* Quick Actions Panel */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Quick Actions</h3>
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => navigate('/admin/executives/new')}
-              className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
+              className="flex flex-col items-center justify-center rounded-sm border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
             >
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-[#0D1F3D]/10 text-[#0D1F3D]">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-sm bg-[#0D1F3D]/10 text-[#0D1F3D]">
                 <UserPlus2 className="h-5 w-5" />
               </div>
               <span className="text-xs font-bold text-[#0D1F3D]">Add Executive</span>
@@ -575,9 +575,9 @@ export default function AllExecutivesPage() {
 
             <button
               onClick={() => toast.info('Select Excel file for bulk executive upload...')}
-              className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
+              className="flex flex-col items-center justify-center rounded-sm border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
             >
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-sm bg-blue-500/10 text-blue-600">
                 <Upload className="h-5 w-5" />
               </div>
               <span className="text-xs font-bold text-[#0D1F3D]">Bulk Upload</span>
@@ -585,9 +585,9 @@ export default function AllExecutivesPage() {
 
             <button
               onClick={() => navigate('/admin/leads/bulk-assign')}
-              className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
+              className="flex flex-col items-center justify-center rounded-sm border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
             >
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-red-500/10 text-[#E20613]">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-sm bg-red-500/10 text-[#E20613]">
                 <TrendingUp className="h-5 w-5" />
               </div>
               <span className="text-xs font-bold text-[#0D1F3D]">Assign Leads</span>
@@ -595,9 +595,9 @@ export default function AllExecutivesPage() {
 
             <button
               onClick={() => toast.success('Exporting Data...')}
-              className="flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
+              className="flex flex-col items-center justify-center rounded-sm border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
             >
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-sm bg-emerald-500/10 text-emerald-600">
                 <FileSpreadsheet className="h-5 w-5" />
               </div>
               <span className="text-xs font-bold text-[#0D1F3D]">Export Data</span>

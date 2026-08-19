@@ -96,15 +96,15 @@ export default function TeamPerformancePage() {
       </div>
 
       {/* Meta Header Card & Timeframe Selector */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
+      <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700 text-lg font-extrabold">
+          <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-blue-100 text-blue-700 text-lg font-extrabold">
             MN
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-extrabold text-[#0D1F3D]">Mumbai North Team</h2>
-              <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold text-emerald-600">
+              <span className="rounded-sm bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold text-emerald-600">
                 Active
               </span>
             </div>
@@ -113,12 +113,12 @@ export default function TeamPerformancePage() {
         </div>
 
         {/* Timeframe Selector Pill Tabs */}
-        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-extrabold">
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-sm text-xs font-extrabold">
           {['Today', 'This Week', 'This Month', 'This Quarter', 'This Year'].map((t) => (
             <button
               key={t}
               onClick={() => setTimeframe(t)}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-sm transition-all cursor-pointer ${
                 timeframe === t
                   ? 'bg-white text-[#0D1F3D] shadow-xs'
                   : 'text-slate-500 hover:text-[#0D1F3D]'
@@ -195,7 +195,7 @@ export default function TeamPerformancePage() {
       {/* Middle Row: Trend Line + Source Donut + Stage Funnel */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Performance Trend Dual Line Chart */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-5 space-y-4">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Performance Trend</h3>
             <div className="flex items-center gap-3 text-xs font-bold">
@@ -213,7 +213,7 @@ export default function TeamPerformancePage() {
                 <Tooltip
                   position={{ y: -15 }}
                   wrapperStyle={{ zIndex: 100 }}
-                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                   labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                   itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                 />
@@ -225,7 +225,7 @@ export default function TeamPerformancePage() {
         </div>
 
         {/* Performance by Source Donut */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4 space-y-4">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4 space-y-4">
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Performance by Source <span className="text-xs text-slate-400 font-normal">(Revenue)</span></h3>
           <div className="flex flex-col items-center">
             <div className="h-44 w-full relative">
@@ -247,7 +247,7 @@ export default function TeamPerformancePage() {
                   <Tooltip
                     position={{ y: -15 }}
                     wrapperStyle={{ zIndex: 100 }}
-                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                     labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                     formatter={(val: any) => [`₹${Number(val).toLocaleString()}`, 'Revenue']}
@@ -275,7 +275,7 @@ export default function TeamPerformancePage() {
         </div>
 
         {/* Performance by Stage Funnel */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-3 space-y-4">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-3 space-y-4">
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Performance by Stage</h3>
           <div className="space-y-2 pt-1 text-xs">
             {[
@@ -285,13 +285,13 @@ export default function TeamPerformancePage() {
               { stage: 'Negotiation', count: '68', pct: '5.45%' },
               { stage: 'Deals Won', count: '48', pct: '3.85%' },
             ].map((stg) => (
-              <div key={stg.stage} className="flex justify-between items-center bg-slate-50/60 p-2 rounded-lg border border-slate-100">
+              <div key={stg.stage} className="flex justify-between items-center bg-slate-50/60 p-2 rounded-sm border border-slate-100">
                 <span className="font-bold text-slate-700">{stg.stage}</span>
                 <span className="font-extrabold text-[#0D1F3D]">{stg.count} <span className="text-slate-400 font-normal">({stg.pct})</span></span>
               </div>
             ))}
 
-            <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-2.5 text-center text-xs font-bold text-emerald-800">
+            <div className="mt-3 rounded-sm border border-emerald-200 bg-emerald-50/60 p-2.5 text-center text-xs font-bold text-emerald-800">
               Overall Conversion Rate: <span className="font-extrabold text-emerald-600">3.85%</span>
             </div>
           </div>
@@ -301,7 +301,7 @@ export default function TeamPerformancePage() {
       {/* Bottom Row: Member Summary Table + Achievements & Insights */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Member Performance Table */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm lg:col-span-8 overflow-hidden">
+        <div className="rounded-sm border border-slate-200/80 bg-white shadow-sm lg:col-span-8 overflow-hidden">
           <div className="p-4 border-b border-slate-100 flex items-center justify-between">
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Member Performance Summary</h3>
             <Button
@@ -365,7 +365,7 @@ export default function TeamPerformancePage() {
         {/* Right Column: Achievements & Insights */}
         <div className="space-y-6 lg:col-span-4">
           {/* Top Achievements */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+          <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Top Achievements</h3>
             <div className="space-y-3 text-xs">
               {[
@@ -374,7 +374,7 @@ export default function TeamPerformancePage() {
                 { title: 'Best Win Rate', winner: 'Rohit Singh (TL-1011)', score: '37.5%', badge: '🥉' },
                 { title: 'Fastest Conversion', winner: 'Karan Patil (TL-1009)', score: '10.42%', badge: '⚡' },
               ].map((ach, idx) => (
-                <div key={idx} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+                <div key={idx} className="flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-3">
                   <div className="flex items-center gap-2.5">
                     <span className="text-base">{ach.badge}</span>
                     <div>
@@ -389,7 +389,7 @@ export default function TeamPerformancePage() {
           </div>
 
           {/* Insights & Alerts */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3 text-xs">
+          <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm space-y-3 text-xs">
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Insights & Alerts</h3>
             <div className="space-y-2.5 font-medium text-slate-600">
               <div className="flex items-start gap-2">

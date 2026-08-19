@@ -135,7 +135,7 @@ Visiblo Finance & HR Operations Team`,
       </div>
 
       {/* Tabs Bar */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 bg-white p-2 rounded-2xl shadow-xs">
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 bg-white p-2 rounded-sm shadow-xs">
         {[
           { id: 'general', label: 'General & Pay Cycle', icon: Calendar },
           { id: 'attendance', label: 'Attendance & Shift Penalties', icon: Clock },
@@ -149,7 +149,7 @@ Visiblo Finance & HR Operations Team`,
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-extrabold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 rounded-sm px-4 py-2.5 text-xs font-extrabold transition-all cursor-pointer ${
                 isActive
                   ? 'bg-[#0D1F3D] text-white shadow-xs'
                   : 'text-slate-500 hover:bg-slate-100 hover:text-[#0D1F3D]'
@@ -166,7 +166,7 @@ Visiblo Finance & HR Operations Team`,
       {activeTab === 'general' && (
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-8">
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5 text-xs">
+            <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-5 text-xs">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">General Payroll Calculation Rules</h3>
 
               {/* Salary Divisor Days */}
@@ -181,7 +181,7 @@ Visiblo Finance & HR Operations Team`,
                     <label
                       key={mode.id}
                       onClick={() => setGeneralSettings({ ...generalSettings, salaryDivisorMode: mode.id })}
-                      className={`flex flex-col justify-between rounded-xl border p-4 cursor-pointer transition-all ${
+                      className={`flex flex-col justify-between rounded-sm border p-4 cursor-pointer transition-all ${
                         generalSettings.salaryDivisorMode === mode.id
                           ? 'border-[#0D1F3D] bg-blue-50/40 ring-1 ring-[#0D1F3D]'
                           : 'border-slate-200 bg-white hover:bg-slate-50'
@@ -210,7 +210,7 @@ Visiblo Finance & HR Operations Team`,
                   <select
                     value={generalSettings.payCycleStartDay}
                     onChange={(e) => setGeneralSettings({ ...generalSettings, payCycleStartDay: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   >
                     <option value={1}>1st of every month (1st - 30th/31st)</option>
                     <option value={25}>25th of previous month (25th - 24th)</option>
@@ -223,7 +223,7 @@ Visiblo Finance & HR Operations Team`,
                   <select
                     value={generalSettings.autoFinalizeCutoffDay}
                     onChange={(e) => setGeneralSettings({ ...generalSettings, autoFinalizeCutoffDay: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   >
                     <option value={25}>25th of month</option>
                     <option value={28}>28th of month</option>
@@ -250,7 +250,7 @@ Visiblo Finance & HR Operations Team`,
           </div>
 
           <div className="space-y-6 lg:col-span-4">
-            <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5 space-y-3 text-xs">
+            <div className="rounded-sm border border-blue-100 bg-blue-50/60 p-5 space-y-3 text-xs">
               <div className="flex items-center gap-2 text-blue-900 font-extrabold text-sm">
                 <Info className="h-4 w-4 text-blue-600" />
                 <span>Formula & Policy Note</span>
@@ -258,7 +258,7 @@ Visiblo Finance & HR Operations Team`,
               <p className="text-slate-600 leading-relaxed font-medium">
                 Per-day salary calculation formula:
               </p>
-              <div className="rounded-xl bg-white p-3 border border-blue-200/60 font-mono text-[11px] text-[#0D1F3D] font-bold">
+              <div className="rounded-sm bg-white p-3 border border-blue-200/60 font-mono text-[11px] text-[#0D1F3D] font-bold">
                 Per Day Salary = (Base Salary + Allowances) ÷ Divisor Days
               </div>
               <p className="text-slate-500 leading-snug">
@@ -273,7 +273,7 @@ Visiblo Finance & HR Operations Team`,
       {activeTab === 'attendance' && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-8">
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5 text-xs">
+            <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-5 text-xs">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Shift & Late Arrival Penalty Rules</h3>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -283,7 +283,7 @@ Visiblo Finance & HR Operations Team`,
                     type="time"
                     value={shiftSettings.shiftStartTime}
                     onChange={(e) => setShiftSettings({ ...shiftSettings, shiftStartTime: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   />
                 </div>
 
@@ -293,7 +293,7 @@ Visiblo Finance & HR Operations Team`,
                     type="time"
                     value={shiftSettings.shiftEndTime}
                     onChange={(e) => setShiftSettings({ ...shiftSettings, shiftEndTime: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   />
                 </div>
 
@@ -302,7 +302,7 @@ Visiblo Finance & HR Operations Team`,
                   <select
                     value={shiftSettings.lateGraceMinutes}
                     onChange={(e) => setShiftSettings({ ...shiftSettings, lateGraceMinutes: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   >
                     <option value={10}>10 Minutes Grace</option>
                     <option value={15}>15 Minutes Grace</option>
@@ -315,7 +315,7 @@ Visiblo Finance & HR Operations Team`,
                   <select
                     value={shiftSettings.lateThresholdCount}
                     onChange={(e) => setShiftSettings({ ...shiftSettings, lateThresholdCount: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   >
                     <option value={3}>Every 3 Late Arrivals</option>
                     <option value={4}>Every 4 Late Arrivals</option>
@@ -329,7 +329,7 @@ Visiblo Finance & HR Operations Team`,
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <label
                     onClick={() => setShiftSettings({ ...shiftSettings, latePenaltyMode: 'half_day' })}
-                    className={`flex items-center gap-2.5 rounded-xl border p-3.5 cursor-pointer ${
+                    className={`flex items-center gap-2.5 rounded-sm border p-3.5 cursor-pointer ${
                       shiftSettings.latePenaltyMode === 'half_day'
                         ? 'border-[#0D1F3D] bg-blue-50/40 ring-1 ring-[#0D1F3D]'
                         : 'border-slate-200 bg-white hover:bg-slate-50'
@@ -350,7 +350,7 @@ Visiblo Finance & HR Operations Team`,
 
                   <label
                     onClick={() => setShiftSettings({ ...shiftSettings, latePenaltyMode: 'full_day' })}
-                    className={`flex items-center gap-2.5 rounded-xl border p-3.5 cursor-pointer ${
+                    className={`flex items-center gap-2.5 rounded-sm border p-3.5 cursor-pointer ${
                       shiftSettings.latePenaltyMode === 'full_day'
                         ? 'border-[#0D1F3D] bg-blue-50/40 ring-1 ring-[#0D1F3D]'
                         : 'border-slate-200 bg-white hover:bg-slate-50'
@@ -374,7 +374,7 @@ Visiblo Finance & HR Operations Team`,
           </div>
 
           <div className="space-y-6 lg:col-span-4">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 space-y-3 text-xs">
+            <div className="rounded-sm border border-amber-200 bg-amber-50/60 p-5 space-y-3 text-xs">
               <div className="flex items-center gap-2 text-amber-900 font-extrabold text-sm">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
                 <span>Shift Rule Warning</span>
@@ -391,7 +391,7 @@ Visiblo Finance & HR Operations Team`,
       {activeTab === 'incentive' && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-8">
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5 text-xs">
+            <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-5 text-xs">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Monthly Incentive Policy & Rates</h3>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -401,7 +401,7 @@ Visiblo Finance & HR Operations Team`,
                     type="number"
                     value={incentiveSettings.minDealsToQualify}
                     onChange={(e) => setIncentiveSettings({ ...incentiveSettings, minDealsToQualify: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   />
                   <p className="text-[10px] text-slate-400 font-medium">Executives must close at least this many deals to trigger commission payout.</p>
                 </div>
@@ -413,7 +413,7 @@ Visiblo Finance & HR Operations Team`,
                     step="0.1"
                     value={incentiveSettings.salesIncentivePct}
                     onChange={(e) => setIncentiveSettings({ ...incentiveSettings, salesIncentivePct: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   />
                 </div>
 
@@ -424,7 +424,7 @@ Visiblo Finance & HR Operations Team`,
                     step="0.1"
                     value={incentiveSettings.preSalesIncentivePct}
                     onChange={(e) => setIncentiveSettings({ ...incentiveSettings, preSalesIncentivePct: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   />
                 </div>
 
@@ -435,7 +435,7 @@ Visiblo Finance & HR Operations Team`,
                     step="0.1"
                     value={incentiveSettings.teamLeaderIncentivePct}
                     onChange={(e) => setIncentiveSettings({ ...incentiveSettings, teamLeaderIncentivePct: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   />
                 </div>
               </div>
@@ -443,7 +443,7 @@ Visiblo Finance & HR Operations Team`,
               {/* Role-Based Incentive Visibility Table */}
               <div className="pt-3 border-t border-slate-100 space-y-3">
                 <h4 className="font-extrabold text-[#0D1F3D]">Role-Based Incentive Visibility Scope</h4>
-                <div className="overflow-x-auto rounded-xl border border-slate-200">
+                <div className="overflow-x-auto rounded-sm border border-slate-200">
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
@@ -481,7 +481,7 @@ Visiblo Finance & HR Operations Team`,
       {activeTab === 'statutory' && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-8">
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5 text-xs">
+            <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-5 text-xs">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Provident Fund (PF) & Statutory Tax Rates</h3>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -491,7 +491,7 @@ Visiblo Finance & HR Operations Team`,
                     type="number"
                     value={statutorySettings.employeePfPct}
                     onChange={(e) => setStatutorySettings({ ...statutorySettings, employeePfPct: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   />
                 </div>
 
@@ -501,7 +501,7 @@ Visiblo Finance & HR Operations Team`,
                     type="number"
                     value={statutorySettings.employerPfPct}
                     onChange={(e) => setStatutorySettings({ ...statutorySettings, employerPfPct: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   />
                 </div>
 
@@ -511,7 +511,7 @@ Visiblo Finance & HR Operations Team`,
                     type="number"
                     value={statutorySettings.pfCapLimit}
                     onChange={(e) => setStatutorySettings({ ...statutorySettings, pfCapLimit: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   />
                 </div>
 
@@ -521,7 +521,7 @@ Visiblo Finance & HR Operations Team`,
                     type="number"
                     value={statutorySettings.professionalTaxMonthly}
                     onChange={(e) => setStatutorySettings({ ...statutorySettings, professionalTaxMonthly: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
                   />
                 </div>
               </div>
@@ -534,7 +534,7 @@ Visiblo Finance & HR Operations Team`,
       {activeTab === 'email' && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-8">
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4 text-xs">
+            <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-4 text-xs">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Payslip Email Notification Template</h3>
 
               <div className="space-y-3">
@@ -544,7 +544,7 @@ Visiblo Finance & HR Operations Team`,
                     type="text"
                     value={emailSettings.senderName}
                     onChange={(e) => setEmailSettings({ ...emailSettings, senderName: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 font-semibold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2 font-semibold text-[#0D1F3D]"
                   />
                 </div>
 
@@ -554,7 +554,7 @@ Visiblo Finance & HR Operations Team`,
                     type="text"
                     value={emailSettings.subjectTemplate}
                     onChange={(e) => setEmailSettings({ ...emailSettings, subjectTemplate: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 font-semibold text-[#0D1F3D]"
+                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2 font-semibold text-[#0D1F3D]"
                   />
                 </div>
 
@@ -564,7 +564,7 @@ Visiblo Finance & HR Operations Team`,
                     rows={8}
                     value={emailSettings.emailBody}
                     onChange={(e) => setEmailSettings({ ...emailSettings, emailBody: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-white p-3 font-mono text-xs font-semibold text-[#0D1F3D] leading-relaxed"
+                    className="w-full rounded-sm border border-slate-200 bg-white p-3 font-mono text-xs font-semibold text-[#0D1F3D] leading-relaxed"
                   />
                 </div>
               </div>

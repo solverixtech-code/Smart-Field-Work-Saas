@@ -48,7 +48,7 @@ export default function ConversionDashboardPage() {
   const [selectedTeam, setSelectedTeam] = useState('All');
 
   return (
-    <div className="space-y-6 font-sans">
+    <div className="space-y-4 font-sans pb-12">
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -146,7 +146,7 @@ export default function ConversionDashboardPage() {
       </div>
 
       {/* Middle Row: Conversion Funnel, Conversion Trend, Conversion by Source */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Conversion Funnel */}
         <ChartCard title="Stage Conversion Funnel" className="lg:col-span-5">
           <div className="space-y-3 pt-2">
@@ -247,7 +247,7 @@ export default function ConversionDashboardPage() {
       </div>
 
       {/* Bottom Row: Team Performance, Stage Analysis, Top Sales Reps */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Conversion by Sales Team */}
         <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
           <h3 className="mb-4 text-base font-extrabold text-[#0D1F3D]">Conversion by Field Team</h3>

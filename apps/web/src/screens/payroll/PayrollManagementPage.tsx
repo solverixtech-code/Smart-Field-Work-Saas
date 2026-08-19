@@ -501,7 +501,7 @@ export default function PayrollManagementPage() {
       </div>
 
       {/* Filters & Search Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-xs font-extrabold text-[#0D1F3D]">
             <Calendar className="h-4 w-4 text-[#E20613]" />
@@ -510,7 +510,7 @@ export default function PayrollManagementPage() {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none"
+            className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none"
           >
             <option>May 2025</option>
             <option>April 2025</option>
@@ -526,14 +526,14 @@ export default function PayrollManagementPage() {
               placeholder="Search by name, email or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-8 pr-3 py-1.5 text-xs font-semibold text-[#0D1F3D] focus:outline-none"
+              className="w-full rounded-sm border border-slate-200 bg-slate-50 pl-8 pr-3 py-1.5 text-xs font-semibold text-[#0D1F3D] focus:outline-none"
             />
           </div>
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none"
+            className="rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none"
           >
             <option value="All">All Statuses</option>
             <option value="Draft">Draft</option>
@@ -544,7 +544,7 @@ export default function PayrollManagementPage() {
       </div>
 
       {/* Main Data Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-sm border border-slate-200/80 bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-semibold">
             <thead>
@@ -588,7 +588,7 @@ export default function PayrollManagementPage() {
                     ₹{p.netPay.toLocaleString()}
                   </td>
                   <td className="px-4 py-3.5">
-                    <span className={`inline-block rounded-md px-2.5 py-0.5 text-[10px] font-extrabold border ${
+                    <span className={`inline-block rounded-sm px-2.5 py-0.5 text-[10px] font-extrabold border ${
                       p.status === 'Paid'
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         : p.status === 'Finalized'

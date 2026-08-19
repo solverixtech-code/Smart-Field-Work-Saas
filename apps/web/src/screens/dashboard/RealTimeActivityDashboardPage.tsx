@@ -108,7 +108,7 @@ export default function RealTimeActivityDashboardPage() {
   }&z=13&ie=UTF8&iwloc=&output=embed`;
 
   return (
-    <div className="space-y-6 font-sans pb-12">
+    <div className="space-y-4 font-sans pb-12">
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
@@ -125,7 +125,7 @@ export default function RealTimeActivityDashboardPage() {
 
         <div className="flex flex-wrap items-center gap-3">
           <DateRangePicker />
-          <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-[#0D1F3D] shadow-xs">
+          <div className="rounded-sm border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-[#0D1F3D] shadow-xs">
             🕒 Live Sync: {new Date().toLocaleTimeString()}
           </div>
         </div>
@@ -184,7 +184,7 @@ export default function RealTimeActivityDashboardPage() {
       </div>
 
       {/* Google Maps Container with Profile Picture Markers + Live Activity Feed */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-stretch">
         {/* Google Maps Canvas (7 Cols) */}
         <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-7 flex flex-col justify-between">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

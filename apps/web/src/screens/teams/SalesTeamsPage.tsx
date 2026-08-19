@@ -310,7 +310,7 @@ export default function SalesTeamsPage() {
       {/* Main Table Section */}
       <div className="space-y-3">
         {/* Search & Filter Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200/80 bg-white p-3 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-slate-200/80 bg-white p-3 shadow-xs">
           {/* Search Input */}
           <div className="relative flex-1 min-w-[240px]">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -319,7 +319,7 @@ export default function SalesTeamsPage() {
               placeholder="Search teams by name, code, leader..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
+              className="w-full rounded-sm border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
             />
           </div>
 
@@ -327,7 +327,7 @@ export default function SalesTeamsPage() {
           <select
             value={regionFilter}
             onChange={(e) => setRegionFilter(e.target.value)}
-            className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+            className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
           >
             <option value="All">All Regions</option>
             <option value="Mumbai">Mumbai</option>
@@ -342,7 +342,7 @@ export default function SalesTeamsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+            className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
           >
             <option value="All">All Statuses</option>
             <option value="Active">Active</option>
@@ -351,7 +351,7 @@ export default function SalesTeamsPage() {
         </div>
 
         {/* Table Card Container */}
-        <div className="overflow-hidden rounded-md border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
+        <div className="overflow-hidden rounded-sm border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
           <div>
             <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left text-xs border-collapse">
@@ -362,7 +362,7 @@ export default function SalesTeamsPage() {
                         type="checkbox"
                         onChange={handleSelectAll}
                         checked={selectedIds.length === filteredTeams.length && filteredTeams.length > 0}
-                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                        className="rounded-sm border-slate-300 text-slate-900 focus:ring-slate-900"
                       />
                     </th>
                     <th className="px-4 py-3.5 whitespace-nowrap min-w-[200px]">Team Name</th>
@@ -386,14 +386,14 @@ export default function SalesTeamsPage() {
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => handleSelectOne(t.id)}
-                            className="rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                            className="rounded-sm border-slate-300 text-slate-900 focus:ring-slate-900"
                           />
                         </td>
 
                         {/* Team Name */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className={`flex h-8 w-8 items-center justify-center rounded-lg font-bold text-xs shrink-0 ${t.avatarBg}`}>
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-sm font-bold text-xs shrink-0 ${t.avatarBg}`}>
                               {t.avatarText}
                             </div>
                             <div>
@@ -477,7 +477,7 @@ export default function SalesTeamsPage() {
                         {/* Status Badge */}
                         <td className="px-4 py-3.5 whitespace-nowrap text-center">
                           <span
-                            className={`inline-block rounded-md px-2.5 py-0.5 text-xs font-semibold border ${
+                            className={`inline-block rounded-sm px-2.5 py-0.5 text-xs font-semibold border ${
                               t.status === 'Active'
                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                 : 'bg-slate-100 text-slate-700 border-slate-300'
@@ -493,7 +493,7 @@ export default function SalesTeamsPage() {
                             <button
                               onClick={() => navigate(`/admin/teams/${t.id}`)}
                               title="View Team Details"
-                              className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs"
+                              className="p-1.5 rounded-sm text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs"
                             >
                               <Eye className="h-4 w-4" />
                             </button>
@@ -505,7 +505,7 @@ export default function SalesTeamsPage() {
                                   setActiveMenuId(activeMenuId === t.id ? null : t.id);
                                 }}
                                 title="Team Actions Menu"
-                                className={`p-1.5 rounded-lg transition-colors border shadow-xs ${
+                                className={`p-1.5 rounded-sm transition-colors border shadow-xs ${
                                   activeMenuId === t.id
                                     ? 'bg-[#0D1F3D] text-white border-[#0D1F3D]'
                                     : 'text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-[#0D1F3D]'
@@ -517,7 +517,7 @@ export default function SalesTeamsPage() {
                               {/* Floating Dropdown Action Menu */}
                               {activeMenuId === t.id && (
                                 <div
-                                  className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl space-y-1 text-left animate-fadeIn"
+                                  className="absolute right-0 top-full mt-1 z-50 w-52 rounded-sm border border-slate-200 bg-white p-1.5 shadow-2xl space-y-1 text-left animate-fadeIn"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <button
@@ -525,7 +525,7 @@ export default function SalesTeamsPage() {
                                       setActiveMenuId(null);
                                       navigate(`/admin/teams/${t.id}/leader`);
                                     }}
-                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-[#0D1F3D] hover:bg-red-50 hover:text-[#E20613] transition-colors"
+                                    className="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-bold text-[#0D1F3D] hover:bg-red-50 hover:text-[#E20613] transition-colors"
                                   >
                                     <UserCheck className="h-4 w-4 text-[#E20613]" />
                                     <span>Assign / Change Leader</span>
@@ -536,7 +536,7 @@ export default function SalesTeamsPage() {
                                       setActiveMenuId(null);
                                       navigate(`/admin/teams/${t.id}/members`);
                                     }}
-                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                    className="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
                                   >
                                     <Users className="h-4 w-4 text-blue-600" />
                                     <span>Manage Members ({t.memberCount})</span>
@@ -547,7 +547,7 @@ export default function SalesTeamsPage() {
                                       setActiveMenuId(null);
                                       navigate(`/admin/teams/${t.id}/performance`);
                                     }}
-                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                    className="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
                                   >
                                     <BarChart3 className="h-4 w-4 text-emerald-600" />
                                     <span>View Team Performance</span>
@@ -558,7 +558,7 @@ export default function SalesTeamsPage() {
                                       setActiveMenuId(null);
                                       navigate(`/admin/teams/${t.id}/targets`);
                                     }}
-                                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                    className="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
                                   >
                                     <Target className="h-4 w-4 text-purple-600" />
                                     <span>Manage Team Targets</span>
@@ -570,7 +570,7 @@ export default function SalesTeamsPage() {
                                         setActiveMenuId(null);
                                         navigate(`/admin/teams/${t.id}`);
                                       }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                                      className="flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
                                     >
                                       <Eye className="h-4 w-4 text-slate-500" />
                                       <span>Team Full Details</span>
@@ -594,17 +594,17 @@ export default function SalesTeamsPage() {
             <p>Showing 1 to {filteredTeams.length} of {teams.length} teams</p>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
-                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50">
+                <button className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-300 bg-white text-slate-600 hover:bg-slate-50">
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-xs font-semibold text-white">
+                <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-slate-900 text-xs font-semibold text-white">
                   1
                 </span>
-                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50">
+                <button className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-300 bg-white text-slate-600 hover:bg-slate-50">
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
-              <select className="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-900">
+              <select className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-900">
                 <option>10 / page</option>
                 <option>25 / page</option>
                 <option>50 / page</option>
@@ -617,7 +617,7 @@ export default function SalesTeamsPage() {
       {/* Bottom Grid: Team Distribution + Top Performing Teams + Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Team Distribution Donut Chart */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
           <h3 className="text-base font-bold text-slate-900">Team Distribution</h3>
           <div className="flex flex-col items-center">
             <div className="h-44 w-full relative">
@@ -639,7 +639,7 @@ export default function SalesTeamsPage() {
                   <Tooltip
                     position={{ y: -15 }}
                     wrapperStyle={{ zIndex: 100 }}
-                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                     labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                     formatter={(val: any) => [`${val} Teams`, 'Count']}
@@ -667,7 +667,7 @@ export default function SalesTeamsPage() {
         </div>
 
         {/* Top Performing Teams Leaderboard */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-slate-900">Top Performing Teams</h3>
             <span className="text-xs font-normal text-slate-600">This Month</span>
@@ -701,12 +701,12 @@ export default function SalesTeamsPage() {
         </div>
 
         {/* Quick Actions Card */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
           <h3 className="text-base font-bold text-slate-900">Quick Actions</h3>
           <div className="space-y-2">
             <button
               onClick={() => navigate('/admin/teams/create')}
-              className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+              className="w-full flex items-center justify-between rounded-sm border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
             >
               <div className="flex items-center gap-2.5">
                 <Plus className="h-4 w-4 text-slate-900" />
@@ -720,7 +720,7 @@ export default function SalesTeamsPage() {
 
             <button
               onClick={() => navigate('/admin/teams/targets')}
-              className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+              className="w-full flex items-center justify-between rounded-sm border border-slate-200 bg-slate-50 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
             >
               <div className="flex items-center gap-2.5">
                 <Users className="h-4 w-4 text-slate-900" />

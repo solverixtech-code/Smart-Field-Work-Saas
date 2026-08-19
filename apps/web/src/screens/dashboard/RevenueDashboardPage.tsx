@@ -89,7 +89,7 @@ export default function RevenueDashboardPage() {
   const [selectedBusiness, setSelectedBusiness] = useState('All Businesses');
 
   return (
-    <div className="space-y-6 font-sans pb-12">
+    <div className="space-y-4 font-sans pb-12">
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
@@ -105,7 +105,7 @@ export default function RevenueDashboardPage() {
           <select
             value={selectedBusiness}
             onChange={(e) => setSelectedBusiness(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-[#0D1F3D]"
+            className="rounded-sm border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-[#0D1F3D]"
           >
             <option>All Businesses</option>
             <option>Reliance Fresh</option>
@@ -189,7 +189,7 @@ export default function RevenueDashboardPage() {
       </div>
 
       {/* MIDDLE SECTION: Revenue Trend + Revenue by Plan + Revenue Summary */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-stretch">
         {/* Revenue Trend Line Chart (5 Cols) */}
         <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
@@ -303,7 +303,7 @@ export default function RevenueDashboardPage() {
       </div>
 
       {/* BOTTOM SECTION: Revenue by Business + Invoices Overview + Monthly Revenue */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-stretch">
         {/* Revenue by Business (5 Cols) */}
         <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">

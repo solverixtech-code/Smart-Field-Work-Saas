@@ -141,10 +141,10 @@ export default function TeamDetailsPage() {
               <ArrowLeft className="h-5 w-5" />
             </button>
             <h1 className="text-2xl font-bold text-slate-900">Mumbai North Team</h1>
-            <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+            <span className="rounded-sm bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
               Active
             </span>
-            <span className="font-mono text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+            <span className="font-mono text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-sm border border-slate-200">
               MN-001
             </span>
           </div>
@@ -182,24 +182,24 @@ export default function TeamDetailsPage() {
       </div>
 
       {/* Team Operational Hierarchy Card: Sales Manager -> Team Leader -> Field Executives */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm space-y-3.5">
+      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-sm space-y-3.5">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-[#0D1F3D]">
             Team Operational Hierarchy
           </h3>
-          <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1">
+          <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 rounded-sm px-2.5 py-1">
             Sales Manager → Team Leader → Field Executives
           </span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
           {/* Level 1: Sales Manager */}
-          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0D1F3D] text-white font-bold text-xs shadow-xs">
+          <div className="flex items-center gap-3 rounded-sm border border-slate-200 bg-slate-50/80 p-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold text-xs shadow-xs">
               SM
             </div>
             <div className="min-w-0 flex-1">
-              <span className="inline-block text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-md mb-1">
+              <span className="inline-block text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-sm mb-1">
                 Sales Manager
               </span>
               <p className="text-xs font-bold text-[#0D1F3D] truncate">Amit Sharma</p>
@@ -208,14 +208,14 @@ export default function TeamDetailsPage() {
           </div>
 
           {/* Level 2: Team Leader */}
-          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+          <div className="flex items-center gap-3 rounded-sm border border-slate-200 bg-slate-50/80 p-3.5">
             <img
               src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
               alt="Team Leader"
-              className="h-10 w-10 rounded-xl object-cover shrink-0 border border-slate-200 shadow-xs"
+              className="h-10 w-10 rounded-sm object-cover shrink-0 border border-slate-200 shadow-xs"
             />
             <div className="min-w-0 flex-1">
-              <span className="inline-block text-[11px] font-bold text-[#E20613] bg-red-50 border border-red-200/80 px-2 py-0.5 rounded-md mb-1">
+              <span className="inline-block text-[11px] font-bold text-[#E20613] bg-red-50 border border-red-200/80 px-2 py-0.5 rounded-sm mb-1">
                 Team Leader
               </span>
               <p className="text-xs font-bold text-[#0D1F3D] truncate">
@@ -234,12 +234,12 @@ export default function TeamDetailsPage() {
           </div>
 
           {/* Level 3: Field Executives */}
-          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-white font-bold text-xs shadow-xs">
+          <div className="flex items-center gap-3 rounded-sm border border-slate-200 bg-slate-50/80 p-3.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-emerald-700 text-white font-bold text-xs shadow-xs">
               8 FE
             </div>
             <div className="min-w-0 flex-1">
-              <span className="inline-block text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md mb-1">
+              <span className="inline-block text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-sm mb-1">
                 Field Executives
               </span>
               <p className="text-xs font-bold text-[#0D1F3D] truncate">8 Active Executives</p>
@@ -306,7 +306,7 @@ export default function TeamDetailsPage() {
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2.5 text-xs font-semibold whitespace-nowrap border-b-2 transition-all cursor-pointer ${
               activeTab === tab
-                ? 'border-slate-900 text-slate-900 bg-white rounded-t-lg font-bold'
+                ? 'border-slate-900 text-slate-900 bg-white rounded-t-sm font-bold'
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -321,7 +321,7 @@ export default function TeamDetailsPage() {
           {/* Charts Row */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
             {/* Sales Performance Trend Area Chart */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-6 space-y-4 flex flex-col justify-between">
+            <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-6 space-y-4 flex flex-col justify-between">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-bold text-slate-900">Sales Performance Trend</h3>
@@ -347,7 +347,7 @@ export default function TeamDetailsPage() {
                     <Tooltip
                       position={{ y: -15 }}
                       wrapperStyle={{ zIndex: 100 }}
-                      contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                      contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                       labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                       itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                       formatter={(val: any, name: any) => [`₹${Number(val || 0).toLocaleString()}`, name]}
@@ -360,7 +360,7 @@ export default function TeamDetailsPage() {
             </div>
 
             {/* Leads by Source Donut Chart */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+            <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
               <h3 className="text-base font-bold text-slate-900">Leads by Source</h3>
               <div className="flex flex-col items-center">
                 <div className="h-44 w-full relative">
@@ -382,7 +382,7 @@ export default function TeamDetailsPage() {
                       <Tooltip
                         position={{ y: -15 }}
                         wrapperStyle={{ zIndex: 100 }}
-                        contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                        contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                         labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                         itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                         formatter={(val: any) => [`${val}%`, 'Share']}
@@ -410,7 +410,7 @@ export default function TeamDetailsPage() {
             </div>
 
             {/* Deal Stage Funnel */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+            <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
               <h3 className="text-base font-bold text-slate-900">Deal Stage Funnel</h3>
               <div className="space-y-2 pt-1">
                 {[
@@ -438,7 +438,7 @@ export default function TeamDetailsPage() {
           {/* Members Table & Leaderboard Grid */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
             {/* Team Members Table */}
-            <div className="rounded-xl border border-slate-200 bg-white shadow-xs lg:col-span-8 overflow-hidden flex flex-col justify-between">
+            <div className="rounded-sm border border-slate-200 bg-white shadow-xs lg:col-span-8 overflow-hidden flex flex-col justify-between">
               <div>
                 {/* Table Header & Toolbar */}
                 <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
@@ -452,7 +452,7 @@ export default function TeamDetailsPage() {
                         placeholder="Search members..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white pl-8 pr-3 py-1.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
+                        className="w-full rounded-sm border border-slate-300 bg-white pl-8 pr-3 py-1.5 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
                       />
                     </div>
                     <Button
@@ -486,7 +486,7 @@ export default function TeamDetailsPage() {
                       <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
+                        className="w-full rounded-sm border border-slate-300 bg-white p-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
                       >
                         <option value="All">All Statuses</option>
                         <option value="Active">Active</option>
@@ -500,7 +500,7 @@ export default function TeamDetailsPage() {
                       <select
                         value={locationFilter}
                         onChange={(e) => setLocationFilter(e.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
+                        className="w-full rounded-sm border border-slate-300 bg-white p-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
                       >
                         <option value="All">All Locations</option>
                         <option value="Andheri">Andheri</option>
@@ -565,7 +565,7 @@ export default function TeamDetailsPage() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-center whitespace-nowrap">
-                              <span className={`inline-block rounded-md px-2.5 py-0.5 text-xs font-semibold border whitespace-nowrap ${
+                              <span className={`inline-block rounded-sm px-2.5 py-0.5 text-xs font-semibold border whitespace-nowrap ${
                                 m.status === 'Active'
                                   ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                   : m.status === 'On Leave'
@@ -576,7 +576,7 @@ export default function TeamDetailsPage() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right whitespace-nowrap">
-                              <button className="text-slate-600 hover:text-slate-900 p-1 border border-slate-200 rounded-md bg-white shadow-xs">
+                              <button className="text-slate-600 hover:text-slate-900 p-1 border border-slate-200 rounded-sm bg-white shadow-xs">
                                 <MoreVertical className="h-4 w-4" />
                               </button>
                             </td>
@@ -609,7 +609,7 @@ export default function TeamDetailsPage() {
 
             {/* Right: Top Performers */}
             <div className="space-y-6 lg:col-span-4">
-              <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+              <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-bold text-slate-900">Top Performers</h3>
                   <span className="text-xs font-normal text-slate-600">This Month</span>
@@ -643,7 +643,7 @@ export default function TeamDetailsPage() {
 
       {/* TAB CONTENT: TEAM MEMBERS */}
       {activeTab === 'Team Members' && (
-        <div className="rounded-xl border border-slate-200 bg-white shadow-xs p-5 space-y-4">
+        <div className="rounded-sm border border-slate-200 bg-white shadow-xs p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-slate-900">Team Roster</h3>
@@ -661,7 +661,7 @@ export default function TeamDetailsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {filteredMembers.map((m) => (
-              <div key={m.id} className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+              <div key={m.id} className="rounded-sm border border-slate-200 bg-slate-50 p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <img src={m.avatar} alt={m.name} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
                   <div>

@@ -133,7 +133,7 @@ export default function FieldActivityDashboardPage() {
   }&z=13&ie=UTF8&iwloc=&output=embed`;
 
   return (
-    <div className="space-y-6 font-sans pb-12">
+    <div className="space-y-4 font-sans pb-12">
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
@@ -202,7 +202,7 @@ export default function FieldActivityDashboardPage() {
       </div>
 
       {/* MAIN LIVE TRACKING SECTION: Executive List Sidebar (Left) + Google Maps Canvas with Profile Pins (Right) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-stretch">
         {/* Left 4 Cols: Executives Selection & Filter Panel */}
         <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4 space-y-4 flex flex-col justify-between">
           <div className="space-y-3">

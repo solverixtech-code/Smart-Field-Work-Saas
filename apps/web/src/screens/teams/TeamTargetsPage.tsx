@@ -105,16 +105,16 @@ export default function TeamTargetsPage() {
 
       {/* Meta Banner Card */}
       {!isAllTeams && (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700 text-lg font-extrabold">
+              <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-blue-100 text-blue-700 text-lg font-extrabold">
                 MN
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-extrabold text-[#0D1F3D]">Mumbai North Team</h2>
-                  <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold text-emerald-600">
+                  <span className="rounded-sm bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold text-emerald-600">
                     Active
                   </span>
                 </div>
@@ -192,10 +192,10 @@ export default function TeamTargetsPage() {
       {isAllTeams ? (
         /* All Teams Target Performance Table */
         <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
+          <div className="rounded-sm border border-slate-200/80 bg-white shadow-sm overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-base font-extrabold text-[#0D1F3D]">Team Target Performance Matrix</h2>
-              <select className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D]">
+              <select className="rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D]">
                 <option>This Month (May 2025)</option>
               </select>
             </div>
@@ -242,7 +242,7 @@ export default function TeamTargetsPage() {
                         {t.winTarget} / {t.winAchv}
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <span className={`inline-block rounded-md px-2.5 py-0.5 text-[11px] font-extrabold ${t.overall >= 75 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'}`}>
+                        <span className={`inline-block rounded-sm px-2.5 py-0.5 text-[11px] font-extrabold ${t.overall >= 75 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-amber-50 text-amber-600 border border-amber-200'}`}>
                           {t.overall}%
                         </span>
                       </td>
@@ -257,12 +257,12 @@ export default function TeamTargetsPage() {
         /* Single Team Targets Breakdown */
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Left Column: Team Targets Details Table */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white shadow-sm lg:col-span-8 overflow-hidden">
+          <div className="rounded-sm border border-slate-200/80 bg-white shadow-sm lg:col-span-8 overflow-hidden">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-base font-extrabold text-[#0D1F3D]">Team Target Details</h2>
 
               <div className="flex items-center gap-2 text-xs font-bold">
-                <select className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-[#0D1F3D]">
+                <select className="rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs text-[#0D1F3D]">
                   <option>This Month (May 2025)</option>
                 </select>
               </div>
@@ -308,7 +308,7 @@ export default function TeamTargetsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <span className={`rounded-md px-2 py-0.5 text-[10px] font-extrabold ${item.statusBadge}`}>
+                        <span className={`rounded-sm px-2 py-0.5 text-[10px] font-extrabold ${item.statusBadge}`}>
                           {item.status}
                         </span>
                       </td>
@@ -316,7 +316,7 @@ export default function TeamTargetsPage() {
                         <button
                           onClick={() => setEditingMetric(item)}
                           title="Edit target metric"
-                          className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs"
+                          className="p-1.5 rounded-sm text-slate-500 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
@@ -331,7 +331,7 @@ export default function TeamTargetsPage() {
           {/* Right Column: Donut + Quick Actions + Target Rules */}
           <div className="space-y-6 lg:col-span-4">
             {/* Target Overview Donut Chart */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+            <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Target Overview</h3>
               <div className="flex flex-col items-center">
                 <div className="h-44 w-full relative">
@@ -353,7 +353,7 @@ export default function TeamTargetsPage() {
                       <Tooltip
                         position={{ y: -15 }}
                         wrapperStyle={{ zIndex: 100 }}
-                        contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                        contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                         labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                         itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                         formatter={(val: any) => [`${val} Targets`, 'Count']}
@@ -381,12 +381,12 @@ export default function TeamTargetsPage() {
             </div>
 
             {/* Quick Actions Card */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
+            <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm space-y-3">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Quick Actions</h3>
               <div className="space-y-2">
                 <button
                   onClick={() => setIsSetTargetsModalOpen(true)}
-                  className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+                  className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
                 >
                   <div className="flex items-center gap-2.5">
                     <Target className="h-4 w-4 text-blue-600" />
@@ -399,7 +399,7 @@ export default function TeamTargetsPage() {
 
                 <button
                   onClick={() => toast.success('Targets copied from last month successfully!')}
-                  className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+                  className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
                 >
                   <div className="flex items-center gap-2.5">
                     <Copy className="h-4 w-4 text-purple-600" />
@@ -412,7 +412,7 @@ export default function TeamTargetsPage() {
 
                 <button
                   onClick={() => toast.info('Select Excel file to import targets...')}
-                  className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+                  className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
                 >
                   <div className="flex items-center gap-2.5">
                     <Upload className="h-4 w-4 text-emerald-600" />
@@ -425,7 +425,7 @@ export default function TeamTargetsPage() {
 
                 <button
                   onClick={() => toast.info('Loading target history...')}
-                  className="w-full flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
+                  className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-3 hover:bg-slate-100 transition-colors text-xs text-left"
                 >
                   <div className="flex items-center gap-2.5">
                     <History className="h-4 w-4 text-amber-600" />
@@ -439,7 +439,7 @@ export default function TeamTargetsPage() {
             </div>
 
             {/* Target Rules Card */}
-            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-3 text-xs">
+            <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm space-y-3 text-xs">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Target Rules</h3>
               <div className="space-y-2.5 font-medium text-slate-600">
                 <div className="flex items-start gap-2">

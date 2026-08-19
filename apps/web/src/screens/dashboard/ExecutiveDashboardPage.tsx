@@ -79,7 +79,7 @@ export default function ExecutiveDashboardPage() {
   const user = useAppSelector((s) => s.auth.user);
 
   return (
-    <div className="space-y-6 font-sans pb-12">
+    <div className="space-y-4 font-sans pb-12">
       {/* Page Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
@@ -105,7 +105,7 @@ export default function ExecutiveDashboardPage() {
       </div>
 
       {/* 11 REQUIRED KPI METRICS GRID */}
-      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
         <KpiCard
           title="Executives Online"
           value="42 Online"
@@ -211,7 +211,7 @@ export default function ExecutiveDashboardPage() {
       </div>
 
       {/* MIDDLE SECTION: Performance Overview Line Chart + Leads Donut Chart + Real-time Activity */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-stretch">
         {/* Performance Overview (Line Chart, 7 Cols) */}
         <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-6 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
@@ -341,7 +341,7 @@ export default function ExecutiveDashboardPage() {
       </div>
 
       {/* BOTTOM ROW: Tasks Overview Donut + Top Performing Executives + Upcoming Reminders */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-stretch">
         {/* Tasks Overview (3 Cols) */}
         <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
