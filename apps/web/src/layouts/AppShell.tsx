@@ -353,7 +353,7 @@ export default function AppShell() {
       {/* Refined Enterprise White Theme Sidebar */}
       <aside
         className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-slate-200 bg-white text-slate-700 shadow-xs transition-all duration-300 ease-in-out overflow-x-hidden ${
-          showBigLogo ? 'w-[275px]' : 'w-[80px]'
+          showBigLogo ? 'w-[295px]' : 'w-[80px]'
         }`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -453,7 +453,7 @@ export default function AppShell() {
 
                     {showBigLogo && (
                       <div className="flex flex-1 items-center justify-between overflow-hidden">
-                        <span className="truncate">{item.label}</span>
+                        <span className="whitespace-nowrap font-medium">{item.label}</span>
                         {item.badge && (
                           <span
                             className={`ml-2 shrink-0 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-extrabold transition-colors ${
@@ -573,7 +573,7 @@ export default function AppShell() {
       {/* Main Content Area */}
       <div
         className={`flex flex-1 flex-col overflow-hidden transition-all duration-300 ${
-          collapsed ? 'ml-[80px]' : 'ml-[275px]'
+          collapsed ? 'ml-[80px]' : 'ml-[295px]'
         }`}
       >
         {/* Top Header */}
