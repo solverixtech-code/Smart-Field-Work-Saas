@@ -361,42 +361,47 @@ export default function AllBusinessesPage() {
         </div>
       </div>
 
-      {/* Main Content Grid: Unified DataTable (Left 9 Cols) + Analytics Sidebar (Right 3 Cols) */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="lg:col-span-9">
-          <DataTable
-            columns={columns}
-            data={filteredBusinesses}
-            keyExtractor={(b) => b.id}
-            selectable
-            selectedIds={selectedIds}
-            onSelectAll={handleSelectAll}
-            onSelectOne={handleSelectOne}
-            density="relaxed"
-            pagination={{
-              currentPage,
-              totalPages: 585,
-              totalEntries: 5842,
-              pageSize: 10,
-              onPageChange: (p) => setCurrentPage(p),
-            }}
-          />
-        </div>
+      {/* Full Width DataTable Container */}
+      <div className="space-y-3">
+        <DataTable
+          columns={columns}
+          data={filteredBusinesses}
+          keyExtractor={(b) => b.id}
+          selectable
+          selectedIds={selectedIds}
+          onSelectAll={handleSelectAll}
+          onSelectOne={handleSelectOne}
+          density="relaxed"
+          pagination={{
+            currentPage,
+            totalPages: 585,
+            totalEntries: 5842,
+            pageSize: 10,
+            onPageChange: (p) => setCurrentPage(p),
+          }}
+        />
+      </div>
 
-        {/* Right Sidebar Charts & Quick Actions (3 Cols) */}
-        <div className="lg:col-span-3 space-y-4">
-          <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold text-[#0D1F3D]">Businesses by Status</h3>
-            <div className="flex items-center justify-center">
-              <div className="h-36 w-36">
+      {/* 3 Inspection & Analytics Cards Side-by-Side After the Table */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pt-2">
+        {/* Card 1: Businesses by Status (4 Cols) */}
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs lg:col-span-4 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center justify-between">
+              <span>Businesses by Status</span>
+              <span className="font-bold text-slate-400 text-[11px]">Total: 5,842</span>
+            </h3>
+
+            <div className="flex items-center justify-center pt-2">
+              <div className="h-40 w-40">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={statusDistributionData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={38}
-                      outerRadius={55}
+                      innerRadius={40}
+                      outerRadius={60}
                       paddingAngle={3}
                       dataKey="value"
                     >
@@ -412,28 +417,35 @@ export default function AllBusinessesPage() {
                 </ResponsiveContainer>
               </div>
             </div>
-
-            <div className="space-y-1.5 text-xs font-semibold text-slate-600">
-              {statusDistributionData.map((s) => (
-                <div key={s.name} className="flex justify-between items-center">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-                    {s.name}
-                  </span>
-                  <span className="font-bold text-[#0D1F3D]">{s.value.toLocaleString()} ({((s.value / 5842) * 100).toFixed(1)}%)</span>
-                </div>
-              ))}
-            </div>
           </div>
 
-          <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold text-[#0D1F3D]">Businesses by Source</h3>
-            <div className="space-y-2.5 text-xs font-semibold">
+          <div className="space-y-2 text-xs font-semibold text-slate-600 pt-2 border-t border-slate-100">
+            {statusDistributionData.map((s) => (
+              <div key={s.name} className="flex justify-between items-center">
+                <span className="flex items-center gap-1.5 font-bold">
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                  {s.name}
+                </span>
+                <span className="font-extrabold text-[#0D1F3D]">{s.value.toLocaleString()} ({((s.value / 5842) * 100).toFixed(1)}%)</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Card 2: Businesses by Source (5 Cols) */}
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs lg:col-span-5 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center justify-between">
+              <span>Businesses by Source</span>
+              <span className="font-bold text-slate-400 text-[11px]">6 Lead Channels</span>
+            </h3>
+
+            <div className="space-y-2.5 text-xs font-semibold pt-2">
               {sourceDistribution.map((src) => (
                 <div key={src.name} className="space-y-1">
                   <div className="flex justify-between text-slate-700">
-                    <span>{src.name}</span>
-                    <span className="font-bold text-[#0D1F3D]">{src.count.toLocaleString()} ({src.pct})</span>
+                    <span className="font-bold text-[#0D1F3D]">{src.name}</span>
+                    <span className="font-bold text-slate-600">{src.count.toLocaleString()} ({src.pct})</span>
                   </div>
                   <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
                     <div className={`h-full ${src.color} rounded-full`} style={{ width: src.pct }} />
@@ -442,52 +454,59 @@ export default function AllBusinessesPage() {
               ))}
             </div>
           </div>
+        </div>
 
-          <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-2.5">
-            <h3 className="text-xs font-bold text-[#0D1F3D]">Quick Actions</h3>
-            <div className="space-y-2 text-xs font-semibold">
-              <button
-                onClick={() => toast.info('Opening Add Business Form...')}
-                className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-2.5 hover:bg-slate-100 text-left transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <UserPlus className="h-4 w-4 text-blue-600" />
-                  <div>
-                    <p className="font-bold text-[#0D1F3D]">Add New Business</p>
-                    <p className="text-[10px] text-slate-400">Manually add a new merchant</p>
-                  </div>
-                </div>
-                <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-              </button>
+        {/* Card 3: Quick Actions (3 Cols) */}
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs lg:col-span-3 flex flex-col justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-[#0D1F3D] border-b border-slate-100 pb-2">
+              Quick Actions
+            </h3>
+            <p className="text-[11px] text-slate-500 pt-1 font-medium">Perform quick merchant operations and bulk imports.</p>
+          </div>
 
-              <button
-                onClick={() => toast.info('Select Excel file to import businesses...')}
-                className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-2.5 hover:bg-slate-100 text-left transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Upload className="h-4 w-4 text-purple-600" />
-                  <div>
-                    <p className="font-bold text-[#0D1F3D]">Import Businesses</p>
-                    <p className="text-[10px] text-slate-400">Bulk import from CSV/Excel</p>
-                  </div>
+          <div className="space-y-2 text-xs font-semibold pt-1">
+            <button
+              onClick={() => navigate('/admin/businesses/create')}
+              className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-2.5 hover:bg-slate-100 text-left transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-blue-600" />
+                <div>
+                  <p className="font-bold text-[#0D1F3D]">Add New Business</p>
+                  <p className="text-[10px] text-slate-400">Manually add a new merchant</p>
                 </div>
-                <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-              </button>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+            </button>
 
-              <button
-                onClick={() => toast.success('Exporting business list...')}
-                className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-2.5 hover:bg-slate-100 text-left transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Download className="h-4 w-4 text-emerald-600" />
-                  <div>
-                    <p className="font-bold text-[#0D1F3D]">Export Businesses</p>
-                    <p className="text-[10px] text-slate-400">Download business list</p>
-                  </div>
+            <button
+              onClick={() => toast.info('Select Excel file to import businesses...')}
+              className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-2.5 hover:bg-slate-100 text-left transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <Upload className="h-4 w-4 text-purple-600" />
+                <div>
+                  <p className="font-bold text-[#0D1F3D]">Import Businesses</p>
+                  <p className="text-[10px] text-slate-400">Bulk import from CSV/Excel</p>
                 </div>
-                <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-              </button>
-            </div>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+            </button>
+
+            <button
+              onClick={() => toast.success('Exporting business list...')}
+              className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-2.5 hover:bg-slate-100 text-left transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <Download className="h-4 w-4 text-emerald-600" />
+                <div>
+                  <p className="font-bold text-[#0D1F3D]">Export Businesses</p>
+                  <p className="text-[10px] text-slate-400">Download business list</p>
+                </div>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+            </button>
           </div>
         </div>
       </div>
