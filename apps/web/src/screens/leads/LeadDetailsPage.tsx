@@ -96,16 +96,16 @@ export default function LeadDetailsPage() {
       </div>
 
       {/* Banner Header Card */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+      <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-6">
           {/* Left Core Lead Metrics & Header */}
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="text-2xl font-extrabold text-[#0D1F3D]">{currentLead.companyName}</h2>
-              <span className="rounded-md bg-slate-900 text-white px-2.5 py-0.5 text-xs font-mono font-bold">
+              <span className="rounded-sm bg-slate-900 text-white px-2.5 py-0.5 text-xs font-mono font-bold">
                 {currentLead.code}
               </span>
-              <span className={`rounded-md px-3 py-0.5 text-xs font-extrabold border ${
+              <span className={`rounded-sm px-3 py-0.5 text-xs font-extrabold border ${
                 currentLead.stage === 'Won / Converted' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                 currentLead.stage === 'Lost' ? 'bg-red-50 text-red-600 border-red-200' :
                 'bg-blue-50 text-blue-600 border-blue-200'
@@ -132,7 +132,7 @@ export default function LeadDetailsPage() {
               <p className="text-2xl font-extrabold text-emerald-600">₹{currentLead.estimatedValue.toLocaleString()}</p>
             </div>
 
-            <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 p-2 rounded-xl text-left text-xs font-semibold">
+            <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 p-2 rounded-sm text-left text-xs font-semibold">
               <img
                 src={currentLead.assignedExecutiveAvatar}
                 alt={currentLead.assignedExecutive}
@@ -148,7 +148,7 @@ export default function LeadDetailsPage() {
       </div>
 
       {/* Navigation Sub-Tabs Bar */}
-      <div className="flex overflow-x-auto gap-1 border-b border-slate-200 bg-white p-1.5 rounded-2xl shadow-xs scrollbar-none">
+      <div className="flex overflow-x-auto gap-1 border-b border-slate-200 bg-white p-1.5 rounded-sm shadow-xs scrollbar-none">
         {[
           { id: 'overview', label: 'Overview' },
           { id: 'timeline', label: 'Timeline' },
@@ -164,7 +164,7 @@ export default function LeadDetailsPage() {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`rounded-sm px-4 py-2 text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 isActive
                   ? 'bg-[#0D1F3D] text-white shadow-xs'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D]'

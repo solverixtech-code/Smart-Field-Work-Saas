@@ -5,7 +5,7 @@ import { mockLeadFollowUps } from '../leadsData';
 
 export function LeadFollowUpsTab() {
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
+    <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D] flex items-center gap-2">
@@ -24,11 +24,11 @@ export function LeadFollowUpsTab() {
 
       <div className="space-y-3">
         {mockLeadFollowUps.map((item) => (
-          <div key={item.id} className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-xs font-semibold">
+          <div key={item.id} className="flex flex-wrap items-center justify-between gap-4 rounded-sm border border-slate-200 bg-slate-50/60 p-4 text-xs font-semibold">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-[#0D1F3D] text-sm">{item.title}</span>
-                <span className={`rounded-md px-2 py-0.5 text-[10px] font-extrabold border ${
+                <span className={`rounded-sm px-2 py-0.5 text-[10px] font-extrabold border ${
                   item.status === 'Pending' ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'
                 }`}>
                   {item.status}

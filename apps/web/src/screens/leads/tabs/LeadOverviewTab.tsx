@@ -25,7 +25,7 @@ export function LeadOverviewTab({ lead }: TabProps) {
       {/* Left 8 Cols: Primary Information Cards */}
       <div className="space-y-3 lg:col-span-8">
         {/* Company & Contact Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-4">
           <h3 className="text-sm font-extrabold text-[#0D1F3D] flex items-center gap-2">
             <Building2 className="h-4 w-4 text-blue-600" />
             <span>Company & Primary Contact Information</span>
@@ -69,12 +69,12 @@ export function LeadOverviewTab({ lead }: TabProps) {
         </div>
 
         {/* Requirements & Pain Points Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-3 text-xs">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-3 text-xs">
           <h3 className="text-sm font-extrabold text-[#0D1F3D] flex items-center gap-2">
             <FileText className="h-4 w-4 text-purple-600" />
             <span>Requirement Notes & Scope</span>
           </h3>
-          <div className="rounded-xl bg-slate-50/70 p-4 border border-slate-100 font-semibold text-slate-700 leading-relaxed">
+          <div className="rounded-sm bg-slate-50/70 p-4 border border-slate-100 font-semibold text-slate-700 leading-relaxed">
             {lead.requirementNotes}
           </div>
         </div>
@@ -83,13 +83,13 @@ export function LeadOverviewTab({ lead }: TabProps) {
       {/* Right 4 Cols: Executive Assignment & Territory Card */}
       <div className="space-y-3 lg:col-span-4">
         {/* Executive Assignment Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4 text-xs">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-4 text-xs">
           <h3 className="text-sm font-extrabold text-[#0D1F3D] flex items-center gap-2">
             <User className="h-4 w-4 text-emerald-600" />
             <span>Assigned Sales Representative</span>
           </h3>
 
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+          <div className="flex items-center gap-3 p-3 rounded-sm bg-slate-50 border border-slate-100">
             <img
               src={lead.assignedExecutiveAvatar}
               alt={lead.assignedExecutive}
@@ -118,7 +118,7 @@ export function LeadOverviewTab({ lead }: TabProps) {
         </div>
 
         {/* Lead Score Breakdown */}
-        <div className="rounded-2xl border border-blue-100 bg-blue-50/60 p-5 space-y-3 text-xs">
+        <div className="rounded-sm border border-blue-100 bg-blue-50/60 p-5 space-y-3 text-xs">
           <div className="flex items-center justify-between">
             <span className="font-extrabold text-blue-900">Lead Health Score</span>
             <span className="rounded-full bg-[#0D1F3D] text-white px-2.5 py-0.5 font-extrabold text-xs">

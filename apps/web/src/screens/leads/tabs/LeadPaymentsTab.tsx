@@ -7,7 +7,7 @@ export function LeadPaymentsTab() {
   const totalPaid = mockLeadPayments.reduce((acc, curr) => acc + curr.amount, 0);
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
+    <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D] flex items-center gap-2">
@@ -25,21 +25,21 @@ export function LeadPaymentsTab() {
       </div>
 
       {/* Summary Box */}
-      <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
+      <div className="rounded-sm border border-emerald-200 bg-emerald-50/40 p-4 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
         <div>
           <span className="text-slate-500 block">Total Advance Collected</span>
           <span className="text-xl font-extrabold text-emerald-700">₹{totalPaid.toLocaleString()}</span>
         </div>
         <div className="text-right">
           <span className="text-slate-500 block">Ledger Status</span>
-          <span className="rounded-md bg-emerald-100 text-emerald-800 px-2.5 py-0.5 font-extrabold text-[11px]">
+          <span className="rounded-sm bg-emerald-100 text-emerald-800 px-2.5 py-0.5 font-extrabold text-[11px]">
             Fully Verified
           </span>
         </div>
       </div>
 
       {/* Ledger Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200">
+      <div className="overflow-hidden rounded-sm border border-slate-200">
         <table className="w-full text-left text-xs font-semibold">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
@@ -62,7 +62,7 @@ export function LeadPaymentsTab() {
                 <td className="p-3">{p.paymentDate}</td>
                 <td className="p-3 font-extrabold text-emerald-600">₹{p.amount.toLocaleString()}</td>
                 <td className="p-3">
-                  <span className="rounded-md bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold">
+                  <span className="rounded-sm bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold">
                     {p.status}
                   </span>
                 </td>

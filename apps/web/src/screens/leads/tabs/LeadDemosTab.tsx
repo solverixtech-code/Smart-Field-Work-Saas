@@ -5,7 +5,7 @@ import { mockLeadDemos } from '../leadsData';
 
 export function LeadDemosTab() {
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
+    <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D] flex items-center gap-2">
@@ -24,7 +24,7 @@ export function LeadDemosTab() {
 
       <div className="space-y-4">
         {mockLeadDemos.map((demo) => (
-          <div key={demo.id} className="rounded-xl border border-slate-200 bg-slate-50/60 p-5 space-y-3 text-xs">
+          <div key={demo.id} className="rounded-sm border border-slate-200 bg-slate-50/60 p-5 space-y-3 text-xs">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
               <div>
                 <h4 className="font-extrabold text-[#0D1F3D] text-sm">{demo.demoTitle}</h4>
@@ -55,7 +55,7 @@ export function LeadDemosTab() {
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-white border border-slate-200/80 text-slate-700">
+            <div className="p-3 rounded-sm bg-white border border-slate-200/80 text-slate-700">
               <span className="text-[10px] text-slate-400 font-bold block uppercase">Client Questions & Feedback</span>
               <p className="font-medium leading-relaxed mt-0.5">{demo.keyQuestions}</p>
             </div>

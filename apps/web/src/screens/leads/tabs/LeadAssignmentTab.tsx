@@ -29,7 +29,7 @@ export function LeadAssignmentTab({ lead }: TabProps) {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
+    <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D] flex items-center gap-2">
@@ -43,7 +43,7 @@ export function LeadAssignmentTab({ lead }: TabProps) {
       </div>
 
       {/* Current Assignment Box */}
-      <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
+      <div className="rounded-sm border border-slate-200 bg-slate-50/60 p-4 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
         <div className="flex items-center gap-3">
           <img
             src={lead.assignedExecutiveAvatar}
@@ -65,7 +65,7 @@ export function LeadAssignmentTab({ lead }: TabProps) {
           <select
             value={selectedExecutive}
             onChange={(e) => setSelectedExecutive(e.target.value)}
-            className="w-full sm:w-1/2 rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 font-bold text-[#0D1F3D]"
+            className="w-full sm:w-1/2 rounded-sm border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 font-bold text-[#0D1F3D]"
           >
             <option value="Rahul Verma">Rahul Verma (FE-1001) • Mumbai North</option>
             <option value="Priya Mehta">Priya Mehta (FE-1002) • Western Suburbs</option>
@@ -83,7 +83,7 @@ export function LeadAssignmentTab({ lead }: TabProps) {
             value={reassignReason}
             onChange={(e) => setReassignReason(e.target.value)}
             placeholder="e.g. Client requested territory transfer to Bandra West sales team..."
-            className="w-full rounded-xl border border-slate-200 bg-slate-50/60 p-3 font-semibold text-[#0D1F3D]"
+            className="w-full rounded-sm border border-slate-200 bg-slate-50/60 p-3 font-semibold text-[#0D1F3D]"
           />
         </div>
 

@@ -23,7 +23,7 @@ export function LeadCommunicationTab() {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
+    <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D] flex items-center gap-2">
@@ -47,7 +47,7 @@ export function LeadCommunicationTab() {
 
       {/* Log Form Dialog Container */}
       {showLogForm && (
-        <form onSubmit={handleSaveLog} className="rounded-xl border border-teal-200 bg-teal-50/40 p-5 space-y-4 text-xs font-semibold animate-fadeIn">
+        <form onSubmit={handleSaveLog} className="rounded-sm border border-teal-200 bg-teal-50/40 p-5 space-y-4 text-xs font-semibold animate-fadeIn">
           <h4 className="font-extrabold text-[#0D1F3D] text-sm">Log New Communication Activity</h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -56,7 +56,7 @@ export function LeadCommunicationTab() {
               <select
                 value={commChannel}
                 onChange={(e) => setCommChannel(e.target.value as any)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-bold text-[#0D1F3D]"
+                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 font-bold text-[#0D1F3D]"
               >
                 <option value="Call">Phone Call</option>
                 <option value="Email">Email Exchange</option>
@@ -72,7 +72,7 @@ export function LeadCommunicationTab() {
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="e.g. Discussed pricing discount"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-bold text-[#0D1F3D]"
+                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 font-bold text-[#0D1F3D]"
               />
             </div>
           </div>
@@ -84,7 +84,7 @@ export function LeadCommunicationTab() {
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder="Enter key details discussed with client..."
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 font-semibold text-[#0D1F3D]"
+              className="w-full rounded-sm border border-slate-200 bg-white p-3 font-semibold text-[#0D1F3D]"
             />
           </div>
 
@@ -102,10 +102,10 @@ export function LeadCommunicationTab() {
       {/* Communications Stream */}
       <div className="space-y-3">
         {mockLeadCommunications.map((comm) => (
-          <div key={comm.id} className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2 text-xs font-semibold">
+          <div key={comm.id} className="rounded-sm border border-slate-200 bg-slate-50/50 p-4 space-y-2 text-xs font-semibold">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-2">
               <div className="flex items-center gap-2">
-                <span className={`rounded-md px-2 py-0.5 text-[10px] font-extrabold border ${
+                <span className={`rounded-sm px-2 py-0.5 text-[10px] font-extrabold border ${
                   comm.channel === 'Call' ? 'bg-blue-50 text-blue-600 border-blue-200' :
                   comm.channel === 'Email' ? 'bg-purple-50 text-purple-600 border-purple-200' :
                   'bg-emerald-50 text-emerald-600 border-emerald-200'

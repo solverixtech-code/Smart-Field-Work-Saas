@@ -14,7 +14,7 @@ import { mockLeadTimelineEvents } from '../leadsData';
 
 export function LeadTimelineTab() {
   return (
-    <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
+    <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D] flex items-center gap-2">
@@ -44,7 +44,7 @@ export function LeadTimelineTab() {
             </div>
 
             {/* Event Box */}
-            <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 p-4 space-y-2 text-xs">
+            <div className="rounded-sm border border-slate-200/80 bg-slate-50/50 p-4 space-y-2 text-xs">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h4 className="font-extrabold text-[#0D1F3D] text-sm">{evt.title}</h4>
                 <span className="text-[11px] font-bold text-slate-400">{evt.timestamp}</span>
