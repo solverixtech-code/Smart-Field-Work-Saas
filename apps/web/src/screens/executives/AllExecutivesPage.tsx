@@ -27,6 +27,7 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
 
 const teamOverviewData = [
   { name: 'Active', value: 128, color: '#10B981' },
@@ -296,30 +297,34 @@ export default function AllExecutivesPage() {
           </div>
 
           {/* Region Dropdown */}
-          <select
-            value={regionFilter}
-            onChange={(e) => setRegionFilter(e.target.value)}
-            className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
-          >
-            <option value="All">All Regions</option>
-            <option value="Mumbai">Mumbai</option>
-            <option value="Thane">Thane</option>
-            <option value="Navi Mumbai">Navi Mumbai</option>
-            <option value="Pune">Pune</option>
-          </select>
+          <div className="min-w-[150px]">
+            <Select
+              value={regionFilter}
+              onChange={(e) => setRegionFilter(e.target.value)}
+              options={[
+                { label: 'All Regions', value: 'All' },
+                { label: 'Mumbai', value: 'Mumbai' },
+                { label: 'Thane', value: 'Thane' },
+                { label: 'Navi Mumbai', value: 'Navi Mumbai' },
+                { label: 'Pune', value: 'Pune' },
+              ]}
+            />
+          </div>
 
           {/* Status Dropdown */}
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="On Field">On Field</option>
-            <option value="On Leave">On Leave</option>
-            <option value="Inactive">Inactive</option>
-          </select>
+          <div className="min-w-[150px]">
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              options={[
+                { label: 'All Statuses', value: 'All' },
+                { label: 'Active', value: 'Active' },
+                { label: 'On Field', value: 'On Field' },
+                { label: 'On Leave', value: 'On Leave' },
+                { label: 'Inactive', value: 'Inactive' },
+              ]}
+            />
+          </div>
         </div>
 
         {/* Table Card Container */}

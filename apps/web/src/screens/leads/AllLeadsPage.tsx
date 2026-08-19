@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
 import { DataTable, ColumnDef } from '../../components/ui/DataTable';
 import { mockLeadsData, LeadItem } from './leadsData';
 
@@ -287,48 +288,54 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
           </div>
 
           {/* Region Filter */}
-          <select
-            value={regionFilter}
-            onChange={(e) => setRegionFilter(e.target.value)}
-            className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
-          >
-            <option value="All">All Regions</option>
-            <option value="North Mumbai">North Mumbai</option>
-            <option value="Western Suburbs">Western Suburbs</option>
-            <option value="Eastern Suburbs">Eastern Suburbs</option>
-            <option value="Thane">Thane & Navi Mumbai</option>
-            <option value="Pune">Pune</option>
-          </select>
+          <div className="min-w-[160px]">
+            <Select
+              value={regionFilter}
+              onChange={(e) => setRegionFilter(e.target.value)}
+              options={[
+                { label: 'All Regions', value: 'All' },
+                { label: 'North Mumbai', value: 'North Mumbai' },
+                { label: 'Western Suburbs', value: 'Western Suburbs' },
+                { label: 'Eastern Suburbs', value: 'Eastern Suburbs' },
+                { label: 'Thane & Navi Mumbai', value: 'Thane' },
+                { label: 'Pune', value: 'Pune' },
+              ]}
+            />
+          </div>
 
           {/* Priority Filter */}
-          <select
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
-          >
-            <option value="All">All Priorities</option>
-            <option value="Urgent">Urgent</option>
-            <option value="High">High</option>
-            <option value="Medium">Medium</option>
-            <option value="Low">Low</option>
-          </select>
+          <div className="min-w-[160px]">
+            <Select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              options={[
+                { label: 'All Priorities', value: 'All' },
+                { label: 'Urgent', value: 'Urgent' },
+                { label: 'High', value: 'High' },
+                { label: 'Medium', value: 'Medium' },
+                { label: 'Low', value: 'Low' },
+              ]}
+            />
+          </div>
 
           {/* Stage Filter */}
-          <select
-            value={stageFilter}
-            onChange={(e) => setStageFilter(e.target.value)}
-            className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
-          >
-            <option value="All">All Lead Stages</option>
-            <option value="New / Fresh">New / Fresh</option>
-            <option value="Contacted">Contacted</option>
-            <option value="Meeting Scheduled">Meeting Scheduled</option>
-            <option value="Demo Completed">Demo Completed</option>
-            <option value="Proposal Sent">Proposal Sent</option>
-            <option value="Negotiation">Negotiation</option>
-            <option value="Won / Converted">Won / Converted</option>
-            <option value="Lost">Lost</option>
-          </select>
+          <div className="min-w-[170px]">
+            <Select
+              value={stageFilter}
+              onChange={(e) => setStageFilter(e.target.value)}
+              options={[
+                { label: 'All Lead Stages', value: 'All' },
+                { label: 'New / Fresh', value: 'New / Fresh' },
+                { label: 'Contacted', value: 'Contacted' },
+                { label: 'Meeting Scheduled', value: 'Meeting Scheduled' },
+                { label: 'Demo Completed', value: 'Demo Completed' },
+                { label: 'Proposal Sent', value: 'Proposal Sent' },
+                { label: 'Negotiation', value: 'Negotiation' },
+                { label: 'Won / Converted', value: 'Won / Converted' },
+                { label: 'Lost', value: 'Lost' },
+              ]}
+            />
+          </div>
         </div>
 
         {/* Leads Data Table Container */}
