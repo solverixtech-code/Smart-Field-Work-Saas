@@ -360,8 +360,8 @@ export default function AppShell() {
       >
         {/* Brand Header */}
         <div
-          className={`flex h-16 flex-none items-center border-b border-slate-100 transition-all duration-300 ${
-            showBigLogo ? 'justify-between px-3' : 'justify-center px-2'
+          className={`flex h-20 flex-none items-center border-b border-slate-100 transition-all duration-300 ${
+            showBigLogo ? 'justify-between px-4' : 'justify-center px-2'
           }`}
         >
           {showBigLogo ? (
@@ -370,7 +370,7 @@ export default function AppShell() {
                 <img
                   src={bigLogo}
                   alt="Smart Field Work Logo"
-                  style={{ width: '200px', maxHeight: '52px', objectFit: 'contain' }}
+                  style={{ width: '240px', maxHeight: '64px', objectFit: 'contain' }}
                 />
               </NavLink>
               <button
@@ -392,7 +392,7 @@ export default function AppShell() {
               <img
                 src={smallLogo}
                 alt="Smart Field Work Favicon"
-                style={{ width: '50px', height: '50px', objectFit: 'contain' }}
+                style={{ width: '60px', height: '60px', objectFit: 'contain' }}
               />
             </button>
           )}
@@ -577,7 +577,7 @@ export default function AppShell() {
         }`}
       >
         {/* Top Header */}
-        <header className="flex h-16 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-sm">
+        <header className="flex h-20 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-sm">
           {/* Mandatory Left Header Breadcrumb Navigation */}
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
             <NavLink to="/admin/dashboard" className="flex items-center text-slate-400 hover:text-[#0D1F3D] transition-colors">
