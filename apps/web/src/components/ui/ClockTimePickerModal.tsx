@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { Check, ChevronDown, Clock, X } from 'lucide-react';
 import { Button } from './Button';
+import { Modal } from './Modal';
 
 export interface ClockTimePickerModalProps {
   value: string;
@@ -121,7 +122,6 @@ export function ClockTimePickerModal({
   const [mode, setMode] = useState<ClockMode>('hour');
   const [draggingMode, setDraggingMode] = useState<ClockMode | null>(null);
   const dialRef = useRef<HTMLDivElement | null>(null);
-  const modalContentRef = useRef<HTMLDivElement | null>(null);
 
   const selectedTime = parseTimeParts(value || options[0] || '09:00 AM');
   const [editingField, setEditingField] = useState<ClockMode | null>(null);
@@ -146,18 +146,6 @@ export function ClockTimePickerModal({
       setMinuteInput(selectedTime.minute.toString().padStart(2, '0'));
     }
   }, [editingField, selectedTime.hour, selectedTime.minute]);
-
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
 
   const closePicker = () => {
     setOpen(false);
@@ -269,256 +257,243 @@ export function ClockTimePickerModal({
         <ChevronDown className="h-4 w-4 text-slate-400 shrink-0" />
       </button>
 
-      {/* Center Screen Centered Modal Dialog Overlay */}
-      {open && !disabled && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs animate-fadeIn"
-          onClick={(e) => {
-            if (modalContentRef.current && !modalContentRef.current.contains(e.target as Node)) {
-              closePicker();
-            }
-          }}
-        >
-          <div
-            ref={modalContentRef}
-            className="relative w-full max-w-[340px] rounded-sm border border-slate-200 bg-white p-4 shadow-2xl animate-dropdown space-y-3.5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Dialog Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <div>
-                <h3 className="text-sm font-extrabold text-[#0D1F3D]">Clock Time Picker</h3>
-                <p className="text-[11px] text-slate-500 font-medium">Select hour & minute</p>
-              </div>
-              <button
-                type="button"
-                onClick={closePicker}
-                className="rounded-sm p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-              >
-                <X className="h-4 w-4" />
-              </button>
+      {/* System Modal Component */}
+      <Modal isOpen={open} onClose={closePicker} maxWidth="max-w-[340px]">
+        <div className="space-y-3.5 -m-1">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Clock Time Picker</h3>
+              <p className="text-[11px] text-slate-500 font-medium">Select hour & minute</p>
             </div>
+            <button
+              type="button"
+              onClick={closePicker}
+              className="rounded-sm p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
 
-            {/* Digital Time Display & AM/PM Toggle */}
-            <div className="rounded-sm border border-slate-200 bg-slate-50/90 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={editingField === 'hour' ? hourInput : selectedTime.hour.toString().padStart(2, '0')}
-                    maxLength={2}
-                    className={`h-10 w-11 rounded-sm border-0 bg-transparent text-center text-2xl font-extrabold leading-none text-[#0D1F3D] outline-none transition-colors ${
-                      mode === 'hour' ? 'bg-blue-100/80 text-[#0D1F3D] ring-2 ring-[#0D1F3D]' : 'hover:bg-slate-200/60'
-                    }`}
-                    onChange={(e) => updateHourInput(e.target.value)}
-                    onFocus={(e) => {
-                      setMode('hour');
-                      setEditingField('hour');
-                      e.currentTarget.select();
-                    }}
-                    onBlur={() => setEditingField(null)}
-                  />
-                  <span className="text-2xl font-extrabold text-slate-400">:</span>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={editingField === 'minute' ? minuteInput : selectedTime.minute.toString().padStart(2, '0')}
-                    maxLength={2}
-                    className={`h-10 w-11 rounded-sm border-0 bg-transparent text-center text-2xl font-extrabold leading-none text-[#0D1F3D] outline-none transition-colors ${
-                      mode === 'minute' ? 'bg-blue-100/80 text-[#0D1F3D] ring-2 ring-[#0D1F3D]' : 'hover:bg-slate-200/60'
-                    }`}
-                    onChange={(e) => updateMinuteInput(e.target.value)}
-                    onFocus={(e) => {
-                      setMode('minute');
-                      setEditingField('minute');
-                      e.currentTarget.select();
-                    }}
-                    onBlur={() => setEditingField(null)}
-                  />
-                </div>
-
-                {/* AM / PM Toggle Buttons */}
-                <div className="grid grid-cols-2 gap-1 rounded-sm border border-slate-200 bg-white p-1">
-                  {(['AM', 'PM'] as const).map((period) => (
-                    <button
-                      key={period}
-                      type="button"
-                      onClick={() => commit(selectedTime.hour, selectedTime.minute, period)}
-                      className={`h-8 px-3 text-xs font-extrabold rounded-sm transition-all cursor-pointer ${
-                        selectedTime.period === period
-                          ? 'bg-[#0D1F3D] text-white shadow-xs'
-                          : 'text-slate-500 hover:bg-slate-100'
-                      }`}
-                    >
-                      {period}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Hour / Minute Mode Switcher */}
-            <div className="grid grid-cols-2 gap-2">
-              {(['hour', 'minute'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setMode(tab)}
-                  className={`py-1.5 text-xs font-bold rounded-sm border transition-all cursor-pointer ${
-                    mode === tab
-                      ? 'border-[#0D1F3D] bg-blue-50 text-[#0D1F3D]'
-                      : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+          {/* Digital Time Display & AM/PM Toggle */}
+          <div className="rounded-sm border border-slate-200 bg-slate-50/90 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={editingField === 'hour' ? hourInput : selectedTime.hour.toString().padStart(2, '0')}
+                  maxLength={2}
+                  className={`h-10 w-11 rounded-sm border-0 bg-transparent text-center text-2xl font-extrabold leading-none text-[#0D1F3D] outline-none transition-colors ${
+                    mode === 'hour' ? 'bg-blue-100/80 text-[#0D1F3D] ring-2 ring-[#0D1F3D]' : 'hover:bg-slate-200/60'
                   }`}
-                >
-                  {tab === 'hour' ? 'Hour' : 'Minute'}
-                </button>
-              ))}
-            </div>
-
-            {/* Interactive Dial */}
-            <div className="rounded-sm border border-slate-200 bg-slate-50/50 p-3">
-              <div
-                ref={dialRef}
-                className="relative mx-auto h-[192px] w-[192px] touch-none select-none rounded-full border border-slate-200 bg-white shadow-xs cursor-pointer"
-                onPointerDown={handleDialPointerDown}
-                onPointerMove={handleDialPointerMove}
-                onPointerUp={handleDialPointerEnd}
-                onPointerCancel={handleDialPointerEnd}
-              >
-                <div className="absolute inset-[16px] rounded-full border border-dashed border-slate-200" />
-                <div className="absolute inset-[34px] rounded-full border border-slate-100" />
-
-                {/* Minute Markers */}
-                {minuteLabelOptions.map((minute) => {
-                  const active = mode === 'minute' && selectedTime.minute === minute;
-                  return (
-                    <button
-                      key={`minute-${minute}`}
-                      type="button"
-                      className={`absolute h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full p-0 text-[10.5px] font-extrabold transition-all cursor-pointer ${
-                        mode === 'minute'
-                          ? active
-                            ? 'bg-[#E20613] text-white shadow-md scale-110'
-                            : 'text-slate-500 hover:bg-slate-100'
-                          : 'pointer-events-none opacity-0'
-                      }`}
-                      style={getDialPosition(getMinuteAngle(minute), MINUTE_MARKER_RADIUS)}
-                      onClick={() => commit(selectedTime.hour, minute, selectedTime.period)}
-                    >
-                      {minute.toString().padStart(2, '0')}
-                    </button>
-                  );
-                })}
-
-                {/* Hour Markers */}
-                {hourLabelOptions.map((hour) => {
-                  const active = mode === 'hour' && selectedTime.hour === hour;
-                  return (
-                    <button
-                      key={`hour-${hour}`}
-                      type="button"
-                      className={`absolute h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full p-0 text-xs font-extrabold transition-all cursor-pointer ${
-                        mode === 'hour'
-                          ? active
-                            ? 'bg-[#0D1F3D] text-white shadow-md scale-110'
-                            : 'text-slate-700 hover:bg-slate-100'
-                          : 'pointer-events-none opacity-0'
-                      }`}
-                      style={getDialPosition(hour * 30, HOUR_MARKER_RADIUS)}
-                      onClick={() => {
-                        commit(hour, selectedTime.minute, selectedTime.period);
-                        setMode('minute');
-                      }}
-                    >
-                      {hour}
-                    </button>
-                  );
-                })}
-
-                {/* Hour Hand Pointer */}
-                <div
-                  className={`absolute left-1/2 top-1/2 w-[3.5px] origin-bottom rounded-full bg-[#0D1F3D] ${
-                    draggingMode ? '' : 'transition-transform duration-200'
-                  }`}
-                  style={{
-                    height: '48px',
-                    transform: `translateX(-50%) translateY(-100%) rotate(${getHourAngle(
-                      selectedTime.hour,
-                      selectedTime.minute,
-                    )}deg)`,
+                  onChange={(e) => updateHourInput(e.target.value)}
+                  onFocus={(e) => {
+                    setMode('hour');
+                    setEditingField('hour');
+                    e.currentTarget.select();
                   }}
+                  onBlur={() => setEditingField(null)}
                 />
-
-                {/* Minute Hand Pointer */}
-                <div
-                  className={`absolute left-1/2 top-1/2 w-[2.5px] origin-bottom rounded-full bg-[#E20613] ${
-                    draggingMode ? '' : 'transition-transform duration-200'
+                <span className="text-2xl font-extrabold text-slate-400">:</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={editingField === 'minute' ? minuteInput : selectedTime.minute.toString().padStart(2, '0')}
+                  maxLength={2}
+                  className={`h-10 w-11 rounded-sm border-0 bg-transparent text-center text-2xl font-extrabold leading-none text-[#0D1F3D] outline-none transition-colors ${
+                    mode === 'minute' ? 'bg-blue-100/80 text-[#0D1F3D] ring-2 ring-[#0D1F3D]' : 'hover:bg-slate-200/60'
                   }`}
-                  style={{
-                    height: '66px',
-                    transform: `translateX(-50%) translateY(-100%) rotate(${getMinuteAngle(
-                      selectedTime.minute,
-                    )}deg)`,
+                  onChange={(e) => updateMinuteInput(e.target.value)}
+                  onFocus={(e) => {
+                    setMode('minute');
+                    setEditingField('minute');
+                    e.currentTarget.select();
                   }}
+                  onBlur={() => setEditingField(null)}
                 />
-
-                {/* Center Dot */}
-                <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#0D1F3D]" />
               </div>
-            </div>
 
-            {/* Quick Presets */}
-            <div className="space-y-1.5">
-              <p className="text-[10.5px] font-extrabold text-slate-500">Quick Presets</p>
-              <div className="flex flex-wrap gap-1.5">
-                {quickTimes.map((t) => (
+              {/* AM / PM Toggle Buttons */}
+              <div className="grid grid-cols-2 gap-1 rounded-sm border border-slate-200 bg-white p-1">
+                {(['AM', 'PM'] as const).map((period) => (
                   <button
-                    key={t}
+                    key={period}
                     type="button"
-                    onClick={() => {
-                      onChange(t);
-                      closePicker();
-                    }}
-                    className={`flex items-center gap-1 rounded-sm px-2.5 py-1 text-xs font-bold border transition-all cursor-pointer ${
-                      value === t
-                        ? 'border-[#0D1F3D] bg-[#0D1F3D] text-white shadow-xs'
-                        : 'border-slate-200 text-slate-700 hover:bg-slate-100'
+                    onClick={() => commit(selectedTime.hour, selectedTime.minute, period)}
+                    className={`h-8 px-3 text-xs font-extrabold rounded-sm transition-all cursor-pointer ${
+                      selectedTime.period === period
+                        ? 'bg-[#0D1F3D] text-white shadow-xs'
+                        : 'text-slate-500 hover:bg-slate-100'
                     }`}
                   >
-                    <Clock className="h-3 w-3" />
-                    {t}
-                    {value === t && <Check className="h-3 w-3" />}
+                    {period}
                   </button>
                 ))}
               </div>
             </div>
+          </div>
 
-            {/* Modal Dialog Action Footer */}
-            <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-              {allowClear && value ? (
-                <button
-                  type="button"
-                  onClick={() => onChange('')}
-                  className="text-xs font-bold text-slate-400 hover:text-red-600 transition-colors"
-                >
-                  Clear
-                </button>
-              ) : <div />}
-
-              <Button
+          {/* Hour / Minute Mode Switcher */}
+          <div className="grid grid-cols-2 gap-2">
+            {(['hour', 'minute'] as const).map((tab) => (
+              <button
+                key={tab}
                 type="button"
-                variant="accent"
-                size="sm"
-                onClick={closePicker}
-                className="h-8 px-4 text-xs font-bold bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm"
+                onClick={() => setMode(tab)}
+                className={`py-1.5 text-xs font-bold rounded-sm border transition-all cursor-pointer ${
+                  mode === tab
+                    ? 'border-[#0D1F3D] bg-blue-50 text-[#0D1F3D]'
+                    : 'border-slate-200 text-slate-500 hover:bg-slate-50'
+                }`}
               >
-                Done
-              </Button>
+                {tab === 'hour' ? 'Hour' : 'Minute'}
+              </button>
+            ))}
+          </div>
+
+          {/* Interactive Dial */}
+          <div className="rounded-sm border border-slate-200 bg-slate-50/50 p-3">
+            <div
+              ref={dialRef}
+              className="relative mx-auto h-[192px] w-[192px] touch-none select-none rounded-full border border-slate-200 bg-white shadow-xs cursor-pointer"
+              onPointerDown={handleDialPointerDown}
+              onPointerMove={handleDialPointerMove}
+              onPointerUp={handleDialPointerEnd}
+              onPointerCancel={handleDialPointerEnd}
+            >
+              <div className="absolute inset-[16px] rounded-full border border-dashed border-slate-200" />
+              <div className="absolute inset-[34px] rounded-full border border-slate-100" />
+
+              {/* Minute Markers */}
+              {minuteLabelOptions.map((minute) => {
+                const active = mode === 'minute' && selectedTime.minute === minute;
+                return (
+                  <button
+                    key={`minute-${minute}`}
+                    type="button"
+                    className={`absolute h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full p-0 text-[10.5px] font-extrabold transition-all cursor-pointer ${
+                      mode === 'minute'
+                        ? active
+                          ? 'bg-[#E20613] text-white shadow-md scale-110'
+                          : 'text-slate-500 hover:bg-slate-100'
+                        : 'pointer-events-none opacity-0'
+                    }`}
+                    style={getDialPosition(getMinuteAngle(minute), MINUTE_MARKER_RADIUS)}
+                    onClick={() => commit(selectedTime.hour, minute, selectedTime.period)}
+                  >
+                    {minute.toString().padStart(2, '0')}
+                  </button>
+                );
+              })}
+
+              {/* Hour Markers */}
+              {hourLabelOptions.map((hour) => {
+                const active = mode === 'hour' && selectedTime.hour === hour;
+                return (
+                  <button
+                    key={`hour-${hour}`}
+                    type="button"
+                    className={`absolute h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full p-0 text-xs font-extrabold transition-all cursor-pointer ${
+                      mode === 'hour'
+                        ? active
+                          ? 'bg-[#0D1F3D] text-white shadow-md scale-110'
+                          : 'text-slate-700 hover:bg-slate-100'
+                        : 'pointer-events-none opacity-0'
+                    }`}
+                    style={getDialPosition(hour * 30, HOUR_MARKER_RADIUS)}
+                    onClick={() => {
+                      commit(hour, selectedTime.minute, selectedTime.period);
+                      setMode('minute');
+                    }}
+                  >
+                    {hour}
+                  </button>
+                );
+              })}
+
+              {/* Hour Hand Pointer */}
+              <div
+                className={`absolute left-1/2 top-1/2 w-[3.5px] origin-bottom rounded-full bg-[#0D1F3D] ${
+                  draggingMode ? '' : 'transition-transform duration-200'
+                }`}
+                style={{
+                  height: '48px',
+                  transform: `translateX(-50%) translateY(-100%) rotate(${getHourAngle(
+                    selectedTime.hour,
+                    selectedTime.minute,
+                  )}deg)`,
+                }}
+              />
+
+              {/* Minute Hand Pointer */}
+              <div
+                className={`absolute left-1/2 top-1/2 w-[2.5px] origin-bottom rounded-full bg-[#E20613] ${
+                  draggingMode ? '' : 'transition-transform duration-200'
+                }`}
+                style={{
+                  height: '66px',
+                  transform: `translateX(-50%) translateY(-100%) rotate(${getMinuteAngle(
+                    selectedTime.minute,
+                  )}deg)`,
+                }}
+              />
+
+              {/* Center Dot */}
+              <div className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#0D1F3D]" />
             </div>
           </div>
+
+          {/* Quick Presets */}
+          <div className="space-y-1.5">
+            <p className="text-[10.5px] font-extrabold text-slate-500">Quick Presets</p>
+            <div className="flex flex-wrap gap-1.5">
+              {quickTimes.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => {
+                    onChange(t);
+                    closePicker();
+                  }}
+                  className={`flex items-center gap-1 rounded-sm px-2.5 py-1 text-xs font-bold border transition-all cursor-pointer ${
+                    value === t
+                      ? 'border-[#0D1F3D] bg-[#0D1F3D] text-white shadow-xs'
+                      : 'border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <Clock className="h-3 w-3" />
+                  {t}
+                  {value === t && <Check className="h-3 w-3" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Action Footer */}
+          <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+            {allowClear && value ? (
+              <button
+                type="button"
+                onClick={() => onChange('')}
+                className="text-xs font-bold text-slate-400 hover:text-red-600 transition-colors"
+              >
+                Clear
+              </button>
+            ) : <div />}
+
+            <Button
+              type="button"
+              variant="accent"
+              size="sm"
+              onClick={closePicker}
+              className="h-8 px-4 text-xs font-bold bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm"
+            >
+              Done
+            </Button>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }
