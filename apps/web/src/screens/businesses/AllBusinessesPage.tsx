@@ -8,6 +8,7 @@ import {
   Download,
   Upload,
   Eye,
+  Edit,
   MoreVertical,
   RefreshCw,
   CheckCircle2,
@@ -175,14 +176,21 @@ export default function AllBusinessesPage() {
         <div className="flex items-center justify-end gap-1">
           <button
             onClick={() => navigate(`/admin/businesses/${b.id}`)}
-            className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
+            className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
             title="View Business Details"
           >
             <Eye className="h-4 w-4" />
           </button>
           <button
+            onClick={() => navigate(`/admin/businesses/${b.id}/edit`)}
+            className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
+            title="Edit Business"
+          >
+            <Edit className="h-4 w-4" />
+          </button>
+          <button
             onClick={() => toast.info(`Options for ${b.name}`)}
-            className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
+            className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
           >
             <MoreVertical className="h-4 w-4" />
           </button>

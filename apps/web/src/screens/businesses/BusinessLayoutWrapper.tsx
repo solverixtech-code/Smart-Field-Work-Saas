@@ -76,8 +76,8 @@ export default function BusinessLayoutWrapper() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => toast.info('Opening Edit Business modal...')}
-            className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white"
+            onClick={() => navigate(`/admin/businesses/${business.id}/edit`)}
+            className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm"
           >
             <Edit className="h-4 w-4" /> Edit Business
           </Button>

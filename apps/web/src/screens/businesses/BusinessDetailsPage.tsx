@@ -36,8 +36,8 @@ export default function BusinessDetailsPage() {
               <Building2 className="h-4 w-4 text-[#E20613]" /> Business Information
             </h3>
             <button
-              onClick={() => toast.info('Edit Business Information...')}
-              className="text-xs font-bold text-[#0D1F3D] hover:text-[#E20613]"
+              onClick={() => navigate(`/admin/businesses/${business.id}/edit`)}
+              className="text-xs font-bold text-[#0D1F3D] hover:text-[#E20613] cursor-pointer"
             >
               Edit
             </button>
@@ -120,7 +120,7 @@ export default function BusinessDetailsPage() {
             <h3 className="text-sm font-bold text-[#0D1F3D] flex items-center gap-2">
               <MapPin className="h-4 w-4 text-[#E20613]" /> Location & Address
             </h3>
-            <button onClick={() => toast.info('Edit Address...')} className="text-xs font-bold text-[#0D1F3D] hover:text-[#E20613]">
+            <button onClick={() => navigate(`/admin/businesses/${business.id}/edit`)} className="text-xs font-bold text-[#0D1F3D] hover:text-[#E20613] cursor-pointer">
               Edit
             </button>
           </div>
@@ -173,7 +173,7 @@ export default function BusinessDetailsPage() {
             <h3 className="text-sm font-bold text-[#0D1F3D] flex items-center gap-2">
               <FileText className="h-4 w-4 text-[#E20613]" /> Business Description
             </h3>
-            <button onClick={() => toast.info('Edit Description...')} className="text-xs font-bold text-[#0D1F3D] hover:text-[#E20613]">
+            <button onClick={() => navigate(`/admin/businesses/${business.id}/edit`)} className="text-xs font-bold text-[#0D1F3D] hover:text-[#E20613] cursor-pointer">
               Edit
             </button>
           </div>
