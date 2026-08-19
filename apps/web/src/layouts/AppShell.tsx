@@ -335,7 +335,7 @@ export default function AppShell() {
       >
         {/* Brand Header */}
         <div
-          className={`flex h-20 flex-none items-center border-b border-slate-100 transition-all duration-300 ${
+          className={`flex h-16 flex-none items-center border-b border-slate-100 transition-all duration-300 ${
             showBigLogo ? 'justify-between px-3' : 'justify-center px-2'
           }`}
         >
@@ -345,7 +345,7 @@ export default function AppShell() {
                 <img
                   src={bigLogo}
                   alt="Smart Field Work Logo"
-                  style={{ width: '180px', maxHeight: '55px', objectFit: 'contain' }}
+                  style={{ width: '200px', maxHeight: '52px', objectFit: 'contain' }}
                 />
               </NavLink>
               <button
@@ -367,7 +367,7 @@ export default function AppShell() {
               <img
                 src={smallLogo}
                 alt="Smart Field Work Favicon"
-                style={{ width: '42px', height: '42px', objectFit: 'contain' }}
+                style={{ width: '50px', height: '50px', objectFit: 'contain' }}
               />
             </button>
           )}
