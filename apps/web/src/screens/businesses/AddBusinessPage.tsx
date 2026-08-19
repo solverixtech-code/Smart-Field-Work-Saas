@@ -384,55 +384,28 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
                 />
               </div>
 
-              {/* Right Map Preview Container (5 Cols) */}
+              {/* Right Google Maps Container (5 Cols) */}
               <div className="space-y-2 lg:col-span-5 flex flex-col justify-between">
-                <div className="relative overflow-hidden rounded-sm border border-slate-200 bg-slate-100 h-52 flex flex-col justify-between p-3">
-                  {/* Map SVG Pattern Background */}
-                  <div className="absolute inset-0 bg-blue-50/60 opacity-80 pointer-events-none">
-                    <svg className="w-full h-full text-slate-300/40" width="100%" height="100%">
-                      <pattern id="mapGrid" width="30" height="30" patternUnits="userSpaceOnUse">
-                        <path d="M 30 0 L 0 0 0 30" fill="none" stroke="currentColor" strokeWidth="1" />
-                      </pattern>
-                      <rect width="100%" height="100%" fill="url(#mapGrid)" />
-                    </svg>
-                  </div>
-
-                  {/* Pick On Map Button Header */}
-                  <div className="relative z-10 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => toast.info('Interactive map pin picker opened.')}
-                      className="flex items-center gap-1.5 rounded-sm bg-[#0D1F3D] px-3 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-slate-800 transition-all cursor-pointer"
-                    >
-                      <MapPin className="h-3.5 w-3.5 text-[#E20613]" /> Pick on Map
-                    </button>
-                  </div>
-
-                  {/* Center Map Pin */}
-                  <div className="relative z-10 flex flex-col items-center justify-center space-y-1 my-auto">
-                    <div className="relative flex items-center justify-center">
-                      <span className="absolute h-10 w-10 animate-ping rounded-full bg-red-400/40 opacity-75" />
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#E20613] text-white shadow-lg ring-4 ring-white">
-                        <MapPin className="h-5 w-5" />
-                      </div>
-                    </div>
-                    <span className="rounded-sm bg-white/90 px-2.5 py-0.5 text-[11px] font-bold text-[#0D1F3D] shadow-xs border border-slate-200">
-                      {formData.name || 'Selected Location'}
-                    </span>
-                  </div>
-
-                  {/* Zoom Controls */}
-                  <div className="relative z-10 flex flex-col items-end gap-1">
-                    <div className="flex flex-col rounded-sm border border-slate-200 bg-white shadow-xs">
-                      <button type="button" className="px-2 py-1 text-xs font-bold text-slate-700 hover:bg-slate-100 border-b border-slate-100">+</button>
-                      <button type="button" className="px-2 py-1 text-xs font-bold text-slate-700 hover:bg-slate-100">-</button>
-                    </div>
-                  </div>
+                <div className="relative overflow-hidden rounded-sm border border-slate-200 bg-slate-100 h-60 flex flex-col justify-between shadow-xs">
+                  <iframe
+                    title="Google Maps Location Preview"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    allowFullScreen
+                    src={`https://maps.google.com/maps?q=${encodeURIComponent(
+                      formData.address1 || formData.city
+                        ? `${formData.address1 ? formData.address1 + ', ' : ''}${formData.city || ''}, ${formData.state || 'Maharashtra'}`
+                        : 'Mumbai, Maharashtra',
+                    )}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                    className="w-full h-full rounded-sm"
+                  />
                 </div>
 
                 <div className="flex items-center gap-2 rounded-sm border border-blue-200/80 bg-blue-50/70 p-2.5 text-[11px] font-semibold text-blue-900">
                   <Info className="h-4 w-4 text-blue-600 shrink-0" />
-                  <span>Accurate location helps in better route planning and visit tracking.</span>
+                  <span>Accurate Google Maps location helps in better route planning and visit tracking.</span>
                 </div>
               </div>
             </div>
@@ -704,7 +677,7 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
         </div>
 
         {/* Right Column: Live Quick Summary & Document Upload Sidebar */}
-        <div className="space-y-6 lg:col-span-4">
+        <div className="space-y-6 lg:col-span-4 sticky top-4 self-start">
           {/* Quick Summary Live Card */}
           <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
