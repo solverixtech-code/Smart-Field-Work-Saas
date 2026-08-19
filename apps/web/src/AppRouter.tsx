@@ -44,6 +44,7 @@ import LeadImportPage from './screens/leads/LeadImportPage';
 import LeadExportPage from './screens/leads/LeadExportPage';
 
 import AllBusinessesPage from './screens/businesses/AllBusinessesPage';
+import AddBusinessPage from './screens/businesses/AddBusinessPage';
 import BusinessLayoutWrapper from './screens/businesses/BusinessLayoutWrapper';
 import BusinessDetailsPage from './screens/businesses/BusinessDetailsPage';
 import BusinessContactsPage from './screens/businesses/BusinessContactsPage';
@@ -311,6 +312,8 @@ export default function AppRouter() {
               }
             >
               <Route path="/admin/businesses" element={<AllBusinessesPage />} />
+              <Route path="/admin/businesses/create" element={<AddBusinessPage />} />
+              <Route path="/admin/businesses/:businessId/edit" element={<AddBusinessPage isEdit />} />
               <Route path="/admin/businesses/:businessId" element={<BusinessLayoutWrapper />}>
                 <Route index element={<BusinessDetailsPage />} />
                 <Route path="contacts" element={<BusinessContactsPage />} />

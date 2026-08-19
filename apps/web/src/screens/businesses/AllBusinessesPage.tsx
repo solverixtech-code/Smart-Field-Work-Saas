@@ -214,8 +214,8 @@ export default function AllBusinessesPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => toast.info('Opening New Business Form...')}
-            className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white"
+            onClick={() => navigate('/admin/businesses/create')}
+            className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm"
           >
             <Plus className="h-4 w-4" /> Add Business
           </Button>
