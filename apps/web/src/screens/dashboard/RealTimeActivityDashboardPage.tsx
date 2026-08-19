@@ -186,7 +186,7 @@ export default function RealTimeActivityDashboardPage() {
       {/* Google Maps Container with Profile Picture Markers + Live Activity Feed */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
         {/* Google Maps Canvas (7 Cols) */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-7 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-7 flex flex-col justify-between">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
@@ -197,11 +197,11 @@ export default function RealTimeActivityDashboardPage() {
             </div>
 
             {/* Map Layer Toggle */}
-            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
+            <div className="flex items-center gap-2 rounded-sm border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
               <button
                 type="button"
                 onClick={() => setMapType('roadmap')}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all ${
+                className={`flex items-center gap-1.5 rounded-sm px-3 py-1.5 transition-all ${
                   mapType === 'roadmap'
                     ? 'bg-[#0D1F3D] text-white shadow-xs'
                     : 'text-slate-600 hover:text-[#0D1F3D]'
@@ -212,7 +212,7 @@ export default function RealTimeActivityDashboardPage() {
               <button
                 type="button"
                 onClick={() => setMapType('satellite')}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all ${
+                className={`flex items-center gap-1.5 rounded-sm px-3 py-1.5 transition-all ${
                   mapType === 'satellite'
                     ? 'bg-[#0D1F3D] text-white shadow-xs'
                     : 'text-slate-600 hover:text-[#0D1F3D]'
@@ -224,7 +224,7 @@ export default function RealTimeActivityDashboardPage() {
           </div>
 
           {/* Actual Google Maps Render Container */}
-          <div className="relative h-[500px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
+          <div className="relative h-[500px] w-full overflow-hidden rounded-sm border border-slate-200 bg-slate-100 shadow-inner">
             <iframe
               title="Google Maps Live Visitors Map"
               width="100%"

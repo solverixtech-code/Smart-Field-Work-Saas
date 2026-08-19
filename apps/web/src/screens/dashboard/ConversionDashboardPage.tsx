@@ -168,7 +168,7 @@ export default function ConversionDashboardPage() {
               </div>
             ))}
 
-            <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 p-3 text-center text-xs font-semibold text-slate-700">
+            <div className="mt-4 rounded-sm border border-slate-100 bg-slate-50/60 p-3 text-center text-xs font-semibold text-slate-700">
               Overall Funnel Conversion Rate: <span className="font-extrabold text-[#E20613]">11.83%</span> (+2.15% vs last month)
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function ConversionDashboardPage() {
                 <Tooltip
                   position={{ y: -15 }}
                   wrapperStyle={{ zIndex: 100 }}
-                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: '1px solid rgba(255, 255, 255, 0.1)' }}
                   labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                   itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                   formatter={(val: any, name: any) => [name === 'Conversion Rate' ? `${val}%` : `${val} deals`, name]}
@@ -223,7 +223,7 @@ export default function ConversionDashboardPage() {
                   <Tooltip
                     position={{ y: -15 }}
                     wrapperStyle={{ zIndex: 100 }}
-                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                     labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                     formatter={(val: any) => [`${val} Leads`, 'Leads']}
@@ -249,7 +249,7 @@ export default function ConversionDashboardPage() {
       {/* Bottom Row: Team Performance, Stage Analysis, Top Sales Reps */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Conversion by Sales Team */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
           <h3 className="mb-4 text-base font-extrabold text-[#0D1F3D]">Conversion by Field Team</h3>
           <div className="space-y-3 text-xs font-semibold">
             {[
@@ -258,7 +258,7 @@ export default function ConversionDashboardPage() {
               { team: 'South Tech Team', leads: 512, won: 54, rate: '10.55%' },
               { team: 'East Territory Team', leads: 440, won: 32, rate: '7.27%' },
             ].map((t) => (
-              <div key={t.team} className="flex justify-between items-center rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+              <div key={t.team} className="flex justify-between items-center rounded-sm border border-slate-100 bg-slate-50/60 p-3">
                 <div>
                   <p className="font-extrabold text-[#0D1F3D]">{t.team}</p>
                   <p className="text-[11px] text-slate-400">{t.won} won out of {t.leads} leads</p>
@@ -270,7 +270,7 @@ export default function ConversionDashboardPage() {
         </div>
 
         {/* Stage Conversion Analysis */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
           <h3 className="mb-4 text-base font-extrabold text-[#0D1F3D]">Stage Transition Velocity</h3>
           <div className="space-y-3 text-xs font-semibold">
             {[
@@ -279,14 +279,14 @@ export default function ConversionDashboardPage() {
               { stage: 'Proposal → Negotiation', rate: '53.68%', target: '50%', status: 'Above Target' },
               { stage: 'Negotiation → Won', rate: '63.27%', target: '60%', status: 'Above Target' },
             ].map((s) => (
-              <div key={s.stage} className="flex justify-between items-center rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+              <div key={s.stage} className="flex justify-between items-center rounded-sm border border-slate-100 bg-slate-50/60 p-3">
                 <div>
                   <p className="font-extrabold text-[#0D1F3D]">{s.stage}</p>
                   <p className="text-[11px] text-slate-400">Benchmark: {s.target}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-extrabold text-[#0D1F3D]">{s.rate}</p>
-                  <span className="inline-block rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[10px] font-extrabold text-emerald-600">
+                  <span className="inline-block rounded-sm bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[10px] font-extrabold text-emerald-600">
                     {s.status}
                   </span>
                 </div>
@@ -296,7 +296,7 @@ export default function ConversionDashboardPage() {
         </div>
 
         {/* Top Performing Sales Reps */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Top Field Converters</h3>
             <button className="text-xs font-bold text-[#E20613] hover:underline flex items-center gap-1">
@@ -310,7 +310,7 @@ export default function ConversionDashboardPage() {
               { name: 'Sanjay Yadav', won: 28, rate: '13.59%' },
               { name: 'Kavita Singh', won: 22, rate: '12.22%' },
             ].map((rep) => (
-              <div key={rep.name} className="flex justify-between items-center rounded-xl border border-slate-100 bg-slate-50/60 p-3">
+              <div key={rep.name} className="flex justify-between items-center rounded-sm border border-slate-100 bg-slate-50/60 p-3">
                 <div>
                   <p className="font-extrabold text-[#0D1F3D]">{rep.name}</p>
                   <p className="text-[11px] text-slate-400">{rep.won} won deals</p>

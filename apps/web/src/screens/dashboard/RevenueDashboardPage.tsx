@@ -191,10 +191,10 @@ export default function RevenueDashboardPage() {
       {/* MIDDLE SECTION: Revenue Trend + Revenue by Plan + Revenue Summary */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
         {/* Revenue Trend Line Chart (5 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#0D1F3D]">Revenue Trend</h3>
-            <select className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-[#0D1F3D]">
+            <select className="rounded-sm border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-[#0D1F3D]">
               <option>This Week</option>
             </select>
           </div>
@@ -212,7 +212,7 @@ export default function RevenueDashboardPage() {
                 <Tooltip
                   position={{ y: -15 }}
                   wrapperStyle={{ zIndex: 100 }}
-                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                   labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                   itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                   formatter={(val: any, name: any) => [`₹${Number(val || 0).toLocaleString()}`, name]}
@@ -225,7 +225,7 @@ export default function RevenueDashboardPage() {
         </div>
 
         {/* Revenue by Plan Donut Chart (4 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
           <h3 className="text-base font-bold text-[#0D1F3D]">Revenue by Plan</h3>
 
           <div className="flex flex-col items-center">
@@ -248,7 +248,7 @@ export default function RevenueDashboardPage() {
                   <Tooltip
                     position={{ y: -15 }}
                     wrapperStyle={{ zIndex: 100 }}
-                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                     labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                     formatter={(val: any) => [`₹${Number(val || 0).toLocaleString()}`, 'Revenue']}
@@ -282,7 +282,7 @@ export default function RevenueDashboardPage() {
         </div>
 
         {/* Revenue Summary (3 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
           <h3 className="text-base font-bold text-[#0D1F3D]">Revenue Summary</h3>
 
           <div className="space-y-3 text-xs">
@@ -305,7 +305,7 @@ export default function RevenueDashboardPage() {
       {/* BOTTOM SECTION: Revenue by Business + Invoices Overview + Monthly Revenue */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
         {/* Revenue by Business (5 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#0D1F3D]">Revenue by Business</h3>
             <button className="text-xs font-bold text-[#E20613] hover:underline">View All</button>
@@ -344,7 +344,7 @@ export default function RevenueDashboardPage() {
         </div>
 
         {/* Invoices Overview Donut (3 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#0D1F3D]">Invoices Overview</h3>
             <button className="text-xs font-bold text-[#E20613] hover:underline">View All</button>
@@ -370,7 +370,7 @@ export default function RevenueDashboardPage() {
                   <Tooltip
                     position={{ y: -15 }}
                     wrapperStyle={{ zIndex: 100 }}
-                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                     labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                     formatter={(val: any) => [`${val} Invoices`, 'Count']}
@@ -398,10 +398,10 @@ export default function RevenueDashboardPage() {
         </div>
 
         {/* Monthly Revenue (This Year) Bar Chart (4 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#0D1F3D]">Monthly Revenue (This Year)</h3>
-            <select className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-[#0D1F3D]">
+            <select className="rounded-sm border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-[#0D1F3D]">
               <option>This Year</option>
             </select>
           </div>

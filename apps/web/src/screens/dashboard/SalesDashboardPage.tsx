@@ -163,10 +163,10 @@ export default function SalesDashboardPage() {
       {/* MIDDLE SECTION: Sales Trend + Sales by Stage Funnel + Sales by Source */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
         {/* Sales Trend Line Chart (5 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#0D1F3D]">Sales Trend</h3>
-            <select className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-[#0D1F3D]">
+            <select className="rounded-sm border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-[#0D1F3D]">
               <option>This Week</option>
             </select>
           </div>
@@ -184,7 +184,7 @@ export default function SalesDashboardPage() {
                 <Tooltip
                   position={{ y: -15 }}
                   wrapperStyle={{ zIndex: 100 }}
-                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                   labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                   itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                 />
@@ -196,7 +196,7 @@ export default function SalesDashboardPage() {
         </div>
 
         {/* Sales by Stage Funnel Diagram (4 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
           <h3 className="text-base font-bold text-[#0D1F3D]">Sales by Stage</h3>
 
           <div className="space-y-2 pt-1 text-xs">
@@ -207,7 +207,7 @@ export default function SalesDashboardPage() {
               { stage: 'Negotiation (112)', deals: '64', val: '₹3,25,800', color: 'bg-purple-600' },
               { stage: 'Won (128)', deals: '128', val: '₹24,85,600', color: 'bg-red-600' },
             ].map((f) => (
-              <div key={f.stage} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-2.5 font-semibold text-slate-800">
+              <div key={f.stage} className="flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50 p-2.5 font-semibold text-slate-800">
                 <span className="flex items-center gap-2">
                   <span className={`h-2.5 w-2.5 rounded-full ${f.color}`} />
                   {f.stage}
@@ -220,7 +220,7 @@ export default function SalesDashboardPage() {
         </div>
 
         {/* Sales by Source Donut Chart (3 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#0D1F3D]">Sales by Source</h3>
             <button className="text-xs font-bold text-[#E20613] hover:underline">View All</button>
@@ -246,7 +246,7 @@ export default function SalesDashboardPage() {
                   <Tooltip
                     position={{ y: -15 }}
                     wrapperStyle={{ zIndex: 100 }}
-                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                     labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                   />
@@ -276,7 +276,7 @@ export default function SalesDashboardPage() {
       {/* BOTTOM SECTION: Team Performance + Top Performing Executives + Target Gauge */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
         {/* Team Performance Table (5 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-5 space-y-4 flex flex-col justify-between">
           <h3 className="text-base font-bold text-[#0D1F3D]">Team Performance</h3>
 
           <div className="overflow-x-auto custom-scrollbar">
@@ -319,7 +319,7 @@ export default function SalesDashboardPage() {
         </div>
 
         {/* Top Performing Executives (4 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#0D1F3D]">Top Performing Executives</h3>
             <button className="text-xs font-bold text-[#E20613] hover:underline">View All</button>
@@ -327,7 +327,7 @@ export default function SalesDashboardPage() {
 
           <div className="space-y-3 font-semibold text-xs">
             {topSalesExecs.map((exec) => (
-              <div key={exec.name} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-2.5">
+              <div key={exec.name} className="flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50 p-2.5">
                 <div className="flex items-center gap-2.5">
                   <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover shrink-0 border border-slate-200" />
                   <div>
@@ -348,7 +348,7 @@ export default function SalesDashboardPage() {
         </div>
 
         {/* Sales Target Overview Gauge (3 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
           <h3 className="text-base font-bold text-[#0D1F3D]">Sales Target Overview</h3>
 
           <div className="flex flex-col items-center">

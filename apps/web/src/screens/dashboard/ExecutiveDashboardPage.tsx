@@ -213,13 +213,13 @@ export default function ExecutiveDashboardPage() {
       {/* MIDDLE SECTION: Performance Overview Line Chart + Leads Donut Chart + Real-time Activity */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
         {/* Performance Overview (Line Chart, 7 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-6 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-6 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-[#0D1F3D]">Performance Overview</h3>
               <p className="text-xs text-slate-600">Weekly activity trends across all field operations</p>
             </div>
-            <select className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-[#0D1F3D]">
+            <select className="rounded-sm border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-[#0D1F3D]">
               <option>This Week</option>
               <option>Last Week</option>
               <option>This Month</option>
@@ -241,7 +241,7 @@ export default function ExecutiveDashboardPage() {
                 <Tooltip
                   position={{ y: -15 }}
                   wrapperStyle={{ zIndex: 100 }}
-                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                  contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                   labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                   itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                 />
@@ -255,7 +255,7 @@ export default function ExecutiveDashboardPage() {
         </div>
 
         {/* Leads Source Distribution (Donut Chart, 3 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
           <h3 className="text-base font-bold text-[#0D1F3D]">Leads Source Distribution</h3>
 
           <div className="flex flex-col items-center">
@@ -278,7 +278,7 @@ export default function ExecutiveDashboardPage() {
                   <Tooltip
                     position={{ y: -15 }}
                     wrapperStyle={{ zIndex: 100 }}
-                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                     labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                     formatter={(val: any) => [`${Number(val || 0).toLocaleString()} Leads`, 'Count']}
@@ -312,7 +312,7 @@ export default function ExecutiveDashboardPage() {
         </div>
 
         {/* Real-time Activity Stream (3 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#0D1F3D]">Real-time Activity</h3>
             <button className="text-xs font-bold text-[#E20613] hover:underline">View All</button>
@@ -343,10 +343,10 @@ export default function ExecutiveDashboardPage() {
       {/* BOTTOM ROW: Tasks Overview Donut + Top Performing Executives + Upcoming Reminders */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
         {/* Tasks Overview (3 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#0D1F3D]">Tasks Overview</h3>
-            <select className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#0D1F3D]">
+            <select className="rounded-sm border border-slate-200 bg-white px-2 py-0.5 text-xs font-semibold text-[#0D1F3D]">
               <option>This Week</option>
             </select>
           </div>
@@ -371,7 +371,7 @@ export default function ExecutiveDashboardPage() {
                   <Tooltip
                     position={{ y: -15 }}
                     wrapperStyle={{ zIndex: 100 }}
-                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '12px', border: 'none' }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                     labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
                   />
@@ -404,7 +404,7 @@ export default function ExecutiveDashboardPage() {
         </div>
 
         {/* Top Performing Executives Table (6 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-6 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-6 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#0D1F3D]">Top Performing Executives</h3>
             <button className="text-xs font-bold text-[#E20613] hover:underline">View All</button>
@@ -453,15 +453,15 @@ export default function ExecutiveDashboardPage() {
         </div>
 
         {/* Upcoming Reminders (3 Cols) */}
-        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-[#0D1F3D]">Upcoming Reminders</h3>
             <button className="text-xs font-bold text-[#E20613] hover:underline">View All</button>
           </div>
 
           <div className="space-y-3 font-semibold text-xs">
-            <div className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+            <div className="flex items-start gap-3 rounded-sm border border-slate-100 bg-slate-50 p-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-blue-50 text-blue-600 border border-blue-100">
                 <Calendar className="h-4 w-4" />
               </div>
               <div>
@@ -470,8 +470,8 @@ export default function ExecutiveDashboardPage() {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-50 text-[#E20613] border border-red-100">
+            <div className="flex items-start gap-3 rounded-sm border border-slate-100 bg-slate-50 p-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-red-50 text-[#E20613] border border-red-100">
                 <Target className="h-4 w-4" />
               </div>
               <div>
@@ -480,8 +480,8 @@ export default function ExecutiveDashboardPage() {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <div className="flex items-start gap-3 rounded-sm border border-slate-100 bg-slate-50 p-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 border border-emerald-100">
                 <CheckCircle2 className="h-4 w-4" />
               </div>
               <div>

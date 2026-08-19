@@ -204,7 +204,7 @@ export default function FieldActivityDashboardPage() {
       {/* MAIN LIVE TRACKING SECTION: Executive List Sidebar (Left) + Google Maps Canvas with Profile Pins (Right) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-stretch">
         {/* Left 4 Cols: Executives Selection & Filter Panel */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4 space-y-4 flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4 space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Field Executives</h3>

@@ -25,7 +25,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`flex flex-col rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm ${className}`}>
+    <div className={`flex flex-col rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm ${className}`}>
       {/* Header */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -39,7 +39,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               <select
                 value={selectedPeriod}
                 onChange={(e) => onPeriodChange(e.target.value)}
-                className="appearance-none rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-1.5 pr-8 text-xs font-bold text-[#0D1F3D] transition-all focus:border-[#E20613] focus:bg-white focus:outline-none"
+                className="appearance-none rounded-sm border border-slate-200 bg-slate-50/80 px-3 py-1.5 pr-8 text-xs font-bold text-[#0D1F3D] transition-all focus:border-[#E20613] focus:bg-white focus:outline-none"
               >
                 {periodOptions.map((opt) => (
                   <option key={opt} value={opt}>
