@@ -351,9 +351,9 @@ export default function SalesTeamsPage() {
         </div>
 
         {/* Table Card Container */}
-        <div className="overflow-hidden rounded-sm border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
+        <div className="overflow-hidden rounded-sm border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between min-h-[360px]">
           <div>
-            <div className="overflow-x-auto custom-scrollbar">
+            <div className="overflow-x-auto custom-scrollbar min-h-[300px]">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-100/90 text-xs font-semibold text-slate-800">

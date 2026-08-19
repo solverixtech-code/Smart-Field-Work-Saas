@@ -65,9 +65,9 @@ export function DataTable<T>({
       : 'px-3.5 py-3';
 
   return (
-    <div className={`overflow-hidden rounded-sm border border-slate-200/80 bg-white shadow-xs flex flex-col justify-between ${className}`}>
+    <div className={`overflow-hidden rounded-sm border border-slate-200/80 bg-white shadow-xs flex flex-col justify-between min-h-[360px] ${className}`}>
       {/* Scrollable Table Area */}
-      <div className="overflow-x-auto custom-scrollbar flex-1">
+      <div className="overflow-x-auto custom-scrollbar flex-1 min-h-[300px]">
         <table className="w-full text-left text-xs border-collapse font-sans">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-100/90 text-xs font-bold text-[#0D1F3D]">

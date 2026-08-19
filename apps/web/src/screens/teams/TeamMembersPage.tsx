@@ -328,9 +328,9 @@ export default function TeamMembersPage() {
         </div>
 
         {/* Table Card Container */}
-        <div className="overflow-hidden rounded-sm border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
+        <div className="overflow-hidden rounded-sm border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between min-h-[360px]">
           <div>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto min-h-[300px]">
               <table className="w-full text-left text-xs font-semibold">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold text-slate-600">
