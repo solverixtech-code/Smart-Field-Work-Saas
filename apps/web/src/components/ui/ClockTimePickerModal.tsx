@@ -64,8 +64,6 @@ const formatTimeParts = (hour: number, minute: number, period: Period) => {
     .padStart(2, '0')} ${period}`;
 };
 
-const parseEditableNumber = (value: string) => Number.parseInt(value.replace(/\D/g, ''), 10);
-
 const getDialPosition = (angle: number, radius: number) => {
   const radians = ((angle - 90) * Math.PI) / 180;
   return {
@@ -156,35 +154,26 @@ export function ClockTimePickerModal({
 
   const updateHourInput = (nextValue: string) => {
     const sanitizedValue = nextValue.replace(/\D/g, '').slice(0, 2);
-    const nextHour = parseEditableNumber(sanitizedValue);
-    setHourInput(
-      Number.isNaN(nextHour) ? sanitizedValue : clampHour(nextHour).toString().padStart(2, '0'),
-    );
-    if (Number.isNaN(nextHour)) {
-      return;
+    setHourInput(sanitizedValue);
+
+    if (!sanitizedValue) return;
+
+    const nextHour = Number.parseInt(sanitizedValue, 10);
+    if (!Number.isNaN(nextHour) && nextHour >= 1 && nextHour <= 12) {
+      commit(nextHour, selectedTime.minute, selectedTime.period);
     }
-    commit(clampHour(nextHour), selectedTime.minute, selectedTime.period);
   };
 
   const updateMinuteInput = (nextValue: string) => {
     const sanitizedValue = nextValue.replace(/\D/g, '').slice(0, 2);
-    if (sanitizedValue === '') {
-      setMinuteInput('');
-      return;
-    }
-
-    const nextMinute = parseEditableNumber(sanitizedValue);
-    if (Number.isNaN(nextMinute)) {
-      setMinuteInput(sanitizedValue);
-      return;
-    }
-
-    if (nextMinute > 59) {
-      return;
-    }
-
     setMinuteInput(sanitizedValue);
-    commit(selectedTime.hour, nextMinute, selectedTime.period);
+
+    if (!sanitizedValue) return;
+
+    const nextMinute = Number.parseInt(sanitizedValue, 10);
+    if (!Number.isNaN(nextMinute) && nextMinute >= 0 && nextMinute <= 59) {
+      commit(selectedTime.hour, nextMinute, selectedTime.period);
+    }
   };
 
   const updateFromPointer = (clientX: number, clientY: number, activeMode: ClockMode) => {
@@ -291,9 +280,13 @@ export function ClockTimePickerModal({
                   onFocus={(e) => {
                     setMode('hour');
                     setEditingField('hour');
+                    setHourInput(selectedTime.hour.toString().padStart(2, '0'));
                     e.currentTarget.select();
                   }}
-                  onBlur={() => setEditingField(null)}
+                  onBlur={() => {
+                    setEditingField(null);
+                    setHourInput(selectedTime.hour.toString().padStart(2, '0'));
+                  }}
                 />
                 <span className="text-2xl font-extrabold text-slate-400">:</span>
                 <input
@@ -308,9 +301,13 @@ export function ClockTimePickerModal({
                   onFocus={(e) => {
                     setMode('minute');
                     setEditingField('minute');
+                    setMinuteInput(selectedTime.minute.toString().padStart(2, '0'));
                     e.currentTarget.select();
                   }}
-                  onBlur={() => setEditingField(null)}
+                  onBlur={() => {
+                    setEditingField(null);
+                    setMinuteInput(selectedTime.minute.toString().padStart(2, '0'));
+                  }}
                 />
               </div>
 
