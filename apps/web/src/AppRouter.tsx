@@ -43,6 +43,15 @@ import BulkAssignLeadsPage from './screens/leads/BulkAssignLeadsPage';
 import LeadImportPage from './screens/leads/LeadImportPage';
 import LeadExportPage from './screens/leads/LeadExportPage';
 
+import AllBusinessesPage from './screens/businesses/AllBusinessesPage';
+import BusinessLayoutWrapper from './screens/businesses/BusinessLayoutWrapper';
+import BusinessDetailsPage from './screens/businesses/BusinessDetailsPage';
+import BusinessContactsPage from './screens/businesses/BusinessContactsPage';
+import BusinessGoogleProfilePage from './screens/businesses/BusinessGoogleProfilePage';
+import BusinessSalesHistoryPage from './screens/businesses/BusinessSalesHistoryPage';
+import BusinessVisitHistoryPage from './screens/businesses/BusinessVisitHistoryPage';
+import BusinessSubscriptionPage from './screens/businesses/BusinessSubscriptionPage';
+
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { Role, AuthTokensSchema } from '@visiblo/shared';
@@ -286,6 +295,30 @@ export default function AppRouter() {
               <Route path="/admin/leads/:leadId/communications" element={<LeadDetailsPage />} />
               <Route path="/admin/leads/:leadId/payments" element={<LeadDetailsPage />} />
               <Route path="/admin/leads/:leadId/assignment" element={<LeadDetailsPage />} />
+            </Route>
+
+            {/* Business Database Management Routes (Screens 54 to 60) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/businesses" element={<AllBusinessesPage />} />
+              <Route path="/admin/businesses/:businessId" element={<BusinessLayoutWrapper />}>
+                <Route index element={<BusinessDetailsPage />} />
+                <Route path="contacts" element={<BusinessContactsPage />} />
+                <Route path="google-profile" element={<BusinessGoogleProfilePage />} />
+                <Route path="sales-history" element={<BusinessSalesHistoryPage />} />
+                <Route path="visits" element={<BusinessVisitHistoryPage />} />
+                <Route path="subscription" element={<BusinessSubscriptionPage />} />
+              </Route>
             </Route>
 
             {/* System Masters Management Route */}

@@ -69,6 +69,13 @@ const navCategories: NavCategory[] = [
         badge: '1,250 Leads',
       },
       {
+        label: 'Businesses',
+        icon: Building2,
+        to: '/admin/businesses',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '5.8k Stores',
+      },
+      {
         label: 'Sales Teams',
         icon: Building2,
         to: '/admin/teams',
@@ -196,6 +203,23 @@ function getBreadcrumbTrail(pathname: string) {
       items.push({ label: 'Team Performance', to: pathname });
     } else if (pathname.endsWith('/targets')) {
       items.push({ label: 'Team Targets', to: pathname });
+    }
+  } else if (pathname === '/admin/businesses') {
+    items.push({ label: 'Businesses & Data', to: '/admin/businesses' });
+    items.push({ label: 'All Businesses', to: '/admin/businesses' });
+  } else if (pathname.startsWith('/admin/businesses/')) {
+    items.push({ label: 'Businesses & Data', to: '/admin/businesses' });
+    items.push({ label: 'FitZone Gym', to: '/admin/businesses/BUS-10058242' });
+    if (pathname.endsWith('/contacts')) {
+      items.push({ label: 'Business Contacts', to: pathname });
+    } else if (pathname.endsWith('/google-profile')) {
+      items.push({ label: 'Google Business Profile', to: pathname });
+    } else if (pathname.endsWith('/sales-history')) {
+      items.push({ label: 'Sales History', to: pathname });
+    } else if (pathname.endsWith('/visits')) {
+      items.push({ label: 'Visit History', to: pathname });
+    } else if (pathname.endsWith('/subscription')) {
+      items.push({ label: 'Business Subscription', to: pathname });
     }
   } else if (pathname === '/admin/executives') {
     items.push({ label: 'Field Operations', to: '/admin/executives' });
