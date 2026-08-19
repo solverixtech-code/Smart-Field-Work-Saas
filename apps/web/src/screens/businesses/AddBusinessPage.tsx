@@ -14,6 +14,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
 import { mockBusinesses } from './businessesData';
 
 interface AddBusinessPageProps {
@@ -208,41 +209,39 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Business Type *</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => handleInputChange('type', e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="">Select business type</option>
-                  <option value="Gym / Fitness">Gym / Fitness</option>
-                  <option value="Food & Beverage">Food & Beverage</option>
-                  <option value="Security Services">Security Services</option>
-                  <option value="Construction">Construction</option>
-                  <option value="Retail Supermarket">Retail Supermarket</option>
-                  <option value="Beauty & Salon">Beauty & Salon</option>
-                  <option value="Technology">Technology</option>
-                  <option value="Healthcare">Healthcare</option>
-                </select>
-              </div>
+              <Select
+                label="Business Type *"
+                placeholder="Select business type"
+                value={formData.type}
+                onChange={(e) => handleInputChange('type', e.target.value)}
+                options={[
+                  { label: 'Select business type', value: '' },
+                  { label: 'Gym / Fitness', value: 'Gym / Fitness' },
+                  { label: 'Food & Beverage', value: 'Food & Beverage' },
+                  { label: 'Security Services', value: 'Security Services' },
+                  { label: 'Construction', value: 'Construction' },
+                  { label: 'Retail Supermarket', value: 'Retail Supermarket' },
+                  { label: 'Beauty & Salon', value: 'Beauty & Salon' },
+                  { label: 'Technology', value: 'Technology' },
+                  { label: 'Healthcare', value: 'Healthcare' },
+                ]}
+              />
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Category / Industry *</label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="">Select category</option>
-                  <option value="Fitness & Wellness">Fitness & Wellness</option>
-                  <option value="Hospitality & Dining">Hospitality & Dining</option>
-                  <option value="Facility & Security">Facility & Security</option>
-                  <option value="Building & Real Estate">Building & Real Estate</option>
-                  <option value="Retail & FMCG">Retail & FMCG</option>
-                  <option value="Corporate Services">Corporate Services</option>
-                </select>
-              </div>
+              <Select
+                label="Category / Industry *"
+                placeholder="Select category"
+                value={formData.category}
+                onChange={(e) => handleInputChange('category', e.target.value)}
+                options={[
+                  { label: 'Select category', value: '' },
+                  { label: 'Fitness & Wellness', value: 'Fitness & Wellness' },
+                  { label: 'Hospitality & Dining', value: 'Hospitality & Dining' },
+                  { label: 'Facility & Security', value: 'Facility & Security' },
+                  { label: 'Building & Real Estate', value: 'Building & Real Estate' },
+                  { label: 'Retail & FMCG', value: 'Retail & FMCG' },
+                  { label: 'Corporate Services', value: 'Corporate Services' },
+                ]}
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -268,21 +267,19 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Year Established</label>
-                <select
-                  value={formData.yearEstablished}
-                  onChange={(e) => handleInputChange('yearEstablished', e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="">Select year</option>
-                  {Array.from({ length: 30 }, (_, i) => 2025 - i).map((y) => (
-                    <option key={y} value={y.toString()}>
-                      {y}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Year Established"
+                placeholder="Select year"
+                value={formData.yearEstablished}
+                onChange={(e) => handleInputChange('yearEstablished', e.target.value)}
+                options={[
+                  { label: 'Select year', value: '' },
+                  ...Array.from({ length: 30 }, (_, i) => {
+                    const y = (2025 - i).toString();
+                    return { label: y, value: y };
+                  }),
+                ]}
+              />
             </div>
 
             <div className="space-y-1">
@@ -347,21 +344,20 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
                     />
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 block">State *</label>
-                    <select
-                      value={formData.state}
-                      onChange={(e) => handleInputChange('state', e.target.value)}
-                      className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                    >
-                      <option value="">Select state</option>
-                      <option value="Maharashtra">Maharashtra</option>
-                      <option value="Gujarat">Gujarat</option>
-                      <option value="Karnataka">Karnataka</option>
-                      <option value="Delhi">Delhi NCR</option>
-                      <option value="Telangana">Telangana</option>
-                    </select>
-                  </div>
+                  <Select
+                    label="State *"
+                    placeholder="Select state"
+                    value={formData.state}
+                    onChange={(e) => handleInputChange('state', e.target.value)}
+                    options={[
+                      { label: 'Select state', value: '' },
+                      { label: 'Maharashtra', value: 'Maharashtra' },
+                      { label: 'Gujarat', value: 'Gujarat' },
+                      { label: 'Karnataka', value: 'Karnataka' },
+                      { label: 'Delhi NCR', value: 'Delhi' },
+                      { label: 'Telangana', value: 'Telangana' },
+                    ]}
+                  />
 
                   <div className="space-y-1">
                     <label className="font-bold text-slate-700 block">Pincode *</label>
@@ -375,18 +371,16 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700 block">Country *</label>
-                  <select
-                    value={formData.country}
-                    onChange={(e) => handleInputChange('country', e.target.value)}
-                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                  >
-                    <option value="India">India</option>
-                    <option value="UAE">United Arab Emirates</option>
-                    <option value="Singapore">Singapore</option>
-                  </select>
-                </div>
+                <Select
+                  label="Country *"
+                  value={formData.country}
+                  onChange={(e) => handleInputChange('country', e.target.value)}
+                  options={[
+                    { label: 'India', value: 'India' },
+                    { label: 'United Arab Emirates', value: 'UAE' },
+                    { label: 'Singapore', value: 'Singapore' },
+                  ]}
+                />
               </div>
 
               {/* Right Map Preview Container (5 Cols) */}
@@ -529,32 +523,28 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Contact Preference</label>
-                <select
-                  value={formData.contactPreference}
-                  onChange={(e) => handleInputChange('contactPreference', e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="Phone Call">Phone Call</option>
-                  <option value="WhatsApp">WhatsApp</option>
-                  <option value="Email">Email</option>
-                  <option value="In-Person Visit">In-Person Visit</option>
-                </select>
-              </div>
+              <Select
+                label="Contact Preference"
+                value={formData.contactPreference}
+                onChange={(e) => handleInputChange('contactPreference', e.target.value)}
+                options={[
+                  { label: 'Phone Call', value: 'Phone Call' },
+                  { label: 'WhatsApp', value: 'WhatsApp' },
+                  { label: 'Email', value: 'Email' },
+                  { label: 'In-Person Visit', value: 'In-Person Visit' },
+                ]}
+              />
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Best Time to Contact</label>
-                <select
-                  value={formData.bestTime}
-                  onChange={(e) => handleInputChange('bestTime', e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="Morning (9 AM - 12 PM)">Morning (9 AM - 12 PM)</option>
-                  <option value="Afternoon (12 PM - 4 PM)">Afternoon (12 PM - 4 PM)</option>
-                  <option value="Evening (4 PM - 8 PM)">Evening (4 PM - 8 PM)</option>
-                </select>
-              </div>
+              <Select
+                label="Best Time to Contact"
+                value={formData.bestTime}
+                onChange={(e) => handleInputChange('bestTime', e.target.value)}
+                options={[
+                  { label: 'Morning (9 AM - 12 PM)', value: 'Morning (9 AM - 12 PM)' },
+                  { label: 'Afternoon (12 PM - 4 PM)', value: 'Afternoon (12 PM - 4 PM)' },
+                  { label: 'Evening (4 PM - 8 PM)', value: 'Evening (4 PM - 8 PM)' },
+                ]}
+              />
             </div>
           </div>
 
@@ -566,33 +556,29 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Number of Employees</label>
-                <select
-                  value={formData.employees}
-                  onChange={(e) => handleInputChange('employees', e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="1-10">1 - 10 Employees</option>
-                  <option value="11-50">11 - 50 Employees</option>
-                  <option value="51-200">51 - 200 Employees</option>
-                  <option value="200+">200+ Employees</option>
-                </select>
-              </div>
+              <Select
+                label="Number of Employees"
+                value={formData.employees}
+                onChange={(e) => handleInputChange('employees', e.target.value)}
+                options={[
+                  { label: '1 - 10 Employees', value: '1-10' },
+                  { label: '11 - 50 Employees', value: '11-50' },
+                  { label: '51 - 200 Employees', value: '51-200' },
+                  { label: '200+ Employees', value: '200+' },
+                ]}
+              />
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Annual Turnover</label>
-                <select
-                  value={formData.turnover}
-                  onChange={(e) => handleInputChange('turnover', e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="< ₹50 Lakhs">&lt; ₹50 Lakhs</option>
-                  <option value="₹50L - ₹2 Cr">₹50 Lakhs - ₹2 Cr</option>
-                  <option value="₹2 Cr - ₹10 Cr">₹2 Cr - ₹10 Cr</option>
-                  <option value="₹10 Cr+">₹10 Cr+</option>
-                </select>
-              </div>
+              <Select
+                label="Annual Turnover"
+                value={formData.turnover}
+                onChange={(e) => handleInputChange('turnover', e.target.value)}
+                options={[
+                  { label: '< ₹50 Lakhs', value: '< ₹50 Lakhs' },
+                  { label: '₹50 Lakhs - ₹2 Cr', value: '₹50L - ₹2 Cr' },
+                  { label: '₹2 Cr - ₹10 Cr', value: '₹2 Cr - ₹10 Cr' },
+                  { label: '₹10 Cr+', value: '₹10 Cr+' },
+                ]}
+              />
 
               <div className="space-y-1">
                 <label className="font-bold text-slate-700 block">Service Areas / Locations</label>
@@ -618,18 +604,16 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Working Days</label>
-                <select
-                  value={formData.workingDays}
-                  onChange={(e) => handleInputChange('workingDays', e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="Monday - Saturday">Monday - Saturday</option>
-                  <option value="Monday - Friday">Monday - Friday</option>
-                  <option value="All 7 Days">All 7 Days</option>
-                </select>
-              </div>
+              <Select
+                label="Working Days"
+                value={formData.workingDays}
+                onChange={(e) => handleInputChange('workingDays', e.target.value)}
+                options={[
+                  { label: 'Monday - Saturday', value: 'Monday - Saturday' },
+                  { label: 'Monday - Friday', value: 'Monday - Friday' },
+                  { label: 'All 7 Days', value: 'All 7 Days' },
+                ]}
+              />
 
               <div className="space-y-1">
                 <label className="font-bold text-slate-700 block">Working Hours</label>
@@ -666,48 +650,42 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Assign To Executive</label>
-                <select
-                  value={formData.assignedExecutive}
-                  onChange={(e) => handleInputChange('assignedExecutive', e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="Rahul Verma">Rahul Verma (FE-1001)</option>
-                  <option value="Sanjay Yadav">Sanjay Yadav (FE-1002)</option>
-                  <option value="Vikram Joshi">Vikram Joshi (FE-1003)</option>
-                  <option value="Neha Patil">Neha Patil (FE-1004)</option>
-                  <option value="Arun Kumar">Arun Kumar (FE-1005)</option>
-                </select>
-              </div>
+              <Select
+                label="Assign To Executive"
+                value={formData.assignedExecutive}
+                onChange={(e) => handleInputChange('assignedExecutive', e.target.value)}
+                options={[
+                  { label: 'Rahul Verma (FE-1001)', value: 'Rahul Verma' },
+                  { label: 'Sanjay Yadav (FE-1002)', value: 'Sanjay Yadav' },
+                  { label: 'Vikram Joshi (FE-1003)', value: 'Vikram Joshi' },
+                  { label: 'Neha Patil (FE-1004)', value: 'Neha Patil' },
+                  { label: 'Arun Kumar (FE-1005)', value: 'Arun Kumar' },
+                ]}
+              />
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Assign To Team (Optional)</label>
-                <select
-                  value={formData.assignedTeam}
-                  onChange={(e) => handleInputChange('assignedTeam', e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="Mumbai North Team">Mumbai North Team</option>
-                  <option value="Pune Central Team">Pune Central Team</option>
-                  <option value="Thane Territory Team">Thane Territory Team</option>
-                </select>
-              </div>
+              <Select
+                label="Assign To Team (Optional)"
+                value={formData.assignedTeam}
+                onChange={(e) => handleInputChange('assignedTeam', e.target.value)}
+                options={[
+                  { label: 'Mumbai North Team', value: 'Mumbai North Team' },
+                  { label: 'Pune Central Team', value: 'Pune Central Team' },
+                  { label: 'Thane Territory Team', value: 'Thane Territory Team' },
+                ]}
+              />
 
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Source</label>
-                <select
-                  value={formData.source}
-                  onChange={(e) => handleInputChange('source', e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="Field Visit">Field Visit</option>
-                  <option value="Website Lead">Website Lead</option>
-                  <option value="Referral">Referral</option>
-                  <option value="Cold Call">Cold Call</option>
-                  <option value="Exhibition">Exhibition</option>
-                </select>
-              </div>
+              <Select
+                label="Source"
+                value={formData.source}
+                onChange={(e) => handleInputChange('source', e.target.value)}
+                options={[
+                  { label: 'Field Visit', value: 'Field Visit' },
+                  { label: 'Website Lead', value: 'Website Lead' },
+                  { label: 'Referral', value: 'Referral' },
+                  { label: 'Cold Call', value: 'Cold Call' },
+                  { label: 'Exhibition', value: 'Exhibition' },
+                ]}
+              />
 
               <div className="space-y-1">
                 <label className="font-bold text-slate-700 block">Tags (Optional)</label>
