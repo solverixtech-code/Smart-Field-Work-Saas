@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Mail, Shield, Send, ArrowLeft, Info } from 'lucide-react';
 import AuthLayout from '../../layouts/AuthLayout';
 import { Button } from '../../components/ui/Button';
@@ -15,6 +16,7 @@ export default function ForgotPasswordPage() {
     setTimeout(() => {
       setLoading(false);
       setSubmitted(true);
+      toast.success(`Password reset link sent to ${email}`);
     }, 800);
   };
 

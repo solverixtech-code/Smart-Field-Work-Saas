@@ -46,9 +46,12 @@ export default function LoginPage() {
       const tokens = AuthTokensSchema.parse(res.data);
       saveRefreshToken(tokens.refreshToken, remember);
       dispatch(setCredentials({ accessToken: tokens.accessToken, user: tokens.user }));
+      toast.success('Welcome back! Login successful.');
       navigate('/admin/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please check credentials.');
+      const errorMsg = err.response?.data?.message || 'Login failed. Please check credentials.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

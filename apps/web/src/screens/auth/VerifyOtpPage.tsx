@@ -52,7 +52,9 @@ export default function VerifyOtpPage() {
     e.preventDefault();
     const otp = digits.join('');
     if (otp.length < 6) {
-      setError('Please enter complete 6-digit OTP passcode.');
+      const errText = 'Please enter complete 6-digit OTP passcode.';
+      setError(errText);
+      toast.error(errText);
       return;
     }
 
@@ -66,9 +68,12 @@ export default function VerifyOtpPage() {
         saveRefreshToken(tokens.refreshToken, true);
         dispatch(setCredentials({ accessToken: tokens.accessToken, user: tokens.user }));
       }
+      toast.success('Passcode verified! Logged in successfully.');
       navigate('/admin/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid or expired OTP passcode.');
+      const errorMsg = err.response?.data?.message || 'Invalid or expired OTP passcode.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
