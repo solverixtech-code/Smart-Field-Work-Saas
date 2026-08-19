@@ -13,7 +13,7 @@ export const Card = ({ className = '', size = 'lg', children, ...props }: CardPr
 
   return (
     <div
-      className={`w-full max-w-[500px] min-h-[530px] flex flex-col justify-between rounded-md bg-white shadow-2xl shadow-[#0B2E6B]/15 ${paddingSizes[size]} ${className}`}
+      className={`w-full max-w-[500px] min-h-[530px] flex flex-col justify-between rounded-sm bg-white shadow-2xl shadow-[#0B2E6B]/15 ${paddingSizes[size]} ${className}`}
       {...props}
     >
       {children}

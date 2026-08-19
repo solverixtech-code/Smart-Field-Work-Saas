@@ -69,15 +69,15 @@
   }
 
   .auth-card {
-    @apply w-full max-w-md rounded-lg bg-card p-8 shadow-auth-card;
+    @apply w-full max-w-md rounded-sm bg-card p-8 shadow-auth-card;
   }
 
   .auth-input {
-    @apply flex h-12 w-full rounded-md border border-input bg-background px-4 py-2 pl-11 text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50;
+    @apply flex h-12 w-full rounded-sm border border-input bg-background px-4 py-2 pl-11 text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .auth-btn {
-    @apply flex h-12 w-full items-center justify-center gap-2 rounded-md text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply flex h-12 w-full items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .auth-btn-primary {
@@ -101,7 +101,7 @@
   }
 
   .crm-sidebar-item {
-    @apply flex h-11 items-center gap-3 rounded-md px-3 text-[14px] font-medium transition-colors;
+    @apply flex h-11 items-center gap-3 rounded-sm px-3 text-[14px] font-medium transition-colors;
   }
 
   .crm-sidebar-item-active {
@@ -110,7 +110,7 @@
 
   /* ─── OTP Input ─── */
   .otp-input {
-    @apply flex h-14 w-12 items-center justify-center rounded-md border-2 border-input bg-background text-center text-xl font-semibold text-foreground transition-colors focus:border-primary focus:ring-1 focus:ring-primary;
+    @apply flex h-14 w-12 items-center justify-center rounded-sm border-2 border-input bg-background text-center text-xl font-semibold text-foreground transition-colors focus:border-primary focus:ring-1 focus:ring-primary;
   }
 }
 

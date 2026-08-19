@@ -25,9 +25,9 @@ export const KpiCard: React.FC<KpiCardProps> = ({
   subValue,
 }) => {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-3.5 shadow-sm transition-all hover:shadow-md min-w-0">
-      {/* Circular Left Icon Badge */}
-      <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl ${iconBgColor} ${iconTextColor}`}>
+    <div className="flex items-center gap-3 rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-sm transition-all hover:shadow-md min-w-0">
+      {/* Left Icon Badge */}
+      <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-sm ${iconBgColor} ${iconTextColor}`}>
         <Icon className="h-5 w-5" />
       </div>
 

@@ -65,7 +65,7 @@ export function DataTable<T>({
       : 'px-3.5 py-3';
 
   return (
-    <div className={`overflow-hidden rounded-md border border-slate-200/80 bg-white shadow-xs flex flex-col justify-between ${className}`}>
+    <div className={`overflow-hidden rounded-sm border border-slate-200/80 bg-white shadow-xs flex flex-col justify-between ${className}`}>
       {/* Scrollable Table Area */}
       <div className="overflow-x-auto custom-scrollbar flex-1">
         <table className="w-full text-left text-xs border-collapse font-sans">
@@ -77,7 +77,7 @@ export function DataTable<T>({
                     type="checkbox"
                     checked={allSelected}
                     onChange={onSelectAll}
-                    className="rounded border-slate-300 text-[#0D1F3D] focus:ring-[#0D1F3D]"
+                    className="rounded-sm border-slate-300 text-[#0D1F3D] focus:ring-[#0D1F3D]"
                   />
                 </th>
               )}
@@ -131,7 +131,7 @@ export function DataTable<T>({
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => onSelectOne && onSelectOne(key)}
-                          className="rounded border-slate-300 text-[#0D1F3D] focus:ring-[#0D1F3D]"
+                          className="rounded-sm border-slate-300 text-[#0D1F3D] focus:ring-[#0D1F3D]"
                         />
                       </td>
                     )}
@@ -196,7 +196,7 @@ export function DataTable<T>({
               size="sm"
               disabled={pagination.currentPage <= 1}
               onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
-              className="h-7 px-2.5 text-xs font-semibold rounded-md border-slate-200 text-slate-700 hover:bg-slate-100"
+              className="h-7 px-2.5 text-xs font-semibold rounded-sm border-slate-200 text-slate-700 hover:bg-slate-100"
             >
               Prev
             </Button>
@@ -210,7 +210,7 @@ export function DataTable<T>({
                   variant={isActive ? 'accent' : 'outline'}
                   size="sm"
                   onClick={() => pagination.onPageChange(pageNum)}
-                  className={`h-7 px-2.5 text-xs font-bold rounded-md ${
+                  className={`h-7 px-2.5 text-xs font-bold rounded-sm ${
                     isActive
                       ? 'bg-[#0D1F3D] text-white hover:bg-slate-800'
                       : 'border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -226,7 +226,7 @@ export function DataTable<T>({
               size="sm"
               disabled={pagination.currentPage >= pagination.totalPages}
               onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
-              className="h-7 px-2.5 text-xs font-semibold rounded-md border-slate-200 text-slate-700 hover:bg-slate-100"
+              className="h-7 px-2.5 text-xs font-semibold rounded-sm border-slate-200 text-slate-700 hover:bg-slate-100"
             >
               Next
             </Button>
