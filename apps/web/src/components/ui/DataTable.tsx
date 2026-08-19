@@ -30,6 +30,7 @@ export interface DataTableProps<T> {
   pagination?: PaginationConfig;
   emptyMessage?: string;
   isLoading?: boolean;
+  density?: 'compact' | 'normal' | 'relaxed';
   className?: string;
 }
 
@@ -44,19 +45,34 @@ export function DataTable<T>({
   pagination,
   emptyMessage = 'No records found',
   isLoading = false,
+  density = 'normal',
   className = '',
 }: DataTableProps<T>) {
   const allSelected = selectable && data.length > 0 && selectedIds.length === data.length;
 
+  const cellPaddingClass =
+    density === 'relaxed'
+      ? 'px-4 py-4'
+      : density === 'compact'
+      ? 'px-3 py-2'
+      : 'px-3.5 py-3.5';
+
+  const headerPaddingClass =
+    density === 'relaxed'
+      ? 'px-4 py-3.5'
+      : density === 'compact'
+      ? 'px-3 py-2.5'
+      : 'px-3.5 py-3';
+
   return (
     <div className={`overflow-hidden rounded-md border border-slate-200/80 bg-white shadow-xs flex flex-col justify-between ${className}`}>
       {/* Scrollable Table Area */}
-      <div className="overflow-x-auto custom-scrollbar">
+      <div className="overflow-x-auto custom-scrollbar flex-1">
         <table className="w-full text-left text-xs border-collapse font-sans">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-100/90 text-xs font-bold text-[#0D1F3D]">
               {selectable && (
-                <th className="p-3 text-center w-10">
+                <th className={`${headerPaddingClass} text-center w-10`}>
                   <input
                     type="checkbox"
                     checked={allSelected}
@@ -78,7 +94,7 @@ export function DataTable<T>({
                   <th
                     key={idx}
                     style={{ width: col.width }}
-                    className={`px-3.5 py-3 whitespace-nowrap ${alignClass} ${col.className || ''}`}
+                    className={`${headerPaddingClass} whitespace-nowrap ${alignClass} ${col.className || ''}`}
                   >
                     {col.header}
                   </th>
@@ -90,7 +106,7 @@ export function DataTable<T>({
           <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold">
             {isLoading ? (
               <tr>
-                <td colSpan={columns.length + (selectable ? 1 : 0)} className="py-12 text-center text-slate-400">
+                <td colSpan={columns.length + (selectable ? 1 : 0)} className="py-14 text-center text-slate-400">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-[#0D1F3D]" />
                     <span className="text-xs font-medium">Loading data...</span>
@@ -110,7 +126,7 @@ export function DataTable<T>({
                     }`}
                   >
                     {selectable && (
-                      <td className="p-3 text-center">
+                      <td className={`${cellPaddingClass} text-center`}>
                         <input
                           type="checkbox"
                           checked={isSelected}
@@ -138,7 +154,7 @@ export function DataTable<T>({
                       return (
                         <td
                           key={cIdx}
-                          className={`px-3.5 py-3 whitespace-nowrap ${alignClass} ${col.className || ''}`}
+                          className={`${cellPaddingClass} whitespace-nowrap ${alignClass} ${col.className || ''}`}
                         >
                           {content}
                         </td>
@@ -151,7 +167,7 @@ export function DataTable<T>({
               <tr>
                 <td
                   colSpan={columns.length + (selectable ? 1 : 0)}
-                  className="px-4 py-10 text-center text-slate-500"
+                  className="px-4 py-14 text-center text-slate-500"
                 >
                   <div className="flex flex-col items-center justify-center space-y-1">
                     <Layers className="h-7 w-7 text-slate-300 mb-1" />
@@ -167,7 +183,7 @@ export function DataTable<T>({
 
       {/* Standardized Pagination Footer */}
       {pagination && (
-        <div className="flex flex-wrap items-center justify-between border-t border-slate-200 bg-slate-50/50 px-4 py-2.5 text-xs text-slate-500 gap-2">
+        <div className="flex flex-wrap items-center justify-between border-t border-slate-200 bg-slate-50/50 px-4 py-3 text-xs text-slate-500 gap-2">
           <span>
             Showing {data.length === 0 ? 0 : (pagination.currentPage - 1) * pagination.pageSize + 1} to{' '}
             {Math.min(pagination.currentPage * pagination.pageSize, pagination.totalEntries)} of{' '}

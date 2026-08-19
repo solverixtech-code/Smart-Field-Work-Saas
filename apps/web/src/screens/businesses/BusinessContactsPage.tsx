@@ -273,6 +273,7 @@ export default function BusinessContactsPage() {
             selectedIds={selectedIds}
             onSelectAll={handleSelectAll}
             onSelectOne={handleSelectOne}
+            density="relaxed"
             pagination={{
               currentPage,
               totalPages: 2,

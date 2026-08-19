@@ -320,6 +320,7 @@ export default function BusinessVisitHistoryPage() {
             selectedIds={selectedIds}
             onSelectAll={handleSelectAll}
             onSelectOne={handleSelectOne}
+            density="relaxed"
             pagination={{
               currentPage,
               totalPages: 5,

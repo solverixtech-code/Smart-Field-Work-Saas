@@ -261,6 +261,7 @@ export default function BusinessSubscriptionPage() {
               columns={columns}
               data={subscription.history as HistoryItem[]}
               keyExtractor={(h) => h.subscriptionId}
+              density="relaxed"
             />
           </div>
         </div>

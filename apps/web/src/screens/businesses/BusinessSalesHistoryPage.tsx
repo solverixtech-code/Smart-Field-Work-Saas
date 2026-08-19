@@ -250,6 +250,7 @@ export default function BusinessSalesHistoryPage() {
             columns={columns}
             data={filteredOrders}
             keyExtractor={(o) => o.id}
+            density="relaxed"
             pagination={{
               currentPage,
               totalPages: 7,

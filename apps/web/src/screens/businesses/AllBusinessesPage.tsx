@@ -364,6 +364,7 @@ export default function AllBusinessesPage() {
             selectedIds={selectedIds}
             onSelectAll={handleSelectAll}
             onSelectOne={handleSelectOne}
+            density="relaxed"
             pagination={{
               currentPage,
               totalPages: 585,
