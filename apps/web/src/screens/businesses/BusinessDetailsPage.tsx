@@ -154,16 +154,15 @@ export default function BusinessDetailsPage() {
               </div>
             </div>
 
-            {/* Embedded Visual Map Card */}
-            <div className="relative h-44 rounded-md border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center p-3 text-center">
-              <div className="absolute inset-0 bg-blue-50/50 flex items-center justify-center">
-                <div className="bg-white p-3 rounded-md shadow-md border border-slate-200 space-y-1">
-                  <p className="font-bold text-xs text-[#0D1F3D] flex items-center justify-center gap-1">
-                    <MapPin className="h-4 w-4 text-[#E20613]" /> {business.name}
-                  </p>
-                  <p className="text-[10px] text-slate-500 max-w-xs">{business.fullAddress}</p>
-                </div>
-              </div>
+            {/* Embedded Interactive Google Map */}
+            <div className="relative h-48 w-full rounded-md border border-slate-200 bg-slate-100 overflow-hidden shadow-xs">
+              <iframe
+                title="Google Maps Location"
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(business.fullAddress)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                className="w-full h-full border-0"
+                loading="lazy"
+                allowFullScreen
+              />
             </div>
           </div>
         </div>
