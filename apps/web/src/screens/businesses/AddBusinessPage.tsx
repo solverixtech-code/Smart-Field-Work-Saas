@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
+import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
 import { mockBusinesses } from './businessesData';
 
 interface AddBusinessPageProps {
@@ -618,24 +619,20 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
               <div className="space-y-1">
                 <label className="font-bold text-slate-700 block">Working Hours</label>
                 <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
+                  <div className="flex-1">
+                    <ClockTimePickerModal
                       value={formData.workingHoursStart}
-                      onChange={(e) => handleInputChange('workingHoursStart', e.target.value)}
-                      className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#0D1F3D]"
+                      onChange={(val) => handleInputChange('workingHoursStart', val)}
+                      placeholder="Start Time"
                     />
-                    <Clock className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
                   </div>
                   <span className="text-slate-400 font-bold">+</span>
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
+                  <div className="flex-1">
+                    <ClockTimePickerModal
                       value={formData.workingHoursEnd}
-                      onChange={(e) => handleInputChange('workingHoursEnd', e.target.value)}
-                      className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#0D1F3D]"
+                      onChange={(val) => handleInputChange('workingHoursEnd', val)}
+                      placeholder="End Time"
                     />
-                    <Clock className="absolute right-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
                   </div>
                 </div>
               </div>

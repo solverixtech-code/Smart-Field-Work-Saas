@@ -21,6 +21,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
 
 export default function PayrollSettingsPage() {
   const navigate = useNavigate();
@@ -277,25 +278,19 @@ Visiblo Finance & HR Operations Team`,
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Shift & Late Arrival Penalty Rules</h3>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700 block">Default Shift Start Time</label>
-                  <input
-                    type="time"
-                    value={shiftSettings.shiftStartTime}
-                    onChange={(e) => setShiftSettings({ ...shiftSettings, shiftStartTime: e.target.value })}
-                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
-                  />
-                </div>
+                <ClockTimePickerModal
+                  label="Default Shift Start Time"
+                  value={shiftSettings.shiftStartTime}
+                  onChange={(val) => setShiftSettings({ ...shiftSettings, shiftStartTime: val })}
+                  placeholder="Select Start Time"
+                />
 
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700 block">Default Shift End Time</label>
-                  <input
-                    type="time"
-                    value={shiftSettings.shiftEndTime}
-                    onChange={(e) => setShiftSettings({ ...shiftSettings, shiftEndTime: e.target.value })}
-                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
-                  />
-                </div>
+                <ClockTimePickerModal
+                  label="Default Shift End Time"
+                  value={shiftSettings.shiftEndTime}
+                  onChange={(val) => setShiftSettings({ ...shiftSettings, shiftEndTime: val })}
+                  placeholder="Select End Time"
+                />
 
                 <div className="space-y-1">
                   <label className="font-bold text-slate-700 block">Late Arrival Grace Period (Minutes)</label>

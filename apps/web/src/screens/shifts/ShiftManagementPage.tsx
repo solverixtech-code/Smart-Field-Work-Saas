@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button, Modal } from '../../components/ui';
+import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
 
 export type ShiftTemplate = {
   id: string;
@@ -458,30 +459,18 @@ export default function ShiftManagementPage() {
 
               {/* Start & End Time Clock Dropdowns */}
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-slate-600 block mb-1 font-bold">Start Time *</label>
-                  <select
-                    value={form.startTime}
-                    onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-                    className="w-full rounded-sm border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
-                  >
-                    {shiftTimeOptions.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-slate-600 block mb-1 font-bold">End Time *</label>
-                  <select
-                    value={form.endTime}
-                    onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-                    className="w-full rounded-sm border border-slate-200 bg-slate-50 p-2.5 font-bold text-[#0D1F3D] focus:outline-none"
-                  >
-                    {shiftTimeOptions.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
+                <ClockTimePickerModal
+                  label="Start Time *"
+                  value={form.startTime}
+                  onChange={(val) => setForm({ ...form, startTime: val })}
+                  placeholder="Select Start Time"
+                />
+                <ClockTimePickerModal
+                  label="End Time *"
+                  value={form.endTime}
+                  onChange={(val) => setForm({ ...form, endTime: val })}
+                  placeholder="Select End Time"
+                />
               </div>
 
               {/* Working Days Buttons */}
