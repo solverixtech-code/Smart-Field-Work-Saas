@@ -54,6 +54,7 @@ import BusinessVisitHistoryPage from './screens/businesses/BusinessVisitHistoryP
 import BusinessSubscriptionPage from './screens/businesses/BusinessSubscriptionPage';
 
 import AllVisitsPage from './screens/visits/AllVisitsPage';
+import ScheduleVisitPage from './screens/visits/ScheduleVisitPage';
 import VisitDetailsPage from './screens/visits/VisitDetailsPage';
 import GpsExceptionsPage from './screens/visits/GpsExceptionsPage';
 import GpsExceptionDetailsPage from './screens/visits/GpsExceptionDetailsPage';
@@ -343,6 +344,7 @@ export default function AppRouter() {
               }
             >
               <Route path="/admin/visits" element={<AllVisitsPage viewMode="all" />} />
+              <Route path="/admin/visits/schedule" element={<ScheduleVisitPage />} />
               <Route path="/admin/visits/today" element={<AllVisitsPage viewMode="today" />} />
               <Route path="/admin/visits/scheduled" element={<AllVisitsPage viewMode="scheduled" />} />
               <Route path="/admin/visits/completed" element={<AllVisitsPage viewMode="completed" />} />
