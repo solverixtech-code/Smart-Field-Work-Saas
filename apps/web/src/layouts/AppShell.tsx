@@ -452,7 +452,7 @@ export default function AppShell() {
                     />
 
                     {showBigLogo && (
-                      <div className="flex flex-1 items-center justify-between overflow-hidden">
+                      <div className="flex flex-1 items-center justify-between min-w-0">
                         <span className="whitespace-nowrap font-medium">{item.label}</span>
                         {item.badge && (
                           <span
