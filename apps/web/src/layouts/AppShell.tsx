@@ -404,7 +404,7 @@ export default function AppShell() {
                       }
                     }}
                     title={!showBigLogo ? item.label : undefined}
-                    className={`group relative flex items-center rounded-lg py-2 text-[13px] font-medium transition-all duration-150 ${
+                    className={`group relative flex items-center rounded-sm py-2 text-[13px] font-medium transition-all duration-150 ${
                       showBigLogo ? 'px-3 gap-3 justify-start' : 'w-11 mx-auto justify-center px-0'
                     } ${
                       isActive
@@ -429,7 +429,7 @@ export default function AppShell() {
                         <span className="truncate">{item.label}</span>
                         {item.badge && (
                           <span
-                            className={`ml-2 shrink-0 whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-extrabold transition-colors ${
+                            className={`ml-2 shrink-0 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-extrabold transition-colors ${
                               isActive
                                 ? 'bg-[#E20613] text-white border border-[#E20613]'
                                 : 'bg-red-50 text-[#E20613] border border-red-200/60'
@@ -439,7 +439,7 @@ export default function AppShell() {
                           </span>
                         )}
                         {!isAllowed && (
-                          <span className="ml-2 shrink-0 whitespace-nowrap rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                          <span className="ml-2 shrink-0 whitespace-nowrap rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
                             Locked
                           </span>
                         )}
@@ -448,7 +448,7 @@ export default function AppShell() {
 
                     {/* Tooltip on Collapsed Hover */}
                     {!showBigLogo && (
-                      <div className="pointer-events-none absolute left-full ml-3 z-50 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-medium text-white shadow-xl opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="pointer-events-none absolute left-full ml-3 z-50 whitespace-nowrap rounded-sm bg-slate-900 px-2.5 py-1 text-xs font-medium text-white shadow-xl opacity-0 transition-opacity group-hover:opacity-100">
                         {item.label}
                       </div>
                     )}
@@ -465,7 +465,7 @@ export default function AppShell() {
             <div className="relative">
               <div
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className={`flex items-center rounded-xl p-2 transition-all cursor-pointer ${
+                className={`flex items-center rounded-sm p-2 transition-all cursor-pointer ${
                   showBigLogo ? 'justify-between' : 'justify-center'
                 } ${
                   userMenuOpen ? 'bg-slate-100' : 'hover:bg-slate-50'
@@ -476,10 +476,10 @@ export default function AppShell() {
                     <img
                       src={user.image}
                       alt="User Avatar"
-                      className="h-8 w-8 rounded-lg object-cover flex-shrink-0 shadow-xs border border-slate-200"
+                      className="h-8 w-8 rounded-sm object-cover flex-shrink-0 shadow-xs border border-slate-200"
                     />
                   ) : (
-                    <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[#0D1F3D] text-xs font-semibold text-white shadow-xs">
+                    <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-xs font-semibold text-white shadow-xs">
                       {user.fullName?.charAt(0) ?? user.email.charAt(0).toUpperCase()}
                       <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-[#E20613] ring-2 ring-white" />
                     </div>
@@ -508,7 +508,7 @@ export default function AppShell() {
 
               {/* User Quick Actions Dropdown Card */}
               {userMenuOpen && (
-                <div className="absolute bottom-full left-0 mb-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl space-y-1 z-50">
+                <div className="absolute bottom-full left-0 mb-2 w-full rounded-sm border border-slate-200 bg-white p-2 shadow-2xl space-y-1 z-50">
                   <div className="px-3 py-2 border-b border-slate-100 mb-1">
                     <p className="text-xs font-bold text-[#0D1F3D] truncate">{user.fullName || user.email}</p>
                     <p className="text-[11px] text-slate-400 truncate">{user.email}</p>
@@ -516,14 +516,14 @@ export default function AppShell() {
                   <NavLink
                     to="/admin/profile"
                     onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
+                    className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
                   >
                     <User className="h-4 w-4 text-[#E20613]" /> My Profile
                   </NavLink>
                   <NavLink
                     to="/admin/profile/security"
                     onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
+                    className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
                   >
                     <Shield className="h-4 w-4 text-blue-600" /> Security
                   </NavLink>
@@ -532,7 +532,7 @@ export default function AppShell() {
                     size="sm"
                     fullWidth
                     onClick={handleLogout}
-                    className="flex items-center justify-start gap-2.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs mt-1"
+                    className="flex items-center justify-start gap-2.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs mt-1 rounded-sm"
                   >
                     <LogOut className="h-4 w-4 text-rose-600" /> Sign Out
                   </Button>
@@ -562,7 +562,7 @@ export default function AppShell() {
                 <React.Fragment key={crumb.to + idx}>
                   <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" />
                   {isLast ? (
-                    <span className="font-extrabold text-[#0D1F3D] bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200/60 shadow-xs">
+                    <span className="font-extrabold text-[#0D1F3D] bg-slate-100 px-2.5 py-1 rounded-sm border border-slate-200/60 shadow-xs">
                       {crumb.label}
                     </span>
                   ) : (
@@ -579,7 +579,7 @@ export default function AppShell() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100">
+            <button className="relative inline-flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100">
               <Bell className="h-4 w-4" />
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#E20613]" />
             </button>
@@ -589,16 +589,16 @@ export default function AppShell() {
               <div className="relative" ref={headerRef}>
                 <div
                   onClick={() => setHeaderMenuOpen(!headerMenuOpen)}
-                  className="flex items-center gap-2.5 p-1 rounded-xl cursor-pointer hover:bg-slate-100/80 transition-all"
+                  className="flex items-center gap-2.5 p-1 rounded-sm cursor-pointer hover:bg-slate-100/80 transition-all"
                 >
                   {user.image ? (
                     <img
                       src={user.image}
                       alt="User Avatar"
-                      className="h-9 w-9 rounded-xl object-cover shadow-xs border border-slate-200"
+                      className="h-9 w-9 rounded-sm object-cover shadow-xs border border-slate-200"
                     />
                   ) : (
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#0D1F3D] text-xs font-bold text-white shadow-sm">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-[#0D1F3D] text-xs font-bold text-white shadow-sm">
                       {user.fullName?.charAt(0) ?? user.email.charAt(0).toUpperCase()}
                     </div>
                   )}
@@ -613,7 +613,7 @@ export default function AppShell() {
 
                 {/* Header User Dropdown Card */}
                 {headerMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl space-y-1 z-50">
+                  <div className="absolute right-0 top-full mt-2 w-56 rounded-sm border border-slate-200 bg-white p-2 shadow-2xl space-y-1 z-50">
                     <div className="px-3 py-2 border-b border-slate-100 mb-1">
                       <p className="text-xs font-bold text-[#0D1F3D] truncate">{user.fullName || user.email}</p>
                       <p className="text-[11px] text-slate-400 truncate">{user.email}</p>
@@ -621,14 +621,14 @@ export default function AppShell() {
                     <NavLink
                       to="/admin/profile"
                       onClick={() => setHeaderMenuOpen(false)}
-                      className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
+                      className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
                     >
                       <User className="h-4 w-4 text-[#E20613]" /> My Profile
                     </NavLink>
                     <NavLink
                       to="/admin/profile/security"
                       onClick={() => setHeaderMenuOpen(false)}
-                      className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
+                      className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
                     >
                       <Shield className="h-4 w-4 text-blue-600" /> Security
                     </NavLink>
@@ -637,7 +637,7 @@ export default function AppShell() {
                       size="sm"
                       fullWidth
                       onClick={handleLogout}
-                      className="flex items-center justify-start gap-2.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs mt-1"
+                      className="flex items-center justify-start gap-2.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs mt-1 rounded-sm"
                     >
                       <LogOut className="h-4 w-4 text-rose-600" /> Sign Out
                     </Button>
