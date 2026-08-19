@@ -8,18 +8,83 @@ import {
   CheckCircle2,
   Download,
   Eye,
-  Shield,
-  Zap,
   ChevronRight,
-  AlertCircle,
-  HelpCircle,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { DataTable, ColumnDef } from '../../components/ui/DataTable';
 import { BusinessItem, mockSubscription } from './businessesData';
+
+interface HistoryItem {
+  subscriptionId: string;
+  planName: string;
+  billingCycle: string;
+  amountInclTax: number;
+  status: 'Active' | 'Cancelled';
+  startDate: string;
+  endDate: string;
+  paymentMethod: string;
+}
 
 export default function BusinessSubscriptionPage() {
   const business = useOutletContext<BusinessItem>();
   const [subscription] = useState(mockSubscription);
+
+  const columns: ColumnDef<HistoryItem>[] = [
+    {
+      header: 'Subscription ID',
+      cell: (h) => <span className="font-mono font-bold text-[#0D1F3D]">{h.subscriptionId}</span>,
+    },
+    {
+      header: 'Plan',
+      cell: (h) => (
+        <span className="rounded-md bg-purple-50 px-2 py-0.5 text-[11px] font-bold text-purple-700 border border-purple-200">
+          {h.planName}
+        </span>
+      ),
+    },
+    {
+      header: 'Billing Cycle',
+      accessorKey: 'billingCycle',
+    },
+    {
+      header: 'Amount (Incl. Tax)',
+      align: 'right',
+      cell: (h) => <span className="font-bold text-[#0D1F3D]">₹ {h.amountInclTax.toLocaleString()}</span>,
+    },
+    {
+      header: 'Status',
+      align: 'center',
+      cell: (h) => (
+        <span className={`rounded-md px-2 py-0.5 text-[11px] font-bold border ${h.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+          {h.status}
+        </span>
+      ),
+    },
+    {
+      header: 'Start Date',
+      accessorKey: 'startDate',
+      className: 'text-slate-500',
+    },
+    {
+      header: 'End Date',
+      accessorKey: 'endDate',
+      className: 'text-slate-500',
+    },
+    {
+      header: 'Payment Method',
+      accessorKey: 'paymentMethod',
+      className: 'font-mono text-[11px] text-slate-600',
+    },
+    {
+      header: 'Actions',
+      align: 'right',
+      cell: (h) => (
+        <button onClick={() => toast.info(`Viewing details for ${h.subscriptionId}`)} className="p-1 text-slate-500 hover:text-[#0D1F3D]">
+          <Eye className="h-4 w-4" />
+        </button>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-4 font-sans">
@@ -141,7 +206,6 @@ export default function BusinessSubscriptionPage() {
 
           {/* Included Features & Usage Overview */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {/* Included Features */}
             <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
               <h4 className="text-xs font-bold text-[#0D1F3D]">Included Features ({subscription.planName})</h4>
               <div className="space-y-2 text-xs font-semibold text-slate-700">
@@ -154,7 +218,6 @@ export default function BusinessSubscriptionPage() {
               </div>
             </div>
 
-            {/* Usage Overview Progress Bars */}
             <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
               <h4 className="text-xs font-bold text-[#0D1F3D]">Usage Overview</h4>
               <div className="space-y-3 text-xs font-semibold">
@@ -191,59 +254,19 @@ export default function BusinessSubscriptionPage() {
             </div>
           </div>
 
-          {/* Subscription History Table */}
-          <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
+          {/* Subscription History DataTable */}
+          <div className="space-y-2">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Subscription History</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse font-semibold">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-100/90 text-xs font-bold text-[#0D1F3D]">
-                    <th className="px-3.5 py-2.5 whitespace-nowrap">Subscription ID</th>
-                    <th className="px-3.5 py-2.5 whitespace-nowrap">Plan</th>
-                    <th className="px-3.5 py-2.5 whitespace-nowrap">Billing Cycle</th>
-                    <th className="px-3.5 py-2.5 whitespace-nowrap text-right">Amount (Incl. Tax)</th>
-                    <th className="px-3.5 py-2.5 whitespace-nowrap text-center">Status</th>
-                    <th className="px-3.5 py-2.5 whitespace-nowrap">Start Date</th>
-                    <th className="px-3.5 py-2.5 whitespace-nowrap">End Date</th>
-                    <th className="px-3.5 py-2.5 whitespace-nowrap">Payment Method</th>
-                    <th className="px-3.5 py-2.5 whitespace-nowrap text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {subscription.history.map((h) => (
-                    <tr key={h.subscriptionId} className="hover:bg-slate-50">
-                      <td className="px-3.5 py-2.5 font-mono font-bold text-[#0D1F3D]">{h.subscriptionId}</td>
-                      <td className="px-3.5 py-2.5">
-                        <span className="rounded-md bg-purple-50 px-2 py-0.5 text-[11px] font-bold text-purple-700 border border-purple-200">
-                          {h.planName}
-                        </span>
-                      </td>
-                      <td className="px-3.5 py-2.5">{h.billingCycle}</td>
-                      <td className="px-3.5 py-2.5 text-right font-bold text-[#0D1F3D]">₹ {h.amountInclTax.toLocaleString()}</td>
-                      <td className="px-3.5 py-2.5 text-center">
-                        <span className={`rounded-md px-2 py-0.5 text-[11px] font-bold border ${h.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
-                          {h.status}
-                        </span>
-                      </td>
-                      <td className="px-3.5 py-2.5 text-slate-500">{h.startDate}</td>
-                      <td className="px-3.5 py-2.5 text-slate-500">{h.endDate}</td>
-                      <td className="px-3.5 py-2.5 text-slate-600 font-mono text-[11px]">{h.paymentMethod}</td>
-                      <td className="px-3.5 py-2.5 text-right">
-                        <button onClick={() => toast.info(`Viewing details for ${h.subscriptionId}`)} className="p-1 text-slate-500 hover:text-[#0D1F3D]">
-                          <Eye className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              columns={columns}
+              data={subscription.history as HistoryItem[]}
+              keyExtractor={(h) => h.subscriptionId}
+            />
           </div>
         </div>
 
         {/* Right Column (4 Cols) Sidebar */}
         <div className="space-y-4 lg:col-span-4">
-          {/* Subscription Status */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-2 text-xs font-semibold">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Subscription Status</h3>
             <div className="rounded-md bg-emerald-50 p-3 border border-emerald-100 flex items-center gap-2 text-emerald-800">
@@ -255,7 +278,6 @@ export default function BusinessSubscriptionPage() {
             </div>
           </div>
 
-          {/* Next Billing */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Next Billing</h3>
             <div className="flex justify-between items-center border-b border-slate-100 pb-2">
@@ -271,7 +293,6 @@ export default function BusinessSubscriptionPage() {
             </Button>
           </div>
 
-          {/* Payment Summary Invoice Download */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Payment Summary</h3>
             <div className="space-y-1.5 border-b border-slate-100 pb-2 text-slate-600">
@@ -288,7 +309,6 @@ export default function BusinessSubscriptionPage() {
             </Button>
           </div>
 
-          {/* Quick Actions */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-2 text-xs font-semibold">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Quick Actions</h3>
             <button onClick={() => toast.info('Opening Change Plan dialog...')} className="w-full flex items-center justify-between rounded-md border border-slate-100 bg-slate-50 p-2 text-left font-bold text-[#0D1F3D] hover:bg-slate-100">

@@ -6,21 +6,19 @@ import {
   Plus,
   Search,
   Download,
-  Upload,
   Eye,
   MoreVertical,
   CheckCircle2,
   XCircle,
   AlertCircle,
   ChevronRight,
-  Phone,
-  Mail,
   UserPlus,
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
+import { DataTable, ColumnDef } from '../../components/ui/DataTable';
 import { BusinessItem, mockBusinessContacts, BusinessContactItem } from './businessesData';
 
 const contactStatusDistribution = [
@@ -44,6 +42,7 @@ export default function BusinessContactsPage() {
   const [roleFilter, setRoleFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredContacts = mockBusinessContacts.filter((c) => {
     const matchesSearch =
@@ -69,9 +68,96 @@ export default function BusinessContactsPage() {
     );
   };
 
+  const columns: ColumnDef<BusinessContactItem>[] = [
+    {
+      header: 'Contact Name',
+      cell: (c) => (
+        <div className="flex items-center gap-2.5">
+          <img
+            src={c.avatar}
+            alt={c.name}
+            className="h-8 w-8 rounded-full object-cover border border-slate-200 shrink-0"
+          />
+          <div>
+            <p className="font-bold text-[#0D1F3D]">{c.name}</p>
+            <p className="text-[10px] text-slate-400 font-mono">ID: {c.id}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Role',
+      cell: (c) => (
+        <span className={`rounded-md px-2 py-0.5 text-[11px] font-bold border ${c.roleBadgeColor}`}>
+          {c.role}
+        </span>
+      ),
+    },
+    {
+      header: 'Phone / Email',
+      cell: (c) => (
+        <div>
+          <p className="font-semibold text-slate-800">{c.phone}</p>
+          <p className="text-[11px] text-slate-500">{c.email}</p>
+        </div>
+      ),
+    },
+    {
+      header: 'Status',
+      align: 'center',
+      cell: (c) => (
+        <span
+          className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-bold border ${
+            c.status === 'Active'
+              ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+              : c.status === 'Inactive'
+              ? 'bg-amber-50 text-amber-600 border-amber-200'
+              : 'bg-red-50 text-red-600 border-red-200'
+          }`}
+        >
+          {c.status}
+        </span>
+      ),
+    },
+    {
+      header: 'Added On',
+      accessorKey: 'addedOn',
+      className: 'text-slate-600 text-[11px]',
+    },
+    {
+      header: 'Added By',
+      cell: (c) => (
+        <div>
+          <p className="font-semibold text-[#0D1F3D]">{c.addedByName}</p>
+          <p className="text-[10px] text-slate-500">{c.addedByRole}</p>
+        </div>
+      ),
+    },
+    {
+      header: 'Actions',
+      align: 'right',
+      cell: (c) => (
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={() => toast.info(`Viewing details for ${c.name}`)}
+            className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => toast.info(`Options for ${c.name}`)}
+            className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-4 font-sans">
-      {/* Sub-Header & Business Quick Info Card */}
+      {/* Sub-Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-[#0D1F3D]">Business Contacts</h2>
@@ -176,138 +262,29 @@ export default function BusinessContactsPage() {
         </div>
       </div>
 
-      {/* Main Content Grid: Contacts Table (9 Cols) + Breakdown Sidebar (3 Cols) */}
+      {/* Main Content Grid: DataTable (9 Cols) + Breakdown Sidebar (3 Cols) */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {/* Table Container (9 Cols) */}
         <div className="lg:col-span-9">
-          <div className="overflow-hidden rounded-md border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
-            <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-100/90 text-xs font-bold text-[#0D1F3D]">
-                    <th className="p-3 text-center w-10">
-                      <input
-                        type="checkbox"
-                        onChange={handleSelectAll}
-                        checked={selectedIds.length === filteredContacts.length && filteredContacts.length > 0}
-                        className="rounded border-slate-300 text-[#0D1F3D] focus:ring-[#0D1F3D]"
-                      />
-                    </th>
-                    <th className="px-3.5 py-3 whitespace-nowrap min-w-[180px]">Contact Name</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap min-w-[130px]">Role</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap min-w-[160px]">Phone / Email</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap text-center min-w-[90px]">Status</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap min-w-[140px]">Added On</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap min-w-[140px]">Added By</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap text-right min-w-[80px]">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {filteredContacts.map((c) => {
-                    const isSelected = selectedIds.includes(c.id);
-                    return (
-                      <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3 text-center">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => handleSelectOne(c.id)}
-                            className="rounded border-slate-300 text-[#0D1F3D] focus:ring-[#0D1F3D]"
-                          />
-                        </td>
-
-                        {/* Name */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <div className="flex items-center gap-2.5">
-                            <img
-                              src={c.avatar}
-                              alt={c.name}
-                              className="h-8 w-8 rounded-full object-cover border border-slate-200 shrink-0"
-                            />
-                            <div>
-                              <p className="font-bold text-[#0D1F3D]">{c.name}</p>
-                              <p className="text-[10px] text-slate-400 font-mono">ID: {c.id}</p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Role */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <span className={`rounded-md px-2 py-0.5 text-[11px] font-bold border ${c.roleBadgeColor}`}>
-                            {c.role}
-                          </span>
-                        </td>
-
-                        {/* Phone / Email */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <p className="font-semibold text-slate-800">{c.phone}</p>
-                          <p className="text-[11px] text-slate-500">{c.email}</p>
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-3.5 py-3 whitespace-nowrap text-center">
-                          <span
-                            className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-bold border ${
-                              c.status === 'Active'
-                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                                : c.status === 'Inactive'
-                                ? 'bg-amber-50 text-amber-600 border-amber-200'
-                                : 'bg-red-50 text-red-600 border-red-200'
-                            }`}
-                          >
-                            {c.status}
-                          </span>
-                        </td>
-
-                        {/* Added On */}
-                        <td className="px-3.5 py-3 whitespace-nowrap text-slate-600 text-[11px]">
-                          {c.addedOn}
-                        </td>
-
-                        {/* Added By */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <p className="font-semibold text-[#0D1F3D]">{c.addedByName}</p>
-                          <p className="text-[10px] text-slate-500">{c.addedByRole}</p>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-3.5 py-3 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              onClick={() => toast.info(`Viewing details for ${c.name}`)}
-                              className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => toast.info(`Options for ${c.name}`)}
-                              className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/50 px-4 py-2 text-xs text-slate-500">
-              <span>Showing 1 to {filteredContacts.length} of 12 contacts</span>
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" disabled className="h-7 px-2 text-xs">Prev</Button>
-                <Button variant="accent" size="sm" className="h-7 px-2 text-xs bg-[#0D1F3D]">1</Button>
-                <Button variant="outline" size="sm" disabled className="h-7 px-2 text-xs">Next</Button>
-              </div>
-            </div>
-          </div>
+          <DataTable
+            columns={columns}
+            data={filteredContacts}
+            keyExtractor={(c) => c.id}
+            selectable
+            selectedIds={selectedIds}
+            onSelectAll={handleSelectAll}
+            onSelectOne={handleSelectOne}
+            pagination={{
+              currentPage,
+              totalPages: 2,
+              totalEntries: 12,
+              pageSize: 10,
+              onPageChange: (p) => setCurrentPage(p),
+            }}
+          />
         </div>
 
         {/* Right Sidebar Charts (3 Cols) */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Donut Chart: Contact Summary */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Business Contact Summary</h3>
             <div className="flex items-center justify-center">
@@ -349,7 +326,6 @@ export default function BusinessContactsPage() {
             </div>
           </div>
 
-          {/* Roles Breakdown */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-2.5">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Roles Breakdown</h3>
             <div className="space-y-2 text-xs font-semibold">
@@ -367,7 +343,6 @@ export default function BusinessContactsPage() {
             </div>
           </div>
 
-          {/* Quick Actions */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-2">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Quick Actions</h3>
             <button

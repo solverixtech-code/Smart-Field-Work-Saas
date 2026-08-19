@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
+import { DataTable, ColumnDef } from '../../../components/ui/DataTable';
 import {
   masterCategories,
   initialMasterRecords,
@@ -508,121 +509,102 @@ export default function MasterManagementPage() {
               </div>
 
               {/* MasterDataTable Component */}
-              <div className="rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-                <div className="overflow-x-auto custom-scrollbar">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-200 bg-slate-100/80 text-xs font-semibold text-slate-800">
-                        <th className="px-4 py-3">Master Name & Code</th>
-                        <th className="px-4 py-3">Description</th>
-                        <th className="px-4 py-3 text-center">Sort Order</th>
-                        <th className="px-4 py-3">Type</th>
-                        <th className="px-4 py-3">Status</th>
-                        <th className="px-4 py-3 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {filteredRows.length > 0 ? (
-                        filteredRows.map((row) => (
-                          <tr key={row.id} className="hover:bg-slate-50/70 transition-colors">
-                            {/* Name & Code */}
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-2.5">
-                                {row.displayColor && (
-                                  <span
-                                    className="h-3.5 w-3.5 rounded-full shrink-0 border border-slate-200 shadow-xs"
-                                    style={{ backgroundColor: row.displayColor }}
-                                  />
-                                )}
-                                <div>
-                                  <p className="font-semibold text-slate-900">{row.name}</p>
-                                  <p className="text-xs font-mono font-semibold text-slate-600 mt-0.5">{row.code}</p>
-                                </div>
-                              </div>
-                            </td>
-
-                            {/* Description */}
-                            <td className="px-4 py-3 text-slate-700 font-normal max-w-[280px]">
-                              <p className="truncate">{row.description || '—'}</p>
-                            </td>
-
-                            {/* Sort Order */}
-                            <td className="px-4 py-3 text-center">
-                              <span className="rounded-md bg-slate-100 px-2 py-0.5 font-semibold text-slate-800 border border-slate-200">
-                                #{row.sortOrder}
-                              </span>
-                            </td>
-
-                            {/* Type (System Default / Custom) */}
-                            <td className="px-4 py-3">
-                              {row.isSystemDefault ? (
-                                <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-900 border border-blue-200">
-                                  <Tag className="h-3 w-3 text-blue-800" /> System Default
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-800 border border-slate-200">
-                                  Custom
-                                </span>
-                              )}
-                            </td>
-
-                            {/* Status Toggle */}
-                            <td className="px-4 py-3">
-                              <button
-                                type="button"
-                                onClick={() => handleToggleActive(row)}
-                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer border ${
-                                  row.isActive
-                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                                    : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
-                                }`}
-                              >
-                                {row.isActive ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-700" /> : <PauseCircle className="h-3.5 w-3.5 text-slate-600" />}
-                                {row.isActive ? 'Active' : 'Inactive'}
-                              </button>
-                            </td>
-
-                            {/* Action Buttons */}
-                            <td className="px-4 py-3 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenEditModal(row)}
-                                  className="rounded-lg border border-slate-300 bg-white p-1.5 text-slate-700 hover:border-slate-800 hover:text-slate-900 transition-colors shadow-xs"
-                                  title="Edit Master Record"
-                                >
-                                  <Edit2 className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteRequest(row)}
-                                  disabled={row.isSystemDefault}
-                                  className={`rounded-lg border p-1.5 transition-colors ${
-                                    row.isSystemDefault
-                                      ? 'border-slate-100 text-slate-300 cursor-not-allowed'
-                                      : 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50 shadow-xs'
-                                  }`}
-                                  title={row.isSystemDefault ? 'System Default Cannot Be Deleted' : 'Delete Record'}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
+              <DataTable
+                columns={[
+                  {
+                    header: 'Master Name & Code',
+                    cell: (row) => (
+                      <div className="flex items-center gap-2.5">
+                        {row.displayColor && (
+                          <span
+                            className="h-3.5 w-3.5 rounded-full shrink-0 border border-slate-200 shadow-xs"
+                            style={{ backgroundColor: row.displayColor }}
+                          />
+                        )}
+                        <div>
+                          <p className="font-semibold text-[#0D1F3D]">{row.name}</p>
+                          <p className="text-xs font-mono font-semibold text-slate-500 mt-0.5">{row.code}</p>
+                        </div>
+                      </div>
+                    ),
+                  },
+                  {
+                    header: 'Description',
+                    cell: (row) => <span className="text-slate-600 font-normal max-w-[280px] truncate block">{row.description || '—'}</span>,
+                  },
+                  {
+                    header: 'Sort Order',
+                    align: 'center',
+                    cell: (row) => (
+                      <span className="rounded-md bg-slate-100 px-2 py-0.5 font-semibold text-slate-800 border border-slate-200">
+                        #{row.sortOrder}
+                      </span>
+                    ),
+                  },
+                  {
+                    header: 'Type',
+                    cell: (row) =>
+                      row.isSystemDefault ? (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-900 border border-blue-200">
+                          <Tag className="h-3 w-3 text-blue-800" /> System Default
+                        </span>
                       ) : (
-                        <tr>
-                          <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
-                            <Layers className="mx-auto h-8 w-8 text-slate-400 mb-2" />
-                            <p className="font-bold text-slate-800">No master records found</p>
-                            <p className="text-xs text-slate-600 mt-0.5">Try clearing search filters or add a new record.</p>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                        <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-800 border border-slate-200">
+                          Custom
+                        </span>
+                      ),
+                  },
+                  {
+                    header: 'Status',
+                    cell: (row) => (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActive(row)}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-all cursor-pointer border ${
+                          row.isActive
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                            : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'
+                        }`}
+                      >
+                        {row.isActive ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-700" /> : <PauseCircle className="h-3.5 w-3.5 text-slate-600" />}
+                        {row.isActive ? 'Active' : 'Inactive'}
+                      </button>
+                    ),
+                  },
+                  {
+                    header: 'Actions',
+                    align: 'right',
+                    cell: (row) => (
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(row)}
+                          className="rounded-lg border border-slate-300 bg-white p-1.5 text-slate-700 hover:border-slate-800 hover:text-slate-900 transition-colors shadow-xs"
+                          title="Edit Master Record"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRequest(row)}
+                          disabled={row.isSystemDefault}
+                          className={`rounded-lg border p-1.5 transition-colors ${
+                            row.isSystemDefault
+                              ? 'border-slate-100 text-slate-300 cursor-not-allowed'
+                              : 'border-rose-200 bg-white text-rose-600 hover:bg-rose-50 shadow-xs'
+                          }`}
+                          title={row.isSystemDefault ? 'System Default Cannot Be Deleted' : 'Delete Record'}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ),
+                  },
+                ]}
+                data={filteredRows}
+                keyExtractor={(row) => row.id}
+                emptyMessage="No master records found"
+              />
             </div>
           </div>
 

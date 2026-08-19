@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
+import { DataTable, ColumnDef } from '../../components/ui/DataTable';
 import { mockLeadsData, LeadItem } from './leadsData';
 
 interface AllLeadsPageProps {
@@ -327,276 +328,176 @@ export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
         </div>
 
         {/* Leads Data Table Container */}
-        <div className="overflow-hidden rounded-md border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-semibold">
-                <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-bold text-slate-600">
-                    <th className="p-3.5 text-center">
-                      <input
-                        type="checkbox"
-                        onChange={handleSelectAll}
-                        checked={selectedIds.length === filteredLeads.length && filteredLeads.length > 0}
-                        className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
-                      />
-                    </th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Lead / Company</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Contact Person</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Stage & Score</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Est. Value (₹)</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Assigned Executive</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Region & Territory</th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Next Follow-up</th>
-                    <th className="px-4 py-3.5 text-right whitespace-nowrap">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {filteredLeads.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="px-4 py-12 text-center text-slate-400">
-                        <Target className="h-10 w-10 mx-auto mb-2 text-slate-300" />
-                        <p className="font-extrabold text-[#0D1F3D] text-sm">No Leads Found</p>
-                        <p className="text-xs text-slate-500 font-medium">Try resetting your search query or category filters.</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredLeads.map((lead) => {
-                      const isSelected = selectedIds.includes(lead.id);
-                      return (
-                        <tr key={lead.id} className="hover:bg-slate-50/80 transition-colors">
-                          <td className="p-3.5 text-center">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handleSelectOne(lead.id)}
-                              className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
-                            />
-                          </td>
+        <DataTable
+          columns={[
+            {
+              header: 'Lead / Company',
+              cell: (lead) => (
+                <div>
+                  <button
+                    onClick={() => navigate(`/admin/leads/${lead.id}`)}
+                    className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline block text-left"
+                  >
+                    {lead.companyName}
+                  </button>
+                  <span className="text-[10px] font-mono text-slate-400">{lead.code} • {lead.leadSource}</span>
+                </div>
+              ),
+            },
+            {
+              header: 'Contact Person',
+              cell: (lead) => (
+                <div>
+                  <p className="font-bold text-slate-900">{lead.contactPerson}</p>
+                  <p className="text-[10px] text-slate-500 font-medium">{lead.phone}</p>
+                </div>
+              ),
+            },
+            {
+              header: 'Stage & Score',
+              cell: (lead) => (
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-md px-2.5 py-0.5 text-[10px] font-extrabold border ${
+                    lead.stage === 'Won / Converted' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                    lead.stage === 'Lost' ? 'bg-red-50 text-red-600 border-red-200' :
+                    lead.stage === 'Negotiation' ? 'bg-purple-50 text-purple-600 border-purple-200' :
+                    lead.stage === 'Proposal Sent' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                    'bg-slate-100 text-slate-700 border-slate-200'
+                  }`}>
+                    {lead.stage}
+                  </span>
+                  <span className="rounded-full bg-slate-900 text-white px-2 py-0.5 text-[10px] font-extrabold">
+                    {lead.score} pts
+                  </span>
+                </div>
+              ),
+            },
+            {
+              header: 'Est. Value (₹)',
+              cell: (lead) => (
+                <div>
+                  <p className="font-extrabold text-[#0D1F3D]">₹{lead.estimatedValue.toLocaleString()}</p>
+                  <span className="text-[10px] text-slate-400 font-medium">{lead.probabilityPct}% Prob</span>
+                </div>
+              ),
+            },
+            {
+              header: 'Assigned Executive',
+              cell: (lead) => (
+                <div className="flex items-center gap-2">
+                  <img
+                    src={lead.assignedExecutiveAvatar}
+                    alt={lead.assignedExecutive}
+                    className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0"
+                  />
+                  <div>
+                    <p className="font-bold text-slate-900 text-xs">{lead.assignedExecutive}</p>
+                    <p className="text-[10px] text-slate-400 font-medium">{lead.assignedLeader}</p>
+                  </div>
+                </div>
+              ),
+            },
+            {
+              header: 'Region & Territory',
+              cell: (lead) => (
+                <div>
+                  <p className="font-bold text-slate-800">{lead.territory}</p>
+                  <p className="text-[10px] text-slate-400 font-medium">{lead.region}</p>
+                </div>
+              ),
+            },
+            {
+              header: 'Next Follow-up',
+              accessorKey: 'nextFollowUpDate',
+              className: 'font-bold text-slate-700',
+            },
+            {
+              header: 'Actions',
+              align: 'right',
+              cell: (lead) => (
+                <div className="flex items-center justify-end gap-1">
+                  <button
+                    onClick={() => navigate(`/admin/leads/${lead.id}`)}
+                    title="View Lead Details"
+                    className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
 
-                          {/* Company Name & Code */}
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <div>
-                              <button
-                                onClick={() => navigate(`/admin/leads/${lead.id}`)}
-                                className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline block text-left"
-                              >
-                                {lead.companyName}
-                              </button>
-                              <span className="text-[10px] font-mono text-slate-400">{lead.code} • {lead.leadSource}</span>
-                            </div>
-                          </td>
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveMenuId(activeMenuId === lead.id ? null : lead.id);
+                      }}
+                      title="Lead Actions Menu"
+                      className={`p-1.5 rounded-lg transition-colors border shadow-xs ${
+                        activeMenuId === lead.id
+                          ? 'bg-[#0D1F3D] text-white border-[#0D1F3D]'
+                          : 'text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-[#0D1F3D]'
+                      }`}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
 
-                          {/* Contact Person */}
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <div>
-                              <p className="font-bold text-slate-900">{lead.contactPerson}</p>
-                              <p className="text-[10px] text-slate-500 font-medium">{lead.phone}</p>
-                            </div>
-                          </td>
+                    {activeMenuId === lead.id && (
+                      <div
+                        className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl space-y-1 text-left animate-fadeIn"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => { setActiveMenuId(null); navigate(`/admin/leads/${lead.id}`); }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-[#0D1F3D] hover:bg-slate-50 transition-colors"
+                        >
+                          <Eye className="h-4 w-4 text-blue-600" />
+                          <span>View Full Details</span>
+                        </button>
 
-                          {/* Stage & Score Pill */}
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span className={`rounded-md px-2.5 py-0.5 text-[10px] font-extrabold border ${
-                                lead.stage === 'Won / Converted' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-                                lead.stage === 'Lost' ? 'bg-red-50 text-red-600 border-red-200' :
-                                lead.stage === 'Negotiation' ? 'bg-purple-50 text-purple-600 border-purple-200' :
-                                lead.stage === 'Proposal Sent' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                                'bg-slate-100 text-slate-700 border-slate-200'
-                              }`}>
-                                {lead.stage}
-                              </span>
-                              <span className="rounded-full bg-slate-900 text-white px-2 py-0.5 text-[10px] font-extrabold">
-                                {lead.score} pts
-                              </span>
-                            </div>
-                          </td>
+                        <button
+                          onClick={() => { setActiveMenuId(null); navigate(`/admin/leads/${lead.id}/edit`); }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <Edit className="h-4 w-4 text-emerald-600" />
+                          <span>Edit Lead Info</span>
+                        </button>
 
-                          {/* Est Value */}
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <p className="font-extrabold text-[#0D1F3D]">₹{lead.estimatedValue.toLocaleString()}</p>
-                            <span className="text-[10px] text-slate-400 font-medium">{lead.probabilityPct}% Prob</span>
-                          </td>
+                        <button
+                          onClick={() => { setActiveMenuId(null); navigate(`/admin/leads/${lead.id}/assignment`); }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <UserCheck className="h-4 w-4 text-purple-600" />
+                          <span>Assign / Reassign Lead</span>
+                        </button>
 
-                          {/* Assigned Executive */}
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={lead.assignedExecutiveAvatar}
-                                alt={lead.assignedExecutive}
-                                className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0"
-                              />
-                              <div>
-                                <p className="font-bold text-slate-900 text-xs">{lead.assignedExecutive}</p>
-                                <p className="text-[10px] text-slate-400 font-medium">{lead.assignedLeader}</p>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Region & Territory */}
-                          <td className="px-4 py-3.5 whitespace-nowrap">
-                            <p className="font-bold text-slate-800">{lead.territory}</p>
-                            <p className="text-[10px] text-slate-400 font-medium">{lead.region}</p>
-                          </td>
-
-                          {/* Follow up date */}
-                          <td className="px-4 py-3.5 whitespace-nowrap font-bold text-slate-700">
-                            {lead.nextFollowUpDate}
-                          </td>
-
-                          {/* Interactive Action Menu (⋮) */}
-                          <td className="px-4 py-3.5 text-right whitespace-nowrap relative">
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={() => navigate(`/admin/leads/${lead.id}`)}
-                                title="View Lead Details"
-                                className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </button>
-
-                              <div className="relative">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setActiveMenuId(activeMenuId === lead.id ? null : lead.id);
-                                  }}
-                                  title="Lead Actions Menu"
-                                  className={`p-1.5 rounded-lg transition-colors border shadow-xs ${
-                                    activeMenuId === lead.id
-                                      ? 'bg-[#0D1F3D] text-white border-[#0D1F3D]'
-                                      : 'text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-[#0D1F3D]'
-                                  }`}
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </button>
-
-                                {/* Floating Dropdown Action Menu */}
-                                {activeMenuId === lead.id && (
-                                  <div
-                                    className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl space-y-1 text-left animate-fadeIn"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    <button
-                                      onClick={() => {
-                                        setActiveMenuId(null);
-                                        navigate(`/admin/leads/${lead.id}`);
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-[#0D1F3D] hover:bg-slate-50 transition-colors"
-                                    >
-                                      <Eye className="h-4 w-4 text-blue-600" />
-                                      <span>View Full Details</span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        setActiveMenuId(null);
-                                        navigate(`/admin/leads/${lead.id}/edit`);
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                                    >
-                                      <Edit className="h-4 w-4 text-emerald-600" />
-                                      <span>Edit Lead Info</span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        setActiveMenuId(null);
-                                        navigate(`/admin/leads/${lead.id}/assignment`);
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                                    >
-                                      <UserCheck className="h-4 w-4 text-purple-600" />
-                                      <span>Assign / Reassign Lead</span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        setActiveMenuId(null);
-                                        navigate(`/admin/leads/${lead.id}/timeline`);
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                                    >
-                                      <Clock className="h-4 w-4 text-amber-600" />
-                                      <span>View Activity Timeline</span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        setActiveMenuId(null);
-                                        navigate(`/admin/leads/${lead.id}/visits`);
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                                    >
-                                      <MapPin className="h-4 w-4 text-rose-600" />
-                                      <span>Field Visit Check-ins</span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        setActiveMenuId(null);
-                                        navigate(`/admin/leads/${lead.id}/demos`);
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                                    >
-                                      <Video className="h-4 w-4 text-indigo-600" />
-                                      <span>Product Demos</span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        setActiveMenuId(null);
-                                        navigate(`/admin/leads/${lead.id}/communications`);
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                                    >
-                                      <MessageSquare className="h-4 w-4 text-teal-600" />
-                                      <span>Call & Mail Logs</span>
-                                    </button>
-
-                                    <button
-                                      onClick={() => {
-                                        setActiveMenuId(null);
-                                        navigate(`/admin/leads/${lead.id}/payments`);
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                                    >
-                                      <DollarSign className="h-4 w-4 text-emerald-700" />
-                                      <span>Payment History</span>
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Table Footer Pagination */}
-          <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-700 font-medium bg-slate-50">
-            <p>Showing 1 to {filteredLeads.length} of {leads.length} leads</p>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50">
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-xs font-semibold text-white">
-                  1
-                </span>
-                <button className="flex h-7 w-7 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-50">
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+                        <button
+                          onClick={() => { setActiveMenuId(null); navigate(`/admin/leads/${lead.id}/timeline`); }}
+                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <Clock className="h-4 w-4 text-amber-600" />
+                          <span>View Activity Timeline</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ),
+            },
+          ]}
+          data={filteredLeads}
+          keyExtractor={(l) => l.id}
+          selectable
+          selectedIds={selectedIds}
+          onSelectAll={handleSelectAll}
+          onSelectOne={handleSelectOne}
+          pagination={{
+            currentPage: 1,
+            totalPages: 1,
+            totalEntries: filteredLeads.length,
+            pageSize: 10,
+            onPageChange: () => {},
+          }}
+          emptyMessage="No Leads Found"
+        />
       </div>
     </div>
   );

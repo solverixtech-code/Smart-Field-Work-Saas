@@ -9,13 +9,10 @@ import {
   Upload,
   Eye,
   MoreVertical,
-  Calendar,
-  Filter,
   RefreshCw,
   CheckCircle2,
   XCircle,
   AlertCircle,
-  FileText,
   UserPlus,
   ChevronRight,
 } from 'lucide-react';
@@ -23,6 +20,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
+import { DataTable, ColumnDef } from '../../components/ui/DataTable';
 import { mockBusinesses, BusinessItem } from './businessesData';
 
 const statusDistributionData = [
@@ -47,15 +45,8 @@ export default function AllBusinessesPage() {
   const [cityFilter, setCityFilter] = useState('All');
   const [sourceFilter, setSourceFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [assignedFilter, setAssignedFilter] = useState('All');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    const handleGlobalClick = () => setActiveMenuId(null);
-    window.addEventListener('click', handleGlobalClick);
-    return () => window.removeEventListener('click', handleGlobalClick);
-  }, []);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredBusinesses = mockBusinesses.filter((b) => {
     const matchesSearch =
@@ -83,6 +74,122 @@ export default function AllBusinessesPage() {
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
+
+  const columns: ColumnDef<BusinessItem>[] = [
+    {
+      header: 'Business Details',
+      cell: (b) => (
+        <div className="flex items-center gap-2.5">
+          {b.logoUrl ? (
+            <img
+              src={b.logoUrl}
+              alt={b.name}
+              className="h-8 w-8 rounded-md object-cover border border-slate-200 shrink-0"
+            />
+          ) : (
+            <div className={`flex h-8 w-8 items-center justify-center rounded-md font-bold text-xs shrink-0 ${b.logoBg}`}>
+              {b.logoText}
+            </div>
+          )}
+          <div>
+            <button
+              onClick={() => navigate(`/admin/businesses/${b.id}`)}
+              className="font-bold text-[#0D1F3D] hover:text-blue-600 hover:underline text-left block whitespace-nowrap"
+            >
+              {b.name}
+            </button>
+            <p className="text-[11px] text-slate-500 font-normal whitespace-nowrap">
+              {b.city}, Maharashtra • <span className="font-mono text-[10px] text-slate-400">ID: {b.id}</span>
+            </p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Business Type',
+      cell: (b) => (
+        <span className="rounded-md bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 border border-blue-100">
+          {b.businessType}
+        </span>
+      ),
+    },
+    {
+      header: 'Contact Person',
+      cell: (b) => (
+        <div>
+          <p className="font-bold text-[#0D1F3D]">{b.contactPerson}</p>
+          <p className="text-[11px] text-slate-500 font-normal">{b.contactRole}</p>
+        </div>
+      ),
+    },
+    {
+      header: 'Contact Info',
+      cell: (b) => (
+        <div>
+          <p className="font-semibold text-slate-800">{b.phone}</p>
+          <p className="text-[11px] text-slate-500">{b.email}</p>
+        </div>
+      ),
+    },
+    {
+      header: 'Source',
+      accessorKey: 'source',
+    },
+    {
+      header: 'Assigned To',
+      cell: (b) => (
+        <div className="flex items-center gap-2">
+          <img
+            src={b.assignedToAvatar}
+            alt={b.assignedToName}
+            className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0"
+          />
+          <div>
+            <p className="font-semibold text-[#0D1F3D]">{b.assignedToName}</p>
+            <p className="text-[10px] text-slate-500">{b.assignedToRole}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Status',
+      align: 'center',
+      cell: (b) => (
+        <span
+          className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-bold border ${
+            b.status === 'Active'
+              ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+              : b.status === 'Inactive'
+              ? 'bg-amber-50 text-amber-600 border-amber-200'
+              : 'bg-red-50 text-red-600 border-red-200'
+          }`}
+        >
+          {b.status}
+        </span>
+      ),
+    },
+    {
+      header: 'Actions',
+      align: 'right',
+      cell: (b) => (
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={() => navigate(`/admin/businesses/${b.id}`)}
+            className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
+            title="View Business Details"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => toast.info(`Options for ${b.name}`)}
+            className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-3 font-sans pb-10">
@@ -121,7 +228,6 @@ export default function AllBusinessesPage() {
           title="Total Businesses"
           value="5,842"
           subValue="All time"
-          timeframe=""
           icon={Building2}
           iconBgColor="bg-[#0D1F3D]/10"
           iconTextColor="text-[#0D1F3D]"
@@ -130,7 +236,6 @@ export default function AllBusinessesPage() {
           title="Active Businesses"
           value="5,102"
           subValue="87.3% of total"
-          timeframe=""
           icon={CheckCircle2}
           iconBgColor="bg-emerald-500/10"
           iconTextColor="text-emerald-600"
@@ -139,7 +244,6 @@ export default function AllBusinessesPage() {
           title="Inactive Businesses"
           value="540"
           subValue="9.2% of total"
-          timeframe=""
           icon={AlertCircle}
           iconBgColor="bg-amber-500/10"
           iconTextColor="text-amber-600"
@@ -148,7 +252,6 @@ export default function AllBusinessesPage() {
           title="Blocked Businesses"
           value="200"
           subValue="3.4% of total"
-          timeframe=""
           icon={XCircle}
           iconBgColor="bg-red-500/10"
           iconTextColor="text-[#E20613]"
@@ -250,174 +353,29 @@ export default function AllBusinessesPage() {
         </div>
       </div>
 
-      {/* Main Content Grid: Table (Left 9 Cols) + Charts & Quick Actions Sidebar (Right 3 Cols) */}
+      {/* Main Content Grid: Unified DataTable (Left 9 Cols) + Analytics Sidebar (Right 3 Cols) */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {/* Table Container (9 Cols) */}
-        <div className="lg:col-span-9 space-y-3">
-          <div className="overflow-hidden rounded-md border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
-            <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-100/90 text-xs font-bold text-[#0D1F3D]">
-                    <th className="p-3 text-center w-10">
-                      <input
-                        type="checkbox"
-                        onChange={handleSelectAll}
-                        checked={selectedIds.length === filteredBusinesses.length && filteredBusinesses.length > 0}
-                        className="rounded border-slate-300 text-[#0D1F3D] focus:ring-[#0D1F3D]"
-                      />
-                    </th>
-                    <th className="px-3.5 py-3 whitespace-nowrap min-w-[200px]">Business Details</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap min-w-[140px]">Business Type</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap min-w-[140px]">Contact Person</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap min-w-[150px]">Contact Info</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap min-w-[110px]">Source</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap min-w-[150px]">Assigned To</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap text-center min-w-[90px]">Status</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap text-right min-w-[90px]">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {filteredBusinesses.map((b) => {
-                    const isSelected = selectedIds.includes(b.id);
-                    return (
-                      <tr key={b.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3 text-center">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => handleSelectOne(b.id)}
-                            className="rounded border-slate-300 text-[#0D1F3D] focus:ring-[#0D1F3D]"
-                          />
-                        </td>
-
-                        {/* Business Details */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <div className="flex items-center gap-2.5">
-                            {b.logoUrl ? (
-                              <img
-                                src={b.logoUrl}
-                                alt={b.name}
-                                className="h-8 w-8 rounded-md object-cover border border-slate-200 shrink-0"
-                              />
-                            ) : (
-                              <div className={`flex h-8 w-8 items-center justify-center rounded-md font-bold text-xs shrink-0 ${b.logoBg}`}>
-                                {b.logoText}
-                              </div>
-                            )}
-                            <div>
-                              <button
-                                onClick={() => navigate(`/admin/businesses/${b.id}`)}
-                                className="font-bold text-[#0D1F3D] hover:text-blue-600 hover:underline text-left block whitespace-nowrap"
-                              >
-                                {b.name}
-                              </button>
-                              <p className="text-[11px] text-slate-500 font-normal whitespace-nowrap">
-                                {b.city}, Maharashtra • <span className="font-mono text-[10px] text-slate-400">ID: {b.id}</span>
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Business Type */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <span className="rounded-md bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 border border-blue-100">
-                            {b.businessType}
-                          </span>
-                        </td>
-
-                        {/* Contact Person */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <p className="font-bold text-[#0D1F3D]">{b.contactPerson}</p>
-                          <p className="text-[11px] text-slate-500 font-normal">{b.contactRole}</p>
-                        </td>
-
-                        {/* Contact Info */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <p className="font-semibold text-slate-800">{b.phone}</p>
-                          <p className="text-[11px] text-slate-500">{b.email}</p>
-                        </td>
-
-                        {/* Source */}
-                        <td className="px-3.5 py-3 whitespace-nowrap font-medium text-slate-700">
-                          {b.source}
-                        </td>
-
-                        {/* Assigned To */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={b.assignedToAvatar}
-                              alt={b.assignedToName}
-                              className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0"
-                            />
-                            <div>
-                              <p className="font-semibold text-[#0D1F3D]">{b.assignedToName}</p>
-                              <p className="text-[10px] text-slate-500">{b.assignedToRole}</p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-3.5 py-3 whitespace-nowrap text-center">
-                          <span
-                            className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-bold border ${
-                              b.status === 'Active'
-                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                                : b.status === 'Inactive'
-                                ? 'bg-amber-50 text-amber-600 border-amber-200'
-                                : 'bg-red-50 text-red-600 border-red-200'
-                            }`}
-                          >
-                            {b.status}
-                          </span>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="px-3.5 py-3 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              onClick={() => navigate(`/admin/businesses/${b.id}`)}
-                              className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
-                              title="View Business Details"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuId(activeMenuId === b.id ? null : b.id);
-                              }}
-                              className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/50 px-4 py-2.5 text-xs text-slate-500">
-              <span>Showing 1 to {filteredBusinesses.length} of 5,842 businesses</span>
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" disabled className="h-7 px-2 text-xs">Prev</Button>
-                <Button variant="accent" size="sm" className="h-7 px-2.5 text-xs bg-[#0D1F3D]">1</Button>
-                <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs">2</Button>
-                <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs">3</Button>
-                <Button variant="outline" size="sm" className="h-7 px-2 text-xs">Next</Button>
-              </div>
-            </div>
-          </div>
+        <div className="lg:col-span-9">
+          <DataTable
+            columns={columns}
+            data={filteredBusinesses}
+            keyExtractor={(b) => b.id}
+            selectable
+            selectedIds={selectedIds}
+            onSelectAll={handleSelectAll}
+            onSelectOne={handleSelectOne}
+            pagination={{
+              currentPage,
+              totalPages: 585,
+              totalEntries: 5842,
+              pageSize: 10,
+              onPageChange: (p) => setCurrentPage(p),
+            }}
+          />
         </div>
 
         {/* Right Sidebar Charts & Quick Actions (3 Cols) */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Donut Chart: Businesses by Status */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Businesses by Status</h3>
             <div className="flex items-center justify-center">
@@ -459,7 +417,6 @@ export default function AllBusinessesPage() {
             </div>
           </div>
 
-          {/* Progress Bars: Businesses by Source */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Businesses by Source</h3>
             <div className="space-y-2.5 text-xs font-semibold">
@@ -477,7 +434,6 @@ export default function AllBusinessesPage() {
             </div>
           </div>
 
-          {/* Quick Actions Card */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-2.5">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Quick Actions</h3>
             <div className="space-y-2 text-xs font-semibold">

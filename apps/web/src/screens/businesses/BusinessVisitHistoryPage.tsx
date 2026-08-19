@@ -9,18 +9,15 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
-  AlertCircle,
   Eye,
   MoreVertical,
-  ChevronRight,
   UserCheck,
-  MapPin,
-  TrendingUp,
 } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
+import { DataTable, ColumnDef } from '../../components/ui/DataTable';
 import { BusinessItem, mockBusinessVisits, BusinessVisitItem } from './businessesData';
 
 const visitStatusDistribution = [
@@ -53,6 +50,7 @@ export default function BusinessVisitHistoryPage() {
   const [visitTypeFilter, setVisitTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredVisits = mockBusinessVisits.filter((v) => {
     const matchesSearch =
@@ -77,6 +75,94 @@ export default function BusinessVisitHistoryPage() {
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
+
+  const columns: ColumnDef<BusinessVisitItem>[] = [
+    {
+      header: 'Visit ID',
+      cell: (v) => <span className="font-mono font-bold text-[#0D1F3D]">{v.visitCode}</span>,
+    },
+    {
+      header: 'Visit Date & Time',
+      accessorKey: 'date',
+      className: 'text-[11px] text-slate-500',
+    },
+    {
+      header: 'Executive',
+      cell: (v) => (
+        <div className="flex items-center gap-2">
+          <img src={v.executiveAvatar} alt="" className="h-6 w-6 rounded-full object-cover shrink-0" />
+          <span className="font-bold text-[#0D1F3D]">{v.executiveName}</span>
+        </div>
+      ),
+    },
+    {
+      header: 'Visit Type',
+      cell: (v) => (
+        <span
+          className={`rounded-md px-2 py-0.5 text-[11px] font-bold border ${
+            v.visitType === 'Sales Visit'
+              ? 'bg-blue-50 text-blue-700 border-blue-200'
+              : v.visitType === 'Follow-up'
+              ? 'bg-amber-50 text-amber-700 border-amber-200'
+              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          }`}
+        >
+          {v.visitType}
+        </span>
+      ),
+    },
+    {
+      header: 'Purpose',
+      accessorKey: 'purpose',
+    },
+    {
+      header: 'Status',
+      align: 'center',
+      cell: (v) => (
+        <span
+          className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-bold border ${
+            v.status === 'Completed'
+              ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+              : v.status === 'In Progress'
+              ? 'bg-amber-50 text-amber-600 border-amber-200'
+              : 'bg-red-50 text-red-600 border-red-200'
+          }`}
+        >
+          {v.status}
+        </span>
+      ),
+    },
+    {
+      header: 'Duration',
+      accessorKey: 'duration',
+      align: 'center',
+      className: 'font-mono text-[11px]',
+    },
+    {
+      header: 'Notes',
+      cell: (v) => <span className="text-[11px] max-w-xs truncate block">{v.notes}</span>,
+    },
+    {
+      header: 'Actions',
+      align: 'right',
+      cell: (v) => (
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={() => toast.info(`Viewing visit log ${v.visitCode}`)}
+            className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => toast.info(`Options for ${v.visitCode}`)}
+            className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-4 font-sans">
@@ -223,131 +309,29 @@ export default function BusinessVisitHistoryPage() {
         </div>
       </div>
 
-      {/* Main Content Grid: Visits Table (9 Cols) + Visit Analytics Sidebar (3 Cols) */}
+      {/* Main Content Grid: DataTable (9 Cols) + Visit Analytics Sidebar (3 Cols) */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {/* Table Container (9 Cols) */}
         <div className="lg:col-span-9">
-          <div className="overflow-hidden rounded-md border border-slate-200/80 bg-white shadow-sm flex flex-col justify-between">
-            <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-100/90 text-xs font-bold text-[#0D1F3D]">
-                    <th className="p-3 text-center w-10">
-                      <input
-                        type="checkbox"
-                        onChange={handleSelectAll}
-                        checked={selectedIds.length === filteredVisits.length && filteredVisits.length > 0}
-                        className="rounded border-slate-300 text-[#0D1F3D] focus:ring-[#0D1F3D]"
-                      />
-                    </th>
-                    <th className="px-3.5 py-3 whitespace-nowrap">Visit ID</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap">Visit Date & Time</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap">Executive</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap">Visit Type</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap">Purpose</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap text-center">Status</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap text-center">Duration</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap">Notes</th>
-                    <th className="px-3.5 py-3 whitespace-nowrap text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold">
-                  {filteredVisits.map((v) => {
-                    const isSelected = selectedIds.includes(v.id);
-                    return (
-                      <tr key={v.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="p-3 text-center">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => handleSelectOne(v.id)}
-                            className="rounded border-slate-300 text-[#0D1F3D] focus:ring-[#0D1F3D]"
-                          />
-                        </td>
-                        <td className="px-3.5 py-3 font-mono font-bold text-[#0D1F3D] whitespace-nowrap">{v.visitCode}</td>
-                        <td className="px-3.5 py-3 whitespace-nowrap text-[11px] text-slate-500">{v.date}</td>
-
-                        {/* Executive */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <img src={v.executiveAvatar} alt="" className="h-6 w-6 rounded-full object-cover shrink-0" />
-                            <span className="font-bold text-[#0D1F3D]">{v.executiveName}</span>
-                          </div>
-                        </td>
-
-                        {/* Visit Type */}
-                        <td className="px-3.5 py-3 whitespace-nowrap">
-                          <span
-                            className={`rounded-md px-2 py-0.5 text-[11px] font-bold border ${
-                              v.visitType === 'Sales Visit'
-                                ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                : v.visitType === 'Follow-up'
-                                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            }`}
-                          >
-                            {v.visitType}
-                          </span>
-                        </td>
-
-                        <td className="px-3.5 py-3 whitespace-nowrap font-medium text-slate-700">{v.purpose}</td>
-
-                        {/* Status */}
-                        <td className="px-3.5 py-3 whitespace-nowrap text-center">
-                          <span
-                            className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-bold border ${
-                              v.status === 'Completed'
-                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                                : v.status === 'In Progress'
-                                ? 'bg-amber-50 text-amber-600 border-amber-200'
-                                : 'bg-red-50 text-red-600 border-red-200'
-                            }`}
-                          >
-                            {v.status}
-                          </span>
-                        </td>
-
-                        <td className="px-3.5 py-3 text-center whitespace-nowrap text-slate-600 font-mono text-[11px]">{v.duration}</td>
-                        <td className="px-3.5 py-3 font-medium text-slate-600 text-[11px] max-w-xs truncate">{v.notes}</td>
-
-                        {/* Actions */}
-                        <td className="px-3.5 py-3 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              onClick={() => toast.info(`Viewing visit log ${v.visitCode}`)}
-                              className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => toast.info(`Options for ${v.visitCode}`)}
-                              className="p-1 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-md"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/50 px-4 py-2 text-xs text-slate-500">
-              <span>Showing 1 to {filteredVisits.length} of 42 visits</span>
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" disabled className="h-7 px-2 text-xs">Prev</Button>
-                <Button variant="accent" size="sm" className="h-7 px-2 text-xs bg-[#0D1F3D]">1</Button>
-                <Button variant="outline" size="sm" className="h-7 px-2 text-xs">Next</Button>
-              </div>
-            </div>
-          </div>
+          <DataTable
+            columns={columns}
+            data={filteredVisits}
+            keyExtractor={(v) => v.id}
+            selectable
+            selectedIds={selectedIds}
+            onSelectAll={handleSelectAll}
+            onSelectOne={handleSelectOne}
+            pagination={{
+              currentPage,
+              totalPages: 5,
+              totalEntries: 42,
+              pageSize: 10,
+              onPageChange: (p) => setCurrentPage(p),
+            }}
+          />
         </div>
 
         {/* Right Sidebar Visit Analytics (3 Cols) */}
         <div className="lg:col-span-3 space-y-4">
-          {/* Top Executives by Visits */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-2.5">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Top Executive (by Visits)</h3>
             <div className="space-y-2 text-xs font-semibold">
@@ -363,7 +347,6 @@ export default function BusinessVisitHistoryPage() {
             </div>
           </div>
 
-          {/* Visit Trend (Last 7 Days) */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-2.5">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Visit Trend (Last 7 Days)</h3>
             <div className="h-32 w-full">
@@ -378,7 +361,6 @@ export default function BusinessVisitHistoryPage() {
             </div>
           </div>
 
-          {/* Visit by Status Donut Chart */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
             <h3 className="text-xs font-bold text-[#0D1F3D]">Visit by Status</h3>
             <div className="flex items-center justify-center">
