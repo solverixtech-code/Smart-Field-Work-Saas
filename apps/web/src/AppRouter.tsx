@@ -53,6 +53,11 @@ import BusinessSalesHistoryPage from './screens/businesses/BusinessSalesHistoryP
 import BusinessVisitHistoryPage from './screens/businesses/BusinessVisitHistoryPage';
 import BusinessSubscriptionPage from './screens/businesses/BusinessSubscriptionPage';
 
+import AllVisitsPage from './screens/visits/AllVisitsPage';
+import VisitDetailsPage from './screens/visits/VisitDetailsPage';
+import GpsExceptionsPage from './screens/visits/GpsExceptionsPage';
+import GpsExceptionDetailsPage from './screens/visits/GpsExceptionDetailsPage';
+
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { Role, AuthTokensSchema } from '@visiblo/shared';
@@ -322,6 +327,31 @@ export default function AppRouter() {
                 <Route path="visits" element={<BusinessVisitHistoryPage />} />
                 <Route path="subscription" element={<BusinessSubscriptionPage />} />
               </Route>
+            </Route>
+
+            {/* Visit Management Routes (Screens 61 to 70) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/visits" element={<AllVisitsPage viewMode="all" />} />
+              <Route path="/admin/visits/today" element={<AllVisitsPage viewMode="today" />} />
+              <Route path="/admin/visits/scheduled" element={<AllVisitsPage viewMode="scheduled" />} />
+              <Route path="/admin/visits/completed" element={<AllVisitsPage viewMode="completed" />} />
+              <Route path="/admin/visits/missed" element={<AllVisitsPage viewMode="missed" />} />
+              <Route path="/admin/visits/verified" element={<AllVisitsPage viewMode="verified" />} />
+              <Route path="/admin/visits/unverified" element={<AllVisitsPage viewMode="unverified" />} />
+              <Route path="/admin/visits/gps-exceptions" element={<GpsExceptionsPage />} />
+              <Route path="/admin/visits/gps-exceptions/:exceptionId" element={<GpsExceptionDetailsPage />} />
+              <Route path="/admin/visits/:visitId" element={<VisitDetailsPage />} />
             </Route>
 
             {/* System Masters Management Route */}

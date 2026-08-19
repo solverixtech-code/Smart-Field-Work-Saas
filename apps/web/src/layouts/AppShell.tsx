@@ -111,6 +111,62 @@ const navCategories: NavCategory[] = [
     ],
   },
   {
+    title: 'Visit Management',
+    items: [
+      {
+        label: 'All Visits',
+        icon: MapPin,
+        to: '/admin/visits',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '128 Scheduled',
+      },
+      {
+        label: "Today's Visits",
+        icon: Clock,
+        to: '/admin/visits/today',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '26 Today',
+      },
+      {
+        label: 'Scheduled Visits',
+        icon: MapPin,
+        to: '/admin/visits/scheduled',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+      },
+      {
+        label: 'Completed Visits',
+        icon: MapPin,
+        to: '/admin/visits/completed',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+      },
+      {
+        label: 'Missed Visits',
+        icon: MapPin,
+        to: '/admin/visits/missed',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+      },
+      {
+        label: 'Verified Visits',
+        icon: MapPin,
+        to: '/admin/visits/verified',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+      },
+      {
+        label: 'Unverified Visits',
+        icon: MapPin,
+        to: '/admin/visits/unverified',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+      },
+      {
+        label: 'GPS Exceptions',
+        icon: MapPin,
+        to: '/admin/visits/gps-exceptions',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '18 Pending',
+      },
+    ],
+  },
+  {
     title: 'Workforce & Operations',
     items: [
       {
