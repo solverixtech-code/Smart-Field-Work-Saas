@@ -36,7 +36,7 @@ export default function SuspendExecutivePage() {
           <ArrowLeft className="h-4 w-4" /> Back to Details
         </button>
 
-        <h1 className="text-xl font-extrabold text-[#0D1F3D]">Suspend / Reactivate Executive</h1>
+        <h1 className="text-2xl font-bold text-[#0D1F3D]">Suspend / Reactivate Executive</h1>
       </div>
 
       {/* Success Alert */}

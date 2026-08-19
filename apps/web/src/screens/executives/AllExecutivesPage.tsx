@@ -195,8 +195,8 @@ export default function AllExecutivesPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-extrabold text-[#0D1F3D]">All Field Executives</h1>
-          <p className="text-xs font-medium text-slate-500">
+          <h1 className="text-2xl font-bold text-[#0D1F3D]">Field Executives Directory</h1>
+          <p className="text-xs font-normal text-slate-500">
             Manage field staff, view live statuses, performance stats, and territory teams.
           </p>
         </div>
@@ -427,7 +427,7 @@ export default function AllExecutivesPage() {
 
                             {/* Dropdown Quick Actions */}
                             {activeMenuId === exec.id && (
-                              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl space-y-0.5 text-left">
+                              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl space-y-0.5 text-left animate-dropdown">
                                 <NavLink
                                   to={`/admin/executives/${exec.id}`}
                                   className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
