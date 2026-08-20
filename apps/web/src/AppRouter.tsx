@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './screens/auth/LoginPage';
 import ForgotPasswordPage from './screens/auth/ForgotPasswordPage';
@@ -77,7 +78,10 @@ export default function AppRouter() {
       const refreshToken = getStoredRefreshToken();
       if (!isAuthenticated && refreshToken) {
         try {
-          const res = await api.post('/auth/refresh', getRefreshPayload());
+          const baseURL = import.meta.env.VITE_API_URL ?? '/api';
+          const res = await axios.post(`${baseURL}/auth/refresh`, getRefreshPayload(), {
+            withCredentials: true,
+          });
           const tokens = AuthTokensSchema.parse(res.data);
           saveRefreshToken(tokens.refreshToken);
           dispatch(
