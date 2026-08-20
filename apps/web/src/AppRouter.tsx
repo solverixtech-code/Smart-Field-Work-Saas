@@ -60,6 +60,14 @@ import VisitDetailsPage from './screens/visits/VisitDetailsPage';
 import GpsExceptionsPage from './screens/visits/GpsExceptionsPage';
 import GpsExceptionDetailsPage from './screens/visits/GpsExceptionDetailsPage';
 
+import LiveFieldMapPage from './screens/maps/LiveFieldMapPage';
+import ExecutiveLocationsPage from './screens/maps/ExecutiveLocationsPage';
+import BusinessProspectMapPage from './screens/maps/BusinessProspectMapPage';
+import VisitHeatmapPage from './screens/maps/VisitHeatmapPage';
+import SalesHeatmapPage from './screens/maps/SalesHeatmapPage';
+import TerritoryMapPage from './screens/maps/TerritoryMapPage';
+import RoutePlaybackPage from './screens/maps/RoutePlaybackPage';
+
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { Role, AuthTokensSchema } from '@visiblo/shared';
@@ -358,6 +366,29 @@ export default function AppRouter() {
               <Route path="/admin/visits/gps-exceptions" element={<GpsExceptionsPage />} />
               <Route path="/admin/visits/gps-exceptions/:exceptionId" element={<GpsExceptionDetailsPage />} />
               <Route path="/admin/visits/:visitId" element={<VisitDetailsPage />} />
+            </Route>
+
+            {/* Live Location & Maps Routes (Screens 71 to 77) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/map/live" element={<LiveFieldMapPage />} />
+              <Route path="/admin/map/executives" element={<ExecutiveLocationsPage />} />
+              <Route path="/admin/map/businesses" element={<BusinessProspectMapPage />} />
+              <Route path="/admin/map/visits" element={<VisitHeatmapPage />} />
+              <Route path="/admin/map/sales" element={<SalesHeatmapPage />} />
+              <Route path="/admin/map/territories" element={<TerritoryMapPage />} />
+              <Route path="/admin/map/routes" element={<RoutePlaybackPage />} />
+              <Route path="/admin/map/routes/:executiveId" element={<RoutePlaybackPage />} />
             </Route>
 
             {/* System Masters Management Route */}

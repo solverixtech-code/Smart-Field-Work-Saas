@@ -98,6 +98,55 @@ const navCategories: NavCategory[] = [
     ],
   },
   {
+    title: 'Live Tracking & Maps',
+    items: [
+      {
+        label: 'Live Field Map',
+        icon: Radio,
+        to: '/admin/map/live',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '28 Live',
+      },
+      {
+        label: 'Executive Locations',
+        icon: MapPin,
+        to: '/admin/map/executives',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+      },
+      {
+        label: 'Business Prospect Map',
+        icon: Building2,
+        to: '/admin/map/businesses',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '248 Pins',
+      },
+      {
+        label: 'Visit Heatmap',
+        icon: PieChart,
+        to: '/admin/map/visits',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
+      },
+      {
+        label: 'Sales Heatmap',
+        icon: TrendingUp,
+        to: '/admin/map/sales',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
+      },
+      {
+        label: 'Territory Map',
+        icon: Target,
+        to: '/admin/map/territories',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+      },
+      {
+        label: 'Route Playback',
+        icon: Clock,
+        to: '/admin/map/routes/FE-1009',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+      },
+    ],
+  },
+  {
     title: 'Teams & Operations',
     items: [
       {
