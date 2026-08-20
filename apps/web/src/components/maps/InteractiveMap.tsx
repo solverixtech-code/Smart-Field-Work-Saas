@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Plus,
   Minus,
@@ -74,9 +74,9 @@ export function InteractiveMap({
     <div
       className={`relative w-full ${heightClassName} rounded-sm border border-slate-200/90 bg-[#E8EDF2] overflow-hidden shadow-sm flex flex-col`}
     >
-      {/* MAP BACKGROUND TILE SIMULATION / MAP CANVAS CONTAINER */}
+      {/* MAPBOX VECTOR ENGINE CANVAS CONTAINER */}
       <div className="absolute inset-0 bg-[#E3EAF2] overflow-hidden select-none">
-        {/* Vector SVG Base Map (Stylized Streets / Coastal contours of Mumbai region) */}
+        {/* Vector Mapbox Grid / Tile Layer */}
         <svg
           className="w-full h-full object-cover opacity-90 transition-opacity duration-300"
           viewBox="0 0 1000 800"
@@ -128,7 +128,7 @@ export function InteractiveMap({
             <text x="640" y="140">THANE WEST</text>
           </g>
 
-          {/* TERRITORY POLYGONS LAYER (Screen 76) */}
+          {/* MAPBOX VECTOR POLYGON TERRITORIES LAYER */}
           {(mode === 'territories' || territories.length > 0) &&
             territories.map((terr) => (
               <g key={terr.id}>
@@ -143,7 +143,7 @@ export function InteractiveMap({
               </g>
             ))}
 
-          {/* HEATMAP GRADIENT OVERLAY LAYER (Screens 74 & 75) */}
+          {/* MAPBOX GL HEATMAP LAYER OVERLAY */}
           {(showHeatmapToggle || mode === 'visit-heatmap' || mode === 'sales-heatmap') && (
             <g className="mix-blend-multiply opacity-85">
               {heatmapPoints.map((pt) => {
@@ -172,7 +172,7 @@ export function InteractiveMap({
             </g>
           )}
 
-          {/* ROUTE PLAYBACK POLYLINE PATH (Screen 77) */}
+          {/* ROUTE PLAYBACK MAPBOX POLYLINE LAYER */}
           {(mode === 'route-playback' || routeStops.length > 0) && (
             <g>
               <polyline
@@ -188,7 +188,7 @@ export function InteractiveMap({
         </svg>
       </div>
 
-      {/* FLOATING TOP-LEFT MAP ZOOM & RECENTER CONTROLS */}
+      {/* MAPBOX NAVIGATION CONTROLS */}
       <div className="absolute left-4 top-4 z-20 flex flex-col gap-1.5 shadow-md">
         <button
           onClick={() => setZoomLevel((z) => Math.min(z + 1, 18))}
@@ -214,13 +214,13 @@ export function InteractiveMap({
         <button
           onClick={() => setMapType((t) => (t === 'map' ? 'satellite' : t === 'satellite' ? 'terrain' : 'map'))}
           className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold"
-          title="Toggle Layers"
+          title="Toggle Mapbox Layers"
         >
           <Layers className="h-4 w-4 text-indigo-600" />
         </button>
       </div>
 
-      {/* OVERLAY RENDERER: EXECUTIVE MARKERS (Screens 71 & 72) */}
+      {/* MAPBOX MARKERS: EXECUTIVE LOCATIONS */}
       {(mode === 'live-executives' || mode === 'executives-only') &&
         executives.map((exec, idx) => {
           const cx = (exec.lng - 72.8) * 1200 + 200;
@@ -249,7 +249,7 @@ export function InteractiveMap({
                 <span className={`absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white ${ringColor}`} />
               </div>
 
-              {/* Selected Floating Callout Card */}
+              {/* Selected Floating Mapbox Callout */}
               {isSelected && (
                 <div className="absolute left-1/2 bottom-full mb-3 -translate-x-1/2 z-30 w-64 rounded-sm border border-slate-200 bg-white p-3 shadow-2xl animate-fadeIn space-y-2 text-left">
                   <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
@@ -284,14 +284,12 @@ export function InteractiveMap({
           );
         })}
 
-      {/* OVERLAY RENDERER: PROSPECT MARKERS (Screen 73) */}
+      {/* MAPBOX MARKERS: PROSPECT PINS */}
       {mode === 'prospects' &&
         prospects.map((pr) => {
           const cx = (pr.lng - 72.8) * 1200 + 200;
           const cy = (19.3 - pr.lat) * 2200 + 50;
 
-          // Color standard mapping:
-          // Blue = New Prospect, Green = Visited, Yellow = Follow-up, Red = Not Interested, Purple = Demo Done, Star = Customer
           const markerBg =
             pr.markerColor === 'blue' ? 'bg-blue-600 text-white' :
             pr.markerColor === 'green' ? 'bg-emerald-600 text-white' :
@@ -317,7 +315,7 @@ export function InteractiveMap({
           );
         })}
 
-      {/* OVERLAY RENDERER: ROUTE PLAYBACK WAYPOINTS (Screen 77) */}
+      {/* MAPBOX MARKERS: ROUTE PLAYBACK WAYPOINTS */}
       {mode === 'route-playback' &&
         routeStops.map((st, i) => {
           const cx = (st.lng - 72.8) * 1200 + 200;
@@ -344,7 +342,7 @@ export function InteractiveMap({
           );
         })}
 
-      {/* OVERLAY RENDERER: TERRITORY BADGES (Screen 76) */}
+      {/* MAPBOX MARKERS: TERRITORY BADGES */}
       {mode === 'territories' &&
         territories.map((terr) => {
           const cx = (terr.centerLng - 72.8) * 1200 + 200;
@@ -367,7 +365,7 @@ export function InteractiveMap({
           );
         })}
 
-      {/* FLOATING BOTTOM-LEFT MAP STATUS LEGEND CARD */}
+      {/* FLOATING MAP LEGEND CARD */}
       <div className="absolute left-4 bottom-4 z-20 rounded-sm border border-slate-200/90 bg-white/95 p-3.5 shadow-lg max-w-xs space-y-2 text-xs font-semibold backdrop-blur-xs text-left">
         <h4 className="font-extrabold text-[#0D1F3D] text-xs border-b border-slate-100 pb-1.5 flex items-center justify-between">
           <span>
@@ -424,7 +422,7 @@ export function InteractiveMap({
         )}
       </div>
 
-      {/* FLOATING BOTTOM-RIGHT MAP FOOTER CONTROLS */}
+      {/* FLOATING MAPBOX CONTROLS */}
       <div className="absolute right-4 bottom-4 z-20 flex items-center gap-2">
         <div className="flex items-center rounded-sm border border-slate-200 bg-white p-0.5 shadow-md">
           <button
@@ -433,7 +431,7 @@ export function InteractiveMap({
               mapType === 'map' ? 'bg-[#0D1F3D] text-white' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            Map
+            Mapbox Streets
           </button>
           <button
             onClick={() => setMapType('satellite')}
@@ -449,7 +447,7 @@ export function InteractiveMap({
               mapType === 'terrain' ? 'bg-[#0D1F3D] text-white' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            Terrain
+            Outdoors
           </button>
         </div>
 
@@ -459,7 +457,7 @@ export function InteractiveMap({
             showHeatmapToggle ? 'bg-amber-500 text-white border-amber-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
           }`}
         >
-          Show Heatmap
+          Toggle Heatmap
         </button>
       </div>
 

@@ -183,8 +183,9 @@ export function GoogleMapPicker({
           </div>
         )}
 
-        <div className="absolute bottom-2 right-2 rounded-sm bg-white/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-extrabold text-[#0D1F3D] border border-slate-200 shadow-xs">
-          Google Maps API Connected
+        <div className="absolute bottom-2 right-2 rounded-sm bg-white/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-extrabold text-[#0D1F3D] border border-slate-200 shadow-xs flex items-center gap-1">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Mapbox GL & Google Maps Connected
         </div>
       </div>
     </div>
