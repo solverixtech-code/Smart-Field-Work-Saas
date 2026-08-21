@@ -305,6 +305,87 @@ export function InteractiveMap({
     }
   }, [fetchedRealRoadPath, routePath, routeStops, mapType]);
 
+  // Sync Native Mapbox GL GPU Heatmap Shader Layer
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+
+    const updateHeatmapNativeLayer = () => {
+      try {
+        if (!map.isStyleLoaded()) return;
+
+        const isHeatmapActive = showHeatmapToggle || mode === 'visit-heatmap' || mode === 'sales-heatmap';
+
+        if (!isHeatmapActive || heatmapPoints.length === 0) {
+          if (map.getLayer('mapbox-heatmap-layer')) map.removeLayer('mapbox-heatmap-layer');
+          if (map.getSource('mapbox-heatmap-src')) map.removeSource('mapbox-heatmap-src');
+          return;
+        }
+
+        const geojson: any = {
+          type: 'FeatureCollection',
+          features: heatmapPoints.map((pt) => ({
+            type: 'Feature',
+            properties: {
+              intensity: pt.intensity || 0.8,
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [pt.lng, pt.lat],
+            },
+          })),
+        };
+
+        if (map.getSource('mapbox-heatmap-src')) {
+          (map.getSource('mapbox-heatmap-src') as mapboxgl.GeoJSONSource).setData(geojson);
+        } else {
+          map.addSource('mapbox-heatmap-src', {
+            type: 'geojson',
+            data: geojson,
+          });
+
+          map.addLayer({
+            id: 'mapbox-heatmap-layer',
+            type: 'heatmap',
+            source: 'mapbox-heatmap-src',
+            maxzoom: 18,
+            paint: {
+              'heatmap-weight': ['get', 'intensity'],
+              'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 9, 3],
+              'heatmap-color': [
+                'interpolate',
+                ['linear'],
+                ['heatmap-density'],
+                0,
+                'rgba(33,102,172,0)',
+                0.2,
+                'rgb(103,169,207)',
+                0.4,
+                'rgb(209,229,240)',
+                0.6,
+                'rgb(253,219,199)',
+                0.8,
+                'rgb(239,138,98)',
+                1,
+                'rgb(178,24,43)',
+              ],
+              'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, 9, 45, 16, 90],
+              'heatmap-opacity': 0.85,
+            },
+          });
+        }
+      } catch (err) {
+        console.warn('Mapbox heatmap sync notice:', err);
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      updateHeatmapNativeLayer();
+    } else {
+      map.once('styledata', updateHeatmapNativeLayer);
+    }
+  }, [heatmapPoints, showHeatmapToggle, mode, mapType]);
+
   // Handle Zoom Controls
   const handleZoomIn = () => {
     if (mapRef.current) {
@@ -374,33 +455,7 @@ export function InteractiveMap({
               </g>
             ))}
 
-          {/* MAPBOX GL HEATMAP LAYER OVERLAY */}
-          {(showHeatmapToggle || mode === 'visit-heatmap' || mode === 'sales-heatmap') && (
-            <g className="mix-blend-multiply opacity-85">
-              {heatmapPoints.map((pt) => {
-                const pixel = getPixelPoint(pt.lat, pt.lng);
-                const radius = pt.intensity * 90 + 30;
-                return (
-                  <g key={pt.id}>
-                    <circle cx={pixel.x} cy={pixel.y} r={radius} fill="url(#heatGradRed)" opacity="0.65" />
-                    <circle cx={pixel.x} cy={pixel.y} r={radius * 0.6} fill="url(#heatGradYellow)" opacity="0.8" />
-                    <circle cx={pixel.x} cy={pixel.y} r={radius * 0.3} fill="#EF4444" opacity="0.9" />
-                  </g>
-                );
-              })}
-              <defs>
-                <radialGradient id="heatGradRed">
-                  <stop offset="0%" stopColor="#EF4444" stopOpacity="0.9" />
-                  <stop offset="60%" stopColor="#F59E0B" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
-                </radialGradient>
-                <radialGradient id="heatGradYellow">
-                  <stop offset="0%" stopColor="#F59E0B" stopOpacity="1" />
-                  <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-            </g>
-          )}
+
 
           {/* ROUTE PLAYBACK MAPBOX POLYLINE LAYER */}
           {(mode === 'route-playback' || routeStops.length > 0 || routePath.length > 0 || fetchedRealRoadPath.length > 0) && (

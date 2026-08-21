@@ -342,26 +342,61 @@ export const mockProspectMarkers: BusinessProspectMarker[] = [
   },
 ];
 
-// ─── MOCK VISIT HEATMAP DATA ─────────────────────────────────────────────────
+// ─── MOCK VISIT HEATMAP DATA (25 Dense Clusters for Realistic GPU Heatmap Rendering) ───
 export const mockVisitHeatmapPoints: HeatmapPoint[] = [
-  { id: 'hm-1', areaName: 'Andheri East', lat: 19.1136, lng: 72.8697, intensity: 0.95, countOrValueText: '857 visits' },
-  { id: 'hm-2', areaName: 'Malad West', lat: 19.1874, lng: 72.8484, intensity: 0.8, countOrValueText: '642 visits' },
-  { id: 'hm-3', areaName: 'Powai', lat: 19.1176, lng: 72.906, intensity: 0.72, countOrValueText: '532 visits' },
-  { id: 'hm-4', areaName: 'Vikhroli West', lat: 19.1064, lng: 72.926, intensity: 0.65, countOrValueText: '418 visits' },
-  { id: 'hm-5', areaName: 'Goregaon East', lat: 19.1663, lng: 72.8526, intensity: 0.58, countOrValueText: '376 visits' },
-  { id: 'hm-6', areaName: 'Borivali West', lat: 19.2307, lng: 72.8567, intensity: 0.45, countOrValueText: '290 visits' },
-  { id: 'hm-7', areaName: 'Bandra Kurla Complex', lat: 19.0657, lng: 72.8686, intensity: 0.75, countOrValueText: '580 visits' },
-  { id: 'hm-8', areaName: 'Kandivali West', lat: 19.2067, lng: 72.8398, intensity: 0.5, countOrValueText: '320 visits' },
+  // Andheri East / MIDC / Chakala High-Density Cluster
+  { id: 'hm-1', areaName: 'Andheri East (MIDC)', lat: 19.1136, lng: 72.8697, intensity: 0.95, countOrValueText: '857 visits' },
+  { id: 'hm-1a', areaName: 'Chakala Metro Station', lat: 19.1158, lng: 72.8621, intensity: 0.88, countOrValueText: '720 visits' },
+  { id: 'hm-1b', areaName: 'Marol Naka', lat: 19.1121, lng: 72.8765, intensity: 0.92, countOrValueText: '810 visits' },
+  { id: 'hm-1c', areaName: 'SEEPZ Gate 1', lat: 19.1245, lng: 72.8712, intensity: 0.85, countOrValueText: '690 visits' },
+  { id: 'hm-1d', areaName: 'JB Nagar', lat: 19.1102, lng: 72.8643, intensity: 0.78, countOrValueText: '540 visits' },
+
+  // Bandra Kurla Complex (BKC) High-Density Financial Cluster
+  { id: 'hm-7', areaName: 'Bandra Kurla Complex', lat: 19.0657, lng: 72.8686, intensity: 0.91, countOrValueText: '790 visits' },
+  { id: 'hm-7a', areaName: 'BKC G Block', lat: 19.0689, lng: 72.8645, intensity: 0.86, countOrValueText: '640 visits' },
+  { id: 'hm-7b', areaName: 'Kalanagar Bandra East', lat: 19.0602, lng: 72.8521, intensity: 0.74, countOrValueText: '510 visits' },
+
+  // Powai & Hiranandani Tech Cluster
+  { id: 'hm-3', areaName: 'Powai Hiranandani', lat: 19.1176, lng: 72.906, intensity: 0.84, countOrValueText: '630 visits' },
+  { id: 'hm-3a', areaName: 'IIT Bombay Gate', lat: 19.1242, lng: 72.9154, intensity: 0.72, countOrValueText: '490 visits' },
+  { id: 'hm-3b', areaName: 'Saki Vihar Road', lat: 19.1098, lng: 72.8932, intensity: 0.68, countOrValueText: '420 visits' },
+
+  // Lower Parel & Dadar South Mumbai Commercial Corridor
+  { id: 'hm-9', areaName: 'Lower Parel (Phoenix)', lat: 18.9952, lng: 72.8288, intensity: 0.89, countOrValueText: '760 visits' },
+  { id: 'hm-9a', areaName: 'Dadar West Market', lat: 19.0178, lng: 72.8478, intensity: 0.81, countOrValueText: '620 visits' },
+  { id: 'hm-9b', areaName: 'Prabhadevi Commercial', lat: 19.0125, lng: 72.8265, intensity: 0.73, countOrValueText: '510 visits' },
+
+  // Malad & Goregaon IT Hub
+  { id: 'hm-2', areaName: 'Malad Mindspace', lat: 19.1874, lng: 72.8484, intensity: 0.83, countOrValueText: '642 visits' },
+  { id: 'hm-5', areaName: 'Goregaon East (Nesco)', lat: 19.1663, lng: 72.8526, intensity: 0.76, countOrValueText: '576 visits' },
+  { id: 'hm-2a', areaName: 'Inorbit Malad', lat: 19.1765, lng: 72.8398, intensity: 0.69, countOrValueText: '430 visits' },
+
+  // Vikhroli & Ghatkopar LBS Corridor
+  { id: 'hm-4', areaName: 'Vikhroli Godrej IT', lat: 19.1064, lng: 72.926, intensity: 0.79, countOrValueText: '580 visits' },
+  { id: 'hm-4a', areaName: 'Ghatkopar West LBS', lat: 19.086, lng: 72.9081, intensity: 0.71, countOrValueText: '480 visits' },
+  { id: 'hm-4b', areaName: 'Kanjurmarg East', lat: 19.1312, lng: 72.9345, intensity: 0.62, countOrValueText: '370 visits' },
+
+  // Thane & Mulund Hub
+  { id: 'hm-10', areaName: 'Thane Viviana Mall', lat: 19.2183, lng: 72.9781, intensity: 0.80, countOrValueText: '610 visits' },
+  { id: 'hm-10a', areaName: 'Mulund West Check Naka', lat: 19.1726, lng: 72.9565, intensity: 0.66, countOrValueText: '410 visits' },
+
+  // Borivali & Kandivali Corridor
+  { id: 'hm-6', areaName: 'Borivali West Station', lat: 19.2307, lng: 72.8567, intensity: 0.65, countOrValueText: '390 visits' },
+  { id: 'hm-8', areaName: 'Kandivali West Link Rd', lat: 19.2067, lng: 72.8398, intensity: 0.58, countOrValueText: '320 visits' },
 ];
 
 // ─── MOCK SALES HEATMAP DATA ──────────────────────────────────────────────────
 export const mockSalesHeatmapPoints: HeatmapPoint[] = [
-  { id: 'shm-1', areaName: 'Andheri East', lat: 19.1136, lng: 72.8697, intensity: 0.98, countOrValueText: '₹ 9,85,400' },
-  { id: 'shm-2', areaName: 'Bandra Kurla Complex', lat: 19.0657, lng: 72.8686, intensity: 0.88, countOrValueText: '₹ 6,25,300' },
-  { id: 'shm-3', areaName: 'Powai', lat: 19.1176, lng: 72.906, intensity: 0.75, countOrValueText: '₹ 4,85,200' },
-  { id: 'shm-4', areaName: 'Ghatkopar West', lat: 19.086, lng: 72.9081, intensity: 0.62, countOrValueText: '₹ 3,65,800' },
-  { id: 'shm-5', areaName: 'Malad West', lat: 19.1874, lng: 72.8484, intensity: 0.55, countOrValueText: '₹ 3,15,600' },
-  { id: 'shm-6', areaName: 'Thane West', lat: 19.2183, lng: 72.9781, intensity: 0.7, countOrValueText: '₹ 4,10,000' },
+  { id: 'shm-1', areaName: 'Andheri East (MIDC)', lat: 19.1136, lng: 72.8697, intensity: 0.98, countOrValueText: '₹ 9,85,400' },
+  { id: 'shm-1a', areaName: 'Chakala Business Hub', lat: 19.1158, lng: 72.8621, intensity: 0.89, countOrValueText: '₹ 7,40,000' },
+  { id: 'shm-2', areaName: 'Bandra Kurla Complex', lat: 19.0657, lng: 72.8686, intensity: 0.92, countOrValueText: '₹ 8,25,300' },
+  { id: 'shm-2a', areaName: 'BKC G Block', lat: 19.0689, lng: 72.8645, intensity: 0.84, countOrValueText: '₹ 6,10,000' },
+  { id: 'shm-3', areaName: 'Powai Hiranandani', lat: 19.1176, lng: 72.906, intensity: 0.79, countOrValueText: '₹ 5,85,200' },
+  { id: 'shm-4', areaName: 'Ghatkopar West', lat: 19.086, lng: 72.9081, intensity: 0.72, countOrValueText: '₹ 4,65,800' },
+  { id: 'shm-5', areaName: 'Malad West Mindspace', lat: 19.1874, lng: 72.8484, intensity: 0.68, countOrValueText: '₹ 4,15,600' },
+  { id: 'shm-6', areaName: 'Thane West Viviana', lat: 19.2183, lng: 72.9781, intensity: 0.76, countOrValueText: '₹ 5,10,000' },
+  { id: 'shm-7', areaName: 'Lower Parel Phoenix', lat: 18.9952, lng: 72.8288, intensity: 0.94, countOrValueText: '₹ 8,90,000' },
+  { id: 'shm-8', areaName: 'Dadar West', lat: 19.0178, lng: 72.8478, intensity: 0.81, countOrValueText: '₹ 6,50,000' },
 ];
 
 // ─── MOCK TERRITORY POLYGONS ─────────────────────────────────────────────────
