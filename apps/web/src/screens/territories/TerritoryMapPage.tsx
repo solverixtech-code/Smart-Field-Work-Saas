@@ -16,6 +16,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Checkbox } from '../../components/ui/Checkbox';
 import { MapKpiCard } from '../../components/maps/MapKpiCard';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import {
@@ -155,93 +156,109 @@ export default function TerritoryMapPage() {
               <Layers className="h-3.5 w-3.5 text-slate-400" />
             </h3>
 
-            <div className="space-y-2 text-slate-700">
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
+            <div className="space-y-2.5 text-slate-700">
+              <div>
+                <Checkbox
                   checked={showBoundary}
-                  onChange={(e) => setShowBoundary(e.target.checked)}
-                  className="rounded-xs border-slate-300 accent-[#0D1F3D]"
+                  onChange={(val) => setShowBoundary(val)}
+                  label={
+                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <span className="text-blue-600 font-mono font-bold">---</span>
+                      <span>Territory Boundary</span>
+                    </span>
+                  }
                 />
-                <span className="text-blue-600 font-mono font-bold">---</span>
-                <span>Territory Boundary</span>
-              </label>
+              </div>
 
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
+              <div>
+                <Checkbox
                   checked={showBusinesses}
-                  onChange={(e) => setShowBusinesses(e.target.checked)}
-                  className="rounded-xs border-slate-300 accent-[#0D1F3D]"
+                  onChange={(val) => setShowBusinesses(val)}
+                  label={
+                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                      <span>Businesses</span>
+                    </span>
+                  }
                 />
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-                <span>Businesses</span>
-              </label>
+              </div>
 
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
+              <div>
+                <Checkbox
                   checked={showActiveBusinesses}
-                  onChange={(e) => setShowActiveBusinesses(e.target.checked)}
-                  className="rounded-xs border-slate-300 accent-[#0D1F3D]"
+                  onChange={(val) => setShowActiveBusinesses(val)}
+                  label={
+                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
+                      <span>Active Businesses</span>
+                    </span>
+                  }
                 />
-                <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
-                <span>Active Businesses</span>
-              </label>
+              </div>
 
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
+              <div>
+                <Checkbox
                   checked={showLeads}
-                  onChange={(e) => setShowLeads(e.target.checked)}
-                  className="rounded-xs border-slate-300 accent-[#0D1F3D]"
+                  onChange={(val) => setShowLeads(val)}
+                  label={
+                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
+                      <span>Leads</span>
+                    </span>
+                  }
                 />
-                <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
-                <span>Leads</span>
-              </label>
+              </div>
 
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
+              <div>
+                <Checkbox
                   checked={showVisitedLocations}
-                  onChange={(e) => setShowVisitedLocations(e.target.checked)}
-                  className="rounded-xs border-slate-300 accent-[#0D1F3D]"
+                  onChange={(val) => setShowVisitedLocations(val)}
+                  label={
+                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <span className="text-amber-500">📍</span>
+                      <span>Visited Locations (This Month)</span>
+                    </span>
+                  }
                 />
-                <span className="text-amber-500">📍</span>
-                <span>Visited Locations (This Month)</span>
-              </label>
+              </div>
 
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
+              <div>
+                <Checkbox
                   checked={showExecutives}
-                  onChange={(e) => setShowExecutives(e.target.checked)}
-                  className="rounded-xs border-slate-300 accent-[#0D1F3D]"
+                  onChange={(val) => setShowExecutives(val)}
+                  label={
+                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <span className="text-red-500">👤</span>
+                      <span>Executives Live Location</span>
+                    </span>
+                  }
                 />
-                <span className="text-red-500">👤</span>
-                <span>Executives Live Location</span>
-              </label>
+              </div>
 
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
+              <div>
+                <Checkbox
                   checked={showRoutes}
-                  onChange={(e) => setShowRoutes(e.target.checked)}
-                  className="rounded-xs border-slate-300 accent-[#0D1F3D]"
+                  onChange={(val) => setShowRoutes(val)}
+                  label={
+                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <span className="text-blue-500 font-mono">---</span>
+                      <span>Routes (This Month)</span>
+                    </span>
+                  }
                 />
-                <span className="text-blue-500 font-mono">---</span>
-                <span>Routes (This Month)</span>
-              </label>
+              </div>
 
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
+              <div>
+                <Checkbox
                   checked={showHeatmap}
-                  onChange={(e) => setShowHeatmap(e.target.checked)}
-                  className="rounded-xs border-slate-300 accent-[#0D1F3D]"
+                  onChange={(val) => setShowHeatmap(val)}
+                  label={
+                    <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                      <span>🔥 Heatmap (Visits)</span>
+                    </span>
+                  }
                 />
-                <span>🔥 Heatmap (Visits)</span>
-              </label>
+              </div>
             </div>
           </div>
 

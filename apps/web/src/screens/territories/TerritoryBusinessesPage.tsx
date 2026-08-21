@@ -17,6 +17,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Checkbox } from '../../components/ui/Checkbox';
 import { MapKpiCard } from '../../components/maps/MapKpiCard';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import {
@@ -258,14 +259,18 @@ export default function TerritoryBusinessesPage() {
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
                     <th className="p-3 w-10 text-center">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={
                           selectedRows.length === filteredBusinesses.length &&
                           filteredBusinesses.length > 0
                         }
-                        onChange={handleSelectAll}
-                        className="rounded-xs border-slate-300 accent-[#0D1F3D]"
+                        onChange={(checked) => {
+                          if (checked) {
+                            setSelectedRows(filteredBusinesses.map((b) => b.id));
+                          } else {
+                            setSelectedRows([]);
+                          }
+                        }}
                       />
                     </th>
                     <th className="p-3">Business Name</th>
@@ -284,11 +289,9 @@ export default function TerritoryBusinessesPage() {
                     return (
                       <tr key={b.id} className="hover:bg-slate-50/70">
                         <td className="p-3 text-center">
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={isChecked}
                             onChange={() => handleToggleRow(b.id)}
-                            className="rounded-xs border-slate-300 accent-[#0D1F3D]"
                           />
                         </td>
                         <td className="p-3">

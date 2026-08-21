@@ -24,6 +24,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Checkbox } from '../../components/ui/Checkbox';
 import { MapKpiCard } from '../../components/maps/MapKpiCard';
 import { mockTerritoriesList, TerritoryItem } from './territoriesData';
 
@@ -265,14 +266,18 @@ export default function TerritoriesListPage() {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
                 <th className="p-3 w-10 text-center">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={
                       selectedRows.length === filteredTerritories.length &&
                       filteredTerritories.length > 0
                     }
-                    onChange={handleSelectAll}
-                    className="rounded-xs border-slate-300 accent-[#0D1F3D]"
+                    onChange={(checked) => {
+                      if (checked) {
+                        setSelectedRows(filteredTerritories.map((t) => t.id));
+                      } else {
+                        setSelectedRows([]);
+                      }
+                    }}
                   />
                 </th>
                 <th className="p-3">Territory Name</th>
@@ -308,11 +313,9 @@ export default function TerritoriesListPage() {
                       }`}
                     >
                       <td className="p-3 text-center">
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={isChecked}
                           onChange={() => handleToggleRow(terr.id)}
-                          className="rounded-xs border-slate-300 accent-[#0D1F3D]"
                         />
                       </td>
 
