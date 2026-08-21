@@ -13,6 +13,8 @@ import {
   Monitor,
   Calendar,
   Sparkles,
+  Search,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
@@ -44,12 +46,22 @@ const mockTeamRanks: TeamRankItem[] = [
 export const TeamRankingPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedPeriod, setSelectedPeriod] = useState('May 2025');
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<
     'Overall Ranking' | 'Sales' | 'Target Achievement' | 'Collections' | 'Members'
   >('Overall Ranking');
 
   const sortedTeams = React.useMemo(() => {
-    let list = [...mockTeamRanks];
+    const trimmedQuery = searchQuery.trim().toLowerCase();
+    let list = mockTeamRanks.filter((t) => {
+      return (
+        !trimmedQuery ||
+        t.teamName.toLowerCase().includes(trimmedQuery) ||
+        t.managerName.toLowerCase().includes(trimmedQuery) ||
+        t.region.toLowerCase().includes(trimmedQuery)
+      );
+    });
+
     list.sort((a, b) => {
       if (activeTab === 'Target Achievement') return b.achievementPct - a.achievementPct;
       if (activeTab === 'Sales') return b.sales - a.sales;
@@ -58,7 +70,7 @@ export const TeamRankingPage: React.FC = () => {
       return b.achievementPct - a.achievementPct;
     });
     return list.map((t, idx) => ({ ...t, dynamicRank: idx + 1 }));
-  }, [activeTab]);
+  }, [activeTab, searchQuery]);
 
   const handleTabChange = (tab: any) => {
     setActiveTab(tab);
@@ -119,7 +131,43 @@ export const TeamRankingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* UNIFIED SUB-TABS */}
+      {/* FILTER BAR */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-sm border border-slate-200">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="w-36">
+            <Select
+              label="Select Period"
+              value={selectedPeriod}
+              onChange={(e) => setSelectedPeriod(e.target.value)}
+              options={[
+                { value: 'May 2025', label: 'May 2025' },
+                { value: 'April 2025', label: 'April 2025' },
+                { value: 'Q2 2025', label: 'Q2 2025' },
+              ]}
+              searchable={false}
+            />
+          </div>
+          <div className="relative w-64 pt-5">
+            <Search className="absolute left-3 top-8 h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search team or manager..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-sm border border-slate-200 bg-slate-50 pl-8 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setSearchQuery('')}
+          className="mt-5 text-slate-600 border-slate-200 font-bold hover:bg-slate-100"
+        >
+          <RotateCcw className="mr-1 h-3.5 w-3.5" /> Reset
+        </Button>
+      </div>
       <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto text-xs font-bold scrollbar-none pb-0">
         {(['Overall Ranking', 'Sales', 'Target Achievement', 'Collections', 'Members'] as const).map((tab) => (
           <button

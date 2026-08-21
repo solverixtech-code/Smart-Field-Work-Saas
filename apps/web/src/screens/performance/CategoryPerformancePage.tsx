@@ -10,6 +10,8 @@ import {
   Eye,
   ShoppingBag,
   Sparkles,
+  Search,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 
@@ -37,12 +39,21 @@ const mockCategoryRanks: CategoryRankItem[] = [
 
 export const CategoryPerformancePage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<
     'Performance Overview' | 'Sales' | 'Targets vs Achievement' | 'Demos & Leads' | 'Collections'
   >('Performance Overview');
 
   const sortedCategories = React.useMemo(() => {
-    let list = [...mockCategoryRanks];
+    const trimmedQuery = searchQuery.trim().toLowerCase();
+    let list = mockCategoryRanks.filter((c) => {
+      return (
+        !trimmedQuery ||
+        c.categoryName.toLowerCase().includes(trimmedQuery) ||
+        c.type.toLowerCase().includes(trimmedQuery)
+      );
+    });
+
     list.sort((a, b) => {
       if (activeTab === 'Sales') return b.sales - a.sales;
       if (activeTab === 'Targets vs Achievement') return b.achievementPct - a.achievementPct;
@@ -51,7 +62,7 @@ export const CategoryPerformancePage: React.FC = () => {
       return b.sales - a.sales;
     });
     return list.map((c, idx) => ({ ...c, dynamicRank: idx + 1 }));
-  }, [activeTab]);
+  }, [activeTab, searchQuery]);
 
   const handleTabChange = (tab: any) => {
     setActiveTab(tab);
@@ -112,7 +123,30 @@ export const CategoryPerformancePage: React.FC = () => {
         </div>
       </div>
 
-      {/* UNIFIED SUB-TABS */}
+      {/* FILTER BAR */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-sm border border-slate-200">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative w-64 pt-1">
+            <Search className="absolute left-3 top-4 h-3.5 w-3.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search category name or type..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-sm border border-slate-200 bg-slate-50 pl-8 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setSearchQuery('')}
+          className="text-slate-600 border-slate-200 font-bold hover:bg-slate-100"
+        >
+          <RotateCcw className="mr-1 h-3.5 w-3.5" /> Reset
+        </Button>
+      </div>
       <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto text-xs font-bold scrollbar-none pb-0">
         {(['Performance Overview', 'Sales', 'Targets vs Achievement', 'Demos & Leads', 'Collections'] as const).map((tab) => (
           <button

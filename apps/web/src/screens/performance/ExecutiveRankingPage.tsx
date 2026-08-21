@@ -60,8 +60,12 @@ export const ExecutiveRankingPage: React.FC = () => {
   >('Overall Ranking');
 
   const filteredExecutives = useMemo(() => {
+    const trimmedQuery = searchQuery.trim().toLowerCase();
     let list = mockExecutiveRanks.filter((exec) => {
-      const matchesSearch = exec.name.toLowerCase().includes(searchQuery.toLowerCase()) || exec.id.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        !trimmedQuery ||
+        exec.name.toLowerCase().includes(trimmedQuery) ||
+        exec.id.toLowerCase().includes(trimmedQuery);
       const matchesTeam = selectedTeam === 'All' || exec.team === selectedTeam;
       const matchesRegion = selectedRegion === 'All' || exec.region === selectedRegion;
       return matchesSearch && matchesTeam && matchesRegion;

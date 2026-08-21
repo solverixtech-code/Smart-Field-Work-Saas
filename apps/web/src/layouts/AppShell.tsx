@@ -820,7 +820,7 @@ export default function AppShell() {
         </nav>
 
         {/* User Footer Profile Card in Sidebar */}
-        <div className="border-t border-slate-100 p-2.5 overflow-x-hidden" ref={sidebarRef}>
+        <div className="border-t border-slate-100 p-2.5 relative z-20" ref={sidebarRef}>
           {user && (
             <div className="relative">
               <div
@@ -828,7 +828,7 @@ export default function AppShell() {
                 className={`flex items-center rounded-sm p-2 transition-all cursor-pointer ${
                   showBigLogo ? 'justify-between' : 'justify-center'
                 } ${
-                  userMenuOpen ? 'bg-slate-100' : 'hover:bg-slate-50'
+                  userMenuOpen ? 'bg-slate-100 ring-1 ring-slate-200' : 'hover:bg-slate-50'
                 }`}
               >
                 <div className={`flex items-center gap-2.5 ${showBigLogo ? 'overflow-hidden' : 'justify-center'}`}>
@@ -860,15 +860,19 @@ export default function AppShell() {
                 {showBigLogo && (
                   <ChevronRight
                     className={`h-4 w-4 text-slate-400 transition-transform ${
-                      userMenuOpen ? 'rotate-90 text-slate-600' : ''
+                      userMenuOpen ? '-rotate-90 text-slate-600' : ''
                     }`}
                   />
                 )}
               </div>
 
-              {/* User Quick Actions Dropdown Card */}
+              {/* User Quick Actions Dropdown Card popping upwards */}
               {userMenuOpen && (
-                <div className="absolute bottom-full left-0 mb-2 w-full rounded-sm border border-slate-200 bg-white p-2 shadow-2xl space-y-1 z-50">
+                <div
+                  className={`absolute bottom-full mb-2 rounded-sm border border-slate-200 bg-white p-2 shadow-2xl space-y-1 z-[100] ${
+                    showBigLogo ? 'left-0 right-0 w-full' : 'left-0 w-56'
+                  }`}
+                >
                   <div className="px-3 py-2 border-b border-slate-100 mb-1">
                     <p className="text-xs font-bold text-[#0D1F3D] truncate">{user.fullName || user.email}</p>
                     <p className="text-[11px] text-slate-400 truncate">{user.email}</p>
@@ -876,23 +880,30 @@ export default function AppShell() {
                   <NavLink
                     to="/admin/profile"
                     onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
+                    className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
                   >
                     <User className="h-4 w-4 text-[#E20613]" /> My Profile
                   </NavLink>
                   <NavLink
                     to="/admin/profile/security"
                     onClick={() => setUserMenuOpen(false)}
-                    className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
+                    className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
                   >
-                    <Shield className="h-4 w-4 text-blue-600" /> Security
+                    <Shield className="h-4 w-4 text-blue-600" /> Security & 2FA
+                  </NavLink>
+                  <NavLink
+                    to="/admin/profile/sessions"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors"
+                  >
+                    <Monitor className="h-4 w-4 text-purple-600" /> Active Sessions
                   </NavLink>
                   <Button
                     variant="ghost"
                     size="sm"
                     fullWidth
                     onClick={handleLogout}
-                    className="flex items-center justify-start gap-2.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs mt-1 rounded-sm"
+                    className="flex items-center justify-start gap-2.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs mt-1 rounded-sm border-t border-slate-100 pt-2"
                   >
                     <LogOut className="h-4 w-4 text-rose-600" /> Sign Out
                   </Button>
