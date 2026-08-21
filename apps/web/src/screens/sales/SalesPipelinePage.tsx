@@ -244,12 +244,20 @@ export default function SalesPipelinePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3.5 items-start">
           {pipelineStagesList.map((stg) => {
-            const stageDeals = mockPipelineDeals.filter((d) => d.stage === stg.id);
+            const stageDeals = deals.filter((d) => d.stage === stg.id);
+            const isDragOver = dragOverStageId === stg.id;
 
             return (
               <div
                 key={stg.id}
-                className="space-y-3 rounded-md bg-slate-100/70 p-3 border border-slate-200/80 shadow-2xs"
+                onDragOver={(e) => handleDragOver(e, stg.id)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, stg.id)}
+                className={`space-y-3 rounded-md p-3 border transition-all ${
+                  isDragOver
+                    ? 'bg-purple-50/80 border-purple-400 ring-2 ring-purple-400/30'
+                    : 'bg-slate-100/70 border-slate-200/80'
+                }`}
               >
                 {/* Column Header */}
                 <div
@@ -257,62 +265,70 @@ export default function SalesPipelinePage() {
                   className="flex items-center justify-between rounded-md bg-white p-2.5 border border-slate-200/90 shadow-2xs cursor-pointer hover:border-purple-300 transition"
                 >
                   <span className="text-xs font-extrabold text-[#0D1F3D]">
-                    {stg.title} <span className="text-slate-500 font-bold">({stg.count})</span>
+                    {stg.title} <span className="text-slate-500 font-bold">({stageDeals.length})</span>
                   </span>
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: stg.color }} />
                 </div>
 
                 {/* Column Card List */}
                 <div className="space-y-2.5 min-h-[280px]">
-                  {stageDeals.map((deal) => (
-                    <div
-                      key={deal.id}
-                      onClick={() => handleCardClick(deal)}
-                      className="rounded-md border border-slate-200/90 bg-white p-3 shadow-xs space-y-2.5 cursor-pointer hover:border-purple-600 hover:shadow-md transition-all group"
-                    >
-                      <div className="flex items-start gap-2">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-purple-50 text-purple-700 border border-purple-100 text-xs font-bold mt-0.5">
-                          <Building2 className="h-3.5 w-3.5" />
+                  {stageDeals.map((deal) => {
+                    const isBeingDragged = draggedDealId === deal.id;
+                    return (
+                      <div
+                        key={deal.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, deal.id)}
+                        onDragEnd={() => setDraggedDealId(null)}
+                        onClick={() => handleCardClick(deal)}
+                        className={`rounded-md border border-slate-200/90 bg-white p-3 shadow-xs space-y-2.5 cursor-grab active:cursor-grabbing hover:border-purple-600 hover:shadow-md transition-all group ${
+                          isBeingDragged ? 'opacity-40 scale-95 border-dashed border-purple-500' : ''
+                        }`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-purple-50 text-purple-700 border border-purple-100 text-xs font-bold mt-0.5">
+                            <Building2 className="h-3.5 w-3.5" />
+                          </div>
+                          <div className="truncate">
+                            <h4 className="text-xs font-extrabold text-[#0D1F3D] group-hover:text-purple-600 transition truncate">
+                              {deal.businessName}
+                            </h4>
+                            <p className="text-[10px] font-semibold text-slate-400 truncate">
+                              {deal.city}
+                            </p>
+                          </div>
                         </div>
-                        <div className="truncate">
-                          <h4 className="text-xs font-extrabold text-[#0D1F3D] group-hover:text-purple-600 transition truncate">
-                            {deal.businessName}
-                          </h4>
-                          <p className="text-[10px] font-semibold text-slate-400 truncate">
-                            {deal.city}
-                          </p>
-                        </div>
-                      </div>
 
-                      <div className="flex items-center justify-between pt-1 text-xs">
-                        <span className="font-extrabold text-[#0D1F3D] text-xs">
-                          ₹{deal.amount.toLocaleString('en-IN')}
-                        </span>
-                        <span className="text-[10px] font-medium text-slate-400">
-                          {deal.date}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-100">
-                        <div className="flex items-center gap-1.5">
-                          <img
-                            src={deal.executiveAvatar}
-                            alt={deal.executiveName}
-                            className="h-5 w-5 rounded-full object-cover border border-slate-200"
-                          />
-                          <span className="text-[10px] font-semibold text-slate-600 truncate max-w-[80px]">
-                            {deal.executiveName}
+                        <div className="flex items-center justify-between pt-1 text-xs">
+                          <span className="font-extrabold text-[#0D1F3D] text-xs">
+                            ₹{deal.amount.toLocaleString('en-IN')}
+                          </span>
+                          <span className="text-[10px] font-medium text-slate-400">
+                            {deal.date}
                           </span>
                         </div>
 
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold border ${stg.badgeBg} ${stg.badgeText} ${stg.badgeBorder}`}
-                        >
-                          {deal.stageLabel}
-                        </span>
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                          <div className="flex items-center gap-1.5">
+                            <img
+                              src={deal.executiveAvatar}
+                              alt={deal.executiveName}
+                              className="h-5 w-5 rounded-full object-cover border border-slate-200"
+                            />
+                            <span className="text-[10px] font-semibold text-slate-600 truncate max-w-[80px]">
+                              {deal.executiveName}
+                            </span>
+                          </div>
+
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold border ${stg.badgeBg} ${stg.badgeText} ${stg.badgeBorder}`}
+                          >
+                            {stg.title}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <button
@@ -320,7 +336,7 @@ export default function SalesPipelinePage() {
                   onClick={() => navigate(`/admin/sales/${stg.routeKey}`)}
                   className="w-full text-center text-xs font-bold text-slate-600 hover:text-purple-700 py-1.5 rounded-md hover:bg-white transition cursor-pointer"
                 >
-                  + View All ({stg.count})
+                  + View All ({stageDeals.length})
                 </button>
               </div>
             );
@@ -452,7 +468,7 @@ export default function SalesPipelinePage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-semibold text-slate-700">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-extrabold text-[#0D1F3D]">
                 <th className="py-2.5 px-3">Lead / Business</th>
                 <th className="py-2.5 px-3">Stage</th>
                 <th className="py-2.5 px-3">Executive</th>

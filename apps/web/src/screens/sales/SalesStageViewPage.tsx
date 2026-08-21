@@ -130,33 +130,44 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
       {/* BREADCRUMB & HEADER BAR */}
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+      <div className="space-y-1">
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
           <span className="hover:text-purple-600 cursor-pointer" onClick={() => navigate('/admin/dashboard')}>
             Dashboard
           </span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+          <span>/</span>
           <span className="hover:text-purple-600 cursor-pointer" onClick={() => navigate('/admin/sales/pipeline')}>
             Sales Pipeline
           </span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+          <span>/</span>
           <span className="text-[#0D1F3D] font-bold">{metadata.title}</span>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-200 shadow-xs">
-              <Users className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-[#0D1F3D]">{metadata.title}</h1>
-              </div>
-              <p className="text-xs font-semibold text-slate-500">{metadata.description}</p>
-            </div>
+          <div>
+            <h1 className="text-2xl font-bold text-[#0D1F3D]">{metadata.title}</h1>
+            <p className="text-xs font-normal text-slate-500">{metadata.description}</p>
           </div>
 
           <div className="flex items-center gap-2.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toast.info(`Exporting ${metadata.title} CSV report...`)}
+              className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
+            >
+              <Download className="h-3.5 w-3.5 text-emerald-600" /> Export
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toast.info(`Importing template for ${metadata.title}...`)}
+              className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
+            >
+              <Upload className="h-3.5 w-3.5 text-blue-600" /> Import
+            </Button>
+
             <Button
               variant="accent"
               size="sm"
@@ -176,19 +187,19 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
           return (
             <div
               key={idx}
-              className="rounded-md border border-slate-200 bg-white p-4 shadow-xs flex items-center justify-between"
+              className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between"
             >
               <div>
-                <span className="text-[11px] font-bold text-slate-500 block">{kpi.label}</span>
-                <span className="text-2xl font-black text-[#0D1F3D]">{kpi.value}</span>
-                <span className="text-[10px] font-extrabold text-emerald-600 flex items-center gap-1 mt-0.5">
+                <span className="text-xs font-semibold text-slate-500 block">{kpi.label}</span>
+                <span className="text-xl font-extrabold text-[#0D1F3D]">{kpi.value}</span>
+                <span className="text-xs font-semibold text-emerald-600 block mt-0.5">
                   {kpi.subtext}
                 </span>
               </div>
               <div
-                className={`flex h-11 w-11 items-center justify-center rounded-lg border border-slate-100 shrink-0 ${kpi.color}`}
+                className={`flex h-10 w-10 items-center justify-center rounded-sm border border-slate-100 shrink-0 ${kpi.color}`}
               >
-                <IconComponent className="h-6 w-6" />
+                <IconComponent className="h-5 w-5" />
               </div>
             </div>
           );
@@ -317,7 +328,7 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
         <div className="overflow-x-auto border-t border-slate-100 pt-2">
           <table className="w-full text-left text-xs font-semibold text-slate-700">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-extrabold text-[#0D1F3D]">
                 <th className="py-3 px-3 w-10 text-center">
                   <input
                     type="checkbox"
