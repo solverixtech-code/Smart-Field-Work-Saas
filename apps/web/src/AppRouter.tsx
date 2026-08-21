@@ -53,6 +53,14 @@ import ExecutiveTargetsScreen from './screens/targets/ExecutiveTargetsScreen';
 import IncentiveRulesPage from './screens/targets/IncentiveRulesPage';
 import IncentivesManagementPage from './screens/targets/IncentivesManagementPage';
 
+import { SalesPerformancePage } from './screens/performance/SalesPerformancePage';
+import { ExecutiveRankingPage } from './screens/performance/ExecutiveRankingPage';
+import { TeamRankingPage } from './screens/performance/TeamRankingPage';
+import { TerritoryRankingPage } from './screens/performance/TerritoryRankingPage';
+import { CategoryPerformancePage } from './screens/performance/CategoryPerformancePage';
+import { ConversionFunnelPage } from './screens/performance/ConversionFunnelPage';
+import { ProductivityReportPage } from './screens/performance/ProductivityReportPage';
+
 import AllBusinessesPage from './screens/businesses/AllBusinessesPage';
 import AddBusinessPage from './screens/businesses/AddBusinessPage';
 import BusinessLayoutWrapper from './screens/businesses/BusinessLayoutWrapper';
@@ -323,6 +331,28 @@ export default function AppRouter() {
               <Route path="/admin/incentives/approvals" element={<IncentivesManagementPage />} />
               <Route path="/admin/incentives/payouts" element={<IncentivesManagementPage />} />
               <Route path="/admin/incentives/:executiveId" element={<IncentivesManagementPage />} />
+            </Route>
+
+            {/* Sales Performance Routes (Screens 137 to 143) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/performance" element={<SalesPerformancePage />} />
+              <Route path="/admin/performance/executives" element={<ExecutiveRankingPage />} />
+              <Route path="/admin/performance/teams" element={<TeamRankingPage />} />
+              <Route path="/admin/performance/territories" element={<TerritoryRankingPage />} />
+              <Route path="/admin/performance/categories" element={<CategoryPerformancePage />} />
+              <Route path="/admin/performance/funnel" element={<ConversionFunnelPage />} />
+              <Route path="/admin/performance/productivity" element={<ProductivityReportPage />} />
             </Route>
 
             <Route

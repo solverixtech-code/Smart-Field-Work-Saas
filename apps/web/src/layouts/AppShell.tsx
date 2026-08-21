@@ -30,6 +30,9 @@ import {
   Calendar,
   RotateCcw,
   CheckCircle2,
+  Tag,
+  Award,
+  Zap,
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store';
 import { clearCredentials } from '../store/slices/authSlice';
@@ -136,6 +139,59 @@ const navCategories: NavCategory[] = [
         to: '/admin/incentives',
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.FINANCE_OPS],
         badge: '₹1.24L',
+      },
+    ],
+  },
+  {
+    title: 'Sales Performance',
+    items: [
+      {
+        label: 'Sales Performance',
+        icon: TrendingUp,
+        to: '/admin/performance',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: 'Hub',
+      },
+      {
+        label: 'Executive Ranking',
+        icon: Award,
+        to: '/admin/performance/executives',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: 'Top 25',
+      },
+      {
+        label: 'Team Ranking',
+        icon: Users,
+        to: '/admin/performance/teams',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '12 Teams',
+      },
+      {
+        label: 'Territory Ranking',
+        icon: Globe,
+        to: '/admin/performance/territories',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '18 Zones',
+      },
+      {
+        label: 'Category Performance',
+        icon: Tag,
+        to: '/admin/performance/categories',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+      },
+      {
+        label: 'Conversion Funnel',
+        icon: Target,
+        to: '/admin/performance/funnel',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: 'Funnel',
+      },
+      {
+        label: 'Productivity Report',
+        icon: Zap,
+        to: '/admin/performance/productivity',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '81.4 Score',
       },
     ],
   },
