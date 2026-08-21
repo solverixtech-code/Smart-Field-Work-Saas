@@ -581,10 +581,10 @@ export function InteractiveMap({
                 left: 0,
                 top: 0,
               }}
-              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform hover:scale-110 pointer-events-auto"
+              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer pointer-events-auto"
             >
               <div
-                className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-white shadow-lg ring-4 ${ringColor}`}
+                className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-white shadow-lg ring-4 transition-transform hover:scale-110 ${ringColor}`}
               >
                 <img src={exec.avatar} alt={exec.name} className="h-full w-full rounded-full object-cover" />
                 <span className={`absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white ${ringColor}`} />
@@ -660,10 +660,10 @@ export function InteractiveMap({
                 left: 0,
                 top: 0,
               }}
-              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform hover:scale-125 pointer-events-auto"
+              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer pointer-events-auto"
             >
               <div
-                className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-white shadow-md font-bold text-xs ${markerBg}`}
+                className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-white shadow-md font-bold text-xs transition-transform hover:scale-125 ${markerBg}`}
               >
                 {pr.markerColor === 'star' ? (
                   <Star className="h-4 w-4 fill-slate-900" />
