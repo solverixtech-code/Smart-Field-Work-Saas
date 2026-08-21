@@ -5,6 +5,7 @@ import { X, Edit, Phone, User } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
+import { ClockTimePicker } from '../../components/ui/ClockTimePicker';
 import { mockTerritoryExecutives } from '../territories/territoriesData';
 import { DemoItem } from './demosData';
 
@@ -139,7 +140,7 @@ export function EditDemoModal({ isOpen, onClose, demo, onSuccess }: EditDemoModa
               <Select
                 label="Demo Type *"
                 value={demoType}
-                onChange={(e) => setDemoType(e.target.value)}
+                onChange={(e) => setDemoType(e.target.value as any)}
                 searchable={false}
                 options={[
                   { value: 'Product Demo', label: 'Product Demo' },
@@ -202,16 +203,12 @@ export function EditDemoModal({ isOpen, onClose, demo, onSuccess }: EditDemoModa
             />
 
             {/* Demo Time */}
-            <div className="space-y-1">
-              <label className="font-bold text-slate-700 block text-xs">Demo Time *</label>
-              <input
-                type="text"
-                value={demoTime}
-                onChange={(e) => setDemoTime(e.target.value)}
-                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-[#0D1F3D] focus:outline-none font-mono text-xs"
-                required
-              />
-            </div>
+            <ClockTimePicker
+              label="Demo Time"
+              value={demoTime}
+              onChange={(t) => setDemoTime(t)}
+              required
+            />
           </div>
 
           {/* Notes */}

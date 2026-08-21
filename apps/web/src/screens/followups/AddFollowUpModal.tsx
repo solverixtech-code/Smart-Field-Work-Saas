@@ -14,6 +14,7 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
+import { ClockTimePicker } from '../../components/ui/ClockTimePicker';
 import { mockTerritoryExecutives } from '../territories/territoriesData';
 import { mockBusinesses } from '../businesses/businessesData';
 import { mockFollowUpsList } from './followupsData';
@@ -256,17 +257,13 @@ export function AddFollowUpModal({ isOpen, onClose, onSuccess }: AddFollowUpModa
               required
             />
 
-            {/* Follow-up Time */}
-            <div className="space-y-1">
-              <label className="font-bold text-slate-700 block text-xs">Follow-up Time *</label>
-              <input
-                type="time"
-                value={followupTime}
-                onChange={(e) => setFollowupTime(e.target.value)}
-                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-[#0D1F3D] focus:outline-none font-mono text-xs"
-                required
-              />
-            </div>
+            {/* Follow-up Time with ClockTimePicker */}
+            <ClockTimePicker
+              label="Follow-up Time"
+              value={followupTime}
+              onChange={(t) => setFollowupTime(t)}
+              required
+            />
 
             {/* Contact Phone */}
             <div className="space-y-1">
@@ -281,7 +278,10 @@ export function AddFollowUpModal({ isOpen, onClose, onSuccess }: AddFollowUpModa
                   type="tel"
                   placeholder="98765 43210"
                   value={phoneNumber.replace('+91 ', '')}
-                  onChange={(e) => setPhoneNumber(`+91 ${e.target.value}`)}
+                  onChange={(e) => {
+                    const cleanDigits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    setPhoneNumber(cleanDigits ? `+91 ${cleanDigits}` : '');
+                  }}
                   className="w-full rounded-sm border border-slate-200 bg-white pl-11 pr-3 py-2 text-slate-800 font-mono text-xs placeholder-slate-400 focus:border-[#0D1F3D] focus:outline-none"
                   required
                 />
