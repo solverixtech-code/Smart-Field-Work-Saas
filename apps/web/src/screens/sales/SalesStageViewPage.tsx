@@ -40,9 +40,20 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
+import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
+import {
+  Eye,
+  Edit,
+  RefreshCw,
+  PhoneCall,
+  CalendarClock,
+  Trash2,
+  X,
+} from 'lucide-react';
 import {
   stageRouteMetadataMap,
   mockPipelineDeals,
+  pipelineStagesList,
   PipelineDealCard,
 } from './salesPipelineData';
 
@@ -84,6 +95,9 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
 
   const metadata = stageRouteMetadataMap[activeStageKey] || stageRouteMetadataMap.prospects;
 
+  // Deals State
+  const [deals, setDeals] = useState<PipelineDealCard[]>(mockPipelineDeals);
+
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [stageDate, setStageDate] = useState('2025-05-24');
@@ -94,8 +108,14 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Change Stage Modal State
+  const [stageModalOpen, setStageModalOpen] = useState(false);
+  const [activeDealForStage, setActiveDealForStage] = useState<PipelineDealCard | null>(null);
+  const [targetStageId, setTargetStageId] = useState<string>('new');
+  const [stageNotes, setStageNotes] = useState<string>('');
+
   // Map active stage to deals
-  const filteredDeals = mockPipelineDeals.filter((deal) => {
+  const filteredDeals = deals.filter((deal) => {
     const matchesSearch =
       !searchQuery.trim() ||
       deal.businessName.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
@@ -125,6 +145,34 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
     } else {
       setSelectedRows([...selectedRows, id]);
     }
+  };
+
+  const openChangeStageModal = (deal: PipelineDealCard) => {
+    setActiveDealForStage(deal);
+    setTargetStageId(deal.stage);
+    setStageNotes('');
+    setStageModalOpen(true);
+  };
+
+  const handleSaveStageChange = () => {
+    if (!activeDealForStage) return;
+
+    const newStageConfig = pipelineStagesList.find((s) => s.id === targetStageId);
+    setDeals((prev) =>
+      prev.map((d) => {
+        if (d.id === activeDealForStage.id) {
+          return {
+            ...d,
+            stage: targetStageId as any,
+            stageLabel: newStageConfig?.title || d.stageLabel,
+          };
+        }
+        return d;
+      })
+    );
+
+    toast.success(`Updated stage for ${activeDealForStage.businessName} to "${newStageConfig?.title || targetStageId}"`);
+    setStageModalOpen(false);
   };
 
   return (
@@ -481,13 +529,36 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
 
                     {/* Actions */}
                     <td className="py-3 px-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() => navigate(`/admin/leads/${deal.id}`)}
-                        className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition mx-auto cursor-pointer"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
+                      <RowActionsMenu
+                        items={[
+                          {
+                            label: 'View Lead Details',
+                            icon: Eye,
+                            onClick: () => navigate(`/admin/leads/${deal.id}`),
+                          },
+                          {
+                            label: 'Change Stage / Status',
+                            icon: RefreshCw,
+                            onClick: () => openChangeStageModal(deal),
+                          },
+                          {
+                            label: 'Schedule Product Demo',
+                            icon: Monitor,
+                            onClick: () => navigate('/admin/demos/today'),
+                          },
+                          {
+                            label: 'Add Follow-up Action',
+                            icon: PhoneCall,
+                            onClick: () => navigate('/admin/follow-ups/today'),
+                          },
+                          {
+                            label: 'Edit Lead Profile',
+                            icon: Edit,
+                            divider: true,
+                            onClick: () => navigate(`/admin/leads/${deal.id}/edit`),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 );
@@ -544,6 +615,72 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
           </div>
         </div>
       </div>
+
+      {/* CHANGE LEAD STAGE MODAL */}
+      {stageModalOpen && activeDealForStage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-md bg-white p-5 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-sm font-extrabold text-[#0D1F3D]">Change Lead Stage</h3>
+                <p className="text-xs font-semibold text-slate-400">{activeDealForStage.businessName}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStageModalOpen(false)}
+                className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs font-semibold">
+              <div>
+                <Select
+                  label="Select New Stage *"
+                  value={targetStageId}
+                  onChange={(e) => setTargetStageId(e.target.value)}
+                  options={pipelineStagesList.map((s) => ({
+                    value: s.id,
+                    label: `${s.title} (${s.subtitle})`,
+                  }))}
+                  searchable={false}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-700 font-bold block">Stage Change Remarks / Reason</label>
+                <textarea
+                  rows={3}
+                  value={stageNotes}
+                  onChange={(e) => setStageNotes(e.target.value)}
+                  placeholder="Provide reason for moving lead to new stage..."
+                  className="w-full rounded-md border border-slate-200 p-2.5 text-xs text-[#0D1F3D] placeholder-slate-400 focus:border-purple-600 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setStageModalOpen(false)}
+                className="text-xs font-bold"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="accent"
+                size="sm"
+                onClick={handleSaveStageChange}
+                className="bg-[#E20613] hover:bg-red-700 text-white font-bold text-xs"
+              >
+                Update Stage
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
