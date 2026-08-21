@@ -374,7 +374,7 @@ const navCategories: NavCategory[] = [
           Role.FINANCE_OPS,
           Role.SUPPORT,
         ],
-        badge: '35 Masters',
+        badge: '40 Masters',
       },
       {
         label: 'Real-time Activity',
