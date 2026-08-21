@@ -745,6 +745,9 @@ export default function AppShell() {
                       (location.pathname.startsWith('/admin/incentives/') && !location.pathname.startsWith('/admin/incentives/rules'))
                     );
                   }
+                  if (item.to.startsWith('/admin/performance')) {
+                    return location.pathname === item.to;
+                  }
                   if (['/admin/dashboard', '/admin/profile', '/admin/teams', '/admin/territories', '/admin/leads', '/admin/businesses'].includes(item.to)) {
                     return location.pathname === item.to;
                   }

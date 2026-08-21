@@ -275,29 +275,29 @@ export const ExecutiveRankingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Sidebars (4 Cols) */}
-        <div className="space-y-4 lg:col-span-4 flex flex-col justify-between">
-          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+        {/* Right Sidebars */}
+        <div className="space-y-4 lg:col-span-4 flex flex-col justify-between max-w-sm w-full ml-auto">
+          <div className="rounded-sm border border-slate-200 bg-white p-3.5 shadow-xs space-y-3">
             <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Achievement Distribution</h3>
-            <div className="flex items-center justify-between">
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-8 border-emerald-500 border-r-blue-500 border-b-amber-500 border-l-rose-500">
-                <span className="text-xs font-extrabold text-[#0D1F3D]">25 Staff</span>
+            <div className="flex items-center gap-3">
+              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-6 border-emerald-500 border-r-blue-500 border-b-amber-500 border-l-rose-500">
+                <span className="text-[11px] font-extrabold text-[#0D1F3D]">25 Staff</span>
               </div>
-              <div className="space-y-1 text-xs font-semibold">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-emerald-500" /> 120% and above</span>
+              <div className="space-y-1 text-[11px] font-semibold w-full">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-emerald-500" /> ≥ 120%</span>
                   <span className="font-bold text-slate-900">8 (32%)</span>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-blue-500" /> 100% - 119%</span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-blue-500" /> 100–119%</span>
                   <span className="font-bold text-slate-900">10 (40%)</span>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-amber-500" /> 80% - 99%</span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-amber-500" /> 80–99%</span>
                   <span className="font-bold text-slate-900">5 (20%)</span>
                 </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-rose-500" /> Below 80%</span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-rose-500" /> &lt; 80%</span>
                   <span className="font-bold text-slate-900">2 (8%)</span>
                 </div>
               </div>
