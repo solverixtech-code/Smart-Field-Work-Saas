@@ -153,7 +153,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
           type="button"
           disabled={disabled}
           onClick={() => setIsOpen((prev) => !prev)}
-          className={`w-full flex items-center justify-between rounded-sm border bg-white py-2.5 text-xs font-semibold text-[#0D1F3D] transition-all cursor-pointer ${
+          className={`w-full flex items-center justify-between rounded-sm border bg-white py-2.5 text-xs font-semibold text-[#0D1F3D] transition-all cursor-pointer h-10 shrink-0 ${
             leftIcon ? 'pl-10 pr-9' : 'px-3.5'
           } ${
             error

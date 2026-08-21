@@ -74,19 +74,19 @@ export const SetTargetModal: React.FC<SetTargetModalProps> = ({ isOpen, onClose 
 
       {/* Centered Animated Modal Container */}
       <div
-        className={`relative w-full max-w-xl rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 my-8 z-10 transition-all duration-250 ease-out font-sans text-left ${
+        className={`relative w-full max-w-xl min-h-[560px] flex flex-col justify-between rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 my-8 z-10 transition-all duration-250 ease-out font-sans text-left ${
           visible ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-red-50 text-red-600 border border-red-200/60 shadow-xs">
               <Target className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-base font-extrabold text-[#0D1F3D] leading-tight">Set New Target</h2>
-              <p className="text-[11px] font-semibold text-slate-400">Configure monthly or quarterly performance quotas</p>
+              <p className="text-xs font-medium text-slate-600">Configure monthly or quarterly performance quotas</p>
             </div>
           </div>
           <button

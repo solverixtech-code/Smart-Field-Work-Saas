@@ -70,6 +70,10 @@ This document establishes the binding design system, component standards, typogr
 3. **Smooth Enterprise Modal Animations**:
    - All modals must be rendered via portals with smooth two-stage backdrop blur & scale-up transitions (`scale-95 opacity-0` ➔ `scale-100 opacity-100`).
 
+4. **Fixed Layout Bounds & Height Consistency (STRICT BINDING RULE)**:
+   - Modals must NEVER shift, jump, or change height by even a single pixel when switching sub-tabs, target types, radio options, or conditional input fields (e.g. switching between Team Target and Individual Executive).
+   - Set fixed container height bounds (`min-h-[560px] flex flex-col justify-between`) and enforce fixed dropdown trigger height (`h-10 min-h-[40px]`) so the modal frame remains 100% rock-solid, fixed, and pixel-stable.
+
 ---
 
 ## 5. Sidebar Navigation & Active States
