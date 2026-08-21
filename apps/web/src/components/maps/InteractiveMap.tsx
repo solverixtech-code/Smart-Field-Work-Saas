@@ -192,6 +192,119 @@ export function InteractiveMap({
     }
   }, [mapType]);
 
+  const [fetchedRealRoadPath, setFetchedRealRoadPath] = useState<[number, number][]>([]);
+
+  // Fetch real-world driving route geometry from Mapbox / OSRM routing API
+  useEffect(() => {
+    if ((mode !== 'route-playback' && routeStops.length === 0) || routeStops.length < 2) return;
+
+    let isMounted = true;
+    const fetchRealRoadRoute = async () => {
+      try {
+        const customToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+        const coordinatesString = routeStops
+          .slice(0, 25)
+          .map((st) => `${st.lng},${st.lat}`)
+          .join(';');
+
+        let url = `https://router.project-osrm.org/route/v1/driving/${coordinatesString}?overview=full&geometries=geojson`;
+
+        if (customToken) {
+          url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinatesString}?overview=full&geometries=geojson&access_token=${customToken}`;
+        }
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (isMounted && data.routes && data.routes[0] && data.routes[0].geometry) {
+          const realCoords: [number, number][] = data.routes[0].geometry.coordinates.map(
+            ([lng, lat]: [number, number]) => [lat, lng],
+          );
+          setFetchedRealRoadPath(realCoords);
+        }
+      } catch (err) {
+        console.warn('Real road routing API notice:', err);
+      }
+    };
+
+    fetchRealRoadRoute();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [routeStops, mode]);
+
+  // Sync Native Mapbox GL GeoJSON Route Line Layer
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current;
+
+    const updateRouteNativeLayer = () => {
+      try {
+        if (!map.isStyleLoaded()) return;
+
+        const activeCoords =
+          fetchedRealRoadPath.length > 0
+            ? fetchedRealRoadPath
+            : routePath.length > 0
+            ? routePath
+            : routeStops.map((st) => [st.lat, st.lng] as [number, number]);
+
+        const pathCoords = activeCoords.map(([lat, lng]) => [lng, lat]);
+
+        if (pathCoords.length < 2) return;
+
+        const geojson: any = {
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: pathCoords,
+          },
+        };
+
+        if (map.getSource('mapbox-route-src')) {
+          (map.getSource('mapbox-route-src') as mapboxgl.GeoJSONSource).setData(geojson);
+        } else {
+          map.addSource('mapbox-route-src', {
+            type: 'geojson',
+            data: geojson,
+          });
+
+          map.addLayer({
+            id: 'mapbox-route-glow',
+            type: 'line',
+            source: 'mapbox-route-src',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-color': '#60A5FA',
+              'line-width': 8,
+              'line-opacity': 0.4,
+            },
+          });
+
+          map.addLayer({
+            id: 'mapbox-route-line',
+            type: 'line',
+            source: 'mapbox-route-src',
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+              'line-color': '#2563EB',
+              'line-width': 4.5,
+            },
+          });
+        }
+      } catch (err) {
+        console.warn('Mapbox route layer sync notice:', err);
+      }
+    };
+
+    if (map.isStyleLoaded()) {
+      updateRouteNativeLayer();
+    } else {
+      map.once('styledata', updateRouteNativeLayer);
+    }
+  }, [fetchedRealRoadPath, routePath, routeStops, mapType]);
+
   // Handle Zoom Controls
   const handleZoomIn = () => {
     if (mapRef.current) {
@@ -290,11 +403,13 @@ export function InteractiveMap({
           )}
 
           {/* ROUTE PLAYBACK MAPBOX POLYLINE LAYER */}
-          {(mode === 'route-playback' || routeStops.length > 0 || routePath.length > 0) && (
+          {(mode === 'route-playback' || routeStops.length > 0 || routePath.length > 0 || fetchedRealRoadPath.length > 0) && (
             <g>
               {/* Outer Glow Halo */}
               <polyline
-                points={(routePath.length > 0
+                points={(fetchedRealRoadPath.length > 0
+                  ? fetchedRealRoadPath
+                  : routePath.length > 0
                   ? routePath
                   : routeStops.map((st) => [st.lat, st.lng] as [number, number])
                 )
@@ -312,7 +427,9 @@ export function InteractiveMap({
               />
               {/* Core Road Line */}
               <polyline
-                points={(routePath.length > 0
+                points={(fetchedRealRoadPath.length > 0
+                  ? fetchedRealRoadPath
+                  : routePath.length > 0
                   ? routePath
                   : routeStops.map((st) => [st.lat, st.lng] as [number, number])
                 )
