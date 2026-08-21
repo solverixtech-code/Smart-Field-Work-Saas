@@ -244,7 +244,7 @@ export default function TargetDashboardPage() {
                   <td className="py-3 px-3">
                     <div>
                       <span className="font-extrabold text-[#0D1F3D] block">{tt.teamName}</span>
-                      <span className="text-[10px] text-slate-400 font-semibold">{tt.branch}</span>
+                      <span className="text-[10px] text-slate-500 font-semibold">{tt.branch}</span>
                     </div>
                   </td>
                   <td className="py-3 px-3">
@@ -252,7 +252,7 @@ export default function TargetDashboardPage() {
                       <img src={tt.teamLeaderAvatar} alt="" className="h-6 w-6 rounded-full object-cover border border-slate-200" />
                       <div>
                         <span className="font-bold text-[#0D1F3D] block text-xs">{tt.teamLeaderName}</span>
-                        <span className="text-[9px] text-slate-400 font-semibold block">Sales Manager</span>
+                        <span className="text-[9px] text-slate-500 font-semibold block">Sales Manager</span>
                       </div>
                     </div>
                   </td>

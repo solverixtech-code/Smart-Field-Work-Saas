@@ -835,7 +835,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 <h4 className="text-xs font-extrabold text-[#0D1F3D] mb-3">Field Conversion Funnel Metrics</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="rounded-sm bg-slate-50 p-3 border border-slate-200/70 text-center">
-                    <span className="text-[10px] font-bold text-slate-400 block">Total Prospects</span>
+                    <span className="text-xs font-semibold text-slate-600 block">Total Prospects</span>
                     <span className="text-lg font-extrabold text-[#0D1F3D]">168</span>
                     <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">100% Coverage</span>
                   </div>
