@@ -17,12 +17,17 @@ import {
   Clock,
   XCircle,
   TrendingUp,
+  Eye,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
-import { mockDemosList } from './demosData';
+import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
+import { mockDemosList, DemoItem } from './demosData';
 import { AddDemoModal } from './AddDemoModal';
+import { EditDemoModal } from './EditDemoModal';
 
 export default function AllDemosPage() {
   const navigate = useNavigate();
@@ -32,6 +37,8 @@ export default function AllDemosPage() {
   const [assignedToFilter, setAssignedToFilter] = useState('All');
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingDemo, setEditingDemo] = useState<DemoItem | undefined>(undefined);
 
   const filteredDemos = mockDemosList.filter((d) => {
     const matchesSearch =
@@ -389,12 +396,40 @@ export default function AllDemosPage() {
                       )}
                     </td>
                     <td className="p-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => navigate(`/admin/demos/${d.id}`)}
-                        className="p-1 rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
+                      <RowActionsMenu
+                        items={[
+                          {
+                            label: 'View Details',
+                            icon: Eye,
+                            onClick: () => navigate(`/admin/demos/${d.id}`),
+                          },
+                          {
+                            label: 'Edit Demo',
+                            icon: Edit,
+                            onClick: () => {
+                              setEditingDemo(d);
+                              setIsEditModalOpen(true);
+                            },
+                          },
+                          {
+                            label: 'Mark Completed',
+                            icon: CheckCircle2,
+                            onClick: () => toast.success(`Demo ${d.demoId} marked as completed!`),
+                          },
+                          {
+                            label: 'Reschedule',
+                            icon: Calendar,
+                            onClick: () => toast.info('Reschedule demo modal opened'),
+                          },
+                          {
+                            label: 'Delete',
+                            icon: Trash2,
+                            danger: true,
+                            divider: true,
+                            onClick: () => toast.error(`Demo ${d.demoId} deleted`),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 );

@@ -22,11 +22,14 @@ import {
   Send,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
 import { getDemoById, mockDemosList, DemoItem } from './demosData';
+import { EditDemoModal } from './EditDemoModal';
 
 export default function DemoDetailsPage() {
   const { demoId } = useParams();
   const navigate = useNavigate();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const demo = getDemoById(demoId || '') || mockDemosList[2]; // Fallback to Royal Bakers demo
 
@@ -45,7 +48,7 @@ export default function DemoDetailsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Edit Demo opened')}
+            onClick={() => setIsEditModalOpen(true)}
             className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
           >
             <Edit className="h-3.5 w-3.5" /> Edit
@@ -60,14 +63,47 @@ export default function DemoDetailsPage() {
             <Copy className="h-3.5 w-3.5" /> Clone Demo
           </Button>
 
-          <Button
-            variant="accent"
-            size="sm"
-            onClick={() => toast.info('More actions dropdown')}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1.5 shadow-xs"
-          >
-            More Actions <ChevronDown className="h-3.5 w-3.5" />
-          </Button>
+          <RowActionsMenu
+            triggerClassName="rounded-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+            triggerIcon={ChevronDown}
+            items={[
+              {
+                label: 'Edit Product Demo',
+                icon: Edit,
+                onClick: () => setIsEditModalOpen(true),
+              },
+              {
+                label: 'Mark as Completed',
+                icon: CheckCircle2,
+                onClick: () => toast.success(`Demo ${demo.demoId} marked as completed!`),
+              },
+              {
+                label: 'Reschedule Demo',
+                icon: Calendar,
+                onClick: () => toast.info('Reschedule demo modal opened'),
+              },
+              {
+                label: 'Call Client',
+                icon: Phone,
+                onClick: () => toast.info(`Calling ${demo.phone}...`),
+              },
+              {
+                label: 'Send Proposal',
+                icon: FileText,
+                onClick: () => toast.info(`Proposal sent for ${demo.demoId}`),
+              },
+              {
+                label: 'Delete Demo',
+                icon: Edit,
+                danger: true,
+                divider: true,
+                onClick: () => {
+                  toast.error(`Demo ${demo.demoId} deleted`);
+                  navigate('/admin/demos');
+                },
+              },
+            ]}
+          />
         </div>
       </div>
 
@@ -445,6 +481,12 @@ export default function DemoDetailsPage() {
           </div>
         </div>
       </div>
+
+      <EditDemoModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        demo={demo}
+      />
     </div>
   );
 }

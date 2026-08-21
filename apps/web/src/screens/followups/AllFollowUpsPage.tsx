@@ -16,12 +16,17 @@ import {
   AlertTriangle,
   Users,
   Calendar,
+  Eye,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
-import { mockFollowUpsList } from './followupsData';
+import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
+import { mockFollowUpsList, FollowUpItem } from './followupsData';
 import { AddFollowUpModal } from './AddFollowUpModal';
+import { EditFollowUpModal } from './EditFollowUpModal';
 
 export default function AllFollowUpsPage() {
   const navigate = useNavigate();
@@ -31,6 +36,8 @@ export default function AllFollowUpsPage() {
   const [assignedToFilter, setAssignedToFilter] = useState('All');
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingFollowup, setEditingFollowup] = useState<FollowUpItem | undefined>(undefined);
 
   const filteredFollowups = mockFollowUpsList.filter((f) => {
     const matchesSearch =
@@ -352,12 +359,40 @@ export default function AllFollowUpsPage() {
                       </span>
                     </td>
                     <td className="p-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => navigate(`/admin/follow-ups/${f.id}`)}
-                        className="p-1 rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
+                      <RowActionsMenu
+                        items={[
+                          {
+                            label: 'View Details',
+                            icon: Eye,
+                            onClick: () => navigate(`/admin/follow-ups/${f.id}`),
+                          },
+                          {
+                            label: 'Edit Follow-up',
+                            icon: Edit,
+                            onClick: () => {
+                              setEditingFollowup(f);
+                              setIsEditModalOpen(true);
+                            },
+                          },
+                          {
+                            label: 'Mark as Completed',
+                            icon: CheckCircle2,
+                            onClick: () => toast.success(`Follow-up ${f.followupId} completed!`),
+                          },
+                          {
+                            label: 'Reschedule',
+                            icon: Calendar,
+                            onClick: () => toast.info('Reschedule modal opened'),
+                          },
+                          {
+                            label: 'Delete',
+                            icon: Trash2,
+                            danger: true,
+                            divider: true,
+                            onClick: () => toast.error(`Follow-up ${f.followupId} deleted`),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 );
@@ -562,6 +597,12 @@ export default function AllFollowUpsPage() {
       <AddFollowUpModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+      />
+
+      <EditFollowUpModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        followup={editingFollowup}
       />
     </div>
   );

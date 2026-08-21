@@ -20,11 +20,14 @@ import {
   Check,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
 import { getFollowUpById, mockFollowUpsList } from './followupsData';
+import { EditFollowUpModal } from './EditFollowUpModal';
 
 export default function FollowUpDetailsPage() {
   const { followupId } = useParams();
   const navigate = useNavigate();
+  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
 
   const followup = getFollowUpById(followupId || '') || mockFollowUpsList[5]; // Fallback to Fresh & Green
 
@@ -43,20 +46,53 @@ export default function FollowUpDetailsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Edit follow-up opened')}
+            onClick={() => setIsEditModalOpen(true)}
             className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
           >
             <Edit className="h-3.5 w-3.5" /> Edit
           </Button>
 
-          <Button
-            variant="accent"
-            size="sm"
-            onClick={() => toast.info('Actions dropdown')}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1.5 shadow-xs"
-          >
-            Actions <ChevronDown className="h-3.5 w-3.5" />
-          </Button>
+          <RowActionsMenu
+            triggerClassName="rounded-sm bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+            triggerIcon={ChevronDown}
+            items={[
+              {
+                label: 'Edit Follow-up',
+                icon: Edit,
+                onClick: () => setIsEditModalOpen(true),
+              },
+              {
+                label: 'Mark as Completed',
+                icon: CheckCircle2,
+                onClick: () => toast.success(`Follow-up ${followup.followupId} marked as completed!`),
+              },
+              {
+                label: 'Reschedule Follow-up',
+                icon: Calendar,
+                onClick: () => toast.info('Reschedule modal opened'),
+              },
+              {
+                label: 'Call Contact Person',
+                icon: Phone,
+                onClick: () => toast.info(`Calling ${followup.phone}...`),
+              },
+              {
+                label: 'Send Email',
+                icon: Mail,
+                onClick: () => toast.info(`Sending email to ${followup.email}...`),
+              },
+              {
+                label: 'Delete Follow-up',
+                icon: Edit,
+                danger: true,
+                divider: true,
+                onClick: () => {
+                  toast.error(`Follow-up ${followup.followupId} deleted`);
+                  navigate('/admin/follow-ups');
+                },
+              },
+            ]}
+          />
         </div>
       </div>
 
@@ -439,6 +475,12 @@ export default function FollowUpDetailsPage() {
           </div>
         </div>
       </div>
+
+      <EditFollowUpModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        followup={followup}
+      />
     </div>
   );
 }
