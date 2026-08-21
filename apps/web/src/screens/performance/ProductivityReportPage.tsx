@@ -101,98 +101,95 @@ export const ProductivityReportPage: React.FC = () => {
         </div>
       </div>
 
-      {/* MAIN CONTENT GRID */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {/* Executive Productivity Summary Table (8 Cols) */}
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs lg:col-span-8 space-y-3">
-          <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Executive Productivity Summary</h3>
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-left border-collapse whitespace-nowrap text-xs font-semibold">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
-                  <th className="py-2.5 px-3 text-center">Rank</th>
-                  <th className="py-2.5 px-3">Executive</th>
-                  <th className="py-2.5 px-3">Team / Region</th>
-                  <th className="py-2.5 px-3 text-center">Attendance %</th>
-                  <th className="py-2.5 px-3 text-center">Productive Hours / Day</th>
-                  <th className="py-2.5 px-3 text-center">Leads / Day</th>
-                  <th className="py-2.5 px-3 text-center">Demos / Day</th>
-                  <th className="py-2.5 px-3 text-center">Tasks Done</th>
-                  <th className="py-2.5 px-3 text-center">Productivity Score</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {mockProductivityData.map((exec) => (
-                  <tr key={exec.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-3 text-center font-extrabold">
-                      {exec.rank === 1 ? '🥇 1' : exec.rank === 2 ? '🥈 2' : exec.rank === 3 ? '🥉 3' : exec.rank}
-                    </td>
-                    <td className="py-3 px-3">
-                      <div className="flex items-center gap-2.5">
-                        <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
-                        <div>
-                          <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">{exec.id}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3 text-slate-600">
+      {/* 100% FULL-WIDTH PRODUCTIVITY TABLE */}
+      <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs w-full space-y-3">
+        <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Executive Productivity Summary</h3>
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse whitespace-nowrap text-xs font-semibold">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
+                <th className="py-2.5 px-3 text-center">Rank</th>
+                <th className="py-2.5 px-3">Executive</th>
+                <th className="py-2.5 px-3">Team / Region</th>
+                <th className="py-2.5 px-3 text-center">Attendance %</th>
+                <th className="py-2.5 px-3 text-center">Productive Hours / Day</th>
+                <th className="py-2.5 px-3 text-center">Leads / Day</th>
+                <th className="py-2.5 px-3 text-center">Demos / Day</th>
+                <th className="py-2.5 px-3 text-center">Tasks Done</th>
+                <th className="py-2.5 px-3 text-center">Productivity Score</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {mockProductivityData.map((exec) => (
+                <tr key={exec.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-3 px-3 text-center font-extrabold">
+                    {exec.rank === 1 ? '🥇 1' : exec.rank === 2 ? '🥈 2' : exec.rank === 3 ? '🥉 3' : exec.rank}
+                  </td>
+                  <td className="py-3 px-3">
+                    <div className="flex items-center gap-2.5">
+                      <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
                       <div>
-                        <span className="font-bold text-slate-800 block">{exec.team}</span>
-                        <span className="text-[10px] text-slate-400">{exec.region}</span>
+                        <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">{exec.id}</span>
                       </div>
-                    </td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-emerald-700">{exec.attendancePct}%</td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-blue-700">{exec.productiveHoursPerDay}</td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">{exec.leadsPerDay}</td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{exec.demosPerDay}</td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">{exec.tasksCompleted}</td>
-                    <td className="py-3 px-3 text-center font-mono font-extrabold text-emerald-600">{exec.productivityScore}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </div>
+                  </td>
+                  <td className="py-3 px-3 text-slate-600">
+                    <div>
+                      <span className="font-bold text-slate-800 block">{exec.team}</span>
+                      <span className="text-[10px] text-slate-400">{exec.region}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-3 text-center font-mono font-bold text-emerald-700">{exec.attendancePct}%</td>
+                  <td className="py-3 px-3 text-center font-mono font-bold text-blue-700">{exec.productiveHoursPerDay}</td>
+                  <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">{exec.leadsPerDay}</td>
+                  <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{exec.demosPerDay}</td>
+                  <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">{exec.tasksCompleted}</td>
+                  <td className="py-3 px-3 text-center font-mono font-extrabold text-emerald-600">{exec.productivityScore}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* BOTTOM ANALYTICS WIDGETS ROW (RULE SECTION 3.2) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 pt-2">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+          <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Time Utilization</h3>
+          <div className="flex items-center justify-between">
+            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-6 border-emerald-500 border-r-blue-500 border-b-amber-500 border-l-purple-500">
+              <span className="text-[11px] font-extrabold text-[#0D1F3D]">2,487h</span>
+            </div>
+            <div className="space-y-1.5 text-[11px] font-semibold w-full">
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Productive Field Work</span>
+                <span className="font-bold text-slate-900">1,482h (59.6%)</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-blue-500" /> Travel / Commute</span>
+                <span className="font-bold text-slate-900">512h (20.6%)</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-amber-500" /> Meetings / Demos</span>
+                <span className="font-bold text-slate-900">276h (11.1%)</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-purple-500" /> Training & Breaks</span>
+                <span className="font-bold text-slate-900">215h (8.7%)</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right Sidebars: Time Utilization & Insights (4 Cols) */}
-        <div className="space-y-4 lg:col-span-4 flex flex-col justify-between">
-          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Time Utilization</h3>
-            <div className="flex items-center justify-between">
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-8 border-emerald-500 border-r-blue-500 border-b-amber-500 border-l-purple-500">
-                <span className="text-[11px] font-extrabold text-[#0D1F3D]">2,487h</span>
-              </div>
-              <div className="space-y-1.5 text-xs font-semibold">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1 text-slate-700"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Productive Field Work</span>
-                  <span className="font-bold text-slate-900">1,482h (59.6%)</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1 text-slate-700"><span className="h-2 w-2 rounded-full bg-blue-500" /> Travel / Commute</span>
-                  <span className="font-bold text-slate-900">512h (20.6%)</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1 text-slate-700"><span className="h-2 w-2 rounded-full bg-amber-500" /> Meetings / Demos</span>
-                  <span className="font-bold text-slate-900">276h (11.1%)</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1 text-slate-700"><span className="h-2 w-2 rounded-full bg-purple-500" /> Training & Breaks</span>
-                  <span className="font-bold text-slate-900">215h (8.7%)</span>
-                </div>
-              </div>
-            </div>
+        <div className="rounded-sm border border-blue-200 bg-blue-50/40 p-4 shadow-xs space-y-2">
+          <div className="flex items-center gap-2 border-b border-blue-100 pb-1.5">
+            <Sparkles className="h-4 w-4 text-blue-600" />
+            <h4 className="text-xs font-extrabold text-[#0D1F3D]">Productivity AI Insights</h4>
           </div>
-
-          <div className="rounded-sm border border-blue-200 bg-blue-50/40 p-4 shadow-xs space-y-2">
-            <div className="flex items-center gap-2 border-b border-blue-100 pb-1.5">
-              <Sparkles className="h-4 w-4 text-blue-600" />
-              <h4 className="text-xs font-extrabold text-[#0D1F3D]">Productivity AI Insights</h4>
-            </div>
-            <div className="space-y-1 text-xs">
-              <p className="font-bold text-[#0D1F3D]">Productive hours increased by 8.3% compared to last month.</p>
-              <p className="text-[11px] text-slate-600">West Zone team shows highest productivity score (86.7).</p>
-            </div>
+          <div className="space-y-1.5 text-xs">
+            <p className="font-bold text-[#0D1F3D]">Productive hours increased by 8.3% compared to last month.</p>
+            <p className="text-[11px] text-slate-600 font-medium">West Zone team shows highest productivity score (86.7). Overall field time efficiency reached 81.4 pts in May 2025.</p>
           </div>
         </div>
       </div>

@@ -174,167 +174,165 @@ export const ConversionFunnelPage: React.FC = () => {
         </div>
       </div>
 
-      {/* STAGE-BY-STAGE FUNNEL DIAGRAM & TABLE */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs lg:col-span-8 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <div>
-              <h3 className="text-xs font-extrabold text-[#0D1F3D]">Funnel Stage Breakdown</h3>
-              <p className="text-[11px] font-medium text-slate-500">Hover or click any stage to inspect drop-off, conversion rates, and stage details</p>
+      {/* 100% FULL-WIDTH FUNNEL STACK & TABLE */}
+      <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs w-full space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+          <div>
+            <h3 className="text-xs font-extrabold text-[#0D1F3D]">Funnel Stage Breakdown</h3>
+            <p className="text-[11px] font-medium text-slate-500">Hover or click any stage to inspect drop-off, conversion rates, and stage details</p>
+          </div>
+          <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+            <Sparkles className="h-3 w-3" /> Interactive Stage Inspection
+          </span>
+        </div>
+
+        {/* INTERACTIVE VISUAL FUNNEL STACK */}
+        <div className="space-y-2.5 py-3">
+          {funnelStages.map((f) => {
+            const isSelected = selectedStageId === f.id;
+            const isHovered = hoveredStageId === f.id;
+            const isActive = isSelected || isHovered;
+
+            return (
+              <div key={f.id} className="mx-auto flex flex-col items-center">
+                <div
+                  onMouseEnter={() => setHoveredStageId(f.id)}
+                  onMouseLeave={() => setHoveredStageId(null)}
+                  onClick={() => { setSelectedStageId(f.id); toast.info(`Selected ${f.shortLabel}`); }}
+                  className={`${f.widthClass} ${f.colorClass} text-white font-extrabold text-xs py-2.5 px-4 rounded-sm shadow-xs transition-all duration-200 cursor-pointer transform ${
+                    isActive
+                      ? 'scale-[1.03] shadow-lg ring-2 ring-offset-2 ring-[#0D1F3D] opacity-100 z-10'
+                      : 'opacity-90 hover:opacity-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+                      <span>{f.shortLabel} ({f.count.toLocaleString('en-IN')})</span>
+                    </div>
+                    <span className="font-mono text-white/95">{f.conversionFromTotalPct}%</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* DYNAMIC SELECTED STAGE DETAILS CARD */}
+        <div className="rounded-sm border border-slate-200 bg-slate-50/70 p-3.5 space-y-2 transition-all">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full" style={{ backgroundColor: activeStage.bgHex }} />
+              <h4 className="text-xs font-extrabold text-[#0D1F3D]">{activeStage.stageName}</h4>
             </div>
-            <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-              <Sparkles className="h-3 w-3" /> Interactive Stage Inspection
+            <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              +{activeStage.changeVsAprPct}% vs. Apr
             </span>
           </div>
 
-          {/* INTERACTIVE VISUAL FUNNEL STACK */}
-          <div className="space-y-2.5 py-3">
-            {funnelStages.map((f) => {
-              const isSelected = selectedStageId === f.id;
-              const isHovered = hoveredStageId === f.id;
-              const isActive = isSelected || isHovered;
+          <p className="text-[11px] text-slate-600 font-medium">{activeStage.description}</p>
 
-              return (
-                <div key={f.id} className="mx-auto flex flex-col items-center">
-                  <div
-                    onMouseEnter={() => setHoveredStageId(f.id)}
-                    onMouseLeave={() => setHoveredStageId(null)}
-                    onClick={() => { setSelectedStageId(f.id); toast.info(`Selected ${f.shortLabel}`); }}
-                    className={`${f.widthClass} ${f.colorClass} text-white font-extrabold text-xs py-2.5 px-4 rounded-sm shadow-xs transition-all duration-200 cursor-pointer transform ${
-                      isActive
-                        ? 'scale-[1.03] shadow-lg ring-2 ring-offset-2 ring-[#0D1F3D] opacity-100 z-10'
-                        : 'opacity-90 hover:opacity-100'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-                        <span>{f.shortLabel} ({f.count.toLocaleString('en-IN')})</span>
-                      </div>
-                      <span className="font-mono text-white/95">{f.conversionFromTotalPct}%</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* DYNAMIC SELECTED STAGE DETAILS CARD */}
-          <div className="rounded-sm border border-slate-200 bg-slate-50/70 p-3.5 space-y-2 transition-all">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full" style={{ backgroundColor: activeStage.bgHex }} />
-                <h4 className="text-xs font-extrabold text-[#0D1F3D]">{activeStage.stageName}</h4>
-              </div>
-              <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                +{activeStage.changeVsAprPct}% vs. Apr
-              </span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+            <div className="bg-white p-2 rounded-xs border border-slate-200/80">
+              <span className="text-[10px] text-slate-400 font-bold block">Stage Volume</span>
+              <span className="font-mono font-extrabold text-[#0D1F3D] text-xs">{activeStage.count.toLocaleString('en-IN')} Leads</span>
             </div>
-
-            <p className="text-[11px] text-slate-600 font-medium">{activeStage.description}</p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-              <div className="bg-white p-2 rounded-xs border border-slate-200/80">
-                <span className="text-[10px] text-slate-400 font-bold block">Stage Volume</span>
-                <span className="font-mono font-extrabold text-[#0D1F3D] text-xs">{activeStage.count.toLocaleString('en-IN')} Leads</span>
-              </div>
-              <div className="bg-white p-2 rounded-xs border border-slate-200/80">
-                <span className="text-[10px] text-slate-400 font-bold block">Conversion % (Prev)</span>
-                <span className="font-mono font-extrabold text-blue-700 text-xs">{activeStage.conversionFromPrevPct}%</span>
-              </div>
-              <div className="bg-white p-2 rounded-xs border border-slate-200/80">
-                <span className="text-[10px] text-slate-400 font-bold block">Conversion % (Total)</span>
-                <span className="font-mono font-extrabold text-purple-700 text-xs">{activeStage.conversionFromTotalPct}%</span>
-              </div>
-              <div className="bg-white p-2 rounded-xs border border-slate-200/80">
-                <span className="text-[10px] text-slate-400 font-bold block">Stage Revenue Yield</span>
-                <span className="font-mono font-extrabold text-emerald-700 text-xs">{activeStage.revenueVal}</span>
-              </div>
+            <div className="bg-white p-2 rounded-xs border border-slate-200/80">
+              <span className="text-[10px] text-slate-400 font-bold block">Conversion % (Prev)</span>
+              <span className="font-mono font-extrabold text-blue-700 text-xs">{activeStage.conversionFromPrevPct}%</span>
             </div>
-          </div>
-
-          {/* INTERACTIVE FUNNEL STAGE TABLE WITH BI-DIRECTIONAL HOVER */}
-          <div className="overflow-x-auto custom-scrollbar pt-2">
-            <table className="w-full text-left border-collapse whitespace-nowrap text-xs font-semibold">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
-                  <th className="py-2.5 px-3">Stage</th>
-                  <th className="py-2.5 px-3 text-center">Count</th>
-                  <th className="py-2.5 px-3 text-center">Conversion % (Previous)</th>
-                  <th className="py-2.5 px-3 text-center">Conversion % (Total)</th>
-                  <th className="py-2.5 px-3 text-center">Change vs. Apr</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {funnelStages.map((stg) => {
-                  const isSelected = selectedStageId === stg.id;
-                  const isHovered = hoveredStageId === stg.id;
-                  const isActive = isSelected || isHovered;
-
-                  return (
-                    <tr
-                      key={stg.id}
-                      onMouseEnter={() => setHoveredStageId(stg.id)}
-                      onMouseLeave={() => setHoveredStageId(null)}
-                      onClick={() => setSelectedStageId(stg.id)}
-                      className={`transition-colors cursor-pointer ${
-                        isActive
-                          ? 'bg-purple-50/80 font-bold border-l-4 border-purple-600'
-                          : 'hover:bg-slate-50/80'
-                      }`}
-                    >
-                      <td className="py-3 px-3 font-bold text-[#0D1F3D]">
-                        <div className="flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stg.bgHex }} />
-                          {stg.stageName}
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 text-center font-mono font-extrabold text-blue-700">{stg.count.toLocaleString('en-IN')}</td>
-                      <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">{stg.conversionFromPrevPct}%</td>
-                      <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{stg.conversionFromTotalPct}%</td>
-                      <td className="py-3 px-3 text-center font-bold text-emerald-600">+{stg.changeVsAprPct}%</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="bg-white p-2 rounded-xs border border-slate-200/80">
+              <span className="text-[10px] text-slate-400 font-bold block">Conversion % (Total)</span>
+              <span className="font-mono font-extrabold text-purple-700 text-xs">{activeStage.conversionFromTotalPct}%</span>
+            </div>
+            <div className="bg-white p-2 rounded-xs border border-slate-200/80">
+              <span className="text-[10px] text-slate-400 font-bold block">Stage Revenue Yield</span>
+              <span className="font-mono font-extrabold text-emerald-700 text-xs">{activeStage.revenueVal}</span>
+            </div>
           </div>
         </div>
 
-        {/* Right Sidebars (4 Cols) */}
-        <div className="space-y-4 lg:col-span-4 flex flex-col justify-between">
-          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Funnel Drop-off Analysis</h3>
-            <div className="flex items-center justify-between">
-              <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-8 border-purple-600 border-r-blue-500 border-b-amber-500">
-                <span className="text-xs font-extrabold text-[#0D1F3D]">14,032</span>
+        {/* INTERACTIVE FUNNEL STAGE TABLE WITH BI-DIRECTIONAL HOVER */}
+        <div className="overflow-x-auto custom-scrollbar pt-2">
+          <table className="w-full text-left border-collapse whitespace-nowrap text-xs font-semibold">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
+                <th className="py-2.5 px-3">Stage</th>
+                <th className="py-2.5 px-3 text-center">Count</th>
+                <th className="py-2.5 px-3 text-center">Conversion % (Previous)</th>
+                <th className="py-2.5 px-3 text-center">Conversion % (Total)</th>
+                <th className="py-2.5 px-3 text-center">Change vs. Apr</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {funnelStages.map((stg) => {
+                const isSelected = selectedStageId === stg.id;
+                const isHovered = hoveredStageId === stg.id;
+                const isActive = isSelected || isHovered;
+
+                return (
+                  <tr
+                    key={stg.id}
+                    onMouseEnter={() => setHoveredStageId(stg.id)}
+                    onMouseLeave={() => setHoveredStageId(null)}
+                    onClick={() => setSelectedStageId(stg.id)}
+                    className={`transition-colors cursor-pointer ${
+                      isActive
+                        ? 'bg-purple-50/80 font-bold border-l-4 border-purple-600'
+                        : 'hover:bg-slate-50/80'
+                    }`}
+                  >
+                    <td className="py-3 px-3 font-bold text-[#0D1F3D]">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stg.bgHex }} />
+                        {stg.stageName}
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-center font-mono font-extrabold text-blue-700">{stg.count.toLocaleString('en-IN')}</td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">{stg.conversionFromPrevPct}%</td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{stg.conversionFromTotalPct}%</td>
+                    <td className="py-3 px-3 text-center font-bold text-emerald-600">+{stg.changeVsAprPct}%</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* BOTTOM ANALYTICS WIDGETS ROW (RULE SECTION 3.2) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-2 pt-2">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+          <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Funnel Drop-off Analysis</h3>
+          <div className="flex items-center justify-between">
+            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full border-6 border-purple-600 border-r-blue-500 border-b-amber-500">
+              <span className="text-[11px] font-extrabold text-[#0D1F3D]">14,032</span>
+            </div>
+            <div className="space-y-1.5 text-[11px] font-semibold w-full">
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-purple-600" /> Leads not contacted</span>
+                <span className="font-bold text-slate-900">5,438 (37.8%)</span>
               </div>
-              <div className="space-y-1 text-xs font-semibold">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1 text-slate-700"><span className="h-2 w-2 rounded-full bg-purple-600" /> Leads not contacted</span>
-                  <span className="font-bold text-slate-900">5,438 (37.8%)</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1 text-slate-700"><span className="h-2 w-2 rounded-full bg-blue-500" /> No demo conducted</span>
-                  <span className="font-bold text-slate-900">6,986 (48.6%)</span>
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex items-center gap-1 text-slate-700"><span className="h-2 w-2 rounded-full bg-amber-500" /> Demo not converted</span>
-                  <span className="font-bold text-slate-900">1,964 (13.6%)</span>
-                </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-blue-500" /> No demo conducted</span>
+                <span className="font-bold text-slate-900">6,986 (48.6%)</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-1.5 text-slate-700"><span className="h-2 w-2 rounded-full bg-amber-500" /> Demo not converted</span>
+                <span className="font-bold text-slate-900">1,964 (13.6%)</span>
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="rounded-sm border border-blue-200 bg-blue-50/40 p-4 shadow-xs space-y-2">
-            <div className="flex items-center gap-2 border-b border-blue-100 pb-1.5">
-              <Sparkles className="h-4 w-4 text-blue-600" />
-              <h4 className="text-xs font-extrabold text-[#0D1F3D]">Funnel Key Insights</h4>
-            </div>
-            <div className="space-y-1.5 text-xs">
-              <p className="font-bold text-[#0D1F3D]">Lead to Contacted conversion improved by 9.8%</p>
-              <p className="text-[11px] text-slate-600">Demo to Won conversion rate is highest in West Zone (14.5%).</p>
-            </div>
+        <div className="rounded-sm border border-indigo-200 bg-indigo-50/40 p-4 shadow-xs space-y-2">
+          <div className="flex items-center gap-2 border-b border-indigo-100 pb-1.5">
+            <Sparkles className="h-4 w-4 text-indigo-600" />
+            <h4 className="text-xs font-extrabold text-[#0D1F3D]">Funnel Key Insights</h4>
+          </div>
+          <div className="space-y-1.5 text-xs">
+            <p className="font-bold text-[#0D1F3D]">Lead to Contacted conversion improved by 9.8%</p>
+            <p className="text-[11px] text-slate-600 font-medium">Demo to Won conversion rate is highest in West Zone (14.5%). Overall sales funnel efficiency increased by 2.4% MoM.</p>
           </div>
         </div>
       </div>
