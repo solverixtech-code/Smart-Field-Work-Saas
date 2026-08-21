@@ -145,10 +145,14 @@ export function InteractiveMap({
   // Polygon Drawing State
   const [drawnPolygonPoints, setDrawnPolygonPoints] = useState<[number, number][]>(
     territoryPath || [
-      [19.16, 72.85],
-      [19.16, 72.9],
-      [19.11, 72.9],
-      [19.11, 72.85],
+      [19.1485, 72.8550],
+      [19.1550, 72.8720],
+      [19.1420, 72.8950],
+      [19.1280, 72.9050],
+      [19.1080, 72.8920],
+      [19.1020, 72.8680],
+      [19.1150, 72.8520],
+      [19.1350, 72.8530],
     ],
   );
   const [isDrawingModeActive, setIsDrawingModeActive] = useState<boolean>(
@@ -298,10 +302,14 @@ export function InteractiveMap({
     return { x: (lng - 72.8) * 1200 + 200, y: (19.3 - lat) * 2200 + 50 };
   };
 
-  // Update Mapbox Style on Map Type Toggle
+  // Update Mapbox Style on Map Type Toggle safely
   useEffect(() => {
     if (mapRef.current) {
-      mapRef.current.setStyle(getMapboxStyle(mapType));
+      try {
+        mapRef.current.setStyle(getMapboxStyle(mapType));
+      } catch (err) {
+        console.warn('Mapbox setStyle notice:', err);
+      }
     }
   }, [mapType]);
 
@@ -312,12 +320,16 @@ export function InteractiveMap({
     const exec = executives.find((e) => e.id === selectedExecutiveId);
     if (exec) {
       setSelectedMarkerId(exec.id);
-      mapRef.current.flyTo({
-        center: [exec.lng, exec.lat],
-        zoom: 15,
-        duration: 1200,
-        essential: true,
-      });
+      try {
+        mapRef.current.flyTo({
+          center: [exec.lng, exec.lat],
+          zoom: 15,
+          duration: 1200,
+          essential: true,
+        });
+      } catch (err) {
+        console.warn('FlyTo notice:', err);
+      }
     }
   }, [selectedExecutiveId, executives]);
 
@@ -370,7 +382,7 @@ export function InteractiveMap({
 
     const updateRouteNativeLayer = () => {
       try {
-        if (!map.isStyleLoaded()) return;
+        if (!map || !map.getStyle() || !map.isStyleLoaded()) return;
 
         const activeCoords =
           fetchedRealRoadPath.length > 0
@@ -429,9 +441,11 @@ export function InteractiveMap({
 
     if (map.isStyleLoaded()) {
       updateRouteNativeLayer();
-    } else {
-      map.once('styledata', updateRouteNativeLayer);
     }
+    map.on('idle', updateRouteNativeLayer);
+    return () => {
+      map.off('idle', updateRouteNativeLayer);
+    };
   }, [fetchedRealRoadPath, routePath, routeStops, mapType]);
 
   // Sync Native Mapbox GL GPU Heatmap Shader Layer
@@ -441,7 +455,7 @@ export function InteractiveMap({
 
     const updateHeatmapNativeLayer = () => {
       try {
-        if (!map.isStyleLoaded()) return;
+        if (!map || !map.getStyle() || !map.isStyleLoaded()) return;
 
         const isHeatmapActive = showHeatmapToggle || mode === 'visit-heatmap' || mode === 'sales-heatmap';
 
@@ -510,9 +524,11 @@ export function InteractiveMap({
 
     if (map.isStyleLoaded()) {
       updateHeatmapNativeLayer();
-    } else {
-      map.once('styledata', updateHeatmapNativeLayer);
     }
+    map.on('idle', updateHeatmapNativeLayer);
+    return () => {
+      map.off('idle', updateHeatmapNativeLayer);
+    };
   }, [heatmapPoints, showHeatmapToggle, mode, mapType]);
 
   // Handle Zoom Controls

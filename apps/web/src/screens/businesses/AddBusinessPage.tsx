@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Building2,
@@ -18,6 +18,7 @@ import { Select } from '../../components/ui/Select';
 import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
 import { GoogleMapPicker } from '../../components/ui/GoogleMapPicker';
 import { mockBusinesses } from './businessesData';
+import { mockTerritoriesList, mockTerritoryBusinesses } from '../territories/territoriesData';
 
 interface AddBusinessPageProps {
   isEdit?: boolean;
@@ -26,27 +27,41 @@ interface AddBusinessPageProps {
 export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps) {
   const navigate = useNavigate();
   const { businessId } = useParams();
+  const [searchParams] = useSearchParams();
+
+  const territoryIdFromQuery = searchParams.get('territoryId');
+  const targetTerritory = mockTerritoriesList.find(
+    (t) => t.id === territoryIdFromQuery || t.code === territoryIdFromQuery,
+  );
 
   const existingBusiness = isEdit
     ? mockBusinesses.find((b) => b.id === businessId) || mockBusinesses[0]
     : null;
 
-  // Form State
+  // Form State with automatic Territory Pre-Population
   const [formData, setFormData] = useState({
     name: existingBusiness ? existingBusiness.name : '',
-    type: existingBusiness ? existingBusiness.businessType : '',
-    category: existingBusiness ? existingBusiness.category : '',
+    type: existingBusiness ? existingBusiness.businessType : 'Gym / Fitness',
+    category: existingBusiness ? existingBusiness.category : 'Fitness & Wellness',
     gstin: existingBusiness ? existingBusiness.gstin || '' : '',
     website: existingBusiness ? existingBusiness.website || '' : '',
-    yearEstablished: existingBusiness ? existingBusiness.establishedYear.toString() : '2018',
+    yearEstablished: existingBusiness ? existingBusiness.establishedYear.toString() : '2021',
     description: existingBusiness ? existingBusiness.description || '' : '',
 
-    // Location
-    address1: existingBusiness ? existingBusiness.address : '',
+    // Location (Pre-populated from target territory if creating for a territory)
+    address1: existingBusiness
+      ? existingBusiness.address
+      : targetTerritory
+      ? `Plot 12, ${targetTerritory.name}, ${targetTerritory.regionArea}`
+      : '',
     address2: '',
-    city: existingBusiness ? existingBusiness.city : '',
-    state: 'Maharashtra',
-    pincode: '400001',
+    city: existingBusiness
+      ? existingBusiness.city
+      : targetTerritory
+      ? targetTerritory.city
+      : 'Mumbai',
+    state: targetTerritory?.hierarchy?.state || 'Maharashtra',
+    pincode: targetTerritory?.hierarchy?.pincode || '400059',
     country: 'India',
 
     // Contact
@@ -62,17 +77,22 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
     // Details
     employees: existingBusiness ? existingBusiness.employees : '11-50',
     turnover: existingBusiness ? existingBusiness.annualRevenue : '₹50L - ₹2 Cr',
-    serviceAreas: existingBusiness ? existingBusiness.city : '',
+    serviceAreas: targetTerritory ? targetTerritory.name : 'Mumbai',
     languages: 'English, Hindi, Marathi',
     workingDays: 'Monday - Saturday',
     workingHoursStart: '09:00 AM',
     workingHoursEnd: '06:00 PM',
 
-    // Assignment
-    assignedExecutive: existingBusiness ? existingBusiness.assignedToName : 'Rahul Verma',
-    assignedTeam: 'Mumbai North Team',
+    // Assignment (Pre-populated for territory team)
+    assignedTerritory: targetTerritory ? targetTerritory.id : 'TERR-1001',
+    assignedExecutive: existingBusiness
+      ? existingBusiness.assignedToName
+      : targetTerritory
+      ? 'Arjun Mehta'
+      : 'Rahul Verma',
+    assignedTeam: targetTerritory ? `${targetTerritory.name} Team` : 'Mumbai Central Team',
     source: existingBusiness ? existingBusiness.source : 'Field Visit',
-    tags: 'High Priority, Gym, Retail',
+    tags: 'High Priority, Territory Business',
   });
 
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; size: string }[]>([]);
@@ -111,15 +131,44 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
       return;
     }
 
+    const selectedTerritoryObj = mockTerritoriesList.find((t) => t.id === formData.assignedTerritory);
+
+    const newBiz: any = {
+      id: `BUS-${Date.now()}`,
+      name: formData.name,
+      badge: 'New',
+      businessType: formData.type || 'Electronics Store',
+      contactPerson: formData.contactName,
+      contactRole: formData.designation || 'Owner',
+      phone: formData.mobile,
+      email: formData.email || `${formData.name.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
+      address: formData.address1 || `${selectedTerritoryObj?.name || 'Andheri East'}, Mumbai`,
+      assignedToName: formData.assignedExecutive,
+      assignedToAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+      lastVisitDate: 'Just now',
+      status: 'Active',
+      category: formData.category || 'Retail',
+      revenueFormatted: '₹ 1,80,000',
+      visitStatus: 'Visited',
+      lat: 19.118,
+      lng: 72.868,
+    };
+
+    mockTerritoryBusinesses.unshift(newBiz);
+
     toast.success(
       isEdit
         ? `Business "${formData.name}" updated successfully!`
-        : `Business "${formData.name}" added to database!`,
+        : `Business "${formData.name}" assigned to ${selectedTerritoryObj ? selectedTerritoryObj.name : 'Territory'}!`,
     );
 
     setTimeout(() => {
-      navigate('/admin/businesses');
-    }, 1000);
+      if (selectedTerritoryObj) {
+        navigate(`/admin/territories/${selectedTerritoryObj.id}`);
+      } else {
+        navigate('/admin/businesses');
+      }
+    }, 800);
   };
 
   return (
@@ -616,15 +665,39 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
               <Select
+                label="Assign Territory *"
+                value={formData.assignedTerritory}
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  const terr = mockTerritoriesList.find((t) => t.id === selectedId);
+                  setFormData((prev) => ({
+                    ...prev,
+                    assignedTerritory: selectedId,
+                    city: terr ? terr.city : prev.city,
+                    address1: terr ? `Plot 12, ${terr.name}, ${terr.regionArea}` : prev.address1,
+                    serviceAreas: terr ? terr.name : prev.serviceAreas,
+                    assignedTeam: terr ? `${terr.name} Team` : prev.assignedTeam,
+                  }));
+                }}
+                options={[
+                  { label: '-- Select Territory --', value: '' },
+                  ...mockTerritoriesList.map((terr) => ({
+                    label: `${terr.name} (${terr.code} - ${terr.city})`,
+                    value: terr.id,
+                  })),
+                ]}
+              />
+
+              <Select
                 label="Assign To Executive"
                 value={formData.assignedExecutive}
                 onChange={(e) => handleInputChange('assignedExecutive', e.target.value)}
                 options={[
-                  { label: 'Rahul Verma (FE-1001)', value: 'Rahul Verma' },
-                  { label: 'Sanjay Yadav (FE-1002)', value: 'Sanjay Yadav' },
-                  { label: 'Vikram Joshi (FE-1003)', value: 'Vikram Joshi' },
-                  { label: 'Neha Patil (FE-1004)', value: 'Neha Patil' },
-                  { label: 'Arun Kumar (FE-1005)', value: 'Arun Kumar' },
+                  { label: 'Arjun Mehta (Senior Executive)', value: 'Arjun Mehta' },
+                  { label: 'Neha Sharma (Sales Executive)', value: 'Neha Sharma' },
+                  { label: 'Pooja Yadav (Field Rep)', value: 'Pooja Yadav' },
+                  { label: 'Rakesh Patel (Sales Executive)', value: 'Rakesh Patel' },
+                  { label: 'Kiran Jadhav (Field Rep)', value: 'Kiran Jadhav' },
                 ]}
               />
 

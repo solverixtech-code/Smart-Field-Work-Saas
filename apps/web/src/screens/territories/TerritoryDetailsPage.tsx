@@ -45,6 +45,7 @@ import {
   mockTerritoryBusinesses,
   TerritoryItem,
 } from './territoriesData';
+import { mockBusinesses } from '../businesses/businessesData';
 
 export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { initialTab?: string }) {
   const { territoryId } = useParams();
@@ -52,6 +53,12 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
   // Active Tab State (No page jump - seamlessly renders under tab header)
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Link Existing Business Modal State
+  const [isLinkBusinessModalOpen, setIsLinkBusinessModalOpen] = useState(false);
+  const [linkSearchQuery, setLinkSearchQuery] = useState('');
+  const [selectedLinkBizId, setSelectedLinkBizId] = useState(mockBusinesses[0]?.id || '');
+  const [linkAssignedExec, setLinkAssignedExec] = useState('Arjun Mehta');
 
   // Performance Filters State
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange>({
@@ -90,11 +97,25 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   const [targetRevenueInput, setTargetRevenueInput] = useState('250000');
   const [targetVisitInput, setTargetVisitInput] = useState('35');
 
+  // Businesses List State
+  const [businessesList, setBusinessesList] = useState(mockTerritoryBusinesses);
+  const [isAddBusinessModalOpen, setIsAddBusinessModalOpen] = useState(false);
+  const [newBusinessData, setNewBusinessData] = useState({
+    name: '',
+    category: 'Retail',
+    contactPerson: '',
+    phone: '',
+    email: '',
+    address: '',
+    assignedExecutive: 'Arjun Mehta',
+    status: 'Active',
+  });
+
   const territory =
     mockTerritoriesList.find((t) => t.id === territoryId || t.code === territoryId) ||
     mockTerritoriesList[0];
 
-  const filteredBusinesses = mockTerritoryBusinesses.filter((b) => {
+  const filteredBusinesses = businessesList.filter((b) => {
     const matchesSearch =
       b.name.toLowerCase().includes(businessSearchQuery.toLowerCase()) ||
       b.businessType.toLowerCase().includes(businessSearchQuery.toLowerCase());
@@ -106,7 +127,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   });
 
   const selectedBusiness =
-    mockTerritoryBusinesses.find((b) => b.id === selectedBusinessId) || mockTerritoryBusinesses[0];
+    businessesList.find((b) => b.id === selectedBusinessId) || businessesList[0];
 
   const filteredExecutives = mockTerritoryExecutives.filter(
     (e) =>
@@ -987,14 +1008,25 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               />
             </div>
 
-            <Button
-              variant="accent"
-              size="sm"
-              onClick={() => toast.info('Adding new business to territory...')}
-              className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] text-white"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add Business
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsLinkBusinessModalOpen(true)}
+                className="flex items-center gap-1.5 font-bold border-slate-300 text-slate-700 bg-white hover:bg-slate-50 cursor-pointer"
+              >
+                <Building className="h-3.5 w-3.5 text-blue-600" /> Assign Existing Business
+              </Button>
+
+              <Button
+                variant="accent"
+                size="sm"
+                onClick={() => navigate(`/admin/businesses/create?territoryId=${territory.id}`)}
+                className="flex items-center gap-1.5 font-bold shadow-xs bg-[#E20613] hover:bg-red-700 text-white cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" /> Create & Assign New Business
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
@@ -1699,6 +1731,299 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               className="bg-[#0D1F3D] text-white font-bold"
             >
               Save Targets
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal for Adding New Business to Territory */}
+      <Modal isOpen={isAddBusinessModalOpen} onClose={() => setIsAddBusinessModalOpen(false)} maxWidth="max-w-lg">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Add New Business to {territory.name}</h3>
+              <p className="text-[11px] font-medium text-slate-500">Create a business record and assign to field executive</p>
+            </div>
+            <button onClick={() => setIsAddBusinessModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!newBusinessData.name.trim()) {
+                toast.error('Please enter business name');
+                return;
+              }
+              if (!newBusinessData.contactPerson.trim()) {
+                toast.error('Please enter contact person name');
+                return;
+              }
+              if (!newBusinessData.phone.trim()) {
+                toast.error('Please enter contact phone number');
+                return;
+              }
+
+              const created: any = {
+                id: `biz-${Date.now()}`,
+                name: newBusinessData.name,
+                category: newBusinessData.category,
+                businessType: newBusinessData.category === 'Retail' ? 'Electronics Store' : newBusinessData.category,
+                contactPerson: newBusinessData.contactPerson,
+                phone: newBusinessData.phone,
+                email: newBusinessData.email || `${newBusinessData.name.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
+                address: newBusinessData.address || `${territory.name}, Mumbai`,
+                assignedToName: newBusinessData.assignedExecutive,
+                assignedToAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+                status: newBusinessData.status,
+                annualRevenue: '₹ 1,50,000',
+                revenueFormatted: '₹ 1,50,000',
+                lastVisitDate: 'Just now',
+                hotBadge: true,
+                badge: 'Hot',
+              };
+
+              setBusinessesList([created, ...businessesList]);
+              setSelectedBusinessId(created.id);
+              setIsAddBusinessModalOpen(false);
+              setNewBusinessData({
+                name: '',
+                category: 'Retail',
+                contactPerson: '',
+                phone: '',
+                email: '',
+                address: '',
+                assignedExecutive: 'Arjun Mehta',
+                status: 'Active',
+              });
+              toast.success(`Business "${created.name}" added to ${territory.name} successfully!`);
+            }}
+            className="space-y-3 text-xs font-semibold"
+          >
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <label className="text-slate-700 block">Business Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Royal Traders"
+                  value={newBusinessData.name}
+                  onChange={(e) => setNewBusinessData({ ...newBusinessData, name: e.target.value })}
+                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <Select
+                label="Category / Industry *"
+                value={newBusinessData.category}
+                onChange={(e) => setNewBusinessData({ ...newBusinessData, category: e.target.value })}
+                options={[
+                  { label: 'Retail', value: 'Retail' },
+                  { label: 'Healthcare', value: 'Healthcare' },
+                  { label: 'Food & Beverage', value: 'Food & Beverage' },
+                  { label: 'Automobile', value: 'Automobile' },
+                  { label: 'Technology', value: 'Technology' },
+                  { label: 'Fitness & Gym', value: 'Gym' },
+                ]}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <label className="text-slate-700 block">Contact Person Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Rajesh Kumar"
+                  value={newBusinessData.contactPerson}
+                  onChange={(e) => setNewBusinessData({ ...newBusinessData, contactPerson: e.target.value })}
+                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-700 block">Phone / Mobile *</label>
+                <input
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  value={newBusinessData.phone}
+                  onChange={(e) => setNewBusinessData({ ...newBusinessData, phone: e.target.value })}
+                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <label className="text-slate-700 block">Email Address</label>
+                <input
+                  type="email"
+                  placeholder="contact@business.com"
+                  value={newBusinessData.email}
+                  onChange={(e) => setNewBusinessData({ ...newBusinessData, email: e.target.value })}
+                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <Select
+                label="Assign To Field Executive *"
+                value={newBusinessData.assignedExecutive}
+                onChange={(e) => setNewBusinessData({ ...newBusinessData, assignedExecutive: e.target.value })}
+                options={mockTerritoryExecutives.map((ex) => ({
+                  label: `${ex.name} (${ex.team})`,
+                  value: ex.name,
+                }))}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-slate-700 block">Full Address</label>
+              <input
+                type="text"
+                placeholder="Shop No, Building, Street, Area"
+                value={newBusinessData.address}
+                onChange={(e) => setNewBusinessData({ ...newBusinessData, address: e.target.value })}
+                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddBusinessModalOpen(false);
+                  navigate('/admin/businesses/add');
+                }}
+                className="text-[11px] font-extrabold text-blue-600 hover:underline"
+              >
+                Or open full registration page →
+              </button>
+
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" type="button" onClick={() => setIsAddBusinessModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="accent" size="sm" type="submit" className="bg-[#E20613] hover:bg-red-700 text-white font-bold">
+                  Save & Add Business
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </Modal>
+
+      {/* Modal for Assigning Existing Business to Territory */}
+      <Modal isOpen={isLinkBusinessModalOpen} onClose={() => setIsLinkBusinessModalOpen(false)} maxWidth="max-w-lg">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Assign Existing Business to {territory.name}</h3>
+              <p className="text-[11px] font-medium text-slate-500">Select an existing business from the database to add to this territory</p>
+            </div>
+            <button onClick={() => setIsLinkBusinessModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="space-y-3 text-xs font-semibold">
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search business by name, owner, or city..."
+                value={linkSearchQuery}
+                onChange={(e) => setLinkSearchQuery(e.target.value)}
+                className="w-full rounded-sm border border-slate-200 bg-slate-50 pl-8 pr-3 py-1.5 text-xs font-semibold text-[#0D1F3D] focus:outline-none"
+              />
+            </div>
+
+            {/* Business Selection List */}
+            <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-sm divide-y divide-slate-100 bg-slate-50/50">
+              {mockBusinesses
+                .filter(
+                  (b) =>
+                    b.name.toLowerCase().includes(linkSearchQuery.toLowerCase()) ||
+                    b.contactPerson.toLowerCase().includes(linkSearchQuery.toLowerCase()) ||
+                    b.city.toLowerCase().includes(linkSearchQuery.toLowerCase()),
+                )
+                .map((b) => {
+                  const isSelected = selectedLinkBizId === b.id;
+                  return (
+                    <div
+                      key={b.id}
+                      onClick={() => setSelectedLinkBizId(b.id)}
+                      className={`p-2.5 flex items-center justify-between cursor-pointer transition-colors ${
+                        isSelected ? 'bg-blue-50 border-l-4 border-l-blue-600 font-bold' : 'hover:bg-slate-100'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-7 w-7 rounded-sm bg-blue-100 text-blue-800 flex items-center justify-center font-extrabold text-xs">
+                          {b.name.charAt(0)}
+                        </div>
+                        <div>
+                          <span className="font-extrabold text-[#0D1F3D] block">{b.name}</span>
+                          <span className="text-[10px] text-slate-500 font-normal">
+                            {b.businessType} • {b.contactPerson} ({b.city})
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-mono text-slate-400">{b.id}</span>
+                    </div>
+                  );
+                })}
+            </div>
+
+            {/* Executive Assignment Select */}
+            <Select
+              label="Assign Executive in Territory *"
+              value={linkAssignedExec}
+              onChange={(e) => setLinkAssignedExec(e.target.value)}
+              options={mockTerritoryExecutives.map((ex) => ({
+                label: `${ex.name} (${ex.team})`,
+                value: ex.name,
+              }))}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button variant="outline" size="sm" onClick={() => setIsLinkBusinessModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => {
+                const targetBiz = mockBusinesses.find((b) => b.id === selectedLinkBizId);
+                if (targetBiz) {
+                  const created: any = {
+                    id: targetBiz.id,
+                    name: targetBiz.name,
+                    category: targetBiz.category || 'Retail',
+                    businessType: targetBiz.businessType,
+                    contactPerson: targetBiz.contactPerson,
+                    contactRole: targetBiz.contactRole || 'Owner',
+                    phone: targetBiz.phone,
+                    email: targetBiz.email,
+                    address: targetBiz.fullAddress || targetBiz.address,
+                    assignedToName: linkAssignedExec,
+                    assignedToAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+                    status: 'Active',
+                    annualRevenue: targetBiz.annualRevenue || '₹ 1,80,000',
+                    revenueFormatted: '₹ 1,80,000',
+                    lastVisitDate: 'Just now',
+                    hotBadge: true,
+                    badge: 'Assigned',
+                  };
+
+                  setBusinessesList([created, ...businessesList.filter((b) => b.id !== targetBiz.id)]);
+                  setSelectedBusinessId(created.id);
+                  setIsLinkBusinessModalOpen(false);
+                  toast.success(`Business "${targetBiz.name}" assigned to ${territory.name}!`);
+                }
+              }}
+              className="bg-[#0D1F3D] text-white font-bold"
+            >
+              Assign to Territory
             </Button>
           </div>
         </div>

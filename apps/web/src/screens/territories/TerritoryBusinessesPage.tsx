@@ -116,8 +116,8 @@ export default function TerritoryBusinessesPage() {
             <Button
               variant="accent"
               size="sm"
-              onClick={() => navigate('/admin/businesses/add')}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1.5 shadow-xs"
+              onClick={() => navigate(`/admin/businesses/create?territoryId=${territory.id}`)}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <Plus className="h-4 w-4" /> Add Business
             </Button>
