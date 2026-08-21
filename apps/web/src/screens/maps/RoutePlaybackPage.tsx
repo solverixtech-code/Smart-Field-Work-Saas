@@ -154,6 +154,7 @@ export default function RoutePlaybackPage() {
           <InteractiveMap
             mode="route-playback"
             routeStops={route.stops}
+            routePath={route.detailedRoadPath}
             playbackActiveStopIndex={activeStopIndex}
             heightClassName="h-[580px]"
           />

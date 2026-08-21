@@ -96,6 +96,7 @@ export interface InteractiveMapProps {
   heatmapPoints?: HeatmapPoint[];
   territories?: TerritoryPolygon[];
   routeStops?: RouteStop[];
+  routePath?: [number, number][];
   playbackActiveStopIndex?: number;
   selectedExecutiveId?: string;
   onSelectExecutive?: (exec: ExecutiveLocation) => void;
@@ -111,6 +112,7 @@ export function InteractiveMap({
   heatmapPoints = [],
   territories = [],
   routeStops = [],
+  routePath = [],
   playbackActiveStopIndex,
   selectedExecutiveId,
   onSelectExecutive,
@@ -126,6 +128,7 @@ export function InteractiveMap({
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(
     selectedExecutiveId || null,
   );
+  const [, setMapTick] = useState(0);
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -133,7 +136,7 @@ export function InteractiveMap({
   // Default Mumbai Coordinates
   const defaultCenter: [number, number] = [72.8697, 19.1197];
 
-  // Initialize Mapbox GL map instance
+  // Initialize Mapbox GL map instance with frame listeners
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
@@ -149,6 +152,20 @@ export function InteractiveMap({
       map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right');
       mapRef.current = map;
 
+      // Force recalculation of marker projection on every camera movement
+      const updatePositions = () => {
+        setMapTick((t) => t + 1);
+      };
+
+      map.on('move', updatePositions);
+      map.on('zoom', updatePositions);
+      map.on('drag', updatePositions);
+      map.on('pitch', updatePositions);
+      map.on('rotate', updatePositions);
+
+      // Trigger initial render projection
+      map.on('load', updatePositions);
+
       return () => {
         map.remove();
         mapRef.current = null;
@@ -157,6 +174,16 @@ export function InteractiveMap({
       console.warn('Mapbox GL Map mount warning:', e);
     }
   }, []);
+
+  // Dynamic Mapbox Geographic to Screen Pixel Projection
+  const getPixelPoint = (lat: number, lng: number) => {
+    if (mapRef.current) {
+      const pt = mapRef.current.project([lng, lat]);
+      return { x: pt.x, y: pt.y };
+    }
+    // Fallback static projection before map initializes
+    return { x: (lng - 72.8) * 1200 + 200, y: (19.3 - lat) * 2200 + 50 };
+  };
 
   // Update Mapbox Style on Map Type Toggle
   useEffect(() => {
@@ -210,8 +237,9 @@ export function InteractiveMap({
         {/* Vector SVG Grid Overlay for Crisp Territory & Polygon Details */}
         <svg
           className="w-full h-full object-cover opacity-90 transition-opacity duration-300 pointer-events-none absolute inset-0 z-10"
-          viewBox="0 0 1000 800"
-          preserveAspectRatio="xMidYMid slice"
+          viewBox={`0 0 ${mapContainerRef.current?.clientWidth || 1000} ${
+            mapContainerRef.current?.clientHeight || 800
+          }`}
         >
           {/* MAPBOX VECTOR POLYGON TERRITORIES LAYER */}
           {(mode === 'territories' || territories.length > 0) &&
@@ -219,7 +247,10 @@ export function InteractiveMap({
               <g key={terr.id}>
                 <polygon
                   points={terr.pathPoints
-                    .map(([lat, lng]) => `${(lng - 72.8) * 1200 + 200},${(19.3 - lat) * 2200 + 50}`)
+                    .map(([lat, lng]) => {
+                      const pt = getPixelPoint(lat, lng);
+                      return `${pt.x},${pt.y}`;
+                    })
                     .join(' ')}
                   fill={terr.fillColor}
                   fillOpacity="0.22"
@@ -234,14 +265,13 @@ export function InteractiveMap({
           {(showHeatmapToggle || mode === 'visit-heatmap' || mode === 'sales-heatmap') && (
             <g className="mix-blend-multiply opacity-85">
               {heatmapPoints.map((pt) => {
-                const cx = (pt.lng - 72.8) * 1200 + 200;
-                const cy = (19.3 - pt.lat) * 2200 + 50;
+                const pixel = getPixelPoint(pt.lat, pt.lng);
                 const radius = pt.intensity * 90 + 30;
                 return (
                   <g key={pt.id}>
-                    <circle cx={cx} cy={cy} r={radius} fill="url(#heatGradRed)" opacity="0.65" />
-                    <circle cx={cx} cy={cy} r={radius * 0.6} fill="url(#heatGradYellow)" opacity="0.8" />
-                    <circle cx={cx} cy={cy} r={radius * 0.3} fill="#EF4444" opacity="0.9" />
+                    <circle cx={pixel.x} cy={pixel.y} r={radius} fill="url(#heatGradRed)" opacity="0.65" />
+                    <circle cx={pixel.x} cy={pixel.y} r={radius * 0.6} fill="url(#heatGradYellow)" opacity="0.8" />
+                    <circle cx={pixel.x} cy={pixel.y} r={radius * 0.3} fill="#EF4444" opacity="0.9" />
                   </g>
                 );
               })}
@@ -260,15 +290,40 @@ export function InteractiveMap({
           )}
 
           {/* ROUTE PLAYBACK MAPBOX POLYLINE LAYER */}
-          {(mode === 'route-playback' || routeStops.length > 0) && (
+          {(mode === 'route-playback' || routeStops.length > 0 || routePath.length > 0) && (
             <g>
+              {/* Outer Glow Halo */}
               <polyline
-                points={routeStops
-                  .map((st) => `${(st.lng - 72.8) * 1200 + 200},${(19.3 - st.lat) * 2200 + 50}`)
+                points={(routePath.length > 0
+                  ? routePath
+                  : routeStops.map((st) => [st.lat, st.lng] as [number, number])
+                )
+                  .map(([lat, lng]) => {
+                    const pt = getPixelPoint(lat, lng);
+                    return `${pt.x},${pt.y}`;
+                  })
                   .join(' ')}
                 fill="none"
                 stroke="#3B82F6"
-                strokeWidth="5"
+                strokeWidth="7"
+                strokeOpacity="0.35"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* Core Road Line */}
+              <polyline
+                points={(routePath.length > 0
+                  ? routePath
+                  : routeStops.map((st) => [st.lat, st.lng] as [number, number])
+                )
+                  .map(([lat, lng]) => {
+                    const pt = getPixelPoint(lat, lng);
+                    return `${pt.x},${pt.y}`;
+                  })
+                  .join(' ')}
+                fill="none"
+                stroke="#2563EB"
+                strokeWidth="4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -311,9 +366,8 @@ export function InteractiveMap({
 
       {/* MAPBOX MARKERS: EXECUTIVE LOCATIONS */}
       {(mode === 'live-executives' || mode === 'executives-only') &&
-        executives.map((exec, idx) => {
-          const cx = (exec.lng - 72.8) * 1200 + 200;
-          const cy = (19.3 - exec.lat) * 2200 + 50;
+        executives.map((exec) => {
+          const pt = getPixelPoint(exec.lat, exec.lng);
           const isSelected = selectedMarkerId === exec.id;
 
           const ringColor =
@@ -334,8 +388,12 @@ export function InteractiveMap({
                 setSelectedMarkerId(exec.id);
                 if (onSelectExecutive) onSelectExecutive(exec);
               }}
-              style={{ left: `${cx / 10}%`, top: `${cy / 8}%` }}
-              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform hover:scale-110"
+              style={{
+                transform: `translate3d(${pt.x}px, ${pt.y}px, 0)`,
+                left: 0,
+                top: 0,
+              }}
+              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform hover:scale-110 pointer-events-auto"
             >
               <div
                 className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-white shadow-lg ring-4 ${ringColor}`}
@@ -387,8 +445,7 @@ export function InteractiveMap({
       {/* MAPBOX MARKERS: PROSPECT PINS */}
       {mode === 'prospects' &&
         prospects.map((pr) => {
-          const cx = (pr.lng - 72.8) * 1200 + 200;
-          const cy = (19.3 - pr.lat) * 2200 + 50;
+          const pt = getPixelPoint(pr.lat, pr.lng);
 
           const markerBg =
             pr.markerColor === 'blue'
@@ -410,8 +467,12 @@ export function InteractiveMap({
                 setSelectedMarkerId(pr.id);
                 if (onSelectProspect) onSelectProspect(pr);
               }}
-              style={{ left: `${cx / 10}%`, top: `${cy / 8}%` }}
-              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform hover:scale-125"
+              style={{
+                transform: `translate3d(${pt.x}px, ${pt.y}px, 0)`,
+                left: 0,
+                top: 0,
+              }}
+              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform hover:scale-125 pointer-events-auto"
             >
               <div
                 className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-white shadow-md font-bold text-xs ${markerBg}`}
@@ -429,15 +490,18 @@ export function InteractiveMap({
       {/* MAPBOX MARKERS: ROUTE PLAYBACK WAYPOINTS */}
       {mode === 'route-playback' &&
         routeStops.map((st, i) => {
-          const cx = (st.lng - 72.8) * 1200 + 200;
-          const cy = (19.3 - st.lat) * 2200 + 50;
+          const pt = getPixelPoint(st.lat, st.lng);
           const isActive = playbackActiveStopIndex === i;
 
           return (
             <div
               key={st.id}
-              style={{ left: `${cx / 10}%`, top: `${cy / 8}%` }}
-              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1"
+              style={{
+                transform: `translate3d(${pt.x}px, ${pt.y}px, 0)`,
+                left: 0,
+                top: 0,
+              }}
+              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-auto"
             >
               <div
                 className={`flex items-center justify-center rounded-full border-2 border-white shadow-md font-extrabold text-xs text-white transition-all ${
@@ -459,15 +523,18 @@ export function InteractiveMap({
       {/* MAPBOX MARKERS: TERRITORY BADGES */}
       {mode === 'territories' &&
         territories.map((terr) => {
-          const cx = (terr.centerLng - 72.8) * 1200 + 200;
-          const cy = (19.3 - terr.centerLat) * 2200 + 50;
+          const pt = getPixelPoint(terr.centerLat, terr.centerLng);
           return (
             <div
               key={terr.id}
-              style={{ left: `${cx / 10}%`, top: `${cy / 8}%` }}
+              style={{
+                transform: `translate3d(${pt.x}px, ${pt.y}px, 0)`,
+                left: 0,
+                top: 0,
+              }}
               className="absolute z-20 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none"
             >
-              <div className="rounded-sm bg-white/95 border border-slate-300 p-2 shadow-md space-y-0.5 text-xs">
+              <div className="rounded-sm bg-white/95 border border-slate-300 p-2 shadow-md space-y-0.5 text-xs pointer-events-auto">
                 <span className="font-extrabold text-[#0D1F3D] block text-xs">{terr.name}</span>
                 <span className="rounded-sm px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-700 inline-block border border-indigo-200">
                   {terr.executivesCount} Executives
