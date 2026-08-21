@@ -377,6 +377,7 @@ export default function TerritoryBusinessesPage() {
                 mode="territories"
                 heightClassName="h-full"
                 territoryPath={territory.pathPoints}
+                compact
               />
             </div>
             <button

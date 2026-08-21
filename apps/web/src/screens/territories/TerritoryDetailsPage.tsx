@@ -264,6 +264,7 @@ export default function TerritoryDetailsPage() {
                   mode="territories"
                   heightClassName="h-full"
                   territoryPath={territory.pathPoints}
+                  compact
                 />
                 <div className="absolute bottom-2 right-2 z-20 rounded-sm bg-white/95 border border-slate-200 px-2.5 py-1 text-[10px] font-extrabold text-[#0D1F3D] shadow-sm">
                   Area: {territory.areaKm2} km² | Perimeter: {territory.perimeterKm} km

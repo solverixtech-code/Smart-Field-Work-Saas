@@ -104,6 +104,9 @@ export interface InteractiveMapProps {
   onSelectProspect?: (prospect: BusinessProspectMarker) => void;
   heightClassName?: string;
   showHeatmapToggle?: boolean;
+  compact?: boolean;
+  hideLegend?: boolean;
+  hideControls?: boolean;
   children?: React.ReactNode;
 }
 
@@ -122,6 +125,9 @@ export function InteractiveMap({
   onSelectProspect,
   heightClassName = 'h-[620px]',
   showHeatmapToggle: propShowHeatmapToggle,
+  compact = false,
+  hideLegend = false,
+  hideControls = false,
   children,
 }: InteractiveMapProps) {
   const [mapType, setMapType] = useState<'map' | 'satellite' | 'terrain'>('map');
@@ -540,35 +546,43 @@ export function InteractiveMap({
       </div>
 
       {/* MAPBOX NAVIGATION CONTROLS */}
-      <div className="absolute left-4 top-4 z-20 flex flex-col gap-1.5 shadow-md">
+      <div className={`absolute z-20 flex flex-col shadow-md ${compact ? 'left-2 top-2 gap-1' : 'left-4 top-4 gap-1.5'}`}>
         <button
           onClick={handleZoomIn}
-          className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold"
+          className={`flex items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold ${
+            compact ? 'h-7 w-7 text-xs' : 'h-9 w-9'
+          }`}
           title="Zoom In (Mapbox)"
         >
-          <Plus className="h-4 w-4" />
+          <Plus className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
         </button>
         <button
           onClick={handleZoomOut}
-          className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold"
+          className={`flex items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold ${
+            compact ? 'h-7 w-7 text-xs' : 'h-9 w-9'
+          }`}
           title="Zoom Out (Mapbox)"
         >
-          <Minus className="h-4 w-4" />
+          <Minus className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
         </button>
-        <button
-          onClick={handleRecenter}
-          className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold"
-          title="Recenter Mapbox Map"
-        >
-          <Navigation className="h-4 w-4 text-blue-600" />
-        </button>
-        <button
-          onClick={() => setMapType((t) => (t === 'map' ? 'satellite' : t === 'satellite' ? 'terrain' : 'map'))}
-          className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold"
-          title="Toggle Mapbox Layers"
-        >
-          <Layers className="h-4 w-4 text-indigo-600" />
-        </button>
+        {!compact && (
+          <>
+            <button
+              onClick={handleRecenter}
+              className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold"
+              title="Recenter Mapbox Map"
+            >
+              <Navigation className="h-4 w-4 text-blue-600" />
+            </button>
+            <button
+              onClick={() => setMapType((t) => (t === 'map' ? 'satellite' : t === 'satellite' ? 'terrain' : 'map'))}
+              className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold"
+              title="Toggle Mapbox Layers"
+            >
+              <Layers className="h-4 w-4 text-indigo-600" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* MAPBOX MARKERS: EXECUTIVE LOCATIONS */}
@@ -754,115 +768,118 @@ export function InteractiveMap({
         })}
 
       {/* FLOATING MAP LEGEND CARD */}
-      <div className="absolute left-4 bottom-4 z-20 rounded-sm border border-slate-200/90 bg-white/95 p-3.5 shadow-lg max-w-xs space-y-2 text-xs font-semibold backdrop-blur-xs text-left">
-        <h4 className="font-extrabold text-[#0D1F3D] text-xs border-b border-slate-100 pb-1.5 flex items-center justify-between">
-          <span>
-            {mode === 'prospects'
-              ? 'Prospect Status Legend'
-              : mode === 'territories'
-              ? 'Sales Achievement %'
-              : mode === 'route-playback'
-              ? 'Route Legend'
-              : mode === 'visit-heatmap'
-              ? 'Visit Density Scale'
-              : mode === 'sales-heatmap'
-              ? 'Sales Amount (₹)'
-              : 'Status Legend'}
-          </span>
-        </h4>
+      {!compact && !hideLegend && (
+        <div className="absolute left-4 bottom-4 z-20 rounded-sm border border-slate-200/90 bg-white/95 p-3.5 shadow-lg max-w-xs space-y-2 text-xs font-semibold backdrop-blur-xs text-left">
+          <h4 className="font-extrabold text-[#0D1F3D] text-xs border-b border-slate-100 pb-1.5 flex items-center justify-between">
+            <span>
+              {mode === 'prospects'
+                ? 'Prospect Status Legend'
+                : mode === 'territories'
+                ? 'Sales Achievement %'
+                : mode === 'route-playback'
+                ? 'Route Legend'
+                : mode === 'visit-heatmap'
+                ? 'Visit Density Scale'
+                : mode === 'sales-heatmap'
+                ? 'Sales Amount (₹)'
+                : 'Status Legend'}
+            </span>
+          </h4>
 
-        {mode === 'prospects' ? (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] font-bold">
-            <span className="flex items-center gap-1.5 text-slate-700">
-              <span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> New Prospect
-            </span>
-            <span className="flex items-center gap-1.5 text-slate-700">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Visited
-            </span>
-            <span className="flex items-center gap-1.5 text-slate-700">
-              <span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Follow-up
-            </span>
-            <span className="flex items-center gap-1.5 text-slate-700">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-600" /> Not Interested
-            </span>
-            <span className="flex items-center gap-1.5 text-slate-700">
-              <span className="h-2.5 w-2.5 rounded-full bg-purple-600" /> Demo Done
-            </span>
-            <span className="flex items-center gap-1.5 text-slate-700">
-              <Star className="h-3 w-3 fill-amber-400 text-amber-500" /> Customer
-            </span>
-          </div>
-        ) : mode === 'territories' ? (
-          <div className="space-y-1 text-[11px] font-bold">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> 80% and above
-              </span>{' '}
-              <span className="text-slate-400 font-normal">High</span>
+          {mode === 'prospects' ? (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] font-bold">
+              <span className="flex items-center gap-1.5 text-slate-700">
+                <span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> New Prospect
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-700">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Visited
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-700">
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> Follow-up
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-700">
+                <span className="h-2.5 w-2.5 rounded-full bg-red-600" /> Not Interested
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-700">
+                <span className="h-2.5 w-2.5 rounded-full bg-purple-600" /> Demo Done
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-700">
+                <Star className="h-3 w-3 fill-amber-400 text-amber-500" /> Customer
+              </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm bg-lime-500" /> 60% – 79%
-              </span>{' '}
-              <span className="text-slate-400 font-normal">Good</span>
+          ) : mode === 'territories' ? (
+            <div className="space-y-1 text-[11px] font-bold">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> 80% and above
+                </span>{' '}
+                <span className="text-slate-400 font-normal">High</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm bg-lime-500" /> 60% – 79%
+                </span>{' '}
+                <span className="text-slate-400 font-normal">Good</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm bg-amber-400" /> 40% – 59%
+                </span>{' '}
+                <span className="text-slate-400 font-normal">Average</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm bg-red-500" /> Below 20%
+                </span>{' '}
+                <span className="text-slate-400 font-normal">Low</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm bg-amber-400" /> 40% – 59%
-              </span>{' '}
-              <span className="text-slate-400 font-normal">Average</span>
+          ) : mode === 'route-playback' ? (
+            <div className="space-y-1.5 text-[11px] font-bold">
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Start Location
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-red-600" /> End Location
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-blue-500" /> Visited Stop
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-sm bg-red-500" /> Below 20%
-              </span>{' '}
-              <span className="text-slate-400 font-normal">Low</span>
+          ) : (
+            <div className="space-y-1.5 text-[11px] font-bold">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> On Field
+                </span>{' '}
+                <span className="text-slate-500">24</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> In Transit
+                </span>{' '}
+                <span className="text-slate-500">3</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Break
+                </span>{' '}
+                <span className="text-slate-500">1</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> Offline / Not Working
+                </span>{' '}
+                <span className="text-slate-500">4</span>
+              </div>
             </div>
-          </div>
-        ) : mode === 'route-playback' ? (
-          <div className="space-y-1.5 text-[11px] font-bold">
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Start Location
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-600" /> End Location
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2.5 w-2.5 rounded-full bg-blue-500" /> Visited Stop
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-1.5 text-[11px] font-bold">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> On Field
-              </span>{' '}
-              <span className="text-slate-500">24</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> In Transit
-              </span>{' '}
-              <span className="text-slate-500">3</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Break
-              </span>{' '}
-              <span className="text-slate-500">1</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> Offline / Not Working
-              </span>{' '}
-              <span className="text-slate-500">4</span>
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* FLOATING MAPBOX CONTROLS */}
-      <div className="absolute right-4 bottom-4 z-20 flex items-center gap-2">
+      {!compact && !hideControls && (
+        <div className="absolute right-4 bottom-4 z-20 flex items-center gap-2">
         <div className="flex items-center rounded-sm border border-slate-200 bg-white p-0.5 shadow-md">
           <button
             onClick={() => setMapType('map')}
@@ -901,6 +918,7 @@ export function InteractiveMap({
           Toggle Heatmap
         </button>
       </div>
+      )}
 
       {children}
     </div>

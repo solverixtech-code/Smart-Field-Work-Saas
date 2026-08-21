@@ -366,6 +366,7 @@ export default function EditTerritoryPage() {
                 mode="territories"
                 heightClassName="h-[360px]"
                 territoryPath={territory.pathPoints}
+                compact
               />
 
               <div className="absolute bottom-3 right-3 z-20 rounded-sm border border-slate-200 bg-white/95 px-3 py-1.5 text-[11px] font-extrabold text-[#0D1F3D] shadow-md">

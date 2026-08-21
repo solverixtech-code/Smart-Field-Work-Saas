@@ -416,6 +416,7 @@ export default function CreateTerritoryPage() {
                   [19.11, 72.9],
                   [19.11, 72.85],
                 ]}
+                compact
               />
 
               {/* Map Polygon Stats Footer Overlay */}
