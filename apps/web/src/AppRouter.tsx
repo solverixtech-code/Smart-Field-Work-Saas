@@ -47,6 +47,12 @@ import LeadExportPage from './screens/leads/LeadExportPage';
 import SalesPipelinePage from './screens/sales/SalesPipelinePage';
 import SalesStageViewPage from './screens/sales/SalesStageViewPage';
 
+import TargetDashboardPage from './screens/targets/TargetDashboardPage';
+import TeamTargetsScreen from './screens/targets/TeamTargetsScreen';
+import ExecutiveTargetsScreen from './screens/targets/ExecutiveTargetsScreen';
+import IncentiveRulesPage from './screens/targets/IncentiveRulesPage';
+import IncentivesManagementPage from './screens/targets/IncentivesManagementPage';
+
 import AllBusinessesPage from './screens/businesses/AllBusinessesPage';
 import AddBusinessPage from './screens/businesses/AddBusinessPage';
 import BusinessLayoutWrapper from './screens/businesses/BusinessLayoutWrapper';
@@ -293,6 +299,30 @@ export default function AppRouter() {
               <Route path="/admin/teams/:teamId/members" element={<TeamMembersPage />} />
               <Route path="/admin/teams/:teamId/performance" element={<TeamPerformancePage />} />
               <Route path="/admin/teams/:teamId/targets" element={<TeamTargetsPage />} />
+            </Route>
+
+            {/* Targets & Incentives Routes (Screens 128 to 136) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/targets" element={<TargetDashboardPage />} />
+              <Route path="/admin/targets/executives" element={<ExecutiveTargetsScreen />} />
+              <Route path="/admin/targets/teams" element={<TeamTargetsScreen />} />
+              <Route path="/admin/targets/create" element={<TargetDashboardPage />} />
+              <Route path="/admin/incentives/rules" element={<IncentiveRulesPage />} />
+              <Route path="/admin/incentives" element={<IncentivesManagementPage />} />
+              <Route path="/admin/incentives/approvals" element={<IncentivesManagementPage />} />
+              <Route path="/admin/incentives/payouts" element={<IncentivesManagementPage />} />
+              <Route path="/admin/incentives/:executiveId" element={<IncentivesManagementPage />} />
             </Route>
 
             <Route

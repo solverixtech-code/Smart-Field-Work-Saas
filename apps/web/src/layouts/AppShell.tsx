@@ -96,6 +96,46 @@ const navCategories: NavCategory[] = [
     ],
   },
   {
+    title: 'Targets & Incentives',
+    items: [
+      {
+        label: 'Target Dashboard',
+        icon: Target,
+        to: '/admin/targets',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '69.9%',
+      },
+      {
+        label: 'Team Targets',
+        icon: Target,
+        to: '/admin/targets/teams',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '24 Teams',
+      },
+      {
+        label: 'Executive Targets',
+        icon: Target,
+        to: '/admin/targets/executives',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '48 Staff',
+      },
+      {
+        label: 'Incentive Rules',
+        icon: Target,
+        to: '/admin/incentives/rules',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
+        badge: '18 Rules',
+      },
+      {
+        label: 'Incentives & Payouts',
+        icon: Target,
+        to: '/admin/incentives',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.FINANCE_OPS],
+        badge: '₹1.24L',
+      },
+    ],
+  },
+  {
     title: 'Demo Management',
     items: [
       {
