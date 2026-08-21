@@ -173,7 +173,10 @@ export default function LiveFieldMapPage() {
               {filteredExecutives.map((exec) => (
                 <div
                   key={exec.id}
-                  onClick={() => setSelectedExec(exec)}
+                  onClick={() => {
+                    setSelectedExec(exec);
+                    toast.info(`Locating ${exec.name} in ${exec.currentLocation}...`);
+                  }}
                   className={`flex items-center justify-between rounded-sm border p-2.5 transition-all cursor-pointer ${
                     selectedExec?.id === exec.id
                       ? 'border-[#0D1F3D] bg-slate-50 shadow-xs'

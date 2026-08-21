@@ -192,6 +192,22 @@ export function InteractiveMap({
     }
   }, [mapType]);
 
+  // Smoothly Fly Mapbox Camera to Selected Executive Location
+  useEffect(() => {
+    if (!mapRef.current || !selectedExecutiveId) return;
+
+    const exec = executives.find((e) => e.id === selectedExecutiveId);
+    if (exec) {
+      setSelectedMarkerId(exec.id);
+      mapRef.current.flyTo({
+        center: [exec.lng, exec.lat],
+        zoom: 15,
+        duration: 1200,
+        essential: true,
+      });
+    }
+  }, [selectedExecutiveId, executives]);
+
   const [fetchedRealRoadPath, setFetchedRealRoadPath] = useState<[number, number][]>([]);
 
   // Fetch real-world driving route geometry from Mapbox / OSRM routing API
