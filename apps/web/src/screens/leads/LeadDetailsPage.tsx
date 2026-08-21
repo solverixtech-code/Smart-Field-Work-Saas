@@ -148,7 +148,7 @@ export default function LeadDetailsPage() {
       </div>
 
       {/* Navigation Sub-Tabs Bar */}
-      <div className="flex overflow-x-auto gap-1 border-b border-slate-200 bg-white p-1.5 rounded-sm shadow-xs scrollbar-none">
+      <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto text-xs font-bold scrollbar-none pb-0">
         {[
           { id: 'overview', label: 'Overview' },
           { id: 'timeline', label: 'Timeline' },
@@ -164,10 +164,10 @@ export default function LeadDetailsPage() {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`rounded-sm px-4 py-2 text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2.5 border-b-2 font-extrabold transition-all whitespace-nowrap cursor-pointer text-xs ${
                 isActive
-                  ? 'bg-[#0D1F3D] text-white shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D]'
+                  ? 'border-purple-600 text-purple-700 bg-transparent'
+                  : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/50'
               }`}
             >
               {tab.label}
