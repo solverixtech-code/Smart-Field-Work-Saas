@@ -132,7 +132,13 @@ export default function AddLeadPage() {
             {/* Date Indicator Button */}
             <div className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-xs">
               <Calendar className="h-4 w-4 text-slate-500" />
-              <span>May 18, 2025</span>
+              <span>
+                {new Date().toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                })}
+              </span>
               <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
             </div>
 
