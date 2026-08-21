@@ -649,6 +649,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             <InteractiveMap
               mode="territories"
               heightClassName="h-full"
+              enablePolygonDrawing
               territoryPath={territory.pathPoints}
               prospects={mockTerritoryBusinesses.map((b) => ({
                 id: b.id,

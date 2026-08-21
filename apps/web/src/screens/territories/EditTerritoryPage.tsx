@@ -9,8 +9,9 @@ import {
   Info,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Select, SelectOption } from '../../components/ui/Select';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockTerritoriesList } from './territoriesData';
+import { mockTerritoriesList, mockTerritoryExecutives } from './territoriesData';
 
 export default function EditTerritoryPage() {
   const { territoryId } = useParams();
@@ -139,44 +140,45 @@ export default function EditTerritoryPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">
-                  Region / Area <span className="text-red-500">*</span>
-                </label>
-                <select
+                <Select
+                  label="Region / Area *"
                   value={regionArea}
                   onChange={(e) => setRegionArea(e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-[#0D1F3D] focus:outline-none"
-                >
-                  <option value="Mumbai – Andheri East">Mumbai – Andheri East</option>
-                  <option value="Mumbai – Andheri West">Mumbai – Andheri West</option>
-                  <option value="Mumbai – Bandra">Mumbai – Bandra</option>
-                </select>
+                  placeholder="Select region / area"
+                  searchable
+                  options={[
+                    { value: 'Mumbai – Andheri East', label: 'Mumbai – Andheri East' },
+                    { value: 'Mumbai – Andheri West', label: 'Mumbai – Andheri West' },
+                    { value: 'Mumbai – Bandra', label: 'Mumbai – Bandra' },
+                  ]}
+                />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">
-                  City <span className="text-red-500">*</span>
-                </label>
-                <select
+                <Select
+                  label="City *"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-[#0D1F3D] focus:outline-none"
-                >
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Thane">Thane</option>
-                </select>
+                  placeholder="Select city"
+                  searchable
+                  options={[
+                    { value: 'Mumbai', label: 'Mumbai' },
+                    { value: 'Thane', label: 'Thane' },
+                  ]}
+                />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Status</label>
-                <select
+                <Select
+                  label="Status"
                   value={status}
                   onChange={(e) => setStatus(e.target.value as any)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-emerald-700 font-bold focus:border-[#0D1F3D] focus:outline-none"
-                >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
+                  searchable={false}
+                  options={[
+                    { value: 'Active', label: 'Active' },
+                    { value: 'Inactive', label: 'Inactive' },
+                  ]}
+                />
               </div>
 
               <div className="space-y-1">
@@ -222,15 +224,32 @@ export default function EditTerritoryPage() {
               Assign Manager
             </h3>
 
-            <select
+            <Select
+              searchable
               value={managerName}
               onChange={(e) => setManagerName(e.target.value)}
-              className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 font-bold focus:border-[#0D1F3D] focus:outline-none"
-            >
-              <option value="Vikram Singh">Vikram Singh (Sales Manager)</option>
-              <option value="Neha Sharma">Neha Sharma (Sales Manager)</option>
-              <option value="Arjun Mehta">Arjun Mehta (Sales Manager)</option>
-            </select>
+              placeholder="Search and select manager..."
+              options={[
+                {
+                  value: 'Vikram Singh',
+                  label: 'Vikram Singh',
+                  sublabel: 'Sales Manager',
+                  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+                },
+                {
+                  value: 'Neha Sharma',
+                  label: 'Neha Sharma',
+                  sublabel: 'Sales Manager',
+                  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
+                },
+                {
+                  value: 'Arjun Mehta',
+                  label: 'Arjun Mehta',
+                  sublabel: 'Sales Manager',
+                  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+                },
+              ]}
+            />
           </div>
 
           {/* Card 3: Targets (Monthly) */}
@@ -317,23 +336,34 @@ export default function EditTerritoryPage() {
             </h3>
 
             <div className="flex flex-wrap gap-2">
-              {assignedExecutives.map((name) => (
-                <span
-                  key={name}
-                  className="inline-flex items-center gap-1.5 rounded-sm bg-slate-100 border border-slate-200 px-2.5 py-1 text-xs font-bold text-[#0D1F3D]"
-                >
-                  <span>{name}</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setAssignedExecutives(assignedExecutives.filter((n) => n !== name))
-                    }
-                    className="text-slate-400 hover:text-slate-900"
+              {assignedExecutives.map((name) => {
+                const execObj = mockTerritoryExecutives.find((e) => e.name === name);
+                return (
+                  <span
+                    key={name}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 pl-1 pr-2.5 py-1 text-xs font-bold text-[#0D1F3D] shadow-2xs"
                   >
-                    ×
-                  </button>
-                </span>
-              ))}
+                    <img
+                      src={
+                        execObj?.avatar ||
+                        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200'
+                      }
+                      alt={name}
+                      className="h-5 w-5 rounded-full object-cover border border-white shrink-0"
+                    />
+                    <span>{name}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAssignedExecutives(assignedExecutives.filter((n) => n !== name))
+                      }
+                      className="text-slate-400 hover:text-slate-900 font-extrabold ml-1 cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  </span>
+                );
+              })}
             </div>
 
             <button
@@ -365,13 +395,10 @@ export default function EditTerritoryPage() {
               <InteractiveMap
                 mode="territories"
                 heightClassName="h-[360px]"
+                enablePolygonDrawing
                 territoryPath={territory.pathPoints}
                 compact
               />
-
-              <div className="absolute bottom-3 right-3 z-20 rounded-sm border border-slate-200 bg-white/95 px-3 py-1.5 text-[11px] font-extrabold text-[#0D1F3D] shadow-md">
-                Area: {territory.areaKm2} km² | Perimeter: {territory.perimeterKm} km
-              </div>
             </div>
           </div>
 

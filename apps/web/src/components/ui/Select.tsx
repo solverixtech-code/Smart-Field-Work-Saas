@@ -4,6 +4,8 @@ import { ChevronDown, Check, Search } from 'lucide-react';
 export interface SelectOption {
   value: string;
   label: string;
+  avatar?: string;
+  sublabel?: string;
 }
 
 export interface SelectProps {
@@ -143,9 +145,22 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
             </div>
           )}
 
-          <span className={`truncate text-left ${!selectedOption ? 'text-slate-400 font-medium' : 'text-[#0D1F3D] font-bold'}`}>
-            {displayLabel}
-          </span>
+          <div className="flex items-center gap-2 truncate text-left">
+            {selectedOption?.avatar && (
+              <img
+                src={selectedOption.avatar}
+                alt=""
+                className="h-5 w-5 rounded-full object-cover shrink-0 border border-slate-200"
+              />
+            )}
+            <span
+              className={`truncate ${
+                !selectedOption ? 'text-slate-400 font-medium' : 'text-[#0D1F3D] font-bold'
+              }`}
+            >
+              {displayLabel}
+            </span>
+          </div>
 
           <ChevronDown
             className={`h-4 w-4 text-slate-400 shrink-0 transition-transform duration-200 ${
@@ -188,7 +203,23 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                           : 'text-slate-700 hover:bg-slate-50 hover:text-[#0D1F3D]'
                       }`}
                     >
-                      <span className="truncate">{opt.label}</span>
+                      <div className="flex items-center gap-2.5 truncate">
+                        {opt.avatar && (
+                          <img
+                            src={opt.avatar}
+                            alt=""
+                            className="h-6 w-6 rounded-full object-cover shrink-0 border border-slate-200"
+                          />
+                        )}
+                        <div className="truncate text-left">
+                          <span className="truncate block font-bold text-[#0D1F3D]">{opt.label}</span>
+                          {opt.sublabel && (
+                            <span className="text-[10px] text-slate-400 block font-normal">
+                              {opt.sublabel}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       {isSelected && <Check className="h-3.5 w-3.5 text-[#0D1F3D] shrink-0 ml-2" />}
                     </button>
                   );

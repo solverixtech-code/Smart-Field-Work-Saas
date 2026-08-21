@@ -82,6 +82,46 @@ export function getMapboxStyle(mapType: 'map' | 'satellite' | 'terrain'): string
   };
 }
 
+// Calculate geodesic perimeter of polygon (km)
+export function calculatePolygonPerimeter(points: [number, number][]): number {
+  if (!points || points.length < 2) return 0;
+  let total = 0;
+  const R = 6371; // Earth radius in km
+  for (let i = 0; i < points.length; i++) {
+    const p1 = points[i];
+    const p2 = points[(i + 1) % points.length];
+    const dLat = (p2[0] - p1[0]) * (Math.PI / 180);
+    const dLng = (p2[1] - p1[1]) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(p1[0] * (Math.PI / 180)) *
+        Math.cos(p2[0] * (Math.PI / 180)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    total += R * c;
+  }
+  return Number(total.toFixed(2));
+}
+
+// Calculate geodesic area of polygon (km²)
+export function calculatePolygonArea(points: [number, number][]): number {
+  if (!points || points.length < 3) return 0;
+  const R = 6371; // Earth radius in km
+  let area = 0;
+  for (let i = 0; i < points.length; i++) {
+    const p1 = points[i];
+    const p2 = points[(i + 1) % points.length];
+    const radLat1 = p1[0] * (Math.PI / 180);
+    const radLat2 = p2[0] * (Math.PI / 180);
+    const radLng1 = p1[1] * (Math.PI / 180);
+    const radLng2 = p2[1] * (Math.PI / 180);
+    area += (radLng2 - radLng1) * (2 + Math.sin(radLat1) + Math.sin(radLat2));
+  }
+  area = (Math.abs(area) * R * R) / 2;
+  return Number(area.toFixed(2));
+}
+
 export interface InteractiveMapProps {
   mode?:
     | 'live-executives'
@@ -107,6 +147,8 @@ export interface InteractiveMapProps {
   compact?: boolean;
   hideLegend?: boolean;
   hideControls?: boolean;
+  enablePolygonDrawing?: boolean;
+  onPolygonChange?: (points: [number, number][], areaKm2: number, perimeterKm: number) => void;
   children?: React.ReactNode;
 }
 
@@ -128,6 +170,8 @@ export function InteractiveMap({
   compact = false,
   hideLegend = false,
   hideControls = false,
+  enablePolygonDrawing = false,
+  onPolygonChange,
   children,
 }: InteractiveMapProps) {
   const [mapType, setMapType] = useState<'map' | 'satellite' | 'terrain'>('map');
@@ -142,11 +186,55 @@ export function InteractiveMap({
   );
   const [, setMapTick] = useState(0);
 
+  // Polygon Drawing State
+  const [drawnPolygonPoints, setDrawnPolygonPoints] = useState<[number, number][]>(
+    territoryPath || [
+      [19.16, 72.85],
+      [19.16, 72.9],
+      [19.11, 72.9],
+      [19.11, 72.85],
+    ],
+  );
+  const [isDrawingModeActive, setIsDrawingModeActive] = useState<boolean>(
+    Boolean(enablePolygonDrawing),
+  );
+
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
 
+  // Sync prop territoryPath changes if provided externally
+  useEffect(() => {
+    if (territoryPath && territoryPath.length > 0) {
+      setDrawnPolygonPoints(territoryPath);
+    }
+  }, [territoryPath]);
+
   // Default Mumbai Coordinates
   const defaultCenter: [number, number] = [72.8697, 19.1197];
+
+  // Map Click Listener for Polygon Creation & Vertex Editing
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !enablePolygonDrawing || !isDrawingModeActive) return;
+
+    const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
+      const clickedLat = Number(e.lngLat.lat.toFixed(6));
+      const clickedLng = Number(e.lngLat.lng.toFixed(6));
+
+      setDrawnPolygonPoints((prev) => {
+        const updated: [number, number][] = [...prev, [clickedLat, clickedLng]];
+        const area = calculatePolygonArea(updated);
+        const peri = calculatePolygonPerimeter(updated);
+        onPolygonChange?.(updated, area, peri);
+        return updated;
+      });
+    };
+
+    map.on('click', handleMapClick);
+    return () => {
+      map.off('click', handleMapClick);
+    };
+  }, [enablePolygonDrawing, isDrawingModeActive, onPolygonChange]);
 
   // Initialize Mapbox GL map instance with frame listeners
   useEffect(() => {
@@ -463,38 +551,70 @@ export function InteractiveMap({
             mapContainerRef.current?.clientHeight || 800
           }`}
         >
-          {/* MAPBOX VECTOR POLYGON TERRITORIES LAYER */}
-          {(mode === 'territories' || territories.length > 0 || (territoryPath && territoryPath.length > 0)) &&
-            (territories.length > 0
-              ? territories
-              : territoryPath && territoryPath.length > 0
-              ? [
-                  {
-                    id: 'T-SINGLE',
-                    name: 'Territory Boundary',
-                    fillColor: '#2563EB',
-                    borderColor: '#2563EB',
-                    pathPoints: territoryPath,
-                  },
-                ]
-              : []
-            ).map((terr) => (
-              <g key={terr.id}>
+          {/* MAPBOX VECTOR POLYGON TERRITORIES & DRAWING LAYER */}
+          {(mode === 'territories' || enablePolygonDrawing || territories.length > 0 || (drawnPolygonPoints && drawnPolygonPoints.length > 0)) && (
+            <g>
+              {/* Dynamic Interactive Drawn Polygon */}
+              {drawnPolygonPoints.length > 0 && (
                 <polygon
-                  points={terr.pathPoints
+                  points={drawnPolygonPoints
                     .map(([lat, lng]) => {
                       const pt = getPixelPoint(lat, lng);
                       return `${pt.x},${pt.y}`;
                     })
                     .join(' ')}
-                  fill={terr.fillColor}
+                  fill="#2563EB"
                   fillOpacity="0.22"
-                  stroke={terr.borderColor}
+                  stroke="#2563EB"
                   strokeWidth="3"
                   strokeDasharray="6 4"
                 />
-              </g>
-            ))}
+              )}
+
+              {/* Polygon Vertex Points & Click-to-Delete Handles */}
+              {enablePolygonDrawing &&
+                drawnPolygonPoints.map(([lat, lng], idx) => {
+                  const pt = getPixelPoint(lat, lng);
+                  return (
+                    <g
+                      key={`vertex-${idx}`}
+                      className="pointer-events-auto cursor-pointer group"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDrawnPolygonPoints((prev) => {
+                          const updated = prev.filter((_, i) => i !== idx);
+                          const area = calculatePolygonArea(updated);
+                          const peri = calculatePolygonPerimeter(updated);
+                          onPolygonChange?.(updated, area, peri);
+                          return updated;
+                        });
+                      }}
+                    >
+                      <circle
+                        cx={pt.x}
+                        cy={pt.y}
+                        r="9"
+                        fill="#E20613"
+                        stroke="#FFFFFF"
+                        strokeWidth="2.5"
+                        className="transition-transform group-hover:scale-125"
+                      />
+                      <text
+                        x={pt.x}
+                        y={pt.y + 3.5}
+                        textAnchor="middle"
+                        fill="#FFFFFF"
+                        fontSize="9"
+                        fontWeight="900"
+                        className="pointer-events-none"
+                      >
+                        {idx + 1}
+                      </text>
+                    </g>
+                  );
+                })}
+            </g>
+          )}
 
 
 
@@ -545,8 +665,59 @@ export function InteractiveMap({
         </svg>
       </div>
 
+      {/* POLYGON DRAWING INTERACTIVE TOOLBAR OVERLAY */}
+      {enablePolygonDrawing && (
+        <div className="absolute top-2 left-2 right-2 sm:right-auto z-30 flex flex-wrap items-center gap-1.5 rounded-sm bg-white/95 p-1.5 shadow-md border border-slate-200 backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setIsDrawingModeActive(!isDrawingModeActive)}
+            className={`flex items-center gap-1 px-2 py-1 rounded-sm text-xs font-bold transition-all cursor-pointer ${
+              isDrawingModeActive
+                ? 'bg-red-600 text-white shadow-xs'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            }`}
+          >
+            <MapPin className="h-3.5 w-3.5" />
+            {isDrawingModeActive ? 'Click Map to Add Points' : 'Start Drawing Polygon'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setDrawnPolygonPoints((prev) => {
+                const updated = prev.slice(0, -1);
+                const area = calculatePolygonArea(updated);
+                const peri = calculatePolygonPerimeter(updated);
+                onPolygonChange?.(updated, area, peri);
+                return updated;
+              });
+            }}
+            disabled={drawnPolygonPoints.length === 0}
+            className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-50 cursor-pointer"
+          >
+            ↩ Undo
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setDrawnPolygonPoints([]);
+              onPolygonChange?.([], 0, 0);
+            }}
+            disabled={drawnPolygonPoints.length === 0}
+            className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 disabled:opacity-50 cursor-pointer"
+          >
+            Clear Boundary
+          </button>
+
+          <span className="text-[10px] font-extrabold text-[#0D1F3D] px-2 py-0.5 bg-slate-100 rounded-sm">
+            Points: {drawnPolygonPoints.length}
+          </span>
+        </div>
+      )}
+
       {/* MAPBOX NAVIGATION CONTROLS */}
-      <div className={`absolute z-20 flex flex-col shadow-md ${compact ? 'left-2 top-2 gap-1' : 'left-4 top-4 gap-1.5'}`}>
+      <div className={`absolute z-20 flex flex-col shadow-md ${compact ? 'left-2 top-12 gap-1' : 'left-4 top-14 gap-1.5'}`}>
         <button
           onClick={handleZoomIn}
           className={`flex items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold ${

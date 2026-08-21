@@ -17,8 +17,9 @@ import {
   Info,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Select, SelectOption } from '../../components/ui/Select';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockTerritoriesList } from './territoriesData';
+import { mockTerritoriesList, mockTerritoryExecutives } from './territoriesData';
 
 export default function CreateTerritoryPage() {
   const navigate = useNavigate();
@@ -41,6 +42,15 @@ export default function CreateTerritoryPage() {
   const [selectedExecutives, setSelectedExecutives] = useState<string[]>([]);
   const [searchLocation, setSearchLocation] = useState('');
   const [notes, setNotes] = useState('');
+
+  const [boundaryPoints, setBoundaryPoints] = useState<[number, number][]>([
+    [19.16, 72.85],
+    [19.16, 72.9],
+    [19.11, 72.9],
+    [19.11, 72.85],
+  ]);
+  const [areaKm2, setAreaKm2] = useState<number>(18.45);
+  const [perimeterKm, setPerimeterKm] = useState<number>(23.67);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,37 +141,36 @@ export default function CreateTerritoryPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">
-                  Region / Area <span className="text-red-500">*</span>
-                </label>
-                <select
+                <Select
+                  label="Region / Area *"
                   value={regionArea}
                   onChange={(e) => setRegionArea(e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-[#0D1F3D] focus:outline-none"
-                >
-                  <option value="">Select region / area</option>
-                  <option value="Mumbai – Andheri East">Mumbai – Andheri East</option>
-                  <option value="Mumbai – Andheri West">Mumbai – Andheri West</option>
-                  <option value="Mumbai – Bandra">Mumbai – Bandra</option>
-                  <option value="Mumbai – Ghatkopar">Mumbai – Ghatkopar</option>
-                  <option value="Thane – West">Thane – West</option>
-                </select>
+                  placeholder="Select region / area"
+                  searchable
+                  options={[
+                    { value: 'Mumbai – Andheri East', label: 'Mumbai – Andheri East' },
+                    { value: 'Mumbai – Andheri West', label: 'Mumbai – Andheri West' },
+                    { value: 'Mumbai – Bandra', label: 'Mumbai – Bandra' },
+                    { value: 'Mumbai – Ghatkopar', label: 'Mumbai – Ghatkopar' },
+                    { value: 'Thane – West', label: 'Thane – West' },
+                  ]}
+                />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">
-                  City <span className="text-red-500">*</span>
-                </label>
-                <select
+                <Select
+                  label="City *"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-[#0D1F3D] focus:outline-none"
-                >
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Thane">Thane</option>
-                  <option value="Navi Mumbai">Navi Mumbai</option>
-                  <option value="Pune">Pune</option>
-                </select>
+                  placeholder="Select city"
+                  searchable
+                  options={[
+                    { value: 'Mumbai', label: 'Mumbai' },
+                    { value: 'Thane', label: 'Thane' },
+                    { value: 'Navi Mumbai', label: 'Navi Mumbai' },
+                    { value: 'Pune', label: 'Pune' },
+                  ]}
+                />
               </div>
 
               <div className="sm:col-span-2 space-y-1">
@@ -180,17 +189,16 @@ export default function CreateTerritoryPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">
-                  Status <span className="text-red-500">*</span>
-                </label>
-                <select
+                <Select
+                  label="Status *"
                   value={status}
                   onChange={(e) => setStatus(e.target.value as any)}
-                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-[#0D1F3D] focus:outline-none"
-                >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
+                  searchable={false}
+                  options={[
+                    { value: 'Active', label: 'Active' },
+                    { value: 'Inactive', label: 'Inactive' },
+                  ]}
+                />
               </div>
 
               <div className="space-y-1">
@@ -225,17 +233,38 @@ export default function CreateTerritoryPage() {
             </h3>
 
             <div>
-              <select
+              <Select
+                searchable
                 value={managerName}
                 onChange={(e) => setManagerName(e.target.value)}
-                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-[#0D1F3D] focus:outline-none"
-              >
-                <option value="">Search and select manager</option>
-                <option value="Vikram Singh">Vikram Singh (Sales Manager)</option>
-                <option value="Neha Sharma">Neha Sharma (Sales Manager)</option>
-                <option value="Arjun Mehta">Arjun Mehta (Sales Manager)</option>
-                <option value="Pooja Yadav">Pooja Yadav (Team Leader)</option>
-              </select>
+                placeholder="Search and select manager..."
+                options={[
+                  {
+                    value: 'Vikram Singh',
+                    label: 'Vikram Singh',
+                    sublabel: 'Sales Manager',
+                    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+                  },
+                  {
+                    value: 'Neha Sharma',
+                    label: 'Neha Sharma',
+                    sublabel: 'Sales Manager',
+                    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
+                  },
+                  {
+                    value: 'Arjun Mehta',
+                    label: 'Arjun Mehta',
+                    sublabel: 'Sales Manager',
+                    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+                  },
+                  {
+                    value: 'Pooja Yadav',
+                    label: 'Pooja Yadav',
+                    sublabel: 'Team Leader',
+                    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
+                  },
+                ]}
+              />
               <p className="text-[11px] text-slate-400 font-normal mt-1">
                 Manager will be responsible for this territory.
               </p>
@@ -312,41 +341,53 @@ export default function CreateTerritoryPage() {
             </h3>
 
             <div className="space-y-2">
-              <select
+              <Select
+                searchable
+                placeholder="Search executive by name or team..."
+                options={mockTerritoryExecutives.map((exec) => ({
+                  value: exec.name,
+                  label: exec.name,
+                  sublabel: `${exec.role} • ${exec.team}`,
+                  avatar: exec.avatar,
+                }))}
                 onChange={(e) => {
-                  if (e.target.value && !selectedExecutives.includes(e.target.value)) {
-                    setSelectedExecutives([...selectedExecutives, e.target.value]);
+                  const val = e.target.value;
+                  if (val && !selectedExecutives.includes(val)) {
+                    setSelectedExecutives([...selectedExecutives, val]);
                   }
                 }}
-                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-[#0D1F3D] focus:outline-none"
-              >
-                <option value="">Search and select executives</option>
-                <option value="Arjun Mehta">Arjun Mehta (Senior Executive)</option>
-                <option value="Neha Sharma">Neha Sharma (Sales Executive)</option>
-                <option value="Pooja Yadav">Pooja Yadav (Field Representative)</option>
-                <option value="Rakesh Patel">Rakesh Patel (Sales Executive)</option>
-                <option value="Kiran Jadhav">Kiran Jadhav (Field Representative)</option>
-              </select>
+              />
 
               {selectedExecutives.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {selectedExecutives.map((name) => (
-                    <span
-                      key={name}
-                      className="inline-flex items-center gap-1.5 rounded-sm bg-slate-100 border border-slate-200 px-2 py-1 text-xs font-bold text-[#0D1F3D]"
-                    >
-                      <span>{name}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSelectedExecutives(selectedExecutives.filter((n) => n !== name))
-                        }
-                        className="text-slate-400 hover:text-slate-900"
+                  {selectedExecutives.map((name) => {
+                    const execObj = mockTerritoryExecutives.find((e) => e.name === name);
+                    return (
+                      <span
+                        key={name}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 pl-1 pr-2.5 py-1 text-xs font-bold text-[#0D1F3D] shadow-2xs"
                       >
-                        ×
-                      </button>
-                    </span>
-                  ))}
+                        <img
+                          src={
+                            execObj?.avatar ||
+                            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'
+                          }
+                          alt={name}
+                          className="h-5 w-5 rounded-full object-cover border border-white shrink-0"
+                        />
+                        <span>{name}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedExecutives(selectedExecutives.filter((n) => n !== name))
+                          }
+                          className="text-slate-400 hover:text-slate-900 font-extrabold ml-1 cursor-pointer"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })}
                 </div>
               )}
               <p className="text-[11px] text-slate-400 font-normal">
@@ -372,14 +413,19 @@ export default function CreateTerritoryPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info('Boundary cleared')}
-                className="text-xs font-bold border-red-200 text-red-600 hover:bg-red-50 rounded-sm"
+                onClick={() => {
+                  setBoundaryPoints([]);
+                  setAreaKm2(0);
+                  setPerimeterKm(0);
+                  toast.info('Boundary cleared');
+                }}
+                className="text-xs font-bold border-red-200 text-red-600 hover:bg-red-50 rounded-sm cursor-pointer"
               >
                 Clear Boundary
               </Button>
             </div>
             <p className="text-[11px] text-slate-500 font-medium">
-              Search location and draw the boundary on map
+              Search location and click anywhere on the map to add/edit boundary polygon vertices
             </p>
 
             {/* Location Search Bar */}
@@ -405,23 +451,24 @@ export default function CreateTerritoryPage() {
               </Button>
             </div>
 
-            {/* Map Canvas */}
+            {/* Map Canvas with Interactive Polygon Drawing */}
             <div className="relative rounded-sm border border-slate-200 overflow-hidden">
               <InteractiveMap
                 mode="territories"
                 heightClassName="h-[360px]"
-                territoryPath={[
-                  [19.16, 72.85],
-                  [19.16, 72.9],
-                  [19.11, 72.9],
-                  [19.11, 72.85],
-                ]}
+                enablePolygonDrawing
+                territoryPath={boundaryPoints}
+                onPolygonChange={(points, area, peri) => {
+                  setBoundaryPoints(points);
+                  setAreaKm2(area);
+                  setPerimeterKm(peri);
+                }}
                 compact
               />
 
               {/* Map Polygon Stats Footer Overlay */}
               <div className="absolute bottom-3 right-3 z-20 rounded-sm border border-slate-200 bg-white/95 px-3 py-1.5 text-[11px] font-extrabold text-[#0D1F3D] shadow-md">
-                Area: 18.45 km² &nbsp;|&nbsp; Perimeter: 23.67 km
+                Area: {areaKm2} km² &nbsp;|&nbsp; Perimeter: {perimeterKm} km
               </div>
             </div>
           </div>
@@ -438,12 +485,12 @@ export default function CreateTerritoryPage() {
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               <div className="rounded-sm border border-slate-100 bg-slate-50 p-2.5 text-center">
                 <span className="text-[10px] text-slate-400 font-bold block">Area</span>
-                <span className="text-xs font-extrabold text-[#0D1F3D]">18.45 km²</span>
+                <span className="text-xs font-extrabold text-[#0D1F3D]">{areaKm2} km²</span>
               </div>
 
               <div className="rounded-sm border border-slate-100 bg-slate-50 p-2.5 text-center">
                 <span className="text-[10px] text-slate-400 font-bold block">Perimeter</span>
-                <span className="text-xs font-extrabold text-[#0D1F3D]">23.67 km</span>
+                <span className="text-xs font-extrabold text-[#0D1F3D]">{perimeterKm} km</span>
               </div>
 
               <div className="rounded-sm border border-slate-100 bg-slate-50 p-2.5 text-center">
