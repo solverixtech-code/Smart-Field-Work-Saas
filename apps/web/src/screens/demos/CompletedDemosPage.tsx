@@ -143,10 +143,10 @@ export default function CompletedDemosPage() {
         </div>
       </div>
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {/* LEFT 8 COLS TABLE */}
-        <div className="space-y-4 lg:col-span-8">
+      {/* Main Grid: 9-col Table + 3-col Compact Right Sidebars */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+        {/* LEFT 9 COLS TABLE */}
+        <div className="space-y-4 lg:col-span-9">
           <div className="rounded-sm border border-slate-200/90 bg-white shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-semibold border-collapse">
@@ -249,29 +249,29 @@ export default function CompletedDemosPage() {
           </div>
         </div>
 
-        {/* RIGHT 4 COLS SIDEBAR */}
-        <div className="space-y-4 lg:col-span-4">
+        {/* RIGHT 3 COLS SIDEBAR */}
+        <div className="space-y-3 lg:col-span-3">
           {/* Total Value Generated Card */}
-          <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-2 text-xs font-semibold">
+          <div className="rounded-sm border border-slate-200/80 bg-white p-3 shadow-xs space-y-1 text-xs font-semibold">
             <span className="text-slate-400 font-bold block">Total Value Generated</span>
-            <span className="text-2xl font-extrabold text-[#0D1F3D] block">₹18,45,000</span>
-            <span className="text-[11px] text-slate-500 font-medium block">From 28 converted demos</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D] block">₹18,45,000</span>
+            <span className="text-[10px] text-slate-500 font-medium block">From 28 converted demos</span>
           </div>
 
           {/* Completed Demos by Outcome Card */}
-          <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+          <div className="rounded-sm border border-slate-200/80 bg-white p-3 shadow-xs space-y-2 text-xs font-semibold">
+            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-1.5">
               Completed Demos by Outcome
             </h3>
 
-            <div className="relative py-2 flex flex-col items-center justify-center">
-              <div className="h-24 w-24 rounded-full border-8 border-emerald-500 border-t-teal-600 flex flex-col items-center justify-center shadow-inner">
-                <span className="text-lg font-extrabold text-[#0D1F3D]">78</span>
-                <span className="text-[9px] font-bold text-slate-400">Total</span>
+            <div className="relative py-1 flex flex-col items-center justify-center">
+              <div className="h-16 w-16 rounded-full border-4 border-emerald-500 border-t-teal-600 flex flex-col items-center justify-center shadow-xs">
+                <span className="text-sm font-extrabold text-[#0D1F3D]">78</span>
+                <span className="text-[8px] font-bold text-slate-400">Total</span>
               </div>
             </div>
 
-            <div className="space-y-1.5 text-[11px] text-slate-700">
+            <div className="space-y-1 text-[10px] text-slate-700">
               <div className="flex justify-between">
                 <span className="flex items-center gap-1 font-medium">
                   <span className="h-2 w-2 rounded-full bg-emerald-500" /> Interested

@@ -254,10 +254,10 @@ export default function AllDemosPage() {
         </div>
       </div>
 
-      {/* Main Grid: 8-col Table + 4-col Right Sidebars */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {/* LEFT COLUMN (8 COLS TABLE) */}
-        <div className="space-y-4 lg:col-span-8">
+      {/* Main Grid: 9-col Table + 3-col Compact Right Sidebars */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+        {/* LEFT COLUMN (9 COLS TABLE FOR MAXIMUM READABILITY) */}
+        <div className="space-y-4 lg:col-span-9">
           <div className="rounded-sm border border-slate-200/90 bg-white shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-semibold border-collapse">
@@ -431,43 +431,43 @@ export default function AllDemosPage() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN (4 COLS SIDEBAR) */}
-        <div className="space-y-4 lg:col-span-4">
+        {/* RIGHT COLUMN (3 COLS SIDEBAR) */}
+        <div className="space-y-3 lg:col-span-3">
           {/* Demo Status Distribution Donut Card */}
-          <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+          <div className="rounded-sm border border-slate-200/80 bg-white p-3 shadow-xs space-y-2 text-xs font-semibold">
+            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-1.5">
               Demo Status Distribution
             </h3>
 
-            <div className="relative py-2 flex flex-col items-center justify-center">
-              <div className="h-24 w-24 rounded-full border-8 border-emerald-500 border-t-blue-600 border-r-amber-500 border-b-red-500 flex flex-col items-center justify-center shadow-inner">
-                <span className="text-lg font-extrabold text-[#0D1F3D]">128</span>
-                <span className="text-[9px] font-bold text-slate-400">Total Demos</span>
+            <div className="relative py-1 flex flex-col items-center justify-center">
+              <div className="h-16 w-16 rounded-full border-4 border-emerald-500 border-t-blue-600 border-r-amber-500 border-b-red-500 flex flex-col items-center justify-center shadow-xs">
+                <span className="text-sm font-extrabold text-[#0D1F3D]">128</span>
+                <span className="text-[8px] font-bold text-slate-400">Total</span>
               </div>
             </div>
 
-            <div className="space-y-1.5 text-[11px] text-slate-700">
+            <div className="space-y-1 text-[10px] text-slate-700">
               <div className="flex justify-between">
                 <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> Completed
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Completed
                 </span>
                 <span className="font-extrabold">78 (60.9%)</span>
               </div>
               <div className="flex justify-between">
                 <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-blue-600" /> Scheduled
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-600" /> Scheduled
                 </span>
                 <span className="font-extrabold">32 (25.0%)</span>
               </div>
               <div className="flex justify-between">
                 <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-amber-500" /> In Progress
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> In Progress
                 </span>
                 <span className="font-extrabold">12 (9.4%)</span>
               </div>
               <div className="flex justify-between">
                 <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-red-500" /> Cancelled
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-500" /> Cancelled
                 </span>
                 <span className="font-extrabold">6 (4.7%)</span>
               </div>
@@ -475,34 +475,34 @@ export default function AllDemosPage() {
           </div>
 
           {/* Demos by Type Donut Card */}
-          <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+          <div className="rounded-sm border border-slate-200/80 bg-white p-3 shadow-xs space-y-2 text-xs font-semibold">
+            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-1.5">
               Demos by Type
             </h3>
 
-            <div className="relative py-2 flex flex-col items-center justify-center">
-              <div className="h-24 w-24 rounded-full border-8 border-purple-600 border-t-amber-500 border-r-indigo-600 flex flex-col items-center justify-center shadow-inner">
-                <span className="text-lg font-extrabold text-[#0D1F3D]">128</span>
-                <span className="text-[9px] font-bold text-slate-400">Total</span>
+            <div className="relative py-1 flex flex-col items-center justify-center">
+              <div className="h-16 w-16 rounded-full border-4 border-purple-600 border-t-amber-500 border-r-indigo-600 flex flex-col items-center justify-center shadow-xs">
+                <span className="text-sm font-extrabold text-[#0D1F3D]">128</span>
+                <span className="text-[8px] font-bold text-slate-400">Total</span>
               </div>
             </div>
 
-            <div className="space-y-1.5 text-[11px] text-slate-700">
+            <div className="space-y-1 text-[10px] text-slate-700">
               <div className="flex justify-between">
                 <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-purple-600" /> Product Demo
+                  <span className="h-1.5 w-1.5 rounded-full bg-purple-600" /> Product Demo
                 </span>
                 <span className="font-extrabold">68 (53.1%)</span>
               </div>
               <div className="flex justify-between">
                 <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-amber-500" /> Live Demo
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> Live Demo
                 </span>
                 <span className="font-extrabold">32 (25.0%)</span>
               </div>
               <div className="flex justify-between">
                 <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-indigo-600" /> Online Demo
+                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" /> Online Demo
                 </span>
                 <span className="font-extrabold">28 (21.9%)</span>
               </div>
@@ -510,8 +510,8 @@ export default function AllDemosPage() {
           </div>
 
           {/* Top Executives by Demos List */}
-          <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+          <div className="rounded-sm border border-slate-200/80 bg-white p-3 shadow-xs space-y-2 text-xs font-semibold">
+            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-1.5">
               Top Executives by Demos
             </h3>
 

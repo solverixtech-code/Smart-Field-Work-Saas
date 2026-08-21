@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { X, Calendar, Clock, Monitor, User, Building2, FileText } from 'lucide-react';
+import { X, Monitor } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { mockTerritoryExecutives } from '../territories/territoriesData';
+import { mockBusinesses } from '../businesses/businessesData';
+import { mockDemosList } from './demosData';
 
 interface AddDemoModalProps {
   isOpen: boolean;
@@ -11,10 +13,30 @@ interface AddDemoModalProps {
   onSuccess?: () => void;
 }
 
+// Combine businesses from businessesData and demosData to ensure a complete, rich list of existing businesses
+const allAvailableBusinesses = [
+  ...mockBusinesses.map((b) => ({
+    name: b.name,
+    contactPerson: b.contactPerson,
+    phone: b.phone,
+    sublabel: `${b.category} • ${b.city}`,
+  })),
+  ...mockDemosList.map((d) => ({
+    name: d.businessName,
+    contactPerson: d.contactPerson,
+    phone: d.phone,
+    sublabel: d.businessAddress,
+  })),
+].filter((b, idx, self) => idx === self.findIndex((t) => t.name === b.name));
+
 export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) {
-  const [businessName, setBusinessName] = useState('');
-  const [contactPerson, setContactPerson] = useState('');
-  const [phone, setPhone] = useState('');
+  const [selectedBusinessName, setSelectedBusinessName] = useState(
+    allAvailableBusinesses[0]?.name || ''
+  );
+  const [contactPerson, setContactPerson] = useState(
+    allAvailableBusinesses[0]?.contactPerson || ''
+  );
+  const [phone, setPhone] = useState(allAvailableBusinesses[0]?.phone || '');
   const [demoType, setDemoType] = useState('Product Demo');
   const [assignedTo, setAssignedTo] = useState('Arjun Mehta');
   const [demoDate, setDemoDate] = useState('2025-05-20');
@@ -24,13 +46,25 @@ export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) 
 
   if (!isOpen) return null;
 
+  const handleBusinessChange = (e: { target: { value: string } }) => {
+    const val = e.target.value;
+    setSelectedBusinessName(val);
+
+    // Auto-populate contact person and phone number when a business is selected
+    const matched = allAvailableBusinesses.find((b) => b.name === val);
+    if (matched) {
+      setContactPerson(matched.contactPerson);
+      setPhone(matched.phone);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!businessName || !contactPerson || !phone) {
+    if (!selectedBusinessName || !contactPerson || !phone) {
       toast.error('Please fill in required fields');
       return;
     }
-    toast.success(`New Demo scheduled for ${businessName}!`);
+    toast.success(`New Demo scheduled for ${selectedBusinessName}!`);
     onSuccess?.();
     onClose();
   };
@@ -52,20 +86,22 @@ export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) 
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs font-semibold">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Searchable Business Select populated from existing Businesses database */}
             <div className="space-y-1">
-              <label className="font-bold text-slate-700 block">
-                Business / Prospect Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Sai Enterprises"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 placeholder-slate-400 focus:border-[#0D1F3D] focus:outline-none"
-                required
+              <Select
+                label="Business / Prospect Name *"
+                value={selectedBusinessName}
+                onChange={handleBusinessChange}
+                searchable
+                options={allAvailableBusinesses.map((b) => ({
+                  value: b.name,
+                  label: b.name,
+                  sublabel: b.sublabel,
+                }))}
               />
             </div>
 
+            {/* Contact Person (Auto-populated from selected Business) */}
             <div className="space-y-1">
               <label className="font-bold text-slate-700 block">
                 Contact Person <span className="text-red-500">*</span>
@@ -80,6 +116,7 @@ export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) 
               />
             </div>
 
+            {/* Phone Number (Auto-populated from selected Business) */}
             <div className="space-y-1">
               <label className="font-bold text-slate-700 block">
                 Phone Number <span className="text-red-500">*</span>
