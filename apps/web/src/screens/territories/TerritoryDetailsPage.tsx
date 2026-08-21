@@ -82,6 +82,14 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   const [showRoutes, setShowRoutes] = useState(true);
   const [showHeatmap, setShowHeatmap] = useState(false);
 
+  // Targets Tab State
+  const [targetPeriodFilter, setTargetPeriodFilter] = useState('May 2025');
+  const [targetMetricType, setTargetMetricType] = useState('all');
+  const [isSetTargetModalOpen, setIsSetTargetModalOpen] = useState(false);
+  const [editingTargetExec, setEditingTargetExec] = useState<any>(null);
+  const [targetRevenueInput, setTargetRevenueInput] = useState('250000');
+  const [targetVisitInput, setTargetVisitInput] = useState('35');
+
   const territory =
     mockTerritoriesList.find((t) => t.id === territoryId || t.code === territoryId) ||
     mockTerritoriesList[0];
@@ -473,28 +481,256 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
       {/* TAB 3: TARGETS VIEW */}
       {activeTab === 'Targets' && (
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-4 text-xs font-semibold">
-          <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
-            Territory & Executive Target Matrix (May 2025)
-          </h3>
-
-          <div className="space-y-3">
-            {mockTerritoryExecutives.map((exec) => (
-              <div key={exec.id} className="space-y-1 border-b border-slate-100 pb-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-extrabold text-[#0D1F3D]">{exec.name}</span>
-                  <span className="font-mono text-slate-600">
-                    {exec.revenueFormatted} / ₹ 2,50,000 ({exec.performancePercentage}%)
-                  </span>
-                </div>
-                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${exec.performancePercentage >= 90 ? 'bg-emerald-500' : 'bg-blue-600'}`}
-                    style={{ width: `${Math.min(exec.performancePercentage, 100)}%` }}
-                  />
-                </div>
+        <div className="space-y-4">
+          {/* Header Controls & Actions Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-sm border border-slate-200">
+            <div className="flex items-center gap-2">
+              <div className="w-40">
+                <Select
+                  value={targetPeriodFilter}
+                  onChange={(e) => setTargetPeriodFilter(e.target.value)}
+                  options={[
+                    { value: 'May 2025', label: 'May 2025 (Current)' },
+                    { value: 'April 2025', label: 'April 2025' },
+                    { value: 'March 2025', label: 'March 2025' },
+                    { value: 'Q2 2025', label: 'Q2 2025 Overall' },
+                  ]}
+                  searchable={false}
+                />
               </div>
-            ))}
+
+              <div className="w-44">
+                <Select
+                  value={targetMetricType}
+                  onChange={(e) => setTargetMetricType(e.target.value)}
+                  options={[
+                    { value: 'all', label: 'All Metric Targets' },
+                    { value: 'revenue', label: 'Revenue Target' },
+                    { value: 'visits', label: 'Visit Target' },
+                    { value: 'businesses', label: 'Business Goal' },
+                  ]}
+                  searchable={false}
+                />
+              </div>
+            </div>
+
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => {
+                setEditingTargetExec(null);
+                setIsSetTargetModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] text-white hover:bg-[#07152E]"
+            >
+              <Plus className="h-3.5 w-3.5" /> Set Executive Targets
+            </Button>
+          </div>
+
+          {/* Top 4 Target KPI Summary Cards */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <MapKpiCard
+              title="Revenue Target (Monthly)"
+              value="₹ 15,00,000"
+              subValue="₹ 14,00,000 Achieved (93.3%)"
+              icon={Target}
+              iconBgColor="bg-emerald-50"
+              iconTextColor="text-emerald-600"
+            />
+            <MapKpiCard
+              title="Visit Volume Target"
+              value="200 Visits"
+              subValue="176 Completed (88.0%)"
+              icon={TrendingUp}
+              iconBgColor="bg-blue-50"
+              iconTextColor="text-blue-600"
+            />
+            <MapKpiCard
+              title="New Business Goal"
+              value="200 Businesses"
+              subValue="168 Acquired (84.0%)"
+              icon={Building}
+              iconBgColor="bg-purple-50"
+              iconTextColor="text-purple-600"
+            />
+            <MapKpiCard
+              title="Top Performer Goal"
+              value="Arjun Mehta"
+              subValue="₹ 2,48,000 / ₹ 2,50,000 (106% Exceeded)"
+              icon={Award}
+              iconBgColor="bg-amber-50"
+              iconTextColor="text-amber-600"
+            />
+          </div>
+
+          {/* Territory Target Completion Overview Banner */}
+          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+              <div>
+                <h3 className="text-xs font-extrabold text-[#0D1F3D]">Territory Target Progress ({targetPeriodFilter})</h3>
+                <p className="text-[11px] font-medium text-slate-500">Overall progress toward monthly revenue & field operational goals</p>
+              </div>
+              <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-extrabold text-emerald-700">
+                93.3% Base Target Completed
+              </span>
+            </div>
+
+            <div className="space-y-1.5 pt-1 text-xs">
+              <div className="flex justify-between font-extrabold text-[#0D1F3D]">
+                <span>Progress: ₹ 14,00,000</span>
+                <span>Target: ₹ 15,00,000</span>
+              </div>
+              <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden flex p-0.5 border border-slate-200">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all duration-500"
+                  style={{ width: '93.3%' }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] font-bold text-slate-400">
+                <span>0%</span>
+                <span>50% Milestone</span>
+                <span>80% Base Goal</span>
+                <span className="text-emerald-600 font-extrabold">100% Target Met</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Detailed Executive Target Matrix Table */}
+          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 className="text-xs font-extrabold text-[#0D1F3D]">
+                Executive Target & Achievement Matrix ({targetPeriodFilter})
+              </h3>
+              <span className="text-[11px] font-bold text-slate-500">5 Active Executives Assigned</span>
+            </div>
+
+            <div className="space-y-4">
+              {mockTerritoryExecutives.map((exec) => {
+                const targetRev = 250000;
+                const achievedRev = parseInt(exec.revenueFormatted.replace(/[^0-9]/g, '')) || 200000;
+                const revPct = Math.round((achievedRev / targetRev) * 100);
+                const visitTarget = 35;
+                const visitsDone = exec.visitsCount;
+                const visitPct = Math.round((visitsDone / visitTarget) * 100);
+                const isExceeded = revPct >= 100;
+                const isOnTrack = revPct >= 85 && revPct < 100;
+
+                return (
+                  <div
+                    key={exec.id}
+                    className="rounded-sm border border-slate-200 bg-slate-50/50 p-3.5 space-y-3 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-2.5">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={exec.avatar}
+                          alt={exec.name}
+                          className="h-8 w-8 rounded-full object-cover border border-slate-200 shrink-0"
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-[#0D1F3D] text-sm">{exec.name}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">({exec.id})</span>
+                          </div>
+                          <span className="text-[11px] text-slate-500 font-normal">{exec.team}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                            isExceeded
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : isOnTrack
+                              ? 'bg-blue-50 text-blue-700 border-blue-200'
+                              : 'bg-amber-50 text-amber-700 border-amber-200'
+                          }`}
+                        >
+                          {isExceeded ? '• Target Exceeded' : isOnTrack ? '• On Track' : '• Needs Attention'}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setEditingTargetExec(exec);
+                            setTargetRevenueInput(targetRev.toString());
+                            setTargetVisitInput(visitTarget.toString());
+                            setIsSetTargetModalOpen(true);
+                          }}
+                          className="text-[11px] py-1 px-2.5 bg-white border-slate-200 font-bold hover:bg-slate-100"
+                        >
+                          <Edit className="mr-1 h-3 w-3" /> Edit Target
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Metric 1: Revenue Goal */}
+                      <div className="space-y-1 bg-white p-2.5 rounded-sm border border-slate-200/70">
+                        <div className="flex justify-between text-xs font-bold">
+                          <span className="text-slate-600">Revenue Goal</span>
+                          <span className="font-mono text-emerald-700">
+                            {exec.revenueFormatted} / ₹ 2,50,000 ({revPct}%)
+                          </span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${isExceeded ? 'bg-emerald-500' : 'bg-blue-600'}`}
+                            style={{ width: `${Math.min(revPct, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Metric 2: Visit Goal */}
+                      <div className="space-y-1 bg-white p-2.5 rounded-sm border border-slate-200/70">
+                        <div className="flex justify-between text-xs font-bold">
+                          <span className="text-slate-600">Visits Goal</span>
+                          <span className="font-mono text-blue-700">
+                            {visitsDone} / {visitTarget} visits ({visitPct}%)
+                          </span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${visitPct >= 90 ? 'bg-teal-500' : 'bg-purple-600'}`}
+                            style={{ width: `${Math.min(visitPct, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Category Target Distribution Grid */}
+          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+              Category Target vs Actual Achievement Split
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-semibold">
+              {[
+                { category: 'Retail Stores', target: '₹ 6,00,000', achieved: '₹ 5,88,000', pct: 98, color: 'bg-emerald-500' },
+                { category: 'Healthcare & Pharma', target: '₹ 3,50,000', achieved: '₹ 3,36,000', pct: 96, color: 'bg-blue-500' },
+                { category: 'Automobile & Service', target: '₹ 3,00,000', achieved: '₹ 2,52,000', pct: 84, color: 'bg-purple-500' },
+                { category: 'Food & Beverage', target: '₹ 2,00,000', achieved: '₹ 1,54,000', pct: 77, color: 'bg-amber-500' },
+              ].map((cat) => (
+                <div key={cat.category} className="rounded-sm bg-slate-50 border border-slate-200 p-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-extrabold text-[#0D1F3D]">{cat.category}</span>
+                    <span className="font-bold text-blue-600">{cat.pct}%</span>
+                  </div>
+                  <div className="text-[11px] text-slate-600 font-mono flex justify-between">
+                    <span>Achieved: {cat.achieved}</span>
+                    <span className="text-slate-400">Target: {cat.target}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                    <div className={`h-full ${cat.color}`} style={{ width: `${cat.pct}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -1388,6 +1624,81 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               className="bg-[#0D1F3D] text-white"
             >
               Save Assignments
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal for Setting Executive Targets */}
+      <Modal isOpen={isSetTargetModalOpen} onClose={() => setIsSetTargetModalOpen(false)} maxWidth="max-w-md">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+              {editingTargetExec ? `Edit Target for ${editingTargetExec.name}` : 'Set Executive Targets'}
+            </h3>
+            <button onClick={() => setIsSetTargetModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="space-y-3 text-xs font-semibold">
+            <div>
+              <label className="text-slate-500 block mb-1">Target Month / Period</label>
+              <input
+                type="text"
+                value={targetPeriodFilter}
+                disabled
+                className="w-full rounded-sm border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-700"
+              />
+            </div>
+
+            <div>
+              <label className="text-slate-700 block mb-1">Revenue Target (₹)</label>
+              <input
+                type="number"
+                value={targetRevenueInput}
+                onChange={(e) => setTargetRevenueInput(e.target.value)}
+                placeholder="250000"
+                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-slate-700 block mb-1">Monthly Visit Target</label>
+              <input
+                type="number"
+                value={targetVisitInput}
+                onChange={(e) => setTargetVisitInput(e.target.value)}
+                placeholder="35"
+                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none focus:border-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-slate-700 block mb-1">New Business Goal</label>
+              <input
+                type="number"
+                defaultValue="12"
+                placeholder="12"
+                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button variant="outline" size="sm" onClick={() => setIsSetTargetModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => {
+                setIsSetTargetModalOpen(false);
+                toast.success('Executive targets updated successfully!');
+              }}
+              className="bg-[#0D1F3D] text-white font-bold"
+            >
+              Save Targets
             </Button>
           </div>
         </div>
