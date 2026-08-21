@@ -10,27 +10,115 @@ import {
   Eye,
   ArrowUpRight,
   Sparkles,
+  Info,
+  ArrowDown,
+  CheckCircle2,
+  Users,
+  Monitor,
+  DollarSign,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 
 interface StagePerformance {
-  stage: string;
+  id: string;
+  stageName: string;
+  shortLabel: string;
   count: number;
   conversionFromPrevPct: number;
   conversionFromTotalPct: number;
   changeVsAprPct: number;
+  dropOffCount: number;
+  widthClass: string;
+  colorClass: string;
+  bgHex: string;
+  revenueVal: string;
+  description: string;
 }
 
 const funnelStages: StagePerformance[] = [
-  { stage: '1. Total Leads Generated', count: 15280, conversionFromPrevPct: 100, conversionFromTotalPct: 100, changeVsAprPct: 16.2 },
-  { stage: '2. Contacted / Visited', count: 9842, conversionFromPrevPct: 64.5, conversionFromTotalPct: 64.5, changeVsAprPct: 9.8 },
-  { stage: '3. Demos Conducted', count: 2856, conversionFromPrevPct: 29.0, conversionFromTotalPct: 18.7, changeVsAprPct: 7.1 },
-  { stage: '4. Converted / Won', count: 1248, conversionFromPrevPct: 43.7, conversionFromTotalPct: 8.2, changeVsAprPct: 11.3 },
-  { stage: '5. Revenue Generated', count: 892, conversionFromPrevPct: 71.3, conversionFromTotalPct: 5.8, changeVsAprPct: 13.6 },
+  {
+    id: 'stage-1',
+    stageName: '1. Total Leads Generated',
+    shortLabel: 'Total Leads',
+    count: 15280,
+    conversionFromPrevPct: 100,
+    conversionFromTotalPct: 100,
+    changeVsAprPct: 16.2,
+    dropOffCount: 0,
+    widthClass: 'w-full',
+    colorClass: 'bg-purple-600 hover:bg-purple-700',
+    bgHex: '#9333ea',
+    revenueVal: '₹0 (Top Funnel)',
+    description: 'All inbound marketing leads, field executive signups, and store discovery entries.',
+  },
+  {
+    id: 'stage-2',
+    stageName: '2. Contacted / Visited',
+    shortLabel: 'Visited / Contacted',
+    count: 9842,
+    conversionFromPrevPct: 64.5,
+    conversionFromTotalPct: 64.5,
+    changeVsAprPct: 9.8,
+    dropOffCount: 5438,
+    widthClass: 'w-[86%]',
+    colorClass: 'bg-blue-600 hover:bg-blue-700',
+    bgHex: '#2563eb',
+    revenueVal: '₹1.85L (Pipeline Value)',
+    description: 'Leads verified by field executive in-person visit or outbound phone call.',
+  },
+  {
+    id: 'stage-3',
+    stageName: '3. Demos Conducted',
+    shortLabel: 'Demos Conducted',
+    count: 2856,
+    conversionFromPrevPct: 29.0,
+    conversionFromTotalPct: 18.7,
+    changeVsAprPct: 7.1,
+    dropOffCount: 6986,
+    widthClass: 'w-[68%]',
+    colorClass: 'bg-amber-500 hover:bg-amber-600',
+    bgHex: '#f59e0b',
+    revenueVal: '₹4.50L (Demo Stage Value)',
+    description: 'In-person POS/CRM product walkthrough completed at merchant store location.',
+  },
+  {
+    id: 'stage-4',
+    stageName: '4. Converted / Won',
+    shortLabel: 'Converted / Won',
+    count: 1248,
+    conversionFromPrevPct: 43.7,
+    conversionFromTotalPct: 8.2,
+    changeVsAprPct: 11.3,
+    dropOffCount: 1608,
+    widthClass: 'w-[48%]',
+    colorClass: 'bg-emerald-600 hover:bg-emerald-700',
+    bgHex: '#059669',
+    revenueVal: '₹12.48L (Closed Revenue)',
+    description: 'Merchants onboarded with active paid subscription or hardware sale contract.',
+  },
+  {
+    id: 'stage-5',
+    stageName: '5. Revenue Realized',
+    shortLabel: 'Revenue Realized',
+    count: 892,
+    conversionFromPrevPct: 71.3,
+    conversionFromTotalPct: 5.8,
+    changeVsAprPct: 13.6,
+    dropOffCount: 356,
+    widthClass: 'w-[32%]',
+    colorClass: 'bg-teal-600 hover:bg-teal-700',
+    bgHex: '#0d9488',
+    revenueVal: '₹12.48L (Fully Collected)',
+    description: 'Payments fully collected and verified by Finance Ops.',
+  },
 ];
 
 export const ConversionFunnelPage: React.FC = () => {
   const navigate = useNavigate();
+  const [hoveredStageId, setHoveredStageId] = useState<string | null>(null);
+  const [selectedStageId, setSelectedStageId] = useState<string>('stage-1');
+
+  const activeStage = funnelStages.find((s) => s.id === (hoveredStageId || selectedStageId)) || funnelStages[0];
 
   return (
     <div className="space-y-5 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -53,7 +141,7 @@ export const ConversionFunnelPage: React.FC = () => {
               </span>
             </div>
             <p className="text-xs font-medium text-slate-600 mt-0.5">
-              Track lead journey conversion stages from initial discovery to deal win and revenue realization
+              Interactive lead journey conversion stages from initial discovery to deal win and revenue realization
             </p>
           </div>
 
@@ -104,27 +192,83 @@ export const ConversionFunnelPage: React.FC = () => {
       {/* STAGE-BY-STAGE FUNNEL DIAGRAM & TABLE */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs lg:col-span-8 space-y-4">
-          <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Funnel Stage Breakdown</h3>
-
-          {/* Visual Funnel Stack */}
-          <div className="space-y-2 py-2">
-            {[
-              { label: 'Total Leads (15,280)', width: 'w-full', bg: 'bg-purple-600', pct: '100%' },
-              { label: 'Visited / Contacted (9,842)', width: 'w-[85%]', bg: 'bg-blue-600', pct: '64.5%' },
-              { label: 'Demos Conducted (2,856)', width: 'w-[65%]', bg: 'bg-amber-500', pct: '18.7%' },
-              { label: 'Converted / Won (1,248)', width: 'w-[45%]', bg: 'bg-emerald-600', pct: '8.2%' },
-              { label: 'Revenue Realized (892)', width: 'w-[30%]', bg: 'bg-teal-600', pct: '5.8%' },
-            ].map((f) => (
-              <div key={f.label} className="mx-auto flex flex-col items-center">
-                <div className={`${f.width} ${f.bg} text-white font-extrabold text-xs py-2 px-4 rounded-xs shadow-xs text-center flex justify-between`}>
-                  <span>{f.label}</span>
-                  <span className="font-mono">{f.pct}</span>
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div>
+              <h3 className="text-xs font-extrabold text-[#0D1F3D]">Funnel Stage Breakdown</h3>
+              <p className="text-[11px] font-medium text-slate-500">Hover or click any stage to inspect drop-off, conversion rates, and stage details</p>
+            </div>
+            <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <Sparkles className="h-3 w-3" /> Interactive Stage Inspection
+            </span>
           </div>
 
-          {/* Funnel Stage Table */}
+          {/* INTERACTIVE VISUAL FUNNEL STACK */}
+          <div className="space-y-2.5 py-3">
+            {funnelStages.map((f) => {
+              const isSelected = selectedStageId === f.id;
+              const isHovered = hoveredStageId === f.id;
+              const isActive = isSelected || isHovered;
+
+              return (
+                <div key={f.id} className="mx-auto flex flex-col items-center">
+                  <div
+                    onMouseEnter={() => setHoveredStageId(f.id)}
+                    onMouseLeave={() => setHoveredStageId(null)}
+                    onClick={() => { setSelectedStageId(f.id); toast.info(`Selected ${f.shortLabel}`); }}
+                    className={`${f.widthClass} ${f.colorClass} text-white font-extrabold text-xs py-2.5 px-4 rounded-sm shadow-xs transition-all duration-200 cursor-pointer transform ${
+                      isActive
+                        ? 'scale-[1.03] shadow-lg ring-2 ring-offset-2 ring-[#0D1F3D] opacity-100 z-10'
+                        : 'opacity-90 hover:opacity-100'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+                        <span>{f.shortLabel} ({f.count.toLocaleString('en-IN')})</span>
+                      </div>
+                      <span className="font-mono text-white/95">{f.conversionFromTotalPct}%</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* DYNAMIC SELECTED STAGE DETAILS CARD */}
+          <div className="rounded-sm border border-slate-200 bg-slate-50/70 p-3.5 space-y-2 transition-all">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full" style={{ backgroundColor: activeStage.bgHex }} />
+                <h4 className="text-xs font-extrabold text-[#0D1F3D]">{activeStage.stageName}</h4>
+              </div>
+              <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                +{activeStage.changeVsAprPct}% vs. Apr
+              </span>
+            </div>
+
+            <p className="text-[11px] text-slate-600 font-medium">{activeStage.description}</p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+              <div className="bg-white p-2 rounded-xs border border-slate-200/80">
+                <span className="text-[10px] text-slate-400 font-bold block">Stage Volume</span>
+                <span className="font-mono font-extrabold text-[#0D1F3D] text-xs">{activeStage.count.toLocaleString('en-IN')} Leads</span>
+              </div>
+              <div className="bg-white p-2 rounded-xs border border-slate-200/80">
+                <span className="text-[10px] text-slate-400 font-bold block">Conversion % (Prev)</span>
+                <span className="font-mono font-extrabold text-blue-700 text-xs">{activeStage.conversionFromPrevPct}%</span>
+              </div>
+              <div className="bg-white p-2 rounded-xs border border-slate-200/80">
+                <span className="text-[10px] text-slate-400 font-bold block">Conversion % (Total)</span>
+                <span className="font-mono font-extrabold text-purple-700 text-xs">{activeStage.conversionFromTotalPct}%</span>
+              </div>
+              <div className="bg-white p-2 rounded-xs border border-slate-200/80">
+                <span className="text-[10px] text-slate-400 font-bold block">Stage Revenue Yield</span>
+                <span className="font-mono font-extrabold text-emerald-700 text-xs">{activeStage.revenueVal}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* INTERACTIVE FUNNEL STAGE TABLE WITH BI-DIRECTIONAL HOVER */}
           <div className="overflow-x-auto custom-scrollbar pt-2">
             <table className="w-full text-left border-collapse whitespace-nowrap text-xs font-semibold">
               <thead>
@@ -137,15 +281,36 @@ export const ConversionFunnelPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {funnelStages.map((stg) => (
-                  <tr key={stg.stage} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-3 font-bold text-[#0D1F3D]">{stg.stage}</td>
-                    <td className="py-3 px-3 text-center font-mono font-extrabold text-blue-700">{stg.count.toLocaleString('en-IN')}</td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">{stg.conversionFromPrevPct}%</td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{stg.conversionFromTotalPct}%</td>
-                    <td className="py-3 px-3 text-center font-bold text-emerald-600">+{stg.changeVsAprPct}%</td>
-                  </tr>
-                ))}
+                {funnelStages.map((stg) => {
+                  const isSelected = selectedStageId === stg.id;
+                  const isHovered = hoveredStageId === stg.id;
+                  const isActive = isSelected || isHovered;
+
+                  return (
+                    <tr
+                      key={stg.id}
+                      onMouseEnter={() => setHoveredStageId(stg.id)}
+                      onMouseLeave={() => setHoveredStageId(null)}
+                      onClick={() => setSelectedStageId(stg.id)}
+                      className={`transition-colors cursor-pointer ${
+                        isActive
+                          ? 'bg-purple-50/80 font-bold border-l-4 border-purple-600'
+                          : 'hover:bg-slate-50/80'
+                      }`}
+                    >
+                      <td className="py-3 px-3 font-bold text-[#0D1F3D]">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stg.bgHex }} />
+                          {stg.stageName}
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-center font-mono font-extrabold text-blue-700">{stg.count.toLocaleString('en-IN')}</td>
+                      <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">{stg.conversionFromPrevPct}%</td>
+                      <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{stg.conversionFromTotalPct}%</td>
+                      <td className="py-3 px-3 text-center font-bold text-emerald-600">+{stg.changeVsAprPct}%</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
