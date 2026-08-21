@@ -300,9 +300,15 @@ export default function SalesPipelinePage() {
                         </div>
 
                         <div className="flex items-center justify-between pt-1 text-xs">
-                          <span className="font-extrabold text-[#0D1F3D] text-xs">
-                            ₹{deal.amount.toLocaleString('en-IN')}
-                          </span>
+                          {deal.amount && deal.amount > 0 ? (
+                            <span className="font-extrabold text-[#0D1F3D] text-xs">
+                              ₹{deal.amount.toLocaleString('en-IN')}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-slate-400 italic">
+                              Value Unspecified
+                            </span>
+                          )}
                           <span className="text-[10px] font-medium text-slate-400">
                             {deal.date}
                           </span>
