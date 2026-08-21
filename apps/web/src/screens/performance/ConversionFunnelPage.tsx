@@ -233,20 +233,20 @@ export const ConversionFunnelPage: React.FC = () => {
           <p className="text-[11px] text-slate-600 font-medium">{activeStage.description}</p>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-            <div className="bg-white p-2 rounded-xs border border-slate-200/80">
-              <span className="text-[10px] text-slate-400 font-bold block">Stage Volume</span>
+            <div className="bg-white p-2.5 rounded-sm border border-slate-200/80 shadow-xs">
+              <span className="text-[11px] font-semibold text-slate-500 block">Stage Volume</span>
               <span className="font-mono font-extrabold text-[#0D1F3D] text-xs">{activeStage.count.toLocaleString('en-IN')} Leads</span>
             </div>
-            <div className="bg-white p-2 rounded-xs border border-slate-200/80">
-              <span className="text-[10px] text-slate-400 font-bold block">Conversion % (Prev)</span>
+            <div className="bg-white p-2.5 rounded-sm border border-slate-200/80 shadow-xs">
+              <span className="text-[11px] font-semibold text-slate-500 block">Conversion % (Prev)</span>
               <span className="font-mono font-extrabold text-blue-700 text-xs">{activeStage.conversionFromPrevPct}%</span>
             </div>
-            <div className="bg-white p-2 rounded-xs border border-slate-200/80">
-              <span className="text-[10px] text-slate-400 font-bold block">Conversion % (Total)</span>
+            <div className="bg-white p-2.5 rounded-sm border border-slate-200/80 shadow-xs">
+              <span className="text-[11px] font-semibold text-slate-500 block">Conversion % (Total)</span>
               <span className="font-mono font-extrabold text-purple-700 text-xs">{activeStage.conversionFromTotalPct}%</span>
             </div>
-            <div className="bg-white p-2 rounded-xs border border-slate-200/80">
-              <span className="text-[10px] text-slate-400 font-bold block">Stage Revenue Yield</span>
+            <div className="bg-white p-2.5 rounded-sm border border-slate-200/80 shadow-xs">
+              <span className="text-[11px] font-semibold text-slate-500 block">Stage Revenue Yield</span>
               <span className="font-mono font-extrabold text-emerald-700 text-xs">{activeStage.revenueVal}</span>
             </div>
           </div>

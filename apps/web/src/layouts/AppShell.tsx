@@ -701,7 +701,7 @@ export default function AppShell() {
 
         {/* Navigation Items */}
         <nav
-          className={`flex-1 space-y-4 overflow-y-auto overflow-x-hidden px-2.5 py-4 ${
+          className={`flex-1 min-h-0 space-y-4 overflow-y-auto overflow-x-hidden px-2.5 py-4 ${
             showBigLogo ? 'scrollbar-thin scrollbar-thumb-slate-200' : 'scrollbar-none'
           }`}
         >
@@ -820,7 +820,7 @@ export default function AppShell() {
         </nav>
 
         {/* User Footer Profile Card in Sidebar */}
-        <div className="border-t border-slate-100 p-2.5 relative z-20" ref={sidebarRef}>
+        <div className="border-t border-slate-100 p-2.5 relative z-20 flex-shrink-0" ref={sidebarRef}>
           {user && (
             <div className="relative">
               <div
