@@ -122,38 +122,23 @@ export const ConversionFunnelPage: React.FC = () => {
 
   return (
     <div className="space-y-5 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
-      {/* BREADCRUMB HEADER */}
-      <div className="space-y-2 border-b border-slate-200/80 pb-3.5">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-          <span>Dashboard</span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-          <span>Performance</span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-          <span className="font-extrabold text-[#0D1F3D]">Conversion Funnel</span>
+      {/* STANDARD HEADER BAR */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+        <div>
+          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Conversion Funnel</h1>
+          <p className="text-xs font-semibold text-slate-500 mt-0.5">
+            Interactive lead journey conversion stages from initial discovery to deal win and revenue realization
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Conversion Funnel</h1>
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 border border-indigo-200">
-                <Target className="h-4 w-4" />
-              </span>
-            </div>
-            <p className="text-xs font-medium text-slate-600 mt-0.5">
-              Interactive lead journey conversion stages from initial discovery to deal win and revenue realization
-            </p>
-          </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => toast.success('Exporting Conversion Funnel Report...')}
-            className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 shadow-xs flex items-center gap-1.5"
-          >
-            <Download className="h-3.5 w-3.5" /> Export Report
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => toast.success('Exporting Conversion Funnel Report...')}
+          className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 shadow-xs flex items-center gap-1.5"
+        >
+          <Download className="h-3.5 w-3.5" /> Export Report
+        </Button>
       </div>
 
       {/* TOP 5 KPI SUMMARY CARDS */}

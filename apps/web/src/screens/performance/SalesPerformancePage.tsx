@@ -124,52 +124,33 @@ export const SalesPerformancePage: React.FC = () => {
 
   return (
     <div className="space-y-5 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
-      {/* HEADER & BREADCRUMB */}
-      <div className="space-y-2 border-b border-slate-200/80 pb-3.5">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-          <span>Dashboard</span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-          <span>Performance</span>
-          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-          <span className="font-extrabold text-[#0D1F3D]">Sales Performance</span>
+      {/* STANDARD HEADER BAR */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+        <div>
+          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Sales Performance</h1>
+          <p className="text-xs font-semibold text-slate-500 mt-0.5">
+            Track overall sales performance across teams, executives, and revenue targets
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Sales Performance</h1>
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-50 text-[#E20613] border border-red-200">
-                <TrendingUp className="h-4 w-4" />
-              </span>
-            </div>
-            <p className="text-xs font-medium text-slate-600 mt-0.5">
-              Track overall sales performance across teams, executives, and revenue targets
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <DateRangePicker value={dateRange} onChange={setDateRange} />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 shadow-xs flex items-center gap-1.5"
-            >
-              <Download className="h-3.5 w-3.5" /> Export
-            </Button>
-            <Button
-              variant="accent"
-              size="sm"
-              onClick={() => toast.info('Filters panel opened')}
-              className="bg-[#E20613] hover:bg-[#C00410] text-white font-bold shadow-xs flex items-center gap-1.5"
-            >
-              <Filter className="h-3.5 w-3.5" /> Filter
-            </Button>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-end text-[11px] font-medium text-slate-500 pt-0.5">
-          <span>Data as on: 31 May 2025, 11:30 AM</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <DateRangePicker value={dateRange} onChange={setDateRange} />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 shadow-xs flex items-center gap-1.5"
+          >
+            <Download className="h-3.5 w-3.5" /> Export
+          </Button>
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => toast.info('Filters panel opened')}
+            className="bg-[#E20613] hover:bg-[#C00410] text-white font-bold shadow-xs flex items-center gap-1.5"
+          >
+            <Filter className="h-3.5 w-3.5" /> Filter
+          </Button>
         </div>
       </div>
 
