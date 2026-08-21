@@ -589,6 +589,12 @@ export default function AllDemosPage() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
       />
+
+      <EditDemoModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        demo={editingDemo}
+      />
     </div>
   );
 }
