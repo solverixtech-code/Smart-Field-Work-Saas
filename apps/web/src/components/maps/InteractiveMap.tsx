@@ -21,65 +21,21 @@ import {
   RouteStop,
 } from '../../screens/maps/mapsData';
 
-// Function to resolve Mapbox style (supports user VITE_MAPBOX_ACCESS_TOKEN or open tile fallback)
-export function getMapboxStyle(mapType: 'map' | 'satellite' | 'terrain'): string | mapboxgl.Style {
+// Function to resolve Mapbox style
+export function getMapboxStyle(mapType: 'map' | 'satellite' | 'terrain'): string {
   const customToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+  const token =
+    customToken ||
+    'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.aA53nVisualised';
+  mapboxgl.accessToken = token;
 
-  if (customToken) {
-    mapboxgl.accessToken = customToken;
-    return mapType === 'satellite'
-      ? 'mapbox://styles/mapbox/satellite-v9'
-      : mapType === 'terrain'
-      ? 'mapbox://styles/mapbox/outdoors-v12'
-      : 'mapbox://styles/mapbox/streets-v12';
-  }
-
-  // Open-Source Raster Tile Style (No 401 Error, 100% Free & Fast)
   if (mapType === 'satellite') {
-    return {
-      version: 8,
-      sources: {
-        'esri-satellite': {
-          type: 'raster',
-          tiles: [
-            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-          ],
-          tileSize: 256,
-          attribution: 'Esri, Maxar, Earthstar Geographics',
-        },
-      },
-      layers: [
-        {
-          id: 'esri-satellite-layer',
-          type: 'raster',
-          source: 'esri-satellite',
-          minzoom: 0,
-          maxzoom: 19,
-        },
-      ],
-    };
+    return 'mapbox://styles/mapbox/satellite-streets-v12';
   }
-
-  return {
-    version: 8,
-    sources: {
-      'osm-tiles': {
-        type: 'raster',
-        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-        tileSize: 256,
-        attribution: '&copy; OpenStreetMap contributors',
-      },
-    },
-    layers: [
-      {
-        id: 'osm-layer',
-        type: 'raster',
-        source: 'osm-tiles',
-        minzoom: 0,
-        maxzoom: 19,
-      },
-    ],
-  };
+  if (mapType === 'terrain') {
+    return 'mapbox://styles/mapbox/outdoors-v12';
+  }
+  return 'mapbox://styles/mapbox/streets-v12';
 }
 
 // Calculate geodesic perimeter of polygon (km)
