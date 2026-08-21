@@ -667,6 +667,26 @@ export default function AppShell() {
                   if (item.to === '/admin/visits') {
                     return location.pathname === '/admin/visits' || (location.pathname.startsWith('/admin/visits/') && !location.pathname.startsWith('/admin/visits/gps-exceptions'));
                   }
+                  if (item.to === '/admin/targets') {
+                    return location.pathname === '/admin/targets' || location.pathname === '/admin/targets/create';
+                  }
+                  if (item.to === '/admin/targets/teams') {
+                    return location.pathname === '/admin/targets/teams';
+                  }
+                  if (item.to === '/admin/targets/executives') {
+                    return location.pathname === '/admin/targets/executives';
+                  }
+                  if (item.to === '/admin/incentives/rules') {
+                    return location.pathname === '/admin/incentives/rules';
+                  }
+                  if (item.to === '/admin/incentives') {
+                    return (
+                      location.pathname === '/admin/incentives' ||
+                      location.pathname === '/admin/incentives/approvals' ||
+                      location.pathname === '/admin/incentives/payouts' ||
+                      (location.pathname.startsWith('/admin/incentives/') && !location.pathname.startsWith('/admin/incentives/rules'))
+                    );
+                  }
                   if (['/admin/dashboard', '/admin/profile', '/admin/teams', '/admin/territories', '/admin/leads', '/admin/businesses'].includes(item.to)) {
                     return location.pathname === item.to;
                   }
