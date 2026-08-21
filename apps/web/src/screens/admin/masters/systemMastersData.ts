@@ -14,7 +14,7 @@ export interface MasterCategoryConfig {
   id: string;
   name: string;
   description: string;
-  group: 'HR & Personnel' | 'Sales & Pipeline' | 'Operations & Field' | 'Business & Merchants' | 'Payroll & Subscriptions';
+  group: 'HR & Personnel' | 'Sales & Pipeline' | 'Operations & Field' | 'Business & Merchants' | 'Payroll & Subscriptions' | 'Demos & Follow-ups';
   totalLabel: string;
   addTitle: string;
   editTitle: string;
@@ -72,6 +72,80 @@ export const masterCategories: MasterCategoryConfig[] = [
     addLabel: 'Add Leave Type',
     searchPlaceholder: 'Search leave categories...',
     defaultCodePrefix: 'LEAVE',
+  },
+
+  // --- DEMOS & FOLLOW-UPS ---
+  {
+    id: 'followup_type',
+    name: 'Follow-up Types',
+    description: 'Categorization of scheduled client follow-up actions (Quotation, Demo, Payment, Contract).',
+    group: 'Demos & Follow-ups',
+    totalLabel: 'Total Follow-up Types',
+    addTitle: 'Add Follow-up Type',
+    editTitle: 'Edit Follow-up Type',
+    addLabel: 'Add Follow-up Type',
+    searchPlaceholder: 'Search follow-up types...',
+    defaultCodePrefix: 'FUTYPE',
+  },
+  {
+    id: 'followup_outcome',
+    name: 'Follow-up Outcomes',
+    description: 'Standardized call and visit discussion outcomes (Send Quote, Demo Requested, Call Rescheduled).',
+    group: 'Demos & Follow-ups',
+    totalLabel: 'Total Outcomes',
+    addTitle: 'Add Follow-up Outcome',
+    editTitle: 'Edit Follow-up Outcome',
+    addLabel: 'Add Outcome',
+    searchPlaceholder: 'Search follow-up outcomes...',
+    defaultCodePrefix: 'FUOUT',
+  },
+  {
+    id: 'demo_type',
+    name: 'Demo Delivery Modes',
+    description: 'Product presentation modes (Product Walkthrough, Onsite POC, Virtual Video Call).',
+    group: 'Demos & Follow-ups',
+    totalLabel: 'Total Demo Modes',
+    addTitle: 'Add Demo Mode',
+    editTitle: 'Edit Demo Mode',
+    addLabel: 'Add Demo Mode',
+    searchPlaceholder: 'Search demo modes...',
+    defaultCodePrefix: 'DEMTYPE',
+  },
+  {
+    id: 'gps_exception_type',
+    name: 'GPS Violations & Exceptions',
+    description: 'Real-time GPS tracking violation rules (Fake Location, Service Off, Territory Breach, Long Idle).',
+    group: 'Operations & Field',
+    totalLabel: 'Total Violation Rules',
+    addTitle: 'Add GPS Exception Rule',
+    editTitle: 'Edit GPS Exception Rule',
+    addLabel: 'Add Rule',
+    searchPlaceholder: 'Search GPS violation rules...',
+    defaultCodePrefix: 'GPSEXC',
+  },
+  {
+    id: 'transport_mode',
+    name: 'Transport Modes & Allowance',
+    description: 'Travel mode heads and per-km reimbursement rates (Bike ₹4.5/km, Car ₹9/km, Bus, Train).',
+    group: 'Operations & Field',
+    totalLabel: 'Total Transport Modes',
+    addTitle: 'Add Transport Mode',
+    editTitle: 'Edit Transport Mode',
+    addLabel: 'Add Transport Mode',
+    searchPlaceholder: 'Search transport modes...',
+    defaultCodePrefix: 'TRAN',
+  },
+  {
+    id: 'task_activity_type',
+    name: 'Task & Activity Heads',
+    description: 'Field activity types logged by executives (Site Visit, Phone Call, WhatsApp, Email).',
+    group: 'Operations & Field',
+    totalLabel: 'Total Activity Heads',
+    addTitle: 'Add Task Activity Head',
+    editTitle: 'Edit Task Activity Head',
+    addLabel: 'Add Activity Head',
+    searchPlaceholder: 'Search activity heads...',
+    defaultCodePrefix: 'TASKACT',
   },
 
   // --- SALES & PIPELINE ---
@@ -384,5 +458,40 @@ export const initialMasterRecords: Record<string, MasterRecordItem[]> = {
     { id: 'plan-1', category: 'subscription_plan', name: 'Starter Plan (₹5,901/mo)', code: 'STARTER_PLAN', description: 'Basic Google Profile sync and lead management.', sortOrder: 1, isActive: true, isSystemDefault: true, displayColor: '#3B82F6' },
     { id: 'plan-2', category: 'subscription_plan', name: 'Professional Plan (₹12,980/mo)', code: 'PRO_PLAN', description: 'AI review auto-replies, post credits, & website builder.', sortOrder: 2, isActive: true, isSystemDefault: true, displayColor: '#8B5CF6' },
     { id: 'plan-3', category: 'subscription_plan', name: 'Enterprise Growth Plan (₹25,000/mo)', code: 'ENTERPRISE_PLAN', description: 'Multi-store AI suite with dedicated account manager.', sortOrder: 3, isActive: true, isSystemDefault: true, displayColor: '#10B981' },
+  ],
+
+  // Demos & Follow-ups
+  followup_type: [
+    { id: 'fut-1', category: 'followup_type', name: 'Quotation Follow-up', code: 'QUOTE_FOLLOWUP', description: 'Commercial pricing and proposal review follow-up.', sortOrder: 1, isActive: true, isSystemDefault: true, displayColor: '#7C3AED' },
+    { id: 'fut-2', category: 'followup_type', name: 'Demo Follow-up', code: 'DEMO_FOLLOWUP', description: 'Post product demo feedback and technical query resolution.', sortOrder: 2, isActive: true, isSystemDefault: true, displayColor: '#2563EB' },
+    { id: 'fut-3', category: 'followup_type', name: 'Product Info Follow-up', code: 'INFO_FOLLOWUP', description: 'Share product brochure, case studies and features.', sortOrder: 3, isActive: true, isSystemDefault: true, displayColor: '#059669' },
+    { id: 'fut-4', category: 'followup_type', name: 'Payment Follow-up', code: 'PAYMENT_FOLLOWUP', description: 'Collection and invoice payment follow-up.', sortOrder: 4, isActive: true, isSystemDefault: true, displayColor: '#D97706' },
+  ],
+  followup_outcome: [
+    { id: 'fuo-1', category: 'followup_outcome', name: 'Interested - Send Quote', code: 'SEND_QUOTE', description: 'Merchant showed high interest, requested detailed quote.', sortOrder: 1, isActive: true, isSystemDefault: true, displayColor: '#10B981' },
+    { id: 'fuo-2', category: 'followup_outcome', name: 'Product Demo Requested', code: 'DEMO_REQ', description: 'Scheduled onsite live product demo session.', sortOrder: 2, isActive: true, isSystemDefault: true, displayColor: '#3B82F6' },
+    { id: 'fuo-3', category: 'followup_outcome', name: 'Call Rescheduled', code: 'RESCHEDULED', description: 'Owner was busy, asked to call back later.', sortOrder: 3, isActive: true, isSystemDefault: true, displayColor: '#F59E0B' },
+    { id: 'fuo-4', category: 'followup_outcome', name: 'Not Reachable', code: 'NOT_REACHABLE', description: 'Phone went unanswered after 3 attempts.', sortOrder: 4, isActive: true, isSystemDefault: true, displayColor: '#EF4444' },
+  ],
+  demo_type: [
+    { id: 'dem-1', category: 'demo_type', name: 'Product Walkthrough', code: 'WALKTHROUGH', description: 'Standard software feature demonstration.', sortOrder: 1, isActive: true, isSystemDefault: true, displayColor: '#2563EB' },
+    { id: 'dem-2', category: 'demo_type', name: 'Onsite Live POC', code: 'ONSITE_POC', description: 'Onsite setup and live pilot demonstration.', sortOrder: 2, isActive: true, isSystemDefault: true, displayColor: '#7C3AED' },
+    { id: 'dem-3', category: 'demo_type', name: 'Virtual Video Demo', code: 'VIRTUAL_DEMO', description: 'Online screen share presentation via Google Meet / Zoom.', sortOrder: 3, isActive: true, isSystemDefault: true, displayColor: '#059669' },
+  ],
+  gps_exception_type: [
+    { id: 'gpse-1', category: 'gps_exception_type', name: 'Fake Location / Mock GPS', code: 'MOCK_GPS', description: 'GPS spoofing or mock location app detected on device.', sortOrder: 1, isActive: true, isSystemDefault: true, displayColor: '#EF4444' },
+    { id: 'gpse-2', category: 'gps_exception_type', name: 'GPS Service Disabled', code: 'GPS_OFF', description: 'Executive turned off location services during shift.', sortOrder: 2, isActive: true, isSystemDefault: true, displayColor: '#F59E0B' },
+    { id: 'gpse-3', category: 'gps_exception_type', name: 'Outside Territory Boundary', code: 'BOUNDARY_BREACH', description: 'Check-in attempted outside assigned zone radius.', sortOrder: 3, isActive: true, isSystemDefault: true, displayColor: '#D97706' },
+    { id: 'gpse-4', category: 'gps_exception_type', name: 'Excessive Stationary Idle', code: 'LONG_IDLE', description: 'No movement recorded for over 45 consecutive minutes.', sortOrder: 4, isActive: true, isSystemDefault: false, displayColor: '#6B7280' },
+  ],
+  transport_mode: [
+    { id: 'tran-1', category: 'transport_mode', name: 'Two-Wheeler (Bike - ₹4.5/km)', code: 'BIKE', description: 'Personal or company motorcycle.', sortOrder: 1, isActive: true, isSystemDefault: true, displayColor: '#059669' },
+    { id: 'tran-2', category: 'transport_mode', name: 'Four-Wheeler (Car - ₹9.0/km)', code: 'CAR', description: 'Personal four-wheeler commute.', sortOrder: 2, isActive: true, isSystemDefault: true, displayColor: '#2563EB' },
+    { id: 'tran-3', category: 'transport_mode', name: 'Public Bus / Suburban Rail', code: 'PUBLIC_BUS', description: 'Public transport ticket reimbursement.', sortOrder: 3, isActive: true, isSystemDefault: true, displayColor: '#7C3AED' },
+  ],
+  task_activity_type: [
+    { id: 'taskact-1', category: 'task_activity_type', name: 'In-Person Site Visit', code: 'SITE_VISIT', description: 'Physical store visit and merchant consultation.', sortOrder: 1, isActive: true, isSystemDefault: true, displayColor: '#2563EB' },
+    { id: 'taskact-2', category: 'task_activity_type', name: 'Outbound Phone Call', code: 'PHONE_CALL', description: 'Telephonic check-in or follow-up call.', sortOrder: 2, isActive: true, isSystemDefault: true, displayColor: '#059669' },
+    { id: 'taskact-3', category: 'task_activity_type', name: 'WhatsApp / Email Broadcast', code: 'BROADCAST', description: 'Digital collateral or proposal shared via chat/email.', sortOrder: 3, isActive: true, isSystemDefault: true, displayColor: '#D97706' },
   ],
 };
