@@ -254,12 +254,12 @@ export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) 
                 label="Assign Executive *"
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
-                searchable
+                searchable={true}
                 options={mockTerritoryExecutives.map((exec) => ({
                   value: exec.name,
                   label: exec.name,
-                  sublabel: exec.role,
                   avatar: exec.avatar,
+                  sublabel: `${exec.role || 'Field Executive'} • ${exec.team}`,
                 }))}
               />
             </div>

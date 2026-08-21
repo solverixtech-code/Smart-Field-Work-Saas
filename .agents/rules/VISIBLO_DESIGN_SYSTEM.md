@@ -15,9 +15,10 @@ This document establishes the binding design system, component standards, typogr
    - Use `type="tel"` with `+91` prefix mask for Indian phone numbers (e.g. `+91 96540 88990`).
    - Use `type="number"` for numeric amounts, quantities, and durations.
 
-2. **Searchable Executive Dropdowns & Avatars**:
-   - Always use searchable dropdowns (`<Select searchable />`) for selecting Employees, Field Executives, Managers, or Businesses.
-   - Executive select items must render the executive's **Profile Avatar Image**, Full Name, and Role (e.g. `Field Executive`, `Team Lead`).
+2. **Searchable Executive Dropdowns & Profile Avatars (STRICT BINDING RULE)**:
+   - Every single dropdown or selector that pulls, assigns, or selects an Employee, Field Executive, Manager, Team Leader, or Business MUST have a **Searchable Input** (`searchable={true}`).
+   - Dropdown item options for Employees/Executives MUST render the person's **Profile Picture / Avatar Image (`avatar: "https://..."`)**, Full Name (`label`), and Role/Zone (`sublabel`).
+   - Plain text-only employee select dropdowns are strictly prohibited across all screens and modals.
 
 3. **Auto-Populating Business Details**:
    - When selecting a Business/Lead in any Modal or Form, automatically populate and display a **Selected Business Summary Card** showing Business Name, Type, Address, Contact Person, Designation, and Mobile Number.

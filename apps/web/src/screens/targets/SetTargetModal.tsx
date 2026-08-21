@@ -165,10 +165,30 @@ export const SetTargetModal: React.FC<SetTargetModalProps> = ({ isOpen, onClose 
                 onChange={(e) => setSelectedExecutive(e.target.value)}
                 options={[
                   { value: '', label: 'Select Executive' },
-                  { value: 'rahul', label: 'Rahul Gupta (West Zone)' },
-                  { value: 'priya', label: 'Priya Sharma (West Zone)' },
-                  { value: 'vijay', label: 'Vijay Patel (Central Zone)' },
-                  { value: 'neha', label: 'Neha Sharma (North Zone)' },
+                  {
+                    value: 'rahul',
+                    label: 'Rahul Gupta',
+                    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
+                    sublabel: 'Sales Manager • West Zone',
+                  },
+                  {
+                    value: 'priya',
+                    label: 'Priya Sharma',
+                    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80',
+                    sublabel: 'Field Executive • West Zone',
+                  },
+                  {
+                    value: 'vijay',
+                    label: 'Vijay Patel',
+                    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
+                    sublabel: 'Sales Manager • Central Zone',
+                  },
+                  {
+                    value: 'neha',
+                    label: 'Neha Sharma',
+                    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
+                    sublabel: 'Sales Manager • North Zone',
+                  },
                 ]}
                 searchable={true}
               />
