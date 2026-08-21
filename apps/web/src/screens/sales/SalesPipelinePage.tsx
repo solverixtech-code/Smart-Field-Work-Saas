@@ -30,6 +30,11 @@ import {
 export default function SalesPipelinePage() {
   const navigate = useNavigate();
 
+  // Drag and Drop & Deals State
+  const [deals, setDeals] = useState<PipelineDealCard[]>(mockPipelineDeals);
+  const [draggedDealId, setDraggedDealId] = useState<string | null>(null);
+  const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
+
   // Filters State
   const [selectedTeam, setSelectedTeam] = useState('all');
   const [selectedExec, setSelectedExec] = useState('all');
@@ -38,6 +43,47 @@ export default function SalesPipelinePage() {
   const handleCardClick = (deal: PipelineDealCard) => {
     toast.info(`Viewing details for ${deal.businessName}`);
     navigate(`/admin/leads/${deal.id}`);
+  };
+
+  const handleDragStart = (e: React.DragEvent, dealId: string) => {
+    e.dataTransfer.setData('text/plain', dealId);
+    setDraggedDealId(dealId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, stageId: string) => {
+    e.preventDefault();
+    setDragOverStageId(stageId);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverStageId(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetStageId: string) => {
+    e.preventDefault();
+    setDragOverStageId(null);
+    const dealId = e.dataTransfer.getData('text/plain') || draggedDealId;
+    if (!dealId) return;
+
+    const targetStageConfig = pipelineStagesList.find((s) => s.id === targetStageId);
+    const foundDeal = deals.find((d) => d.id === dealId);
+
+    if (foundDeal && foundDeal.stage !== targetStageId) {
+      setDeals((prevDeals) =>
+        prevDeals.map((d) => {
+          if (d.id === dealId) {
+            return {
+              ...d,
+              stage: targetStageId as any,
+              stageLabel: targetStageConfig?.title || d.stageLabel,
+            };
+          }
+          return d;
+        })
+      );
+      toast.success(`Moved "${foundDeal.businessName}" to ${targetStageConfig?.title || targetStageId}`);
+    }
+    setDraggedDealId(null);
   };
 
   return (
