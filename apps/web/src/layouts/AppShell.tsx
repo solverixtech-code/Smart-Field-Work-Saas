@@ -24,6 +24,8 @@ import {
   Target,
   ShieldAlert,
   Calendar,
+  RotateCcw,
+  CheckCircle2,
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store';
 import { clearCredentials } from '../store/slices/authSlice';
@@ -122,6 +124,46 @@ const navCategories: NavCategory[] = [
         icon: TrendingUp,
         to: '/admin/demos/conversions',
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
+      },
+    ],
+  },
+  {
+    title: 'Follow-up Management',
+    items: [
+      {
+        label: 'All Follow-ups',
+        icon: RotateCcw,
+        to: '/admin/follow-ups',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '256 Total',
+      },
+      {
+        label: "Today's Follow-ups",
+        icon: Clock,
+        to: '/admin/follow-ups/today',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '28 Today',
+      },
+      {
+        label: 'Upcoming Follow-ups',
+        icon: Calendar,
+        to: '/admin/follow-ups/upcoming',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '64 Next',
+      },
+      {
+        label: 'Overdue Follow-ups',
+        icon: ShieldAlert,
+        to: '/admin/follow-ups/overdue',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '32 Overdue',
+      },
+      {
+        label: 'Completed Follow-ups',
+        icon: CheckCircle2,
+        to: '/admin/follow-ups/completed',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '98 Done',
       },
     ],
   },
@@ -322,6 +364,24 @@ function getBreadcrumbTrail(pathname: string) {
   } else if (pathname.startsWith('/admin/demos/')) {
     items.push({ label: 'Demo Management', to: '/admin/demos' });
     items.push({ label: 'Demo Details (DEM-1285)', to: pathname });
+  } else if (pathname === '/admin/follow-ups') {
+    items.push({ label: 'Follow-up Management', to: '/admin/follow-ups' });
+    items.push({ label: 'All Follow-ups', to: '/admin/follow-ups' });
+  } else if (pathname === '/admin/follow-ups/today') {
+    items.push({ label: 'Follow-up Management', to: '/admin/follow-ups' });
+    items.push({ label: "Today's Follow-ups", to: '/admin/follow-ups/today' });
+  } else if (pathname === '/admin/follow-ups/upcoming') {
+    items.push({ label: 'Follow-up Management', to: '/admin/follow-ups' });
+    items.push({ label: 'Upcoming Follow-ups', to: '/admin/follow-ups/upcoming' });
+  } else if (pathname === '/admin/follow-ups/overdue') {
+    items.push({ label: 'Follow-up Management', to: '/admin/follow-ups' });
+    items.push({ label: 'Overdue Follow-ups', to: '/admin/follow-ups/overdue' });
+  } else if (pathname === '/admin/follow-ups/completed') {
+    items.push({ label: 'Follow-up Management', to: '/admin/follow-ups' });
+    items.push({ label: 'Completed Follow-ups', to: '/admin/follow-ups/completed' });
+  } else if (pathname.startsWith('/admin/follow-ups/')) {
+    items.push({ label: 'Follow-up Management', to: '/admin/follow-ups' });
+    items.push({ label: 'Follow-up Details (FU-2556)', to: pathname });
   } else if (pathname === '/admin/teams') {
     items.push({ label: 'Teams & Hierarchy', to: '/admin/teams' });
     items.push({ label: 'Sales Teams', to: '/admin/teams' });
@@ -551,6 +611,9 @@ export default function AppShell() {
                 const isActive = (() => {
                   if (item.to === '/admin/demos') {
                     return location.pathname === '/admin/demos' || (location.pathname.startsWith('/admin/demos/') && !['/admin/demos/today', '/admin/demos/scheduled', '/admin/demos/completed', '/admin/demos/conversions'].includes(location.pathname));
+                  }
+                  if (item.to === '/admin/follow-ups') {
+                    return location.pathname === '/admin/follow-ups' || (location.pathname.startsWith('/admin/follow-ups/') && !['/admin/follow-ups/today', '/admin/follow-ups/upcoming', '/admin/follow-ups/overdue', '/admin/follow-ups/completed'].includes(location.pathname));
                   }
                   if (item.to === '/admin/visits') {
                     return location.pathname === '/admin/visits' || (location.pathname.startsWith('/admin/visits/') && !location.pathname.startsWith('/admin/visits/gps-exceptions'));

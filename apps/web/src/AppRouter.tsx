@@ -55,6 +55,13 @@ import ScheduledDemosPage from './screens/demos/ScheduledDemosPage';
 import CompletedDemosPage from './screens/demos/CompletedDemosPage';
 import DemoDetailsPage from './screens/demos/DemoDetailsPage';
 import DemoConversionReportPage from './screens/demos/DemoConversionReportPage';
+
+import AllFollowUpsPage from './screens/followups/AllFollowUpsPage';
+import TodayFollowUpsPage from './screens/followups/TodayFollowUpsPage';
+import UpcomingFollowUpsPage from './screens/followups/UpcomingFollowUpsPage';
+import OverdueFollowUpsPage from './screens/followups/OverdueFollowUpsPage';
+import CompletedFollowUpsPage from './screens/followups/CompletedFollowUpsPage';
+import FollowUpDetailsPage from './screens/followups/FollowUpDetailsPage';
 import BusinessContactsPage from './screens/businesses/BusinessContactsPage';
 import BusinessGoogleProfilePage from './screens/businesses/BusinessGoogleProfilePage';
 import BusinessSalesHistoryPage from './screens/businesses/BusinessSalesHistoryPage';
@@ -315,6 +322,27 @@ export default function AppRouter() {
               <Route path="/admin/demos/completed" element={<CompletedDemosPage />} />
               <Route path="/admin/demos/conversions" element={<DemoConversionReportPage />} />
               <Route path="/admin/demos/:demoId" element={<DemoDetailsPage />} />
+            </Route>
+
+            {/* Follow-up Management Routes (Screens 99 to 104) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/follow-ups" element={<AllFollowUpsPage />} />
+              <Route path="/admin/follow-ups/today" element={<TodayFollowUpsPage />} />
+              <Route path="/admin/follow-ups/upcoming" element={<UpcomingFollowUpsPage />} />
+              <Route path="/admin/follow-ups/overdue" element={<OverdueFollowUpsPage />} />
+              <Route path="/admin/follow-ups/completed" element={<CompletedFollowUpsPage />} />
+              <Route path="/admin/follow-ups/:followupId" element={<FollowUpDetailsPage />} />
             </Route>
 
             {/* Leads Management Routes (Screens 33 to 53) */}
