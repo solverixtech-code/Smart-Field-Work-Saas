@@ -234,10 +234,10 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-3 py-2 border-b-2 font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`px-4 py-2.5 border-b-2 font-extrabold transition-all whitespace-nowrap cursor-pointer text-xs ${
                 isActive
-                  ? 'border-red-600 text-red-600 bg-white'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100/50'
+                  ? 'border-purple-600 text-purple-700 bg-transparent'
+                  : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/50'
               }`}
             >
               {tab.label}

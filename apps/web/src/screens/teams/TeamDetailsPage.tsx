@@ -304,10 +304,10 @@ export default function TeamDetailsPage() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-xs font-semibold whitespace-nowrap border-b-2 transition-all cursor-pointer ${
+            className={`px-4 py-2.5 text-xs font-extrabold whitespace-nowrap border-b-2 transition-all cursor-pointer ${
               activeTab === tab
-                ? 'border-slate-900 text-slate-900 bg-white rounded-t-sm font-bold'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-purple-600 text-purple-700 bg-transparent'
+                : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/50'
             }`}
           >
             {tab}
