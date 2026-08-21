@@ -14,7 +14,7 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
-import { ClockTimePicker } from '../../components/ui/ClockTimePicker';
+import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
 import { mockTerritoryExecutives } from '../territories/territoriesData';
 import { mockBusinesses } from '../businesses/businessesData';
 import { mockLeadsData, LeadItem } from '../leads/leadsData';
@@ -277,12 +277,11 @@ export function AddFollowUpModal({ isOpen, onClose, onSuccess }: AddFollowUpModa
               required
             />
 
-            {/* Follow-up Time with ClockTimePicker */}
-            <ClockTimePicker
+            {/* Follow-up Time with ClockTimePickerModal */}
+            <ClockTimePickerModal
               label="Follow-up Time"
               value={followupTime}
               onChange={(t) => setFollowupTime(t)}
-              required
             />
 
             {/* Contact Phone */}

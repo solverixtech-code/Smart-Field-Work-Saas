@@ -16,7 +16,7 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
-import { ClockTimePicker } from '../../components/ui/ClockTimePicker';
+import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
 import { mockTerritoryExecutives } from '../territories/territoriesData';
 import { mockBusinesses } from '../businesses/businessesData';
 import { mockDemosList } from './demosData';
@@ -283,12 +283,11 @@ export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) 
               required
             />
 
-            {/* Demo Time with interactive ClockTimePicker component */}
-            <ClockTimePicker
+            {/* Demo Time with ClockTimePickerModal */}
+            <ClockTimePickerModal
               label="Demo Time"
               value={demoTime}
               onChange={(t) => setDemoTime(t)}
-              required
             />
           </div>
 

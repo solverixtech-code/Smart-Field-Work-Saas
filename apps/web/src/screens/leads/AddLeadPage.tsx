@@ -220,35 +220,51 @@ export default function AddLeadPage() {
             <h3 className="text-sm font-bold text-[#0D1F3D]">Basic Information</h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {/* Business Name */}
-              <div className="space-y-1 sm:col-span-1">
-                <label className="font-bold text-slate-700 block">
-                  Business Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter business or company name"
-                  value={businessName}
-                  onChange={(e) => setBusinessName(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 bg-white px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:border-purple-600 focus:outline-none"
-                />
-              </div>
+              {/* Conditional Business Name or Individual Name */}
+              {leadType === 'business' ? (
+                <>
+                  <div className="space-y-1 sm:col-span-1">
+                    <label className="font-bold text-slate-700 block">
+                      Business Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter business or company name"
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      className="w-full rounded-md border border-slate-200 bg-white px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:border-purple-600 focus:outline-none"
+                    />
+                  </div>
 
-              {/* Contact Person Name */}
-              <div className="space-y-1 sm:col-span-1">
-                <label className="font-bold text-slate-700 block">
-                  Contact Person Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter full name"
-                  value={contactPerson}
-                  onChange={(e) => setContactPerson(e.target.value)}
-                  className="w-full rounded-md border border-slate-200 bg-white px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:border-purple-600 focus:outline-none"
-                />
-              </div>
+                  <div className="space-y-1 sm:col-span-1">
+                    <label className="font-bold text-slate-700 block">
+                      Contact Person Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter contact person name"
+                      value={contactPerson}
+                      onChange={(e) => setContactPerson(e.target.value)}
+                      className="w-full rounded-md border border-slate-200 bg-white px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:border-purple-600 focus:outline-none"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="font-bold text-slate-700 block">
+                    Individual Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter full name of individual"
+                    value={contactPerson}
+                    onChange={(e) => setContactPerson(e.target.value)}
+                    className="w-full rounded-md border border-slate-200 bg-white px-3.5 py-2.5 text-slate-800 placeholder-slate-400 focus:border-purple-600 focus:outline-none"
+                  />
+                </div>
+              )}
 
-              {/* Mobile Number */}
+              {/* Mobile Number with Strict Digit Sanitization */}
               <div className="space-y-1 sm:col-span-1">
                 <label className="font-bold text-slate-700 block">
                   Mobile Number <span className="text-red-500">*</span>
@@ -260,11 +276,11 @@ export default function AddLeadPage() {
                     <ChevronDown className="h-3 w-3 text-slate-400" />
                   </div>
                   <input
-                    type="text"
-                    placeholder="Enter mobile number"
+                    type="tel"
+                    placeholder="Enter 10-digit mobile number"
                     value={mobileNumber}
-                    onChange={(e) => setMobileNumber(e.target.value)}
-                    className="w-full px-3 py-2 text-slate-800 placeholder-slate-400 focus:outline-none"
+                    onChange={(e) => setMobileNumber(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    className="w-full px-3 py-2 text-slate-800 font-mono text-xs placeholder-slate-400 focus:outline-none"
                   />
                 </div>
               </div>

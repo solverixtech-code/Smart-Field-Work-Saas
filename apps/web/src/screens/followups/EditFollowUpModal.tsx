@@ -5,7 +5,7 @@ import { X, Edit, Phone, User } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
-import { ClockTimePicker } from '../../components/ui/ClockTimePicker';
+import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
 import { mockTerritoryExecutives } from '../territories/territoriesData';
 import { FollowUpItem } from './followupsData';
 
@@ -207,11 +207,10 @@ export function EditFollowUpModal({ isOpen, onClose, followup, onSuccess }: Edit
             />
 
             {/* Time */}
-            <ClockTimePicker
+            <ClockTimePickerModal
               label="Follow-up Time"
               value={followupTime}
               onChange={(t) => setFollowupTime(t)}
-              required
             />
           </div>
 

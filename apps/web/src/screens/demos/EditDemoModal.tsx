@@ -5,7 +5,7 @@ import { X, Edit, Phone, User } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
-import { ClockTimePicker } from '../../components/ui/ClockTimePicker';
+import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
 import { mockTerritoryExecutives } from '../territories/territoriesData';
 import { DemoItem } from './demosData';
 
@@ -203,11 +203,10 @@ export function EditDemoModal({ isOpen, onClose, demo, onSuccess }: EditDemoModa
             />
 
             {/* Demo Time */}
-            <ClockTimePicker
+            <ClockTimePickerModal
               label="Demo Time"
               value={demoTime}
               onChange={(t) => setDemoTime(t)}
-              required
             />
           </div>
 
