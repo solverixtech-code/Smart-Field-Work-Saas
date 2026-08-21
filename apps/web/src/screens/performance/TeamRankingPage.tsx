@@ -44,7 +44,26 @@ const mockTeamRanks: TeamRankItem[] = [
 export const TeamRankingPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedPeriod, setSelectedPeriod] = useState('May 2025');
-  const [activeTab, setActiveTab] = useState('Overall Ranking');
+  const [activeTab, setActiveTab] = useState<
+    'Overall Ranking' | 'Sales' | 'Target Achievement' | 'Collections' | 'Members'
+  >('Overall Ranking');
+
+  const sortedTeams = React.useMemo(() => {
+    let list = [...mockTeamRanks];
+    list.sort((a, b) => {
+      if (activeTab === 'Target Achievement') return b.achievementPct - a.achievementPct;
+      if (activeTab === 'Sales') return b.sales - a.sales;
+      if (activeTab === 'Collections') return b.collections - a.collections;
+      if (activeTab === 'Members') return b.membersCount - a.membersCount;
+      return b.achievementPct - a.achievementPct;
+    });
+    return list.map((t, idx) => ({ ...t, dynamicRank: idx + 1 }));
+  }, [activeTab]);
+
+  const handleTabChange = (tab: any) => {
+    setActiveTab(tab);
+    toast.info(`Team Leaderboard sorted by ${tab}`);
+  };
 
   return (
     <div className="space-y-5 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -102,10 +121,10 @@ export const TeamRankingPage: React.FC = () => {
 
       {/* UNIFIED SUB-TABS */}
       <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto text-xs font-bold scrollbar-none pb-0">
-        {['Overall Ranking', 'Sales', 'Target Achievement', 'Collections', 'Demos', 'Leads', 'Growth Trend'].map((tab) => (
+        {(['Overall Ranking', 'Sales', 'Target Achievement', 'Collections', 'Members'] as const).map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => handleTabChange(tab)}
             className={`px-4 py-2.5 border-b-2 font-extrabold transition-all whitespace-nowrap cursor-pointer text-xs ${
               activeTab === tab
                 ? 'border-purple-600 text-purple-700 bg-transparent'
@@ -126,19 +145,19 @@ export const TeamRankingPage: React.FC = () => {
                 <th className="py-2.5 px-3 text-center">Rank</th>
                 <th className="py-2.5 px-3">Team / Manager</th>
                 <th className="py-2.5 px-3">Region</th>
-                <th className="py-2.5 px-3 text-center">Members</th>
+                <th className={`py-2.5 px-3 text-center ${activeTab === 'Members' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Members</th>
                 <th className="py-2.5 px-3">Target (₹)</th>
                 <th className="py-2.5 px-3">Achieved (₹)</th>
-                <th className="py-2.5 px-3">Achievement %</th>
-                <th className="py-2.5 px-3">Sales (₹)</th>
-                <th className="py-2.5 px-3">Collections (₹)</th>
+                <th className={`py-2.5 px-3 ${activeTab === 'Target Achievement' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Achievement %</th>
+                <th className={`py-2.5 px-3 ${activeTab === 'Sales' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Sales (₹)</th>
+                <th className={`py-2.5 px-3 ${activeTab === 'Collections' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Collections (₹)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {mockTeamRanks.map((team) => (
+              {sortedTeams.map((team) => (
                 <tr key={team.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3 px-3 text-center font-extrabold">
-                    {team.rank === 1 ? '🥇 1' : team.rank === 2 ? '🥈 2' : team.rank === 3 ? '🥉 3' : team.rank}
+                    {team.dynamicRank === 1 ? '🥇 1' : team.dynamicRank === 2 ? '🥈 2' : team.dynamicRank === 3 ? '🥉 3' : team.dynamicRank}
                   </td>
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2.5">
@@ -150,18 +169,18 @@ export const TeamRankingPage: React.FC = () => {
                     </div>
                   </td>
                   <td className="py-3 px-3 text-slate-600 font-bold">{team.region}</td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">{team.membersCount}</td>
+                  <td className={`py-3 px-3 text-center font-mono font-bold text-slate-700 ${activeTab === 'Members' ? 'bg-purple-50/70 font-extrabold' : ''}`}>{team.membersCount}</td>
                   <td className="py-3 px-3 font-mono font-semibold text-slate-600">₹{team.target.toLocaleString('en-IN')}</td>
                   <td className="py-3 px-3 font-mono font-bold text-slate-800">₹{team.achieved.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-3">
+                  <td className={`py-3 px-3 ${activeTab === 'Target Achievement' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
                     <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${
                       team.achievementPct >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
                     }`}>
                       {team.achievementPct}%
                     </span>
                   </td>
-                  <td className="py-3 px-3 font-mono font-extrabold text-blue-700">₹{team.sales.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-3 font-mono font-bold text-emerald-700">₹{team.collections.toLocaleString('en-IN')}</td>
+                  <td className={`py-3 px-3 font-mono font-extrabold text-blue-700 ${activeTab === 'Sales' ? 'bg-purple-50/70 font-extrabold' : ''}`}>₹{team.sales.toLocaleString('en-IN')}</td>
+                  <td className={`py-3 px-3 font-mono font-bold text-emerald-700 ${activeTab === 'Collections' ? 'bg-purple-50/70 font-extrabold' : ''}`}>₹{team.collections.toLocaleString('en-IN')}</td>
                 </tr>
               ))}
             </tbody>

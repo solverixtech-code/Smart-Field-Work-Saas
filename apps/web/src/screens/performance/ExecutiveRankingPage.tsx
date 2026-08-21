@@ -55,16 +55,36 @@ export const ExecutiveRankingPage: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('May 2025');
   const [selectedTeam, setSelectedTeam] = useState('All');
   const [selectedRegion, setSelectedRegion] = useState('All');
-  const [activeTab, setActiveTab] = useState('Overall Ranking');
+  const [activeTab, setActiveTab] = useState<
+    'Overall Ranking' | 'Target Achievement' | 'Sales Achieved' | 'Collection Achieved' | 'Demos Conducted'
+  >('Overall Ranking');
 
   const filteredExecutives = useMemo(() => {
-    return mockExecutiveRanks.filter((exec) => {
+    let list = mockExecutiveRanks.filter((exec) => {
       const matchesSearch = exec.name.toLowerCase().includes(searchQuery.toLowerCase()) || exec.id.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesTeam = selectedTeam === 'All' || exec.team === selectedTeam;
       const matchesRegion = selectedRegion === 'All' || exec.region === selectedRegion;
       return matchesSearch && matchesTeam && matchesRegion;
     });
-  }, [searchQuery, selectedTeam, selectedRegion]);
+
+    list = [...list].sort((a, b) => {
+      if (activeTab === 'Target Achievement') return b.achievementPct - a.achievementPct;
+      if (activeTab === 'Sales Achieved') return b.sales - a.sales;
+      if (activeTab === 'Collection Achieved') return b.collections - a.collections;
+      if (activeTab === 'Demos Conducted') return b.demos - a.demos;
+      return b.score - a.score;
+    });
+
+    return list.map((exec, idx) => ({
+      ...exec,
+      dynamicRank: idx + 1,
+    }));
+  }, [searchQuery, selectedTeam, selectedRegion, activeTab]);
+
+  const handleTabChange = (tab: any) => {
+    setActiveTab(tab);
+    toast.info(`Leaderboard sorted by ${tab}`);
+  };
 
   return (
     <div className="space-y-5 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -175,10 +195,10 @@ export const ExecutiveRankingPage: React.FC = () => {
 
       {/* UNIFIED SUB-TABS */}
       <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto text-xs font-bold scrollbar-none pb-0">
-        {['Overall Ranking', 'Target Achievement', 'Sales Achieved', 'Collection Achieved', 'Demos Conducted'].map((tab) => (
+        {(['Overall Ranking', 'Target Achievement', 'Sales Achieved', 'Collection Achieved', 'Demos Conducted'] as const).map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => handleTabChange(tab)}
             className={`px-4 py-2.5 border-b-2 font-extrabold transition-all whitespace-nowrap cursor-pointer text-xs ${
               activeTab === tab
                 ? 'border-purple-600 text-purple-700 bg-transparent'
@@ -201,11 +221,11 @@ export const ExecutiveRankingPage: React.FC = () => {
                 <th className="py-2.5 px-3">Team / Region</th>
                 <th className="py-2.5 px-3">Target (₹)</th>
                 <th className="py-2.5 px-3">Achieved (₹)</th>
-                <th className="py-2.5 px-3">Achievement %</th>
-                <th className="py-2.5 px-3">Sales (₹)</th>
-                <th className="py-2.5 px-3">Collections (₹)</th>
-                <th className="py-2.5 px-3 text-center">Demos</th>
-                <th className="py-2.5 px-3 text-center">Score</th>
+                <th className={`py-2.5 px-3 ${activeTab === 'Target Achievement' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Achievement %</th>
+                <th className={`py-2.5 px-3 ${activeTab === 'Sales Achieved' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Sales (₹)</th>
+                <th className={`py-2.5 px-3 ${activeTab === 'Collection Achieved' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Collections (₹)</th>
+                <th className={`py-2.5 px-3 text-center ${activeTab === 'Demos Conducted' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Demos</th>
+                <th className={`py-2.5 px-3 text-center ${activeTab === 'Overall Ranking' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Score</th>
                 <th className="py-2.5 px-3 text-center">Trend</th>
               </tr>
             </thead>
@@ -213,7 +233,7 @@ export const ExecutiveRankingPage: React.FC = () => {
               {filteredExecutives.map((exec) => (
                 <tr key={exec.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3 px-3 text-center font-extrabold">
-                    {exec.rank === 1 ? '🥇 1' : exec.rank === 2 ? '🥈 2' : exec.rank === 3 ? '🥉 3' : exec.rank}
+                    {exec.dynamicRank === 1 ? '🥇 1' : exec.dynamicRank === 2 ? '🥈 2' : exec.dynamicRank === 3 ? '🥉 3' : exec.dynamicRank}
                   </td>
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2.5">
@@ -232,17 +252,25 @@ export const ExecutiveRankingPage: React.FC = () => {
                   </td>
                   <td className="py-3 px-3 font-mono font-semibold text-slate-600">₹{exec.target.toLocaleString('en-IN')}</td>
                   <td className="py-3 px-3 font-mono font-bold text-slate-800">₹{exec.achieved.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-3">
+                  <td className={`py-3 px-3 ${activeTab === 'Target Achievement' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
                     <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${
                       exec.achievementPct >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
                     }`}>
                       {exec.achievementPct}%
                     </span>
                   </td>
-                  <td className="py-3 px-3 font-mono font-extrabold text-blue-700">₹{exec.sales.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-3 font-mono font-bold text-emerald-700">₹{exec.collections.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{exec.demos}</td>
-                  <td className="py-3 px-3 text-center font-mono font-extrabold text-emerald-600">{exec.score}</td>
+                  <td className={`py-3 px-3 font-mono font-extrabold text-blue-700 ${activeTab === 'Sales Achieved' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
+                    ₹{exec.sales.toLocaleString('en-IN')}
+                  </td>
+                  <td className={`py-3 px-3 font-mono font-bold text-emerald-700 ${activeTab === 'Collection Achieved' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
+                    ₹{exec.collections.toLocaleString('en-IN')}
+                  </td>
+                  <td className={`py-3 px-3 text-center font-mono font-bold text-purple-700 ${activeTab === 'Demos Conducted' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
+                    {exec.demos}
+                  </td>
+                  <td className={`py-3 px-3 text-center font-mono font-extrabold text-emerald-600 ${activeTab === 'Overall Ranking' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
+                    {exec.score}
+                  </td>
                   <td className="py-3 px-3 text-center">
                     {exec.trend === 'up' ? (
                       <ArrowUpRight className="h-4 w-4 text-emerald-600 inline" />

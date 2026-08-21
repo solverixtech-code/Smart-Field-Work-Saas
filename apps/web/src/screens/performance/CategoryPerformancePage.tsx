@@ -37,7 +37,26 @@ const mockCategoryRanks: CategoryRankItem[] = [
 
 export const CategoryPerformancePage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('Performance Overview');
+  const [activeTab, setActiveTab] = useState<
+    'Performance Overview' | 'Sales' | 'Targets vs Achievement' | 'Demos & Leads' | 'Collections'
+  >('Performance Overview');
+
+  const sortedCategories = React.useMemo(() => {
+    let list = [...mockCategoryRanks];
+    list.sort((a, b) => {
+      if (activeTab === 'Sales') return b.sales - a.sales;
+      if (activeTab === 'Targets vs Achievement') return b.achievementPct - a.achievementPct;
+      if (activeTab === 'Demos & Leads') return b.demos - a.demos;
+      if (activeTab === 'Collections') return b.collections - a.collections;
+      return b.sales - a.sales;
+    });
+    return list.map((c, idx) => ({ ...c, dynamicRank: idx + 1 }));
+  }, [activeTab]);
+
+  const handleTabChange = (tab: any) => {
+    setActiveTab(tab);
+    toast.info(`Category leaderboard sorted by ${tab}`);
+  };
 
   return (
     <div className="space-y-5 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -95,10 +114,10 @@ export const CategoryPerformancePage: React.FC = () => {
 
       {/* UNIFIED SUB-TABS */}
       <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto text-xs font-bold scrollbar-none pb-0">
-        {['Performance Overview', 'Sales', 'Targets vs Achievement', 'Demos & Leads', 'Collections'].map((tab) => (
+        {(['Performance Overview', 'Sales', 'Targets vs Achievement', 'Demos & Leads', 'Collections'] as const).map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => handleTabChange(tab)}
             className={`px-4 py-2.5 border-b-2 font-extrabold transition-all whitespace-nowrap cursor-pointer text-xs ${
               activeTab === tab
                 ? 'border-purple-600 text-purple-700 bg-transparent'
@@ -119,36 +138,36 @@ export const CategoryPerformancePage: React.FC = () => {
                 <th className="py-2.5 px-3 text-center">Rank</th>
                 <th className="py-2.5 px-3">Category Name</th>
                 <th className="py-2.5 px-3">Type</th>
-                <th className="py-2.5 px-3">Total Sales (₹)</th>
+                <th className={`py-2.5 px-3 ${activeTab === 'Sales' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Total Sales (₹)</th>
                 <th className="py-2.5 px-3">Target (₹)</th>
-                <th className="py-2.5 px-3">Achievement %</th>
-                <th className="py-2.5 px-3 text-center">Demos</th>
-                <th className="py-2.5 px-3 text-center">Leads</th>
-                <th className="py-2.5 px-3">Collections (₹)</th>
+                <th className={`py-2.5 px-3 ${activeTab === 'Targets vs Achievement' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Achievement %</th>
+                <th className={`py-2.5 px-3 text-center ${activeTab === 'Demos & Leads' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Demos</th>
+                <th className={`py-2.5 px-3 text-center ${activeTab === 'Demos & Leads' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Leads</th>
+                <th className={`py-2.5 px-3 ${activeTab === 'Collections' ? 'bg-purple-100/80 text-purple-900 font-extrabold' : ''}`}>Collections (₹)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {mockCategoryRanks.map((cat) => (
+              {sortedCategories.map((cat) => (
                 <tr key={cat.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3 px-3 text-center font-extrabold">
-                    {cat.rank === 1 ? '🥇 1' : cat.rank === 2 ? '🥈 2' : cat.rank === 3 ? '🥉 3' : cat.rank}
+                    {cat.dynamicRank === 1 ? '🥇 1' : cat.dynamicRank === 2 ? '🥈 2' : cat.dynamicRank === 3 ? '🥉 3' : cat.dynamicRank}
                   </td>
                   <td className="py-3 px-3">
                     <span className="font-extrabold text-[#0D1F3D] block">{cat.categoryName}</span>
                   </td>
                   <td className="py-3 px-3 text-slate-600 font-bold">{cat.type}</td>
-                  <td className="py-3 px-3 font-mono font-extrabold text-blue-700">₹{cat.sales.toLocaleString('en-IN')}</td>
+                  <td className={`py-3 px-3 font-mono font-extrabold text-blue-700 ${activeTab === 'Sales' ? 'bg-purple-50/70 font-extrabold' : ''}`}>₹{cat.sales.toLocaleString('en-IN')}</td>
                   <td className="py-3 px-3 font-mono font-semibold text-slate-600">₹{cat.target.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-3">
+                  <td className={`py-3 px-3 ${activeTab === 'Targets vs Achievement' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
                     <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${
                       cat.achievementPct >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
                     }`}>
                       {cat.achievementPct}%
                     </span>
                   </td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{cat.demos}</td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">{cat.leads}</td>
-                  <td className="py-3 px-3 font-mono font-bold text-emerald-700">₹{cat.collections.toLocaleString('en-IN')}</td>
+                  <td className={`py-3 px-3 text-center font-mono font-bold text-purple-700 ${activeTab === 'Demos & Leads' ? 'bg-purple-50/70 font-extrabold' : ''}`}>{cat.demos}</td>
+                  <td className={`py-3 px-3 text-center font-mono font-bold text-slate-700 ${activeTab === 'Demos & Leads' ? 'bg-purple-50/70 font-extrabold' : ''}`}>{cat.leads}</td>
+                  <td className={`py-3 px-3 font-mono font-bold text-emerald-700 ${activeTab === 'Collections' ? 'bg-purple-50/70 font-extrabold' : ''}`}>₹{cat.collections.toLocaleString('en-IN')}</td>
                 </tr>
               ))}
             </tbody>
