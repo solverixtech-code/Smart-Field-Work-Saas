@@ -72,6 +72,16 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedExecIds, setSelectedExecIds] = useState<string[]>(['exec-1', 'exec-2', 'exec-3']);
 
+  // Map Layers Toggle State
+  const [showBoundary, setShowBoundary] = useState(true);
+  const [showBusinesses, setShowBusinesses] = useState(true);
+  const [showActiveBusinesses, setShowActiveBusinesses] = useState(true);
+  const [showLeads, setShowLeads] = useState(true);
+  const [showVisitedLocations, setShowVisitedLocations] = useState(true);
+  const [showExecutives, setShowExecutives] = useState(true);
+  const [showRoutes, setShowRoutes] = useState(true);
+  const [showHeatmap, setShowHeatmap] = useState(false);
+
   const territory =
     mockTerritoriesList.find((t) => t.id === territoryId || t.code === territoryId) ||
     mockTerritoriesList[0];
@@ -511,6 +521,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             </div>
           </div>
 
+          {/* Top KPI Metric Cards */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
             <MapKpiCard title="Total Visits" value="176" subValue="↑ 18.4%" icon={TrendingUp} iconBgColor="bg-emerald-50" iconTextColor="text-emerald-600" />
             <MapKpiCard title="Completed Visits" value="142" subValue="↑ 21.7%" icon={CheckCircle2} iconBgColor="bg-blue-50" iconTextColor="text-blue-600" />
@@ -518,6 +529,172 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             <MapKpiCard title="Demos Conducted" value="36" subValue="↑ 12.5%" icon={Target} iconBgColor="bg-amber-50" iconTextColor="text-amber-600" />
             <MapKpiCard title="Sales Closed" value="28" subValue="↑ 21.7%" icon={ShoppingBag} iconBgColor="bg-teal-50" iconTextColor="text-teal-600" />
             <MapKpiCard title="Revenue" value="₹ 14,00,000" subValue="↑ 24.6%" icon={Award} iconBgColor="bg-rose-50" iconTextColor="text-rose-600" />
+          </div>
+
+          {/* Performance Analytics Grid Section */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+            {/* Monthly Trend & Revenue Analysis */}
+            <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs lg:col-span-8 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div>
+                  <h3 className="text-xs font-extrabold text-[#0D1F3D]">Monthly Revenue & Target Trend</h3>
+                  <p className="text-[11px] font-medium text-slate-500">Historical performance across last 5 months in {territory.name}</p>
+                </div>
+                <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                  Target Met: 67%
+                </span>
+              </div>
+
+              {/* Bar Chart Visualization */}
+              <div className="space-y-3 pt-2">
+                {[
+                  { month: 'Jan 2025', revenue: 950000, target: 1200000, visits: 130, pct: 79 },
+                  { month: 'Feb 2025', revenue: 1100000, target: 1250000, visits: 145, pct: 88 },
+                  { month: 'Mar 2025', revenue: 1280000, target: 1300000, visits: 160, pct: 98 },
+                  { month: 'Apr 2025', revenue: 1350000, target: 1400000, visits: 168, pct: 96 },
+                  { month: 'May 2025 (Current)', revenue: 1400000, target: 1500000, visits: 176, pct: 93 },
+                ].map((item) => (
+                  <div key={item.month} className="space-y-1 text-xs">
+                    <div className="flex items-center justify-between font-bold">
+                      <span className="text-[#0D1F3D]">{item.month}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-slate-500 font-normal">{item.visits} visits</span>
+                        <span className="font-mono text-emerald-700">₹ {(item.revenue / 100000).toFixed(2)}L / ₹ {(item.target / 100000).toFixed(2)}L</span>
+                        <span className="w-10 text-right text-blue-600 font-extrabold">{item.pct}%</span>
+                      </div>
+                    </div>
+                    <div className="h-2.5 w-full rounded-full bg-slate-100 overflow-hidden flex">
+                      <div
+                        className="h-full bg-emerald-500 rounded-full transition-all duration-500"
+                        style={{ width: `${item.pct}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Conversion Pipeline Breakdown */}
+              <div className="border-t border-slate-100 pt-4">
+                <h4 className="text-xs font-extrabold text-[#0D1F3D] mb-3">Field Conversion Funnel Metrics</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="rounded-sm bg-slate-50 p-3 border border-slate-200/70 text-center">
+                    <span className="text-[10px] font-bold text-slate-400 block">Total Prospects</span>
+                    <span className="text-lg font-extrabold text-[#0D1F3D]">168</span>
+                    <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">100% Coverage</span>
+                  </div>
+                  <div className="rounded-sm bg-blue-50/50 p-3 border border-blue-100 text-center">
+                    <span className="text-[10px] font-bold text-blue-600 block">Visits Completed</span>
+                    <span className="text-lg font-extrabold text-blue-900">142</span>
+                    <span className="text-[10px] text-blue-700 font-bold block mt-0.5">84.5% Visit Rate</span>
+                  </div>
+                  <div className="rounded-sm bg-amber-50/50 p-3 border border-amber-100 text-center">
+                    <span className="text-[10px] font-bold text-amber-700 block">Demos Conducted</span>
+                    <span className="text-lg font-extrabold text-amber-900">36</span>
+                    <span className="text-[10px] text-amber-800 font-bold block mt-0.5">25.3% Demo Rate</span>
+                  </div>
+                  <div className="rounded-sm bg-emerald-50/50 p-3 border border-emerald-100 text-center">
+                    <span className="text-[10px] font-bold text-emerald-700 block">Sales Closed</span>
+                    <span className="text-lg font-extrabold text-emerald-900">28</span>
+                    <span className="text-[10px] text-emerald-800 font-bold block mt-0.5">77.7% Closing Rate</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Category Revenue Breakdown & Health Score */}
+            <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs lg:col-span-4 space-y-4">
+              <div className="border-b border-slate-100 pb-2">
+                <h3 className="text-xs font-extrabold text-[#0D1F3D]">Revenue Share by Category</h3>
+                <p className="text-[11px] font-medium text-slate-500">Distribution across business categories</p>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { category: 'Retail Stores', share: 42, amount: '₹ 5,88,000', color: 'bg-emerald-500' },
+                  { category: 'Healthcare & Pharmacy', share: 24, amount: '₹ 3,36,000', color: 'bg-blue-500' },
+                  { category: 'Automobile & Service', share: 18, amount: '₹ 2,52,000', color: 'bg-purple-500' },
+                  { category: 'Food & Beverage', share: 11, amount: '₹ 1,54,000', color: 'bg-amber-500' },
+                  { category: 'Hardware & Others', share: 5, amount: '₹ 70,000', color: 'bg-rose-500' },
+                ].map((cat) => (
+                  <div key={cat.category} className="space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[#0D1F3D]">{cat.category}</span>
+                      <span className="font-mono text-slate-600 font-extrabold">{cat.amount} ({cat.share}%)</span>
+                    </div>
+                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                      <div className={`h-full rounded-full ${cat.color}`} style={{ width: `${cat.share}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-slate-100 pt-3 space-y-2">
+                <h4 className="text-xs font-extrabold text-[#0D1F3D]">Territory Health Score</h4>
+                <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 block">Overall Territory Score</span>
+                    <span className="text-xl font-extrabold text-emerald-600">88.5 / 100</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-bold text-slate-400 block">Status</span>
+                    <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Optimal</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Detailed Executive Performance Leaderboard Table */}
+          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 className="text-xs font-extrabold text-[#0D1F3D]">Executive Performance Leaderboard ({territory.name})</h3>
+              <span className="text-[11px] font-bold text-slate-500">May 2025 Performance</span>
+            </div>
+
+            <table className="w-full text-left border-collapse text-xs font-semibold">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 text-[11px]">
+                  <th className="p-3">Executive</th>
+                  <th className="p-3 text-center">Visits Done</th>
+                  <th className="p-3 text-center">Demos</th>
+                  <th className="p-3 text-center">Closed Deals</th>
+                  <th className="p-3 text-right">Revenue (₹)</th>
+                  <th className="p-3 text-center">Conversion Rate</th>
+                  <th className="p-3 text-center">Target Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {mockTerritoryExecutives.map((exec) => (
+                  <tr key={exec.id} className="hover:bg-slate-50">
+                    <td className="p-3">
+                      <div className="flex items-center gap-2.5">
+                        <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0" />
+                        <div>
+                          <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">{exec.team}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-3 text-center font-bold text-slate-700">{exec.visitsCount}</td>
+                    <td className="p-3 text-center font-bold text-amber-700">{Math.round(exec.visitsCount * 0.28)}</td>
+                    <td className="p-3 text-center font-bold text-emerald-700">{Math.round(exec.visitsCount * 0.2)}</td>
+                    <td className="p-3 text-right font-mono font-bold text-slate-900">{exec.revenueFormatted}</td>
+                    <td className="p-3 text-center font-extrabold text-blue-600">
+                      {(20 + (exec.performancePercentage % 15)).toFixed(1)}%
+                    </td>
+                    <td className="p-3 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        exec.performancePercentage >= 85
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}>
+                        {exec.performancePercentage}% Completed
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -744,7 +921,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               </div>
 
               {/* Interactive Mapbox Map Centered on Selected Business */}
-              <div className="relative h-44 w-full rounded-sm border border-slate-200 overflow-hidden shadow-inner">
+              <div className="relative h-[280px] w-full rounded-sm border border-slate-200 overflow-hidden shadow-inner">
                 <InteractiveMap
                   key={selectedBusiness.id}
                   mode="prospects"
@@ -775,32 +952,304 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
       {/* TAB 7: MAP & BOUNDARIES VIEW */}
       {activeTab === 'Map' && (
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-          <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D]">Territory Boundary Polygon Editor</h3>
-            <span className="text-[10px] text-slate-400 font-bold">Mapbox GL JS Engine</span>
+        <div className="space-y-4">
+          {/* Main Grid (4-col Left Control Sidebar + 8-col Right Interactive Mapbox View) */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+            {/* LEFT COLUMN (4 COLS MAP LAYERS & LEGEND) */}
+            <div className="space-y-4 lg:col-span-4 flex flex-col">
+              {/* Map Layers Card */}
+              <div className="rounded-sm border border-slate-200/90 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
+                <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center justify-between">
+                  <span>Map Layers</span>
+                  <Layers className="h-3.5 w-3.5 text-slate-400" />
+                </h3>
+
+                <div className="space-y-2.5 text-slate-700">
+                  <div>
+                    <Checkbox
+                      checked={showBoundary}
+                      onChange={(val) => setShowBoundary(val)}
+                      label={
+                        <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                          <span className="text-blue-600 font-mono font-bold">---</span>
+                          <span>Territory Boundary</span>
+                        </span>
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Checkbox
+                      checked={showBusinesses}
+                      onChange={(val) => setShowBusinesses(val)}
+                      label={
+                        <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                          <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                          <span>Businesses</span>
+                        </span>
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Checkbox
+                      checked={showActiveBusinesses}
+                      onChange={(val) => setShowActiveBusinesses(val)}
+                      label={
+                        <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                          <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
+                          <span>Active Businesses</span>
+                        </span>
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Checkbox
+                      checked={showLeads}
+                      onChange={(val) => setShowLeads(val)}
+                      label={
+                        <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                          <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
+                          <span>Leads</span>
+                        </span>
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Checkbox
+                      checked={showVisitedLocations}
+                      onChange={(val) => setShowVisitedLocations(val)}
+                      label={
+                        <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                          <span className="text-amber-500">📍</span>
+                          <span>Visited Locations (This Month)</span>
+                        </span>
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Checkbox
+                      checked={showExecutives}
+                      onChange={(val) => setShowExecutives(val)}
+                      label={
+                        <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                          <span className="text-red-500">👤</span>
+                          <span>Executives Live Location</span>
+                        </span>
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Checkbox
+                      checked={showRoutes}
+                      onChange={(val) => setShowRoutes(val)}
+                      label={
+                        <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                          <span className="text-blue-500 font-mono">---</span>
+                          <span>Routes (This Month)</span>
+                        </span>
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Checkbox
+                      checked={showHeatmap}
+                      onChange={(val) => setShowHeatmap(val)}
+                      label={
+                        <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                          <span>🔥 Heatmap (Visits)</span>
+                        </span>
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Legend Card with Counts */}
+              <div className="rounded-sm border border-slate-200/90 bg-white p-4 shadow-xs space-y-2 text-xs font-semibold">
+                <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+                  Legend & Counts
+                </h3>
+
+                <div className="space-y-1.5 text-slate-700 text-[11px]">
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Active Businesses
+                    </span>
+                    <span className="font-extrabold text-[#0D1F3D]">142</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Inactive Businesses
+                    </span>
+                    <span className="font-extrabold text-[#0D1F3D]">26</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Leads
+                    </span>
+                    <span className="font-extrabold text-[#0D1F3D]">98</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-2">
+                      <span className="text-amber-500">📍</span> Visited Locations
+                    </span>
+                    <span className="font-extrabold text-[#0D1F3D]">176</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-2">
+                      <span className="text-red-500">👤</span> Executives
+                    </span>
+                    <span className="font-extrabold text-[#0D1F3D]">14</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="flex items-center gap-2">
+                      <span className="text-blue-500 font-mono">---</span> Routes
+                    </span>
+                    <span className="font-extrabold text-[#0D1F3D]">28</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Territory Info Box */}
+              <div className="rounded-sm border border-slate-200/90 bg-white p-4 shadow-xs space-y-2 text-xs font-semibold">
+                <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+                  Territory Info
+                </h3>
+
+                <div className="space-y-1 text-slate-600 text-[11px]">
+                  <div className="flex justify-between">
+                    <span>Territory Code :</span>
+                    <span className="font-mono font-bold text-[#0D1F3D]">{territory.code}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Region / Area :</span>
+                    <span>{territory.regionArea}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Coverage Area :</span>
+                    <span className="font-bold text-slate-800">{territory.areaKm2} km²</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Created On :</span>
+                    <span>{territory.createdOn}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Created By :</span>
+                    <span>{territory.createdBy}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN (8 COLS FULL MAPBOX VIEW) */}
+            <div className="lg:col-span-8 flex flex-col">
+              <div className="relative rounded-sm border border-slate-200/90 bg-white shadow-xs overflow-hidden flex-1 min-h-[580px]">
+                <InteractiveMap
+                  mode={showHeatmap ? 'visit-heatmap' : 'live-executives'}
+                  enablePolygonDrawing
+                  executives={
+                    showExecutives
+                      ? mockTerritoryExecutives.map((exec, idx) => ({
+                          id: exec.id,
+                          name: exec.name,
+                          avatar: exec.avatar,
+                          status: (exec.status as any) || 'On Field',
+                          currentLocation: 'Andheri East, Mumbai',
+                          lastUpdated: '10:25 AM',
+                          batteryLevel: 85 - idx * 5,
+                          lat: 19.115 + idx * 0.008,
+                          lng: 72.86 + idx * 0.008,
+                          phone: exec.phone,
+                          team: exec.team,
+                          visitsTodayCompleted: exec.visitsCount,
+                          visitsTodayTotal: 30,
+                          distanceKmToday: 18.5,
+                        }))
+                      : []
+                  }
+                  prospects={
+                    showBusinesses
+                      ? mockTerritoryBusinesses.map((b, idx) => ({
+                          id: b.id,
+                          name: b.name,
+                          category: b.category,
+                          address: 'Andheri East, Mumbai',
+                          status: (b.status === 'Active' ? 'Visited' : 'New Prospect') as any,
+                          markerColor: b.status === 'Active' ? 'green' : 'purple',
+                          contactPerson: b.contactPerson,
+                          phone: b.phone,
+                          lastVisitTime: b.lastVisitDate,
+                          lat: 19.11 + (idx % 4) * 0.01,
+                          lng: 72.85 + (idx % 3) * 0.015,
+                          region: 'Mumbai – Andheri East',
+                        }))
+                      : []
+                  }
+                  heightClassName="h-full min-h-[580px]"
+                  territoryPath={showBoundary ? territory.pathPoints : undefined}
+                  showHeatmapToggle={showHeatmap}
+                />
+
+                {/* Map Polygon Stats Overlay Footer */}
+                <div className="absolute bottom-3 right-3 z-20 rounded-sm border border-slate-200 bg-white/95 px-3 py-1.5 text-xs font-extrabold text-[#0D1F3D] shadow-md">
+                  Area: {territory.areaKm2} km² &nbsp;|&nbsp; Perimeter: {territory.perimeterKm} km
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="relative h-[550px] w-full rounded-sm border border-slate-200 overflow-hidden shadow-inner">
-            <InteractiveMap
-              mode="territories"
-              heightClassName="h-full"
-              enablePolygonDrawing
-              territoryPath={territory.pathPoints}
-              prospects={mockTerritoryBusinesses.map((b) => ({
-                id: b.id,
-                name: b.name,
-                category: b.category,
-                address: b.contactPerson,
-                status: 'Visited',
-                markerColor: 'green',
-                contactPerson: b.contactPerson,
-                phone: b.phone,
-                lastVisitTime: 'Today',
-                lat: 19.115,
-                lng: 72.86,
-                region: 'Marol',
-              }))}
+          {/* Bottom Metrics Cards Grid (5 Stat Cards matching Territory Map) */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 pt-2">
+            <MapKpiCard
+              title="Total Visits (This Month)"
+              value="176"
+              subValue="↑ 18.4% vs last month"
+              icon={TrendingUp}
+              iconBgColor="bg-blue-50"
+              iconTextColor="text-blue-600"
+            />
+            <MapKpiCard
+              title="Active Businesses"
+              value="142"
+              subValue="84% of total"
+              icon={Building}
+              iconBgColor="bg-emerald-50"
+              iconTextColor="text-emerald-600"
+            />
+            <MapKpiCard
+              title="Leads"
+              value="98"
+              subValue="58.3% converted"
+              icon={Users}
+              iconBgColor="bg-purple-50"
+              iconTextColor="text-purple-600"
+            />
+            <MapKpiCard
+              title="Avg. Visit Duration"
+              value="32m 15s"
+              subValue="↑ 8.6% vs last month"
+              icon={Clock}
+              iconBgColor="bg-amber-50"
+              iconTextColor="text-amber-600"
+            />
+            <MapKpiCard
+              title="Coverage Efficiency"
+              value="78%"
+              subValue="Good coverage"
+              icon={CheckCircle2}
+              iconBgColor="bg-rose-50"
+              iconTextColor="text-rose-600"
             />
           </div>
         </div>
