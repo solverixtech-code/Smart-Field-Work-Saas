@@ -45,7 +45,7 @@ const funnelStages: StagePerformance[] = [
     conversionFromTotalPct: 100,
     changeVsAprPct: 16.2,
     dropOffCount: 0,
-    widthClass: 'w-full',
+    widthClass: 'w-[92%]',
     colorClass: 'bg-purple-600 hover:bg-purple-700',
     bgHex: '#9333ea',
     revenueVal: '₹0 (Top Funnel)',
@@ -60,7 +60,7 @@ const funnelStages: StagePerformance[] = [
     conversionFromTotalPct: 64.5,
     changeVsAprPct: 9.8,
     dropOffCount: 5438,
-    widthClass: 'w-[86%]',
+    widthClass: 'w-[80%]',
     colorClass: 'bg-blue-600 hover:bg-blue-700',
     bgHex: '#2563eb',
     revenueVal: '₹1.85L (Pipeline Value)',
@@ -75,7 +75,7 @@ const funnelStages: StagePerformance[] = [
     conversionFromTotalPct: 18.7,
     changeVsAprPct: 7.1,
     dropOffCount: 6986,
-    widthClass: 'w-[68%]',
+    widthClass: 'w-[64%]',
     colorClass: 'bg-amber-500 hover:bg-amber-600',
     bgHex: '#f59e0b',
     revenueVal: '₹4.50L (Demo Stage Value)',
@@ -90,7 +90,7 @@ const funnelStages: StagePerformance[] = [
     conversionFromTotalPct: 8.2,
     changeVsAprPct: 11.3,
     dropOffCount: 1608,
-    widthClass: 'w-[48%]',
+    widthClass: 'w-[46%]',
     colorClass: 'bg-emerald-600 hover:bg-emerald-700',
     bgHex: '#059669',
     revenueVal: '₹12.48L (Closed Revenue)',
@@ -103,13 +103,13 @@ const funnelStages: StagePerformance[] = [
     count: 892,
     conversionFromPrevPct: 71.3,
     conversionFromTotalPct: 5.8,
-    changeVsAprPct: 13.6,
+    changeVsAprPct: 14.5,
     dropOffCount: 356,
-    widthClass: 'w-[32%]',
+    widthClass: 'w-[30%]',
     colorClass: 'bg-teal-600 hover:bg-teal-700',
     bgHex: '#0d9488',
-    revenueVal: '₹12.48L (Fully Collected)',
-    description: 'Payments fully collected and verified by Finance Ops.',
+    revenueVal: '₹18.90L (Realized ARR)',
+    description: 'First payment processed and account successfully activated for production usage.',
   },
 ];
 
@@ -201,8 +201,8 @@ export const ConversionFunnelPage: React.FC = () => {
                   onClick={() => { setSelectedStageId(f.id); toast.info(`Selected ${f.shortLabel}`); }}
                   className={`${f.widthClass} ${f.colorClass} text-white font-extrabold text-xs py-2.5 px-4 rounded-sm shadow-xs transition-all duration-200 cursor-pointer transform ${
                     isActive
-                      ? 'scale-[1.03] shadow-lg ring-2 ring-offset-2 ring-[#0D1F3D] opacity-100 z-10'
-                      : 'opacity-90 hover:opacity-100'
+                      ? 'scale-[1.015] shadow-md ring-2 ring-purple-600 opacity-100 z-10'
+                      : 'opacity-90 hover:opacity-100 hover:scale-[1.008]'
                   }`}
                 >
                   <div className="flex items-center justify-between">
