@@ -265,36 +265,50 @@ export const ConversionFunnelPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {funnelStages.map((stg) => {
-                const isSelected = selectedStageId === stg.id;
-                const isHovered = hoveredStageId === stg.id;
-                const isActive = isSelected || isHovered;
-
-                return (
-                  <tr
-                    key={stg.id}
-                    onMouseEnter={() => setHoveredStageId(stg.id)}
-                    onMouseLeave={() => setHoveredStageId(null)}
-                    onClick={() => setSelectedStageId(stg.id)}
-                    className={`transition-colors cursor-pointer ${
-                      isActive
-                        ? 'bg-purple-50/80 font-bold border-l-4 border-purple-600'
-                        : 'hover:bg-slate-50/80'
-                    }`}
-                  >
-                    <td className="py-3 px-3 font-bold text-[#0D1F3D]">
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stg.bgHex }} />
-                        {stg.stageName}
+              {funnelStages.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-slate-500 bg-slate-50/40">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                        <Filter className="h-5 w-5" />
                       </div>
-                    </td>
-                    <td className="py-3 px-3 text-center font-mono font-extrabold text-blue-700">{stg.count.toLocaleString('en-IN')}</td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">{stg.conversionFromPrevPct}%</td>
-                    <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{stg.conversionFromTotalPct}%</td>
-                    <td className="py-3 px-3 text-center font-bold text-emerald-600">+{stg.changeVsAprPct}%</td>
-                  </tr>
-                );
-              })}
+                      <p className="text-xs font-extrabold text-[#0D1F3D]">No Funnel Stage Records Found</p>
+                      <p className="text-[11px] font-medium text-slate-400">There are currently no funnel stages matching your active selection</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                funnelStages.map((stg) => {
+                  const isSelected = selectedStageId === stg.id;
+                  const isHovered = hoveredStageId === stg.id;
+                  const isActive = isSelected || isHovered;
+
+                  return (
+                    <tr
+                      key={stg.id}
+                      onMouseEnter={() => setHoveredStageId(stg.id)}
+                      onMouseLeave={() => setHoveredStageId(null)}
+                      onClick={() => setSelectedStageId(stg.id)}
+                      className={`transition-colors cursor-pointer ${
+                        isActive
+                          ? 'bg-purple-50/80 font-bold border-l-4 border-purple-600'
+                          : 'hover:bg-slate-50/80'
+                      }`}
+                    >
+                      <td className="py-3 px-3 font-bold text-[#0D1F3D]">
+                        <div className="flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: stg.bgHex }} />
+                          {stg.stageName}
+                        </div>
+                      </td>
+                      <td className="py-3 px-3 text-center font-mono font-extrabold text-blue-700">{stg.count.toLocaleString('en-IN')}</td>
+                      <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">{stg.conversionFromPrevPct}%</td>
+                      <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{stg.conversionFromTotalPct}%</td>
+                      <td className="py-3 px-3 text-center font-bold text-emerald-600">+{stg.changeVsAprPct}%</td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

@@ -230,58 +230,72 @@ export const ExecutiveRankingPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredExecutives.map((exec) => (
-                <tr key={exec.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3 px-3 text-center font-extrabold">
-                    {exec.dynamicRank === 1 ? '🥇 1' : exec.dynamicRank === 2 ? '🥈 2' : exec.dynamicRank === 3 ? '🥉 3' : exec.dynamicRank}
-                  </td>
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-2.5">
-                      <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
-                      <div>
-                        <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">{exec.id}</span>
+              {filteredExecutives.length === 0 ? (
+                <tr>
+                  <td colSpan={11} className="py-12 text-center text-slate-500 bg-slate-50/40">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                        <Search className="h-5 w-5" />
                       </div>
+                      <p className="text-xs font-extrabold text-[#0D1F3D]">No Executive Records Found</p>
+                      <p className="text-[11px] font-medium text-slate-400">Try adjusting your search keywords or filter criteria</p>
                     </div>
-                  </td>
-                  <td className="py-3 px-3 text-slate-600">
-                    <div>
-                      <span className="font-bold text-slate-800 block">{exec.team}</span>
-                      <span className="text-[10px] text-slate-400">{exec.region}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 font-mono font-semibold text-slate-600">₹{exec.target.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-3 font-mono font-bold text-slate-800">₹{exec.achieved.toLocaleString('en-IN')}</td>
-                  <td className={`py-3 px-3 ${activeTab === 'Target Achievement' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${
-                      exec.achievementPct >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
-                      {exec.achievementPct}%
-                    </span>
-                  </td>
-                  <td className={`py-3 px-3 font-mono font-extrabold text-blue-700 ${activeTab === 'Sales Achieved' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
-                    ₹{exec.sales.toLocaleString('en-IN')}
-                  </td>
-                  <td className={`py-3 px-3 font-mono font-bold text-emerald-700 ${activeTab === 'Collection Achieved' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
-                    ₹{exec.collections.toLocaleString('en-IN')}
-                  </td>
-                  <td className={`py-3 px-3 text-center font-mono font-bold text-purple-700 ${activeTab === 'Demos Conducted' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
-                    {exec.demos}
-                  </td>
-                  <td className={`py-3 px-3 text-center font-mono font-extrabold text-emerald-600 ${activeTab === 'Overall Ranking' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
-                    {exec.score}
-                  </td>
-                  <td className="py-3 px-3 text-center">
-                    {exec.trend === 'up' ? (
-                      <ArrowUpRight className="h-4 w-4 text-emerald-600 inline" />
-                    ) : exec.trend === 'down' ? (
-                      <ArrowDownRight className="h-4 w-4 text-rose-600 inline" />
-                    ) : (
-                      <Minus className="h-4 w-4 text-slate-400 inline" />
-                    )}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredExecutives.map((exec) => (
+                  <tr key={exec.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-3 text-center font-extrabold">
+                      {exec.dynamicRank === 1 ? '🥇 1' : exec.dynamicRank === 2 ? '🥈 2' : exec.dynamicRank === 3 ? '🥉 3' : exec.dynamicRank}
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2.5">
+                        <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                        <div>
+                          <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">{exec.id}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-slate-600">
+                      <div>
+                        <span className="font-bold text-slate-800 block">{exec.team}</span>
+                        <span className="text-[10px] text-slate-400">{exec.region}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 font-mono font-semibold text-slate-600">₹{exec.target.toLocaleString('en-IN')}</td>
+                    <td className="py-3 px-3 font-mono font-bold text-slate-800">₹{exec.achieved.toLocaleString('en-IN')}</td>
+                    <td className={`py-3 px-3 ${activeTab === 'Target Achievement' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${
+                        exec.achievementPct >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
+                        {exec.achievementPct}%
+                      </span>
+                    </td>
+                    <td className={`py-3 px-3 font-mono font-extrabold text-blue-700 ${activeTab === 'Sales Achieved' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
+                      ₹{exec.sales.toLocaleString('en-IN')}
+                    </td>
+                    <td className={`py-3 px-3 font-mono font-bold text-emerald-700 ${activeTab === 'Collection Achieved' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
+                      ₹{exec.collections.toLocaleString('en-IN')}
+                    </td>
+                    <td className={`py-3 px-3 text-center font-mono font-bold text-purple-700 ${activeTab === 'Demos Conducted' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
+                      {exec.demos}
+                    </td>
+                    <td className={`py-3 px-3 text-center font-mono font-extrabold text-emerald-600 ${activeTab === 'Overall Ranking' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
+                      {exec.score}
+                    </td>
+                    <td className="py-3 px-3 text-center">
+                      {exec.trend === 'up' ? (
+                        <ArrowUpRight className="h-4 w-4 text-emerald-600 inline" />
+                      ) : exec.trend === 'down' ? (
+                        <ArrowDownRight className="h-4 w-4 text-rose-600 inline" />
+                      ) : (
+                        <Minus className="h-4 w-4 text-slate-400 inline" />
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

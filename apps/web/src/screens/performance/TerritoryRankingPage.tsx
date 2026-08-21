@@ -117,38 +117,52 @@ export const TerritoryRankingPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {mockTerritoryRanks.map((terr) => (
-                <tr key={terr.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3 px-3 text-center font-extrabold">
-                    {terr.rank === 1 ? '🥇 1' : terr.rank === 2 ? '🥈 2' : terr.rank === 3 ? '🥉 3' : terr.rank}
-                  </td>
-                  <td className="py-3 px-3">
-                    <div>
-                      <span className="font-extrabold text-[#0D1F3D] block">{terr.territoryName}</span>
-                      <span className="text-[10px] text-slate-400">{terr.region}</span>
+              {mockTerritoryRanks.length === 0 ? (
+                <tr>
+                  <td colSpan={10} className="py-12 text-center text-slate-500 bg-slate-50/40">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                        <MapPin className="h-5 w-5" />
+                      </div>
+                      <p className="text-xs font-extrabold text-[#0D1F3D]">No Territory Records Found</p>
+                      <p className="text-[11px] font-medium text-slate-400">There are currently no territory ranking entries matching your selection</p>
                     </div>
                   </td>
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-2">
-                      <img src={terr.managerAvatar} alt={terr.managerName} className="h-6 w-6 rounded-full object-cover border border-slate-200" />
-                      <span className="font-bold text-slate-800">{terr.managerName}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">{terr.executivesCount}</td>
-                  <td className="py-3 px-3 font-mono font-semibold text-slate-600">₹{terr.target.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-3 font-mono font-extrabold text-blue-700">₹{terr.sales.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-3">
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${
-                      terr.achievementPct >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
-                      {terr.achievementPct}%
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">{terr.leads}</td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{terr.demos}</td>
-                  <td className="py-3 px-3 text-center font-mono font-extrabold text-teal-700">{terr.conversionsPct}%</td>
                 </tr>
-              ))}
+              ) : (
+                mockTerritoryRanks.map((terr) => (
+                  <tr key={terr.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-3 text-center font-extrabold">
+                      {terr.rank === 1 ? '🥇 1' : terr.rank === 2 ? '🥈 2' : terr.rank === 3 ? '🥉 3' : terr.rank}
+                    </td>
+                    <td className="py-3 px-3">
+                      <div>
+                        <span className="font-extrabold text-[#0D1F3D] block">{terr.territoryName}</span>
+                        <span className="text-[10px] text-slate-400">{terr.region}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2">
+                        <img src={terr.managerAvatar} alt={terr.managerName} className="h-6 w-6 rounded-full object-cover border border-slate-200" />
+                        <span className="font-bold text-slate-800">{terr.managerName}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">{terr.executivesCount}</td>
+                    <td className="py-3 px-3 font-mono font-semibold text-slate-600">₹{terr.target.toLocaleString('en-IN')}</td>
+                    <td className="py-3 px-3 font-mono font-extrabold text-blue-700">₹{terr.sales.toLocaleString('en-IN')}</td>
+                    <td className="py-3 px-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${
+                        terr.achievementPct >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
+                        {terr.achievementPct}%
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">{terr.leads}</td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{terr.demos}</td>
+                    <td className="py-3 px-3 text-center font-mono font-extrabold text-teal-700">{terr.conversionsPct}%</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -154,35 +154,49 @@ export const TeamRankingPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {sortedTeams.map((team) => (
-                <tr key={team.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3 px-3 text-center font-extrabold">
-                    {team.dynamicRank === 1 ? '🥇 1' : team.dynamicRank === 2 ? '🥈 2' : team.dynamicRank === 3 ? '🥉 3' : team.dynamicRank}
-                  </td>
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-2.5">
-                      <img src={team.managerAvatar} alt={team.managerName} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
-                      <div>
-                        <span className="font-extrabold text-[#0D1F3D] block">{team.teamName}</span>
-                        <span className="text-[10px] text-slate-400">Lead: {team.managerName}</span>
+              {sortedTeams.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-12 text-center text-slate-500 bg-slate-50/40">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                        <Users className="h-5 w-5" />
                       </div>
+                      <p className="text-xs font-extrabold text-[#0D1F3D]">No Team Records Found</p>
+                      <p className="text-[11px] font-medium text-slate-400">There are currently no team performance entries matching your selection</p>
                     </div>
                   </td>
-                  <td className="py-3 px-3 text-slate-600 font-bold">{team.region}</td>
-                  <td className={`py-3 px-3 text-center font-mono font-bold text-slate-700 ${activeTab === 'Members' ? 'bg-purple-50/70 font-extrabold' : ''}`}>{team.membersCount}</td>
-                  <td className="py-3 px-3 font-mono font-semibold text-slate-600">₹{team.target.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-3 font-mono font-bold text-slate-800">₹{team.achieved.toLocaleString('en-IN')}</td>
-                  <td className={`py-3 px-3 ${activeTab === 'Target Achievement' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${
-                      team.achievementPct >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}>
-                      {team.achievementPct}%
-                    </span>
-                  </td>
-                  <td className={`py-3 px-3 font-mono font-extrabold text-blue-700 ${activeTab === 'Sales' ? 'bg-purple-50/70 font-extrabold' : ''}`}>₹{team.sales.toLocaleString('en-IN')}</td>
-                  <td className={`py-3 px-3 font-mono font-bold text-emerald-700 ${activeTab === 'Collections' ? 'bg-purple-50/70 font-extrabold' : ''}`}>₹{team.collections.toLocaleString('en-IN')}</td>
                 </tr>
-              ))}
+              ) : (
+                sortedTeams.map((team) => (
+                  <tr key={team.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-3 text-center font-extrabold">
+                      {team.dynamicRank === 1 ? '🥇 1' : team.dynamicRank === 2 ? '🥈 2' : team.dynamicRank === 3 ? '🥉 3' : team.dynamicRank}
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2.5">
+                        <img src={team.managerAvatar} alt={team.managerName} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                        <div>
+                          <span className="font-extrabold text-[#0D1F3D] block">{team.teamName}</span>
+                          <span className="text-[10px] text-slate-400">Lead: {team.managerName}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-slate-600 font-bold">{team.region}</td>
+                    <td className={`py-3 px-3 text-center font-mono font-bold text-slate-700 ${activeTab === 'Members' ? 'bg-purple-50/70 font-extrabold' : ''}`}>{team.membersCount}</td>
+                    <td className="py-3 px-3 font-mono font-semibold text-slate-600">₹{team.target.toLocaleString('en-IN')}</td>
+                    <td className="py-3 px-3 font-mono font-bold text-slate-800">₹{team.achieved.toLocaleString('en-IN')}</td>
+                    <td className={`py-3 px-3 ${activeTab === 'Target Achievement' ? 'bg-purple-50/70 font-extrabold' : ''}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[11px] font-extrabold border ${
+                        team.achievementPct >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}>
+                        {team.achievementPct}%
+                      </span>
+                    </td>
+                    <td className={`py-3 px-3 font-mono font-extrabold text-blue-700 ${activeTab === 'Sales' ? 'bg-purple-50/70 font-extrabold' : ''}`}>₹{team.sales.toLocaleString('en-IN')}</td>
+                    <td className={`py-3 px-3 font-mono font-bold text-emerald-700 ${activeTab === 'Collections' ? 'bg-purple-50/70 font-extrabold' : ''}`}>₹{team.collections.toLocaleString('en-IN')}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

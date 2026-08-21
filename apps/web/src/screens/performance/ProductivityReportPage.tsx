@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Calendar,
   Sparkles,
+  UserCheck,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 
@@ -120,34 +121,48 @@ export const ProductivityReportPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {mockProductivityData.map((exec) => (
-                <tr key={exec.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3 px-3 text-center font-extrabold">
-                    {exec.rank === 1 ? '🥇 1' : exec.rank === 2 ? '🥈 2' : exec.rank === 3 ? '🥉 3' : exec.rank}
-                  </td>
-                  <td className="py-3 px-3">
-                    <div className="flex items-center gap-2.5">
-                      <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
-                      <div>
-                        <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">{exec.id}</span>
+              {mockProductivityData.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="py-12 text-center text-slate-500 bg-slate-50/40">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200">
+                        <UserCheck className="h-5 w-5" />
                       </div>
+                      <p className="text-xs font-extrabold text-[#0D1F3D]">No Productivity Records Found</p>
+                      <p className="text-[11px] font-medium text-slate-400">There are currently no executive productivity entries matching your selection</p>
                     </div>
                   </td>
-                  <td className="py-3 px-3 text-slate-600">
-                    <div>
-                      <span className="font-bold text-slate-800 block">{exec.team}</span>
-                      <span className="text-[10px] text-slate-400">{exec.region}</span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-emerald-700">{exec.attendancePct}%</td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-blue-700">{exec.productiveHoursPerDay}</td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">{exec.leadsPerDay}</td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{exec.demosPerDay}</td>
-                  <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">{exec.tasksCompleted}</td>
-                  <td className="py-3 px-3 text-center font-mono font-extrabold text-emerald-600">{exec.productivityScore}</td>
                 </tr>
-              ))}
+              ) : (
+                mockProductivityData.map((exec) => (
+                  <tr key={exec.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-3 text-center font-extrabold">
+                      {exec.rank === 1 ? '🥇 1' : exec.rank === 2 ? '🥈 2' : exec.rank === 3 ? '🥉 3' : exec.rank}
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2.5">
+                        <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                        <div>
+                          <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">{exec.id}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-slate-600">
+                      <div>
+                        <span className="font-bold text-slate-800 block">{exec.team}</span>
+                        <span className="text-[10px] text-slate-400">{exec.region}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-emerald-700">{exec.attendancePct}%</td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-blue-700">{exec.productiveHoursPerDay}</td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-800">{exec.leadsPerDay}</td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-purple-700">{exec.demosPerDay}</td>
+                    <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">{exec.tasksCompleted}</td>
+                    <td className="py-3 px-3 text-center font-mono font-extrabold text-emerald-600">{exec.productivityScore}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
