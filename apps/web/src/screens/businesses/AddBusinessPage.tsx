@@ -241,10 +241,82 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
       <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         {/* Left Column Form Sections */}
         <div className="space-y-6 lg:col-span-8">
-          {/* Section 1: Business Information */}
+          {/* Section 1: Territory & Field Assignment */}
+          <div className="rounded-sm border-2 border-blue-200 bg-gradient-to-r from-blue-50/70 to-slate-50 p-6 shadow-xs space-y-4 text-xs">
+            <div className="flex items-center justify-between border-b border-blue-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="rounded-sm bg-[#0D1F3D] p-1.5 text-white">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-[#0D1F3D]">1. Territory & Field Assignment</h2>
+                  <p className="text-[11px] font-normal text-slate-500">Assign this business to a territory and assigned field executive</p>
+                </div>
+              </div>
+
+              {targetTerritory && (
+                <span className="rounded-full bg-blue-100 border border-blue-300 px-3 py-1 text-xs font-extrabold text-blue-900">
+                  Pre-selected for {targetTerritory.name}
+                </span>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Select
+                label="Assign Territory *"
+                value={formData.assignedTerritory}
+                onChange={(e) => {
+                  const selectedId = e.target.value;
+                  const terr = mockTerritoriesList.find((t) => t.id === selectedId);
+                  setFormData((prev) => ({
+                    ...prev,
+                    assignedTerritory: selectedId,
+                    city: terr ? terr.city : prev.city,
+                    address1: terr ? `Plot 12, ${terr.name}, ${terr.regionArea}` : prev.address1,
+                    serviceAreas: terr ? terr.name : prev.serviceAreas,
+                    assignedTeam: terr ? `${terr.name} Team` : prev.assignedTeam,
+                  }));
+                }}
+                options={[
+                  { label: '-- Select Territory --', value: '' },
+                  ...mockTerritoriesList.map((terr) => ({
+                    label: `${terr.name} (${terr.code} - ${terr.city})`,
+                    value: terr.id,
+                  })),
+                ]}
+              />
+
+              <Select
+                label="Assign Executive in Territory *"
+                value={formData.assignedExecutive}
+                onChange={(e) => handleInputChange('assignedExecutive', e.target.value)}
+                options={[
+                  { label: 'Arjun Mehta (Senior Executive)', value: 'Arjun Mehta' },
+                  { label: 'Neha Sharma (Sales Executive)', value: 'Neha Sharma' },
+                  { label: 'Pooja Yadav (Field Rep)', value: 'Pooja Yadav' },
+                  { label: 'Rakesh Patel (Sales Executive)', value: 'Rakesh Patel' },
+                  { label: 'Kiran Jadhav (Field Rep)', value: 'Kiran Jadhav' },
+                ]}
+              />
+
+              <Select
+                label="Assigned Team"
+                value={formData.assignedTeam}
+                onChange={(e) => handleInputChange('assignedTeam', e.target.value)}
+                options={[
+                  { label: 'Mumbai Central Team', value: 'Mumbai Central Team' },
+                  { label: 'Mumbai North Team', value: 'Mumbai North Team' },
+                  { label: 'Pune Central Team', value: 'Pune Central Team' },
+                  { label: 'Thane Territory Team', value: 'Thane Territory Team' },
+                ]}
+              />
+            </div>
+          </div>
+
+          {/* Section 2: Business Information */}
           <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-xs space-y-5 text-xs">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <span className="font-extrabold text-[#E20613]">1.</span>
+              <span className="font-extrabold text-[#E20613]">2.</span>
               <h2 className="text-base font-extrabold text-[#0D1F3D]">Business Information</h2>
             </div>
 
@@ -351,107 +423,100 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
             </div>
           </div>
 
-          {/* Section 2: Business Location */}
+          {/* Section 3: Business Location & Map */}
           <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-xs space-y-5 text-xs">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <MapPin className="h-4 w-4 text-[#E20613]" />
-              <h2 className="text-base font-extrabold text-[#0D1F3D]">Business Location</h2>
+              <span className="font-extrabold text-[#E20613]">3.</span>
+              <h2 className="text-base font-extrabold text-[#0D1F3D]">Business Location & Map Pin</h2>
             </div>
 
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-              {/* Left Address Inputs (7 Cols) */}
-              <div className="space-y-4 lg:col-span-7">
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700 block">Address Line 1 *</label>
-                  <input
-                    type="text"
-                    placeholder="Building, Street, Area"
-                    value={formData.address1}
-                    onChange={(e) => handleInputChange('address1', e.target.value)}
-                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-slate-700 block">Address Line 2</label>
-                  <input
-                    type="text"
-                    placeholder="Landmark, Near by place (Optional)"
-                    value={formData.address2}
-                    onChange={(e) => handleInputChange('address2', e.target.value)}
-                    className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 block">City *</label>
-                    <input
-                      type="text"
-                      placeholder="Enter city"
-                      value={formData.city}
-                      onChange={(e) => handleInputChange('city', e.target.value)}
-                      className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
-                    />
-                  </div>
-
-                  <Select
-                    label="State *"
-                    placeholder="Select state"
-                    value={formData.state}
-                    onChange={(e) => handleInputChange('state', e.target.value)}
-                    options={[
-                      { label: 'Select state', value: '' },
-                      { label: 'Maharashtra', value: 'Maharashtra' },
-                      { label: 'Gujarat', value: 'Gujarat' },
-                      { label: 'Karnataka', value: 'Karnataka' },
-                      { label: 'Delhi NCR', value: 'Delhi' },
-                      { label: 'Telangana', value: 'Telangana' },
-                    ]}
-                  />
-
-                  <div className="space-y-1">
-                    <label className="font-bold text-slate-700 block">Pincode *</label>
-                    <input
-                      type="text"
-                      placeholder="Enter pincode"
-                      value={formData.pincode}
-                      onChange={(e) => handleInputChange('pincode', e.target.value)}
-                      className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <Select
-                  label="Country *"
-                  value={formData.country}
-                  onChange={(e) => handleInputChange('country', e.target.value)}
-                  options={[
-                    { label: 'India', value: 'India' },
-                    { label: 'United Arab Emirates', value: 'UAE' },
-                    { label: 'Singapore', value: 'Singapore' },
-                  ]}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700 block">Address Line 1 *</label>
+                <input
+                  type="text"
+                  placeholder="Building, Street, Area"
+                  value={formData.address1}
+                  onChange={(e) => handleInputChange('address1', e.target.value)}
+                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
                 />
               </div>
 
-              {/* Right Google Maps Container (5 Cols) */}
-              <div className="space-y-2 lg:col-span-5 flex flex-col justify-between">
-                <GoogleMapPicker
-                  address={
-                    formData.address1 || formData.city
-                      ? `${formData.address1 ? formData.address1 + ', ' : ''}${formData.city || ''}, ${formData.state || 'Maharashtra'}`
-                      : 'Mumbai, Maharashtra'
-                  }
-                  onAddressChange={(newAddr) => handleInputChange('address1', newAddr)}
-                  height="h-64"
-                  showLocateMe
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700 block">Address Line 2</label>
+                <input
+                  type="text"
+                  placeholder="Landmark, Near by place (Optional)"
+                  value={formData.address2}
+                  onChange={(e) => handleInputChange('address2', e.target.value)}
+                  className="w-full rounded-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
                 />
-
-                <div className="flex items-center gap-2 rounded-sm border border-blue-200/80 bg-blue-50/70 p-2.5 text-[11px] font-semibold text-blue-900">
-                  <Info className="h-4 w-4 text-blue-600 shrink-0" />
-                  <span>Accurate Google Maps location helps in better route planning and visit tracking.</span>
-                </div>
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700 block">City *</label>
+                <input
+                  type="text"
+                  placeholder="Enter city"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
+                />
+              </div>
+
+              <Select
+                label="State *"
+                placeholder="Select state"
+                value={formData.state}
+                onChange={(e) => handleInputChange('state', e.target.value)}
+                options={[
+                  { label: 'Select state', value: '' },
+                  { label: 'Maharashtra', value: 'Maharashtra' },
+                  { label: 'Gujarat', value: 'Gujarat' },
+                  { label: 'Karnataka', value: 'Karnataka' },
+                  { label: 'Delhi NCR', value: 'Delhi' },
+                  { label: 'Telangana', value: 'Telangana' },
+                ]}
+              />
+
+              <div className="space-y-1">
+                <label className="font-bold text-slate-700 block">Pincode *</label>
+                <input
+                  type="text"
+                  placeholder="Enter pincode"
+                  value={formData.pincode}
+                  onChange={(e) => handleInputChange('pincode', e.target.value)}
+                  className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
+                />
+              </div>
+
+              <Select
+                label="Country *"
+                value={formData.country}
+                onChange={(e) => handleInputChange('country', e.target.value)}
+                options={[
+                  { label: 'India', value: 'India' },
+                  { label: 'United Arab Emirates', value: 'UAE' },
+                  { label: 'Singapore', value: 'Singapore' },
+                ]}
+              />
+            </div>
+
+            {/* Spacious Google Map Picker Container */}
+            <div className="space-y-2 pt-2 border-t border-slate-100">
+              <label className="font-extrabold text-[#0D1F3D] block text-xs">Interactive Location Pin Map</label>
+              <GoogleMapPicker
+                address={
+                  formData.address1 || formData.city
+                    ? `${formData.address1 ? formData.address1 + ', ' : ''}${formData.city || ''}, ${formData.state || 'Maharashtra'}`
+                    : 'Mumbai, Maharashtra'
+                }
+                onAddressChange={(newAddr) => handleInputChange('address1', newAddr)}
+                height="h-[340px]"
+                showLocateMe
+              />
             </div>
           </div>
 
