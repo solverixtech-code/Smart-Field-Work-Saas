@@ -48,6 +48,7 @@ import {
 const domainGroups = [
   'HR & Personnel',
   'Sales & Pipeline',
+  'Demos & Follow-ups',
   'Operations & Field',
   'Business & Merchants',
   'Payroll & Subscriptions',
