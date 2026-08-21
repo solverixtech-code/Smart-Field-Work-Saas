@@ -39,6 +39,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
+import { DatePicker } from '../../components/ui/DatePicker';
 import {
   stageRouteMetadataMap,
   mockPipelineDeals,
@@ -85,6 +86,7 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
+  const [stageDate, setStageDate] = useState('2025-05-24');
   const [selectedSource, setSelectedSource] = useState('all');
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
@@ -126,30 +128,44 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
   };
 
   return (
-    <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2">
-      {/* HEADER BAR */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-200 shadow-xs">
-            <Users className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-[#0D1F3D]">{metadata.title}</h1>
-            </div>
-            <p className="text-xs font-semibold text-slate-500">{metadata.description}</p>
-          </div>
+    <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
+      {/* BREADCRUMB & HEADER BAR */}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+          <span className="hover:text-purple-600 cursor-pointer" onClick={() => navigate('/admin/dashboard')}>
+            Dashboard
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+          <span className="hover:text-purple-600 cursor-pointer" onClick={() => navigate('/admin/sales/pipeline')}>
+            Sales Pipeline
+          </span>
+          <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+          <span className="text-[#0D1F3D] font-bold">{metadata.title}</span>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <Button
-            variant="accent"
-            size="sm"
-            onClick={() => navigate('/admin/leads/add')}
-            className="flex items-center gap-1.5 font-bold shadow-xs bg-[#E20613] hover:bg-red-700 text-white rounded-md"
-          >
-            <Plus className="h-4 w-4" /> Add Lead
-          </Button>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-red-600 border border-red-200 shadow-xs">
+              <Users className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-[#0D1F3D]">{metadata.title}</h1>
+              </div>
+              <p className="text-xs font-semibold text-slate-500">{metadata.description}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => navigate('/admin/leads/create')}
+              className="flex items-center gap-1.5 font-bold shadow-xs bg-[#E20613] hover:bg-red-700 text-white rounded-md px-4 py-2"
+            >
+              <Plus className="h-4 w-4" /> Add Lead
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -243,10 +259,15 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
               />
             </div>
 
-            {/* Date Tag */}
-            <div className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2 text-xs font-semibold text-slate-700">
-              <Calendar className="h-3.5 w-3.5 text-slate-400" />
-              <span>Added: This Month</span>
+            {/* Date Picker Tag */}
+            <div className="w-40">
+              <DatePicker
+                value={stageDate}
+                onChange={(d) => {
+                  setStageDate(d);
+                  toast.success(`Filtered for date ${d}`);
+                }}
+              />
             </div>
           </div>
 
