@@ -9,6 +9,8 @@ import {
   Radio,
   LogOut,
   User,
+  UserPlus,
+  Globe,
   Shield,
   Monitor,
   Bell,
@@ -76,7 +78,7 @@ const navCategories: NavCategory[] = [
       },
       {
         label: 'Leads Management',
-        icon: Target,
+        icon: UserPlus,
         to: '/admin/leads',
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
         badge: '1,250 Leads',
@@ -90,7 +92,7 @@ const navCategories: NavCategory[] = [
       },
       {
         label: 'Territories',
-        icon: Target,
+        icon: Globe,
         to: '/admin/territories',
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
         badge: '12 Active',
@@ -163,7 +165,7 @@ const navCategories: NavCategory[] = [
       },
       {
         label: 'Demo Completed',
-        icon: Target,
+        icon: CheckCircle2,
         to: '/admin/demos/completed',
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
         badge: '78 Done',
@@ -272,7 +274,7 @@ const navCategories: NavCategory[] = [
       },
       {
         label: 'Territory Map',
-        icon: Target,
+        icon: Globe,
         to: '/admin/map/territories',
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
       },
