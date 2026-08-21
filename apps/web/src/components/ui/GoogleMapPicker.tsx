@@ -61,6 +61,20 @@ export function GoogleMapPicker({
         .setLngLat([currentLng, currentLat])
         .addTo(map);
 
+      // Click anywhere on map to move pin marker
+      map.on('click', (e) => {
+        if (readOnly) return;
+        const newLat = Number(e.lngLat.lat.toFixed(6));
+        const newLng = Number(e.lngLat.lng.toFixed(6));
+        setCurrentLat(newLat);
+        setCurrentLng(newLng);
+        marker.setLngLat([newLng, newLat]);
+        setGpsStatus(`Map Pin Placed: ${newLat}° N, ${newLng}° E`);
+        if (onCoordinatesChange) {
+          onCoordinatesChange({ lat: newLat, lng: newLng });
+        }
+      });
+
       marker.on('dragend', () => {
         const lngLat = marker.getLngLat();
         const newLat = Number(lngLat.lat.toFixed(6));
@@ -245,6 +259,13 @@ export function GoogleMapPicker({
           <div className="absolute top-2 left-2 rounded-sm bg-[#0D1F3D]/90 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white shadow-md flex items-center gap-1.5 z-10">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
             <span>{gpsStatus}</span>
+          </div>
+        )}
+
+        {!readOnly && (
+          <div className="absolute top-2 right-12 rounded-sm bg-blue-900/85 backdrop-blur-xs px-2 py-1 text-[10px] font-bold text-white shadow-xs flex items-center gap-1 z-10">
+            <MapPin className="h-3 w-3 text-amber-300 animate-bounce" />
+            <span>Click map or drag marker to pin position</span>
           </div>
         )}
 

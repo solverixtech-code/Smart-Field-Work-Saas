@@ -98,7 +98,19 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
   const [uploadedFiles, setUploadedFiles] = useState<{ name: string; size: string }[]>([]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    let sanitizedVal = value;
+
+    if (field === 'pincode') {
+      sanitizedVal = value.replace(/\D/g, '').slice(0, 6);
+    } else if (field === 'mobile' || field === 'altPhone' || field === 'landline') {
+      sanitizedVal = value.replace(/[^0-9+\s-]/g, '').slice(0, 15);
+    } else if (field === 'gstin') {
+      sanitizedVal = value.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 15);
+    } else if (field === 'yearEstablished') {
+      sanitizedVal = value.replace(/\D/g, '').slice(0, 4);
+    }
+
+    setFormData((prev) => ({ ...prev, [field]: sanitizedVal }));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -485,7 +497,10 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
                 <label className="font-bold text-slate-700 block">Pincode *</label>
                 <input
                   type="text"
-                  placeholder="Enter pincode"
+                  inputMode="numeric"
+                  maxLength={6}
+                  pattern="[0-9]*"
+                  placeholder="6-digit pincode"
                   value={formData.pincode}
                   onChange={(e) => handleInputChange('pincode', e.target.value)}
                   className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
@@ -520,10 +535,10 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
             </div>
           </div>
 
-          {/* Section 3: Contact Information */}
+          {/* Section 4: Contact Information */}
           <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-xs space-y-5 text-xs">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-              <span className="font-extrabold text-[#E20613]">2.</span>
+              <span className="font-extrabold text-[#E20613]">4.</span>
               <h2 className="text-base font-extrabold text-[#0D1F3D]">Contact Information</h2>
             </div>
 
@@ -558,7 +573,10 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
                   </span>
                   <input
                     type="tel"
-                    placeholder="Enter mobile number"
+                    inputMode="numeric"
+                    maxLength={10}
+                    pattern="[0-9]*"
+                    placeholder="10-digit mobile number"
                     value={formData.mobile}
                     onChange={(e) => handleInputChange('mobile', e.target.value)}
                     className="w-full rounded-r-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
