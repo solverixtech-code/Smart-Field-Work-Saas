@@ -95,6 +95,7 @@ export interface InteractiveMapProps {
   prospects?: BusinessProspectMarker[];
   heatmapPoints?: HeatmapPoint[];
   territories?: TerritoryPolygon[];
+  territoryPath?: [number, number][];
   routeStops?: RouteStop[];
   routePath?: [number, number][];
   playbackActiveStopIndex?: number;
@@ -102,6 +103,7 @@ export interface InteractiveMapProps {
   onSelectExecutive?: (exec: ExecutiveLocation) => void;
   onSelectProspect?: (prospect: BusinessProspectMarker) => void;
   heightClassName?: string;
+  showHeatmapToggle?: boolean;
   children?: React.ReactNode;
 }
 
@@ -111,6 +113,7 @@ export function InteractiveMap({
   prospects = [],
   heatmapPoints = [],
   territories = [],
+  territoryPath,
   routeStops = [],
   routePath = [],
   playbackActiveStopIndex,
@@ -118,11 +121,14 @@ export function InteractiveMap({
   onSelectExecutive,
   onSelectProspect,
   heightClassName = 'h-[620px]',
+  showHeatmapToggle: propShowHeatmapToggle,
   children,
 }: InteractiveMapProps) {
   const [mapType, setMapType] = useState<'map' | 'satellite' | 'terrain'>('map');
   const [showHeatmapToggle, setShowHeatmapToggle] = useState(
-    mode === 'visit-heatmap' || mode === 'sales-heatmap',
+    propShowHeatmapToggle !== undefined
+      ? propShowHeatmapToggle
+      : mode === 'visit-heatmap' || mode === 'sales-heatmap',
   );
   const [zoomLevel, setZoomLevel] = useState(13);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(
@@ -452,8 +458,21 @@ export function InteractiveMap({
           }`}
         >
           {/* MAPBOX VECTOR POLYGON TERRITORIES LAYER */}
-          {(mode === 'territories' || territories.length > 0) &&
-            territories.map((terr) => (
+          {(mode === 'territories' || territories.length > 0 || (territoryPath && territoryPath.length > 0)) &&
+            (territories.length > 0
+              ? territories
+              : territoryPath && territoryPath.length > 0
+              ? [
+                  {
+                    id: 'T-SINGLE',
+                    name: 'Territory Boundary',
+                    fillColor: '#2563EB',
+                    borderColor: '#2563EB',
+                    pathPoints: territoryPath,
+                  },
+                ]
+              : []
+            ).map((terr) => (
               <g key={terr.id}>
                 <polygon
                   points={terr.pathPoints

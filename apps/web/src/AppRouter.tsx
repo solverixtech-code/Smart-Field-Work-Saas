@@ -68,6 +68,15 @@ import SalesHeatmapPage from './screens/maps/SalesHeatmapPage';
 import TerritoryMapPage from './screens/maps/TerritoryMapPage';
 import RoutePlaybackPage from './screens/maps/RoutePlaybackPage';
 
+import TerritoriesListPage from './screens/territories/TerritoriesListPage';
+import CreateTerritoryPage from './screens/territories/CreateTerritoryPage';
+import TerritoryDetailsPage from './screens/territories/TerritoryDetailsPage';
+import EditTerritoryPage from './screens/territories/EditTerritoryPage';
+import AssignExecutivesPage from './screens/territories/AssignExecutivesPage';
+import TerritoryBusinessesPage from './screens/territories/TerritoryBusinessesPage';
+import TerritoryPerformancePage from './screens/territories/TerritoryPerformancePage';
+import ModuleTerritoryMapPage from './screens/territories/TerritoryMapPage';
+
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { Role, AuthTokensSchema } from '@visiblo/shared';
@@ -389,6 +398,29 @@ export default function AppRouter() {
               <Route path="/admin/map/territories" element={<TerritoryMapPage />} />
               <Route path="/admin/map/routes" element={<RoutePlaybackPage />} />
               <Route path="/admin/map/routes/:executiveId" element={<RoutePlaybackPage />} />
+            </Route>
+
+            {/* Territory Management Routes (Module 9, Screens 78 to 85) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/territories" element={<TerritoriesListPage />} />
+              <Route path="/admin/territories/create" element={<CreateTerritoryPage />} />
+              <Route path="/admin/territories/:territoryId" element={<TerritoryDetailsPage />} />
+              <Route path="/admin/territories/:territoryId/edit" element={<EditTerritoryPage />} />
+              <Route path="/admin/territories/:territoryId/executives" element={<AssignExecutivesPage />} />
+              <Route path="/admin/territories/:territoryId/businesses" element={<TerritoryBusinessesPage />} />
+              <Route path="/admin/territories/:territoryId/performance" element={<TerritoryPerformancePage />} />
+              <Route path="/admin/territories/:territoryId/map" element={<ModuleTerritoryMapPage />} />
             </Route>
 
             {/* System Masters Management Route */}

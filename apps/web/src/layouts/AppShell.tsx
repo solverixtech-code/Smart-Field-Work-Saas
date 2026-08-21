@@ -76,6 +76,13 @@ const navCategories: NavCategory[] = [
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
         badge: '5.8k Stores',
       },
+      {
+        label: 'Territories',
+        icon: Target,
+        to: '/admin/territories',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '12 Active',
+      },
     ],
   },
   {
@@ -277,6 +284,26 @@ function getBreadcrumbTrail(pathname: string) {
       items.push({ label: 'Team Performance', to: pathname });
     } else if (pathname.endsWith('/targets')) {
       items.push({ label: 'Team Targets', to: pathname });
+    }
+  } else if (pathname === '/admin/territories') {
+    items.push({ label: 'Territory Management', to: '/admin/territories' });
+    items.push({ label: 'Territories', to: '/admin/territories' });
+  } else if (pathname === '/admin/territories/create') {
+    items.push({ label: 'Territory Management', to: '/admin/territories' });
+    items.push({ label: 'Create Territory', to: '/admin/territories/create' });
+  } else if (pathname.startsWith('/admin/territories/')) {
+    items.push({ label: 'Territory Management', to: '/admin/territories' });
+    items.push({ label: 'Andheri East (T001)', to: '/admin/territories/TERR-1001' });
+    if (pathname.endsWith('/edit')) {
+      items.push({ label: 'Edit Territory', to: pathname });
+    } else if (pathname.endsWith('/executives')) {
+      items.push({ label: 'Assign Executives', to: pathname });
+    } else if (pathname.endsWith('/businesses')) {
+      items.push({ label: 'Territory Businesses', to: pathname });
+    } else if (pathname.endsWith('/performance')) {
+      items.push({ label: 'Territory Performance', to: pathname });
+    } else if (pathname.endsWith('/map')) {
+      items.push({ label: 'Territory Map', to: pathname });
     }
   } else if (pathname === '/admin/businesses') {
     items.push({ label: 'Businesses & Data', to: '/admin/businesses' });
