@@ -39,6 +39,13 @@ export default function TerritoryBusinessesPage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [assignedToFilter, setAssignedToFilter] = useState('All');
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [activeBusinessId, setActiveBusinessId] = useState<string>(
+    mockTerritoryBusinesses[0]?.id || ''
+  );
+
+  const activeBusiness =
+    mockTerritoryBusinesses.find((b) => b.id === activeBusinessId) ||
+    mockTerritoryBusinesses[0];
 
   const filteredBusinesses = mockTerritoryBusinesses.filter((b) => {
     const matchesSearch =
@@ -286,9 +293,18 @@ export default function TerritoryBusinessesPage() {
                 <tbody className="divide-y divide-slate-100">
                   {filteredBusinesses.map((b) => {
                     const isChecked = selectedRows.includes(b.id);
+                    const isActive = activeBusinessId === b.id;
                     return (
-                      <tr key={b.id} className="hover:bg-slate-50/70">
-                        <td className="p-3 text-center">
+                      <tr
+                        key={b.id}
+                        onClick={() => setActiveBusinessId(b.id)}
+                        className={`cursor-pointer transition-all ${
+                          isActive
+                            ? 'bg-red-50/60 font-bold border-l-4 border-l-[#E20613]'
+                            : 'hover:bg-slate-50/70'
+                        }`}
+                      >
+                        <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             checked={isChecked}
                             onChange={() => handleToggleRow(b.id)}
@@ -338,7 +354,7 @@ export default function TerritoryBusinessesPage() {
                             • {b.status}
                           </span>
                         </td>
-                        <td className="p-3 text-center">
+                        <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
                           <button className="p-1 rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer">
                             <MoreVertical className="h-4 w-4" />
                           </button>
@@ -372,22 +388,42 @@ export default function TerritoryBusinessesPage() {
 
         {/* RIGHT COLUMN (4 COLS SIDEBAR) */}
         <div className="space-y-4 lg:col-span-4">
-          {/* Territory Mini Map Card */}
+          {/* Territory & Active Business Map Card */}
           <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-2 text-xs font-semibold">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D]">Territory Map</h3>
-            <div className="relative rounded-sm border border-slate-200 overflow-hidden h-[180px]">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-extrabold text-[#0D1F3D]">Selected Business Location</h3>
+              <span className="text-[10px] text-blue-600 font-bold">{activeBusiness.name}</span>
+            </div>
+
+            <div className="relative rounded-sm border border-slate-200 overflow-hidden h-[200px] shadow-inner">
               <InteractiveMap
-                mode="territories"
+                key={activeBusiness.id}
+                mode="prospects"
                 heightClassName="h-full"
-                territoryPath={territory.pathPoints}
                 compact
+                prospects={[
+                  {
+                    id: activeBusiness.id,
+                    name: activeBusiness.name,
+                    category: activeBusiness.category,
+                    address: activeBusiness.address || activeBusiness.contactPerson,
+                    status: activeBusiness.visitStatus === 'Visited' ? 'Visited' : activeBusiness.visitStatus === 'Scheduled' ? 'Follow-up' : 'New Prospect',
+                    markerColor: 'green',
+                    contactPerson: activeBusiness.contactPerson,
+                    phone: activeBusiness.phone,
+                    lastVisitTime: activeBusiness.lastVisitDate,
+                    lat: activeBusiness.lat || 19.118,
+                    lng: activeBusiness.lng || 72.868,
+                    region: 'Andheri East',
+                  },
+                ]}
               />
             </div>
             <button
               onClick={() => navigate(`/admin/territories/${territory.id}/map`)}
-              className="text-xs font-bold text-blue-600 hover:underline block text-center w-full pt-1"
+              className="text-xs font-bold text-blue-600 hover:underline block text-center w-full pt-1 cursor-pointer"
             >
-              View Full Map →
+              View Full Territory Map →
             </button>
           </div>
 

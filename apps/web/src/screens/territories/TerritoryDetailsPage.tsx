@@ -586,7 +586,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
             <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs lg:col-span-8">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-left border-collapse text-xs font-semibold">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 text-[11px]">
                     <th className="p-3">Business</th>
@@ -597,40 +597,176 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredBusinesses.map((b) => (
-                    <tr
-                      key={b.id}
-                      onClick={() => setSelectedBusinessId(b.id)}
-                      className={`cursor-pointer transition-colors ${selectedBusinessId === b.id ? 'bg-red-50/50 font-bold' : 'hover:bg-slate-50'}`}
-                    >
-                      <td className="p-3">
-                        <div className="flex items-center gap-2">
-                          <div className="h-7 w-7 rounded-sm bg-slate-100 flex items-center justify-center font-bold text-slate-700 border border-slate-200">
-                            {b.name.charAt(0)}
+                  {filteredBusinesses.map((b) => {
+                    const isSelected = selectedBusinessId === b.id;
+                    return (
+                      <tr
+                        key={b.id}
+                        onClick={() => setSelectedBusinessId(b.id)}
+                        className={`cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-red-50/60 font-bold border-l-4 border-l-[#E20613]'
+                            : 'hover:bg-slate-50'
+                        }`}
+                      >
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            <div className="h-7 w-7 rounded-sm bg-slate-100 flex items-center justify-center font-extrabold text-[#0D1F3D] border border-slate-200 shrink-0">
+                              {b.name.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1">
+                                <span className="font-extrabold text-[#0D1F3D]">{b.name}</span>
+                                {b.badge && (
+                                  <span className="rounded-xs bg-lime-100 px-1 py-0.2 text-[9px] font-bold text-lime-800">
+                                    {b.badge}
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-slate-400 font-medium">{b.businessType}</span>
+                            </div>
                           </div>
-                          <span className="font-extrabold text-[#0D1F3D]">{b.name}</span>
-                        </div>
-                      </td>
-                      <td className="p-3 text-slate-600">{b.category}</td>
-                      <td className="p-3">{b.assignedToName}</td>
-                      <td className="p-3 text-right font-mono font-bold text-emerald-700">₹ 1,80,000</td>
-                      <td className="p-3 text-center">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">• {b.status}</span>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="p-3 text-slate-600">{b.category}</td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            <img
+                              src={b.assignedToAvatar}
+                              alt={b.assignedToName}
+                              className="h-5 w-5 rounded-full object-cover border border-slate-200 shrink-0"
+                            />
+                            <span>{b.assignedToName}</span>
+                          </div>
+                        </td>
+                        <td className="p-3 text-right font-mono font-bold text-emerald-700">
+                          {b.revenueFormatted || '₹ 1,80,000'}
+                        </td>
+                        <td className="p-3 text-center">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              b.status === 'Active'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-red-50 text-red-700 border border-red-200'
+                            }`}
+                          >
+                            • {b.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
 
-            <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs lg:col-span-4 space-y-3">
-              <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
-                Business Details Preview
-              </h3>
-              <p className="font-extrabold text-sm text-[#0D1F3D]">{selectedBusiness.name}</p>
-              <p className="text-slate-500">{selectedBusiness.contactPerson} ({selectedBusiness.contactRole})</p>
-              <div className="relative h-44 w-full rounded-sm border border-slate-200 overflow-hidden">
-                <InteractiveMap mode="prospects" heightClassName="h-full" compact prospects={[{ id: selectedBusiness.id, name: selectedBusiness.name, category: selectedBusiness.category, address: selectedBusiness.contactPerson, status: 'Visited', markerColor: 'green', contactPerson: selectedBusiness.contactPerson, phone: selectedBusiness.phone, lastVisitTime: 'Today', lat: 19.115, lng: 72.86, region: 'Marol' }]} />
+            {/* Interactive Selected Business Details Preview Panel */}
+            <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs lg:col-span-4 space-y-3 text-xs font-semibold">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h3 className="text-xs font-extrabold text-[#0D1F3D]">
+                  Business Details Preview
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {selectedBusiness.status}
+                </span>
+              </div>
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-extrabold text-sm text-[#0D1F3D]">{selectedBusiness.name}</h4>
+                  {selectedBusiness.badge && (
+                    <span className="rounded-xs bg-lime-100 px-1.5 py-0.5 text-[9px] font-bold text-lime-800">
+                      {selectedBusiness.badge}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] font-bold text-blue-600 mt-0.5">{selectedBusiness.category} • {selectedBusiness.businessType}</p>
+              </div>
+
+              <div className="space-y-1.5 text-slate-700 border-t border-slate-100 pt-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Contact Person :</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{selectedBusiness.contactPerson} ({selectedBusiness.contactRole})</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Phone :</span>
+                  <span className="font-mono font-bold text-slate-800">{selectedBusiness.phone}</span>
+                </div>
+                {selectedBusiness.email && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Email :</span>
+                    <span className="font-mono text-slate-600 truncate max-w-[160px]">{selectedBusiness.email}</span>
+                  </div>
+                )}
+                {selectedBusiness.address && (
+                  <div className="pt-1">
+                    <span className="text-slate-400 block mb-0.5">Address :</span>
+                    <p className="text-[11px] text-slate-600 font-medium leading-tight">
+                      {selectedBusiness.address}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-slate-100 pt-2 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold block">Assigned Executive</span>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <img
+                      src={selectedBusiness.assignedToAvatar}
+                      alt={selectedBusiness.assignedToName}
+                      className="h-5 w-5 rounded-full object-cover border border-slate-200"
+                    />
+                    <span className="font-bold text-[#0D1F3D]">{selectedBusiness.assignedToName}</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 font-bold block">Last Visit</span>
+                  <span className="font-extrabold text-slate-700">{selectedBusiness.lastVisitDate}</span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => toast.info(`Calling ${selectedBusiness.contactPerson} at ${selectedBusiness.phone}...`)}
+                  className="flex items-center justify-center gap-1.5 rounded-sm bg-[#0D1F3D] py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#07152E] cursor-pointer"
+                >
+                  <Phone className="h-3.5 w-3.5" /> Call Owner
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toast.info(`Navigating to ${selectedBusiness.name}...`)}
+                  className="flex items-center justify-center gap-1.5 rounded-sm border border-slate-200 bg-white py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 cursor-pointer"
+                >
+                  <MapPin className="h-3.5 w-3.5 text-red-600" /> Directions
+                </button>
+              </div>
+
+              {/* Interactive Mapbox Map Centered on Selected Business */}
+              <div className="relative h-44 w-full rounded-sm border border-slate-200 overflow-hidden shadow-inner">
+                <InteractiveMap
+                  key={selectedBusiness.id}
+                  mode="prospects"
+                  heightClassName="h-full"
+                  compact
+                  prospects={[
+                    {
+                      id: selectedBusiness.id,
+                      name: selectedBusiness.name,
+                      category: selectedBusiness.category,
+                      address: selectedBusiness.address || selectedBusiness.contactPerson,
+                      status: selectedBusiness.visitStatus === 'Visited' ? 'Visited' : selectedBusiness.visitStatus === 'Scheduled' ? 'Follow-up' : 'New Prospect',
+                      markerColor: 'green',
+                      contactPerson: selectedBusiness.contactPerson,
+                      phone: selectedBusiness.phone,
+                      lastVisitTime: selectedBusiness.lastVisitDate,
+                      lat: selectedBusiness.lat || 19.118,
+                      lng: selectedBusiness.lng || 72.868,
+                      region: 'Andheri East',
+                    },
+                  ]}
+                />
               </div>
             </div>
           </div>

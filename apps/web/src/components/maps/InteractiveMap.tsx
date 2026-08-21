@@ -212,12 +212,69 @@ export function InteractiveMap({
   // Default Mumbai Coordinates
   const defaultCenter: [number, number] = [72.8697, 19.1197];
 
-  // Map Click Listener for Polygon Creation & Vertex Editing
+  // Dragging vertex tracking refs
+  const draggingVertexIndexRef = useRef<number | null>(null);
+  const isDraggingRef = useRef<boolean>(false);
+
+  // Global mousemove & mouseup listeners for smooth vertex dragging
+  useEffect(() => {
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (
+        draggingVertexIndexRef.current === null ||
+        !mapRef.current ||
+        !mapContainerRef.current
+      )
+        return;
+
+      isDraggingRef.current = true;
+      const rect = mapContainerRef.current.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const lngLat = mapRef.current.unproject([mouseX, mouseY]);
+      const newLat = Number(lngLat.lat.toFixed(6));
+      const newLng = Number(lngLat.lng.toFixed(6));
+
+      const idx = draggingVertexIndexRef.current;
+      setDrawnPolygonPoints((prev) => {
+        const updated: [number, number][] = [...prev];
+        updated[idx] = [newLat, newLng];
+        const area = calculatePolygonArea(updated);
+        const peri = calculatePolygonPerimeter(updated);
+        onPolygonChange?.(updated, area, peri);
+        return updated;
+      });
+    };
+
+    const handleGlobalMouseUp = () => {
+      if (draggingVertexIndexRef.current !== null) {
+        draggingVertexIndexRef.current = null;
+        if (mapRef.current) {
+          mapRef.current.dragPan.enable();
+        }
+        setTimeout(() => {
+          isDraggingRef.current = false;
+        }, 100);
+      }
+    };
+
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [onPolygonChange]);
+
+  // Map Click Listener for Polygon Point Creation
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !enablePolygonDrawing || !isDrawingModeActive) return;
 
     const handleMapClick = (e: mapboxgl.MapMouseEvent) => {
+      // Don't add a new point if we just finished dragging a vertex
+      if (isDraggingRef.current) return;
+
       const clickedLat = Number(e.lngLat.lat.toFixed(6));
       const clickedLng = Number(e.lngLat.lng.toFixed(6));
 
@@ -571,16 +628,27 @@ export function InteractiveMap({
                 />
               )}
 
-              {/* Polygon Vertex Points & Click-to-Delete Handles */}
+              {/* Polygon Vertex Points & Draggable Handles (Jitter-Free) */}
               {enablePolygonDrawing &&
                 drawnPolygonPoints.map(([lat, lng], idx) => {
                   const pt = getPixelPoint(lat, lng);
                   return (
                     <g
                       key={`vertex-${idx}`}
-                      className="pointer-events-auto cursor-pointer group"
-                      onClick={(e) => {
+                      className="pointer-events-auto cursor-grab active:cursor-grabbing"
+                      onMouseDown={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
+                        draggingVertexIndexRef.current = idx;
+                        isDraggingRef.current = true;
+                        if (mapRef.current) {
+                          mapRef.current.dragPan.disable();
+                        }
+                      }}
+                      onContextMenu={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        // Right-click or shift-click removes vertex
                         setDrawnPolygonPoints((prev) => {
                           const updated = prev.filter((_, i) => i !== idx);
                           const area = calculatePolygonArea(updated);
@@ -590,6 +658,10 @@ export function InteractiveMap({
                         });
                       }}
                     >
+                      {/* Transparent Hit Area Circle for ultra smooth hovering & grabbing */}
+                      <circle cx={pt.x} cy={pt.y} r="16" fill="transparent" />
+
+                      {/* Vertex Dot */}
                       <circle
                         cx={pt.x}
                         cy={pt.y}
@@ -597,7 +669,6 @@ export function InteractiveMap({
                         fill="#E20613"
                         stroke="#FFFFFF"
                         strokeWidth="2.5"
-                        className="transition-transform group-hover:scale-125"
                       />
                       <text
                         x={pt.x}
@@ -606,7 +677,7 @@ export function InteractiveMap({
                         fill="#FFFFFF"
                         fontSize="9"
                         fontWeight="900"
-                        className="pointer-events-none"
+                        className="pointer-events-none select-none"
                       >
                         {idx + 1}
                       </text>

@@ -48,11 +48,17 @@ export interface TerritoryBusiness {
   contactPerson: string;
   contactRole: string;
   phone: string;
+  email?: string;
+  address?: string;
   assignedToName: string;
   assignedToAvatar: string;
   lastVisitDate: string;
   status: 'Active' | 'Inactive';
   category: 'Retail' | 'Service' | 'Healthcare' | 'Food & Beverage' | 'Others';
+  revenueFormatted?: string;
+  visitStatus?: 'Visited' | 'Not Visited' | 'Scheduled';
+  lat?: number;
+  lng?: number;
 }
 
 export interface TerritoryExecutive {
@@ -523,11 +529,17 @@ export const mockTerritoryBusinesses: TerritoryBusiness[] = [
     contactPerson: 'Suresh Patel',
     contactRole: 'Proprietor',
     phone: '+91 98765 43210',
+    email: 'suresh@saienterprises.com',
+    address: 'Shop 12, Marol Naka, Andheri East, Mumbai 400059',
     assignedToName: 'Arjun Mehta',
     assignedToAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
     lastVisitDate: '20 May 2025',
     status: 'Active',
     category: 'Retail',
+    revenueFormatted: '₹ 1,80,000',
+    visitStatus: 'Visited',
+    lat: 19.118,
+    lng: 72.868,
   },
   {
     id: 'BUS-1002',
@@ -536,11 +548,17 @@ export const mockTerritoryBusinesses: TerritoryBusiness[] = [
     contactPerson: 'Neha Sharma',
     contactRole: 'Pharmacist',
     phone: '+91 98200 11223',
+    email: 'sharma.med@gmail.com',
+    address: 'Plot 45, MIDC Central Road, Andheri East, Mumbai 400093',
     assignedToName: 'Neha Sharma',
     assignedToAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
     lastVisitDate: '19 May 2025',
     status: 'Active',
     category: 'Healthcare',
+    revenueFormatted: '₹ 2,15,000',
+    visitStatus: 'Visited',
+    lat: 19.125,
+    lng: 72.875,
   },
   {
     id: 'BUS-1003',
@@ -549,11 +567,17 @@ export const mockTerritoryBusinesses: TerritoryBusiness[] = [
     contactPerson: 'Rahul Gupta',
     contactRole: 'Owner',
     phone: '+91 99303 22110',
+    email: 'orders@royalbakers.in',
+    address: 'Gala 3, Saki Naka Junction, Andheri East, Mumbai 400072',
     assignedToName: 'Pooja Yadav',
     assignedToAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
     lastVisitDate: '18 May 2025',
     status: 'Active',
     category: 'Food & Beverage',
+    revenueFormatted: '₹ 1,45,000',
+    visitStatus: 'Visited',
+    lat: 19.112,
+    lng: 72.86,
   },
   {
     id: 'BUS-1004',
@@ -562,11 +586,17 @@ export const mockTerritoryBusinesses: TerritoryBusiness[] = [
     contactPerson: 'Amit Jain',
     contactRole: 'Manager',
     phone: '+91 98190 77889',
+    email: 'admin@metrosuper.com',
+    address: 'Building B, SEEPZ Gate 1, Andheri East, Mumbai 400096',
     assignedToName: 'Rakesh Patel',
     assignedToAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
     lastVisitDate: '17 May 2025',
     status: 'Active',
     category: 'Retail',
+    revenueFormatted: '₹ 3,20,000',
+    visitStatus: 'Visited',
+    lat: 19.13,
+    lng: 72.88,
   },
   {
     id: 'BUS-1005',
@@ -575,11 +605,17 @@ export const mockTerritoryBusinesses: TerritoryBusiness[] = [
     contactPerson: 'Vijay Patel',
     contactRole: 'Owner',
     phone: '+91 97690 44556',
+    email: 'vijay@patelelectronics.com',
+    address: 'Station Road, Marol, Andheri East, Mumbai 400059',
     assignedToName: 'Arjun Mehta',
     assignedToAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
     lastVisitDate: '16 May 2025',
     status: 'Active',
     category: 'Retail',
+    revenueFormatted: '₹ 1,60,000',
+    visitStatus: 'Visited',
+    lat: 19.115,
+    lng: 72.865,
   },
   {
     id: 'BUS-1006',
@@ -588,11 +624,17 @@ export const mockTerritoryBusinesses: TerritoryBusiness[] = [
     contactPerson: 'Mahesh Shah',
     contactRole: 'Partner',
     phone: '+91 97020 55678',
+    email: 'contact@omhardware.com',
+    address: 'LBS Marg Periphery, Andheri East, Mumbai 400072',
     assignedToName: 'Kiran Jadhav',
     assignedToAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200',
     lastVisitDate: '15 May 2025',
     status: 'Inactive',
     category: 'Service',
+    revenueFormatted: '₹ 95,000',
+    visitStatus: 'Not Visited',
+    lat: 19.14,
+    lng: 72.89,
   },
   {
     id: 'BUS-1007',
@@ -601,11 +643,17 @@ export const mockTerritoryBusinesses: TerritoryBusiness[] = [
     contactPerson: 'Ramesh Yadav',
     contactRole: 'Owner',
     phone: '+91 96540 88990',
+    email: 'freshgreen@gmail.com',
+    address: 'Chakala Market, Andheri East, Mumbai 400093',
     assignedToName: 'Pooja Yadav',
     assignedToAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
     lastVisitDate: '14 May 2025',
     status: 'Active',
     category: 'Retail',
+    revenueFormatted: '₹ 1,10,000',
+    visitStatus: 'Visited',
+    lat: 19.122,
+    lng: 72.87,
   },
   {
     id: 'BUS-1008',
@@ -614,11 +662,17 @@ export const mockTerritoryBusinesses: TerritoryBusiness[] = [
     contactPerson: 'Anand Verma',
     contactRole: 'Manager',
     phone: '+91 98210 66778',
+    email: 'anand.fashion@gmail.com',
+    address: 'JB Nagar Shopping Center, Andheri East, Mumbai 400059',
     assignedToName: 'Neha Sharma',
     assignedToAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
     lastVisitDate: '13 May 2025',
     status: 'Active',
     category: 'Retail',
+    revenueFormatted: '₹ 1,35,000',
+    visitStatus: 'Visited',
+    lat: 19.117,
+    lng: 72.862,
   },
   {
     id: 'BUS-1009',
@@ -627,11 +681,17 @@ export const mockTerritoryBusinesses: TerritoryBusiness[] = [
     contactPerson: 'Imran Shaikh',
     contactRole: 'Owner',
     phone: '+91 98330 11224',
+    email: 'midasauto@yahoo.com',
+    address: 'MIDC Road No 14, Andheri East, Mumbai 400093',
     assignedToName: 'Rakesh Patel',
     assignedToAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
     lastVisitDate: '12 May 2025',
     status: 'Active',
     category: 'Service',
+    revenueFormatted: '₹ 2,40,000',
+    visitStatus: 'Scheduled',
+    lat: 19.128,
+    lng: 72.878,
   },
   {
     id: 'BUS-1010',
@@ -640,11 +700,17 @@ export const mockTerritoryBusinesses: TerritoryBusiness[] = [
     contactPerson: 'Dinesh Kumar',
     contactRole: 'Proprietor',
     phone: '+91 99200 33445',
+    email: 'dinesh@buildright.in',
+    address: 'Mahakali Caves Road, Andheri East, Mumbai 400093',
     assignedToName: 'Arjun Mehta',
     assignedToAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
     lastVisitDate: '11 May 2025',
     status: 'Inactive',
     category: 'Service',
+    revenueFormatted: '₹ 85,000',
+    visitStatus: 'Not Visited',
+    lat: 19.135,
+    lng: 72.885,
   },
 ];
 
