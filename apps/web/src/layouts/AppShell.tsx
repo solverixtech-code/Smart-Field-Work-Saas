@@ -66,6 +66,13 @@ const navCategories: NavCategory[] = [
     title: 'Sales & Field',
     items: [
       {
+        label: 'Sales Pipeline',
+        icon: TrendingUp,
+        to: '/admin/sales/pipeline',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '₹2.46 Cr',
+      },
+      {
         label: 'Leads Management',
         icon: Target,
         to: '/admin/leads',

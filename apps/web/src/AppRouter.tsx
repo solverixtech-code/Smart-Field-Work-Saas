@@ -44,6 +44,9 @@ import BulkAssignLeadsPage from './screens/leads/BulkAssignLeadsPage';
 import LeadImportPage from './screens/leads/LeadImportPage';
 import LeadExportPage from './screens/leads/LeadExportPage';
 
+import SalesPipelinePage from './screens/sales/SalesPipelinePage';
+import SalesStageViewPage from './screens/sales/SalesStageViewPage';
+
 import AllBusinessesPage from './screens/businesses/AllBusinessesPage';
 import AddBusinessPage from './screens/businesses/AddBusinessPage';
 import BusinessLayoutWrapper from './screens/businesses/BusinessLayoutWrapper';
@@ -379,6 +382,30 @@ export default function AppRouter() {
               <Route path="/admin/leads/:leadId/communications" element={<LeadDetailsPage />} />
               <Route path="/admin/leads/:leadId/payments" element={<LeadDetailsPage />} />
               <Route path="/admin/leads/:leadId/assignment" element={<LeadDetailsPage />} />
+            </Route>
+
+            {/* Sales Pipeline Routes (Screens 105 to 113) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/sales/pipeline" element={<SalesPipelinePage />} />
+              <Route path="/admin/sales/prospects" element={<SalesStageViewPage stageKeyOverride="prospects" />} />
+              <Route path="/admin/sales/contacted" element={<SalesStageViewPage stageKeyOverride="contacted" />} />
+              <Route path="/admin/sales/demo" element={<SalesStageViewPage stageKeyOverride="demo" />} />
+              <Route path="/admin/sales/interested" element={<SalesStageViewPage stageKeyOverride="interested" />} />
+              <Route path="/admin/sales/negotiation" element={<SalesStageViewPage stageKeyOverride="negotiation" />} />
+              <Route path="/admin/sales/payment-pending" element={<SalesStageViewPage stageKeyOverride="payment-pending" />} />
+              <Route path="/admin/sales/won" element={<SalesStageViewPage stageKeyOverride="won" />} />
+              <Route path="/admin/sales/lost" element={<SalesStageViewPage stageKeyOverride="lost" />} />
             </Route>
 
             {/* Business Database Management Routes (Screens 54 to 60) */}
