@@ -58,6 +58,9 @@ export default function MasterManagementPage() {
   const [activeCategoryId, setActiveCategoryId] = useState<string>('designation');
   const [recordsByCategory, setRecordsByCategory] = useState<Record<string, MasterRecordItem[]>>(initialMasterRecords);
 
+  // Category Sidebar Search State
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
+
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [activityFilter, setActivityFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -268,7 +271,7 @@ export default function MasterManagementPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-[#0D1F3D]">System Masters</h1>
             <span className="rounded-sm bg-[#0D1F3D]/10 text-[#0D1F3D] px-2.5 py-0.5 text-xs font-bold">
-              18 Categories
+              {masterCategories.length} Categories
             </span>
           </div>
           <p className="text-xs font-normal text-slate-500 mt-0.5">
@@ -303,17 +306,43 @@ export default function MasterManagementPage() {
       <div className="flex flex-col lg:flex-row gap-4 items-start">
         {/* LEFT COLUMN: CATEGORIES SIDEBAR */}
         <div className="w-full lg:w-[280px] xl:w-[300px] shrink-0 space-y-3">
-          <div className="rounded-sm border border-slate-200 bg-white p-3 shadow-xs">
-            <div className="pb-2 mb-2 border-b border-slate-100 flex items-center justify-between">
+          <div className="rounded-sm border border-slate-200 bg-white p-3 shadow-xs space-y-2.5">
+            <div className="pb-2 border-b border-slate-100 flex items-center justify-between">
               <h3 className="text-xs font-semibold text-[#0D1F3D]">
                 Master Categories
               </h3>
-              <span className="text-[11px] font-medium text-slate-500">18 Configured</span>
+              <span className="text-[11px] font-medium text-slate-500">{masterCategories.length} Configured</span>
+            </div>
+
+            {/* Category Searchbar */}
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                value={categorySearchQuery}
+                onChange={(e) => setCategorySearchQuery(e.target.value)}
+                placeholder="Search categories..."
+                className="w-full rounded-sm border border-slate-200 bg-slate-50/80 pl-8 pr-7 py-1.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
+              />
+              {categorySearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setCategorySearchQuery('')}
+                  className="absolute right-2 top-2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
             </div>
 
             <nav className="space-y-3 max-h-[640px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
               {domainGroups.map((groupName) => {
-                const groupCategories = masterCategories.filter((c) => c.group === groupName);
+                const groupCategories = masterCategories.filter(
+                  (c) =>
+                    c.group === groupName &&
+                    (c.name.toLowerCase().includes(categorySearchQuery.toLowerCase().trim()) ||
+                      c.description.toLowerCase().includes(categorySearchQuery.toLowerCase().trim()))
+                );
                 if (groupCategories.length === 0) return null;
 
                 return (
