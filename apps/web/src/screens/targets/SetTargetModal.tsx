@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 import { X, Target, Users, Building2, Calendar, DollarSign, Award } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
@@ -10,7 +11,8 @@ interface SetTargetModalProps {
 }
 
 export const SetTargetModal: React.FC<SetTargetModalProps> = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
+  const [rendered, setRendered] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   const [targetType, setTargetType] = useState<'team' | 'individual'>('team');
   const [targetTitle, setTargetTitle] = useState('');
@@ -20,7 +22,31 @@ export const SetTargetModal: React.FC<SetTargetModalProps> = ({ isOpen, onClose 
   const [metric, setMetric] = useState('sales_amount');
   const [targetValue, setTargetValue] = useState('');
   const [thresholdPct, setThresholdPct] = useState('80');
-  const [notes, setNotes] = useState('');
+
+  // Smooth two-stage portal animation setup
+  useEffect(() => {
+    if (isOpen) {
+      setRendered(true);
+      const raf = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setVisible(true));
+      });
+      return () => cancelAnimationFrame(raf);
+    } else {
+      setVisible(false);
+      const timer = setTimeout(() => setRendered(false), 250);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,26 +58,43 @@ export const SetTargetModal: React.FC<SetTargetModalProps> = ({ isOpen, onClose 
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-xl rounded-md bg-white p-5 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150 border border-slate-200 text-left">
+  if (!rendered) return null;
+
+  return createPortal(
+    <div
+      className={`fixed inset-0 z-[99999] flex items-center justify-center p-4 overflow-y-auto transition-opacity duration-250 ease-out ${
+        visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+    >
+      {/* Dark Blur Backdrop */}
+      <div
+        className="fixed inset-0 bg-slate-950/65 backdrop-blur-xs transition-opacity duration-250"
+        onClick={onClose}
+      />
+
+      {/* Centered Animated Modal Container */}
+      <div
+        className={`relative w-full max-w-xl rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 my-8 z-10 transition-all duration-250 ease-out font-sans text-left ${
+          visible ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'
+        }`}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-red-50 text-red-600 border border-red-100 font-bold">
-              <Target className="h-4 w-4" />
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-red-50 text-red-600 border border-red-200/60 shadow-xs">
+              <Target className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Set New Target</h3>
+              <h2 className="text-base font-extrabold text-[#0D1F3D] leading-tight">Set New Target</h2>
               <p className="text-[11px] font-semibold text-slate-400">Configure monthly or quarterly performance quotas</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
+            className="flex h-8 w-8 items-center justify-center rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition cursor-pointer"
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -113,7 +156,7 @@ export const SetTargetModal: React.FC<SetTargetModalProps> = ({ isOpen, onClose 
                   { value: 'north', label: 'North Zone (Delhi)' },
                   { value: 'south', label: 'South Zone (Bangalore)' },
                 ]}
-                searchable={false}
+                searchable={true}
               />
             ) : (
               <Select
@@ -127,7 +170,7 @@ export const SetTargetModal: React.FC<SetTargetModalProps> = ({ isOpen, onClose 
                   { value: 'vijay', label: 'Vijay Patel (Central Zone)' },
                   { value: 'neha', label: 'Neha Sharma (North Zone)' },
                 ]}
-                searchable={false}
+                searchable={true}
               />
             )}
 
@@ -173,7 +216,7 @@ export const SetTargetModal: React.FC<SetTargetModalProps> = ({ isOpen, onClose 
             </div>
           </div>
 
-          {/* Threshold & Notes */}
+          {/* Threshold */}
           <div className="space-y-1">
             <label className="text-slate-700 font-bold block">Minimum Achievement Threshold (%)</label>
             <input
@@ -206,6 +249,7 @@ export const SetTargetModal: React.FC<SetTargetModalProps> = ({ isOpen, onClose 
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

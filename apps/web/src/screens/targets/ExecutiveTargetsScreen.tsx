@@ -4,13 +4,10 @@ import { toast } from 'sonner';
 import {
   Users,
   Target,
-  Trophy,
   Gift,
   Plus,
   Download,
-  Filter,
   Search,
-  ChevronRight,
   CheckCircle2,
   AlertTriangle,
   XCircle,
@@ -160,7 +157,7 @@ export default function ExecutiveTargetsScreen() {
       <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div className="flex items-center gap-2">
-            <div className="w-40">
+            <div className="w-44">
               <Select
                 value={selectedTeam}
                 onChange={(e) => setSelectedTeam(e.target.value)}
@@ -170,7 +167,7 @@ export default function ExecutiveTargetsScreen() {
                   { value: 'central zone', label: 'Central Zone' },
                   { value: 'north zone', label: 'North Zone' },
                 ]}
-                searchable={false}
+                searchable={true}
               />
             </div>
           </div>
@@ -188,7 +185,7 @@ export default function ExecutiveTargetsScreen() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-semibold text-slate-700">
+          <table className="w-full text-left text-xs font-semibold text-slate-700 whitespace-nowrap">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-extrabold text-[#0D1F3D]">
                 <th className="py-2.5 px-3">Executive</th>
@@ -220,7 +217,7 @@ export default function ExecutiveTargetsScreen() {
                       <span className="font-mono text-slate-800 text-[11px] block">
                         ₹{et.salesAchieved.toLocaleString('en-IN')} / ₹{et.salesTarget.toLocaleString('en-IN')} ({et.salesPct}%)
                       </span>
-                      <div className="h-1.5 w-32 rounded-full bg-slate-100 overflow-hidden">
+                      <div className="h-1.5 w-36 rounded-full bg-slate-100 overflow-hidden">
                         <div
                           className="h-full rounded-full bg-purple-600"
                           style={{ width: `${Math.min(et.salesPct, 100)}%` }}

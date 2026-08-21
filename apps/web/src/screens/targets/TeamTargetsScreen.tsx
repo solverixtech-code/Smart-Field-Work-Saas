@@ -6,18 +6,17 @@ import {
   Trophy,
   Users,
   Percent,
-  DollarSign,
   Gift,
   CreditCard,
   Plus,
   Download,
   Filter,
-  MoreVertical,
-  ChevronRight,
   CheckCircle2,
   AlertTriangle,
   XCircle,
   Building2,
+  Eye,
+  Edit,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
@@ -93,7 +92,7 @@ export default function TeamTargetsScreen() {
       </div>
 
       {/* TOP KPI CARDS (6 CARDS) */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-6">
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Total Teams</span>
@@ -161,138 +160,172 @@ export default function TeamTargetsScreen() {
         </div>
       </div>
 
-      {/* MAIN CONTENT GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        {/* LEFT COLUMN: TEAM TARGETS OVERVIEW TABLE (8 COLS) */}
-        <div className="lg:col-span-8 space-y-4">
-          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Team Targets Overview</h3>
-              <span className="text-xs font-semibold text-slate-500">Showing 1 to {mockTeamTargets.length} of 24 teams</span>
+      {/* 100% FULL-WIDTH TABLE */}
+      <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Team Targets Overview</h3>
+          <span className="text-xs font-semibold text-slate-500">Showing 1 to {mockTeamTargets.length} of 24 teams</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs font-semibold text-slate-700 whitespace-nowrap">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-extrabold text-[#0D1F3D]">
+                <th className="py-2.5 px-3">Team / Branch</th>
+                <th className="py-2.5 px-3">Team Manager</th>
+                <th className="py-2.5 px-3">Target (₹)</th>
+                <th className="py-2.5 px-3">Achieved (₹)</th>
+                <th className="py-2.5 px-3">Achievement %</th>
+                <th className="py-2.5 px-3">Status</th>
+                <th className="py-2.5 px-3">Executives</th>
+                <th className="py-2.5 px-3">Incentive (₹)</th>
+                <th className="py-2.5 px-3 text-center">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-slate-100">
+              {mockTeamTargets.map((tt) => (
+                <tr key={tt.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="py-3 px-3">
+                    <div>
+                      <span className="font-extrabold text-[#0D1F3D] block">{tt.teamName}</span>
+                      <span className="text-[10px] text-slate-400 font-semibold">{tt.branch}</span>
+                    </div>
+                  </td>
+                  <td className="py-3 px-3">
+                    <div className="flex items-center gap-2">
+                      <img src={tt.teamLeaderAvatar} alt="" className="h-6 w-6 rounded-full object-cover border border-slate-200" />
+                      <div>
+                        <span className="font-bold text-[#0D1F3D] block text-xs">{tt.teamLeaderName}</span>
+                        <span className="text-[9px] text-slate-400 font-semibold block">Sales Manager</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3 px-3 font-mono text-slate-800">₹{tt.targetAmount.toLocaleString('en-IN')}</td>
+                  <td className="py-3 px-3 font-mono text-slate-800">₹{tt.achievedAmount.toLocaleString('en-IN')}</td>
+                  <td className="py-3 px-3">
+                    <div className="space-y-1 w-28">
+                      <span className="font-extrabold text-[#0D1F3D] text-[11px]">{tt.achievementPct}%</span>
+                      <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${
+                            tt.achievementPct >= 70
+                              ? 'bg-emerald-500'
+                              : tt.achievementPct >= 55
+                              ? 'bg-amber-500'
+                              : 'bg-red-500'
+                          }`}
+                          style={{ width: `${Math.min(tt.achievementPct, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3 px-3">
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-black border ${
+                        tt.status === 'On Track'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : tt.status === 'At Risk'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200'
+                          : 'bg-red-50 text-red-600 border-red-200'
+                      }`}
+                    >
+                      {tt.status}
+                    </span>
+                  </td>
+                  <td className="py-3 px-3 font-bold text-slate-700">{tt.executivesCount}</td>
+                  <td className="py-3 px-3 font-mono text-emerald-600 font-bold">₹{tt.incentiveEarned.toLocaleString('en-IN')}</td>
+                  <td className="py-3 px-3 text-center">
+                    <RowActionsMenu
+                      items={[
+                        { label: 'Edit Team Target', icon: Edit, onClick: () => setIsSetTargetModalOpen(true) },
+                        { label: 'View Team Members', icon: Eye, onClick: () => navigate('/admin/targets/executives') },
+                      ]}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* BOTTOM ANALYTICS ROW */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#0D1F3D]">
+              <Trophy className="h-4 w-4 text-amber-500" />
+              <span>Top Performing Teams</span>
+            </div>
+            <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+              This Month
+            </span>
+          </div>
+
+          <div className="space-y-2 text-xs font-semibold">
+            <div className="flex items-center justify-between p-2 rounded-md bg-emerald-50/50 border border-emerald-200/60">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-[#0D1F3D]">1. West Zone</span>
+                <span className="text-[10px] text-slate-400 font-semibold">(Mumbai)</span>
+              </div>
+              <span className="font-black text-emerald-600">75.0%</span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-semibold text-slate-700">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-extrabold text-[#0D1F3D]">
-                    <th className="py-2.5 px-3">Team / Branch</th>
-                    <th className="py-2.5 px-3">Team Manager</th>
-                    <th className="py-2.5 px-3">Target (₹)</th>
-                    <th className="py-2.5 px-3">Achieved (₹)</th>
-                    <th className="py-2.5 px-3">Achievement %</th>
-                    <th className="py-2.5 px-3">Status</th>
-                    <th className="py-2.5 px-3">Executives</th>
-                    <th className="py-2.5 px-3">Incentive (₹)</th>
-                    <th className="py-2.5 px-3 text-center">Actions</th>
-                  </tr>
-                </thead>
+            <div className="flex items-center justify-between p-2 rounded-md bg-slate-50 border border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-[#0D1F3D]">2. Central Zone</span>
+                <span className="text-[10px] text-slate-400 font-semibold">(Mumbai)</span>
+              </div>
+              <span className="font-black text-amber-600">66.2%</span>
+            </div>
 
-                <tbody className="divide-y divide-slate-100">
-                  {mockTeamTargets.map((tt) => (
-                    <tr key={tt.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-3">
-                        <div>
-                          <span className="font-extrabold text-[#0D1F3D] block">{tt.teamName}</span>
-                          <span className="text-[10px] text-slate-400 font-semibold">{tt.branch}</span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3">
-                        <div className="flex items-center gap-2">
-                          <img src={tt.teamLeaderAvatar} alt="" className="h-6 w-6 rounded-full object-cover border border-slate-200" />
-                          <div>
-                            <span className="font-bold text-[#0D1F3D] block text-xs">{tt.teamLeaderName}</span>
-                            <span className="text-[9px] text-slate-400 font-semibold block">Sales Manager</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 font-mono text-slate-800">₹{tt.targetAmount.toLocaleString('en-IN')}</td>
-                      <td className="py-3 px-3 font-mono text-slate-800">₹{tt.achievedAmount.toLocaleString('en-IN')}</td>
-                      <td className="py-3 px-3">
-                        <div className="space-y-1 w-24">
-                          <span className="font-extrabold text-[#0D1F3D] text-[11px]">{tt.achievementPct}%</span>
-                          <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                            <div
-                              className={`h-full rounded-full ${
-                                tt.achievementPct >= 70
-                                  ? 'bg-emerald-500'
-                                  : tt.achievementPct >= 55
-                                  ? 'bg-amber-500'
-                                  : 'bg-red-500'
-                              }`}
-                              style={{ width: `${Math.min(tt.achievementPct, 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3">
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-[10px] font-black border ${
-                            tt.status === 'On Track'
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : tt.status === 'At Risk'
-                              ? 'bg-amber-50 text-amber-700 border-amber-200'
-                              : 'bg-red-50 text-red-600 border-red-200'
-                          }`}
-                        >
-                          {tt.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 font-bold text-slate-700">{tt.executivesCount}</td>
-                      <td className="py-3 px-3 font-mono text-emerald-600 font-bold">₹{tt.incentiveEarned.toLocaleString('en-IN')}</td>
-                      <td className="py-3 px-3 text-center">
-                        <RowActionsMenu
-                          items={[
-                            { label: 'Edit Team Target', onClick: () => setIsSetTargetModalOpen(true) },
-                            { label: 'View Team Members', onClick: () => navigate('/admin/targets/executives') },
-                          ]}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="flex items-center justify-between p-2 rounded-md bg-slate-50 border border-slate-100">
+              <div className="flex items-center gap-2">
+                <span className="font-extrabold text-[#0D1F3D]">3. South Zone</span>
+                <span className="text-[10px] text-slate-400 font-semibold">(Bangalore)</span>
+              </div>
+              <span className="font-black text-amber-600">61.7%</span>
             </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: WIDGETS & LEADERBOARD (4 COLS) */}
-        <div className="lg:col-span-4 space-y-4">
-          {/* TOP PERFORMING TEAMS LEADERBOARD */}
-          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-              <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#0D1F3D]">
-                <Trophy className="h-4 w-4 text-amber-500" />
-                <span>Top Performing Teams</span>
-              </div>
-              <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
-                This Month
-              </span>
+        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+          <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+            Target Distribution by Region
+          </h3>
+          <div className="space-y-2 text-xs font-semibold">
+            <div className="flex justify-between text-slate-700">
+              <span>West Zone</span>
+              <span className="font-extrabold text-[#0D1F3D]">₹ 2,25,000 (25.7%)</span>
             </div>
+            <div className="flex justify-between text-slate-700 border-t border-slate-100 pt-1.5">
+              <span>Central Zone</span>
+              <span className="font-extrabold text-[#0D1F3D]">₹ 2,00,000 (22.8%)</span>
+            </div>
+            <div className="flex justify-between text-slate-700 border-t border-slate-100 pt-1.5">
+              <span>North Zone</span>
+              <span className="font-extrabold text-[#0D1F3D]">₹ 1,75,000 (20.0%)</span>
+            </div>
+          </div>
+        </div>
 
-            <div className="space-y-2 text-xs font-semibold">
-              <div className="flex items-center justify-between p-2 rounded-md bg-emerald-50/50 border border-emerald-200/60">
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-[#0D1F3D]">1. West Zone</span>
-                  <span className="text-[10px] text-slate-400 font-semibold">(Mumbai)</span>
-                </div>
-                <span className="font-black text-emerald-600">75.0%</span>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded-md bg-slate-50 border border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-[#0D1F3D]">2. Central Zone</span>
-                  <span className="text-[10px] text-slate-400 font-semibold">(Mumbai)</span>
-                </div>
-                <span className="font-black text-amber-600">66.2%</span>
-              </div>
-
-              <div className="flex items-center justify-between p-2 rounded-md bg-slate-50 border border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-[#0D1F3D]">3. South Zone</span>
-                  <span className="text-[10px] text-slate-400 font-semibold">(Bangalore)</span>
-                </div>
-                <span className="font-black text-amber-600">61.7%</span>
-              </div>
+        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+          <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+            Team Status Breakdown
+          </h3>
+          <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold pt-1">
+            <div className="rounded-md bg-emerald-50 p-2 border border-emerald-200/60">
+              <span className="text-emerald-700 block text-lg font-black">12</span>
+              <span className="text-[10px] text-emerald-600 font-semibold">On Track</span>
+            </div>
+            <div className="rounded-md bg-amber-50 p-2 border border-amber-200/60">
+              <span className="text-amber-700 block text-lg font-black">7</span>
+              <span className="text-[10px] text-amber-600 font-semibold">At Risk</span>
+            </div>
+            <div className="rounded-md bg-red-50 p-2 border border-red-200/60">
+              <span className="text-red-700 block text-lg font-black">5</span>
+              <span className="text-[10px] text-red-600 font-semibold">Behind</span>
             </div>
           </div>
         </div>

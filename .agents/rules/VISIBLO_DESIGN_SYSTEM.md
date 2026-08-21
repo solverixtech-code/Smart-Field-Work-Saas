@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Visiblo Smart Field Work — Master UI/UX & Code Standards
 
 This document establishes the binding design system, component standards, typography rules, and UX patterns for all frontend screens in the **Visiblo Smart Field Work** SaaS platform.
