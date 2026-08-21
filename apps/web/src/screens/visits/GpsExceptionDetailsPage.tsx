@@ -19,6 +19,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import { mockGpsExceptions } from './visitsData';
 
 export default function GpsExceptionDetailsPage() {
@@ -280,12 +281,28 @@ export default function GpsExceptionDetailsPage() {
 
                 {/* Map Circle Simulation */}
                 <div className="relative h-44 w-full rounded-sm border border-blue-200 overflow-hidden">
-                  <iframe
-                    title="Expected Map"
-                    src={`https://maps.google.com/maps?q=${req.expectedLatitude},${req.expectedLongitude}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
-                    className="w-full h-full border-0"
+                  <InteractiveMap
+                    mode="prospects"
+                    heightClassName="h-full"
+                    compact
+                    prospects={[
+                      {
+                        id: 'expected',
+                        name: 'Expected Location',
+                        category: 'Expected',
+                        address: req.businessAddress,
+                        status: 'Visited',
+                        markerColor: 'blue',
+                        contactPerson: req.businessName,
+                        phone: '',
+                        lastVisitTime: req.requestedAt,
+                        lat: req.expectedLatitude,
+                        lng: req.expectedLongitude,
+                        region: 'Expected',
+                      },
+                    ]}
                   />
-                  <div className="absolute bottom-2 right-2 rounded-sm bg-blue-600 px-2 py-1 text-[10px] font-extrabold text-white shadow-xs">
+                  <div className="absolute bottom-2 right-2 rounded-sm bg-blue-600 px-2 py-1 text-[10px] font-extrabold text-white shadow-xs z-20">
                     100m radius
                   </div>
                 </div>
@@ -321,12 +338,28 @@ export default function GpsExceptionDetailsPage() {
 
                 {/* Map Circle Simulation */}
                 <div className="relative h-44 w-full rounded-sm border border-red-200 overflow-hidden">
-                  <iframe
-                    title="Actual Map"
-                    src={`https://maps.google.com/maps?q=${req.actualLatitude},${req.actualLongitude}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
-                    className="w-full h-full border-0"
+                  <InteractiveMap
+                    mode="prospects"
+                    heightClassName="h-full"
+                    compact
+                    prospects={[
+                      {
+                        id: 'actual',
+                        name: 'Actual Location',
+                        category: 'Actual',
+                        address: req.businessAddress,
+                        status: 'Visited',
+                        markerColor: 'red',
+                        contactPerson: req.executiveName,
+                        phone: '',
+                        lastVisitTime: req.requestedAt,
+                        lat: req.actualLatitude,
+                        lng: req.actualLongitude,
+                        region: 'Actual',
+                      },
+                    ]}
                   />
-                  <div className="absolute bottom-2 right-2 rounded-sm bg-red-600 px-2 py-1 text-[10px] font-extrabold text-white shadow-xs">
+                  <div className="absolute bottom-2 right-2 rounded-sm bg-red-600 px-2 py-1 text-[10px] font-extrabold text-white shadow-xs z-20">
                     350m away
                   </div>
                 </div>
@@ -392,10 +425,40 @@ export default function GpsExceptionDetailsPage() {
             </h3>
 
             <div className="relative h-60 w-full rounded-sm border border-slate-200 overflow-hidden shadow-xs">
-              <iframe
-                title="Location Map Overview"
-                src={`https://maps.google.com/maps?q=${req.expectedLatitude},${req.expectedLongitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                className="w-full h-full border-0"
+              <InteractiveMap
+                mode="prospects"
+                heightClassName="h-full"
+                compact
+                prospects={[
+                  {
+                    id: 'exp',
+                    name: 'Expected Location',
+                    category: 'Expected',
+                    address: req.businessAddress,
+                    status: 'Visited',
+                    markerColor: 'blue',
+                    contactPerson: req.businessName,
+                    phone: '',
+                    lastVisitTime: req.requestedAt,
+                    lat: req.expectedLatitude,
+                    lng: req.expectedLongitude,
+                    region: 'Expected',
+                  },
+                  {
+                    id: 'act',
+                    name: 'Actual Location',
+                    category: 'Actual',
+                    address: req.businessAddress,
+                    status: 'Visited',
+                    markerColor: 'red',
+                    contactPerson: req.executiveName,
+                    phone: '',
+                    lastVisitTime: req.requestedAt,
+                    lat: req.actualLatitude,
+                    lng: req.actualLongitude,
+                    region: 'Actual',
+                  },
+                ]}
               />
             </div>
 

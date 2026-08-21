@@ -17,6 +17,7 @@ import {
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button, Modal } from '../../components/ui';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { InteractiveMap } from '../../components/maps/InteractiveMap';
 
 const todayPunches = [
   {
@@ -90,8 +91,6 @@ export default function AttendanceMonitoringPage() {
   const [selectedPunch, setSelectedPunch] = useState(todayPunches[0]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showPhotoModal, setShowPhotoModal] = useState<string | null>(null);
-
-  const googleMapUrl = `https://maps.google.com/maps?q=${selectedPunch.lat},${selectedPunch.lng}&z=14&ie=UTF8&iwloc=&output=embed`;
 
   const filteredPunches = todayPunches.filter(
     (p) =>
@@ -284,16 +283,28 @@ export default function AttendanceMonitoringPage() {
               </span>
             </div>
 
-            {/* Actual Google Map Embed */}
-            <div className="relative h-64 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-inner">
-              <iframe
-                title="GPS Punch Location Map"
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                scrolling="no"
-                src={googleMapUrl}
-                className="h-full w-full border-0"
+            {/* Interactive Mapbox Location Map */}
+            <div className="relative h-64 w-full overflow-hidden rounded-xl border border-slate-200 shadow-inner">
+              <InteractiveMap
+                mode="prospects"
+                heightClassName="h-full"
+                compact
+                prospects={[
+                  {
+                    id: selectedPunch.id,
+                    name: selectedPunch.user,
+                    category: selectedPunch.empId,
+                    address: selectedPunch.location,
+                    status: 'Visited',
+                    markerColor: 'green',
+                    contactPerson: selectedPunch.user,
+                    phone: '',
+                    lastVisitTime: selectedPunch.time,
+                    lat: selectedPunch.lat,
+                    lng: selectedPunch.lng,
+                    region: selectedPunch.location,
+                  },
+                ]}
               />
             </div>
 

@@ -19,6 +19,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import { BusinessItem } from './businessesData';
 
 export default function BusinessDetailsPage() {
@@ -154,14 +155,28 @@ export default function BusinessDetailsPage() {
               </div>
             </div>
 
-            {/* Embedded Interactive Google Map */}
-            <div className="relative h-48 w-full rounded-md border border-slate-200 bg-slate-100 overflow-hidden shadow-xs">
-              <iframe
-                title="Google Maps Location"
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(business.fullAddress)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                className="w-full h-full border-0"
-                loading="lazy"
-                allowFullScreen
+            {/* Interactive Location Map */}
+            <div className="relative h-48 w-full rounded-md border border-slate-200 overflow-hidden shadow-xs">
+              <InteractiveMap
+                mode="prospects"
+                heightClassName="h-full"
+                compact
+                prospects={[
+                  {
+                    id: business.id,
+                    name: business.name,
+                    category: business.businessType,
+                    address: business.fullAddress,
+                    status: 'Visited',
+                    markerColor: 'green',
+                    contactPerson: business.assignedToName,
+                    phone: business.phone,
+                    lastVisitTime: 'Today',
+                    lat: 19.115,
+                    lng: 72.86,
+                    region: business.city,
+                  },
+                ]}
               />
             </div>
           </div>

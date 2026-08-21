@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MapPin, Navigation, Clock, Store, Globe, Eye, Download, Layers, CheckCircle2 } from 'lucide-react';
 import { KpiCard } from '../../../components/dashboard/KpiCard';
 import { Button } from '../../../components/ui/Button';
+import { InteractiveMap } from '../../../components/maps/InteractiveMap';
 
 const routeLogs = [
   { date: '20 May 2025 Tue', startEnd: '09:15 AM - 05:45 PM', distance: '32.16 km', duration: '7h 24m', visits: 5, status: 'Completed', lat: 19.1197, lng: 72.8464 },
@@ -24,10 +25,6 @@ const waypoints = [
 export function RouteHistoryTab() {
   const [selectedRoute, setSelectedRoute] = useState(routeLogs[0]);
   const [mapType, setMapType] = useState<'roadmap' | 'satellite'>('roadmap');
-
-  const googleMapUrl = `https://maps.google.com/maps?q=${selectedRoute.lat},${selectedRoute.lng}&t=${
-    mapType === 'satellite' ? 'k' : 'm'
-  }&z=13&ie=UTF8&iwloc=&output=embed`;
 
   return (
     <div className="space-y-6 font-sans">
@@ -190,16 +187,24 @@ export function RouteHistoryTab() {
             </div>
           </div>
 
-          {/* Actual Google Maps Render */}
-          <div className="relative h-64 w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-100 shadow-inner">
-            <iframe
-              title="Route Tracking Map"
-              width="100%"
-              height="100%"
-              frameBorder="0"
-              scrolling="no"
-              src={googleMapUrl}
-              className="h-full w-full border-0"
+          {/* Interactive Mapbox Route Map */}
+          <div className="relative h-64 w-full overflow-hidden rounded-xl border border-slate-200 shadow-inner">
+            <InteractiveMap
+              mode="route-playback"
+              heightClassName="h-full"
+              compact
+              routeStops={waypoints.map((w, idx) => ({
+                id: String(w.id),
+                stopNumber: w.id,
+                type: idx === 0 ? 'start' : idx === waypoints.length - 1 ? 'end' : 'visit',
+                title: w.location,
+                locationName: w.location,
+                address: w.location,
+                timestamp: w.checkin,
+                distanceKm: idx * 2.5,
+                lat: selectedRoute.lat + idx * 0.005,
+                lng: selectedRoute.lng + idx * 0.005,
+              }))}
             />
           </div>
 

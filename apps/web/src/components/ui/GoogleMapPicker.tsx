@@ -135,8 +135,8 @@ export function GoogleMapPicker({
     toast.success('Map location updated for address search.');
   };
 
-  // Fallback iframe URL if WebGL context is disabled in certain browser sessions
-  const fallbackEmbedUrl = `https://maps.google.com/maps?q=${currentLat},${currentLng}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
+  // Fallback OpenStreetMap tile embed URL if WebGL context is disabled in certain browser sessions
+  const fallbackEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${currentLng - 0.005},${currentLat - 0.005},${currentLng + 0.005},${currentLat + 0.005}&layer=mapnik&marker=${currentLat},${currentLng}`;
 
   return (
     <div className="space-y-3 font-sans text-xs">
@@ -256,3 +256,6 @@ export function GoogleMapPicker({
     </div>
   );
 }
+
+export const MapPicker = GoogleMapPicker;
+

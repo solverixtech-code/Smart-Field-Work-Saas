@@ -19,6 +19,7 @@ import {
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { Button } from '../../components/ui/Button';
+import { InteractiveMap } from '../../components/maps/InteractiveMap';
 
 interface FieldExecutive {
   id: string;
@@ -126,11 +127,6 @@ export default function FieldActivityDashboardPage() {
     e.name.toLowerCase().includes(mapSearchQuery.toLowerCase()) ||
     e.area.toLowerCase().includes(mapSearchQuery.toLowerCase()),
   );
-
-  // Dynamic Google Map Embed URL centered on selected executive GPS
-  const googleMapUrl = `https://maps.google.com/maps?q=${selectedExec.lat},${selectedExec.lng}&t=${
-    mapType === 'satellite' ? 'k' : 'm'
-  }&z=13&ie=UTF8&iwloc=&output=embed`;
 
   return (
     <div className="space-y-4 font-sans pb-12">
@@ -319,261 +315,40 @@ export default function FieldActivityDashboardPage() {
           </div>
         </div>
 
-        {/* Right 8 Cols: Interactive Google Maps Canvas with Custom Profile Picture Map Pins */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-8 flex flex-col justify-between relative">
-          {/* Google Maps Controls Bar */}
+        {/* Right 8 Cols: Interactive Mapbox Map Canvas */}
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-8 flex flex-col justify-between">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
                 <Globe className="h-4.5 w-4.5 text-[#E20613]" />
-                <h3 className="text-base font-extrabold text-[#0D1F3D]">Live Google Maps View</h3>
+                <h3 className="text-base font-extrabold text-[#0D1F3D]">Live Interactive Map View</h3>
               </div>
-              <p className="text-xs text-slate-500">Search any executive from the map search bar below to center Google Maps</p>
-            </div>
-
-            {/* Map Layer Toggle */}
-            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs font-bold">
-              <button
-                type="button"
-                onClick={() => setMapType('roadmap')}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all ${
-                  mapType === 'roadmap'
-                    ? 'bg-[#0D1F3D] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-[#0D1F3D]'
-                }`}
-              >
-                <Layers className="h-3.5 w-3.5" /> Map View
-              </button>
-              <button
-                type="button"
-                onClick={() => setMapType('satellite')}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 transition-all ${
-                  mapType === 'satellite'
-                    ? 'bg-[#0D1F3D] text-white shadow-xs'
-                    : 'text-slate-600 hover:text-[#0D1F3D]'
-                }`}
-              >
-                <Globe className="h-3.5 w-3.5" /> Satellite View
-              </button>
+              <p className="text-xs text-slate-500">Real-time Mapbox GL JS engine with executive GPS markers</p>
             </div>
           </div>
 
-          {/* Actual Google Maps Render Container */}
-          <div className="relative h-[520px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner">
-            <iframe
-              title="Google Maps Live GPS Field Executive Tracking"
-              width="100%"
-              height="100%"
-              frameBorder="0"
-              scrolling="no"
-              marginHeight={0}
-              marginWidth={0}
-              src={googleMapUrl}
-              className="h-full w-full border-0 transition-opacity duration-300"
+          <div className="relative h-[520px] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-inner">
+            <InteractiveMap
+              mode="live-executives"
+              heightClassName="h-full"
+              selectedExecutiveId={selectedExec.id}
+              executives={executivesData.map((e) => ({
+                id: e.id,
+                name: e.name,
+                avatar: e.avatar,
+                status: (e.status === 'Checked-in' ? 'On Field' : e.status === 'In Transit' ? 'In Transit' : 'On Field') as any,
+                currentLocation: e.area,
+                lastUpdated: e.lastUpdated,
+                batteryLevel: parseInt(e.battery),
+                lat: e.lat,
+                lng: e.lng,
+                phone: e.phone,
+                team: 'Field Team',
+                visitsTodayCompleted: 4,
+                visitsTodayTotal: 8,
+                distanceKmToday: 24.2,
+              }))}
             />
-
-            {/* Interactive Live Search Box & Executive Selection Bar on Top of Map */}
-            <div className="absolute top-3 left-3 right-3 z-30 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 rounded-2xl bg-white/95 p-2.5 shadow-xl backdrop-blur-md border border-white/80">
-              {/* Search Box Input with Clear Button */}
-              <div className="relative flex-1 max-w-xs">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search executive or location..."
-                  value={mapSearchQuery}
-                  onChange={(e) => {
-                    setMapSearchQuery(e.target.value);
-                    setShowMapSearchResults(true);
-                  }}
-                  onFocus={() => setShowMapSearchResults(true)}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50/80 pl-9 pr-8 py-1.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:outline-none transition-all"
-                />
-                {mapSearchQuery && (
-                  <button
-                    onClick={() => {
-                      setMapSearchQuery('');
-                      setShowMapSearchResults(false);
-                    }}
-                    className="absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 font-bold text-xs"
-                  >
-                    ✕
-                  </button>
-                )}
-
-                {/* Autocomplete Search Dropdown */}
-                {showMapSearchResults && mapSearchQuery && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 z-40 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl space-y-1 custom-scrollbar">
-                    {matchingMapExecs.length > 0 ? (
-                      matchingMapExecs.map((exec) => (
-                        <div
-                          key={exec.id}
-                          onClick={() => {
-                            setSelectedExec(exec);
-                            setShowMapSearchResults(false);
-                          }}
-                          className="flex items-center justify-between rounded-lg p-2 hover:bg-slate-50 cursor-pointer transition-colors"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover shrink-0 border border-slate-200" />
-                            <div>
-                              <p className="text-xs font-bold text-[#0D1F3D]">{exec.name}</p>
-                              <p className="text-[10px] text-slate-500 font-medium">{exec.area}</p>
-                            </div>
-                          </div>
-                          <span className="rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700">
-                            {exec.status}
-                          </span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-3 text-center text-xs font-medium text-slate-400">
-                        No executives found matching "{mapSearchQuery}"
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Quick Executive Profile Chips */}
-              <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-0.5 max-w-full">
-                {executivesData.map((exec) => {
-                  const isSelected = selectedExec.id === exec.id;
-                  return (
-                    <button
-                      key={exec.id}
-                      onClick={() => setSelectedExec(exec)}
-                      className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-bold transition-all shrink-0 ${
-                        isSelected
-                          ? 'bg-[#E20613] text-white shadow-sm ring-2 ring-[#E20613]/20'
-                          : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      <img src={exec.avatar} alt={exec.name} className="h-5 w-5 rounded-full object-cover border border-white" />
-                      <span className="truncate max-w-[90px]">{exec.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Dynamic Profile Avatar Pins Overlay Layer on Top of Google Maps */}
-            <div className="absolute inset-0 pointer-events-none p-4">
-              <div className="relative w-full h-full">
-                {executivesData.map((exec) => {
-                  const isSelected = selectedExec.id === exec.id;
-
-                  // Calculate dynamic viewport offset relative to selected executive GPS center
-                  const dLat = exec.lat - selectedExec.lat;
-                  const dLng = exec.lng - selectedExec.lng;
-
-                  // Zoom level 13 distance scale factor
-                  const topPos = 50 - dLat * 1800;
-                  const leftPos = 50 + dLng * 1800;
-
-                  // Hide if outside map viewport boundaries
-                  if (topPos < 5 || topPos > 95 || leftPos < 5 || leftPos > 95) {
-                    return null;
-                  }
-
-                  return (
-                    <div
-                      key={exec.id}
-                      onClick={() => setSelectedExec(exec)}
-                      className={`pointer-events-auto absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 ${
-                        isSelected ? 'z-30 scale-110' : 'z-20 hover:scale-105'
-                      }`}
-                      style={{
-                        top: `${topPos}%`,
-                        left: `${leftPos}%`,
-                      }}
-                    >
-                      {/* Profile Picture Map Pin Component */}
-                      <div className="relative flex flex-col items-center group">
-                        <div
-                          className={`mb-1 flex flex-col items-center rounded-xl bg-[#0D1F3D] px-3 py-1.5 text-xs font-bold text-white shadow-2xl border border-white/20 whitespace-nowrap transition-all ${
-                            isSelected ? 'opacity-100 scale-105' : 'opacity-85 group-hover:opacity-100'
-                          }`}
-                        >
-                          <span className="text-xs font-extrabold">{exec.name}</span>
-                          <span className="text-[10px] text-emerald-400 font-semibold">{exec.status} • {exec.area}</span>
-                        </div>
-
-                        <div
-                          className={`relative h-12 w-12 rounded-full p-0.5 bg-white shadow-2xl ring-4 ${
-                            isSelected ? 'ring-[#E20613] scale-110' : 'ring-blue-600'
-                          }`}
-                        >
-                          <img
-                            src={exec.avatar}
-                            alt={exec.name}
-                            className="h-full w-full rounded-full object-cover"
-                          />
-                          <span
-                            className={`absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-white ${
-                              exec.status === 'Checked-in'
-                                ? 'bg-emerald-500'
-                                : exec.status === 'In Transit'
-                                ? 'bg-blue-500'
-                                : exec.status === 'Demo Completed'
-                                ? 'bg-purple-500'
-                                : 'bg-amber-500'
-                            }`}
-                          />
-                        </div>
-
-                        <div className={`h-3 w-3 rotate-45 transform -mt-1.5 ${isSelected ? 'bg-[#E20613]' : 'bg-blue-600'}`} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Floating Info Overlay Card for Selected Executive */}
-            <div className="absolute bottom-4 left-4 right-4 sm:right-auto rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-2xl backdrop-blur-md space-y-3 min-w-[280px]">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={selectedExec.avatar}
-                    alt={selectedExec.name}
-                    className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-xs"
-                  />
-                  <div>
-                    <h4 className="text-sm font-extrabold text-[#0D1F3D]">{selectedExec.name}</h4>
-                    <p className="text-[11px] font-semibold text-slate-500">{selectedExec.role}</p>
-                  </div>
-                </div>
-                <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700">
-                  {selectedExec.status}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-700">
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 block">Area Location</span>
-                  <span className="font-extrabold text-[#0D1F3D]">{selectedExec.area}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 block">Live Speed & Battery</span>
-                  <span className="font-extrabold text-blue-600">{selectedExec.speed} • {selectedExec.battery}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <button
-                  onClick={() => toast.info(`Calling ${selectedExec.name} at ${selectedExec.phone}...`)}
-                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-[#0D1F3D] py-2 text-xs font-bold text-white shadow-xs hover:bg-[#07152E]"
-                >
-                  <PhoneCall className="h-3.5 w-3.5" /> Call Executive
-                </button>
-                <button
-                  onClick={() => toast.info(`Opening chat with ${selectedExec.name}...`)}
-                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50"
-                >
-                  <MessageSquare className="h-3.5 w-3.5 text-[#E20613]" /> Send Message
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>

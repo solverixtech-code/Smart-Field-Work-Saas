@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
+import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import { mockVisits } from './visitsData';
 
 export default function VisitDetailsPage() {
@@ -414,14 +415,28 @@ export default function VisitDetailsPage() {
               Location & Proof
             </h3>
 
-            {/* Embedded Google Map */}
-            <div className="relative h-56 w-full rounded-sm border border-slate-200 bg-slate-100 overflow-hidden shadow-xs">
-              <iframe
-                title="Visit Check-in Location"
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(visit.location)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                className="w-full h-full border-0"
-                loading="lazy"
-                allowFullScreen
+            {/* Interactive Location Map */}
+            <div className="relative h-56 w-full rounded-sm border border-slate-200 overflow-hidden shadow-xs">
+              <InteractiveMap
+                mode="prospects"
+                heightClassName="h-full"
+                compact
+                prospects={[
+                  {
+                    id: visit.id,
+                    name: visit.businessName,
+                    category: visit.purpose,
+                    address: visit.location,
+                    status: 'Visited',
+                    markerColor: 'green',
+                    contactPerson: visit.executiveName,
+                    phone: visit.executivePhone,
+                    lastVisitTime: visit.actualDateTime || 'Today',
+                    lat: 19.115,
+                    lng: 72.86,
+                    region: visit.routeArea,
+                  },
+                ]}
               />
             </div>
 
