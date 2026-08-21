@@ -17,6 +17,7 @@ import { DatePicker } from '../../components/ui/DatePicker';
 import { ClockTimePicker } from '../../components/ui/ClockTimePicker';
 import { mockTerritoryExecutives } from '../territories/territoriesData';
 import { mockBusinesses } from '../businesses/businessesData';
+import { mockLeadsData, LeadItem } from '../leads/leadsData';
 import { mockFollowUpsList } from './followupsData';
 
 interface AddFollowUpModalProps {
@@ -25,9 +26,23 @@ interface AddFollowUpModalProps {
   onSuccess?: () => void;
 }
 
-const allAvailableBusinesses = [
+const allAvailableTargets = [
+  ...mockLeadsData.map((l: LeadItem) => ({
+    name: l.companyName,
+    type: 'Lead',
+    code: l.code || l.id,
+    contactPerson: l.contactPerson,
+    contactRole: l.designation,
+    phone: l.phone,
+    email: l.email,
+    address: l.address || `${l.city}, ${l.region}`,
+    city: l.city,
+    category: l.industry || 'Prospect Lead',
+  })),
   ...mockBusinesses.map((b) => ({
     name: b.name,
+    type: 'Business',
+    code: b.id,
     contactPerson: b.contactPerson,
     contactRole: b.contactRole,
     phone: b.phone,
@@ -38,6 +53,8 @@ const allAvailableBusinesses = [
   })),
   ...mockFollowUpsList.map((f) => ({
     name: f.businessName,
+    type: 'Business',
+    code: f.leadId,
     contactPerson: f.contactPerson,
     contactRole: f.contactRole,
     phone: f.phone,
@@ -53,19 +70,19 @@ export function AddFollowUpModal({ isOpen, onClose, onSuccess }: AddFollowUpModa
   const [visible, setVisible] = useState(false);
 
   const [selectedBusinessName, setSelectedBusinessName] = useState(
-    allAvailableBusinesses[0]?.name || ''
+    allAvailableTargets[0]?.name || ''
   );
 
   const matchedBusiness =
-    allAvailableBusinesses.find((b) => b.name === selectedBusinessName) ||
-    allAvailableBusinesses[0];
+    allAvailableTargets.find((b) => b.name === selectedBusinessName) ||
+    allAvailableTargets[0];
 
   const [phoneNumber, setPhoneNumber] = useState(matchedBusiness?.phone || '');
   const [followupType, setFollowupType] = useState<any>('Quotation Follow-up');
   const [assignedTo, setAssignedTo] = useState('Pooja Yadav');
   const [priority, setPriority] = useState('High');
   const [followupDate, setFollowupDate] = useState('2025-05-22');
-  const [followupTime, setFollowupTime] = useState('12:00');
+  const [followupTime, setFollowupTime] = useState('12:00 PM');
   const [purpose, setPurpose] = useState('');
 
   useEffect(() => {
@@ -95,7 +112,7 @@ export function AddFollowUpModal({ isOpen, onClose, onSuccess }: AddFollowUpModa
   const handleBusinessSelect = (e: { target: { value: string } }) => {
     const val = e.target.value;
     setSelectedBusinessName(val);
-    const found = allAvailableBusinesses.find((b) => b.name === val);
+    const found = allAvailableTargets.find((b) => b.name === val);
     if (found) {
       setPhoneNumber(found.phone);
     }
@@ -104,7 +121,7 @@ export function AddFollowUpModal({ isOpen, onClose, onSuccess }: AddFollowUpModa
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBusinessName || !phoneNumber) {
-      toast.error('Please select a business');
+      toast.error('Please select a target lead or business');
       return;
     }
     toast.success(`Follow-up scheduled for ${selectedBusinessName}!`);
@@ -141,7 +158,7 @@ export function AddFollowUpModal({ isOpen, onClose, onSuccess }: AddFollowUpModa
                 Add New Follow-up
               </h2>
               <p className="text-[11px] font-semibold text-slate-500">
-                Schedule a follow-up action for a business or prospect lead.
+                Schedule a follow-up action for a Lead or Business.
               </p>
             </div>
           </div>
@@ -157,27 +174,30 @@ export function AddFollowUpModal({ isOpen, onClose, onSuccess }: AddFollowUpModa
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4 text-xs font-semibold">
-          {/* Target Business Selection */}
+          {/* Target Selection */}
           <div className="space-y-1">
             <Select
-              label="Select Target Business *"
+              label="Select Target Lead or Business *"
               value={selectedBusinessName}
               onChange={handleBusinessSelect}
               searchable
-              options={allAvailableBusinesses.map((b) => ({
+              options={allAvailableTargets.map((b) => ({
                 value: b.name,
-                label: b.name,
+                label: `[${b.type.toUpperCase()}] ${b.name}`,
                 sublabel: `${b.category} • ${b.city}`,
               }))}
             />
           </div>
 
-          {/* Business Info Summary Card */}
+          {/* Business/Lead Info Summary Card */}
           {matchedBusiness && (
             <div className="rounded-sm border border-slate-200/80 bg-slate-50/70 p-3.5 space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="font-extrabold text-[#0D1F3D]">{matchedBusiness.name}</span>
+                  <span className="rounded-xs bg-purple-100 text-purple-700 px-1.5 py-0.2 text-[10px] font-bold">
+                    {matchedBusiness.type}
+                  </span>
                   <span className="rounded-xs bg-slate-200/60 text-slate-700 px-1.5 py-0.2 text-[10px] font-bold">
                     {matchedBusiness.category}
                   </span>
