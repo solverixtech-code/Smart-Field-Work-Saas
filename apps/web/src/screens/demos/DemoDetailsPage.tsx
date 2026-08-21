@@ -30,15 +30,13 @@ export default function DemoDetailsPage() {
 
   const demo = getDemoById(demoId || '') || mockDemosList[2]; // Fallback to Royal Bakers demo
 
-  const [activeTab, setActiveTab] = useState('Overview');
-
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
       {/* Top Navigation Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
         <button
           onClick={() => navigate('/admin/demos')}
-          className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-900 cursor-pointer"
+          className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Demos
         </button>
@@ -95,41 +93,41 @@ export default function DemoDetailsPage() {
             <Monitor className="h-5 w-5" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 font-bold block">Demo ID</span>
+            <span className="text-[11px] font-semibold text-slate-500 block">Demo ID</span>
             <span className="text-sm font-extrabold text-[#0D1F3D]">{demo.demoId}</span>
-            <span className="text-[10px] text-blue-600 font-bold block">{demo.demoType}</span>
+            <span className="text-[11px] font-bold text-blue-600 block">{demo.demoType}</span>
           </div>
         </div>
 
         <div>
-          <span className="text-[10px] text-slate-400 font-bold block">Status</span>
+          <span className="text-[11px] font-semibold text-slate-500 block">Status</span>
           <span className="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold inline-block mt-0.5">
             {demo.status}
           </span>
-          <span className="text-[10px] text-slate-400 font-normal block mt-1">Completed On {demo.demoDate}</span>
+          <span className="text-[11px] text-slate-500 font-medium block mt-1">Completed On {demo.demoDate}</span>
         </div>
 
         <div>
-          <span className="text-[10px] text-slate-400 font-bold block">Demo Date & Time</span>
+          <span className="text-[11px] font-semibold text-slate-500 block">Demo Date & Time</span>
           <span className="font-extrabold text-[#0D1F3D] block">{demo.demoDate}, {demo.demoTime}</span>
         </div>
 
         <div>
-          <span className="text-[10px] text-slate-400 font-bold block">Duration</span>
+          <span className="text-[11px] font-semibold text-slate-500 block">Duration</span>
           <span className="font-extrabold text-slate-800 block">{demo.durationFormatted || '52m 05s'}</span>
         </div>
 
         <div>
-          <span className="text-[10px] text-slate-400 font-bold block">Outcome</span>
+          <span className="text-[11px] font-semibold text-slate-500 block">Outcome</span>
           <span className="rounded-full bg-teal-50 text-teal-700 border border-teal-200 px-2 py-0.5 text-[10px] font-bold inline-block mt-0.5">
             {demo.outcome || 'Demo Done'}
           </span>
         </div>
 
         <div>
-          <span className="text-[10px] text-slate-400 font-bold block">Next Action</span>
+          <span className="text-[11px] font-semibold text-slate-500 block">Next Action</span>
           <span className="font-extrabold text-[#0D1F3D] block">{demo.nextAction || 'Send Proposal'}</span>
-          <span className="text-[10px] text-slate-400 font-normal block">{demo.nextActionDate || '20 May 2025'}</span>
+          <span className="text-[11px] text-slate-500 font-medium block">{demo.nextActionDate || '20 May 2025'}</span>
         </div>
       </div>
 
@@ -150,24 +148,24 @@ export default function DemoDetailsPage() {
                 </div>
                 <div>
                   <h4 className="font-extrabold text-sm text-[#0D1F3D]">{demo.businessName}</h4>
-                  <span className="text-[11px] text-slate-500 block">Bakery & Confectionery</span>
-                  <span className="text-[10px] text-slate-400 block">{demo.businessAddress}</span>
+                  <span className="text-[11px] font-medium text-slate-500 block">Bakery & Confectionery</span>
+                  <span className="text-[11px] text-slate-500 block">{demo.businessAddress}</span>
                 </div>
               </div>
 
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">Lead Source</span>
-                <span className="font-bold text-slate-800">{demo.leadSource || 'Referral'}</span>
+                <span className="text-[11px] font-semibold text-slate-500 block">Lead Source</span>
+                <span className="font-extrabold text-slate-800">{demo.leadSource || 'Referral'}</span>
               </div>
 
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">Lead Stage</span>
-                <span className="font-bold text-blue-600">{demo.leadStage || 'Interested'}</span>
+                <span className="text-[11px] font-semibold text-slate-500 block">Lead Stage</span>
+                <span className="font-extrabold text-blue-600">{demo.leadStage || 'Interested'}</span>
               </div>
 
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">Lead Score</span>
-                <div className="flex items-center gap-1 text-amber-500 font-bold">
+                <span className="text-[11px] font-semibold text-slate-500 block">Lead Score</span>
+                <div className="flex items-center gap-1 text-amber-500 font-extrabold">
                   <Star className="h-3.5 w-3.5 fill-amber-400" />
                   <span>{demo.leadScore || 4.5}/5</span>
                 </div>
@@ -178,14 +176,14 @@ export default function DemoDetailsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-4">
               {/* Contact Person */}
               <div className="rounded-sm border border-slate-200/70 p-3.5 bg-slate-50/40 space-y-2">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Contact Person</span>
+                <span className="text-xs font-extrabold text-slate-700 block">Contact Person</span>
                 <div className="flex items-center gap-2">
                   <div className="h-7 w-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                     <User className="h-4 w-4" />
                   </div>
                   <div>
                     <span className="font-extrabold text-[#0D1F3D] block">{demo.contactPerson}</span>
-                    <span className="text-[10px] text-slate-400 font-normal">{demo.contactRole}</span>
+                    <span className="text-[11px] text-slate-500 font-medium">{demo.contactRole}</span>
                   </div>
                 </div>
                 <div className="space-y-1 pt-1 text-[11px] font-mono">
@@ -207,7 +205,7 @@ export default function DemoDetailsPage() {
 
               {/* Assigned To Executive */}
               <div className="rounded-sm border border-slate-200/70 p-3.5 bg-slate-50/40 space-y-2">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Assigned To</span>
+                <span className="text-xs font-extrabold text-slate-700 block">Assigned To</span>
                 <div className="flex items-center gap-2">
                   <img
                     src={demo.assignedToAvatar}
@@ -216,7 +214,7 @@ export default function DemoDetailsPage() {
                   />
                   <div>
                     <span className="font-extrabold text-[#0D1F3D] block">{demo.assignedToName}</span>
-                    <span className="text-[10px] text-slate-400 font-normal">{demo.assignedToRole}</span>
+                    <span className="text-[11px] text-slate-500 font-medium">{demo.assignedToRole}</span>
                   </div>
                 </div>
                 <div className="space-y-1 pt-1 text-[11px] font-mono">
@@ -246,34 +244,34 @@ export default function DemoDetailsPage() {
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">Demo Type</span>
-                <span className="font-bold text-[#0D1F3D]">{demo.demoType}</span>
+                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Demo Type</span>
+                <span className="font-extrabold text-[#0D1F3D]">{demo.demoType}</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">Product / Service</span>
-                <span className="font-bold text-blue-600">{demo.productService}</span>
+                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Product / Service</span>
+                <span className="font-extrabold text-blue-600">{demo.productService}</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">Source</span>
-                <span className="font-bold text-slate-800">{demo.leadSource || 'Referral'}</span>
+                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Source</span>
+                <span className="font-extrabold text-slate-800">{demo.leadSource || 'Referral'}</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">Demo Location</span>
-                <span className="font-bold text-slate-800">📍 Customer Place</span>
+                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Demo Location</span>
+                <span className="font-extrabold text-slate-800">📍 Customer Place</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">Attendees</span>
+                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Attendees</span>
                 <span className="font-mono font-bold text-slate-800">{demo.attendeesCount || 2}</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">Reminder Sent</span>
+                <span className="text-[11px] font-semibold text-slate-500 block mb-0.5">Reminder Sent</span>
                 <span className="text-emerald-600 font-bold">✓ Yes ({demo.demoDate})</span>
               </div>
             </div>
 
             <div className="border-t border-slate-100 pt-2">
-              <span className="text-[10px] text-slate-400 font-bold block mb-0.5">Notes</span>
-              <p className="text-[11px] text-slate-700 font-medium leading-relaxed bg-slate-50 p-2.5 rounded-sm border border-slate-200/60">
+              <span className="text-[11px] font-semibold text-slate-500 block mb-1">Notes</span>
+              <p className="text-[11px] text-slate-800 font-medium leading-relaxed bg-slate-50 p-2.5 rounded-sm border border-slate-200/60">
                 {demo.notesSummary || 'Customer showed interest in Review Management and AI Website. Discussed pricing and implementation timeline.'}
               </p>
             </div>
@@ -302,7 +300,7 @@ export default function DemoDetailsPage() {
                   </div>
                   <div>
                     <span className="font-bold text-[#0D1F3D] block">Presentation_RoyalBakers.pdf</span>
-                    <span className="text-[10px] text-slate-400">2.4 MB • PDF</span>
+                    <span className="text-[10px] text-slate-500 font-medium">2.4 MB • PDF</span>
                   </div>
                 </div>
                 <button
@@ -321,7 +319,7 @@ export default function DemoDetailsPage() {
                   </div>
                   <div>
                     <span className="font-bold text-[#0D1F3D] block">Features_Overview.pdf</span>
-                    <span className="text-[10px] text-slate-400">1.6 MB • PDF</span>
+                    <span className="text-[10px] text-slate-500 font-medium">1.6 MB • PDF</span>
                   </div>
                 </div>
                 <button
@@ -351,10 +349,10 @@ export default function DemoDetailsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-extrabold text-[#0D1F3D]">Demo Completed</span>
-                  <span className="text-[10px] text-slate-400 font-mono">04:22 PM</span>
+                  <span className="text-[10px] text-slate-500 font-mono font-medium">04:22 PM</span>
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium">Demo marked as completed with outcome</p>
-                <span className="text-[9px] text-slate-400 font-normal">19 May 2025</span>
+                <p className="text-[11px] text-slate-600 font-medium">Demo marked as completed with outcome</p>
+                <span className="text-[10px] text-slate-500 font-medium">19 May 2025</span>
               </div>
 
               <div className="relative pl-4">
@@ -363,10 +361,10 @@ export default function DemoDetailsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-extrabold text-[#0D1F3D]">Outcome Updated</span>
-                  <span className="text-[10px] text-slate-400 font-mono">04:21 PM</span>
+                  <span className="text-[10px] text-slate-500 font-mono font-medium">04:21 PM</span>
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium">Outcome changed to Demo Done</p>
-                <span className="text-[9px] text-slate-400 font-normal">19 May 2025</span>
+                <p className="text-[11px] text-slate-600 font-medium">Outcome changed to Demo Done</p>
+                <span className="text-[10px] text-slate-500 font-medium">19 May 2025</span>
               </div>
 
               <div className="relative pl-4">
@@ -375,10 +373,10 @@ export default function DemoDetailsPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="font-extrabold text-[#0D1F3D]">Presentation Shared</span>
-                  <span className="text-[10px] text-slate-400 font-mono">03:55 PM</span>
+                  <span className="text-[10px] text-slate-500 font-mono font-medium">03:55 PM</span>
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium">Product presentation shared with customer</p>
-                <span className="text-[9px] text-slate-400 font-normal">19 May 2025</span>
+                <p className="text-[11px] text-slate-600 font-medium">Product presentation shared with customer</p>
+                <span className="text-[10px] text-slate-500 font-medium">19 May 2025</span>
               </div>
             </div>
 
@@ -399,20 +397,20 @@ export default function DemoDetailsPage() {
 
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-400">Total Duration :</span>
-                <span className="font-bold text-slate-800">52m 05s</span>
+                <span className="text-slate-600 font-medium">Total Duration :</span>
+                <span className="font-extrabold text-slate-800">52m 05s</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Outcome :</span>
-                <span className="font-bold text-emerald-600">{demo.outcome || 'Demo Done'}</span>
+                <span className="text-slate-600 font-medium">Outcome :</span>
+                <span className="font-extrabold text-emerald-600">{demo.outcome || 'Demo Done'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Interest Level :</span>
+                <span className="text-slate-600 font-medium">Interest Level :</span>
                 <span className="font-bold text-amber-500">⭐⭐⭐⭐☆ 4.5/5</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Value Discussed :</span>
-                <span className="font-bold text-[#0D1F3D]">₹18,45,000</span>
+                <span className="text-slate-600 font-medium">Value Discussed :</span>
+                <span className="font-extrabold text-[#0D1F3D]">₹18,45,000</span>
               </div>
               <div className="flex justify-between border-t border-slate-100 pt-2 font-extrabold">
                 <span className="text-slate-700">Probability :</span>

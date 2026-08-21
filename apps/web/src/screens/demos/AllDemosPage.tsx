@@ -272,16 +272,16 @@ export default function AllDemosPage() {
                         onChange={handleSelectAll}
                       />
                     </th>
-                    <th className="p-3">Demo ID</th>
-                    <th className="p-3">Business / Lead</th>
-                    <th className="p-3">Contact Person</th>
-                    <th className="p-3">Demo Type</th>
-                    <th className="p-3">Assigned To</th>
-                    <th className="p-3">Demo Date & Time</th>
-                    <th className="p-3 text-center">Status</th>
-                    <th className="p-3 text-center">Outcome</th>
-                    <th className="p-3 text-center">Next Action</th>
-                    <th className="p-3 text-center">Actions</th>
+                    <th className="p-3 whitespace-nowrap min-w-[100px]">Demo ID</th>
+                    <th className="p-3 min-w-[180px]">Business / Lead</th>
+                    <th className="p-3 whitespace-nowrap min-w-[160px]">Contact Person</th>
+                    <th className="p-3 whitespace-nowrap min-w-[130px]">Demo Type</th>
+                    <th className="p-3 whitespace-nowrap min-w-[150px]">Assigned To</th>
+                    <th className="p-3 whitespace-nowrap min-w-[140px]">Demo Date & Time</th>
+                    <th className="p-3 text-center whitespace-nowrap min-w-[110px]">Status</th>
+                    <th className="p-3 text-center whitespace-nowrap min-w-[120px]">Outcome</th>
+                    <th className="p-3 text-center whitespace-nowrap min-w-[130px]">Next Action</th>
+                    <th className="p-3 text-center whitespace-nowrap w-16">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -299,7 +299,7 @@ export default function AllDemosPage() {
                             onChange={() => handleToggleRow(d.id)}
                           />
                         </td>
-                        <td className="p-3">
+                        <td className="p-3 whitespace-nowrap">
                           <div className="flex items-center gap-1.5">
                             <span className="font-mono font-extrabold text-[#0D1F3D]">{d.demoId}</span>
                             {d.badge && (
@@ -318,21 +318,21 @@ export default function AllDemosPage() {
                         <td className="p-3">
                           <div>
                             <span className="font-extrabold text-[#0D1F3D] block">{d.businessName}</span>
-                            <span className="text-[10px] text-slate-400 font-medium">{d.businessAddress}</span>
+                            <span className="text-[10px] text-slate-400 font-medium line-clamp-1">{d.businessAddress}</span>
                           </div>
                         </td>
-                        <td className="p-3">
+                        <td className="p-3 whitespace-nowrap">
                           <div>
                             <span className="font-extrabold text-[#0D1F3D] block">{d.contactPerson}</span>
                             <span className="text-[10px] text-slate-500 font-mono">{d.phone}</span>
                           </div>
                         </td>
-                        <td className="p-3">
-                          <span className="rounded-xs bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-bold border border-slate-200">
+                        <td className="p-3 whitespace-nowrap">
+                          <span className="inline-block rounded-xs bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-bold border border-slate-200 whitespace-nowrap">
                             {d.demoType}
                           </span>
                         </td>
-                        <td className="p-3">
+                        <td className="p-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <img
                               src={d.assignedToAvatar}
