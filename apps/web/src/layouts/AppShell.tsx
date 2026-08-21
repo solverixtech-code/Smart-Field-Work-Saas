@@ -548,12 +548,18 @@ export default function AppShell() {
               {cat.items.map((item) => {
                 const isAllowed = !item.allowed || item.allowed.includes(userRole);
                 const Icon = item.icon;
-                const isActive =
-                  item.to === '/admin/visits'
-                    ? location.pathname.startsWith('/admin/visits') && !location.pathname.startsWith('/admin/visits/gps-exceptions')
-                    : item.to === '/admin/dashboard' || item.to === '/admin/profile'
-                      ? location.pathname === item.to
-                      : location.pathname.startsWith(item.to);
+                const isActive = (() => {
+                  if (item.to === '/admin/demos') {
+                    return location.pathname === '/admin/demos' || (location.pathname.startsWith('/admin/demos/') && !['/admin/demos/today', '/admin/demos/scheduled', '/admin/demos/completed', '/admin/demos/conversions'].includes(location.pathname));
+                  }
+                  if (item.to === '/admin/visits') {
+                    return location.pathname === '/admin/visits' || (location.pathname.startsWith('/admin/visits/') && !location.pathname.startsWith('/admin/visits/gps-exceptions'));
+                  }
+                  if (['/admin/dashboard', '/admin/profile', '/admin/teams', '/admin/territories', '/admin/leads', '/admin/businesses'].includes(item.to)) {
+                    return location.pathname === item.to;
+                  }
+                  return location.pathname === item.to || location.pathname.startsWith(item.to + '/');
+                })();
 
                 return (
                   <NavLink
