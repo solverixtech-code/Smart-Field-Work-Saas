@@ -6,21 +6,29 @@ import {
   DollarSign,
   Monitor,
   MapPin,
-  PieChart,
   Users,
-  Calendar,
   Filter,
   Download,
-  Award,
   ShoppingBag,
   ArrowUpRight,
-  ArrowDownRight,
-  Eye,
-  CheckCircle2,
   Sparkles,
   ChevronRight,
   Target,
+  Eye,
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 import { Button } from '../../components/ui/Button';
 import { DateRangePicker, DateRange } from '../../components/ui/DateRangePicker';
 
@@ -46,10 +54,69 @@ const mockTeamSummaries: TeamPerformanceSummary[] = [
   { id: '5', teamName: 'East Zone - Kolkata', region: 'Kolkata', activeExec: '14 / 18', visits: 260, demos: 27, sales: 124000, collections: 80400, target: 150000, achievementPct: 83, growthVsAprPct: 3.6 },
 ];
 
+const dailySalesTrendData = [
+  { date: '01 May', sales: 65000, collections: 42000, target: 75000 },
+  { date: '02 May', sales: 72000, collections: 50000, target: 75000 },
+  { date: '03 May', sales: 88000, collections: 58000, target: 75000 },
+  { date: '04 May', sales: 60000, collections: 38000, target: 75000 },
+  { date: '05 May', sales: 95000, collections: 62000, target: 75000 },
+  { date: '06 May', sales: 110000, collections: 78000, target: 75000 },
+  { date: '07 May', sales: 82000, collections: 54000, target: 75000 },
+  { date: '08 May', sales: 75000, collections: 49000, target: 75000 },
+  { date: '09 May', sales: 98000, collections: 66000, target: 75000 },
+  { date: '10 May', sales: 105000, collections: 72000, target: 75000 },
+  { date: '11 May', sales: 70000, collections: 45000, target: 75000 },
+  { date: '12 May', sales: 85000, collections: 56000, target: 75000 },
+  { date: '13 May', sales: 115000, collections: 82000, target: 75000 },
+  { date: '14 May', sales: 125000, collections: 90000, target: 75000 },
+  { date: '15 May', sales: 90000, collections: 60000, target: 75000 },
+  { date: '16 May', sales: 102000, collections: 68000, target: 75000 },
+  { date: '17 May', sales: 88000, collections: 58000, target: 75000 },
+  { date: '18 May', sales: 94000, collections: 64000, target: 75000 },
+  { date: '19 May', sales: 130000, collections: 95000, target: 75000 },
+  { date: '20 May', sales: 145000, collections: 105000, target: 75000 },
+  { date: '21 May', sales: 98000, collections: 68000, target: 75000 },
+  { date: '22 May', sales: 112000, collections: 78000, target: 75000 },
+  { date: '23 May', sales: 135000, collections: 98000, target: 75000 },
+  { date: '24 May', sales: 120000, collections: 85000, target: 75000 },
+  { date: '25 May', sales: 105000, collections: 74000, target: 75000 },
+  { date: '26 May', sales: 128000, collections: 92000, target: 75000 },
+  { date: '27 May', sales: 140000, collections: 102000, target: 75000 },
+  { date: '28 May', sales: 155000, collections: 112000, target: 75000 },
+  { date: '29 May', sales: 132000, collections: 94000, target: 75000 },
+  { date: '30 May', sales: 148000, collections: 108000, target: 75000 },
+  { date: '31 May', sales: 160000, collections: 118000, target: 75000 },
+];
+
+const weeklySalesTrendData = [
+  { date: 'Week 1 (May 1-7)', sales: 562000, collections: 420000, target: 525000 },
+  { date: 'Week 2 (May 8-14)', sales: 678000, collections: 513000, target: 525000 },
+  { date: 'Week 3 (May 15-21)', sales: 651000, collections: 494000, target: 525000 },
+  { date: 'Week 4 (May 22-31)', sales: 585500, collections: 418300, target: 525000 },
+];
+
+const monthlySalesTrendData = [
+  { date: 'Jan 2025', sales: 1820000, collections: 1350000, target: 2000000 },
+  { date: 'Feb 2025', sales: 1950000, collections: 1420000, target: 2000000 },
+  { date: 'Mar 2025', sales: 2100000, collections: 1580000, target: 2100000 },
+  { date: 'Apr 2025', sales: 2016000, collections: 1555000, target: 2100000 },
+  { date: 'May 2025', sales: 2476500, collections: 1845300, target: 2350000 },
+];
+
+const salesByTeamData = [
+  { name: 'West Zone', value: 876200, color: '#2563EB', pct: '35.4%' },
+  { name: 'Central Zone', value: 635400, color: '#10B981', pct: '25.7%' },
+  { name: 'South Zone', value: 512300, color: '#F59E0B', pct: '20.7%' },
+  { name: 'North Zone', value: 328600, color: '#8B5CF6', pct: '13.3%' },
+  { name: 'East Zone', value: 124000, color: '#EC4899', pct: '5.0%' },
+];
+
 export const SalesPerformancePage: React.FC = () => {
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState<DateRange>({ startDate: '2025-05-01', endDate: '2025-05-31', label: '01 May 2025 - 31 May 2025' });
   const [timeframe, setTimeframe] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+
+  const currentChartData = timeframe === 'daily' ? dailySalesTrendData : timeframe === 'weekly' ? weeklySalesTrendData : monthlySalesTrendData;
 
   const handleExport = () => {
     toast.success('Exporting Sales Performance Report (PDF/Excel)...');
@@ -199,14 +266,14 @@ export const SalesPerformancePage: React.FC = () => {
         </div>
       </div>
 
-      {/* CHARTS GRID ROW */}
+      {/* CHARTS GRID ROW WITH RECHARTS */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        {/* Sales Trend Area Line Chart */}
+        {/* Sales Trend Interactive Recharts Line/Area Chart */}
         <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs lg:col-span-8 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
             <div>
               <h3 className="text-xs font-extrabold text-[#0D1F3D]">Sales Trend</h3>
-              <p className="text-[11px] font-medium text-slate-500">Daily timeline tracking Sales (₹) vs Collections (₹) vs Target (₹)</p>
+              <p className="text-[11px] font-medium text-slate-500">Interactive timeline tracking Sales (₹) vs Collections (₹) vs Target (₹)</p>
             </div>
             <div className="flex items-center gap-2">
               {(['daily', 'weekly', 'monthly'] as const).map((tf) => (
@@ -238,41 +305,87 @@ export const SalesPerformancePage: React.FC = () => {
               </span>
             </div>
 
-            {/* Custom SVG Line Chart */}
-            <div className="h-56 w-full relative pt-2">
-              <svg className="h-full w-full overflow-visible" viewBox="0 0 500 160">
-                {/* Gridlines */}
-                <line x1="0" y1="20" x2="500" y2="20" stroke="#f1f5f9" strokeDasharray="4 4" />
-                <line x1="0" y1="60" x2="500" y2="60" stroke="#f1f5f9" strokeDasharray="4 4" />
-                <line x1="0" y1="100" x2="500" y2="100" stroke="#f1f5f9" strokeDasharray="4 4" />
-                <line x1="0" y1="140" x2="500" y2="140" stroke="#f1f5f9" />
-
-                {/* Target Line */}
-                <path d="M0,50 Q125,45 250,55 T500,40" fill="none" stroke="#a855f7" strokeWidth="2" strokeDasharray="3 3" />
-
-                {/* Sales Line & Area */}
-                <path d="M0,80 Q125,30 250,60 T500,25" fill="none" stroke="#2563eb" strokeWidth="3" />
-                <circle cx="125" cy="30" r="4" fill="#2563eb" />
-                <circle cx="250" cy="60" r="4" fill="#2563eb" />
-                <circle cx="375" cy="35" r="4" fill="#2563eb" />
-                <circle cx="500" cy="25" r="4" fill="#2563eb" />
-
-                {/* Collections Line */}
-                <path d="M0,120 Q125,90 250,110 T500,85" fill="none" stroke="#10b981" strokeWidth="2.5" />
-                <circle cx="125" cy="90" r="3.5" fill="#10b981" />
-                <circle cx="250" cy="110" r="3.5" fill="#10b981" />
-                <circle cx="375" cy="95" r="3.5" fill="#10b981" />
-                <circle cx="500" cy="85" r="3.5" fill="#10b981" />
-              </svg>
-              <div className="flex justify-between text-[10px] font-bold text-slate-400 pt-2">
-                <span>01 May</span>
-                <span>06 May</span>
-                <span>11 May</span>
-                <span>16 May</span>
-                <span>21 May</span>
-                <span>26 May</span>
-                <span>31 May</span>
-              </div>
+            {/* REAL RECHARTS AREA CHART */}
+            <div className="h-[360px] w-full pt-2 pb-1">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={currentChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.18} />
+                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0.01} />
+                    </linearGradient>
+                    <linearGradient id="colorCollections" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.12} />
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0.01} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    interval={timeframe === 'daily' ? 4 : 0}
+                    tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#cbd5e1' }}
+                    dy={5}
+                  />
+                  <YAxis
+                    domain={[0, 'auto']}
+                    tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(val) =>
+                      val === 0
+                        ? '₹0'
+                        : val >= 100000
+                        ? `₹${(val / 100000).toFixed(1).replace('.0', '')}L`
+                        : `₹${(val / 1000).toFixed(0)}k`
+                    }
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#0D1F3D',
+                      borderColor: '#1e293b',
+                      borderRadius: '6px',
+                      color: '#ffffff',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)',
+                    }}
+                    formatter={(value: any, name: any) => [
+                      `₹ ${Number(value).toLocaleString('en-IN')}`,
+                      name === 'sales' ? 'Total Sales' : name === 'collections' ? 'Total Collections' : 'Target',
+                    ]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="sales"
+                    stroke="#2563eb"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorSales)"
+                    dot={{ r: 3.5, strokeWidth: 2, stroke: '#2563eb', fill: '#ffffff' }}
+                    activeDot={{ r: 6, strokeWidth: 2 }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="collections"
+                    stroke="#10b981"
+                    strokeWidth={2.5}
+                    fillOpacity={1}
+                    fill="url(#colorCollections)"
+                    dot={{ r: 3, strokeWidth: 2, stroke: '#10b981', fill: '#ffffff' }}
+                    activeDot={{ r: 5, strokeWidth: 2 }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="target"
+                    stroke="#a855f7"
+                    strokeWidth={2}
+                    strokeDasharray="4 4"
+                    dot={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
@@ -282,30 +395,43 @@ export const SalesPerformancePage: React.FC = () => {
           <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
             <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Sales by Team</h3>
             <div className="flex items-center justify-between">
-              <div className="relative flex h-28 w-28 items-center justify-center rounded-full border-8 border-blue-600 border-r-emerald-500 border-b-amber-500 border-l-purple-500">
-                <div className="text-center">
-                  <span className="text-xs font-extrabold text-[#0D1F3D] block">₹24.76L</span>
-                  <span className="text-[9px] text-slate-400 font-bold">Total Sales</span>
+              {/* REAL RECHARTS PIE CHART */}
+              <div className="h-28 w-28 relative flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={salesByTeamData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={30}
+                      outerRadius={46}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {salesByTeamData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#0D1F3D', color: '#fff', borderRadius: '4px', fontSize: '11px', fontWeight: 700 }}
+                      formatter={(val: any) => [`₹ ${Number(val).toLocaleString('en-IN')}`, 'Sales']}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[11px] font-extrabold text-[#0D1F3D]">₹24.76L</span>
                 </div>
               </div>
 
               <div className="space-y-1.5 text-xs font-semibold">
-                <div className="flex items-center gap-2 justify-between">
-                  <span className="flex items-center gap-1 text-slate-700"><span className="h-2 w-2 rounded-full bg-blue-600" /> West Zone</span>
-                  <span className="font-mono font-bold text-[#0D1F3D]">₹ 8.76L (35.4%)</span>
-                </div>
-                <div className="flex items-center gap-2 justify-between">
-                  <span className="flex items-center gap-1 text-slate-700"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Central Zone</span>
-                  <span className="font-mono font-bold text-[#0D1F3D]">₹ 6.35L (25.7%)</span>
-                </div>
-                <div className="flex items-center gap-2 justify-between">
-                  <span className="flex items-center gap-1 text-slate-700"><span className="h-2 w-2 rounded-full bg-amber-500" /> South Zone</span>
-                  <span className="font-mono font-bold text-[#0D1F3D]">₹ 5.12L (20.7%)</span>
-                </div>
-                <div className="flex items-center gap-2 justify-between">
-                  <span className="flex items-center gap-1 text-slate-700"><span className="h-2 w-2 rounded-full bg-purple-500" /> North Zone</span>
-                  <span className="font-mono font-bold text-[#0D1F3D]">₹ 3.28L (13.3%)</span>
-                </div>
+                {salesByTeamData.map((item) => (
+                  <div key={item.name} className="flex items-center gap-2 justify-between">
+                    <span className="flex items-center gap-1.5 text-slate-700">
+                      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: item.color }} /> {item.name}
+                    </span>
+                    <span className="font-mono font-bold text-[#0D1F3D]">{item.pct}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
