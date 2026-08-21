@@ -48,6 +48,13 @@ import AllBusinessesPage from './screens/businesses/AllBusinessesPage';
 import AddBusinessPage from './screens/businesses/AddBusinessPage';
 import BusinessLayoutWrapper from './screens/businesses/BusinessLayoutWrapper';
 import BusinessDetailsPage from './screens/businesses/BusinessDetailsPage';
+
+import AllDemosPage from './screens/demos/AllDemosPage';
+import DemosTodayPage from './screens/demos/DemosTodayPage';
+import ScheduledDemosPage from './screens/demos/ScheduledDemosPage';
+import CompletedDemosPage from './screens/demos/CompletedDemosPage';
+import DemoDetailsPage from './screens/demos/DemoDetailsPage';
+import DemoConversionReportPage from './screens/demos/DemoConversionReportPage';
 import BusinessContactsPage from './screens/businesses/BusinessContactsPage';
 import BusinessGoogleProfilePage from './screens/businesses/BusinessGoogleProfilePage';
 import BusinessSalesHistoryPage from './screens/businesses/BusinessSalesHistoryPage';
@@ -287,6 +294,27 @@ export default function AppRouter() {
             >
               <Route path="/admin/payroll" element={<PayrollManagementPage />} />
               <Route path="/admin/payroll/settings" element={<PayrollSettingsPage />} />
+            </Route>
+
+            {/* Demo Management Routes (Screens 93 to 98) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/demos" element={<AllDemosPage />} />
+              <Route path="/admin/demos/today" element={<DemosTodayPage />} />
+              <Route path="/admin/demos/scheduled" element={<ScheduledDemosPage />} />
+              <Route path="/admin/demos/completed" element={<CompletedDemosPage />} />
+              <Route path="/admin/demos/conversions" element={<DemoConversionReportPage />} />
+              <Route path="/admin/demos/:demoId" element={<DemoDetailsPage />} />
             </Route>
 
             {/* Leads Management Routes (Screens 33 to 53) */}

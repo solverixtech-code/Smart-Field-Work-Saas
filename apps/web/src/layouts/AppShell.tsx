@@ -23,6 +23,7 @@ import {
   SlidersHorizontal,
   Target,
   ShieldAlert,
+  Calendar,
 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '../store';
 import { clearCredentials } from '../store/slices/authSlice';
@@ -82,6 +83,45 @@ const navCategories: NavCategory[] = [
         to: '/admin/territories',
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
         badge: '12 Active',
+      },
+    ],
+  },
+  {
+    title: 'Demo Management',
+    items: [
+      {
+        label: 'All Demos',
+        icon: Monitor,
+        to: '/admin/demos',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '128 Demos',
+      },
+      {
+        label: 'Demos Today',
+        icon: Clock,
+        to: '/admin/demos/today',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '22 Today',
+      },
+      {
+        label: 'Scheduled Demos',
+        icon: Calendar,
+        to: '/admin/demos/scheduled',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '32 Upcoming',
+      },
+      {
+        label: 'Demo Completed',
+        icon: Target,
+        to: '/admin/demos/completed',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER],
+        badge: '78 Done',
+      },
+      {
+        label: 'Demo Conversions',
+        icon: TrendingUp,
+        to: '/admin/demos/conversions',
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
       },
     ],
   },
@@ -264,7 +304,25 @@ const navCategories: NavCategory[] = [
 function getBreadcrumbTrail(pathname: string) {
   const items: { label: string; to: string }[] = [];
 
-  if (pathname === '/admin/teams') {
+  if (pathname === '/admin/demos') {
+    items.push({ label: 'Demo Management', to: '/admin/demos' });
+    items.push({ label: 'All Demos', to: '/admin/demos' });
+  } else if (pathname === '/admin/demos/today') {
+    items.push({ label: 'Demo Management', to: '/admin/demos' });
+    items.push({ label: 'Demos Today', to: '/admin/demos/today' });
+  } else if (pathname === '/admin/demos/scheduled') {
+    items.push({ label: 'Demo Management', to: '/admin/demos' });
+    items.push({ label: 'Scheduled Demos', to: '/admin/demos/scheduled' });
+  } else if (pathname === '/admin/demos/completed') {
+    items.push({ label: 'Demo Management', to: '/admin/demos' });
+    items.push({ label: 'Demo Completed', to: '/admin/demos/completed' });
+  } else if (pathname === '/admin/demos/conversions') {
+    items.push({ label: 'Demo Management', to: '/admin/demos' });
+    items.push({ label: 'Demo Conversion Report', to: '/admin/demos/conversions' });
+  } else if (pathname.startsWith('/admin/demos/')) {
+    items.push({ label: 'Demo Management', to: '/admin/demos' });
+    items.push({ label: 'Demo Details (DEM-1285)', to: pathname });
+  } else if (pathname === '/admin/teams') {
     items.push({ label: 'Teams & Hierarchy', to: '/admin/teams' });
     items.push({ label: 'Sales Teams', to: '/admin/teams' });
   } else if (pathname === '/admin/teams/create') {
