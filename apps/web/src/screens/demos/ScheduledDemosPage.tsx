@@ -2,30 +2,21 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Search,
   Plus,
   Download,
   RefreshCw,
-  Filter,
-  RotateCcw,
   MoreVertical,
-  ChevronLeft,
-  ChevronRight,
   Calendar,
   Clock,
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { mockDemosList } from './demosData';
 import { AddDemoModal } from './AddDemoModal';
 
 export default function ScheduledDemosPage() {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [demoTypeFilter, setDemoTypeFilter] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const scheduledDemos = mockDemosList.filter(
@@ -75,16 +66,16 @@ export default function ScheduledDemosPage() {
         </div>
       </div>
 
-      {/* 6 KPI Cards */}
+      {/* 6 Top KPI Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-purple-50 text-purple-600 shrink-0">
             <Calendar className="h-5 w-5" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 font-bold block">Total Scheduled</span>
+            <span className="text-xs font-semibold text-slate-500 block">Total Scheduled</span>
             <span className="text-xl font-extrabold text-purple-600">32</span>
-            <span className="text-[10px] text-emerald-600 font-bold block">↑ 6.7% vs yesterday</span>
+            <span className="text-xs font-semibold text-emerald-600 block">↑ 6.7% vs yesterday</span>
           </div>
         </div>
 
@@ -93,9 +84,9 @@ export default function ScheduledDemosPage() {
             <Clock className="h-5 w-5" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 font-bold block">Today</span>
+            <span className="text-xs font-semibold text-slate-500 block">Today</span>
             <span className="text-xl font-extrabold text-[#0D1F3D]">8</span>
-            <span className="text-[10px] text-slate-400 font-bold block">25.0% of total</span>
+            <span className="text-xs font-medium text-slate-500 block">25.0% of total</span>
           </div>
         </div>
 
@@ -104,9 +95,9 @@ export default function ScheduledDemosPage() {
             <Calendar className="h-5 w-5" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 font-bold block">This Week</span>
+            <span className="text-xs font-semibold text-slate-500 block">This Week</span>
             <span className="text-xl font-extrabold text-amber-600">18</span>
-            <span className="text-[10px] text-slate-400 font-bold block">56.2% of total</span>
+            <span className="text-xs font-medium text-slate-500 block">56.2% of total</span>
           </div>
         </div>
 
@@ -115,9 +106,9 @@ export default function ScheduledDemosPage() {
             <Calendar className="h-5 w-5" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 font-bold block">This Month</span>
+            <span className="text-xs font-semibold text-slate-500 block">This Month</span>
             <span className="text-xl font-extrabold text-indigo-600">32</span>
-            <span className="text-[10px] text-slate-400 font-bold block">100% of total</span>
+            <span className="text-xs font-medium text-slate-500 block">100% of total</span>
           </div>
         </div>
 
@@ -126,9 +117,9 @@ export default function ScheduledDemosPage() {
             <CheckCircle2 className="h-5 w-5" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 font-bold block">Confirmed</span>
+            <span className="text-xs font-semibold text-slate-500 block">Confirmed</span>
             <span className="text-xl font-extrabold text-emerald-600">24</span>
-            <span className="text-[10px] text-slate-400 font-bold block">75.0% of total</span>
+            <span className="text-xs font-medium text-slate-500 block">75.0% of total</span>
           </div>
         </div>
 
@@ -137,143 +128,138 @@ export default function ScheduledDemosPage() {
             <AlertCircle className="h-5 w-5" />
           </div>
           <div>
-            <span className="text-[10px] text-slate-400 font-bold block">Pending Confirmation</span>
+            <span className="text-xs font-semibold text-slate-500 block">Pending Confirmation</span>
             <span className="text-xl font-extrabold text-orange-600">8</span>
-            <span className="text-[10px] text-slate-400 font-bold block">25.0% of total</span>
+            <span className="text-xs font-medium text-slate-500 block">25.0% of total</span>
           </div>
         </div>
       </div>
 
-      {/* Main Grid: 9-col Table + 3-col Compact Right Sidebars */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
-        {/* LEFT 9 COLS TABLE */}
-        <div className="space-y-4 lg:col-span-9">
-          <div className="rounded-sm border border-slate-200/90 bg-white shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-semibold border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
-                    <th className="p-3 whitespace-nowrap min-w-[100px]">Demo ID</th>
-                    <th className="p-3 whitespace-nowrap min-w-[140px]">Date & Time</th>
-                    <th className="p-3 min-w-[180px]">Business / Lead</th>
-                    <th className="p-3 whitespace-nowrap min-w-[160px]">Contact Person</th>
-                    <th className="p-3 whitespace-nowrap min-w-[130px]">Demo Type</th>
-                    <th className="p-3 whitespace-nowrap min-w-[150px]">Assigned To</th>
-                    <th className="p-3 text-center whitespace-nowrap min-w-[110px]">Status</th>
-                    <th className="p-3 text-center whitespace-nowrap min-w-[110px]">Source</th>
-                    <th className="p-3 text-center whitespace-nowrap w-16">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {scheduledDemos.map((d) => (
-                    <tr
-                      key={d.id}
+      {/* FULL WIDTH DATA TABLE */}
+      <div className="rounded-sm border border-slate-200/90 bg-white shadow-xs overflow-hidden w-full">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs font-semibold border-collapse">
+            <thead>
+              <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
+                <th className="p-3 whitespace-nowrap">Demo ID</th>
+                <th className="p-3 whitespace-nowrap">Date & Time</th>
+                <th className="p-3">Business / Lead</th>
+                <th className="p-3 whitespace-nowrap">Contact Person</th>
+                <th className="p-3 whitespace-nowrap">Demo Type</th>
+                <th className="p-3 whitespace-nowrap">Assigned To</th>
+                <th className="p-3 text-center whitespace-nowrap">Status</th>
+                <th className="p-3 text-center whitespace-nowrap">Source</th>
+                <th className="p-3 text-center whitespace-nowrap w-16">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {scheduledDemos.map((d) => (
+                <tr
+                  key={d.id}
+                  onClick={() => navigate(`/admin/demos/${d.id}`)}
+                  className="hover:bg-slate-50/70 cursor-pointer transition-colors"
+                >
+                  <td className="p-3 whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono font-extrabold text-[#0D1F3D]">{d.demoId}</span>
+                      <span className="rounded-xs bg-blue-100 text-blue-800 px-1 py-0.2 text-[9px] font-bold">
+                        Today
+                      </span>
+                    </div>
+                  </td>
+                  <td className="p-3 font-medium text-slate-700 whitespace-nowrap">
+                    <div>
+                      <span className="font-bold text-slate-800 block">{d.demoDate}</span>
+                      <span className="text-[10px] text-slate-500 font-mono">{d.demoTime}</span>
+                    </div>
+                  </td>
+                  <td className="p-3">
+                    <div>
+                      <span className="font-extrabold text-[#0D1F3D] block">{d.businessName}</span>
+                      <span className="text-[10px] text-slate-500 font-medium">{d.businessAddress}</span>
+                    </div>
+                  </td>
+                  <td className="p-3 whitespace-nowrap">
+                    <div>
+                      <span className="font-extrabold text-[#0D1F3D] block">{d.contactPerson}</span>
+                      <span className="text-[10px] text-slate-500 font-mono">{d.phone}</span>
+                    </div>
+                  </td>
+                  <td className="p-3 whitespace-nowrap">
+                    <span className="inline-block rounded-xs bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-bold border border-slate-200">
+                      {d.demoType}
+                    </span>
+                  </td>
+                  <td className="p-3 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={d.assignedToAvatar}
+                        alt={d.assignedToName}
+                        className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0"
+                      />
+                      <span>{d.assignedToName}</span>
+                    </div>
+                  </td>
+                  <td className="p-3 text-center whitespace-nowrap">
+                    <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Confirmed
+                    </span>
+                  </td>
+                  <td className="p-3 text-center text-slate-600 font-medium whitespace-nowrap">
+                    {d.leadSource || 'Website'}
+                  </td>
+                  <td className="p-3 text-center whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <button
                       onClick={() => navigate(`/admin/demos/${d.id}`)}
-                      className="hover:bg-slate-50/70 cursor-pointer transition-colors"
+                      className="p-1 rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
                     >
-                      <td className="p-3">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono font-extrabold text-[#0D1F3D]">{d.demoId}</span>
-                          <span className="rounded-xs bg-blue-100 text-blue-800 px-1 py-0.2 text-[9px] font-bold">
-                            Today
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-3 font-medium text-slate-700">
-                        <div>
-                          <span className="font-bold text-slate-800 block">{d.demoDate}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">{d.demoTime}</span>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div>
-                          <span className="font-extrabold text-[#0D1F3D] block">{d.businessName}</span>
-                          <span className="text-[10px] text-slate-400 font-medium">{d.businessAddress}</span>
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <div>
-                          <span className="font-extrabold text-[#0D1F3D] block">{d.contactPerson}</span>
-                          <span className="text-[10px] text-slate-500 font-mono">{d.phone}</span>
-                        </div>
-                      </td>
-                      <td className="p-3 whitespace-nowrap">
-                        <span className="inline-block rounded-xs bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-bold border border-slate-200 whitespace-nowrap">
-                          {d.demoType}
-                        </span>
-                      </td>
-                      <td className="p-3 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <img
-                            src={d.assignedToAvatar}
-                            alt={d.assignedToName}
-                            className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0"
-                          />
-                          <span>{d.assignedToName}</span>
-                        </div>
-                      </td>
-                      <td className="p-3 text-center">
-                        <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Confirmed
-                        </span>
-                      </td>
-                      <td className="p-3 text-center text-slate-600 font-medium">
-                        {d.leadSource || 'Website'}
-                      </td>
-                      <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => navigate(`/admin/demos/${d.id}`)}
-                          className="p-1 rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination Footer */}
-            <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/60 px-4 py-2.5 text-xs font-semibold text-slate-600">
-              <span>Showing 1 to {scheduledDemos.length} of 32 scheduled demos</span>
-              <div className="flex items-center gap-1">
-                <button className="flex h-7 w-7 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold">
-                  1
-                </button>
-              </div>
-            </div>
-          </div>
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
-        {/* RIGHT 3 COLS SIDEBAR */}
-        <div className="space-y-3 lg:col-span-3">
-          {/* Scheduled Demos by Status Donut Card */}
-          <div className="rounded-sm border border-slate-200/80 bg-white p-3 shadow-xs space-y-2 text-xs font-semibold">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-1.5">
-              Scheduled Demos by Status
-            </h3>
+        {/* Pagination Footer */}
+        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/60 px-4 py-2.5 text-xs font-semibold text-slate-600">
+          <span>Showing 1 to {scheduledDemos.length} of 32 scheduled demos</span>
+          <div className="flex items-center gap-1">
+            <button className="flex h-7 w-7 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold">
+              1
+            </button>
+          </div>
+        </div>
+      </div>
 
-            <div className="relative py-1 flex flex-col items-center justify-center">
-              <div className="h-16 w-16 rounded-full border-4 border-emerald-500 border-t-amber-500 flex flex-col items-center justify-center shadow-xs">
-                <span className="text-sm font-extrabold text-[#0D1F3D]">32</span>
-                <span className="text-[8px] font-bold text-slate-400">Total</span>
-              </div>
+      {/* BOTTOM ANALYTICS CARDS (Placed on next line below table) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 pt-2">
+        {/* Scheduled Demos by Status Donut Card */}
+        <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
+          <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+            Scheduled Demos by Status
+          </h3>
+
+          <div className="relative py-2 flex flex-col items-center justify-center">
+            <div className="h-20 w-20 rounded-full border-4 border-emerald-500 border-t-amber-500 flex flex-col items-center justify-center shadow-xs">
+              <span className="text-base font-extrabold text-[#0D1F3D]">32</span>
+              <span className="text-[9px] font-bold text-slate-400">Total</span>
             </div>
+          </div>
 
-            <div className="space-y-1 text-[10px] text-slate-700">
-              <div className="flex justify-between">
-                <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> Confirmed
-                </span>
-                <span className="font-extrabold">24 (75.0%)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-amber-500" /> Pending Confirmation
-                </span>
-                <span className="font-extrabold">8 (25.0%)</span>
-              </div>
+          <div className="space-y-1.5 text-xs text-slate-700">
+            <div className="flex justify-between">
+              <span className="flex items-center gap-1.5 font-medium">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" /> Confirmed
+              </span>
+              <span className="font-extrabold">24 (75.0%)</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="flex items-center gap-1.5 font-medium">
+                <span className="h-2 w-2 rounded-full bg-amber-500" /> Pending Confirmation
+              </span>
+              <span className="font-extrabold">8 (25.0%)</span>
             </div>
           </div>
         </div>
