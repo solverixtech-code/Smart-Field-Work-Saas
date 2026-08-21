@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Maximize2,
 } from 'lucide-react';
+import mapboxgl from 'mapbox-gl';
 import {
   ExecutiveLocation,
   BusinessProspectMarker,
@@ -20,8 +21,76 @@ import {
   RouteStop,
 } from '../../screens/maps/mapsData';
 
+// Function to resolve Mapbox style (supports user VITE_MAPBOX_ACCESS_TOKEN or open tile fallback)
+export function getMapboxStyle(mapType: 'map' | 'satellite' | 'terrain'): string | mapboxgl.Style {
+  const customToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+
+  if (customToken) {
+    mapboxgl.accessToken = customToken;
+    return mapType === 'satellite'
+      ? 'mapbox://styles/mapbox/satellite-v9'
+      : mapType === 'terrain'
+      ? 'mapbox://styles/mapbox/outdoors-v12'
+      : 'mapbox://styles/mapbox/streets-v12';
+  }
+
+  // Open-Source Raster Tile Style (No 401 Error, 100% Free & Fast)
+  if (mapType === 'satellite') {
+    return {
+      version: 8,
+      sources: {
+        'esri-satellite': {
+          type: 'raster',
+          tiles: [
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          ],
+          tileSize: 256,
+          attribution: 'Esri, Maxar, Earthstar Geographics',
+        },
+      },
+      layers: [
+        {
+          id: 'esri-satellite-layer',
+          type: 'raster',
+          source: 'esri-satellite',
+          minzoom: 0,
+          maxzoom: 19,
+        },
+      ],
+    };
+  }
+
+  return {
+    version: 8,
+    sources: {
+      'osm-tiles': {
+        type: 'raster',
+        tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+        tileSize: 256,
+        attribution: '&copy; OpenStreetMap contributors',
+      },
+    },
+    layers: [
+      {
+        id: 'osm-layer',
+        type: 'raster',
+        source: 'osm-tiles',
+        minzoom: 0,
+        maxzoom: 19,
+      },
+    ],
+  };
+}
+
 export interface InteractiveMapProps {
-  mode?: 'live-executives' | 'executives-only' | 'prospects' | 'visit-heatmap' | 'sales-heatmap' | 'territories' | 'route-playback';
+  mode?:
+    | 'live-executives'
+    | 'executives-only'
+    | 'prospects'
+    | 'visit-heatmap'
+    | 'sales-heatmap'
+    | 'territories'
+    | 'route-playback';
   executives?: ExecutiveLocation[];
   prospects?: BusinessProspectMarker[];
   heatmapPoints?: HeatmapPoint[];
@@ -58,6 +127,66 @@ export function InteractiveMap({
     selectedExecutiveId || null,
   );
 
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+
+  // Default Mumbai Coordinates
+  const defaultCenter: [number, number] = [72.8697, 19.1197];
+
+  // Initialize Mapbox GL map instance
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    try {
+      const map = new mapboxgl.Map({
+        container: mapContainerRef.current,
+        style: getMapboxStyle(mapType),
+        center: defaultCenter,
+        zoom: zoomLevel,
+        attributionControl: false,
+      });
+
+      map.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right');
+      mapRef.current = map;
+
+      return () => {
+        map.remove();
+        mapRef.current = null;
+      };
+    } catch (e) {
+      console.warn('Mapbox GL Map mount warning:', e);
+    }
+  }, []);
+
+  // Update Mapbox Style on Map Type Toggle
+  useEffect(() => {
+    if (mapRef.current) {
+      mapRef.current.setStyle(getMapboxStyle(mapType));
+    }
+  }, [mapType]);
+
+  // Handle Zoom Controls
+  const handleZoomIn = () => {
+    if (mapRef.current) {
+      mapRef.current.zoomIn();
+      setZoomLevel(Math.min(zoomLevel + 1, 18));
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (mapRef.current) {
+      mapRef.current.zoomOut();
+      setZoomLevel(Math.max(zoomLevel - 1, 8));
+    }
+  };
+
+  const handleRecenter = () => {
+    if (mapRef.current) {
+      mapRef.current.flyTo({ center: defaultCenter, zoom: 13, duration: 1000 });
+      setZoomLevel(13);
+    }
+  };
+
   const activeExecutive = useMemo(() => {
     return (
       executives.find((e) => e.id === selectedMarkerId) ||
@@ -74,66 +203,24 @@ export function InteractiveMap({
     <div
       className={`relative w-full ${heightClassName} rounded-sm border border-slate-200/90 bg-[#E8EDF2] overflow-hidden shadow-sm flex flex-col`}
     >
-      {/* MAPBOX VECTOR ENGINE CANVAS CONTAINER */}
-      <div className="absolute inset-0 bg-[#E3EAF2] overflow-hidden select-none">
-        {/* Vector Mapbox Grid / Tile Layer */}
+      {/* MAPBOX GL TILE CANVAS CONTAINER */}
+      <div className="absolute inset-0 overflow-hidden select-none bg-[#E3EAF2]">
+        <div ref={mapContainerRef} className="w-full h-full absolute inset-0" />
+
+        {/* Vector SVG Grid Overlay for Crisp Territory & Polygon Details */}
         <svg
-          className="w-full h-full object-cover opacity-90 transition-opacity duration-300"
+          className="w-full h-full object-cover opacity-90 transition-opacity duration-300 pointer-events-none absolute inset-0 z-10"
           viewBox="0 0 1000 800"
           preserveAspectRatio="xMidYMid slice"
         >
-          <rect width="1000" height="800" fill={mapType === 'satellite' ? '#1E293B' : '#E8EEF5'} />
-
-          {/* Water Bodies (Arabian Sea & Powai Lake) */}
-          <path
-            d="M 0,0 L 280,0 Q 320,180 220,380 Q 140,520 260,800 L 0,800 Z"
-            fill={mapType === 'satellite' ? '#0F172A' : '#CBE2F7'}
-          />
-          <ellipse cx="620" cy="380" rx="45" ry="35" fill={mapType === 'satellite' ? '#0F172A' : '#CBE2F7'} />
-
-          {/* Major Highways & Arterial Roads */}
-          <g stroke={mapType === 'satellite' ? '#334155' : '#FFFFFF'} strokeWidth="10" fill="none">
-            <path d="M 380,0 L 390,800" stroke={mapType === 'satellite' ? '#475569' : '#FCD34D'} strokeWidth="6" /> {/* W.E. Highway */}
-            <path d="M 680,0 L 670,800" stroke={mapType === 'satellite' ? '#475569' : '#FCD34D'} strokeWidth="5" /> {/* E.E. Highway */}
-            <path d="M 280,180 Q 420,240 680,260" strokeWidth="4" />
-            <path d="M 390,320 L 670,360" strokeWidth="4" />
-            <path d="M 260,520 Q 390,480 670,540" strokeWidth="4" />
-          </g>
-
-          {/* District Neighborhood Grids */}
-          <g fill="none" stroke={mapType === 'satellite' ? '#1E293B' : '#E2E8F0'} strokeWidth="1.5">
-            <line x1="280" y1="100" x2="800" y2="100" />
-            <line x1="280" y1="200" x2="800" y2="200" />
-            <line x1="280" y1="300" x2="800" y2="300" />
-            <line x1="280" y1="400" x2="800" y2="400" />
-            <line x1="280" y1="500" x2="800" y2="500" />
-            <line x1="280" y1="600" x2="800" y2="600" />
-            <line x1="450" y1="0" x2="450" y2="800" />
-            <line x1="550" y1="0" x2="550" y2="800" />
-            <line x1="650" y1="0" x2="650" y2="800" />
-          </g>
-
-          {/* Neighborhood Region Label Texts */}
-          <g fill={mapType === 'satellite' ? '#94A3B8' : '#94A3B8'} fontSize="11" fontWeight="700" fontFamily="sans-serif" letterSpacing="1">
-            <text x="310" y="80">BORIVALI WEST</text>
-            <text x="300" y="190">KANDIVALI WEST</text>
-            <text x="290" y="290">MALAD WEST</text>
-            <text x="300" y="440">GOREGAON EAST</text>
-            <text x="320" y="550">ANDHERI WEST</text>
-            <text x="430" y="510">ANDHERI EAST</text>
-            <text x="590" y="440">POWAI</text>
-            <text x="640" y="520">VIKHROLI WEST</text>
-            <text x="610" y="620">GHATKOPAR WEST</text>
-            <text x="410" y="730">BANDRA KURLA COMPLEX</text>
-            <text x="640" y="140">THANE WEST</text>
-          </g>
-
           {/* MAPBOX VECTOR POLYGON TERRITORIES LAYER */}
           {(mode === 'territories' || territories.length > 0) &&
             territories.map((terr) => (
               <g key={terr.id}>
                 <polygon
-                  points={terr.pathPoints.map(([lat, lng]) => `${(lng - 72.8) * 1200 + 200},${(19.3 - lat) * 2200 + 50}`).join(' ')}
+                  points={terr.pathPoints
+                    .map(([lat, lng]) => `${(lng - 72.8) * 1200 + 200},${(19.3 - lat) * 2200 + 50}`)
+                    .join(' ')}
                   fill={terr.fillColor}
                   fillOpacity="0.22"
                   stroke={terr.borderColor}
@@ -176,7 +263,9 @@ export function InteractiveMap({
           {(mode === 'route-playback' || routeStops.length > 0) && (
             <g>
               <polyline
-                points={routeStops.map((st) => `${(st.lng - 72.8) * 1200 + 200},${(19.3 - st.lat) * 2200 + 50}`).join(' ')}
+                points={routeStops
+                  .map((st) => `${(st.lng - 72.8) * 1200 + 200},${(19.3 - st.lat) * 2200 + 50}`)
+                  .join(' ')}
                 fill="none"
                 stroke="#3B82F6"
                 strokeWidth="5"
@@ -191,23 +280,23 @@ export function InteractiveMap({
       {/* MAPBOX NAVIGATION CONTROLS */}
       <div className="absolute left-4 top-4 z-20 flex flex-col gap-1.5 shadow-md">
         <button
-          onClick={() => setZoomLevel((z) => Math.min(z + 1, 18))}
+          onClick={handleZoomIn}
           className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold"
-          title="Zoom In"
+          title="Zoom In (Mapbox)"
         >
           <Plus className="h-4 w-4" />
         </button>
         <button
-          onClick={() => setZoomLevel((z) => Math.max(z - 1, 8))}
+          onClick={handleZoomOut}
           className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold"
-          title="Zoom Out"
+          title="Zoom Out (Mapbox)"
         >
           <Minus className="h-4 w-4" />
         </button>
         <button
-          onClick={() => setZoomLevel(13)}
+          onClick={handleRecenter}
           className="flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 cursor-pointer font-bold"
-          title="Recenter Map"
+          title="Recenter Mapbox Map"
         >
           <Navigation className="h-4 w-4 text-blue-600" />
         </button>
@@ -228,11 +317,15 @@ export function InteractiveMap({
           const isSelected = selectedMarkerId === exec.id;
 
           const ringColor =
-            exec.status === 'On Field' ? 'ring-emerald-500 bg-emerald-500' :
-            exec.status === 'In Transit' ? 'ring-amber-500 bg-amber-500' :
-            exec.status === 'Break' ? 'ring-purple-500 bg-purple-500' :
-            exec.status === 'Vehicle' ? 'ring-red-500 bg-red-500' :
-            'ring-slate-400 bg-slate-400';
+            exec.status === 'On Field'
+              ? 'ring-emerald-500 bg-emerald-500'
+              : exec.status === 'In Transit'
+              ? 'ring-amber-500 bg-amber-500'
+              : exec.status === 'Break'
+              ? 'ring-purple-500 bg-purple-500'
+              : exec.status === 'Vehicle'
+              ? 'ring-red-500 bg-red-500'
+              : 'ring-slate-400 bg-slate-400';
 
           return (
             <div
@@ -244,7 +337,9 @@ export function InteractiveMap({
               style={{ left: `${cx / 10}%`, top: `${cy / 8}%` }}
               className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform hover:scale-110"
             >
-              <div className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-white shadow-lg ring-4 ${ringColor}`}>
+              <div
+                className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-white shadow-lg ring-4 ${ringColor}`}
+              >
                 <img src={exec.avatar} alt={exec.name} className="h-full w-full rounded-full object-cover" />
                 <span className={`absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white ${ringColor}`} />
               </div>
@@ -262,7 +357,12 @@ export function InteractiveMap({
                     </div>
                   </div>
                   <div className="text-[11px] space-y-1 text-slate-600 font-medium">
-                    <p><span className="text-slate-400 font-bold block text-[9px] uppercase">Current Location / Visit</span> {exec.currentLocation}</p>
+                    <p>
+                      <span className="text-slate-400 font-bold block text-[9px] uppercase">
+                        Current Location / Visit
+                      </span>{' '}
+                      {exec.currentLocation}
+                    </p>
                     <div className="flex justify-between pt-1 font-bold text-slate-700">
                       <span>Time: {exec.lastUpdated}</span>
                       <span className="text-emerald-600 font-mono">{exec.batteryLevel}% 🔋</span>
@@ -291,12 +391,17 @@ export function InteractiveMap({
           const cy = (19.3 - pr.lat) * 2200 + 50;
 
           const markerBg =
-            pr.markerColor === 'blue' ? 'bg-blue-600 text-white' :
-            pr.markerColor === 'green' ? 'bg-emerald-600 text-white' :
-            pr.markerColor === 'yellow' ? 'bg-amber-500 text-white' :
-            pr.markerColor === 'red' ? 'bg-red-600 text-white' :
-            pr.markerColor === 'purple' ? 'bg-purple-600 text-white' :
-            'bg-amber-400 text-slate-900';
+            pr.markerColor === 'blue'
+              ? 'bg-blue-600 text-white'
+              : pr.markerColor === 'green'
+              ? 'bg-emerald-600 text-white'
+              : pr.markerColor === 'yellow'
+              ? 'bg-amber-500 text-white'
+              : pr.markerColor === 'red'
+              ? 'bg-red-600 text-white'
+              : pr.markerColor === 'purple'
+              ? 'bg-purple-600 text-white'
+              : 'bg-amber-400 text-slate-900';
 
           return (
             <div
@@ -308,8 +413,14 @@ export function InteractiveMap({
               style={{ left: `${cx / 10}%`, top: `${cy / 8}%` }}
               className="absolute z-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-transform hover:scale-125"
             >
-              <div className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-white shadow-md font-bold text-xs ${markerBg}`}>
-                {pr.markerColor === 'star' ? <Star className="h-4 w-4 fill-slate-900" /> : <MapPin className="h-4 w-4" />}
+              <div
+                className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-white shadow-md font-bold text-xs ${markerBg}`}
+              >
+                {pr.markerColor === 'star' ? (
+                  <Star className="h-4 w-4 fill-slate-900" />
+                ) : (
+                  <MapPin className="h-4 w-4" />
+                )}
               </div>
             </div>
           );
@@ -330,10 +441,13 @@ export function InteractiveMap({
             >
               <div
                 className={`flex items-center justify-center rounded-full border-2 border-white shadow-md font-extrabold text-xs text-white transition-all ${
-                  st.type === 'start' ? 'h-9 w-9 bg-emerald-600 ring-4 ring-emerald-200' :
-                  st.type === 'end' ? 'h-9 w-9 bg-red-600 ring-4 ring-red-200' :
-                  isActive ? 'h-8 w-8 bg-blue-600 ring-4 ring-blue-300 scale-125' :
-                  'h-7 w-7 bg-blue-500'
+                  st.type === 'start'
+                    ? 'h-9 w-9 bg-emerald-600 ring-4 ring-emerald-200'
+                    : st.type === 'end'
+                    ? 'h-9 w-9 bg-red-600 ring-4 ring-red-200'
+                    : isActive
+                    ? 'h-8 w-8 bg-blue-600 ring-4 ring-blue-300 scale-125'
+                    : 'h-7 w-7 bg-blue-500'
                 }`}
               >
                 {st.type === 'start' ? 'S' : st.type === 'end' ? 'E' : st.stopNumber}
@@ -369,12 +483,17 @@ export function InteractiveMap({
       <div className="absolute left-4 bottom-4 z-20 rounded-sm border border-slate-200/90 bg-white/95 p-3.5 shadow-lg max-w-xs space-y-2 text-xs font-semibold backdrop-blur-xs text-left">
         <h4 className="font-extrabold text-[#0D1F3D] text-xs border-b border-slate-100 pb-1.5 flex items-center justify-between">
           <span>
-            {mode === 'prospects' ? 'Prospect Status Legend' :
-             mode === 'territories' ? 'Sales Achievement %' :
-             mode === 'route-playback' ? 'Route Legend' :
-             mode === 'visit-heatmap' ? 'Visit Density Scale' :
-             mode === 'sales-heatmap' ? 'Sales Amount (₹)' :
-             'Status Legend'}
+            {mode === 'prospects'
+              ? 'Prospect Status Legend'
+              : mode === 'territories'
+              ? 'Sales Achievement %'
+              : mode === 'route-playback'
+              ? 'Route Legend'
+              : mode === 'visit-heatmap'
+              ? 'Visit Density Scale'
+              : mode === 'sales-heatmap'
+              ? 'Sales Amount (₹)'
+              : 'Status Legend'}
           </span>
         </h4>
 
@@ -401,23 +520,69 @@ export function InteractiveMap({
           </div>
         ) : mode === 'territories' ? (
           <div className="space-y-1 text-[11px] font-bold">
-            <div className="flex items-center justify-between"><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> 80% and above</span> <span className="text-slate-400 font-normal">High</span></div>
-            <div className="flex items-center justify-between"><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-lime-500" /> 60% – 79%</span> <span className="text-slate-400 font-normal">Good</span></div>
-            <div className="flex items-center justify-between"><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-amber-400" /> 40% – 59%</span> <span className="text-slate-400 font-normal">Average</span></div>
-            <div className="flex items-center justify-between"><span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-sm bg-red-500" /> Below 20%</span> <span className="text-slate-400 font-normal">Low</span></div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm bg-emerald-500" /> 80% and above
+              </span>{' '}
+              <span className="text-slate-400 font-normal">High</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm bg-lime-500" /> 60% – 79%
+              </span>{' '}
+              <span className="text-slate-400 font-normal">Good</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm bg-amber-400" /> 40% – 59%
+              </span>{' '}
+              <span className="text-slate-400 font-normal">Average</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm bg-red-500" /> Below 20%
+              </span>{' '}
+              <span className="text-slate-400 font-normal">Low</span>
+            </div>
           </div>
         ) : mode === 'route-playback' ? (
           <div className="space-y-1.5 text-[11px] font-bold">
-            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Start Location</div>
-            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-red-600" /> End Location</div>
-            <div className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" /> Visited Stop</div>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-600" /> Start Location
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-red-600" /> End Location
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-blue-500" /> Visited Stop
+            </div>
           </div>
         ) : (
           <div className="space-y-1.5 text-[11px] font-bold">
-            <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> On Field</span> <span className="text-slate-500">24</span></div>
-            <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> In Transit</span> <span className="text-slate-500">3</span></div>
-            <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Break</span> <span className="text-slate-500">1</span></div>
-            <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> Offline / Not Working</span> <span className="text-slate-500">4</span></div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> On Field
+              </span>{' '}
+              <span className="text-slate-500">24</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> In Transit
+              </span>{' '}
+              <span className="text-slate-500">3</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Break
+              </span>{' '}
+              <span className="text-slate-500">1</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> Offline / Not Working
+              </span>{' '}
+              <span className="text-slate-500">4</span>
+            </div>
           </div>
         )}
       </div>
@@ -454,7 +619,9 @@ export function InteractiveMap({
         <button
           onClick={() => setShowHeatmapToggle(!showHeatmapToggle)}
           className={`flex items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs font-bold shadow-md cursor-pointer transition-colors ${
-            showHeatmapToggle ? 'bg-amber-500 text-white border-amber-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+            showHeatmapToggle
+              ? 'bg-amber-500 text-white border-amber-600'
+              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
           }`}
         >
           Toggle Heatmap
