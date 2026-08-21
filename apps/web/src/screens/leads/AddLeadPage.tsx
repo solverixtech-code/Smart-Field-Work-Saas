@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
+import { DatePicker } from '../../components/ui/DatePicker';
 
 export default function AddLeadPage() {
   const navigate = useNavigate();
@@ -427,17 +428,11 @@ export default function AddLeadPage() {
               </div>
 
               {/* Expected Closing Date */}
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Expected Closing Date</label>
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={expectedClosingDate}
-                    onChange={(e) => setExpectedClosingDate(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-700 focus:border-purple-600 focus:outline-none"
-                  />
-                </div>
-              </div>
+              <DatePicker
+                label="Expected Closing Date"
+                value={expectedClosingDate}
+                onChange={(d) => setExpectedClosingDate(d)}
+              />
             </div>
           </div>
 
@@ -611,15 +606,11 @@ export default function AddLeadPage() {
             <h3 className="text-sm font-bold text-[#0D1F3D]">Follow-up & Next Action</h3>
 
             <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Next Follow-up Date</label>
-                <input
-                  type="date"
-                  value={nextFollowUpDate}
-                  onChange={(e) => setNextFollowUpDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-slate-700 focus:border-purple-600 focus:outline-none"
-                />
-              </div>
+              <DatePicker
+                label="Next Follow-up Date"
+                value={nextFollowUpDate}
+                onChange={(d) => setNextFollowUpDate(d)}
+              />
 
               <div className="space-y-1">
                 <label className="font-bold text-slate-700 block">Next Action / Notes</label>

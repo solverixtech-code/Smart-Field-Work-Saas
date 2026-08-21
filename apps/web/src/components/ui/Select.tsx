@@ -6,7 +6,31 @@ export interface SelectOption {
   label: string;
   avatar?: string;
   sublabel?: string;
+  badge?: {
+    text: string;
+    variant?: 'purple' | 'blue' | 'emerald' | 'amber' | 'slate';
+  };
 }
+
+const getOptionBadgeAndCleanLabel = (opt?: SelectOption) => {
+  if (!opt) return { badge: null, cleanLabel: '' };
+  if (opt.badge) {
+    return { badge: opt.badge, cleanLabel: opt.label };
+  }
+  if (opt.label.startsWith('[LEAD]')) {
+    return {
+      badge: { text: 'LEAD', variant: 'purple' as const },
+      cleanLabel: opt.label.replace('[LEAD]', '').trim(),
+    };
+  }
+  if (opt.label.startsWith('[BUSINESS]')) {
+    return {
+      badge: { text: 'BUSINESS', variant: 'blue' as const },
+      cleanLabel: opt.label.replace('[BUSINESS]', '').trim(),
+    };
+  }
+  return { badge: null, cleanLabel: opt.label };
+};
 
 export interface SelectProps {
   label?: string;
@@ -79,7 +103,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
 
     // Find active selected label
     const selectedOption = parsedOptions.find((opt) => String(opt.value) === String(currentValue));
-    const displayLabel = selectedOption ? selectedOption.label : placeholder;
+    const selectedParsed = getOptionBadgeAndCleanLabel(selectedOption);
 
     // Auto-focus search input when dropdown opens
     useEffect(() => {
@@ -153,12 +177,25 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                 className="h-5 w-5 rounded-full object-cover shrink-0 border border-slate-200"
               />
             )}
+            {selectedParsed.badge && (
+              <span
+                className={`rounded-xs px-1.5 py-0.5 text-[9px] font-extrabold tracking-wide uppercase shrink-0 border ${
+                  selectedParsed.badge.variant === 'purple'
+                    ? 'bg-purple-50 text-purple-700 border-purple-200'
+                    : selectedParsed.badge.variant === 'blue'
+                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                }`}
+              >
+                {selectedParsed.badge.text}
+              </span>
+            )}
             <span
               className={`truncate ${
                 !selectedOption ? 'text-slate-400 font-medium' : 'text-[#0D1F3D] font-bold'
               }`}
             >
-              {displayLabel}
+              {selectedOption ? selectedParsed.cleanLabel : placeholder}
             </span>
           </div>
 
@@ -192,6 +229,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((opt) => {
                   const isSelected = String(opt.value) === String(currentValue);
+                  const parsed = getOptionBadgeAndCleanLabel(opt);
                   return (
                     <button
                       key={opt.value}
@@ -211,10 +249,25 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                             className="h-6 w-6 rounded-full object-cover shrink-0 border border-slate-200"
                           />
                         )}
-                        <div className="truncate text-left">
-                          <span className="truncate block font-bold text-[#0D1F3D]">{opt.label}</span>
+                        <div className="truncate text-left flex flex-col justify-center">
+                          <div className="flex items-center gap-2 truncate">
+                            {parsed.badge && (
+                              <span
+                                className={`rounded-xs px-1.5 py-0.2 text-[9px] font-extrabold tracking-wide uppercase shrink-0 border ${
+                                  parsed.badge.variant === 'purple'
+                                    ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                    : parsed.badge.variant === 'blue'
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                                }`}
+                              >
+                                {parsed.badge.text}
+                              </span>
+                            )}
+                            <span className="truncate font-bold text-[#0D1F3D]">{parsed.cleanLabel}</span>
+                          </div>
                           {opt.sublabel && (
-                            <span className="text-[10px] text-slate-400 block font-normal">
+                            <span className="text-[10px] text-slate-400 block font-normal mt-0.5">
                               {opt.sublabel}
                             </span>
                           )}
