@@ -28,6 +28,10 @@ This document establishes the binding design system, component standards, typogr
    - **Date Pickers**: Always use the reusable `<DatePicker />` component with an interactive month/year calendar popup.
    - **Time Pickers**: Always use an interactive clock time picker modal for scheduling time slots.
 
+5. **Reusable Custom Checkbox Component (STRICT BINDING RULE)**:
+   - Never render raw HTML `<input type="checkbox" />` elements.
+   - Always use the pre-built, styled `<Checkbox checked={...} onChange={...} label={...} />` component from `src/components/ui/Checkbox.tsx` for consistent enterprise UI styling across all forms, tables, and modals.
+
 ---
 
 ## 2. Typography & Color Tokens

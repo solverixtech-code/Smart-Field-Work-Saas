@@ -38,6 +38,7 @@ import {
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
 import { DataTable } from '../../../components/ui/DataTable';
+import { Checkbox } from '../../../components/ui/Checkbox';
 import {
   masterCategories,
   initialMasterRecords,
@@ -725,18 +726,16 @@ export default function MasterManagementPage() {
               </div>
             </div>
 
-            <label className="flex items-center gap-2.5 rounded-sm border border-slate-200 bg-slate-50 p-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formIsActive}
-                onChange={(e) => setFormIsActive(e.target.checked)}
-                className="h-4 w-4 rounded-sm border-slate-300 text-[#0D1F3D]"
-              />
+            <div className="rounded-sm border border-slate-200 bg-slate-50 p-3.5 flex items-center justify-between">
               <div>
-                <p className="font-bold text-[#0D1F3D]">Active Status</p>
-                <p className="text-[11px] text-slate-500 font-normal">Active masters appear in application dropdown menus.</p>
+                <p className="font-extrabold text-[#0D1F3D] text-xs">Active Status</p>
+                <p className="text-[11px] text-slate-500 font-medium">Active masters appear in application dropdown menus.</p>
               </div>
-            </label>
+              <Checkbox
+                checked={formIsActive}
+                onChange={(checked) => setFormIsActive(checked)}
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
