@@ -415,12 +415,12 @@ export default function AppRouter() {
             >
               <Route path="/admin/territories" element={<TerritoriesListPage />} />
               <Route path="/admin/territories/create" element={<CreateTerritoryPage />} />
-              <Route path="/admin/territories/:territoryId" element={<TerritoryDetailsPage />} />
+              <Route path="/admin/territories/:territoryId" element={<TerritoryDetailsPage initialTab="Overview" />} />
               <Route path="/admin/territories/:territoryId/edit" element={<EditTerritoryPage />} />
-              <Route path="/admin/territories/:territoryId/executives" element={<AssignExecutivesPage />} />
-              <Route path="/admin/territories/:territoryId/businesses" element={<TerritoryBusinessesPage />} />
-              <Route path="/admin/territories/:territoryId/performance" element={<TerritoryPerformancePage />} />
-              <Route path="/admin/territories/:territoryId/map" element={<ModuleTerritoryMapPage />} />
+              <Route path="/admin/territories/:territoryId/executives" element={<TerritoryDetailsPage initialTab="Executives" />} />
+              <Route path="/admin/territories/:territoryId/businesses" element={<TerritoryDetailsPage initialTab="Businesses" />} />
+              <Route path="/admin/territories/:territoryId/performance" element={<TerritoryDetailsPage initialTab="Performance" />} />
+              <Route path="/admin/territories/:territoryId/map" element={<TerritoryDetailsPage initialTab="Map" />} />
             </Route>
 
             {/* System Masters Management Route */}
