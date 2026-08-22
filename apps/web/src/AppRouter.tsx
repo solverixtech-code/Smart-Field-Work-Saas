@@ -131,10 +131,10 @@ export default function AppRouter() {
             withCredentials: true,
           });
           const tokens = AuthTokensSchema.parse(res.data);
-          saveRefreshToken(tokens.refreshToken);
           dispatch(
             setCredentials({
               accessToken: tokens.accessToken,
+              refreshToken: tokens.refreshToken,
               user: tokens.user,
             }),
           );

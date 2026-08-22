@@ -31,9 +31,12 @@ async function performRefresh(): Promise<string | null> {
       withCredentials: true,
     });
     const tokens = AuthTokensSchema.parse(response.data);
-    saveRefreshToken(tokens.refreshToken);
     store.dispatch(
-      setCredentials({ accessToken: tokens.accessToken, user: tokens.user }),
+      setCredentials({
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        user: tokens.user,
+      }),
     );
     return tokens.accessToken;
   } catch (err) {
