@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { AuthTokens } from '@visiblo/shared';
+import { getStoredAuthSession, saveAuthSession, clearAuthSession } from '../../common/authSession';
 
 export interface AuthState {
   accessToken: string | null;
@@ -7,10 +8,12 @@ export interface AuthState {
   isAuthenticated: boolean;
 }
 
+const initialSession = getStoredAuthSession();
+
 const initialState: AuthState = {
-  accessToken: null,
-  user: null,
-  isAuthenticated: false,
+  accessToken: initialSession?.accessToken ?? null,
+  user: initialSession?.user ?? null,
+  isAuthenticated: Boolean(initialSession?.accessToken && initialSession?.user),
 };
 
 const authSlice = createSlice({
@@ -19,16 +22,22 @@ const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      action: PayloadAction<Pick<AuthTokens, 'accessToken' | 'user'>>,
+      action: PayloadAction<Pick<AuthTokens, 'accessToken' | 'user'> & { refreshToken?: string }>,
     ) => {
       state.accessToken = action.payload.accessToken;
       state.user = action.payload.user;
       state.isAuthenticated = true;
+      saveAuthSession({
+        accessToken: action.payload.accessToken,
+        refreshToken: action.payload.refreshToken,
+        user: action.payload.user,
+      });
     },
     clearCredentials: (state) => {
       state.accessToken = null;
       state.user = null;
       state.isAuthenticated = false;
+      clearAuthSession();
     },
   },
 });
