@@ -61,6 +61,10 @@ import { CategoryPerformancePage } from './screens/performance/CategoryPerforman
 import { ConversionFunnelPage } from './screens/performance/ConversionFunnelPage';
 import { ProductivityReportPage } from './screens/performance/ProductivityReportPage';
 
+import AllCategoriesPage from './screens/categories/AllCategoriesPage';
+import AddCategoryPage from './screens/categories/AddCategoryPage';
+import CategoryDetailsPage from './screens/categories/CategoryDetailsPage';
+
 import AllBusinessesPage from './screens/businesses/AllBusinessesPage';
 import AddBusinessPage from './screens/businesses/AddBusinessPage';
 import BusinessLayoutWrapper from './screens/businesses/BusinessLayoutWrapper';
@@ -353,6 +357,25 @@ export default function AppRouter() {
               <Route path="/admin/performance/categories" element={<CategoryPerformancePage />} />
               <Route path="/admin/performance/funnel" element={<ConversionFunnelPage />} />
               <Route path="/admin/performance/productivity" element={<ProductivityReportPage />} />
+            </Route>
+
+            {/* Business Categories Routes (Screens 144 to 147) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/categories" element={<AllCategoriesPage />} />
+              <Route path="/admin/categories/create" element={<AddCategoryPage />} />
+              <Route path="/admin/categories/:categoryId" element={<CategoryDetailsPage />} />
+              <Route path="/admin/categories/:categoryId/performance" element={<CategoryPerformancePage />} />
             </Route>
 
             <Route
