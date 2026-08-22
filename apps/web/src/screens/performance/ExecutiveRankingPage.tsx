@@ -253,18 +253,34 @@ export const ExecutiveRankingPage: React.FC = () => {
                       {exec.dynamicRank === 1 ? '🥇 1' : exec.dynamicRank === 2 ? '🥈 2' : exec.dynamicRank === 3 ? '🥉 3' : exec.dynamicRank}
                     </td>
                     <td className="py-3 px-3">
-                      <div className="flex items-center gap-2.5">
-                        <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                      <div
+                        onClick={() => navigate(`/admin/executives/${exec.id}`)}
+                        className="flex items-center gap-2.5 cursor-pointer group"
+                        title={`View ${exec.name}'s Profile`}
+                      >
+                        <img
+                          src={exec.avatar}
+                          alt={exec.name}
+                          className="h-7 w-7 rounded-full object-cover border border-slate-200 group-hover:ring-2 group-hover:ring-purple-600 transition-all flex-shrink-0"
+                        />
                         <div>
-                          <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
-                          <span className="text-[10px] text-slate-400 font-mono">{exec.id}</span>
+                          <span className="font-extrabold text-[#0D1F3D] block group-hover:text-purple-600 group-hover:underline transition-colors">
+                            {exec.name}
+                          </span>
+                          <span className="text-[10px] text-slate-400 font-mono block">{exec.id}</span>
                         </div>
                       </div>
                     </td>
                     <td className="py-3 px-3 text-slate-600">
-                      <div>
-                        <span className="font-bold text-slate-800 block">{exec.team}</span>
-                        <span className="text-[10px] text-slate-400">{exec.region}</span>
+                      <div
+                        onClick={() => navigate('/admin/teams')}
+                        className="cursor-pointer group"
+                        title={`View ${exec.team}`}
+                      >
+                        <span className="font-bold text-slate-800 block group-hover:text-purple-600 group-hover:underline transition-colors">
+                          {exec.team}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block">{exec.region}</span>
                       </div>
                     </td>
                     <td className="py-3 px-3 font-mono font-semibold text-slate-600">₹{exec.target.toLocaleString('en-IN')}</td>

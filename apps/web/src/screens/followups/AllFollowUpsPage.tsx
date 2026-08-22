@@ -311,15 +311,21 @@ export default function AllFollowUpsPage() {
                         {f.followupType}
                       </span>
                     </td>
-                    <td className="p-3 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
+                    <td className="p-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        onClick={() => navigate('/admin/executives/FE-1001')}
+                        className="flex items-center gap-2 cursor-pointer group"
+                        title={`View ${f.assignedToName}'s Profile`}
+                      >
                         <img
                           src={f.assignedToAvatar}
                           alt={f.assignedToName}
-                          className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0"
+                          className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0 group-hover:ring-2 group-hover:ring-purple-600 transition-all"
                         />
                         <div>
-                          <span className="font-bold text-[#0D1F3D] block leading-tight">{f.assignedToName}</span>
+                          <span className="font-bold text-[#0D1F3D] block leading-tight group-hover:text-purple-600 group-hover:underline transition-colors">
+                            {f.assignedToName}
+                          </span>
                           <span className="text-[9px] text-slate-500 font-medium">{f.assignedToRole}</span>
                         </div>
                       </div>

@@ -96,6 +96,7 @@ export interface InteractiveMapProps {
   routePath?: [number, number][];
   playbackActiveStopIndex?: number;
   selectedExecutiveId?: string;
+  selectedProspectId?: string;
   onSelectExecutive?: (exec: ExecutiveLocation) => void;
   onSelectProspect?: (prospect: BusinessProspectMarker) => void;
   heightClassName?: string;
@@ -119,6 +120,7 @@ export function InteractiveMap({
   routePath = [],
   playbackActiveStopIndex,
   selectedExecutiveId,
+  selectedProspectId,
   onSelectExecutive,
   onSelectProspect,
   heightClassName = 'h-[620px]',
@@ -332,6 +334,26 @@ export function InteractiveMap({
       }
     }
   }, [selectedExecutiveId, executives]);
+
+  // Smoothly Fly Mapbox Camera to Selected Prospect Location
+  useEffect(() => {
+    if (!mapRef.current || !selectedProspectId) return;
+
+    const pr = prospects.find((p) => p.id === selectedProspectId);
+    if (pr) {
+      setSelectedMarkerId(pr.id);
+      try {
+        mapRef.current.flyTo({
+          center: [pr.lng, pr.lat],
+          zoom: 15.5,
+          duration: 1200,
+          essential: true,
+        });
+      } catch (err) {
+        console.warn('Prospect FlyTo notice:', err);
+      }
+    }
+  }, [selectedProspectId, prospects]);
 
   const [fetchedRealRoadPath, setFetchedRealRoadPath] = useState<[number, number][]>([]);
 

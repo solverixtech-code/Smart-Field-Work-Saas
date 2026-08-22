@@ -182,14 +182,21 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
     {
       header: 'Executive',
       cell: (v) => (
-        <div className="flex items-center gap-2">
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate('/admin/executives/FE-1001');
+          }}
+          className="flex items-center gap-2 cursor-pointer group"
+          title={`View ${v.executiveName}'s Profile`}
+        >
           <img
             src={v.executiveAvatar}
             alt={v.executiveName}
-            className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0"
+            className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0 group-hover:ring-2 group-hover:ring-purple-600 transition-all"
           />
           <div>
-            <p className="font-bold text-[#0D1F3D]">{v.executiveName}</p>
+            <p className="font-bold text-[#0D1F3D] group-hover:text-purple-600 group-hover:underline transition-colors">{v.executiveName}</p>
             <p className="text-[10px] text-slate-500 font-medium">{v.executiveRole}</p>
           </div>
         </div>

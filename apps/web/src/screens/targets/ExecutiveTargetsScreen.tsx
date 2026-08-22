@@ -203,15 +203,27 @@ export default function ExecutiveTargetsScreen() {
               {filteredExecs.map((et) => (
                 <tr key={et.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3 px-3">
-                    <div className="flex items-center gap-2.5">
-                      <img src={et.executiveAvatar} alt="" className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                    <div
+                      onClick={() => navigate(`/admin/executives/${et.executiveId}`)}
+                      className="flex items-center gap-2.5 cursor-pointer group"
+                      title={`View ${et.executiveName}'s Profile`}
+                    >
+                      <img src={et.executiveAvatar} alt="" className="h-7 w-7 rounded-full object-cover border border-slate-200 group-hover:ring-2 group-hover:ring-purple-600 transition-all shrink-0" />
                       <div>
-                        <span className="font-extrabold text-[#0D1F3D] block">{et.executiveName}</span>
-                        <span className="text-[10px] text-slate-400 font-mono font-semibold">{et.executiveId} • {et.role}</span>
+                        <span className="font-extrabold text-[#0D1F3D] block group-hover:text-purple-600 group-hover:underline transition-colors">{et.executiveName}</span>
+                        <span className="text-[10px] text-slate-400 font-mono font-semibold block">{et.executiveId} • {et.role}</span>
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-3 font-semibold text-slate-700">{et.teamName}</td>
+                  <td className="py-3 px-3 font-semibold text-slate-700">
+                    <div
+                      onClick={() => navigate('/admin/teams')}
+                      className="cursor-pointer group"
+                      title={`View ${et.teamName}`}
+                    >
+                      <span className="group-hover:text-purple-600 group-hover:underline transition-colors">{et.teamName}</span>
+                    </div>
+                  </td>
                   <td className="py-3 px-3">
                     <div className="space-y-1">
                       <span className="font-mono text-slate-800 text-[11px] block">

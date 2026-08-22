@@ -136,15 +136,31 @@ export const TerritoryRankingPage: React.FC = () => {
                       {terr.rank === 1 ? '🥇 1' : terr.rank === 2 ? '🥈 2' : terr.rank === 3 ? '🥉 3' : terr.rank}
                     </td>
                     <td className="py-3 px-3">
-                      <div>
-                        <span className="font-extrabold text-[#0D1F3D] block">{terr.territoryName}</span>
-                        <span className="text-[10px] text-slate-400">{terr.region}</span>
+                      <div
+                        onClick={() => navigate('/admin/territories')}
+                        className="cursor-pointer group"
+                        title={`View ${terr.territoryName}`}
+                      >
+                        <span className="font-extrabold text-[#0D1F3D] block group-hover:text-purple-600 group-hover:underline transition-colors">
+                          {terr.territoryName}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block">{terr.region}</span>
                       </div>
                     </td>
                     <td className="py-3 px-3">
-                      <div className="flex items-center gap-2">
-                        <img src={terr.managerAvatar} alt={terr.managerName} className="h-6 w-6 rounded-full object-cover border border-slate-200" />
-                        <span className="font-bold text-slate-800">{terr.managerName}</span>
+                      <div
+                        onClick={() => navigate('/admin/executives/FE-1001')}
+                        className="flex items-center gap-2 cursor-pointer group"
+                        title={`View Manager ${terr.managerName}'s Profile`}
+                      >
+                        <img
+                          src={terr.managerAvatar}
+                          alt={terr.managerName}
+                          className="h-6 w-6 rounded-full object-cover border border-slate-200 group-hover:ring-2 group-hover:ring-purple-600 transition-all flex-shrink-0"
+                        />
+                        <span className="font-bold text-slate-800 group-hover:text-purple-600 group-hover:underline transition-colors">
+                          {terr.managerName}
+                        </span>
                       </div>
                     </td>
                     <td className="py-3 px-3 text-center font-mono font-bold text-slate-700">{terr.executivesCount}</td>

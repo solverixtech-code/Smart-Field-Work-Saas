@@ -222,10 +222,27 @@ export const TeamRankingPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2.5">
-                        <img src={team.managerAvatar} alt={team.managerName} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                        <img
+                          src={team.managerAvatar}
+                          alt={team.managerName}
+                          onClick={() => navigate('/admin/executives/FE-1001')}
+                          className="h-7 w-7 rounded-full object-cover border border-slate-200 cursor-pointer hover:ring-2 hover:ring-purple-600 transition-all flex-shrink-0"
+                          title={`View Leader ${team.managerName}'s Profile`}
+                        />
                         <div>
-                          <span className="font-extrabold text-[#0D1F3D] block">{team.teamName}</span>
-                          <span className="text-[10px] text-slate-400">Lead: {team.managerName}</span>
+                          <span
+                            onClick={() => navigate(`/admin/teams/${team.id}`)}
+                            className="font-extrabold text-[#0D1F3D] block cursor-pointer hover:text-purple-600 hover:underline transition-colors"
+                            title={`View ${team.teamName} Details`}
+                          >
+                            {team.teamName}
+                          </span>
+                          <span
+                            onClick={() => navigate('/admin/executives/FE-1001')}
+                            className="text-[10px] text-slate-500 font-medium block cursor-pointer hover:text-purple-600 hover:underline transition-colors"
+                          >
+                            Lead: {team.managerName}
+                          </span>
                         </div>
                       </div>
                     </td>

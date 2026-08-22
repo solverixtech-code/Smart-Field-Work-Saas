@@ -156,6 +156,7 @@ export default function BusinessProspectMapPage() {
           <InteractiveMap
             mode="prospects"
             prospects={filteredProspects}
+            selectedProspectId={selectedProspect?.id}
             onSelectProspect={(pr) => setSelectedProspect(pr)}
             heightClassName="h-[650px]"
           >
@@ -200,6 +201,7 @@ export default function BusinessProspectMapPage() {
           {/* Prospects List */}
           <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-1">
             {filteredProspects.map((pr) => {
+              const isSelected = selectedProspect?.id === pr.id;
               const initials = pr.name
                 .split(' ')
                 .map((n) => n[0])
@@ -218,12 +220,17 @@ export default function BusinessProspectMapPage() {
                 <div
                   key={pr.id}
                   onClick={() => {
-                    setSelectedProspect(pr);
-                    navigate(`/admin/businesses/${pr.id}`);
+                    if (isSelected) {
+                      navigate(`/admin/businesses/${pr.id}`);
+                    } else {
+                      setSelectedProspect(pr);
+                      toast.info(`Centered map on ${pr.name}`);
+                    }
                   }}
-                  className={`flex items-center justify-between rounded-sm border p-3 transition-all cursor-pointer ${
-                    selectedProspect?.id === pr.id
-                      ? 'border-[#0D1F3D] bg-slate-50 shadow-xs'
+                  onDoubleClick={() => navigate(`/admin/businesses/${pr.id}`)}
+                  className={`group flex items-center justify-between rounded-sm border p-3 transition-all cursor-pointer ${
+                    isSelected
+                      ? 'border-[#0D1F3D] bg-purple-50/60 shadow-xs ring-1 ring-[#0D1F3D]'
                       : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/50'
                   }`}
                 >
@@ -245,9 +252,24 @@ export default function BusinessProspectMapPage() {
                     </div>
                   </div>
 
-                  <div className="text-right shrink-0">
-                    <span className="text-[10px] text-slate-400 font-medium block">{pr.lastVisitTime}</span>
-                    <ChevronRight className="h-4 w-4 text-slate-300 ml-auto mt-1" />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400 font-medium block">{pr.lastVisitTime}</span>
+                      <span className="text-[10px] text-purple-700 font-bold hidden group-hover:block">
+                        {isSelected ? 'Click to Open' : 'Focus Map'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/admin/businesses/${pr.id}`);
+                      }}
+                      title="Open Business Details"
+                      className="p-1 rounded-sm text-slate-400 hover:text-[#0D1F3D] hover:bg-slate-200/60 transition-colors"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               );
