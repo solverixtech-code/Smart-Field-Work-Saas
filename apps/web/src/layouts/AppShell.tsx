@@ -755,6 +755,20 @@ function getBreadcrumbTrail(pathname: string) {
     } else if (pathname.endsWith("/targets")) {
       items.push({ label: "Team Targets", to: pathname });
     }
+  } else if (pathname === '/admin/categories') {
+    items.push({ label: 'Business Categories', to: '/admin/categories' });
+    items.push({ label: 'All Categories', to: '/admin/categories' });
+  } else if (pathname === '/admin/categories/create') {
+    items.push({ label: 'Categories', to: '/admin/categories' });
+    items.push({ label: 'Add Category', to: '/admin/categories/create' });
+  } else if (pathname.startsWith('/admin/categories/')) {
+    items.push({ label: 'Categories', to: '/admin/categories' });
+    if (pathname.endsWith('/performance')) {
+      items.push({ label: 'Retail Business', to: '/admin/categories/cat-1' });
+      items.push({ label: 'Category Performance', to: pathname });
+    } else {
+      items.push({ label: 'Category Details', to: pathname });
+    }
   } else if (pathname === "/admin/territories") {
     items.push({ label: "Territory Management", to: "/admin/territories" });
     items.push({ label: "Territories", to: "/admin/territories" });
