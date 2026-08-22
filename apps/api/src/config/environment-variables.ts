@@ -10,11 +10,12 @@ export interface EnvironmentVariables {
   THROTTLE_ENABLED?: boolean;
   RATE_LIMIT_TTL_MS: number;
   RATE_LIMIT_LIMIT: number;
-  REDIS_HOST: string;
-  REDIS_PORT: number;
+  REDIS_ENABLED?: boolean;
+  REDIS_HOST?: string;
+  REDIS_PORT?: number;
   REDIS_PASSWORD?: string;
-  REDIS_DB: number;
-  REDIS_KEY_PREFIX: string;
+  REDIS_DB?: number;
+  REDIS_KEY_PREFIX?: string;
   SMTP_HOST?: string;
   SMTP_PORT?: number;
   SMTP_USER?: string;
@@ -37,11 +38,12 @@ export const validationSchemaForEnv = Joi.object<EnvironmentVariables, true>({
   THROTTLE_ENABLED: Joi.boolean().truthy('true').falsy('false').default(false),
   RATE_LIMIT_TTL_MS: Joi.number().integer().positive().default(60000),
   RATE_LIMIT_LIMIT: Joi.number().integer().positive().default(120),
-  REDIS_HOST: Joi.string().default('127.0.0.1'),
-  REDIS_PORT: Joi.number().integer().positive().default(6379),
+  REDIS_ENABLED: Joi.boolean().truthy('true').falsy('false').default(true),
+  REDIS_HOST: Joi.string().allow('').optional().default('127.0.0.1'),
+  REDIS_PORT: Joi.number().integer().positive().allow(null).optional().default(6379),
   REDIS_PASSWORD: Joi.string().allow('').optional(),
-  REDIS_DB: Joi.number().integer().min(0).default(0),
-  REDIS_KEY_PREFIX: Joi.string().default('visiblo:'),
+  REDIS_DB: Joi.number().integer().min(0).optional().default(0),
+  REDIS_KEY_PREFIX: Joi.string().allow('').optional().default('visiblo:'),
   SMTP_HOST: Joi.string().allow('').optional(),
   SMTP_PORT: Joi.number().integer().positive().default(587),
   SMTP_USER: Joi.string().allow('').optional(),

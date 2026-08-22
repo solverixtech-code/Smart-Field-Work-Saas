@@ -9,8 +9,16 @@ interface RedisThrottlerStorageRecord {
   timeToBlockExpire: number;
 }
 
+interface InMemoryThrottlerRecord {
+  hits: number;
+  hitsExpireAt: number;
+  blockExpireAt?: number;
+}
+
 @Injectable()
 export class RedisThrottlerStorage implements ThrottlerStorage {
+  private inMemoryMap = new Map<string, InMemoryThrottlerRecord>();
+
   constructor(private readonly redisService: RedisService) {}
 
   async increment(
@@ -26,33 +34,83 @@ export class RedisThrottlerStorage implements ThrottlerStorage {
     const blockKey = `rate-limit:${throttlerName}:${key}:block`;
     const client = this.redisService.getClient();
 
-    const blockTtl = await client.pttl(blockKey);
-    if (blockTtl > 0) {
+    if (!client || !this.redisService.isRedisAvailable()) {
+      return this.incrementInMemory(hitsKey, ttlMs, limit, blockMs);
+    }
+
+    try {
+      const blockTtl = await client.pttl(blockKey);
+      if (blockTtl > 0) {
+        return {
+          totalHits: limit + 1,
+          timeToExpire: Math.max(await client.pttl(hitsKey), 0),
+          isBlocked: true,
+          timeToBlockExpire: blockTtl,
+        };
+      }
+
+      const totalHits = await client.incr(hitsKey);
+      if (totalHits === 1) {
+        await client.pexpire(hitsKey, ttlMs);
+      }
+
+      const timeToExpire = Math.max(await client.pttl(hitsKey), 0);
+      const isBlocked = totalHits > limit;
+
+      if (isBlocked) {
+        await client.set(blockKey, '1', 'PX', blockMs);
+      }
+
+      return {
+        totalHits,
+        timeToExpire,
+        isBlocked,
+        timeToBlockExpire: isBlocked ? blockMs : 0,
+      };
+    } catch {
+      return this.incrementInMemory(hitsKey, ttlMs, limit, blockMs);
+    }
+  }
+
+  private incrementInMemory(
+    hitsKey: string,
+    ttlMs: number,
+    limit: number,
+    blockMs: number,
+  ): RedisThrottlerStorageRecord {
+    const now = Date.now();
+    let record = this.inMemoryMap.get(hitsKey);
+
+    if (record && record.blockExpireAt && now < record.blockExpireAt) {
       return {
         totalHits: limit + 1,
-        timeToExpire: Math.max(await client.pttl(hitsKey), 0),
+        timeToExpire: Math.max(record.hitsExpireAt - now, 0),
         isBlocked: true,
-        timeToBlockExpire: blockTtl,
+        timeToBlockExpire: record.blockExpireAt - now,
       };
     }
 
-    const totalHits = await client.incr(hitsKey);
-    if (totalHits === 1) {
-      await client.pexpire(hitsKey, ttlMs);
+    if (!record || now >= record.hitsExpireAt) {
+      record = {
+        hits: 1,
+        hitsExpireAt: now + ttlMs,
+      };
+    } else {
+      record.hits += 1;
     }
 
-    const timeToExpire = Math.max(await client.pttl(hitsKey), 0);
-    const isBlocked = totalHits > limit;
-
-    if (isBlocked) {
-      await client.set(blockKey, '1', 'PX', blockMs);
+    const isBlocked = record.hits > limit;
+    if (isBlocked && !record.blockExpireAt) {
+      record.blockExpireAt = now + blockMs;
     }
+
+    this.inMemoryMap.set(hitsKey, record);
 
     return {
-      totalHits,
-      timeToExpire,
+      totalHits: record.hits,
+      timeToExpire: Math.max(record.hitsExpireAt - now, 0),
       isBlocked,
-      timeToBlockExpire: isBlocked ? blockMs : 0,
+      timeToBlockExpire: isBlocked && record.blockExpireAt ? Math.max(record.blockExpireAt - now, 0) : 0,
     };
   }
 }
