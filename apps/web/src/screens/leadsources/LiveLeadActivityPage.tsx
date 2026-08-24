@@ -9,7 +9,6 @@ import {
   Globe,
   Filter,
   Download,
-  MoreHorizontal,
   CheckCircle2,
   AlertTriangle,
   XCircle,
@@ -18,9 +17,15 @@ import {
   Users,
   BarChart3,
   Calendar,
+  Eye,
+  UserCheck,
+  Trash2,
+  ExternalLink,
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { Button } from '../../components/ui/Button';
+import { Checkbox } from '../../components/ui/Checkbox';
+import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
 import { mockLiveActivitiesList } from './leadSourcesData';
 
@@ -36,7 +41,6 @@ export default function LiveLeadActivityPage() {
 
   const [activeTab, setActiveTab] = useState<'All' | 'New' | 'Assigned' | 'Duplicate' | 'Failed' | 'Unassigned'>('All');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   const filteredActivities = mockLiveActivitiesList.filter((item) => {
     if (activeTab === 'All') return true;
@@ -44,33 +48,35 @@ export default function LiveLeadActivityPage() {
     return item.status === activeTab;
   });
 
+  const allSelected = filteredActivities.length > 0 && filteredActivities.every((item) => selectedIds.includes(item.id));
+
   const getSourceIcon = (platform: string) => {
     switch (platform) {
       case 'Meta':
-        return <Facebook className="h-3.5 w-3.5 text-blue-600" />;
+        return <Facebook className="h-3.5 w-3.5 text-blue-600 shrink-0" />;
       case 'Google':
-        return <Search className="h-3.5 w-3.5 text-amber-500" />;
+        return <Search className="h-3.5 w-3.5 text-amber-500 shrink-0" />;
       case 'WhatsApp':
-        return <MessageSquare className="h-3.5 w-3.5 text-emerald-600" />;
+        return <MessageSquare className="h-3.5 w-3.5 text-emerald-600 shrink-0" />;
       case 'Website':
-        return <Globe className="h-3.5 w-3.5 text-purple-600" />;
+        return <Globe className="h-3.5 w-3.5 text-purple-600 shrink-0" />;
       default:
-        return <Globe className="h-3.5 w-3.5 text-slate-500" />;
+        return <Globe className="h-3.5 w-3.5 text-slate-500 shrink-0" />;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'New':
-        return <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-0.5 rounded-xs">New</span>;
+        return <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2.5 py-0.5 rounded-xs">New</span>;
       case 'Assigned':
-        return <span className="bg-indigo-100 text-indigo-800 text-[10px] font-black px-2 py-0.5 rounded-xs">Assigned</span>;
+        return <span className="bg-indigo-100 text-indigo-800 text-[10px] font-black px-2.5 py-0.5 rounded-xs">Assigned</span>;
       case 'Duplicate':
-        return <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-xs">Duplicate</span>;
+        return <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-0.5 rounded-xs">Duplicate</span>;
       case 'Failed':
-        return <span className="bg-red-100 text-red-800 text-[10px] font-black px-2 py-0.5 rounded-xs">Failed</span>;
+        return <span className="bg-red-100 text-red-800 text-[10px] font-black px-2.5 py-0.5 rounded-xs">Failed</span>;
       default:
-        return <span className="bg-slate-100 text-slate-800 text-[10px] font-black px-2 py-0.5 rounded-xs">{status}</span>;
+        return <span className="bg-slate-100 text-slate-800 text-[10px] font-black px-2.5 py-0.5 rounded-xs">{status}</span>;
     }
   };
 
@@ -185,157 +191,200 @@ export default function LiveLeadActivityPage() {
         </div>
       </div>
 
+      {/* SYSTEM STANDARD SUB-TABS NAVIGATION BAR */}
+      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-2 pt-1.5 rounded-sm shadow-xs overflow-x-auto custom-scrollbar">
+        <div className="flex items-center gap-1">
+          {(
+            [
+              { id: 'All', label: 'All Leads', count: '2,618' },
+              { id: 'New', label: 'New', count: '2,306' },
+              { id: 'Assigned', label: 'Assigned', count: '2,148' },
+              { id: 'Duplicate', label: 'Duplicate', count: '216' },
+              { id: 'Failed', label: 'Failed', count: '48' },
+              { id: 'Unassigned', label: 'Unassigned', count: '104' },
+            ] as const
+          ).map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold transition-all border-b-2 whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? 'border-indigo-600 text-indigo-700 bg-slate-50/80 rounded-t-sm'
+                    : 'border-transparent text-slate-500 hover:text-[#0D1F3D] hover:border-slate-300'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span
+                  className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded-full ${
+                    isActive ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-600'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2 py-1.5 pr-2">
+          <select className="rounded-sm border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-[#0D1F3D]">
+            <option value="Newest First">Newest First ∨</option>
+            <option value="Oldest First">Oldest First ∨</option>
+          </select>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => toast.success('Exporting activity log...')}
+            className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5"
+          >
+            <Download className="h-3.5 w-3.5" /> Export
+          </Button>
+        </div>
+      </div>
+
       {/* MAIN CONTENT GRID: DATATABLE (8 COLS) + SIDEBAR (4 COLS) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left Column: Live Activity Datatable (8 Cols) */}
         <div className="lg:col-span-8 rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-          {/* Sub-Tabs & Actions Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
-            <div className="flex items-center gap-1 overflow-x-auto custom-scrollbar">
-              {(
-                [
-                  { id: 'All', label: 'All Leads', count: '2,618' },
-                  { id: 'New', label: 'New', count: '2,306' },
-                  { id: 'Assigned', label: 'Assigned', count: '2,148' },
-                  { id: 'Duplicate', label: 'Duplicate', count: '216' },
-                  { id: 'Failed', label: 'Failed', count: '48' },
-                  { id: 'Unassigned', label: 'Unassigned', count: '104' },
-                ] as const
-              ).map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-xs cursor-pointer transition-colors whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  {tab.label} <span className="text-[10px] font-normal opacity-80">({tab.count})</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <select className="rounded-sm border border-slate-200 bg-white px-2 py-1 text-[10px] font-bold text-[#0D1F3D]">
-                <option value="Newest First">Newest First</option>
-                <option value="Oldest First">Oldest First</option>
-              </select>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => toast.success('Exporting activity log...')}
-                className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1"
-              >
-                <Download className="h-3.5 w-3.5" /> Export
-              </Button>
-            </div>
-          </div>
-
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="border-b border-slate-100 text-slate-500 bg-slate-50/70">
-                  <th className="py-2.5 px-3 text-center">
-                    <input
-                      type="checkbox"
-                      onChange={(e) => {
-                        if (e.target.checked) setSelectedIds(filteredActivities.map((a) => a.id));
+                <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/90 text-xs font-bold uppercase tracking-wider">
+                  <th className="py-3 px-3 text-center w-10">
+                    <Checkbox
+                      checked={allSelected}
+                      onChange={(checked) => {
+                        if (checked) setSelectedIds(filteredActivities.map((a) => a.id));
                         else setSelectedIds([]);
                       }}
                     />
                   </th>
-                  <th className="py-2.5 px-3">Lead Details</th>
-                  <th className="py-2.5 px-3">Source</th>
-                  <th className="py-2.5 px-3">Campaign / Form</th>
-                  <th className="py-2.5 px-3">Time Captured</th>
-                  <th className="py-2.5 px-3 text-center">Status</th>
-                  <th className="py-2.5 px-3">Assigned To</th>
-                  <th className="py-2.5 px-3">SLA Timer</th>
-                  <th className="py-2.5 px-3 text-center">Actions</th>
+                  <th className="py-3 px-3">Lead Details</th>
+                  <th className="py-3 px-3">Source</th>
+                  <th className="py-3 px-3">Campaign / Form</th>
+                  <th className="py-3 px-3">Time Captured</th>
+                  <th className="py-3 px-3 text-center">Status</th>
+                  <th className="py-3 px-3">Assigned To</th>
+                  <th className="py-3 px-3">SLA Timer</th>
+                  <th className="py-3 px-3 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredActivities.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/70">
+                  <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="py-3 px-3 text-center">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedIds.includes(item.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) setSelectedIds([...selectedIds, item.id]);
+                        onChange={(checked) => {
+                          if (checked) setSelectedIds([...selectedIds, item.id]);
                           else setSelectedIds(selectedIds.filter((i) => i !== item.id));
                         }}
                       />
                     </td>
+                    {/* Lead Name (Clickable link) */}
                     <td className="py-3 px-3">
-                      <div className="flex items-center gap-2">
-                        <div className="h-7 w-7 rounded-full bg-slate-100 text-[#0D1F3D] font-extrabold text-[10px] flex items-center justify-center shrink-0 border border-slate-200">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-8 w-8 rounded-full bg-slate-100 text-[#0D1F3D] font-extrabold text-xs flex items-center justify-center shrink-0 border border-slate-200">
                           {item.leadName.split(' ').map((n) => n[0]).join('')}
                         </div>
                         <div>
-                          <span className="font-extrabold text-[#0D1F3D] block">{item.leadName}</span>
+                          <span
+                            onClick={() => navigate('/admin/businesses')}
+                            className="font-extrabold text-[#0D1F3D] block text-xs hover:text-indigo-600 hover:underline cursor-pointer"
+                          >
+                            {item.leadName}
+                          </span>
                           <span className="text-[10px] text-slate-500 font-mono">{item.phone}</span>
                         </div>
                       </div>
                     </td>
+                    {/* Source Channel */}
                     <td className="py-3 px-3">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-sm border border-slate-200/80 inline-flex">
                         {getSourceIcon(item.platform)}
-                        <span className="font-bold text-slate-800 text-[11px]">{item.sourceName}</span>
+                        <span className="font-extrabold text-slate-800 text-[11px]">{item.sourceName}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-3 text-slate-600 font-medium text-[11px]">
+                    {/* Campaign / Form */}
+                    <td className="py-3 px-3 text-slate-700 font-semibold text-[11px]">
                       {item.campaignOrForm}
                     </td>
+                    {/* Time Captured */}
                     <td className="py-3 px-3 text-slate-500 font-mono text-[11px]">
                       {item.timeCaptured}
                     </td>
+                    {/* Status Badge */}
                     <td className="py-3 px-3 text-center">
                       {getStatusBadge(item.status)}
                     </td>
+                    {/* Assigned To Executive (Clickable Link with Avatar) */}
                     <td className="py-3 px-3">
-                      <div>
-                        <span className="font-bold text-[#0D1F3D] block text-[11px]">
-                          {item.assignedToName}
+                      {item.assignedToName === 'Unassigned' ? (
+                        <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-xs text-[11px]">
+                          Unassigned (Queue)
                         </span>
-                        <span className="text-[10px] text-slate-400 font-medium">{item.assignedToTeam}</span>
-                      </div>
+                      ) : item.assignedToName?.startsWith('Merged') ? (
+                        <div>
+                          <span className="font-bold text-slate-700 block text-[11px]">{item.assignedToName}</span>
+                          <span className="text-[10px] text-slate-400 font-medium">{item.assignedToTeam}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <img
+                            src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80"
+                            alt="Executive"
+                            className="h-6 w-6 rounded-full object-cover shrink-0 border border-slate-200"
+                          />
+                          <div>
+                            <span
+                              onClick={() => navigate('/admin/executives/FE-1001')}
+                              className="font-extrabold text-[#0D1F3D] block text-[11px] hover:text-indigo-600 hover:underline cursor-pointer"
+                            >
+                              {item.assignedToName}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">{item.assignedToTeam}</span>
+                          </div>
+                        </div>
+                      )}
                     </td>
+                    {/* SLA Timer */}
                     <td className="py-3 px-3 font-mono font-bold text-indigo-700 text-[11px]">
                       {item.slaTime}
                     </td>
-                    <td className="py-3 px-3 text-center relative">
-                      <button
-                        onClick={() => setActiveMenuId(activeMenuId === item.id ? null : item.id)}
-                        className="text-slate-400 hover:text-slate-700 p-1 rounded-sm cursor-pointer"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-
-                      {activeMenuId === item.id && (
-                        <div className="absolute right-3 top-full mt-1 w-44 rounded-md border border-slate-200 bg-white p-1.5 shadow-xl z-50 text-left font-semibold text-xs space-y-0.5">
-                          <button
-                            onClick={() => {
-                              setActiveMenuId(null);
+                    {/* Interactive Row Actions Menu */}
+                    <td className="py-3 px-3 text-center">
+                      <RowActionsMenu
+                        items={[
+                          {
+                            label: 'View Lead Details',
+                            icon: Eye,
+                            onClick: () => {
                               toast.info(`Viewing details for ${item.leadName}`);
-                            }}
-                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-slate-100 text-[#0D1F3D]"
-                          >
-                            <BarChart3 className="h-3.5 w-3.5 text-indigo-600" /> View Lead Details
-                          </button>
-                          <button
-                            onClick={() => {
-                              setActiveMenuId(null);
-                              toast.success(`Re-assigned lead ${item.leadName}`);
-                            }}
-                            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-slate-100 text-[#0D1F3D]"
-                          >
-                            <Users className="h-3.5 w-3.5 text-blue-600" /> Re-assign Executive
-                          </button>
-                        </div>
-                      )}
+                              navigate('/admin/businesses');
+                            },
+                          },
+                          {
+                            label: 'Re-assign Executive',
+                            icon: UserCheck,
+                            onClick: () => toast.success(`Re-assigned lead ${item.leadName}`),
+                          },
+                          {
+                            label: 'View Source Details',
+                            icon: ExternalLink,
+                            onClick: () => navigate('/admin/leads/sources/src-101'),
+                          },
+                          {
+                            label: 'Delete Log',
+                            icon: Trash2,
+                            danger: true,
+                            divider: true,
+                            onClick: () => toast.info('Activity log deleted'),
+                          },
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))}
