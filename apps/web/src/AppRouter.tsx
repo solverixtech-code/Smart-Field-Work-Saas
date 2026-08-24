@@ -76,6 +76,11 @@ import ConnectWhatsAppWizardPage from './screens/leadsources/ConnectWhatsAppWiza
 import AutomationSettingsPage from './screens/leadsources/AutomationSettingsPage';
 import LiveLeadActivityPage from './screens/leadsources/LiveLeadActivityPage';
 
+import ConvertedCustomersPage from './screens/customers/ConvertedCustomersPage';
+import CustomerDetailsPage from './screens/customers/CustomerDetailsPage';
+import SubscriptionDetailsPage from './screens/customers/SubscriptionDetailsPage';
+import RenewalStatusPage from './screens/customers/RenewalStatusPage';
+
 import AllBusinessesPage from './screens/businesses/AllBusinessesPage';
 import AddBusinessPage from './screens/businesses/AddBusinessPage';
 import BusinessLayoutWrapper from './screens/businesses/BusinessLayoutWrapper';
@@ -424,6 +429,26 @@ export default function AppRouter() {
               <Route path="/admin/leads/integrations/whatsapp/connect" element={<ConnectWhatsAppWizardPage />} />
               <Route path="/admin/leads/automation/settings" element={<AutomationSettingsPage />} />
               <Route path="/admin/leads/automation/activity" element={<LiveLeadActivityPage />} />
+            </Route>
+
+            {/* Customer & Subscription Linkage Routes (Screens 151 to 155) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/customers" element={<ConvertedCustomersPage />} />
+              <Route path="/admin/customers/field-sales" element={<ConvertedCustomersPage />} />
+              <Route path="/admin/customers/:customerId" element={<CustomerDetailsPage />} />
+              <Route path="/admin/customers/:customerId/subscription" element={<SubscriptionDetailsPage />} />
+              <Route path="/admin/customers/:customerId/renewal" element={<RenewalStatusPage />} />
             </Route>
 
             <Route

@@ -383,6 +383,23 @@ const navCategories: NavCategory[] = [
     ],
   },
   {
+    title: "Customers & Subscriptions",
+    items: [
+      {
+        label: "Converted Customers",
+        icon: UserCheck,
+        to: "/admin/customers/field-sales",
+        allowed: [
+          Role.SUPER_ADMIN,
+          Role.ADMIN,
+          Role.SALES_MANAGER,
+          Role.TEAM_LEADER,
+        ],
+        badge: "2,148",
+      },
+    ],
+  },
+  {
     title: "Demo Management",
     items: [
       {
