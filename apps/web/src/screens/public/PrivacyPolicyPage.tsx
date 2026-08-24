@@ -150,9 +150,9 @@ export default function PrivacyPolicyPage() {
             </h2>
             <p>If you have any questions, privacy concerns, or data requests, please contact our Data Protection Officer:</p>
             <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 font-medium space-y-1">
-              <span className="font-extrabold text-[#0D1F3D] block text-xs">Solverix Technologies — Visiblo SFW Team</span>
-              <span className="block text-xs">Email: <a href="mailto:privacy@visibloai.com" className="text-indigo-600 font-bold hover:underline">privacy@visibloai.com</a> / <a href="mailto:solverixtechnologies@gmail.com" className="text-indigo-600 font-bold hover:underline">solverixtechnologies@gmail.com</a></span>
-              <span className="block text-xs">Website: <a href="https://www.facebook.com" target="_blank" rel="noreferrer" className="text-indigo-600 font-bold hover:underline">visibloai.com</a></span>
+              <span className="font-extrabold text-[#0D1F3D] block text-xs">Solverix Technologies — Smart Field Work Team</span>
+              <span className="block text-xs">Email: <a href="mailto:privacy@smartfieldwork.com" className="text-indigo-600 font-bold hover:underline">privacy@smartfieldwork.com</a> / <a href="mailto:solverixtechnologies@gmail.com" className="text-indigo-600 font-bold hover:underline">solverixtechnologies@gmail.com</a></span>
+              <span className="block text-xs">Website: <a href="https://smartfieldwork.com" target="_blank" rel="noreferrer" className="text-indigo-600 font-bold hover:underline">smartfieldwork.com</a> | App: <a href="https://crm.smartfieldwork.com" target="_blank" rel="noreferrer" className="text-indigo-600 font-bold hover:underline">crm.smartfieldwork.com</a></span>
             </div>
           </section>
         </div>
@@ -161,7 +161,7 @@ export default function PrivacyPolicyPage() {
       {/* FOOTER */}
       <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500 font-medium">
         <div className="max-w-4xl mx-auto px-4 flex flex-wrap items-center justify-between gap-3">
-          <span>© 2026 Visiblo SFW CRM. All rights reserved.</span>
+          <span>© 2026 Smart Field Work SFW CRM. All rights reserved.</span>
           <div className="flex items-center gap-4 font-bold text-slate-600">
             <a href="/privacy-policy" className="hover:text-indigo-600">Privacy Policy</a>
             <span>•</span>

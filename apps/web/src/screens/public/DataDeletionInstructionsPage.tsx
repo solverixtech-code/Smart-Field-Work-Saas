@@ -134,8 +134,8 @@ export default function DataDeletionInstructionsPage() {
             </h2>
             <p>You can also email your deletion request directly to our privacy officer:</p>
             <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 font-medium space-y-1">
-              <span className="font-extrabold text-[#0D1F3D] block text-xs">Solverix Technologies — Data Protection Officer</span>
-              <span className="block text-xs">Email: <a href="mailto:privacy@visibloai.com" className="text-indigo-600 font-bold hover:underline">privacy@visibloai.com</a> / <a href="mailto:solverixtechnologies@gmail.com" className="text-indigo-600 font-bold hover:underline">solverixtechnologies@gmail.com</a></span>
+              <span className="font-extrabold text-[#0D1F3D] block text-xs">Solverix Technologies — Smart Field Work Team</span>
+              <span className="block text-xs">Email: <a href="mailto:privacy@smartfieldwork.com" className="text-indigo-600 font-bold hover:underline">privacy@smartfieldwork.com</a> / <a href="mailto:solverixtechnologies@gmail.com" className="text-indigo-600 font-bold hover:underline">solverixtechnologies@gmail.com</a></span>
               <span className="block text-xs text-slate-500">Subject line format: <em>Data Deletion Request — [Your Company Name]</em></span>
             </div>
           </section>
@@ -145,7 +145,7 @@ export default function DataDeletionInstructionsPage() {
       {/* FOOTER */}
       <footer className="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500 font-medium">
         <div className="max-w-4xl mx-auto px-4 flex flex-wrap items-center justify-between gap-3">
-          <span>© 2026 Visiblo SFW CRM. All rights reserved.</span>
+          <span>© 2026 Smart Field Work SFW CRM. All rights reserved.</span>
           <div className="flex items-center gap-4 font-bold text-slate-600">
             <a href="/privacy-policy" className="hover:text-indigo-600">Privacy Policy</a>
             <span>•</span>
