@@ -153,7 +153,7 @@ export default function AddLeadSourcePage() {
                     { value: 'Offline', label: 'Offline / Event' },
                     { value: 'Other', label: 'Other' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
                 <span className="text-[10px] text-slate-400 font-medium mt-1 block">Choose the type of lead source</span>
               </div>
@@ -295,7 +295,7 @@ export default function AddLeadSourcePage() {
                     { value: 'Medium', label: 'Medium (Priority 2)' },
                     { value: 'Low', label: 'Low (Priority 3)' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
                 <span className="text-[10px] text-slate-400 font-medium mt-1 block">Set priority for this source (1 = Highest, 3 = Lowest)</span>
               </div>
@@ -312,52 +312,39 @@ export default function AddLeadSourcePage() {
                     { value: 'Last Touch', label: 'Last Touch' },
                     { value: 'Linear', label: 'Linear' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
                 <span className="text-[10px] text-slate-400 font-medium mt-1 block">Select how leads will be attributed to this source</span>
               </div>
 
+              {/* STYLED CUSTOM RADIO CARDS FOR COST TYPE (REPLACING RAW RADIO) */}
               <div>
                 <label className="text-xs font-semibold text-slate-500 block mb-1">Cost Type</label>
-                <div className="flex items-center gap-4 pt-1">
-                  <label className="flex items-center gap-1.5 text-xs font-bold text-[#0D1F3D] cursor-pointer">
-                    <input
-                      type="radio"
-                      name="costType"
-                      value="Non Paid"
-                      checked={costType === 'Non Paid'}
-                      onChange={() => setCostType('Non Paid')}
-                      className="text-indigo-600"
-                    />
-                    Non Paid
-                  </label>
-                  <label className="flex items-center gap-1.5 text-xs font-bold text-[#0D1F3D] cursor-pointer">
-                    <input
-                      type="radio"
-                      name="costType"
-                      value="Paid (CPC/CPM)"
-                      checked={costType === 'Paid (CPC/CPM)'}
-                      onChange={() => setCostType('Paid (CPC/CPM)')}
-                      className="text-indigo-600"
-                    />
-                    Paid (CPC/CPM)
-                  </label>
-                  <label className="flex items-center gap-1.5 text-xs font-bold text-[#0D1F3D] cursor-pointer">
-                    <input
-                      type="radio"
-                      name="costType"
-                      value="Other"
-                      checked={costType === 'Other'}
-                      onChange={() => setCostType('Other')}
-                      className="text-indigo-600"
-                    />
-                    Other
-                  </label>
+                <div className="grid grid-cols-3 gap-2 pt-1">
+                  {[
+                    { value: 'Non Paid', label: 'Non Paid' },
+                    { value: 'Paid (CPC/CPM)', label: 'Paid (CPC)' },
+                    { value: 'Other', label: 'Other' },
+                  ].map((ct) => (
+                    <button
+                      key={ct.value}
+                      type="button"
+                      onClick={() => setCostType(ct.value as any)}
+                      className={`p-2 rounded-sm border text-xs font-bold text-center cursor-pointer transition-colors ${
+                        costType === ct.value
+                          ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {ct.label}
+                    </button>
+                  ))}
                 </div>
                 <span className="text-[10px] text-slate-400 font-medium mt-1 block">Define the cost nature of this source</span>
               </div>
             </div>
 
+            {/* SEARCHABLE DEFAULT OWNER SELECT WITH AVATARS AND SUBLABELS */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
               <div>
                 <Select
@@ -365,11 +352,30 @@ export default function AddLeadSourcePage() {
                   value={defaultOwner}
                   onChange={(e) => setDefaultOwner(e.target.value)}
                   options={[
-                    { value: '', label: 'Select user (optional)' },
-                    { value: 'Rohit Sharma', label: 'Rohit Sharma (Sales Manager)' },
-                    { value: 'Priya Sharma', label: 'Priya Sharma (Team Leader)' },
-                    { value: 'Vijay Patel', label: 'Vijay Patel (Senior Executive)' },
-                    { value: 'Mumbai Sales Team', label: 'Mumbai Sales Team (Team Queue)' },
+                    { value: '', label: 'Select user or team queue (optional)' },
+                    {
+                      value: 'Rohit Sharma',
+                      label: 'Rohit Sharma',
+                      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+                      sublabel: 'Sales Manager • Mumbai',
+                    },
+                    {
+                      value: 'Priya Sharma',
+                      label: 'Priya Sharma',
+                      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+                      sublabel: 'Team Leader • Andheri',
+                    },
+                    {
+                      value: 'Vijay Patel',
+                      label: 'Vijay Patel',
+                      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+                      sublabel: 'Senior Executive • Borivali',
+                    },
+                    {
+                      value: 'Mumbai Sales Team',
+                      label: 'Mumbai Sales Team',
+                      sublabel: 'Team Queue • 12 Executives',
+                    },
                   ]}
                   searchable={true}
                 />

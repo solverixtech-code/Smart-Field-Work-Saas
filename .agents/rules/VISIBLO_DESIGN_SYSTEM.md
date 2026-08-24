@@ -36,16 +36,17 @@ This document establishes the binding design system, component standards, typogr
 
 ## 2. Typography & Color Tokens
 
-1. **No Grey Bold Uppercase Labels**:
-   - Strictly avoid washed-out grey bold uppercase labels (e.g. do NOT use `text-slate-400 font-bold UPPERCASE`).
+1. **No Grey Bold Uppercase Labels (STRICT BINDING RULE)**:
+   - Strictly avoid washed-out grey bold uppercase text anywhere on the platform (e.g. NEVER use `text-slate-400 font-bold UPPERCASE` for field labels or table header column titles).
+   - Table headers must ALWAYS use clean Title Case (e.g. `Lead Details`, `Source`, `Campaign / Form`, `Time Captured`, `Status`, `Assigned To`, `Actions`) with crisp enterprise contrast (`text-xs font-extrabold text-[#0D1F3D]` or `text-xs font-bold text-slate-700`).
    - Use crisp, high-contrast, professional enterprise typography:
      - **Field Labels**: `text-xs font-semibold text-slate-500`
-     - **Headings & Primary Text**: `text-[#0D1F3D] font-extrabold`
+     - **Headings & Table Headers**: `text-[#0D1F3D] font-extrabold`
      - **Secondary Info**: `text-xs text-slate-600 font-medium`
      - **Mono Codes (IDs, Phones, Coordinates)**: `font-mono text-slate-800 font-bold`
 
 2. **Proper Title Case Capitalization**:
-   - Always use standard Title Case for headers and actions (e.g. `Add Follow-up`, `Completed Demos`, `Executive Details`).
+   - Always use standard Title Case for headers, table column headers, and actions (e.g. `Add Follow-up`, `Completed Demos`, `Executive Details`, `Lead Details`).
    - Never use wide tracking or exaggerated letter spacing on standard labels.
 
 ---

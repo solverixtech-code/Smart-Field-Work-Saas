@@ -170,7 +170,7 @@ export default function AutomationSettingsPage() {
                     { value: 'Real-time (Webhook / Instant)', label: 'Real-time (Webhook / Instant)' },
                     { value: 'Scheduled Batch (5 mins)', label: 'Scheduled Batch (5 mins)' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
 
                 <Select
@@ -181,7 +181,7 @@ export default function AutomationSettingsPage() {
                     { value: 'Auto Retry (Every 2 minutes)', label: 'Auto Retry (Every 2 minutes)' },
                     { value: 'Manual Sync', label: 'Manual Sync' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
               </div>
 
@@ -282,7 +282,7 @@ export default function AutomationSettingsPage() {
                     { value: '60 Days', label: '60 Days' },
                     { value: '90 Days', label: '90 Days' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
 
                 <Select
@@ -294,7 +294,7 @@ export default function AutomationSettingsPage() {
                     { value: 'Create Duplicate Flagged', label: 'Create Duplicate Flagged' },
                     { value: 'Skip Duplicate Ingestion', label: 'Skip Duplicate Ingestion' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
               </div>
 
@@ -336,7 +336,7 @@ export default function AutomationSettingsPage() {
                     { value: 'All (Source, Medium, Campaign, Term, Content)', label: 'All (Source, Medium, Campaign, Term, Content)' },
                     { value: 'Basic (Source, Medium)', label: 'Basic (Source, Medium)' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
 
                 <Select
@@ -347,7 +347,7 @@ export default function AutomationSettingsPage() {
                     { value: 'Campaign Level', label: 'Campaign Level' },
                     { value: 'Ad Set & Ad Level', label: 'Ad Set & Ad Level' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
 
                 <div className="flex items-center justify-between pt-1">
@@ -374,7 +374,7 @@ export default function AutomationSettingsPage() {
               </div>
             </div>
 
-            {/* Default Lead Owner Card */}
+            {/* Default Lead Owner Card (WITH AVATARS & SUBLABELS) */}
             <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
               <div className="border-b border-slate-100 pb-2">
                 <span className="font-extrabold text-[#0D1F3D] block">Default Lead Owner</span>
@@ -391,7 +391,7 @@ export default function AutomationSettingsPage() {
                     { value: 'Specific Executive', label: 'Specific Executive' },
                     { value: 'Round Robin', label: 'Round Robin' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
 
                 <Select
@@ -399,11 +399,11 @@ export default function AutomationSettingsPage() {
                   value={defaultTeam}
                   onChange={(e) => setDefaultTeam(e.target.value)}
                   options={[
-                    { value: 'Mumbai Sales Team', label: 'Mumbai Sales Team' },
-                    { value: 'Pune Sales Team', label: 'Pune Sales Team' },
-                    { value: 'Delhi Sales Team', label: 'Delhi Sales Team' },
+                    { value: 'Mumbai Sales Team', label: 'Mumbai Sales Team', sublabel: 'Team Queue • 12 Executives' },
+                    { value: 'Pune Sales Team', label: 'Pune Sales Team', sublabel: 'Team Queue • 8 Executives' },
+                    { value: 'Delhi Sales Team', label: 'Delhi Sales Team', sublabel: 'Team Queue • 10 Executives' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
 
                 <Select
@@ -414,7 +414,7 @@ export default function AutomationSettingsPage() {
                     { value: 'Add to Unassigned Queue', label: 'Add to Unassigned Queue' },
                     { value: 'Notify Super Admin', label: 'Notify Super Admin' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
               </div>
 
@@ -452,7 +452,7 @@ export default function AutomationSettingsPage() {
                     { value: 'Asia/Kolkata (IST)', label: 'Asia/Kolkata (IST)' },
                     { value: 'UTC', label: 'UTC' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
 
                 <div>
@@ -516,7 +516,7 @@ export default function AutomationSettingsPage() {
                     { value: '5 Years', label: '5 Years' },
                     { value: 'Forever', label: 'Forever' },
                   ]}
-                  searchable={false}
+                  searchable={true}
                 />
               </div>
 
