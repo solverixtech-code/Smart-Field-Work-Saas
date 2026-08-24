@@ -124,19 +124,19 @@ export default function RenewalStatusPage() {
 
         <div className="flex flex-wrap items-center gap-8 text-xs font-semibold border-l border-slate-200 pl-6">
           <div>
-            <span className="text-slate-400 block text-[10px] uppercase tracking-wider font-bold">Customer ID</span>
+            <span className="text-xs font-semibold text-slate-500 block mb-0.5">Customer Code</span>
             <span className="font-mono text-slate-800 font-bold block">{customer.customerCode}</span>
           </div>
           <div>
-            <span className="text-slate-400 block text-[10px] uppercase tracking-wider font-bold">Account</span>
-            <span className="text-slate-800 block">SFW Mumbai (India)</span>
+            <span className="text-xs font-semibold text-slate-500 block mb-0.5">Account</span>
+            <span className="text-slate-800 block font-semibold">SFW Mumbai (India)</span>
           </div>
           <div>
-            <span className="text-slate-400 block text-[10px] uppercase tracking-wider font-bold">Current Plan</span>
+            <span className="text-xs font-semibold text-slate-500 block mb-0.5">Current Plan</span>
             <span className="text-slate-800 font-bold block">{customer.planName} (Monthly)</span>
           </div>
           <div>
-            <span className="text-slate-400 block text-[10px] uppercase tracking-wider font-bold">Next Renewal</span>
+            <span className="text-xs font-semibold text-slate-500 block mb-0.5">Next Renewal</span>
             <span className="font-bold text-blue-600 block">{customer.nextRenewalDate}</span>
             <span className="text-[10px] text-blue-500 font-medium block">(31 days left)</span>
           </div>

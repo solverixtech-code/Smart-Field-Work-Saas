@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   Users,
   CheckCircle2,
@@ -7,21 +8,19 @@ import {
   IndianRupee,
   TrendingUp,
   Search,
-  Filter,
   Plus,
   Download,
   Upload,
   Eye,
   CreditCard,
   RefreshCw,
-  MoreVertical,
   Calendar,
   XCircle,
   Edit,
   Trash2,
   RotateCcw,
   Bookmark,
-  Columns
+  DollarSign
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
@@ -35,10 +34,6 @@ export default function ConvertedCustomersPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
   const [selectedPlan, setSelectedPlan] = useState<string>('All');
   const [selectedExecutive, setSelectedExecutive] = useState<string>('All');
-  const [selectedAccount, setSelectedAccount] = useState<string>('All');
-  const [selectedPaymentStatus, setSelectedPaymentStatus] = useState<string>('All');
-  const [selectedCustomerType, setSelectedCustomerType] = useState<string>('All');
-  const [selectedSource, setSelectedSource] = useState<string>('All');
   const [activeTab, setActiveTab] = useState<'All' | 'Active' | 'Expired' | 'Cancelled' | 'Trial'>('All');
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
@@ -80,7 +75,7 @@ export default function ConvertedCustomersPage() {
   };
 
   const executiveOptions = [
-    { value: 'All', label: 'All Executives' },
+    { value: 'All', label: 'All Assignees' },
     {
       value: 'Amit Verma',
       label: 'Amit Verma',
@@ -108,357 +103,179 @@ export default function ConvertedCustomersPage() {
   ];
 
   return (
-    <div className="space-y-4 font-sans text-slate-800 text-left pb-12">
-      {/* BREADCRUMBS & PAGE HEADER */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
-        <div>
-          <nav className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
-            <span className="hover:text-slate-800 cursor-pointer" onClick={() => navigate('/admin/dashboard')}>
-              Customers & Subscriptions
-            </span>
-            <span>&gt;</span>
-            <span className="text-blue-600 font-bold">Converted Customers (Field Sales)</span>
-          </nav>
-          <h1 className="text-2xl font-bold text-[#0D1F3D]">Converted Customers</h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Customers who have converted from field sales and their subscription details.
-          </p>
+    <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
+      {/* BREADCRUMB & HEADER */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+          <span className="hover:text-purple-600 cursor-pointer" onClick={() => navigate('/admin/dashboard')}>
+            Dashboard
+          </span>
+          <span>/</span>
+          <span className="text-[#0D1F3D] font-bold">Converted Customers</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.location.reload()}
-            className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold flex items-center gap-1.5 text-xs shadow-xs"
-          >
-            <Download className="h-3.5 w-3.5" /> Export
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => alert('Import CSV')}
-            className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold flex items-center gap-1.5 text-xs shadow-xs"
-          >
-            <Upload className="h-3.5 w-3.5" /> Import
-          </Button>
-          <Button
-            variant="accent"
-            size="sm"
-            onClick={() => navigate('/admin/businesses/create')}
-            className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold flex items-center gap-1.5 text-xs shadow-xs"
-          >
-            <Plus className="h-4 w-4" /> Add Customer
-          </Button>
-        </div>
-      </div>
-
-      {/* TOP KPI CARDS GRID WITH SPARKLINE TRENDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* KPI 1 */}
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-600">Total Converted Customers</span>
-            <div className="h-8 w-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <Users className="h-4 w-4" />
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-md bg-blue-100 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0">
+              <Users className="h-6 w-6" />
             </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-xl font-bold text-[#0D1F3D]">2,148</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="font-semibold text-emerald-600">↑ 12.6% vs last 30 days</span>
-            <svg className="w-16 h-5 text-indigo-500" viewBox="0 0 100 25" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M0 20 Q 25 5, 50 15 T 100 5" />
-            </svg>
-          </div>
-        </div>
-
-        {/* KPI 2 */}
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-600">Active Subscriptions</span>
-            <div className="h-8 w-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <CheckCircle2 className="h-4 w-4" />
+            <div>
+              <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Converted Customers</h1>
+              <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                Customers converted from field sales visits and their subscription details
+              </p>
             </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-xl font-bold text-[#0D1F3D]">1,784</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="font-semibold text-emerald-600">↑ 10.3% vs last 30 days</span>
-            <svg className="w-16 h-5 text-emerald-500" viewBox="0 0 100 25" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M0 22 Q 25 15, 50 8 T 100 2" />
-            </svg>
-          </div>
-        </div>
-
-        {/* KPI 3 */}
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-600">Expired / Inactive</span>
-            <div className="h-8 w-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
-              <AlertCircle className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-xl font-bold text-[#0D1F3D]">236</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="font-semibold text-amber-600">↑ 4.8% vs last 30 days</span>
-            <svg className="w-16 h-5 text-amber-500" viewBox="0 0 100 25" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M0 10 Q 25 20, 50 12 T 100 18" />
-            </svg>
-          </div>
-        </div>
-
-        {/* KPI 4 */}
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-600">MRR (Active)</span>
-            <div className="h-8 w-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-              <IndianRupee className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-xl font-bold text-[#0D1F3D]">₹14,85,920</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="font-semibold text-emerald-600">↑ 8.4% vs last 30 days</span>
-            <svg className="w-16 h-5 text-blue-500" viewBox="0 0 100 25" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M0 18 Q 25 10, 50 14 T 100 4" />
-            </svg>
-          </div>
-        </div>
-
-        {/* KPI 5 */}
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-600">Total Revenue (This Month)</span>
-            <div className="h-8 w-8 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-xl font-bold text-[#0D1F3D]">₹16,97,450</span>
-          </div>
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="font-semibold text-emerald-600">↑ 15.2% vs last 30 days</span>
-            <svg className="w-16 h-5 text-teal-500" viewBox="0 0 100 25" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M0 20 Q 25 8, 50 12 T 100 3" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* DETAILED FILTER CONTROLS GRID */}
-      <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Account</label>
-            <Select
-              value={selectedAccount}
-              onChange={(e) => setSelectedAccount(e.target.value)}
-              options={[{ value: 'All', label: 'All Accounts' }]}
-              searchable={true}
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Subscription Status</label>
-            <Select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              options={[
-                { value: 'All', label: 'All Status' },
-                { value: 'Active', label: 'Active' },
-                { value: 'Expired', label: 'Expired' },
-                { value: 'Trial', label: 'Trial' },
-                { value: 'Cancelled', label: 'Cancelled' },
-              ]}
-              searchable={true}
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Plan / Package</label>
-            <Select
-              value={selectedPlan}
-              onChange={(e) => setSelectedPlan(e.target.value)}
-              options={[
-                { value: 'All', label: 'All Plans' },
-                { value: 'Starter Plan', label: 'Starter Plan' },
-                { value: 'Growth Plan', label: 'Growth Plan' },
-                { value: 'Pro Plan', label: 'Pro Plan' },
-                { value: 'Enterprise Plan', label: 'Enterprise Plan' },
-              ]}
-              searchable={true}
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Payment Status</label>
-            <Select
-              value={selectedPaymentStatus}
-              onChange={(e) => setSelectedPaymentStatus(e.target.value)}
-              options={[{ value: 'All', label: 'All Status' }]}
-              searchable={true}
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Customer Type</label>
-            <Select
-              value={selectedCustomerType}
-              onChange={(e) => setSelectedCustomerType(e.target.value)}
-              options={[{ value: 'All', label: 'All Types' }]}
-              searchable={true}
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-1">
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Source</label>
-            <Select
-              value={selectedSource}
-              onChange={(e) => setSelectedSource(e.target.value)}
-              options={[{ value: 'All', label: 'All Sources' }]}
-              searchable={true}
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Converted By</label>
-            <Select
-              value={selectedExecutive}
-              onChange={(e) => setSelectedExecutive(e.target.value)}
-              options={executiveOptions}
-              searchable={true}
-            />
-          </div>
-
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Converted Date</label>
-            <div className="relative">
-              <input
-                type="text"
-                readOnly
-                value="16 May 2025 - 22 May 2025"
-                className="w-full rounded-sm border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-800 bg-slate-50 cursor-pointer"
-              />
-              <Calendar className="absolute right-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[11px] font-semibold text-slate-500 block mb-1">Next Renewal</label>
-            <Select
-              value="All"
-              onChange={() => {}}
-              options={[{ value: 'All', label: 'All' }]}
-              searchable={true}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-2 h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by name, mobile, email, business..."
-              className="w-full rounded-sm border border-slate-200 pl-8 pr-3 py-1.5 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:outline-none bg-slate-50/50"
-            />
           </div>
 
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => {
-                setSearchTerm('');
-                setSelectedStatus('All');
-                setSelectedPlan('All');
-                setSelectedExecutive('All');
-                setActiveTab('All');
-              }}
-              className="bg-white border-slate-200 text-slate-700 font-semibold text-xs"
+              onClick={() => toast.success('Exporting converted customers report...')}
+              className="bg-white text-[#0D1F3D] border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
             >
-              <RotateCcw className="h-3.5 w-3.5 text-slate-400" /> Clear Filters
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => alert('Saved Filter')}
-              className="bg-white border-slate-200 text-slate-700 font-semibold text-xs"
-            >
-              <Bookmark className="h-3.5 w-3.5 text-slate-400" /> Save Filter
+              <Download className="h-4 w-4 text-slate-600" /> Export CSV
             </Button>
             <Button
               variant="accent"
               size="sm"
-              onClick={() => {}}
-              className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-xs"
+              onClick={() => navigate('/admin/businesses/create')}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold flex items-center gap-1.5 shadow-xs"
             >
-              Apply Filters
+              <Plus className="h-4 w-4" /> Add Converted Customer
             </Button>
           </div>
         </div>
       </div>
 
-      {/* SUB-TABS & DATA TABLE */}
-      <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
-          <div className="flex items-center gap-4 text-xs font-semibold">
-            {[
-              { id: 'All', label: 'All Customers', count: 2148 },
-              { id: 'Active', label: 'Active', count: 1784 },
-              { id: 'Expired', label: 'Expired', count: 236 },
-              { id: 'Cancelled', label: 'Cancelled', count: 128 },
-              { id: 'Trial', label: 'Trial', count: 84 },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`py-1 transition-colors border-b-2 font-bold flex items-center gap-1.5 ${
-                  activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                {tab.label}
-                <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
-                    activeTab === tab.id
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-slate-100 text-slate-600'
-                  }`}
-                >
-                  {tab.count}
-                </span>
-              </button>
-            ))}
+      {/* 5 HEADER KPI SUMMARY CARDS */}
+      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-blue-50 text-blue-600 shrink-0">
+            <Users className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-slate-500 block">Total Converted</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">2,148</span>
+            <span className="text-xs font-semibold text-emerald-600 block">↑ 12.6% vs last mo</span>
+          </div>
+        </div>
+
+        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 shrink-0">
+            <CheckCircle2 className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-slate-500 block">Active Subscriptions</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">1,784</span>
+            <span className="text-xs font-semibold text-emerald-600 block">↑ 10.3% vs last mo</span>
+          </div>
+        </div>
+
+        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-amber-50 text-amber-600 shrink-0">
+            <AlertCircle className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-slate-500 block">Expired / Inactive</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">236</span>
+            <span className="text-xs font-semibold text-amber-600 block">↑ 4.8% vs last mo</span>
+          </div>
+        </div>
+
+        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-indigo-50 text-indigo-600 shrink-0">
+            <IndianRupee className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-slate-500 block">Active MRR</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">₹14.85L</span>
+            <span className="text-xs font-semibold text-emerald-600 block">↑ 8.4% vs last mo</span>
+          </div>
+        </div>
+
+        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-teal-50 text-teal-600 shrink-0">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-slate-500 block">Monthly Revenue</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">₹16.97L</span>
+            <span className="text-xs font-semibold text-emerald-600 block">↑ 15.2% vs last mo</span>
+          </div>
+        </div>
+      </div>
+
+      {/* FILTER & SEARCH TOOLBAR */}
+      <div className="rounded-sm border border-slate-200 bg-white p-3 shadow-xs space-y-2">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 items-center">
+          <div className="relative">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by name, mobile, business..."
+              className="w-full rounded-sm border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-bold text-[#0D1F3D] placeholder-slate-400 focus:border-indigo-600 focus:outline-none"
+            />
           </div>
 
+          <Select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            options={[
+              { value: 'All', label: 'All Statuses' },
+              { value: 'Active', label: 'Active Only' },
+              { value: 'Expired', label: 'Expired Only' },
+              { value: 'Trial', label: 'Trial Only' },
+              { value: 'Cancelled', label: 'Cancelled Only' },
+            ]}
+            searchable={true}
+          />
+
+          <Select
+            value={selectedPlan}
+            onChange={(e) => setSelectedPlan(e.target.value)}
+            options={[
+              { value: 'All', label: 'All Plans' },
+              { value: 'Starter Plan', label: 'Starter Plan' },
+              { value: 'Growth Plan', label: 'Growth Plan' },
+              { value: 'Pro Plan', label: 'Pro Plan' },
+              { value: 'Enterprise Plan', label: 'Enterprise Plan' },
+            ]}
+            searchable={true}
+          />
+
+          <Select
+            value={selectedExecutive}
+            onChange={(e) => setSelectedExecutive(e.target.value)}
+            options={executiveOptions}
+            searchable={true}
+          />
+        </div>
+      </div>
+
+      {/* 100% FULL-WIDTH DATATABLE */}
+      <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+          <span className="text-xs font-extrabold text-[#0D1F3D]">
+            Converted Customers ({filteredCustomers.length})
+          </span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => alert('Toggle Columns')}
-            className="bg-white border-slate-200 text-slate-700 font-semibold text-xs h-7 px-2.5"
+            onClick={() => toast.success('Exporting converted customers list...')}
+            className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5"
           >
-            <Columns className="h-3.5 w-3.5 text-slate-400" /> Columns
+            <Download className="h-3.5 w-3.5" /> Export CSV
           </Button>
         </div>
 
-        {/* 100% FULL-WIDTH DATA TABLE */}
-        <div className="overflow-x-auto rounded-sm border border-slate-200">
-          <table className="w-full text-left border-collapse whitespace-nowrap text-xs">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-50/80 border-b border-slate-200 font-bold text-[#0D1F3D]">
-                <th className="py-2.5 px-3 w-10 text-center">
+              <tr className="border-b border-slate-200 bg-slate-50/90 text-xs font-extrabold text-[#0D1F3D]">
+                <th className="py-3 px-3 text-center w-10">
                   <Checkbox
                     checked={
                       selectedRows.length > 0 &&
@@ -467,19 +284,19 @@ export default function ConvertedCustomersPage() {
                     onChange={(checked) => handleSelectAll(checked)}
                   />
                 </th>
-                <th className="py-2.5 px-3">Customer</th>
-                <th className="py-2.5 px-3">Business / Mobile</th>
-                <th className="py-2.5 px-3">Converted By</th>
-                <th className="py-2.5 px-3">Converted On ↕</th>
-                <th className="py-2.5 px-3">Plan / Package</th>
-                <th className="py-2.5 px-3">Status</th>
-                <th className="py-2.5 px-3">Next Renewal ↕</th>
-                <th className="py-2.5 px-3">MRR</th>
-                <th className="py-2.5 px-3">Total Paid</th>
-                <th className="py-2.5 px-3 text-center">Actions</th>
+                <th className="py-3 px-3">Customer</th>
+                <th className="py-3 px-3">Business & Contact</th>
+                <th className="py-3 px-3">Converted By</th>
+                <th className="py-3 px-3">Converted On</th>
+                <th className="py-3 px-3">Plan / Package</th>
+                <th className="py-3 px-3 text-center">Status</th>
+                <th className="py-3 px-3">Next Renewal</th>
+                <th className="py-3 px-3 text-right">MRR</th>
+                <th className="py-3 px-3 text-right">Total Paid</th>
+                <th className="py-3 px-3 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium">
+            <tbody className="divide-y divide-slate-100">
               {filteredCustomers.length === 0 ? (
                 <tr>
                   <td colSpan={11} className="py-8 text-center text-slate-500 font-medium">
@@ -488,16 +305,16 @@ export default function ConvertedCustomersPage() {
                 </tr>
               ) : (
                 filteredCustomers.map((cust) => (
-                  <tr key={cust.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-2.5 px-3 text-center">
+                  <tr key={cust.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-3 px-3 text-center">
                       <Checkbox
                         checked={selectedRows.includes(cust.id)}
                         onChange={(checked) => handleSelectRow(cust.id, checked)}
                       />
                     </td>
-                    <td className="py-2.5 px-3">
+                    <td className="py-3 px-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
+                        <div className="h-8 w-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
                           {cust.name
                             .split(' ')
                             .map((n) => n[0])
@@ -506,29 +323,27 @@ export default function ConvertedCustomersPage() {
                         <div>
                           <span
                             onClick={() => navigate(`/admin/customers/${cust.id}`)}
-                            className="font-bold text-[#0D1F3D] hover:text-blue-600 cursor-pointer block"
+                            className="font-extrabold text-[#0D1F3D] block text-xs hover:text-indigo-600 hover:underline cursor-pointer"
                           >
                             {cust.name}
                           </span>
-                          <span className="text-[11px] text-slate-500 block">
-                            {cust.businessName}
-                          </span>
+                          <span className="text-[10px] text-slate-500 font-mono font-semibold">{cust.customerCode}</span>
                         </div>
                       </div>
                     </td>
 
-                    <td className="py-2.5 px-3">
+                    <td className="py-3 px-3">
                       <div>
-                        <span className="font-mono font-bold text-slate-800 block">
-                          {cust.mobile}
+                        <span className="font-extrabold text-slate-800 block text-xs">
+                          {cust.businessName}
                         </span>
-                        <span className="text-[11px] text-slate-500 block">
-                          {cust.email}
+                        <span className="text-[10px] font-mono text-slate-500 block font-semibold">
+                          {cust.mobile}
                         </span>
                       </div>
                     </td>
 
-                    <td className="py-2.5 px-3">
+                    <td className="py-3 px-3">
                       <div className="flex items-center gap-2">
                         <img
                           src={
@@ -538,78 +353,75 @@ export default function ConvertedCustomersPage() {
                             )}&background=2563EB&color=fff`
                           }
                           alt={cust.convertedByName}
-                          className="h-6 w-6 rounded-full object-cover border border-slate-200"
+                          onClick={() => navigate(`/admin/executives/${cust.convertedById || 'exec-001'}`)}
+                          className="h-6 w-6 rounded-full object-cover border border-slate-200 cursor-pointer hover:opacity-80 transition-opacity"
+                          title={`View ${cust.convertedByName} profile`}
                         />
                         <div>
-                          <span className="font-bold text-slate-800 block text-xs">
+                          <span
+                            onClick={() => navigate(`/admin/executives/${cust.convertedById || 'exec-001'}`)}
+                            className="font-extrabold text-[#0D1F3D] block text-xs hover:text-blue-600 hover:underline cursor-pointer transition-colors"
+                          >
                             {cust.convertedByName}
                           </span>
-                          <span className="text-[10px] text-slate-500 block">
+                          <span className="text-[10px] text-slate-500 block font-medium">
                             Executive
                           </span>
                         </div>
                       </div>
                     </td>
 
-                    <td className="py-2.5 px-3 text-slate-700">
-                      <div>
-                        <span className="block font-semibold">{cust.convertedOn.split(' ')[0]}</span>
-                        <span className="text-[10px] text-slate-400 block font-normal">10:24 AM</span>
-                      </div>
+                    <td className="py-3 px-3 text-slate-700 font-semibold text-[11px]">
+                      {cust.convertedOn}
                     </td>
 
-                    <td className="py-2.5 px-3">
+                    <td className="py-3 px-3">
                       <div>
-                        <span className="font-bold text-[#0D1F3D] block">
+                        <span className="font-extrabold text-[#0D1F3D] block text-xs">
                           {cust.planName}
                         </span>
-                        <span className="text-[10px] text-slate-500 block">
+                        <span className="text-[10px] text-slate-500 font-medium block">
                           {cust.billingCycle}
                         </span>
                       </div>
                     </td>
 
-                    <td className="py-2.5 px-3">
+                    <td className="py-3 px-3 text-center">
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
                           cust.status === 'Active'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                             : cust.status === 'Expired'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
                             : cust.status === 'Trial'
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                            : 'bg-rose-100 text-rose-800 border border-rose-200'
                         }`}
                       >
                         {cust.status}
                       </span>
                     </td>
 
-                    <td className="py-2.5 px-3 font-mono text-slate-700">
+                    <td className="py-3 px-3 font-mono font-bold text-slate-800 text-[11px]">
                       <div>
-                        <span className="font-semibold block">{cust.nextRenewalDate}</span>
+                        <span>{cust.nextRenewalDate}</span>
                         {cust.daysLeft > 0 && (
-                          <span className="text-[10px] text-slate-500 block">
-                            ({cust.daysLeft} days left)
-                          </span>
-                        )}
-                        {cust.daysLeft < 0 && (
-                          <span className="text-[10px] font-bold text-amber-600 block">
-                            (Expired)
+                          <span className="text-[10px] text-slate-500 font-normal block">
+                            ({cust.daysLeft}d left)
                           </span>
                         )}
                       </div>
                     </td>
 
-                    <td className="py-2.5 px-3 font-mono font-bold text-[#0D1F3D]">
+                    <td className="py-3 px-3 text-right font-mono font-extrabold text-[#0D1F3D]">
                       ₹{cust.mrr.toLocaleString('en-IN')}
                     </td>
 
-                    <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
+                    <td className="py-3 px-3 text-right font-mono font-bold text-emerald-700">
                       ₹{cust.totalPaid.toLocaleString('en-IN')}
                     </td>
 
-                    <td className="py-2.5 px-3 text-center">
+                    <td className="py-3 px-3 text-center">
                       <RowActionsMenu
                         items={[
                           {
@@ -636,7 +448,7 @@ export default function ConvertedCustomersPage() {
                           {
                             label: 'Delete Customer',
                             icon: Trash2,
-                            onClick: () => alert(`Deleted ${cust.name}`),
+                            onClick: () => toast.info(`Deleted ${cust.name}`),
                             danger: true,
                           },
                         ]}
@@ -647,38 +459,6 @@ export default function ConvertedCustomersPage() {
               )}
             </tbody>
           </table>
-        </div>
-
-        {/* PAGINATION FOOTER */}
-        <div className="flex items-center justify-between text-xs font-semibold text-slate-500 pt-1">
-          <span>Showing 1 to {filteredCustomers.length} of 2,148 customers</span>
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" disabled className="bg-white border-slate-200 text-xs h-7 px-2">
-              &lt;
-            </Button>
-            <Button variant="outline" size="sm" className="bg-blue-600 text-white border-blue-600 text-xs h-7 px-2.5 font-bold">
-              1
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white border-slate-200 text-xs h-7 px-2.5 font-semibold">
-              2
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white border-slate-200 text-xs h-7 px-2.5 font-semibold">
-              3
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white border-slate-200 text-xs h-7 px-2.5 font-semibold">
-              4
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white border-slate-200 text-xs h-7 px-2.5 font-semibold">
-              5
-            </Button>
-            <span>...</span>
-            <Button variant="outline" size="sm" className="bg-white border-slate-200 text-xs h-7 px-2.5 font-semibold">
-              108
-            </Button>
-            <Button variant="outline" size="sm" className="bg-white border-slate-200 text-xs h-7 px-2">
-              &gt;
-            </Button>
-          </div>
         </div>
       </div>
     </div>

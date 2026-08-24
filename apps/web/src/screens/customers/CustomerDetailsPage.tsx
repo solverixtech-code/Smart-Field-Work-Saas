@@ -147,7 +147,12 @@ export default function CustomerDetailsPage() {
             <div className="space-y-2 font-medium text-slate-700">
               <div className="flex justify-between border-b border-slate-200/50 pb-1.5">
                 <span className="text-slate-500">Converted By Executive:</span>
-                <span className="font-bold text-[#0D1F3D]">{customer.convertedByName}</span>
+                <span
+                  onClick={() => navigate(`/admin/executives/${customer.convertedById || 'exec-001'}`)}
+                  className="font-bold text-[#0D1F3D] hover:text-blue-600 hover:underline cursor-pointer transition-colors"
+                >
+                  {customer.convertedByName}
+                </span>
               </div>
               <div className="flex justify-between border-b border-slate-200/50 pb-1.5">
                 <span className="text-slate-500">Executive Role / Zone:</span>
