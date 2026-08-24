@@ -123,6 +123,10 @@ import TerritoryBusinessesPage from './screens/territories/TerritoryBusinessesPa
 import TerritoryPerformancePage from './screens/territories/TerritoryPerformancePage';
 import ModuleTerritoryMapPage from './screens/territories/TerritoryMapPage';
 
+import PrivacyPolicyPage from './screens/public/PrivacyPolicyPage';
+import TermsOfServicePage from './screens/public/TermsOfServicePage';
+import DataDeletionInstructionsPage from './screens/public/DataDeletionInstructionsPage';
+
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import { Role, AuthTokensSchema } from '@visiblo/shared';
@@ -175,6 +179,14 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public Compliance Routes (Meta App Review & GDPR) */}
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+        <Route path="/terms" element={<TermsOfServicePage />} />
+        <Route path="/data-deletion" element={<DataDeletionInstructionsPage />} />
+        <Route path="/user-data-deletion" element={<DataDeletionInstructionsPage />} />
+
         {/* Public Auth Routes */}
         <Route path="/admin/login" element={<LoginPage />} />
         <Route path="/admin/forgot-password" element={<ForgotPasswordPage />} />
