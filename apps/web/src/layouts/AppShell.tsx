@@ -38,6 +38,14 @@ import {
   Share2,
   Activity,
   Settings,
+  Filter,
+  PlusCircle,
+  Plug,
+  Bot,
+  Sparkles,
+  Sliders,
+  FolderPlus,
+  Compass,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
@@ -292,7 +300,7 @@ const navCategories: NavCategory[] = [
       },
       {
         label: "Add Category",
-        icon: Plus,
+        icon: FolderPlus,
         to: "/admin/categories/create",
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
       },
@@ -314,7 +322,7 @@ const navCategories: NavCategory[] = [
     items: [
       {
         label: "All Lead Sources",
-        icon: Target,
+        icon: Compass,
         to: "/admin/leads/sources",
         allowed: [
           Role.SUPER_ADMIN,
@@ -326,13 +334,13 @@ const navCategories: NavCategory[] = [
       },
       {
         label: "Add Lead Source",
-        icon: Plus,
+        icon: PlusCircle,
         to: "/admin/leads/sources/create",
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
       },
       {
         label: "Lead Integrations",
-        icon: Share2,
+        icon: Plug,
         to: "/admin/leads/integrations",
         allowed: [
           Role.SUPER_ADMIN,
@@ -344,7 +352,7 @@ const navCategories: NavCategory[] = [
       },
       {
         label: "Automation Center",
-        icon: Zap,
+        icon: Sparkles,
         to: "/admin/leads/automation",
         allowed: [
           Role.SUPER_ADMIN,
@@ -356,7 +364,7 @@ const navCategories: NavCategory[] = [
       },
       {
         label: "Live Lead Activity",
-        icon: Activity,
+        icon: Radio,
         to: "/admin/leads/automation/activity",
         allowed: [
           Role.SUPER_ADMIN,
@@ -368,7 +376,7 @@ const navCategories: NavCategory[] = [
       },
       {
         label: "Automation Settings",
-        icon: Settings,
+        icon: SlidersHorizontal,
         to: "/admin/leads/automation/settings",
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
       },
