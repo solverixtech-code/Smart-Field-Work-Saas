@@ -1154,6 +1154,20 @@ export default function AppShell() {
                   if (item.to.startsWith("/admin/performance")) {
                     return location.pathname === item.to;
                   }
+                  if (item.to === "/admin/leads/sources") {
+                    return (
+                      location.pathname === "/admin/leads/sources" ||
+                      (location.pathname.startsWith("/admin/leads/sources/") &&
+                        location.pathname !== "/admin/leads/sources/create")
+                    );
+                  }
+                  if (item.to === "/admin/categories") {
+                    return (
+                      location.pathname === "/admin/categories" ||
+                      (location.pathname.startsWith("/admin/categories/") &&
+                        location.pathname !== "/admin/categories/create")
+                    );
+                  }
                   if (
                     [
                       "/admin/dashboard",
@@ -1162,6 +1176,11 @@ export default function AppShell() {
                       "/admin/territories",
                       "/admin/leads",
                       "/admin/businesses",
+                      "/admin/categories/create",
+                      "/admin/leads/sources/create",
+                      "/admin/leads/automation",
+                      "/admin/leads/automation/activity",
+                      "/admin/leads/automation/settings",
                     ].includes(item.to)
                   ) {
                     return location.pathname === item.to;
