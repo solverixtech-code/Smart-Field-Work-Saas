@@ -101,12 +101,12 @@ export default function ConnectMetaWizardPage() {
           <div className="flex flex-col items-center gap-1 z-10 bg-white px-2">
             <div
               className={`h-8 w-8 rounded-full font-extrabold text-xs flex items-center justify-center transition-colors ${
-                currentStep >= 1 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                currentStep >= 1 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 border border-slate-300'
               }`}
             >
               1
             </div>
-            <span className={`text-xs font-bold ${currentStep >= 1 ? 'text-[#0D1F3D]' : 'text-slate-400'}`}>
+            <span className={`text-xs font-semibold ${currentStep >= 1 ? 'text-[#0D1F3D] font-extrabold' : 'text-slate-600'}`}>
               Connect Account
             </span>
           </div>
@@ -115,12 +115,12 @@ export default function ConnectMetaWizardPage() {
           <div className="flex flex-col items-center gap-1 z-10 bg-white px-2">
             <div
               className={`h-8 w-8 rounded-full font-extrabold text-xs flex items-center justify-center transition-colors ${
-                currentStep >= 2 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                currentStep >= 2 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 border border-slate-300'
               }`}
             >
               2
             </div>
-            <span className={`text-xs font-bold ${currentStep >= 2 ? 'text-[#0D1F3D]' : 'text-slate-400'}`}>
+            <span className={`text-xs font-semibold ${currentStep >= 2 ? 'text-[#0D1F3D] font-extrabold' : 'text-slate-600'}`}>
               Select Assets
             </span>
           </div>
@@ -129,12 +129,12 @@ export default function ConnectMetaWizardPage() {
           <div className="flex flex-col items-center gap-1 z-10 bg-white px-2">
             <div
               className={`h-8 w-8 rounded-full font-extrabold text-xs flex items-center justify-center transition-colors ${
-                currentStep >= 3 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                currentStep >= 3 ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 border border-slate-300'
               }`}
             >
               3
             </div>
-            <span className={`text-xs font-bold ${currentStep >= 3 ? 'text-[#0D1F3D]' : 'text-slate-400'}`}>
+            <span className={`text-xs font-semibold ${currentStep >= 3 ? 'text-[#0D1F3D] font-extrabold' : 'text-slate-600'}`}>
               Auto Setup Review
             </span>
           </div>
@@ -143,12 +143,12 @@ export default function ConnectMetaWizardPage() {
           <div className="flex flex-col items-center gap-1 z-10 bg-white px-2">
             <div
               className={`h-8 w-8 rounded-full font-extrabold text-xs flex items-center justify-center transition-colors ${
-                currentStep >= 4 ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                currentStep >= 4 ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 border border-slate-300'
               }`}
             >
               {currentStep === 4 ? <Check className="h-4 w-4" /> : '4'}
             </div>
-            <span className={`text-xs font-bold ${currentStep >= 4 ? 'text-emerald-700' : 'text-slate-400'}`}>
+            <span className={`text-xs font-semibold ${currentStep >= 4 ? 'text-emerald-700 font-extrabold' : 'text-slate-600'}`}>
               Activate
             </span>
           </div>

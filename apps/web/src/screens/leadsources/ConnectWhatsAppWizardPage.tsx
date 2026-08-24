@@ -85,12 +85,12 @@ export default function ConnectWhatsAppWizardPage() {
             <div key={item.step} className="flex flex-col items-center gap-1 z-10 bg-white px-2">
               <div
                 className={`h-8 w-8 rounded-full font-extrabold text-xs flex items-center justify-center transition-colors ${
-                  currentStep >= item.step ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                  currentStep >= item.step ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 border border-slate-300'
                 }`}
               >
                 {currentStep > item.step ? <Check className="h-4 w-4" /> : item.step}
               </div>
-              <span className={`text-xs font-bold ${currentStep >= item.step ? 'text-[#0D1F3D]' : 'text-slate-400'}`}>
+              <span className={`text-xs font-semibold ${currentStep >= item.step ? 'text-[#0D1F3D] font-extrabold' : 'text-slate-600'}`}>
                 {item.label}
               </span>
             </div>
@@ -114,9 +114,9 @@ export default function ConnectWhatsAppWizardPage() {
                   </div>
                   <div className="flex-1">
                     <span className="font-extrabold text-[#0D1F3D] text-xs block">1. Enable WhatsApp Business API</span>
-                    <span className="text-[10px] text-slate-500 font-medium">You'll be redirected to Facebook to connect your WhatsApp Business Account.</span>
+                    <span className="text-xs text-slate-600 font-medium">You'll be redirected to Facebook to connect your WhatsApp Business Account.</span>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400">1 min</span>
+                  <span className="text-xs font-semibold text-slate-600">1 min</span>
                 </div>
 
                 <div className="flex items-center gap-3 p-3 rounded-sm border border-slate-200 bg-slate-50/70">
@@ -125,9 +125,9 @@ export default function ConnectWhatsAppWizardPage() {
                   </div>
                   <div className="flex-1">
                     <span className="font-extrabold text-[#0D1F3D] text-xs block">2. Verify Your Business</span>
-                    <span className="text-[10px] text-slate-500 font-medium">We will verify your business and fetch your WhatsApp phone numbers.</span>
+                    <span className="text-xs text-slate-600 font-medium">We will verify your business and fetch your WhatsApp phone numbers.</span>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400">1 min</span>
+                  <span className="text-xs font-semibold text-slate-600">1 min</span>
                 </div>
 
                 <div className="flex items-center gap-3 p-3 rounded-sm border border-slate-200 bg-slate-50/70">
@@ -136,9 +136,9 @@ export default function ConnectWhatsAppWizardPage() {
                   </div>
                   <div className="flex-1">
                     <span className="font-extrabold text-[#0D1F3D] text-xs block">3. Select Phone Number</span>
-                    <span className="text-[10px] text-slate-500 font-medium">Choose the WhatsApp number from which you want to receive leads.</span>
+                    <span className="text-xs text-slate-600 font-medium">Choose the WhatsApp number from which you want to receive leads.</span>
                   </div>
-                  <span className="text-[10px] font-bold text-slate-400">1 min</span>
+                  <span className="text-xs font-semibold text-slate-600">1 min</span>
                 </div>
               </div>
 
@@ -154,8 +154,8 @@ export default function ConnectWhatsAppWizardPage() {
                 >
                   <MessageSquare className="h-4 w-4" /> Connect WhatsApp Business
                 </Button>
-                <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1">
-                  <Lock className="h-3 w-3" /> You will be redirected to Facebook to authorize securely
+                <span className="text-xs text-slate-600 font-medium flex items-center gap-1">
+                  <Lock className="h-3 w-3 text-slate-500" /> You will be redirected to Facebook to authorize securely
                 </span>
               </div>
             </div>
@@ -203,7 +203,7 @@ export default function ConnectWhatsAppWizardPage() {
                     </div>
                     <div>
                       <span className="font-extrabold text-[#0D1F3D] text-xs block">Aimbeat Business WABA</span>
-                      <span className="text-[10px] text-slate-400 font-mono">ID: 123456789012345</span>
+                      <span className="text-xs text-slate-700 font-mono font-bold">ID: 123456789012345</span>
                     </div>
                   </div>
                   <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
@@ -253,16 +253,16 @@ export default function ConnectWhatsAppWizardPage() {
                             Active
                           </span>
                         </div>
-                        <span className="text-[10px] text-slate-500 font-medium">Aimbeat Official Display Name</span>
+                        <span className="text-xs text-slate-600 font-medium">Aimbeat Official Display Name</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-6 text-xs text-right">
                       <div>
-                        <span className="text-[10px] text-slate-400 block">Quality Rating</span>
+                        <span className="text-xs text-slate-600 block font-medium">Quality Rating</span>
                         <span className="font-bold text-emerald-600">High</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block">Messaging Limit</span>
+                        <span className="text-xs text-slate-600 block font-medium">Messaging Limit</span>
                         <span className="font-bold text-slate-800">1,000 / day</span>
                       </div>
                     </div>
@@ -292,16 +292,16 @@ export default function ConnectWhatsAppWizardPage() {
                             Active
                           </span>
                         </div>
-                        <span className="text-[10px] text-slate-500 font-medium">Sales Support Display Name</span>
+                        <span className="text-xs text-slate-600 font-medium">Sales Support Display Name</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-6 text-xs text-right">
                       <div>
-                        <span className="text-[10px] text-slate-400 block">Quality Rating</span>
+                        <span className="text-xs text-slate-600 block font-medium">Quality Rating</span>
                         <span className="font-bold text-amber-600">Medium</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block">Messaging Limit</span>
+                        <span className="text-xs text-slate-600 block font-medium">Messaging Limit</span>
                         <span className="font-bold text-slate-800">250 / day</span>
                       </div>
                     </div>

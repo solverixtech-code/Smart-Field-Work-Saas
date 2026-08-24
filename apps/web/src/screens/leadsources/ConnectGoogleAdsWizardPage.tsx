@@ -79,12 +79,12 @@ export default function ConnectGoogleAdsWizardPage() {
             <div key={item.step} className="flex flex-col items-center gap-1 z-10 bg-white px-2">
               <div
                 className={`h-8 w-8 rounded-full font-extrabold text-xs flex items-center justify-center transition-colors ${
-                  currentStep >= item.step ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 border border-slate-200'
+                  currentStep >= item.step ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 border border-slate-300'
                 }`}
               >
                 {currentStep > item.step ? <Check className="h-4 w-4" /> : item.step}
               </div>
-              <span className={`text-xs font-bold ${currentStep >= item.step ? 'text-[#0D1F3D]' : 'text-slate-400'}`}>
+              <span className={`text-xs font-semibold ${currentStep >= item.step ? 'text-[#0D1F3D] font-extrabold' : 'text-slate-600'}`}>
                 {item.label}
               </span>
             </div>
