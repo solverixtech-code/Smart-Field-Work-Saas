@@ -8,12 +8,12 @@ export default function TermsOfServicePage() {
       {/* HEADER NAVBAR */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
-            SFW
-          </div>
+          <img src="/assets/sfw-logo.png" alt="Smart Field Work" className="h-8 object-contain" onError={(e) => {
+            (e.target as HTMLElement).style.display = 'none';
+          }} />
           <div>
-            <span className="font-extrabold text-[#0D1F3D] text-base block tracking-tight">Visiblo SFW CRM</span>
-            <span className="text-[10px] font-semibold text-slate-500 block">Smart Field Work SaaS Platform</span>
+            <span className="font-extrabold text-[#0D1F3D] text-base block tracking-tight">Smart Field Work SFW CRM</span>
+            <span className="text-[10px] font-semibold text-slate-500 block">Enterprise Field Work & Automation SaaS</span>
           </div>
         </div>
 
@@ -22,7 +22,7 @@ export default function TermsOfServicePage() {
             variant="outline"
             size="sm"
             onClick={() => window.location.href = '/admin/login'}
-            className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 text-xs"
+            className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 text-xs shadow-xs"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to CRM Login
           </Button>
@@ -31,17 +31,17 @@ export default function TermsOfServicePage() {
 
       {/* HERO BANNER */}
       <div className="bg-[#0D1F3D] text-white py-12 px-4 sm:px-8 text-center space-y-3">
-        <div className="inline-flex items-center gap-2 bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-bold px-3 py-1 rounded-full">
+        <div className="inline-flex items-center gap-2 bg-indigo-500/20 border border-indigo-400/30 text-indigo-200 text-xs font-bold px-3.5 py-1 rounded-full">
           <Scale className="h-3.5 w-3.5 text-indigo-400" /> SaaS Terms & Service Agreement
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Terms of Service</h1>
         <p className="text-xs sm:text-sm text-slate-300 max-w-xl mx-auto font-medium">
-          Please read these terms carefully before accessing or using the Visiblo SFW CRM application and Meta platform integrations.
+          Please read these terms carefully before accessing or using the Smart Field Work SFW CRM application and Meta platform integrations.
         </p>
         <span className="text-[11px] text-slate-400 font-mono block">Last Updated: August 24, 2026</span>
       </div>
 
-      {/* MAIN CONTAINER */}
+      {/* MAIN CONTENT */}
       <main className="max-w-4xl mx-auto py-10 px-4 sm:px-6 space-y-8">
         <div className="bg-white rounded-xl border border-slate-200/80 p-6 sm:p-10 shadow-xs space-y-8 text-xs sm:text-sm leading-relaxed text-slate-700">
           {/* SECTION 1 */}
@@ -50,7 +50,7 @@ export default function TermsOfServicePage() {
               <FileText className="h-5 w-5 text-indigo-600" /> 1. Acceptance of Terms
             </h2>
             <p>
-              By creating an account, accessing, or using the <strong>Visiblo SFW CRM</strong> platform, mobile application, or connected API services operated by Solverix Technologies ("Company", "we", "us"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not use the platform.
+              By creating an account, accessing, or using the <strong>Smart Field Work SFW CRM</strong> platform, mobile application, or connected API services operated by Solverix Technologies ("Company", "we", "us"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you may not use the platform.
             </p>
           </section>
 
@@ -60,7 +60,7 @@ export default function TermsOfServicePage() {
               <CheckCircle2 className="h-5 w-5 text-emerald-600" /> 2. License & Service Provision
             </h2>
             <p>
-              Subject to your compliance with these Terms and payment of applicable subscription fees, Visiblo grants you a non-exclusive, non-transferable, revocable right to access and use the SaaS CRM platform for internal business lead management, field activity tracking, and automated sales reporting.
+              Subject to your compliance with these Terms and payment of applicable subscription fees, Smart Field Work grants you a non-exclusive, non-transferable, revocable right to access and use the SaaS CRM platform for internal business lead management, field activity tracking, and automated sales reporting.
             </p>
           </section>
 
@@ -70,12 +70,12 @@ export default function TermsOfServicePage() {
               <Shield className="h-5 w-5 text-indigo-600" /> 3. External Platform Integrations (Meta, Google & WhatsApp)
             </h2>
             <p>
-              Visiblo SFW CRM enables integration with third-party advertising and messaging networks including <strong>Meta Lead Ads (Facebook & Instagram)</strong>, <strong>Google Ads Lead Forms</strong>, and <strong>WhatsApp Business Cloud API</strong>.
+              Smart Field Work SFW CRM enables integration with third-party advertising and messaging networks including <strong>Meta Lead Ads (Facebook & Instagram)</strong>, <strong>Google Ads Lead Forms</strong>, and <strong>WhatsApp Business Cloud API</strong>.
             </p>
             <ul className="list-disc pl-5 space-y-2 font-medium text-slate-600">
               <li>You are responsible for obtaining appropriate permissions from your leads before initiating communications.</li>
               <li>You agree to comply with all third-party platform terms, including Meta's Commercial Terms and WhatsApp Business Messaging Policies.</li>
-              <li>Visiblo is not liable for service interruptions caused by third-party API rate limits, access revocations, or downtime.</li>
+              <li>Smart Field Work is not liable for service interruptions caused by third-party API rate limits, access revocations, or downtime.</li>
             </ul>
           </section>
 
@@ -86,19 +86,19 @@ export default function TermsOfServicePage() {
             </h2>
             <p>You agree NOT to engage in any of the following prohibited activities:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <div className="p-3 bg-rose-50/50 rounded-lg border border-rose-200/80 font-medium text-rose-950">
+              <div className="p-3.5 bg-rose-50/50 rounded-lg border border-rose-200/80 font-medium text-rose-950">
                 <span className="font-extrabold block mb-0.5 text-rose-900">Unsolicited Spamming</span>
                 Sending unauthorized spam, mass unsolicited marketing messages, or phishing content via WhatsApp API.
               </div>
-              <div className="p-3 bg-rose-50/50 rounded-lg border border-rose-200/80 font-medium text-rose-950">
+              <div className="p-3.5 bg-rose-50/50 rounded-lg border border-rose-200/80 font-medium text-rose-950">
                 <span className="font-extrabold block mb-0.5 text-rose-900">Unauthorized Data Scraping</span>
                 Using automated scripts, web crawlers, or scrapers to extract platform data without permission.
               </div>
-              <div className="p-3 bg-rose-50/50 rounded-lg border border-rose-200/80 font-medium text-rose-950">
+              <div className="p-3.5 bg-rose-50/50 rounded-lg border border-rose-200/80 font-medium text-rose-950">
                 <span className="font-extrabold block mb-0.5 text-rose-900">Security Circumvention</span>
                 Attempting to bypass authentication, role-based permissions, or system security layers.
               </div>
-              <div className="p-3 bg-rose-50/50 rounded-lg border border-rose-200/80 font-medium text-rose-950">
+              <div className="p-3.5 bg-rose-50/50 rounded-lg border border-rose-200/80 font-medium text-rose-950">
                 <span className="font-extrabold block mb-0.5 text-rose-900">Illegal Lead Capture</span>
                 Capturing or harvesting sensitive personal data without proper GDPR/DPDP consent disclosure.
               </div>
@@ -111,7 +111,7 @@ export default function TermsOfServicePage() {
               <Scale className="h-5 w-5 text-indigo-600" /> 5. Limitation of Liability & Warranties
             </h2>
             <p>
-              The Visiblo SFW CRM service is provided "AS IS" and "AS AVAILABLE". To the maximum extent permitted by law, Solverix Technologies disclaims all warranties, express or implied. In no event shall Solverix Technologies be liable for indirect, incidental, special, or consequential damages resulting from platform usage.
+              The Smart Field Work SFW CRM service is provided "AS IS" and "AS AVAILABLE". To the maximum extent permitted by law, Solverix Technologies disclaims all warranties, express or implied. In no event shall Solverix Technologies be liable for indirect, incidental, special, or consequential damages resulting from platform usage.
             </p>
           </section>
 

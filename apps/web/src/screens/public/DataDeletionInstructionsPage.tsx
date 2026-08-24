@@ -22,12 +22,12 @@ export default function DataDeletionInstructionsPage() {
       {/* HEADER NAVBAR */}
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-black text-sm shadow-xs">
-            SFW
-          </div>
+          <img src="/assets/sfw-logo.png" alt="Smart Field Work" className="h-8 object-contain" onError={(e) => {
+            (e.target as HTMLElement).style.display = 'none';
+          }} />
           <div>
-            <span className="font-extrabold text-[#0D1F3D] text-base block tracking-tight">Visiblo SFW CRM</span>
-            <span className="text-[10px] font-semibold text-slate-500 block">Smart Field Work SaaS Platform</span>
+            <span className="font-extrabold text-[#0D1F3D] text-base block tracking-tight">Smart Field Work SFW CRM</span>
+            <span className="text-[10px] font-semibold text-slate-500 block">Enterprise Field Work & Automation SaaS</span>
           </div>
         </div>
 
@@ -36,7 +36,7 @@ export default function DataDeletionInstructionsPage() {
             variant="outline"
             size="sm"
             onClick={() => window.location.href = '/admin/login'}
-            className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 text-xs"
+            className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 text-xs shadow-xs"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to CRM Login
           </Button>
@@ -45,7 +45,7 @@ export default function DataDeletionInstructionsPage() {
 
       {/* HERO BANNER */}
       <div className="bg-[#0D1F3D] text-white py-12 px-4 sm:px-8 text-center space-y-3">
-        <div className="inline-flex items-center gap-2 bg-rose-500/20 border border-rose-400/30 text-rose-200 text-xs font-bold px-3 py-1 rounded-full">
+        <div className="inline-flex items-center gap-2 bg-rose-500/20 border border-rose-400/30 text-rose-200 text-xs font-bold px-3.5 py-1 rounded-full">
           <Trash2 className="h-3.5 w-3.5 text-rose-400" /> Meta Data Deletion & Privacy
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">User Data Deletion Instructions</h1>
@@ -55,25 +55,25 @@ export default function DataDeletionInstructionsPage() {
         <span className="text-[11px] text-slate-400 font-mono block">Last Updated: August 24, 2026</span>
       </div>
 
-      {/* MAIN CONTAINER */}
+      {/* MAIN CONTENT */}
       <main className="max-w-4xl mx-auto py-10 px-4 sm:px-6 space-y-8">
         <div className="bg-white rounded-xl border border-slate-200/80 p-6 sm:p-10 shadow-xs space-y-8 text-xs sm:text-sm leading-relaxed text-slate-700">
           {/* METHOD 1: META FACEBOOK DELETION */}
           <section className="space-y-4">
             <h2 className="text-base font-extrabold text-[#0D1F3D] flex items-center gap-2 border-b border-slate-100 pb-2">
-              <Shield className="h-5 w-5 text-indigo-600" /> Method 1: Remove Visiblo App Access via Facebook Settings
+              <Shield className="h-5 w-5 text-indigo-600" /> Method 1: Remove Smart Field Work Access via Facebook Settings
             </h2>
             <p>
-              If you connected your Facebook Page, Meta Lead Ads, or WhatsApp Business account to <strong>Visiblo SFW CRM (Smart Field Work SFW CRM)</strong>, you can revoke access at any time directly through Facebook:
+              If you connected your Facebook Page, Meta Lead Ads, or WhatsApp Business account to <strong>Smart Field Work SFW CRM</strong>, you can revoke access at any time directly through Facebook:
             </p>
             <ol className="list-decimal pl-5 space-y-2 font-medium text-slate-700">
               <li>Log in to your Facebook account and go to <strong>Settings & Privacy ➔ Settings</strong>.</li>
               <li>In the left sidebar, click <strong>Apps and Websites</strong>.</li>
-              <li>Search for <strong>Smart Field Work SFW CRM</strong> (or <em>Visiblo SFW CRM</em>).</li>
+              <li>Search for <strong>Smart Field Work SFW CRM</strong>.</li>
               <li>Click <strong>Remove</strong> next to the application name.</li>
               <li>Check the box to delete all posts, videos, or events published by the app if desired, then click <strong>Remove</strong>.</li>
             </ol>
-            <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-900 font-medium flex items-center gap-2">
+            <div className="p-3.5 bg-emerald-50 rounded-lg border border-emerald-200 text-emerald-900 font-medium flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
               <span>Once revoked, Meta automatically halts real-time lead webhook events to our servers immediately.</span>
             </div>
@@ -85,7 +85,7 @@ export default function DataDeletionInstructionsPage() {
               <Trash2 className="h-5 w-5 text-rose-600" /> Method 2: Request Full Account & Lead Data Purge
             </h2>
             <p>
-              To request complete, permanent deletion of your account records, access tokens, lead databases, and server audit logs from Visiblo CRM databases, submit your registered email address below:
+              To request complete, permanent deletion of your account records, access tokens, lead databases, and server audit logs from Smart Field Work CRM databases, submit your registered email address below:
             </p>
 
             {!submitted ? (
