@@ -15,6 +15,8 @@ import {
   BarChart3,
   RefreshCw,
   Award,
+  Globe,
+  DollarSign
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -26,6 +28,9 @@ import {
   YAxis,
   Tooltip,
   Legend,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 import { Button } from '../../components/ui/Button';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
@@ -72,14 +77,23 @@ const topExecutivesData = [
   { rank: 5, name: 'Neha Verma', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', sales: 28450, leads: 942, conversions: 88, cr: '9.3%' },
 ];
 
+const sourcePieData = [
+  { name: 'Field Visits', value: 45 },
+  { name: 'WhatsApp Bot', value: 25 },
+  { name: 'Meta Ads', value: 18 },
+  { name: 'Direct Referrals', value: 12 },
+];
+const PIE_COLORS = ['#2563EB', '#10B981', '#F59E0B', '#8B5CF6'];
+
 export function CategoryPerformancePage() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
 
   const category = mockCategoriesList.find((c) => c.id === categoryId) || mockCategoriesList[0];
 
+  // Functional Active Tab state with curated practical list
   const [activeTab, setActiveTab] = useState<
-    'Overview' | 'Sales Analysis' | 'Lead Analysis' | 'Conversion Analysis' | 'Trend Analysis' | 'Executive Performance' | 'Regional Performance' | 'Time Comparison'
+    'Overview' | 'Sales Analysis' | 'Lead Analysis' | 'Executive Performance' | 'Regional Performance'
   >('Overview');
 
   return (
@@ -137,7 +151,6 @@ export function CategoryPerformancePage() {
 
       {/* TOP 6 KPI CARDS */}
       <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-6">
-        {/* Card 1: Category Badge */}
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-purple-50 text-purple-600 shrink-0">
             <ShoppingBag className="h-5 w-5" />
@@ -149,7 +162,6 @@ export function CategoryPerformancePage() {
           </div>
         </div>
 
-        {/* Card 2: Total Sales */}
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-blue-50 text-blue-600 shrink-0">
             <TrendingUp className="h-5 w-5" />
@@ -161,7 +173,6 @@ export function CategoryPerformancePage() {
           </div>
         </div>
 
-        {/* Card 3: Total Leads */}
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 shrink-0">
             <Target className="h-5 w-5" />
@@ -173,7 +184,6 @@ export function CategoryPerformancePage() {
           </div>
         </div>
 
-        {/* Card 4: Conversion Rate */}
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-amber-50 text-amber-600 shrink-0">
             <Filter className="h-5 w-5" />
@@ -185,7 +195,6 @@ export function CategoryPerformancePage() {
           </div>
         </div>
 
-        {/* Card 5: Avg. Deal Value */}
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-rose-50 text-rose-600 shrink-0">
             <TrendingUp className="h-5 w-5" />
@@ -197,7 +206,6 @@ export function CategoryPerformancePage() {
           </div>
         </div>
 
-        {/* Card 6: Active Executives */}
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-teal-50 text-teal-600 shrink-0">
             <Users className="h-5 w-5" />
@@ -210,18 +218,15 @@ export function CategoryPerformancePage() {
         </div>
       </div>
 
-      {/* SUB-TABS NAVIGATION BAR */}
+      {/* CURATED FUNCTIONAL SUB-TABS NAVIGATION BAR */}
       <div className="flex items-center gap-1 border-b border-slate-200 bg-white px-2 pt-1.5 rounded-sm shadow-xs overflow-x-auto custom-scrollbar">
         {(
           [
             'Overview',
             'Sales Analysis',
             'Lead Analysis',
-            'Conversion Analysis',
-            'Trend Analysis',
             'Executive Performance',
             'Regional Performance',
-            'Time Comparison',
           ] as const
         ).map((tab) => {
           const isActive = activeTab === tab;
@@ -241,260 +246,389 @@ export function CategoryPerformancePage() {
         })}
       </div>
 
-      {/* TOP ROW CHARTS & FUNNEL (2 ROW LAYOUT FOR PROPER SPACING & VISIBILITY) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Sales Trend (₹) Line Chart (7 Cols) */}
-        <div className="lg:col-span-7 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Sales Trend (₹)</h3>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">Revenue growth comparison vs previous period</p>
+      {/* TAB PANEL 1: OVERVIEW */}
+      {activeTab === 'Overview' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Sales Trend (₹) Line Chart (7 Cols) - FIXED LEFT MARGIN ALIGNMENT */}
+            <div className="lg:col-span-7 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#0D1F3D]">Sales Trend (₹)</h3>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">Revenue growth comparison vs previous period</p>
+                </div>
+                <select className="rounded-sm border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-[#0D1F3D] shadow-2xs">
+                  <option value="Daily">Daily</option>
+                  <option value="Weekly">Weekly</option>
+                </select>
+              </div>
+
+              <div className="h-64 w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={salesDailyData} margin={{ top: 10, right: 15, left: -10, bottom: 0 }}>
+                    <XAxis dataKey="day" stroke="#64748B" fontSize={11} tickLine={false} dy={5} />
+                    <YAxis
+                      stroke="#64748B"
+                      fontSize={10}
+                      tickLine={false}
+                      width={45}
+                      tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
+                    />
+                    <Tooltip
+                      formatter={(value: any) => [`₹ ${Number(value).toLocaleString('en-IN')}`, 'Sales']}
+                      contentStyle={{
+                        backgroundColor: '#0D1F3D',
+                        borderRadius: '6px',
+                        color: '#FFF',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="current"
+                      name="This Period"
+                      stroke="#8B5CF6"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#8B5CF6', strokeWidth: 2, stroke: '#FFF' }}
+                      activeDot={{ r: 6 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="previous"
+                      name="Last Period"
+                      stroke="#CBD5E1"
+                      strokeWidth={2}
+                      strokeDasharray="4 4"
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="flex items-center justify-center gap-6 text-xs font-bold border-t border-slate-100 pt-3">
+                <span className="flex items-center gap-2 text-[#0D1F3D]">
+                  <span className="h-3 w-3 rounded-full bg-purple-600 shadow-xs" /> This Period (₹4.26L)
+                </span>
+                <span className="flex items-center gap-2 text-slate-500">
+                  <span className="h-3 w-3 rounded-full bg-slate-300" /> Last Period (₹3.60L)
+                </span>
+              </div>
             </div>
-            <select className="rounded-sm border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-[#0D1F3D] shadow-2xs">
-              <option value="Daily">Daily</option>
-              <option value="Weekly">Weekly</option>
-            </select>
+
+            {/* Conversion Funnel Diagram Card (5 Cols) */}
+            <div className="lg:col-span-5 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="text-sm font-extrabold text-[#0D1F3D]">Conversion Funnel</h3>
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    9.2% Overall CR
+                  </span>
+                </div>
+
+                <div className="space-y-2.5 pt-3">
+                  <div className="bg-indigo-600 text-white p-2.5 rounded-sm flex items-center justify-between shadow-xs">
+                    <span className="font-extrabold text-xs">Total Leads</span>
+                    <span className="font-mono text-xs font-black">12,458</span>
+                  </div>
+
+                  <div className="bg-blue-600 text-white p-2.5 rounded-sm flex items-center justify-between mx-2 shadow-xs">
+                    <span className="font-extrabold text-xs">Contacted Leads</span>
+                    <span className="font-mono text-xs font-black">8,246 (66.2%)</span>
+                  </div>
+
+                  <div className="bg-emerald-600 text-white p-2.5 rounded-sm flex items-center justify-between mx-4 shadow-xs">
+                    <span className="font-extrabold text-xs">Interested Leads</span>
+                    <span className="font-mono text-xs font-black">4,752 (38.1%)</span>
+                  </div>
+
+                  <div className="bg-amber-500 text-white p-2.5 rounded-sm flex items-center justify-between mx-6 shadow-xs">
+                    <span className="font-extrabold text-xs">Demos Conducted</span>
+                    <span className="font-mono text-xs font-black">2,158 (17.3%)</span>
+                  </div>
+
+                  <div className="bg-rose-600 text-white p-2.5 rounded-sm flex items-center justify-between mx-8 shadow-xs">
+                    <span className="font-extrabold text-xs">Converted</span>
+                    <span className="font-mono text-xs font-black">1,148 (9.2%)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 p-2.5 rounded-sm">
+                <span className="text-slate-600 font-bold text-xs">Category Conversion Benchmark</span>
+                <span className="text-sm font-extrabold text-emerald-600">9.2%</span>
+              </div>
+            </div>
           </div>
 
-          <div className="h-64 w-full pt-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={salesDailyData} margin={{ top: 10, right: 20, left: 25, bottom: 5 }}>
-                <XAxis dataKey="day" stroke="#64748B" fontSize={11} tickLine={false} dy={5} />
-                <YAxis
-                  stroke="#64748B"
-                  fontSize={10}
-                  tickLine={false}
-                  tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
-                />
-                <Tooltip
-                  formatter={(value: any) => [`₹ ${Number(value).toLocaleString('en-IN')}`, 'Sales']}
-                  contentStyle={{
-                    backgroundColor: '#0D1F3D',
-                    borderRadius: '6px',
-                    color: '#FFF',
-                    fontSize: '11px',
-                    fontWeight: 'bold',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="current"
-                  name="This Period"
-                  stroke="#8B5CF6"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: '#8B5CF6', strokeWidth: 2, stroke: '#FFF' }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="previous"
-                  name="Last Period"
-                  stroke="#CBD5E1"
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+          {/* BOTTOM ROW TABLES & KEY INSIGHTS (3 CARDS) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-5 rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h3 className="text-xs font-extrabold text-[#0D1F3D]">Performance by Region</h3>
+                <button onClick={() => setActiveTab('Regional Performance')} className="text-[11px] font-bold text-indigo-600 hover:underline">
+                  View all regions →
+                </button>
+              </div>
 
-          <div className="flex items-center justify-center gap-6 text-xs font-bold border-t border-slate-100 pt-3">
-            <span className="flex items-center gap-2 text-[#0D1F3D]">
-              <span className="h-3 w-3 rounded-full bg-purple-600 shadow-xs" /> This Period (₹4.26L)
-            </span>
-            <span className="flex items-center gap-2 text-slate-500">
-              <span className="h-3 w-3 rounded-full bg-slate-300" /> Last Period (₹3.60L)
-            </span>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse whitespace-nowrap text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-slate-500 bg-slate-50/70">
+                      <th className="py-2 px-2">Region</th>
+                      <th className="py-2 px-2 text-right">Businesses</th>
+                      <th className="py-2 px-2 text-right">Sales (₹)</th>
+                      <th className="py-2 px-2 text-right">Conversions</th>
+                      <th className="py-2 px-2 text-right">CR (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {regionalPerformanceData.slice(0, 5).map((row) => (
+                      <tr key={row.region} className="hover:bg-slate-50/70">
+                        <td className="py-2 px-2 font-extrabold text-[#0D1F3D]">{row.region}</td>
+                        <td className="py-2 px-2 text-right font-mono font-bold text-slate-700">{row.businesses}</td>
+                        <td className="py-2 px-2 text-right font-mono font-bold text-[#0D1F3D]">₹{row.sales.toLocaleString('en-IN')}</td>
+                        <td className="py-2 px-2 text-right font-mono text-slate-600">{row.conversions}</td>
+                        <td className="py-2 px-2 text-right font-mono font-bold text-emerald-700">{row.cr}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="lg:col-span-4 rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h3 className="text-xs font-extrabold text-[#0D1F3D]">Top Performing Executives</h3>
+                <button onClick={() => setActiveTab('Executive Performance')} className="text-[11px] font-bold text-indigo-600 hover:underline">
+                  View all executives →
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse whitespace-nowrap text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-slate-500 bg-slate-50/70">
+                      <th className="py-2 px-2 text-center">Rank</th>
+                      <th className="py-2 px-2">Executive</th>
+                      <th className="py-2 px-2 text-right">Sales (₹)</th>
+                      <th className="py-2 px-2 text-right">CR (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {topExecutivesData.map((exec) => (
+                      <tr key={exec.name} className="hover:bg-slate-50/70">
+                        <td className="py-2 px-2 text-center">
+                          {exec.rank === 1 ? '🥇' : exec.rank === 2 ? '🥈' : exec.rank === 3 ? '🥉' : exec.rank}
+                        </td>
+                        <td className="py-2 px-2">
+                          <div className="flex items-center gap-2">
+                            <img src={exec.avatar} alt={exec.name} className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0" />
+                            <span className="font-extrabold text-[#0D1F3D]">{exec.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-2 px-2 text-right font-mono font-bold text-[#0D1F3D]">₹{exec.sales.toLocaleString('en-IN')}</td>
+                        <td className="py-2 px-2 text-right font-mono font-bold text-emerald-700">{exec.cr}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="lg:col-span-3 rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                  <Sparkles className="h-4 w-4 text-purple-600" /> Category Insights
+                </h3>
+
+                <div className="space-y-3 pt-2">
+                  <div className="p-2.5 rounded-sm bg-emerald-50/70 border border-emerald-100">
+                    <h4 className="font-extrabold text-[#0D1F3D] text-xs">Sales increased by 18.4%</h4>
+                    <p className="text-[11px] font-medium text-slate-600 mt-0.5">Strong growth across Mumbai & Pune zones.</p>
+                  </div>
+                  <div className="p-2.5 rounded-sm bg-blue-50/70 border border-blue-100">
+                    <h4 className="font-extrabold text-[#0D1F3D] text-xs">9.2% Conversion Rate</h4>
+                    <p className="text-[11px] font-medium text-slate-600 mt-0.5">Field visit follow-ups driving higher conversion.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Conversion Funnel Diagram Card (5 Cols) */}
-        <div className="lg:col-span-5 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Conversion Funnel</h3>
-              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                9.2% Overall CR
-              </span>
-            </div>
-
-            <div className="space-y-2.5 pt-3">
-              <div className="bg-indigo-600 text-white p-2.5 rounded-sm flex items-center justify-between shadow-xs">
-                <span className="font-extrabold text-xs">Total Leads</span>
-                <span className="font-mono text-xs font-black">12,458</span>
-              </div>
-
-              <div className="bg-blue-600 text-white p-2.5 rounded-sm flex items-center justify-between mx-2 shadow-xs">
-                <span className="font-extrabold text-xs">Contacted Leads</span>
-                <span className="font-mono text-xs font-black">8,246 (66.2%)</span>
-              </div>
-
-              <div className="bg-emerald-600 text-white p-2.5 rounded-sm flex items-center justify-between mx-4 shadow-xs">
-                <span className="font-extrabold text-xs">Interested Leads</span>
-                <span className="font-mono text-xs font-black">4,752 (38.1%)</span>
-              </div>
-
-              <div className="bg-amber-500 text-white p-2.5 rounded-sm flex items-center justify-between mx-6 shadow-xs">
-                <span className="font-extrabold text-xs">Demos Conducted</span>
-                <span className="font-mono text-xs font-black">2,158 (17.3%)</span>
-              </div>
-
-              <div className="bg-rose-600 text-white p-2.5 rounded-sm flex items-center justify-between mx-8 shadow-xs">
-                <span className="font-extrabold text-xs">Converted</span>
-                <span className="font-mono text-xs font-black">1,148 (9.2%)</span>
+      {/* TAB PANEL 2: SALES ANALYSIS */}
+      {activeTab === 'Sales Analysis' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-8 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Revenue & Sales Trend Analysis</h3>
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={salesDailyData} margin={{ top: 10, right: 15, left: -10, bottom: 0 }}>
+                    <XAxis dataKey="day" stroke="#64748B" fontSize={11} />
+                    <YAxis stroke="#64748B" fontSize={10} width={45} tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(val: any) => [`₹ ${Number(val).toLocaleString('en-IN')}`, 'Sales']} />
+                    <Line type="monotone" dataKey="current" name="Current Sales" stroke="#2563EB" strokeWidth={3} dot={{ r: 4 }} />
+                    <Line type="monotone" dataKey="previous" name="Target Sales" stroke="#10B981" strokeWidth={2} strokeDasharray="3 3" />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </div>
-          </div>
 
-          <div className="pt-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 p-2.5 rounded-sm">
-            <span className="text-slate-600 font-bold text-xs">Category Conversion Benchmark</span>
-            <span className="text-sm font-extrabold text-emerald-600">9.2%</span>
+            <div className="lg:col-span-4 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+              <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Sales Breakdown</h3>
+              <div className="space-y-3 text-xs">
+                <div className="flex justify-between border-b border-slate-100 pb-2">
+                  <span className="text-slate-500 font-medium">Total Category Revenue:</span>
+                  <span className="font-mono font-extrabold text-[#0D1F3D]">₹4,26,000</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-100 pb-2">
+                  <span className="text-slate-500 font-medium">Average Deal Size:</span>
+                  <span className="font-mono font-bold text-slate-800">₹3,708</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-100 pb-2">
+                  <span className="text-slate-500 font-medium">Top Deal Closed:</span>
+                  <span className="font-mono font-bold text-emerald-700">₹24,999</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 font-medium">Growth vs Last Month:</span>
+                  <span className="font-bold text-emerald-600">+18.4%</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* BOTTOM ROW TABLES & KEY INSIGHTS (3 CARDS) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Performance by Region Table (5 Cols) */}
-        <div className="lg:col-span-5 rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D]">Performance by Region</h3>
-            <button onClick={() => navigate('/admin/performance/territories')} className="text-[11px] font-bold text-indigo-600 hover:underline">
-              View all regions →
-            </button>
-          </div>
+      {/* TAB PANEL 3: LEAD ANALYSIS */}
+      {activeTab === 'Lead Analysis' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            <div className="lg:col-span-7 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Leads vs Conversions Volume</h3>
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={leadsVsConversionsData} margin={{ top: 10, right: 15, left: -10, bottom: 0 }}>
+                    <XAxis dataKey="day" stroke="#64748B" fontSize={11} />
+                    <YAxis stroke="#64748B" fontSize={10} width={45} />
+                    <Tooltip />
+                    <Bar dataKey="leads" name="Leads" fill="#2563EB" radius={[3, 3, 0, 0]} />
+                    <Bar dataKey="conversions" name="Conversions" fill="#10B981" radius={[3, 3, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse whitespace-nowrap text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-500 bg-slate-50/70">
-                  <th className="py-2 px-2">Region</th>
-                  <th className="py-2 px-2 text-right">Businesses</th>
-                  <th className="py-2 px-2 text-right">Sales (₹)</th>
-                  <th className="py-2 px-2 text-right">Leads</th>
-                  <th className="py-2 px-2 text-right">Conversions</th>
-                  <th className="py-2 px-2 text-right">CR (%)</th>
-                  <th className="py-2 px-2 text-right">Growth</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {regionalPerformanceData.map((row) => (
-                  <tr key={row.region} className="hover:bg-slate-50/70">
-                    <td className="py-2 px-2 font-extrabold text-[#0D1F3D]">{row.region}</td>
-                    <td className="py-2 px-2 text-right font-mono font-bold text-slate-700">{row.businesses}</td>
-                    <td className="py-2 px-2 text-right font-mono font-bold text-[#0D1F3D]">₹{row.sales.toLocaleString('en-IN')}</td>
-                    <td className="py-2 px-2 text-right font-mono text-slate-600">{row.leads}</td>
-                    <td className="py-2 px-2 text-right font-mono text-slate-600">{row.conversions}</td>
-                    <td className="py-2 px-2 text-right font-mono font-bold text-emerald-700">{row.cr}</td>
-                    <td className="py-2 px-2 text-right font-mono font-bold text-emerald-600">{row.growth}</td>
-                  </tr>
+            <div className="lg:col-span-5 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+              <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Lead Channels Share</h3>
+              <div className="h-56 w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={sourcePieData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value">
+                      {sourcePieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
+                {sourcePieData.map((src, i) => (
+                  <div key={src.name} className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i] }} />
+                    <span className="text-slate-700">{src.name}: <strong className="text-[#0D1F3D]">{src.value}%</strong></span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
         </div>
+      )}
 
-        {/* Top Performing Executives Table (4 Cols) */}
-        <div className="lg:col-span-4 rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D]">Top Performing Executives</h3>
-            <button onClick={() => navigate('/admin/performance/executives')} className="text-[11px] font-bold text-indigo-600 hover:underline">
-              View all executives →
-            </button>
-          </div>
-
+      {/* TAB PANEL 4: EXECUTIVE PERFORMANCE */}
+      {activeTab === 'Executive Performance' && (
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Field Executive Leaderboard in {category.name}</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse whitespace-nowrap text-xs">
               <thead>
-                <tr className="border-b border-slate-100 text-slate-500 bg-slate-50/70">
-                  <th className="py-2 px-2 text-center">Rank</th>
-                  <th className="py-2 px-2">Executive</th>
-                  <th className="py-2 px-2 text-right">Sales (₹)</th>
-                  <th className="py-2 px-2 text-right">Leads</th>
-                  <th className="py-2 px-2 text-right">Conversions</th>
-                  <th className="py-2 px-2 text-right">CR (%)</th>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[#0D1F3D] font-extrabold">
+                  <th className="py-3 px-3 text-center">Rank</th>
+                  <th className="py-3 px-3">Field Executive</th>
+                  <th className="py-3 px-3 text-right">Closed Revenue</th>
+                  <th className="py-3 px-3 text-right">Total Leads</th>
+                  <th className="py-3 px-3 text-right">Conversions</th>
+                  <th className="py-3 px-3 text-right">CR %</th>
+                  <th className="py-3 px-3 text-center">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 font-medium">
                 {topExecutivesData.map((exec) => (
-                  <tr key={exec.name} className="hover:bg-slate-50/70">
-                    <td className="py-2 px-2 text-center">
+                  <tr key={exec.name} className="hover:bg-slate-50">
+                    <td className="py-3 px-3 text-center font-bold">
                       {exec.rank === 1 ? '🥇 1' : exec.rank === 2 ? '🥈 2' : exec.rank === 3 ? '🥉 3' : exec.rank}
                     </td>
-                    <td className="py-2 px-2">
-                      <div className="flex items-center gap-2">
-                        <img src={exec.avatar} alt={exec.name} className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0" />
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2.5">
+                        <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
                         <span className="font-extrabold text-[#0D1F3D]">{exec.name}</span>
                       </div>
                     </td>
-                    <td className="py-2 px-2 text-right font-mono font-bold text-[#0D1F3D]">₹{exec.sales.toLocaleString('en-IN')}</td>
-                    <td className="py-2 px-2 text-right font-mono text-slate-600">{exec.leads}</td>
-                    <td className="py-2 px-2 text-right font-mono text-slate-600">{exec.conversions}</td>
-                    <td className="py-2 px-2 text-right font-mono font-bold text-emerald-700">{exec.cr}</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold text-emerald-700">₹{exec.sales.toLocaleString('en-IN')}</td>
+                    <td className="py-3 px-3 text-right font-mono text-slate-700">{exec.leads}</td>
+                    <td className="py-3 px-3 text-right font-mono text-slate-800 font-bold">{exec.conversions}</td>
+                    <td className="py-3 px-3 text-right font-mono font-extrabold text-indigo-700">{exec.cr}</td>
+                    <td className="py-3 px-3 text-center">
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
+                        Top Performer
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+      )}
 
-        {/* Key Insights Card (3 Cols) */}
-        <div className="lg:col-span-3 rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold flex flex-col justify-between">
-          <div>
-            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-purple-600" /> Key Insights
-            </h3>
-
-            <div className="space-y-3 pt-2">
-              <div className="flex items-start gap-2.5 p-2.5 rounded-sm bg-emerald-50/70 border border-emerald-100">
-                <div className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
-                  <TrendingUp className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-[#0D1F3D] text-xs">Sales increased by 18.4%</h4>
-                  <p className="text-[11px] font-medium text-slate-600">Compared to April 2025. Strong growth across most regions.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5 p-2.5 rounded-sm bg-blue-50/70 border border-blue-100">
-                <div className="h-6 w-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5">
-                  <Users className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-[#0D1F3D] text-xs">Conversion rate improved by 1.4%</h4>
-                  <p className="text-[11px] font-medium text-slate-600">Better lead quality and faster follow-ups.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5 p-2.5 rounded-sm bg-purple-50/70 border border-purple-100">
-                <div className="h-6 w-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 mt-0.5">
-                  <ShoppingBag className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-[#0D1F3D] text-xs">Mumbai is top performing region</h4>
-                  <p className="text-[11px] font-medium text-slate-600">₹ 1,12,500 sales with 9.6% conversion rate.</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2.5 p-2.5 rounded-sm bg-amber-50/70 border border-amber-100">
-                <div className="h-6 w-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
-                  <Award className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <h4 className="font-extrabold text-[#0D1F3D] text-xs">Rohit Sharma is top performer</h4>
-                  <p className="text-[11px] font-medium text-slate-600">₹ 58,600 sales and 8.4% conversion rate.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 text-center text-[10px] font-semibold text-slate-400 flex items-center justify-between">
-            <span>Note: Metrics calculated on selected date range.</span>
-            <span className="font-mono text-slate-500 font-bold">Data as of: 31 May 2025</span>
+      {/* TAB PANEL 5: REGIONAL PERFORMANCE */}
+      {activeTab === 'Regional Performance' && (
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Regional / Zone Performance in {category.name}</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse whitespace-nowrap text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[#0D1F3D] font-extrabold">
+                  <th className="py-3 px-3">Territory / Zone</th>
+                  <th className="py-3 px-3 text-right">Active Businesses</th>
+                  <th className="py-3 px-3 text-right">Total Revenue (₹)</th>
+                  <th className="py-3 px-3 text-right">Total Leads</th>
+                  <th className="py-3 px-3 text-right">Conversions</th>
+                  <th className="py-3 px-3 text-right">CR %</th>
+                  <th className="py-3 px-3 text-right">YoY Growth</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {regionalPerformanceData.map((row) => (
+                  <tr key={row.region} className="hover:bg-slate-50">
+                    <td className="py-3 px-3 font-extrabold text-[#0D1F3D]">{row.region} Zone</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold text-slate-800">{row.businesses}</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold text-[#0D1F3D]">₹{row.sales.toLocaleString('en-IN')}</td>
+                    <td className="py-3 px-3 text-right font-mono text-slate-600">{row.leads}</td>
+                    <td className="py-3 px-3 text-right font-mono text-slate-700">{row.conversions}</td>
+                    <td className="py-3 px-3 text-right font-mono font-bold text-emerald-700">{row.cr}</td>
+                    <td className="py-3 px-3 text-right font-mono font-extrabold text-emerald-600">{row.growth}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
