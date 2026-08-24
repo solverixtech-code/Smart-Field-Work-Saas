@@ -35,6 +35,9 @@ import {
   Award,
   Zap,
   Plus,
+  Share2,
+  Activity,
+  Settings,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
@@ -303,6 +306,71 @@ const navCategories: NavCategory[] = [
           Role.SALES_MANAGER,
           Role.TEAM_LEADER,
         ],
+      },
+    ],
+  },
+  {
+    title: "Lead Sources & Automation",
+    items: [
+      {
+        label: "All Lead Sources",
+        icon: Target,
+        to: "/admin/leads/sources",
+        allowed: [
+          Role.SUPER_ADMIN,
+          Role.ADMIN,
+          Role.SALES_MANAGER,
+          Role.TEAM_LEADER,
+        ],
+        badge: "18 Active",
+      },
+      {
+        label: "Add Lead Source",
+        icon: Plus,
+        to: "/admin/leads/sources/create",
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
+      },
+      {
+        label: "Lead Integrations",
+        icon: Share2,
+        to: "/admin/leads/integrations",
+        allowed: [
+          Role.SUPER_ADMIN,
+          Role.ADMIN,
+          Role.SALES_MANAGER,
+          Role.TEAM_LEADER,
+        ],
+        badge: "3 Connectors",
+      },
+      {
+        label: "Automation Center",
+        icon: Zap,
+        to: "/admin/leads/automation",
+        allowed: [
+          Role.SUPER_ADMIN,
+          Role.ADMIN,
+          Role.SALES_MANAGER,
+          Role.TEAM_LEADER,
+        ],
+        badge: "AI Active",
+      },
+      {
+        label: "Live Lead Activity",
+        icon: Activity,
+        to: "/admin/leads/automation/activity",
+        allowed: [
+          Role.SUPER_ADMIN,
+          Role.ADMIN,
+          Role.SALES_MANAGER,
+          Role.TEAM_LEADER,
+        ],
+        badge: "Live",
+      },
+      {
+        label: "Automation Settings",
+        icon: Settings,
+        to: "/admin/leads/automation/settings",
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
       },
     ],
   },
@@ -769,6 +837,30 @@ function getBreadcrumbTrail(pathname: string) {
     } else {
       items.push({ label: 'Category Details', to: pathname });
     }
+  } else if (pathname === '/admin/leads/sources') {
+    items.push({ label: 'Lead Sources', to: '/admin/leads/sources' });
+    items.push({ label: 'All Lead Sources', to: '/admin/leads/sources' });
+  } else if (pathname === '/admin/leads/sources/create') {
+    items.push({ label: 'Lead Sources', to: '/admin/leads/sources' });
+    items.push({ label: 'Create Source', to: '/admin/leads/sources/create' });
+  } else if (pathname.startsWith('/admin/leads/sources/')) {
+    items.push({ label: 'Lead Sources', to: '/admin/leads/sources' });
+    items.push({ label: 'Source Performance', to: pathname });
+  } else if (pathname === '/admin/leads/integrations') {
+    items.push({ label: 'Lead Automation', to: '/admin/leads/automation' });
+    items.push({ label: 'Integrations', to: '/admin/leads/integrations' });
+  } else if (pathname === '/admin/leads/automation') {
+    items.push({ label: 'Lead Automation', to: '/admin/leads/automation' });
+    items.push({ label: 'Automation Center', to: '/admin/leads/automation' });
+  } else if (pathname === '/admin/leads/automation/activity') {
+    items.push({ label: 'Lead Automation', to: '/admin/leads/automation' });
+    items.push({ label: 'Live Lead Activity', to: '/admin/leads/automation/activity' });
+  } else if (pathname === '/admin/leads/automation/settings') {
+    items.push({ label: 'Lead Automation', to: '/admin/leads/automation' });
+    items.push({ label: 'Automation Settings', to: '/admin/leads/automation/settings' });
+  } else if (pathname.startsWith('/admin/leads/integrations/')) {
+    items.push({ label: 'Integrations', to: '/admin/leads/integrations' });
+    items.push({ label: 'Platform Connector', to: pathname });
   } else if (pathname === "/admin/territories") {
     items.push({ label: "Territory Management", to: "/admin/territories" });
     items.push({ label: "Territories", to: "/admin/territories" });

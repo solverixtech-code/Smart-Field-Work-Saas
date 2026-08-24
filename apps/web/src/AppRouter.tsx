@@ -65,6 +65,17 @@ import AllCategoriesPage from './screens/categories/AllCategoriesPage';
 import AddCategoryPage from './screens/categories/AddCategoryPage';
 import CategoryDetailsPage from './screens/categories/CategoryDetailsPage';
 
+import AllLeadSourcesPage from './screens/leadsources/AllLeadSourcesPage';
+import AddLeadSourcePage from './screens/leadsources/AddLeadSourcePage';
+import LeadSourceDetailsPage from './screens/leadsources/LeadSourceDetailsPage';
+import LeadIntegrationsDashboard from './screens/leadsources/LeadIntegrationsDashboard';
+import LeadAutomationCenter from './screens/leadsources/LeadAutomationCenter';
+import ConnectMetaWizardPage from './screens/leadsources/ConnectMetaWizardPage';
+import ConnectGoogleAdsWizardPage from './screens/leadsources/ConnectGoogleAdsWizardPage';
+import ConnectWhatsAppWizardPage from './screens/leadsources/ConnectWhatsAppWizardPage';
+import AutomationSettingsPage from './screens/leadsources/AutomationSettingsPage';
+import LiveLeadActivityPage from './screens/leadsources/LiveLeadActivityPage';
+
 import AllBusinessesPage from './screens/businesses/AllBusinessesPage';
 import AddBusinessPage from './screens/businesses/AddBusinessPage';
 import BusinessLayoutWrapper from './screens/businesses/BusinessLayoutWrapper';
@@ -376,6 +387,31 @@ export default function AppRouter() {
               <Route path="/admin/categories/create" element={<AddCategoryPage />} />
               <Route path="/admin/categories/:categoryId" element={<CategoryDetailsPage />} />
               <Route path="/admin/categories/:categoryId/performance" element={<CategoryPerformancePage />} />
+            </Route>
+
+            {/* Lead Sources & Automation Routes (Screens 148 to 157) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[
+                    Role.SUPER_ADMIN,
+                    Role.ADMIN,
+                    Role.SALES_MANAGER,
+                    Role.TEAM_LEADER,
+                  ]}
+                />
+              }
+            >
+              <Route path="/admin/leads/sources" element={<AllLeadSourcesPage />} />
+              <Route path="/admin/leads/sources/create" element={<AddLeadSourcePage />} />
+              <Route path="/admin/leads/sources/:sourceId" element={<LeadSourceDetailsPage />} />
+              <Route path="/admin/leads/integrations" element={<LeadIntegrationsDashboard />} />
+              <Route path="/admin/leads/automation" element={<LeadAutomationCenter />} />
+              <Route path="/admin/leads/integrations/meta/connect" element={<ConnectMetaWizardPage />} />
+              <Route path="/admin/leads/integrations/google/connect" element={<ConnectGoogleAdsWizardPage />} />
+              <Route path="/admin/leads/integrations/whatsapp/connect" element={<ConnectWhatsAppWizardPage />} />
+              <Route path="/admin/leads/automation/settings" element={<AutomationSettingsPage />} />
+              <Route path="/admin/leads/automation/activity" element={<LiveLeadActivityPage />} />
             </Route>
 
             <Route
