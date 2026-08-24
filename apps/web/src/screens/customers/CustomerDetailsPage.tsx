@@ -26,9 +26,9 @@ export default function CustomerDetailsPage() {
   const customer = MOCK_CUSTOMERS.find((c) => c.id === customerId) || MOCK_CUSTOMERS[0];
 
   return (
-    <div className="space-y-6 pb-12 font-sans text-slate-800 text-left">
+    <div className="space-y-4 font-sans text-slate-800 text-left pb-12">
       {/* BREADCRUMBS & TOP BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <nav className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
             <span className="hover:text-slate-800 cursor-pointer" onClick={() => navigate('/admin/dashboard')}>Dashboard</span>
@@ -38,9 +38,9 @@ export default function CustomerDetailsPage() {
             <span className="text-[#0D1F3D] font-extrabold">{customer.name}</span>
           </nav>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-extrabold text-[#0D1F3D]">{customer.name}</h1>
+            <h1 className="text-2xl font-bold text-[#0D1F3D]">{customer.name}</h1>
             <span
-              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold ${
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
                 customer.status === 'Active'
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                   : 'bg-amber-50 text-amber-700 border border-amber-200'
@@ -56,7 +56,7 @@ export default function CustomerDetailsPage() {
             variant="outline"
             size="sm"
             onClick={() => navigate(`/admin/customers/${customer.id}/subscription`)}
-            className="bg-white border-slate-200 text-indigo-700 hover:bg-indigo-50 font-bold flex items-center gap-1.5 text-xs shadow-xs"
+            className="bg-white border-slate-200 text-indigo-700 hover:bg-indigo-50 font-semibold flex items-center gap-1.5 text-xs shadow-xs"
           >
             <CreditCard className="h-4 w-4" /> Subscription Details
           </Button>
@@ -64,7 +64,7 @@ export default function CustomerDetailsPage() {
             variant="accent"
             size="sm"
             onClick={() => navigate(`/admin/customers/${customer.id}/renewal`)}
-            className="bg-[#E20613] hover:bg-red-700 text-white font-extrabold flex items-center gap-1.5 text-xs shadow-md"
+            className="bg-[#E20613] hover:bg-red-700 text-white font-semibold flex items-center gap-1.5 text-xs shadow-xs"
           >
             <RefreshCw className="h-4 w-4" /> Renewal Status
           </Button>
@@ -72,7 +72,7 @@ export default function CustomerDetailsPage() {
       </div>
 
       {/* HEADER SUMMARY CARD */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-6">
+      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-slate-100">
           <div className="flex items-center gap-4">
             <img
@@ -113,16 +113,16 @@ export default function CustomerDetailsPage() {
         </div>
 
         {/* DETAILS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           {/* BUSINESS INFO CARD */}
-          <div className="p-5 bg-slate-50/60 rounded-xl border border-slate-200/80 space-y-3">
-            <h3 className="font-extrabold text-[#0D1F3D] text-sm flex items-center gap-2">
+          <div className="p-4 bg-slate-50/60 rounded-sm border border-slate-200 space-y-3">
+            <h3 className="font-bold text-[#0D1F3D] text-sm flex items-center gap-2">
               <Building className="h-4 w-4 text-[#E20613]" /> Connected Business Details
             </h3>
             <div className="space-y-2 font-medium text-slate-700">
               <div className="flex justify-between border-b border-slate-200/50 pb-1.5">
                 <span className="text-slate-500">Business Name:</span>
-                <span className="font-extrabold text-[#0D1F3D]">{customer.businessName}</span>
+                <span className="font-bold text-[#0D1F3D]">{customer.businessName}</span>
               </div>
               <div className="flex justify-between border-b border-slate-200/50 pb-1.5">
                 <span className="text-slate-500">Mobile Number:</span>
@@ -140,14 +140,14 @@ export default function CustomerDetailsPage() {
           </div>
 
           {/* FIELD SALES CONVERSION CARD */}
-          <div className="p-5 bg-slate-50/60 rounded-xl border border-slate-200/80 space-y-3">
-            <h3 className="font-extrabold text-[#0D1F3D] text-sm flex items-center gap-2">
+          <div className="p-4 bg-slate-50/60 rounded-sm border border-slate-200 space-y-3">
+            <h3 className="font-bold text-[#0D1F3D] text-sm flex items-center gap-2">
               <UserIcon className="h-4 w-4 text-emerald-600" /> Field Sales Conversion Summary
             </h3>
             <div className="space-y-2 font-medium text-slate-700">
               <div className="flex justify-between border-b border-slate-200/50 pb-1.5">
                 <span className="text-slate-500">Converted By Executive:</span>
-                <span className="font-extrabold text-[#0D1F3D]">{customer.convertedByName}</span>
+                <span className="font-bold text-[#0D1F3D]">{customer.convertedByName}</span>
               </div>
               <div className="flex justify-between border-b border-slate-200/50 pb-1.5">
                 <span className="text-slate-500">Executive Role / Zone:</span>

@@ -30,9 +30,9 @@ export default function RenewalStatusPage() {
   };
 
   return (
-    <div className="space-y-6 pb-12 font-sans text-slate-800 text-left">
+    <div className="space-y-4 font-sans text-slate-800 text-left pb-12">
       {/* BREADCRUMBS & TOP BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <nav className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
             <span className="hover:text-slate-800 cursor-pointer" onClick={() => navigate('/admin/dashboard')}>Dashboard</span>
@@ -43,8 +43,8 @@ export default function RenewalStatusPage() {
             <span>&gt;</span>
             <span className="text-[#0D1F3D] font-extrabold">Renewal Status</span>
           </nav>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Renewal Status & Schedule</h1>
-          <p className="text-xs font-medium text-slate-500 mt-0.5">
+          <h1 className="text-2xl font-bold text-[#0D1F3D]">Renewal Status & Schedule</h1>
+          <p className="text-xs font-normal text-slate-600 mt-0.5">
             Track renewal schedule, auto-renewal settings, and renewal history for this customer.
           </p>
         </div>
@@ -54,7 +54,7 @@ export default function RenewalStatusPage() {
             variant="outline"
             size="sm"
             onClick={handleSendReminder}
-            className="bg-white border-slate-200 text-indigo-700 hover:bg-indigo-50 font-bold flex items-center gap-1.5 text-xs shadow-xs"
+            className="bg-white border-slate-200 text-indigo-700 hover:bg-indigo-50 font-semibold flex items-center gap-1.5 text-xs shadow-xs"
           >
             <Send className="h-3.5 w-3.5" /> Send Renewal Reminder
           </Button>
@@ -65,7 +65,7 @@ export default function RenewalStatusPage() {
               setAutoRenew(!autoRenew);
               toast.success(`Auto-renewal ${!autoRenew ? 'enabled' : 'disabled'}!`);
             }}
-            className="bg-[#E20613] hover:bg-red-700 text-white font-extrabold flex items-center gap-1.5 text-xs shadow-md"
+            className="bg-[#E20613] hover:bg-red-700 text-white font-semibold flex items-center gap-1.5 text-xs shadow-xs"
           >
             <RefreshCw className="h-3.5 w-3.5" /> Update Auto-Renewal
           </Button>
@@ -73,7 +73,7 @@ export default function RenewalStatusPage() {
       </div>
 
       {/* HEADER CUSTOMER PROFILE SUMMARY */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <img
             src={
@@ -117,11 +117,11 @@ export default function RenewalStatusPage() {
       {/* RENEWAL KPI CARDS GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         {/* CARD 1 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
-          <span className="text-xs font-bold text-slate-500 block">Next Renewal Date</span>
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-2">
+          <span className="text-xs font-semibold text-slate-500 block">Next Renewal Date</span>
           <div className="flex items-baseline justify-between">
-            <span className="text-lg font-mono font-extrabold text-[#0D1F3D]">{customer.nextRenewalDate}</span>
-            <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+            <span className="text-lg font-mono font-bold text-[#0D1F3D]">{customer.nextRenewalDate}</span>
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
               31 Days Left
             </span>
           </div>
@@ -129,11 +129,11 @@ export default function RenewalStatusPage() {
         </div>
 
         {/* CARD 2 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
-          <span className="text-xs font-bold text-slate-500 block">Renewal Status</span>
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-2">
+          <span className="text-xs font-semibold text-slate-500 block">Renewal Status</span>
           <div className="flex items-baseline justify-between">
-            <span className="text-lg font-extrabold text-emerald-600">Scheduled</span>
-            <span className="text-xs font-extrabold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+            <span className="text-lg font-bold text-emerald-600">Scheduled</span>
+            <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
               Upcoming
             </span>
           </div>
@@ -141,21 +141,21 @@ export default function RenewalStatusPage() {
         </div>
 
         {/* CARD 3 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
-          <span className="text-xs font-bold text-slate-500 block">Billing Cycle</span>
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-2">
+          <span className="text-xs font-semibold text-slate-500 block">Billing Cycle</span>
           <div className="flex items-baseline justify-between">
-            <span className="text-lg font-extrabold text-[#0D1F3D]">Monthly</span>
+            <span className="text-lg font-bold text-[#0D1F3D]">Monthly</span>
             <span className="text-xs font-bold text-slate-600">31 Days</span>
           </div>
           <span className="text-[11px] font-medium text-slate-500 block">Cycle Start: 22 May 2025</span>
         </div>
 
         {/* CARD 4 */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs space-y-2">
-          <span className="text-xs font-bold text-slate-500 block">Renewal Risk Assessment</span>
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-2">
+          <span className="text-xs font-semibold text-slate-500 block">Renewal Risk Assessment</span>
           <div className="flex items-baseline justify-between">
-            <span className="text-lg font-extrabold text-emerald-600">Low Risk</span>
-            <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+            <span className="text-lg font-bold text-emerald-600">Low Risk</span>
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
               Score: 15 / 100
             </span>
           </div>
@@ -164,9 +164,9 @@ export default function RenewalStatusPage() {
       </div>
 
       {/* TIMELINE & RENEWAL HISTORY GRID */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* RENEWAL TIMELINE */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
           <h3 className="text-sm font-extrabold text-[#0D1F3D]">Renewal Timeline</h3>
           <div className="space-y-4 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 text-xs font-medium">
             <div className="flex items-start gap-4 relative z-10">

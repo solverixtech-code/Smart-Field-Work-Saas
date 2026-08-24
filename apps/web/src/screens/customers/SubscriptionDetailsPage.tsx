@@ -26,9 +26,9 @@ export default function SubscriptionDetailsPage() {
   const customer = MOCK_CUSTOMERS.find((c) => c.id === customerId) || MOCK_CUSTOMERS[0];
 
   return (
-    <div className="space-y-6 pb-12 font-sans text-slate-800 text-left">
+    <div className="space-y-4 font-sans text-slate-800 text-left pb-12">
       {/* BREADCRUMBS & TOP BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <nav className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
             <span className="hover:text-slate-800 cursor-pointer" onClick={() => navigate('/admin/dashboard')}>Dashboard</span>
@@ -39,8 +39,8 @@ export default function SubscriptionDetailsPage() {
             <span>&gt;</span>
             <span className="text-[#0D1F3D] font-extrabold">Subscription Details</span>
           </nav>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Subscription Details</h1>
-          <p className="text-xs font-medium text-slate-500 mt-0.5">
+          <h1 className="text-2xl font-bold text-[#0D1F3D]">Subscription Details</h1>
+          <p className="text-xs font-normal text-slate-600 mt-0.5">
             View and manage customer subscription information.
           </p>
         </div>
@@ -50,7 +50,7 @@ export default function SubscriptionDetailsPage() {
             variant="outline"
             size="sm"
             onClick={() => navigate(`/admin/customers/${customer.id}/renewal`)}
-            className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 font-bold flex items-center gap-1.5 text-xs shadow-xs"
+            className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold flex items-center gap-1.5 text-xs shadow-xs"
           >
             Manage Auto-Renewal
           </Button>
@@ -58,7 +58,7 @@ export default function SubscriptionDetailsPage() {
             variant="accent"
             size="sm"
             onClick={() => alert('Change Plan Modal triggered')}
-            className="bg-[#E20613] hover:bg-red-700 text-white font-extrabold flex items-center gap-1.5 text-xs shadow-md"
+            className="bg-[#E20613] hover:bg-red-700 text-white font-semibold flex items-center gap-1.5 text-xs shadow-xs"
           >
             Change Plan
           </Button>
@@ -66,7 +66,7 @@ export default function SubscriptionDetailsPage() {
       </div>
 
       {/* HEADER CUSTOMER BANNER CARD */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <img
             src={
@@ -123,25 +123,25 @@ export default function SubscriptionDetailsPage() {
 
       {/* TAB CONTENT: OVERVIEW */}
       {activeTab === 'Overview' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* GRID ROW 1: CURRENT PLAN, STATUS, & USAGE */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* CARD 1: CURRENT PLAN */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+            <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider">Current Plan</span>
+                <span className="text-xs font-bold text-[#0D1F3D] uppercase tracking-wider">Current Plan</span>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-extrabold">
                   Active
                 </span>
               </div>
               <div className="space-y-1">
-                <h3 className="text-xl font-extrabold text-[#0D1F3D]">{customer.planName}</h3>
+                <h3 className="text-xl font-bold text-[#0D1F3D]">{customer.planName}</h3>
                 <p className="text-xs font-medium text-slate-500">Ideal for growing field sales teams</p>
               </div>
               <div className="pt-2 border-t border-slate-100 grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <span className="text-slate-500 block text-[11px]">Price</span>
-                  <span className="font-mono font-extrabold text-[#0D1F3D] text-sm">₹{customer.mrr.toLocaleString('en-IN')} / mo</span>
+                  <span className="font-mono font-bold text-[#0D1F3D] text-sm">₹{customer.mrr.toLocaleString('en-IN')} / mo</span>
                 </div>
                 <div>
                   <span className="text-slate-500 block text-[11px]">Next Renewal</span>
@@ -151,12 +151,12 @@ export default function SubscriptionDetailsPage() {
             </div>
 
             {/* CARD 2: SUBSCRIPTION STATUS */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-              <span className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider block">Subscription Status</span>
+            <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+              <span className="text-xs font-bold text-[#0D1F3D] uppercase tracking-wider block">Subscription Status</span>
               <div className="space-y-2.5 text-xs font-medium text-slate-700">
                 <div className="flex justify-between border-b border-slate-100 pb-2">
                   <span className="text-slate-500">Status:</span>
-                  <span className="font-extrabold text-emerald-600">Active</span>
+                  <span className="font-bold text-emerald-600">Active</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-100 pb-2">
                   <span className="text-slate-500">Renewal Type:</span>
@@ -170,8 +170,8 @@ export default function SubscriptionDetailsPage() {
             </div>
 
             {/* CARD 3: USAGE SUMMARY */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-              <span className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider block">Usage Summary</span>
+            <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+              <span className="text-xs font-bold text-[#0D1F3D] uppercase tracking-wider block">Usage Summary</span>
               <div className="space-y-3 text-xs font-medium text-slate-700">
                 <div>
                   <div className="flex justify-between text-xs font-bold text-slate-700 mb-1">
