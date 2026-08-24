@@ -241,125 +241,114 @@ export function CategoryPerformancePage() {
         })}
       </div>
 
-      {/* TOP ROW CHARTS & FUNNEL (3 WIDGETS) */}
+      {/* TOP ROW CHARTS & FUNNEL (2 ROW LAYOUT FOR PROPER SPACING & VISIBILITY) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {/* Sales Trend (₹) Line Chart (4 Cols) */}
-        <div className="lg:col-span-4 rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D]">Sales Trend (₹)</h3>
-            <select className="rounded-sm border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-[#0D1F3D]">
+        {/* Sales Trend (₹) Line Chart (7 Cols) */}
+        <div className="lg:col-span-7 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Sales Trend (₹)</h3>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">Revenue growth comparison vs previous period</p>
+            </div>
+            <select className="rounded-sm border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-[#0D1F3D] shadow-2xs">
               <option value="Daily">Daily</option>
               <option value="Weekly">Weekly</option>
             </select>
           </div>
 
-          <div className="h-44 w-full pt-1">
+          <div className="h-64 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={salesDailyData}>
-                <XAxis dataKey="day" stroke="#94A3B8" fontSize={9} tickLine={false} />
-                <YAxis stroke="#94A3B8" fontSize={9} tickLine={false} />
+              <LineChart data={salesDailyData} margin={{ top: 10, right: 20, left: 25, bottom: 5 }}>
+                <XAxis dataKey="day" stroke="#64748B" fontSize={11} tickLine={false} dy={5} />
+                <YAxis
+                  stroke="#64748B"
+                  fontSize={10}
+                  tickLine={false}
+                  tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
+                />
                 <Tooltip
+                  formatter={(value: any) => [`₹ ${Number(value).toLocaleString('en-IN')}`, 'Sales']}
                   contentStyle={{
                     backgroundColor: '#0D1F3D',
-                    borderRadius: '4px',
+                    borderRadius: '6px',
                     color: '#FFF',
-                    fontSize: '10px',
+                    fontSize: '11px',
                     fontWeight: 'bold',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                   }}
                 />
-                <Line type="monotone" dataKey="current" name="This Period" stroke="#8B5CF6" strokeWidth={2} dot={{ r: 2 }} />
-                <Line type="monotone" dataKey="previous" name="Last Period" stroke="#CBD5E1" strokeWidth={1.5} strokeDasharray="3 3" dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="current"
+                  name="This Period"
+                  stroke="#8B5CF6"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: '#8B5CF6', strokeWidth: 2, stroke: '#FFF' }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="previous"
+                  name="Last Period"
+                  stroke="#CBD5E1"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                  dot={false}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="flex items-center justify-center gap-4 text-[10px] font-bold border-t border-slate-100 pt-2">
-            <span className="flex items-center gap-1 text-[#0D1F3D]">
-              <span className="h-2 w-2 rounded-full bg-purple-600" /> This Period
+          <div className="flex items-center justify-center gap-6 text-xs font-bold border-t border-slate-100 pt-3">
+            <span className="flex items-center gap-2 text-[#0D1F3D]">
+              <span className="h-3 w-3 rounded-full bg-purple-600 shadow-xs" /> This Period (₹4.26L)
             </span>
-            <span className="flex items-center gap-1 text-slate-400">
-              <span className="h-2 w-2 rounded-full bg-slate-300" /> Last Period
-            </span>
-          </div>
-        </div>
-
-        {/* Leads vs Conversions Bar Chart (4 Cols) */}
-        <div className="lg:col-span-4 rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <h3 className="text-xs font-extrabold text-[#0D1F3D]">Leads vs Conversions</h3>
-            <select className="rounded-sm border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-bold text-[#0D1F3D]">
-              <option value="Daily">Daily</option>
-              <option value="Weekly">Weekly</option>
-            </select>
-          </div>
-
-          <div className="h-44 w-full pt-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={leadsVsConversionsData}>
-                <XAxis dataKey="day" stroke="#94A3B8" fontSize={9} tickLine={false} />
-                <YAxis stroke="#94A3B8" fontSize={9} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0D1F3D',
-                    borderRadius: '4px',
-                    color: '#FFF',
-                    fontSize: '10px',
-                    fontWeight: 'bold',
-                  }}
-                />
-                <Bar dataKey="leads" name="Leads" fill="#2563EB" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="conversions" name="Conversions" fill="#10B981" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <div className="flex items-center justify-center gap-4 text-[10px] font-bold border-t border-slate-100 pt-2">
-            <span className="flex items-center gap-1 text-blue-700">
-              <span className="h-2 w-2 rounded-full bg-blue-600" /> Leads
-            </span>
-            <span className="flex items-center gap-1 text-emerald-700">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" /> Conversions
+            <span className="flex items-center gap-2 text-slate-500">
+              <span className="h-3 w-3 rounded-full bg-slate-300" /> Last Period (₹3.60L)
             </span>
           </div>
         </div>
 
-        {/* Conversion Funnel Diagram Card (4 Cols) */}
-        <div className="lg:col-span-4 rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold flex flex-col justify-between">
+        {/* Conversion Funnel Diagram Card (5 Cols) */}
+        <div className="lg:col-span-5 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold flex flex-col justify-between">
           <div>
-            <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
-              Conversion Funnel
-            </h3>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Conversion Funnel</h3>
+              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                9.2% Overall CR
+              </span>
+            </div>
 
-            <div className="space-y-2 pt-2">
-              <div className="bg-indigo-600 text-white p-2 rounded-sm flex items-center justify-between shadow-xs">
+            <div className="space-y-2.5 pt-3">
+              <div className="bg-indigo-600 text-white p-2.5 rounded-sm flex items-center justify-between shadow-xs">
                 <span className="font-extrabold text-xs">Total Leads</span>
                 <span className="font-mono text-xs font-black">12,458</span>
               </div>
 
-              <div className="bg-blue-600 text-white p-2 rounded-sm flex items-center justify-between mx-3 shadow-xs">
+              <div className="bg-blue-600 text-white p-2.5 rounded-sm flex items-center justify-between mx-2 shadow-xs">
                 <span className="font-extrabold text-xs">Contacted Leads</span>
                 <span className="font-mono text-xs font-black">8,246 (66.2%)</span>
               </div>
 
-              <div className="bg-emerald-600 text-white p-2 rounded-sm flex items-center justify-between mx-6 shadow-xs">
+              <div className="bg-emerald-600 text-white p-2.5 rounded-sm flex items-center justify-between mx-4 shadow-xs">
                 <span className="font-extrabold text-xs">Interested Leads</span>
                 <span className="font-mono text-xs font-black">4,752 (38.1%)</span>
               </div>
 
-              <div className="bg-amber-500 text-white p-2 rounded-sm flex items-center justify-between mx-9 shadow-xs">
+              <div className="bg-amber-500 text-white p-2.5 rounded-sm flex items-center justify-between mx-6 shadow-xs">
                 <span className="font-extrabold text-xs">Demos Conducted</span>
                 <span className="font-mono text-xs font-black">2,158 (17.3%)</span>
               </div>
 
-              <div className="bg-rose-600 text-white p-2 rounded-sm flex items-center justify-between mx-12 shadow-xs">
+              <div className="bg-rose-600 text-white p-2.5 rounded-sm flex items-center justify-between mx-8 shadow-xs">
                 <span className="font-extrabold text-xs">Converted</span>
                 <span className="font-mono text-xs font-black">1,148 (9.2%)</span>
               </div>
             </div>
           </div>
 
-          <div className="pt-2 border-t border-slate-100 flex justify-between items-center bg-slate-50 p-2 rounded-sm">
-            <span className="text-slate-600 font-bold text-xs">Overall Conversion Rate</span>
+          <div className="pt-3 border-t border-slate-100 flex justify-between items-center bg-slate-50 p-2.5 rounded-sm">
+            <span className="text-slate-600 font-bold text-xs">Category Conversion Benchmark</span>
             <span className="text-sm font-extrabold text-emerald-600">9.2%</span>
           </div>
         </div>

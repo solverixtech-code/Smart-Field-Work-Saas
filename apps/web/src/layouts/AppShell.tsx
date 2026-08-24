@@ -304,17 +304,6 @@ const navCategories: NavCategory[] = [
         to: "/admin/categories/create",
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
       },
-      {
-        label: "Category Performance",
-        icon: Tag,
-        to: "/admin/performance/categories",
-        allowed: [
-          Role.SUPER_ADMIN,
-          Role.ADMIN,
-          Role.SALES_MANAGER,
-          Role.TEAM_LEADER,
-        ],
-      },
     ],
   },
   {
