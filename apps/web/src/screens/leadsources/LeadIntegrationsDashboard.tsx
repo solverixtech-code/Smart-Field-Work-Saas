@@ -8,7 +8,6 @@ import {
   MessageSquare,
   CheckCircle2,
   AlertCircle,
-  MoreHorizontal,
   Plus,
   RefreshCw,
   TrendingUp,
@@ -16,17 +15,18 @@ import {
   DollarSign,
   HeartPulse,
   Settings,
-  Shield,
+  ExternalLink,
   Layers,
   FileText,
   Plug,
-  Lock,
+  Trash2,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
 
 export default function LeadIntegrationsDashboard() {
   const navigate = useNavigate();
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   // Connection State Controls (Allows user to test connected vs disconnected state)
   const [connectionStatus, setConnectionStatus] = useState<{
@@ -71,7 +71,7 @@ export default function LeadIntegrationsDashboard() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Quick Toggle Controls to preview Connected vs Disconnected Fallback */}
+            {/* Connection Preview State Toggles */}
             <div className="flex items-center gap-1 bg-white p-1 rounded-sm border border-slate-200 shadow-xs text-xs font-bold">
               <button
                 onClick={() => setConnectionStatus({ meta: true, google: true, whatsapp: true })}
@@ -102,7 +102,7 @@ export default function LeadIntegrationsDashboard() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info(`Integration Health Check Status: ${totalConnected} of 3 Platforms Active`)}
+              onClick={() => toast.info(`Integration Health Status: ${totalConnected} of 3 Platforms Operational`)}
               className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
             >
               <HeartPulse className="h-4 w-4 text-purple-600" /> Integration Health
@@ -120,7 +120,7 @@ export default function LeadIntegrationsDashboard() {
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Total Integrations</span>
             <span className="text-xl font-extrabold text-[#0D1F3D]">3</span>
-            <span className="text-xs font-medium text-slate-400 block">Supported platforms</span>
+            <span className="text-xs font-medium text-slate-400 block">All connected platforms</span>
           </div>
         </div>
 
@@ -132,7 +132,7 @@ export default function LeadIntegrationsDashboard() {
             <span className="text-xs font-semibold text-slate-500 block">Active Integrations</span>
             <span className="text-xl font-extrabold text-emerald-600">{totalConnected}</span>
             <span className="text-xs font-semibold text-emerald-600 block">
-              {totalConnected === 3 ? '100% connected' : `${Math.round((totalConnected / 3) * 100)}% connected`}
+              {totalConnected === 3 ? '100% of total' : `${Math.round((totalConnected / 3) * 100)}% of total`}
             </span>
           </div>
         </div>
@@ -162,7 +162,7 @@ export default function LeadIntegrationsDashboard() {
               {totalConnected === 0 ? '0' : totalConnected === 1 ? '4,412' : '11,236'}
             </span>
             <span className="text-xs font-semibold text-emerald-600 block">
-              {totalConnected === 0 ? 'No active assignment' : '↑ 16.7% vs last 30 days'}
+              {totalConnected === 0 ? 'No assignment' : '↑ 16.7% vs last 30 days'}
             </span>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function LeadIntegrationsDashboard() {
             <div>
               <span className="font-extrabold text-amber-950 block text-sm">No Lead Platforms Connected</span>
               <span className="text-amber-800 font-medium">
-                Connect your Meta Ads, Google Ads, or WhatsApp Business account below to automatically ingest leads into SFW CRM.
+                Connect Meta Ads, Google Ads, or WhatsApp Business account below to automatically ingest leads into SFW CRM.
               </span>
             </div>
           </div>
@@ -221,497 +221,620 @@ export default function LeadIntegrationsDashboard() {
         </div>
       )}
 
-      {/* CONNECTED PLATFORM CARDS LIST WITH FALLBACK UNCONNECTED STATES */}
+      {/* PLATFORM CARDS LIST (EXACT REFERENCE 4-COLUMN GRID MATCH) */}
       <div className="space-y-4">
-        {/* Platform 1: Meta Lead Ads */}
-        <div className="rounded-md border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-3">
-              <div
-                className={`h-12 w-12 rounded-md flex items-center justify-center shrink-0 border ${
-                  connectionStatus.meta
-                    ? 'bg-blue-50 border-blue-200 text-blue-600'
-                    : 'bg-slate-100 border-slate-200 text-slate-400'
-                }`}
-              >
-                <Facebook className="h-7 w-7" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-extrabold text-[#0D1F3D]">Meta Lead Ads</h3>
-                  {connectionStatus.meta ? (
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                      Connected
-                    </span>
-                  ) : (
-                    <span className="bg-slate-100 text-slate-600 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-slate-200">
-                      Not Connected
-                    </span>
-                  )}
+        {/* PLATFORM 1: META LEAD ADS */}
+        <div className="rounded-md border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-slate-300">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+            {/* Col 1: Platform Header & Credentials (3 Cols) */}
+            <div className="lg:col-span-3 flex flex-col justify-between space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="h-14 w-14 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 shadow-xs">
+                  <Facebook className="h-8 w-8" />
                 </div>
-                <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                  Facebook & Instagram Lead Ads
-                </p>
-                {connectionStatus.meta ? (
-                  <div className="flex items-center gap-3 text-[11px] text-slate-600 font-medium mt-1">
-                    <span>Connected Account: <strong className="text-[#0D1F3D]">Aimbeat Business</strong></span>
-                    <span>•</span>
-                    <span>FB Page: <strong className="text-indigo-600">Aimbeat</strong></span>
-                    <span>•</span>
-                    <span>Last Sync: <strong>1 min ago</strong> <span className="text-emerald-600 font-bold">(Auto sync: Real-time)</span></span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-[#0D1F3D]">Meta Lead Ads</h3>
+                    {connectionStatus.meta ? (
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        Connected
+                      </span>
+                    ) : (
+                      <span className="bg-slate-100 text-slate-600 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-slate-200">
+                        Not Connected
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <div className="text-[11px] text-slate-400 font-medium mt-1">
-                    No Meta account connected • Real-time lead capture inactive
-                  </div>
-                )}
+                  <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                    Facebook & Instagram Lead Ads
+                  </p>
+                </div>
               </div>
+
+              {connectionStatus.meta ? (
+                <div className="space-y-1.5 text-xs pt-2 border-t border-slate-100">
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span className="text-slate-400 text-[11px]">Connected Account</span>
+                    <span className="font-extrabold text-[#0D1F3D]">Aimbeat Business</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span className="text-slate-400 text-[11px]">FB Page</span>
+                    <span className="font-extrabold text-indigo-600 flex items-center gap-1 cursor-pointer hover:underline">
+                      Aimbeat <ExternalLink className="h-3 w-3" />
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600 pt-0.5">
+                    <span className="text-slate-400 text-[11px]">Last Sync</span>
+                    <div className="text-right">
+                      <span className="font-bold text-[#0D1F3D] block text-[11px]">1 min ago</span>
+                      <span className="text-[10px] text-emerald-600 font-extrabold">Auto sync: Real-time</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50 p-3 rounded-sm border border-dashed border-slate-200 text-[11px] text-slate-500 font-medium">
+                  No Meta Business account connected. Connect account to enable instant lead sync.
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Col 2: Metrics Inner Box (3 Cols) */}
+            <div className="lg:col-span-3">
+              {connectionStatus.meta ? (
+                <div className="bg-slate-50/70 p-4 rounded-md border border-slate-200/90 h-full flex flex-col justify-between">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-semibold text-slate-500">Leads (Last 30 Days)</span>
+                    <span className="text-emerald-600 font-extrabold text-xs">↑ 18.6%</span>
+                  </div>
+                  <span className="text-3xl font-black text-[#0D1F3D] my-1">5,842</span>
+                  <div className="grid grid-cols-4 gap-1 text-[10px] pt-2 border-t border-slate-200/80 text-center">
+                    <div>
+                      <span className="text-slate-400 block font-medium">New Leads</span>
+                      <span className="font-extrabold text-[#0D1F3D]">4,856</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-medium">Assigned</span>
+                      <span className="font-extrabold text-[#0D1F3D]">4,412</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-medium">Converted</span>
+                      <span className="font-extrabold text-[#0D1F3D]">1,156</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-medium">Conversion Rate</span>
+                      <span className="font-extrabold text-emerald-600">19.9%</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50/70 p-4 rounded-md border border-slate-200/90 h-full flex flex-col items-center justify-center text-center">
+                  <span className="text-xs font-semibold text-slate-400 block">Leads (Last 30 Days)</span>
+                  <span className="text-2xl font-bold text-slate-300 my-1">—</span>
+                  <span className="text-[10px] text-slate-400">Connect platform to view metrics</span>
+                </div>
+              )}
+            </div>
+
+            {/* Col 3: Top Campaign & Form Info (3 Cols) */}
+            <div className="lg:col-span-3 flex flex-col justify-center space-y-2 text-xs bg-slate-50/50 p-4 rounded-md border border-slate-200/60">
               {connectionStatus.meta ? (
                 <>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-semibold block uppercase tracking-wider">Top Campaign</span>
+                    <span className="font-extrabold text-[#0D1F3D] block text-xs">Summer Offer 2025</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-semibold block uppercase tracking-wider">Top Ad Set</span>
+                    <span className="font-bold text-slate-700 block text-xs">Offer - Mumbai - 18+</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-semibold block uppercase tracking-wider">Lead Form</span>
+                    <span className="font-bold text-indigo-700 block text-xs">Lead Form 01</span>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center text-slate-400 font-medium text-xs">
+                  No campaign data available until connected.
+                </div>
+              )}
+            </div>
+
+            {/* Col 4: Webhook Active & Action Menu (3 Cols) */}
+            <div className="lg:col-span-3 flex flex-col justify-between bg-slate-50/50 p-4 rounded-md border border-slate-200/60 relative">
+              <div className="flex items-start justify-between">
+                <div>
+                  {connectionStatus.meta ? (
+                    <>
+                      <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold text-xs">
+                        <CheckCircle2 className="h-4 w-4 shrink-0" /> Webhook Active
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        Receiving leads in real-time via Meta Webhooks API
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-1.5 text-slate-400 font-extrabold text-xs">
+                        <Plug className="h-4 w-4 shrink-0" /> Webhook Inactive
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                        No webhook registered
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                {/* 3-Dots RowActionsMenu Popover */}
+                <RowActionsMenu
+                  items={[
+                    {
+                      label: connectionStatus.meta ? 'Re-sync Account' : 'Connect Account',
+                      icon: RotateCcw,
+                      onClick: () => navigate('/admin/leads/integrations/meta/connect'),
+                    },
+                    {
+                      label: 'View Webhook Logs',
+                      icon: FileText,
+                      onClick: () => navigate('/admin/leads/automation/activity'),
+                    },
+                    {
+                      label: connectionStatus.meta ? 'Disconnect Account' : 'Remove Integration',
+                      icon: Trash2,
+                      danger: true,
+                      divider: true,
+                      onClick: () => {
+                        setConnectionStatus({ ...connectionStatus, meta: !connectionStatus.meta });
+                        toast.info(connectionStatus.meta ? 'Meta account disconnected' : 'Meta account connected');
+                      },
+                    },
+                  ]}
+                />
+              </div>
+
+              {connectionStatus.meta ? (
+                <div className="space-y-3 pt-3 border-t border-slate-200/80">
+                  <div className="flex justify-between items-center text-xs">
+                    <div>
+                      <span className="text-slate-400 text-[10px] block">Health Status</span>
+                      <span className="font-extrabold text-emerald-700">Healthy</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-slate-400 text-[10px] block">Error Rate</span>
+                      <span className="font-extrabold text-slate-800">0%</span>
+                    </div>
+                  </div>
+
                   <Button
                     variant="outline"
                     size="sm"
+                    fullWidth
                     onClick={() => navigate('/admin/leads/integrations/meta/connect')}
-                    className="bg-white text-indigo-700 border-indigo-200 font-bold hover:bg-indigo-50 shadow-xs flex items-center gap-1.5"
+                    className="bg-white text-indigo-700 border-indigo-200 font-extrabold hover:bg-indigo-50 shadow-xs flex items-center justify-center gap-1.5 text-xs"
                   >
                     <Settings className="h-3.5 w-3.5" /> Manage Integration
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setConnectionStatus({ ...connectionStatus, meta: false });
-                      toast.info('Meta integration disconnected (simulated)');
-                    }}
-                    className="bg-white text-rose-700 border-slate-200 hover:bg-rose-50 text-xs font-bold"
-                  >
-                    Disconnect
-                  </Button>
-                </>
+                </div>
               ) : (
                 <Button
                   variant="accent"
                   size="sm"
+                  fullWidth
                   onClick={() => navigate('/admin/leads/integrations/meta/connect')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold flex items-center gap-1.5 shadow-xs"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold shadow-xs flex items-center justify-center gap-1.5 text-xs mt-4"
                 >
-                  <Plus className="h-4 w-4" /> Connect Meta Ads
+                  <Plus className="h-4 w-4" /> Connect Meta Lead Ads
                 </Button>
               )}
             </div>
           </div>
-
-          {/* Connected vs Unconnected Card Body */}
-          {connectionStatus.meta ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-semibold">
-              <div className="bg-slate-50/70 p-3.5 rounded-sm border border-slate-200 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500 font-medium">Leads (Last 30 Days)</span>
-                  <span className="text-emerald-600 font-bold">↑ 18.6%</span>
-                </div>
-                <span className="text-2xl font-black text-[#0D1F3D] block">5,842</span>
-                <div className="grid grid-cols-4 gap-1 text-[10px] pt-1 text-center border-t border-slate-200/80">
-                  <div>
-                    <span className="text-slate-400 block font-medium">New</span>
-                    <span className="font-bold text-[#0D1F3D]">4,856</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">Assigned</span>
-                    <span className="font-bold text-[#0D1F3D]">4,412</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">Converted</span>
-                    <span className="font-bold text-[#0D1F3D]">1,156</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">CR %</span>
-                    <span className="font-bold text-emerald-600">19.9%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-slate-50/70 p-3.5 rounded-sm border border-slate-200 space-y-2">
-                <span className="text-slate-500 font-medium block">Top Campaign</span>
-                <span className="font-extrabold text-[#0D1F3D] block">Summer Offer 2025</span>
-                <span className="text-slate-500 font-medium block pt-1">Top Ad Set</span>
-                <span className="font-bold text-slate-700 block">Offer - Mumbai - 18+</span>
-                <span className="text-slate-500 font-medium block pt-1">Lead Form</span>
-                <span className="font-bold text-indigo-700 block">Lead Form 01</span>
-              </div>
-
-              <div className="bg-slate-50/70 p-3.5 rounded-sm border border-slate-200 space-y-2 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-emerald-700 font-extrabold">
-                    <CheckCircle2 className="h-4 w-4" /> Webhook Active
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    Receiving leads in real-time via Meta Webhooks API
-                  </p>
-                </div>
-
-                <div className="flex justify-between items-center pt-2 border-t border-slate-200 text-xs">
-                  <div>
-                    <span className="text-slate-400 text-[10px] block">Health Status</span>
-                    <span className="font-bold text-emerald-700">Healthy</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-slate-400 text-[10px] block">Error Rate</span>
-                    <span className="font-bold text-slate-800">0%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* Fallback Unconnected Card State */
-            <div className="bg-slate-50 p-6 rounded-sm border border-dashed border-slate-300 flex flex-col items-center justify-center text-center space-y-3">
-              <div className="h-12 w-12 rounded-full bg-slate-200/80 text-slate-500 flex items-center justify-center">
-                <Plug className="h-6 w-6" />
-              </div>
-              <div className="max-w-md">
-                <h4 className="font-extrabold text-[#0D1F3D] text-sm">Meta Lead Ads is not connected</h4>
-                <p className="text-xs font-semibold text-slate-500 mt-1">
-                  Connect your Meta Business Manager to capture leads from Facebook & Instagram lead forms directly into SFW CRM in real-time.
-                </p>
-              </div>
-              <Button
-                variant="accent"
-                size="sm"
-                onClick={() => navigate('/admin/leads/integrations/meta/connect')}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold"
-              >
-                Connect Meta Account →
-              </Button>
-            </div>
-          )}
         </div>
 
-        {/* Platform 2: Google Ads */}
-        <div className="rounded-md border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-3">
-              <div
-                className={`h-12 w-12 rounded-md flex items-center justify-center shrink-0 border ${
-                  connectionStatus.google
-                    ? 'bg-amber-50 border-amber-200 text-amber-500'
-                    : 'bg-slate-100 border-slate-200 text-slate-400'
-                }`}
-              >
-                <Search className="h-7 w-7" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-extrabold text-[#0D1F3D]">Google Ads</h3>
-                  {connectionStatus.google ? (
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                      Connected
-                    </span>
-                  ) : (
-                    <span className="bg-slate-100 text-slate-600 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-slate-200">
-                      Not Connected
-                    </span>
-                  )}
+        {/* PLATFORM 2: GOOGLE ADS */}
+        <div className="rounded-md border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-slate-300">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+            {/* Col 1: Platform Header & Credentials (3 Cols) */}
+            <div className="lg:col-span-3 flex flex-col justify-between space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="h-14 w-14 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-500 shrink-0 shadow-xs">
+                  <Search className="h-8 w-8" />
                 </div>
-                <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                  Google Ads Lead Forms & Search Extensions
-                </p>
-                {connectionStatus.google ? (
-                  <div className="flex items-center gap-3 text-[11px] text-slate-600 font-medium mt-1">
-                    <span>Connected Account: <strong className="text-[#0D1F3D]">aimbeatads@gmail.com</strong></span>
-                    <span>•</span>
-                    <span>Customer ID: <strong className="font-mono text-slate-800">123-456-7890</strong></span>
-                    <span>•</span>
-                    <span>Last Sync: <strong>2 min ago</strong> <span className="text-emerald-600 font-bold">(Auto sync: Every 5 min)</span></span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-[#0D1F3D]">Google Ads</h3>
+                    {connectionStatus.google ? (
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        Connected
+                      </span>
+                    ) : (
+                      <span className="bg-slate-100 text-slate-600 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-slate-200">
+                        Not Connected
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <div className="text-[11px] text-slate-400 font-medium mt-1">
-                    No Google Ads account connected • Lead sync inactive
-                  </div>
-                )}
+                  <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                    Google Ads Lead Forms
+                  </p>
+                </div>
               </div>
+
+              {connectionStatus.google ? (
+                <div className="space-y-1.5 text-xs pt-2 border-t border-slate-100">
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span className="text-slate-400 text-[11px]">Connected Account</span>
+                    <span className="font-extrabold text-[#0D1F3D] truncate max-w-[130px]" title="aimbeatads@gmail.com">
+                      aimbeatads@gmail.com
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span className="text-slate-400 text-[11px]">Customer ID</span>
+                    <span className="font-mono font-bold text-slate-800 text-[11px]">123-456-7890</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600 pt-0.5">
+                    <span className="text-slate-400 text-[11px]">Last Sync</span>
+                    <div className="text-right">
+                      <span className="font-bold text-[#0D1F3D] block text-[11px]">2 min ago</span>
+                      <span className="text-[10px] text-emerald-600 font-extrabold">Auto sync: Every 5 min</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50 p-3 rounded-sm border border-dashed border-slate-200 text-[11px] text-slate-500 font-medium">
+                  No Google Ads account connected. Connect account to enable lead form sync.
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Col 2: Metrics Inner Box (3 Cols) */}
+            <div className="lg:col-span-3">
+              {connectionStatus.google ? (
+                <div className="bg-slate-50/70 p-4 rounded-md border border-slate-200/90 h-full flex flex-col justify-between">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-semibold text-slate-500">Leads (Last 30 Days)</span>
+                    <span className="text-emerald-600 font-extrabold text-xs">↑ 16.2%</span>
+                  </div>
+                  <span className="text-3xl font-black text-[#0D1F3D] my-1">4,126</span>
+                  <div className="grid grid-cols-4 gap-1 text-[10px] pt-2 border-t border-slate-200/80 text-center">
+                    <div>
+                      <span className="text-slate-400 block font-medium">New Leads</span>
+                      <span className="font-extrabold text-[#0D1F3D]">3,354</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-medium">Assigned</span>
+                      <span className="font-extrabold text-[#0D1F3D]">3,078</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-medium">Converted</span>
+                      <span className="font-extrabold text-[#0D1F3D]">786</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-medium">Conversion Rate</span>
+                      <span className="font-extrabold text-emerald-600">19.1%</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50/70 p-4 rounded-md border border-slate-200/90 h-full flex flex-col items-center justify-center text-center">
+                  <span className="text-xs font-semibold text-slate-400 block">Leads (Last 30 Days)</span>
+                  <span className="text-2xl font-bold text-slate-300 my-1">—</span>
+                  <span className="text-[10px] text-slate-400">Connect platform to view metrics</span>
+                </div>
+              )}
+            </div>
+
+            {/* Col 3: Top Campaign & Form Info (3 Cols) */}
+            <div className="lg:col-span-3 flex flex-col justify-center space-y-2 text-xs bg-slate-50/50 p-4 rounded-md border border-slate-200/60">
               {connectionStatus.google ? (
                 <>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-semibold block uppercase tracking-wider">Top Campaign</span>
+                    <span className="font-extrabold text-[#0D1F3D] block text-xs">Search - CRM Solution</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-semibold block uppercase tracking-wider">Top Ad Group</span>
+                    <span className="font-bold text-slate-700 block text-xs">CRM Solution - Mumbai</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-semibold block uppercase tracking-wider">Lead Form</span>
+                    <span className="font-bold text-indigo-700 block text-xs">Website Leads Form</span>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center text-slate-400 font-medium text-xs">
+                  No campaign data available until connected.
+                </div>
+              )}
+            </div>
+
+            {/* Col 4: Webhook Active & Action Menu (3 Cols) */}
+            <div className="lg:col-span-3 flex flex-col justify-between bg-slate-50/50 p-4 rounded-md border border-slate-200/60 relative">
+              <div className="flex items-start justify-between">
+                <div>
+                  {connectionStatus.google ? (
+                    <>
+                      <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold text-xs">
+                        <CheckCircle2 className="h-4 w-4 shrink-0" /> Sync Active
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        Leads syncing automatically every 5 minutes
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-1.5 text-slate-400 font-extrabold text-xs">
+                        <Plug className="h-4 w-4 shrink-0" /> Sync Inactive
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                        No active sync configuration
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                <RowActionsMenu
+                  items={[
+                    {
+                      label: connectionStatus.google ? 'Re-sync Account' : 'Connect Account',
+                      icon: RotateCcw,
+                      onClick: () => navigate('/admin/leads/integrations/google/connect'),
+                    },
+                    {
+                      label: 'View Sync Logs',
+                      icon: FileText,
+                      onClick: () => navigate('/admin/leads/automation/activity'),
+                    },
+                    {
+                      label: connectionStatus.google ? 'Disconnect Account' : 'Remove Integration',
+                      icon: Trash2,
+                      danger: true,
+                      divider: true,
+                      onClick: () => {
+                        setConnectionStatus({ ...connectionStatus, google: !connectionStatus.google });
+                        toast.info(connectionStatus.google ? 'Google Ads account disconnected' : 'Google Ads account connected');
+                      },
+                    },
+                  ]}
+                />
+              </div>
+
+              {connectionStatus.google ? (
+                <div className="space-y-3 pt-3 border-t border-slate-200/80">
+                  <div className="flex justify-between items-center text-xs">
+                    <div>
+                      <span className="text-slate-400 text-[10px] block">Health Status</span>
+                      <span className="font-extrabold text-emerald-700">Healthy</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-slate-400 text-[10px] block">Error Rate</span>
+                      <span className="font-extrabold text-slate-800">0.2%</span>
+                    </div>
+                  </div>
+
                   <Button
                     variant="outline"
                     size="sm"
+                    fullWidth
                     onClick={() => navigate('/admin/leads/integrations/google/connect')}
-                    className="bg-white text-indigo-700 border-indigo-200 font-bold hover:bg-indigo-50 shadow-xs flex items-center gap-1.5"
+                    className="bg-white text-indigo-700 border-indigo-200 font-extrabold hover:bg-indigo-50 shadow-xs flex items-center justify-center gap-1.5 text-xs"
                   >
                     <Settings className="h-3.5 w-3.5" /> Manage Integration
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setConnectionStatus({ ...connectionStatus, google: false });
-                      toast.info('Google Ads integration disconnected (simulated)');
-                    }}
-                    className="bg-white text-rose-700 border-slate-200 hover:bg-rose-50 text-xs font-bold"
-                  >
-                    Disconnect
-                  </Button>
-                </>
+                </div>
               ) : (
                 <Button
                   variant="accent"
                   size="sm"
+                  fullWidth
                   onClick={() => navigate('/admin/leads/integrations/google/connect')}
-                  className="bg-amber-500 hover:bg-amber-600 text-white font-extrabold flex items-center gap-1.5 shadow-xs"
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-extrabold shadow-xs flex items-center justify-center gap-1.5 text-xs mt-4"
                 >
                   <Plus className="h-4 w-4" /> Connect Google Ads
                 </Button>
               )}
             </div>
           </div>
-
-          {connectionStatus.google ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-semibold">
-              <div className="bg-slate-50/70 p-3.5 rounded-sm border border-slate-200 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500 font-medium">Leads (Last 30 Days)</span>
-                  <span className="text-emerald-600 font-bold">↑ 16.2%</span>
-                </div>
-                <span className="text-2xl font-black text-[#0D1F3D] block">4,126</span>
-                <div className="grid grid-cols-4 gap-1 text-[10px] pt-1 text-center border-t border-slate-200/80">
-                  <div>
-                    <span className="text-slate-400 block font-medium">New</span>
-                    <span className="font-bold text-[#0D1F3D]">3,354</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">Assigned</span>
-                    <span className="font-bold text-[#0D1F3D]">3,078</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">Converted</span>
-                    <span className="font-bold text-[#0D1F3D]">786</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">CR %</span>
-                    <span className="font-bold text-emerald-600">19.1%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-slate-50/70 p-3.5 rounded-sm border border-slate-200 space-y-2">
-                <span className="text-slate-500 font-medium block">Top Campaign</span>
-                <span className="font-extrabold text-[#0D1F3D] block">Search - CRM Solution</span>
-                <span className="text-slate-500 font-medium block pt-1">Top Ad Group</span>
-                <span className="font-bold text-slate-700 block">CRM Solution - Mumbai</span>
-                <span className="text-slate-500 font-medium block pt-1">Lead Form</span>
-                <span className="font-bold text-indigo-700 block">Website Leads Form</span>
-              </div>
-
-              <div className="bg-slate-50/70 p-3.5 rounded-sm border border-slate-200 space-y-2 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-emerald-700 font-extrabold">
-                    <CheckCircle2 className="h-4 w-4" /> Sync Active
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    Leads syncing automatically every 5 minutes via Google API
-                  </p>
-                </div>
-
-                <div className="flex justify-between items-center pt-2 border-t border-slate-200 text-xs">
-                  <div>
-                    <span className="text-slate-400 text-[10px] block">Health Status</span>
-                    <span className="font-bold text-emerald-700">Healthy</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-slate-400 text-[10px] block">Error Rate</span>
-                    <span className="font-bold text-slate-800">0.2%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-slate-50 p-6 rounded-sm border border-dashed border-slate-300 flex flex-col items-center justify-center text-center space-y-3">
-              <div className="h-12 w-12 rounded-full bg-slate-200/80 text-slate-500 flex items-center justify-center">
-                <Plug className="h-6 w-6" />
-              </div>
-              <div className="max-w-md">
-                <h4 className="font-extrabold text-[#0D1F3D] text-sm">Google Ads is not connected</h4>
-                <p className="text-xs font-semibold text-slate-500 mt-1">
-                  Connect your Google Ads account to capture lead form extension submissions into SFW CRM automatically.
-                </p>
-              </div>
-              <Button
-                variant="accent"
-                size="sm"
-                onClick={() => navigate('/admin/leads/integrations/google/connect')}
-                className="bg-amber-500 hover:bg-amber-600 text-white font-extrabold"
-              >
-                Connect Google Ads →
-              </Button>
-            </div>
-          )}
         </div>
 
-        {/* Platform 3: WhatsApp API */}
-        <div className="rounded-md border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-3">
-              <div
-                className={`h-12 w-12 rounded-md flex items-center justify-center shrink-0 border ${
-                  connectionStatus.whatsapp
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-600'
-                    : 'bg-slate-100 border-slate-200 text-slate-400'
-                }`}
-              >
-                <MessageSquare className="h-7 w-7" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-extrabold text-[#0D1F3D]">WhatsApp API</h3>
-                  {connectionStatus.whatsapp ? (
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                      Connected
-                    </span>
-                  ) : (
-                    <span className="bg-slate-100 text-slate-600 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-slate-200">
-                      Not Connected
-                    </span>
-                  )}
+        {/* PLATFORM 3: WHATSAPP API */}
+        <div className="rounded-md border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-slate-300">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+            {/* Col 1: Platform Header & Credentials (3 Cols) */}
+            <div className="lg:col-span-3 flex flex-col justify-between space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="h-14 w-14 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0 shadow-xs">
+                  <MessageSquare className="h-8 w-8" />
                 </div>
-                <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                  WhatsApp Business Cloud API Inbound Enquiries
-                </p>
-                {connectionStatus.whatsapp ? (
-                  <div className="flex items-center gap-3 text-[11px] text-slate-600 font-medium mt-1">
-                    <span>Phone Number: <strong className="font-mono text-[#0D1F3D]">+91 90876 54321</strong></span>
-                    <span>•</span>
-                    <span>WABA ID: <strong className="font-mono text-slate-800">123456789012345</strong></span>
-                    <span>•</span>
-                    <span>Last Sync: <strong>Just now</strong> <span className="text-emerald-600 font-bold">(Auto sync: Real-time)</span></span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-[#0D1F3D]">WhatsApp API</h3>
+                    {connectionStatus.whatsapp ? (
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                        Connected
+                      </span>
+                    ) : (
+                      <span className="bg-slate-100 text-slate-600 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-slate-200">
+                        Not Connected
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <div className="text-[11px] text-slate-400 font-medium mt-1">
-                    No WhatsApp Business API connected • Inbound message sync inactive
-                  </div>
-                )}
+                  <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                    WhatsApp Business Cloud API
+                  </p>
+                </div>
               </div>
+
+              {connectionStatus.whatsapp ? (
+                <div className="space-y-1.5 text-xs pt-2 border-t border-slate-100">
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span className="text-slate-400 text-[11px]">Phone Number</span>
+                    <span className="font-mono font-extrabold text-[#0D1F3D]">+91 90876 54321</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span className="text-slate-400 text-[11px]">WABA ID</span>
+                    <span className="font-mono font-bold text-slate-800 text-[11px]">123456789012345</span>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600 pt-0.5">
+                    <span className="text-slate-400 text-[11px]">Last Sync</span>
+                    <div className="text-right">
+                      <span className="font-bold text-[#0D1F3D] block text-[11px]">Just now</span>
+                      <span className="text-[10px] text-emerald-600 font-extrabold">Auto sync: Real-time</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50 p-3 rounded-sm border border-dashed border-slate-200 text-[11px] text-slate-500 font-medium">
+                  No WhatsApp Business API connected. Connect to convert chats into leads.
+                </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-2">
+            {/* Col 2: Metrics Inner Box (3 Cols) */}
+            <div className="lg:col-span-3">
+              {connectionStatus.whatsapp ? (
+                <div className="bg-slate-50/70 p-4 rounded-md border border-slate-200/90 h-full flex flex-col justify-between">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-semibold text-slate-500">Leads (Last 30 Days)</span>
+                    <span className="text-emerald-600 font-extrabold text-xs">↑ 20.4%</span>
+                  </div>
+                  <span className="text-3xl font-black text-[#0D1F3D] my-1">2,490</span>
+                  <div className="grid grid-cols-4 gap-1 text-[10px] pt-2 border-t border-slate-200/80 text-center">
+                    <div>
+                      <span className="text-slate-400 block font-medium">New Leads</span>
+                      <span className="font-extrabold text-[#0D1F3D]">2,184</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-medium">Assigned</span>
+                      <span className="font-extrabold text-[#0D1F3D]">1,946</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-medium">Converted</span>
+                      <span className="font-extrabold text-[#0D1F3D]">498</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block font-medium">Conversion Rate</span>
+                      <span className="font-extrabold text-emerald-600">20.0%</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50/70 p-4 rounded-md border border-slate-200/90 h-full flex flex-col items-center justify-center text-center">
+                  <span className="text-xs font-semibold text-slate-400 block">Leads (Last 30 Days)</span>
+                  <span className="text-2xl font-bold text-slate-300 my-1">—</span>
+                  <span className="text-[10px] text-slate-400">Connect platform to view metrics</span>
+                </div>
+              )}
+            </div>
+
+            {/* Col 3: Top Campaign & Form Info (3 Cols) */}
+            <div className="lg:col-span-3 flex flex-col justify-center space-y-2 text-xs bg-slate-50/50 p-4 rounded-md border border-slate-200/60">
               {connectionStatus.whatsapp ? (
                 <>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-semibold block uppercase tracking-wider">Sources</span>
+                    <span className="font-extrabold text-[#0D1F3D] block text-xs">Click-to-WhatsApp, Chat, Catalog, QR Code</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-semibold block uppercase tracking-wider">Default Team</span>
+                    <span className="font-bold text-slate-700 block text-xs">WhatsApp Team</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 text-[10px] font-semibold block uppercase tracking-wider">Auto-Reply</span>
+                    <span className="font-bold text-emerald-600 block text-xs">Enabled</span>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center text-slate-400 font-medium text-xs">
+                  No sources data available until connected.
+                </div>
+              )}
+            </div>
+
+            {/* Col 4: Webhook Active & Action Menu (3 Cols) */}
+            <div className="lg:col-span-3 flex flex-col justify-between bg-slate-50/50 p-4 rounded-md border border-slate-200/60 relative">
+              <div className="flex items-start justify-between">
+                <div>
+                  {connectionStatus.whatsapp ? (
+                    <>
+                      <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold text-xs">
+                        <CheckCircle2 className="h-4 w-4 shrink-0" /> Webhook Active
+                      </div>
+                      <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                        Receiving messages in real-time via Meta API
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-1.5 text-slate-400 font-extrabold text-xs">
+                        <Plug className="h-4 w-4 shrink-0" /> Webhook Inactive
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                        No active WhatsApp webhook
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                <RowActionsMenu
+                  items={[
+                    {
+                      label: connectionStatus.whatsapp ? 'Re-sync Account' : 'Connect Account',
+                      icon: RotateCcw,
+                      onClick: () => navigate('/admin/leads/integrations/whatsapp/connect'),
+                    },
+                    {
+                      label: 'View Webhook Logs',
+                      icon: FileText,
+                      onClick: () => navigate('/admin/leads/automation/activity'),
+                    },
+                    {
+                      label: connectionStatus.whatsapp ? 'Disconnect Account' : 'Remove Integration',
+                      icon: Trash2,
+                      danger: true,
+                      divider: true,
+                      onClick: () => {
+                        setConnectionStatus({ ...connectionStatus, whatsapp: !connectionStatus.whatsapp });
+                        toast.info(connectionStatus.whatsapp ? 'WhatsApp API disconnected' : 'WhatsApp API connected');
+                      },
+                    },
+                  ]}
+                />
+              </div>
+
+              {connectionStatus.whatsapp ? (
+                <div className="space-y-3 pt-3 border-t border-slate-200/80">
+                  <div className="flex justify-between items-center text-xs">
+                    <div>
+                      <span className="text-slate-400 text-[10px] block">Health Status</span>
+                      <span className="font-extrabold text-emerald-700">Healthy</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-slate-400 text-[10px] block">Error Rate</span>
+                      <span className="font-extrabold text-slate-800">0%</span>
+                    </div>
+                  </div>
+
                   <Button
                     variant="outline"
                     size="sm"
+                    fullWidth
                     onClick={() => navigate('/admin/leads/integrations/whatsapp/connect')}
-                    className="bg-white text-indigo-700 border-indigo-200 font-bold hover:bg-indigo-50 shadow-xs flex items-center gap-1.5"
+                    className="bg-white text-indigo-700 border-indigo-200 font-extrabold hover:bg-indigo-50 shadow-xs flex items-center justify-center gap-1.5 text-xs"
                   >
                     <Settings className="h-3.5 w-3.5" /> Manage Integration
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setConnectionStatus({ ...connectionStatus, whatsapp: false });
-                      toast.info('WhatsApp integration disconnected (simulated)');
-                    }}
-                    className="bg-white text-rose-700 border-slate-200 hover:bg-rose-50 text-xs font-bold"
-                  >
-                    Disconnect
-                  </Button>
-                </>
+                </div>
               ) : (
                 <Button
                   variant="accent"
                   size="sm"
+                  fullWidth
                   onClick={() => navigate('/admin/leads/integrations/whatsapp/connect')}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold flex items-center gap-1.5 shadow-xs"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-xs flex items-center justify-center gap-1.5 text-xs mt-4"
                 >
                   <Plus className="h-4 w-4" /> Connect WhatsApp API
                 </Button>
               )}
             </div>
           </div>
-
-          {connectionStatus.whatsapp ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-semibold">
-              <div className="bg-slate-50/70 p-3.5 rounded-sm border border-slate-200 space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-500 font-medium">Leads (Last 30 Days)</span>
-                  <span className="text-emerald-600 font-bold">↑ 20.4%</span>
-                </div>
-                <span className="text-2xl font-black text-[#0D1F3D] block">2,490</span>
-                <div className="grid grid-cols-4 gap-1 text-[10px] pt-1 text-center border-t border-slate-200/80">
-                  <div>
-                    <span className="text-slate-400 block font-medium">New</span>
-                    <span className="font-bold text-[#0D1F3D]">2,184</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">Assigned</span>
-                    <span className="font-bold text-[#0D1F3D]">1,946</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">Converted</span>
-                    <span className="font-bold text-[#0D1F3D]">498</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400 block font-medium">CR %</span>
-                    <span className="font-bold text-emerald-600">20.0%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-slate-50/70 p-3.5 rounded-sm border border-slate-200 space-y-2">
-                <span className="text-slate-500 font-medium block">Sources</span>
-                <span className="font-bold text-[#0D1F3D] block">Click-to-WhatsApp, Chat, Catalog, QR Code</span>
-                <span className="text-slate-500 font-medium block pt-1">Default Team</span>
-                <span className="font-bold text-[#0D1F3D] block">WhatsApp Team</span>
-                <span className="text-slate-500 font-medium block pt-1">Auto-Reply</span>
-                <span className="font-bold text-emerald-600 block">Enabled</span>
-              </div>
-
-              <div className="bg-slate-50/70 p-3.5 rounded-sm border border-slate-200 space-y-2 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center gap-2 text-emerald-700 font-extrabold">
-                    <CheckCircle2 className="h-4 w-4" /> Webhook Active
-                  </div>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    Receiving messages & enquiries in real-time via Meta WhatsApp API
-                  </p>
-                </div>
-
-                <div className="flex justify-between items-center pt-2 border-t border-slate-200 text-xs">
-                  <div>
-                    <span className="text-slate-400 text-[10px] block">Health Status</span>
-                    <span className="font-bold text-emerald-700">Healthy</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-slate-400 text-[10px] block">Error Rate</span>
-                    <span className="font-bold text-slate-800">0%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-slate-50 p-6 rounded-sm border border-dashed border-slate-300 flex flex-col items-center justify-center text-center space-y-3">
-              <div className="h-12 w-12 rounded-full bg-slate-200/80 text-slate-500 flex items-center justify-center">
-                <Plug className="h-6 w-6" />
-              </div>
-              <div className="max-w-md">
-                <h4 className="font-extrabold text-[#0D1F3D] text-sm">WhatsApp API is not connected</h4>
-                <p className="text-xs font-semibold text-slate-500 mt-1">
-                  Connect your WhatsApp Business Cloud API to automatically capture inbound customer chats into CRM leads.
-                </p>
-              </div>
-              <Button
-                variant="accent"
-                size="sm"
-                onClick={() => navigate('/admin/leads/integrations/whatsapp/connect')}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold"
-              >
-                Connect WhatsApp API →
-              </Button>
-            </div>
-          )}
         </div>
       </div>
 
