@@ -10,13 +10,95 @@ import {
   Check,
   Plus,
   RefreshCw,
+  Users,
+  Bot,
+  Tag,
+  Copy,
+  Zap,
+  ArrowRightLeft,
+  FileText,
+  Sliders,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Select, SelectOption } from '../../components/ui/Select';
+import { Checkbox } from '../../components/ui/Checkbox';
+
+// Executive / Lead Owner Options with Profile Avatars matching VISIBLO_DESIGN_SYSTEM.md
+const EXECUTIVE_OPTIONS: SelectOption[] = [
+  {
+    value: 'exec_101',
+    label: 'Rohit Sharma',
+    sublabel: 'Super Admin • HQ Zone',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+  },
+  {
+    value: 'exec_102',
+    label: 'Amit Verma',
+    sublabel: 'Sales Manager • West Zone',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+  },
+  {
+    value: 'exec_103',
+    label: 'Neha Patel',
+    sublabel: 'Team Leader • North Zone',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+  },
+  {
+    value: 'exec_104',
+    label: 'Karan Joshi',
+    sublabel: 'Senior Executive • South Zone',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+  },
+  {
+    value: 'auto_round_robin',
+    label: 'Auto Round-Robin Distribution',
+    sublabel: 'Smart AI Assignment Engine',
+    avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=80',
+  },
+];
+
+// CRM Lead Field Target Options
+const CRM_FIELD_OPTIONS: SelectOption[] = [
+  { value: 'name', label: 'Lead Name / Contact Person' },
+  { value: 'mobile', label: 'Mobile Number (+91)' },
+  { value: 'email', label: 'Email Address' },
+  { value: 'business', label: 'Company / Business Name' },
+  { value: 'requirements', label: 'Initial Requirement / Notes' },
+  { value: 'source_detail', label: 'Campaign / Source Detail' },
+  { value: 'city', label: 'City / Location' },
+  { value: 'created_at', label: 'Capture Time' },
+];
 
 export default function ConnectWhatsAppWizardPage() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const [selectedNumber, setSelectedNumber] = useState('+91 98765 43210');
+
+  // Step 3 State: Field Mapping & Executive Assignment
+  const [selectedExecutive, setSelectedExecutive] = useState('exec_102');
+  const [fieldMappings, setFieldMappings] = useState({
+    profileName: 'name',
+    waId: 'mobile',
+    messageBody: 'requirements',
+    referralHeadline: 'source_detail',
+    timestamp: 'created_at',
+  });
+
+  const [customMappings, setCustomMappings] = useState<Array<{ id: string; waParam: string; crmField: string }>>([
+    { id: 'c1', waParam: 'context.referral.source_url', crmField: 'source_detail' },
+  ]);
+
+  const addCustomMapping = () => {
+    setCustomMappings((prev) => [
+      ...prev,
+      { id: `c_${Date.now()}`, waParam: 'button_reply.id', crmField: 'requirements' },
+    ]);
+    toast.success('Added custom parameter mapping rule');
+  };
+
+  const removeCustomMapping = (id: string) => {
+    setCustomMappings((prev) => prev.filter((m) => m.id !== id));
+  };
 
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -79,7 +161,7 @@ export default function ConnectWhatsAppWizardPage() {
           {[
             { step: 1, label: 'Connect' },
             { step: 2, label: 'Number Setup' },
-            { step: 3, label: 'Rules & Mapping' },
+            { step: 3, label: 'Field Mapping' },
             { step: 4, label: 'Complete' },
           ].map((item) => (
             <div key={item.step} className="flex flex-col items-center gap-1 z-10 bg-white px-2">
@@ -135,8 +217,8 @@ export default function ConnectWhatsAppWizardPage() {
                     3
                   </div>
                   <div className="flex-1">
-                    <span className="font-extrabold text-[#0D1F3D] text-xs block">3. Select Phone Number</span>
-                    <span className="text-xs text-slate-600 font-medium">Choose the WhatsApp number from which you want to receive leads.</span>
+                    <span className="font-extrabold text-[#0D1F3D] text-xs block">3. Select Phone Number & Map Fields</span>
+                    <span className="text-xs text-slate-600 font-medium">Choose the WhatsApp number and map payload fields into SFW CRM.</span>
                   </div>
                   <span className="text-xs font-semibold text-slate-600">1 min</span>
                 </div>
@@ -333,13 +415,10 @@ export default function ConnectWhatsAppWizardPage() {
                 <Button
                   variant="accent"
                   size="md"
-                  onClick={() => {
-                    setCurrentStep(4);
-                    toast.success('WhatsApp Business API connected!');
-                  }}
+                  onClick={() => setCurrentStep(3)}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold flex items-center gap-1.5"
                 >
-                  Save & Continue →
+                  Configure Field Mapping →
                 </Button>
               </div>
             </div>
@@ -362,6 +441,256 @@ export default function ConnectWhatsAppWizardPage() {
                 <div className="flex justify-between items-center">
                   <span className="font-medium">Webhook Status</span>
                   <span className="text-emerald-700 font-bold">Configured</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3: FIELD MAPPING & EXECUTIVE ASSIGNMENT (STRICT VISIBLO DESIGN SYSTEM BINDING) */}
+      {currentStep === 3 && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="lg:col-span-8 space-y-5">
+            <div className="rounded-md border border-slate-200 bg-white p-5 shadow-xs space-y-5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div>
+                  <h2 className="text-sm font-extrabold text-[#0D1F3D]">
+                    WhatsApp Payload Field Mapping & Executive Assignment
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    Map incoming WhatsApp Business API JSON parameters directly to SFW CRM lead fields.
+                  </p>
+                </div>
+                <span className="bg-indigo-50 text-indigo-700 text-[10px] font-extrabold px-2.5 py-1 rounded-full border border-indigo-200">
+                  Real-time Webhook Payload
+                </span>
+              </div>
+
+              {/* 1. Searchable Executive / Lead Owner Selection (STRICT BINDING RULE) */}
+              <div className="space-y-2 bg-slate-50/70 p-4 rounded-md border border-slate-200/80">
+                <label className="text-xs font-extrabold text-[#0D1F3D] flex items-center gap-1.5">
+                  <Users className="h-4 w-4 text-indigo-600" /> Default Lead Owner / Executive Assignment <span className="text-rose-500">*</span>
+                </label>
+                <Select
+                  value={selectedExecutive}
+                  onChange={(e) => setSelectedExecutive(e.target.value)}
+                  options={EXECUTIVE_OPTIONS}
+                  searchable={true}
+                  placeholder="Search employee by name, role or zone..."
+                />
+                <span className="text-xs text-slate-500 font-medium block">
+                  Selected executive will automatically be assigned all new inbound leads from WhatsApp.
+                </span>
+              </div>
+
+              {/* 2. WhatsApp Payload Field Mapping Table */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-extrabold text-[#0D1F3D] flex items-center gap-1.5">
+                    <ArrowRightLeft className="h-4 w-4 text-emerald-600" /> Standard WhatsApp Parameter Mapping Table
+                  </h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addCustomMapping}
+                    className="bg-white text-indigo-700 border-indigo-200 font-bold hover:bg-indigo-50 flex items-center gap-1 text-xs"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Add Custom Parameter
+                  </Button>
+                </div>
+
+                <div className="overflow-x-auto border border-slate-200 rounded-md">
+                  <table className="w-full text-left border-collapse whitespace-nowrap text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-700 bg-slate-50 font-bold">
+                        <th className="py-2.5 px-3">WhatsApp API Payload Parameter</th>
+                        <th className="py-2.5 px-3 text-center">Direction</th>
+                        <th className="py-2.5 px-3">SFW CRM Lead Field Target</th>
+                        <th className="py-2.5 px-3 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {/* Row 1: Profile Name */}
+                      <tr>
+                        <td className="py-2.5 px-3">
+                          <span className="font-mono font-bold text-slate-800 block text-xs">profile.name</span>
+                          <span className="text-[10px] text-slate-400 font-medium">Contact WhatsApp Profile Display Name</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-center text-slate-400">➔</td>
+                        <td className="py-2.5 px-3">
+                          <Select
+                            value={fieldMappings.profileName}
+                            onChange={(e) => setFieldMappings({ ...fieldMappings, profileName: e.target.value })}
+                            options={CRM_FIELD_OPTIONS}
+                            searchable={true}
+                          />
+                        </td>
+                        <td className="py-2.5 px-3 text-center">
+                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                            Auto Mapped ✓
+                          </span>
+                        </td>
+                      </tr>
+
+                      {/* Row 2: WhatsApp Phone */}
+                      <tr>
+                        <td className="py-2.5 px-3">
+                          <span className="font-mono font-bold text-slate-800 block text-xs">wa_id / phone_number</span>
+                          <span className="text-[10px] text-slate-400 font-medium">WhatsApp E.164 Phone Number</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-center text-slate-400">➔</td>
+                        <td className="py-2.5 px-3">
+                          <Select
+                            value={fieldMappings.waId}
+                            onChange={(e) => setFieldMappings({ ...fieldMappings, waId: e.target.value })}
+                            options={CRM_FIELD_OPTIONS}
+                            searchable={true}
+                          />
+                        </td>
+                        <td className="py-2.5 px-3 text-center">
+                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                            Auto Mapped ✓
+                          </span>
+                        </td>
+                      </tr>
+
+                      {/* Row 3: Message Body */}
+                      <tr>
+                        <td className="py-2.5 px-3">
+                          <span className="font-mono font-bold text-slate-800 block text-xs">message.text.body</span>
+                          <span className="text-[10px] text-slate-400 font-medium">First Inbound Message Text Content</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-center text-slate-400">➔</td>
+                        <td className="py-2.5 px-3">
+                          <Select
+                            value={fieldMappings.messageBody}
+                            onChange={(e) => setFieldMappings({ ...fieldMappings, messageBody: e.target.value })}
+                            options={CRM_FIELD_OPTIONS}
+                            searchable={true}
+                          />
+                        </td>
+                        <td className="py-2.5 px-3 text-center">
+                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                            Auto Mapped ✓
+                          </span>
+                        </td>
+                      </tr>
+
+                      {/* Row 4: Referral Headline */}
+                      <tr>
+                        <td className="py-2.5 px-3">
+                          <span className="font-mono font-bold text-slate-800 block text-xs">context.referral.headline</span>
+                          <span className="text-[10px] text-slate-400 font-medium">Click-to-WhatsApp Meta Ad Headline</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-center text-slate-400">➔</td>
+                        <td className="py-2.5 px-3">
+                          <Select
+                            value={fieldMappings.referralHeadline}
+                            onChange={(e) => setFieldMappings({ ...fieldMappings, referralHeadline: e.target.value })}
+                            options={CRM_FIELD_OPTIONS}
+                            searchable={true}
+                          />
+                        </td>
+                        <td className="py-2.5 px-3 text-center">
+                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                            Auto Mapped ✓
+                          </span>
+                        </td>
+                      </tr>
+
+                      {/* Custom Parameters */}
+                      {customMappings.map((custom) => (
+                        <tr key={custom.id} className="bg-purple-50/30">
+                          <td className="py-2.5 px-3">
+                            <input
+                              type="text"
+                              value={custom.waParam}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCustomMappings((prev) =>
+                                  prev.map((m) => (m.id === custom.id ? { ...m, waParam: val } : m))
+                                );
+                              }}
+                              className="w-full font-mono text-xs font-bold text-[#0D1F3D] p-1 rounded border border-purple-200 outline-none"
+                            />
+                          </td>
+                          <td className="py-2.5 px-3 text-center text-slate-400">➔</td>
+                          <td className="py-2.5 px-3">
+                            <Select
+                              value={custom.crmField}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setCustomMappings((prev) =>
+                                  prev.map((m) => (m.id === custom.id ? { ...m, crmField: val } : m))
+                                );
+                              }}
+                              options={CRM_FIELD_OPTIONS}
+                              searchable={true}
+                            />
+                          </td>
+                          <td className="py-2.5 px-3 text-center">
+                            <button
+                              type="button"
+                              onClick={() => removeCustomMapping(custom.id)}
+                              className="text-rose-600 font-extrabold text-[11px] hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={() => setCurrentStep(2)}
+                  className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50"
+                >
+                  ← Back
+                </Button>
+                <Button
+                  variant="accent"
+                  size="md"
+                  onClick={() => {
+                    setCurrentStep(4);
+                    toast.success('WhatsApp field mapping saved & integration activated!');
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold flex items-center gap-1.5 shadow-md"
+                >
+                  <Zap className="h-4 w-4" /> Save Mapping & Activate Integration →
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-4 space-y-4">
+            <div className="rounded-md border border-slate-200 bg-white p-5 shadow-xs space-y-3 text-xs">
+              <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+                Mapping Summary
+              </h3>
+              <div className="space-y-2 text-slate-700">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Assigned Owner</span>
+                  <span className="font-bold text-indigo-700">
+                    {EXECUTIVE_OPTIONS.find((e) => e.value === selectedExecutive)?.label}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Mapped Parameters</span>
+                  <span className="font-extrabold text-emerald-700">
+                    {4 + customMappings.length} Parameters
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Validation Status</span>
+                  <span className="text-emerald-700 font-bold">100% Validated ✓</span>
                 </div>
               </div>
             </div>

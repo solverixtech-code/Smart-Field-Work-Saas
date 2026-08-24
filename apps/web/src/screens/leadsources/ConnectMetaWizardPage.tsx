@@ -279,7 +279,7 @@ export default function ConnectMetaWizardPage() {
                         { value: 'Aimbeat Technologies Pvt. Ltd.', label: 'Aimbeat Technologies Pvt. Ltd.' },
                         { value: 'Aimbeat Global Inc.', label: 'Aimbeat Global Inc.' },
                       ]}
-                      searchable={false}
+                      searchable={true}
                     />
                   </div>
                   <Button
