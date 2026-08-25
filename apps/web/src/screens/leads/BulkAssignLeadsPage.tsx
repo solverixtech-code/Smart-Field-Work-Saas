@@ -14,6 +14,7 @@ import {
   Save,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
 import { mockLeadsData, LeadItem } from './leadsData';
 
 export default function BulkAssignLeadsPage() {
@@ -97,17 +98,44 @@ export default function BulkAssignLeadsPage() {
         <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2 text-xs font-semibold">
           <label className="font-bold text-[#0D1F3D] block">Select Target Field Executive *</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <select
+            <Select
               value={targetExecutive}
               onChange={(e) => setTargetExecutive(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D]"
-            >
-              <option>Rahul Verma (FE-1001) • Mumbai North</option>
-              <option>Priya Mehta (FE-1002) • Western Suburbs</option>
-              <option>Sanjay Yadav (FE-1003) • Eastern Suburbs</option>
-              <option>Karan Patil (FE-1009) • Thane Team</option>
-              <option>Neha Deshpande (FE-1014) • Pune Team</option>
-            </select>
+              options={[
+                {
+                  value: 'Rahul Verma (FE-1001)',
+                  label: 'Rahul Verma',
+                  sublabel: 'FE-1001 • Mumbai North',
+                  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+                },
+                {
+                  value: 'Priya Mehta (FE-1002)',
+                  label: 'Priya Mehta',
+                  sublabel: 'FE-1002 • Western Suburbs',
+                  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+                },
+                {
+                  value: 'Sanjay Yadav (FE-1003)',
+                  label: 'Sanjay Yadav',
+                  sublabel: 'FE-1003 • Eastern Suburbs',
+                  avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+                },
+                {
+                  value: 'Karan Patil (FE-1009)',
+                  label: 'Karan Patil',
+                  sublabel: 'FE-1009 • Thane Team',
+                  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+                },
+                {
+                  value: 'Neha Deshpande (FE-1014)',
+                  label: 'Neha Deshpande',
+                  sublabel: 'FE-1014 • Pune Team',
+                  avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+                },
+              ]}
+              searchable={true}
+              placeholder="Search target executive..."
+            />
 
             <div className="flex items-center gap-2 text-slate-500 font-medium">
               <AlertCircle className="h-4 w-4 text-purple-600 shrink-0" />

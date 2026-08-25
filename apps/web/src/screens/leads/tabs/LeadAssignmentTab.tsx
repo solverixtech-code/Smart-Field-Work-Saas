@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { UserCheck, Users, Save, ShieldAlert } from 'lucide-react';
+import { UserCheck } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
+import { Select } from '../../../components/ui/Select';
 import { LeadItem } from '../leadsData';
 
 interface TabProps {
@@ -12,6 +13,39 @@ export function LeadAssignmentTab({ lead }: TabProps) {
   const [selectedExecutive, setSelectedExecutive] = useState(lead.assignedExecutive);
   const [reassignReason, setReassignReason] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  const executiveOptions = [
+    {
+      value: 'Rahul Verma',
+      label: 'Rahul Verma',
+      sublabel: 'FE-1001 • Mumbai North',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    },
+    {
+      value: 'Priya Mehta',
+      label: 'Priya Mehta',
+      sublabel: 'FE-1002 • Western Suburbs',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    },
+    {
+      value: 'Sanjay Yadav',
+      label: 'Sanjay Yadav',
+      sublabel: 'FE-1003 • Eastern Suburbs',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+    },
+    {
+      value: 'Karan Patil',
+      label: 'Karan Patil',
+      sublabel: 'FE-1009 • Thane Team',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    },
+    {
+      value: 'Neha Deshpande',
+      label: 'Neha Deshpande',
+      sublabel: 'FE-1014 • Pune Team',
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+    },
+  ];
 
   const handleReassign = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,19 +94,15 @@ export function LeadAssignmentTab({ lead }: TabProps) {
 
       {/* Reassignment Form */}
       <form onSubmit={handleReassign} className="space-y-4 text-xs font-semibold pt-2">
-        <div className="space-y-1">
+        <div className="space-y-1 sm:w-1/2">
           <label className="font-bold text-[#0D1F3D] block">Select New Field Executive *</label>
-          <select
+          <Select
             value={selectedExecutive}
             onChange={(e) => setSelectedExecutive(e.target.value)}
-            className="w-full sm:w-1/2 rounded-sm border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 font-bold text-[#0D1F3D]"
-          >
-            <option value="Rahul Verma">Rahul Verma (FE-1001) • Mumbai North</option>
-            <option value="Priya Mehta">Priya Mehta (FE-1002) • Western Suburbs</option>
-            <option value="Sanjay Yadav">Sanjay Yadav (FE-1003) • Eastern Suburbs</option>
-            <option value="Karan Patil">Karan Patil (FE-1009) • Thane Team</option>
-            <option value="Neha Deshpande">Neha Deshpande (FE-1014) • Pune Team</option>
-          </select>
+            options={executiveOptions}
+            searchable={true}
+            placeholder="Search and select executive..."
+          />
         </div>
 
         <div className="space-y-1">
@@ -83,7 +113,7 @@ export function LeadAssignmentTab({ lead }: TabProps) {
             value={reassignReason}
             onChange={(e) => setReassignReason(e.target.value)}
             placeholder="e.g. Client requested territory transfer to Bandra West sales team..."
-            className="w-full rounded-sm border border-slate-200 bg-slate-50/60 p-3 font-semibold text-[#0D1F3D]"
+            className="w-full rounded-sm border border-slate-200 bg-slate-50/60 p-3 font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
           />
         </div>
 
