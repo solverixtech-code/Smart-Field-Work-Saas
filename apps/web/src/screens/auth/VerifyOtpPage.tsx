@@ -28,7 +28,16 @@ export default function VerifyOtpPage() {
     const interval = setInterval(() => {
       setTimer((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
-    return () => clearInterval(interval);
+
+    // Auto-focus the first OTP digit input immediately when page loads
+    const timerId = setTimeout(() => {
+      inputRefs.current[0]?.focus();
+    }, 100);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timerId);
+    };
   }, []);
 
   const handleChange = (index: number, value: string) => {
@@ -39,6 +48,16 @@ export default function VerifyOtpPage() {
 
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pastedData = e.clipboardData.getData('Text').trim();
+    if (/^\d{6}$/.test(pastedData)) {
+      e.preventDefault();
+      const newDigits = pastedData.split('');
+      setDigits(newDigits);
+      inputRefs.current[5]?.focus();
     }
   };
 
@@ -118,10 +137,12 @@ export default function VerifyOtpPage() {
                   type="text"
                   inputMode="numeric"
                   maxLength={1}
+                  autoFocus={idx === 0}
                   value={digit}
                   onChange={(e) => handleChange(idx, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(idx, e)}
-                  className="h-12 w-10 sm:w-11 rounded-xl border border-slate-200 bg-slate-50/50 text-center text-lg font-bold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:outline-none transition-all shadow-xs"
+                  onPaste={handlePaste}
+                  className="h-12 w-10 sm:w-11 rounded-xl border border-slate-200 bg-slate-50/50 text-center text-lg font-bold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:ring-2 focus:ring-red-100 focus:outline-none transition-all shadow-xs"
                 />
               ))}
             </div>
