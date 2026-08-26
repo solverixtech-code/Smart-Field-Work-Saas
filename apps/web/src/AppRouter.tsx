@@ -131,6 +131,7 @@ import ModuleTerritoryMapPage from './screens/territories/TerritoryMapPage';
 import PrivacyPolicyPage from './screens/public/PrivacyPolicyPage';
 import TermsOfServicePage from './screens/public/TermsOfServicePage';
 import DataDeletionInstructionsPage from './screens/public/DataDeletionInstructionsPage';
+import { CreateNotificationPage, ExecutiveAlertsPage, NotificationCenterPage, NotificationTemplatesPage, PushNotificationsPage } from './screens/notifications/NotificationsPages';
 
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
@@ -449,6 +450,21 @@ export default function AppRouter() {
               <Route path="/admin/customers/:customerId" element={<CustomerDetailsPage />} />
               <Route path="/admin/customers/:customerId/subscription" element={<SubscriptionDetailsPage />} />
               <Route path="/admin/customers/:customerId/renewal" element={<RenewalStatusPage />} />
+            </Route>
+
+            {/* Notifications (Screens 163 to 167) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER]}
+                />
+              }
+            >
+              <Route path="/admin/notifications" element={<NotificationCenterPage />} />
+              <Route path="/admin/notifications/create" element={<CreateNotificationPage />} />
+              <Route path="/admin/notifications/push" element={<PushNotificationsPage />} />
+              <Route path="/admin/notifications/executives" element={<ExecutiveAlertsPage />} />
+              <Route path="/admin/notifications/templates" element={<NotificationTemplatesPage />} />
             </Route>
 
             <Route

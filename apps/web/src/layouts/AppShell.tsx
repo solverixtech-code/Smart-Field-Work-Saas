@@ -46,6 +46,8 @@ import {
   Sliders,
   FolderPlus,
   Compass,
+  ClipboardCopy,
+  Send,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
@@ -369,6 +371,16 @@ const navCategories: NavCategory[] = [
         to: "/admin/leads/automation/settings",
         allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER],
       },
+    ],
+  },
+  {
+    title: "Notifications",
+    items: [
+      { label: "Notification Center", icon: Bell, to: "/admin/notifications", allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER], badge: "1,248" },
+      { label: "Create Notification", icon: PlusCircle, to: "/admin/notifications/create", allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER] },
+      { label: "Push Notifications", icon: Send, to: "/admin/notifications/push", allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER] },
+      { label: "Executive Alerts", icon: ShieldAlert, to: "/admin/notifications/executives", allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER], badge: "28" },
+      { label: "Notification Templates", icon: ClipboardCopy, to: "/admin/notifications/templates", allowed: [Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER] },
     ],
   },
   {
@@ -875,6 +887,18 @@ function getBreadcrumbTrail(pathname: string) {
   } else if (pathname.startsWith('/admin/leads/integrations/')) {
     items.push({ label: 'Integrations', to: '/admin/leads/integrations' });
     items.push({ label: 'Platform Connector', to: pathname });
+  } else if (pathname === '/admin/notifications') {
+    items.push({ label: 'Notifications', to: '/admin/notifications' });
+    items.push({ label: 'Notification Center', to: pathname });
+  } else if (pathname.startsWith('/admin/notifications/')) {
+    items.push({ label: 'Notifications', to: '/admin/notifications' });
+    const notificationPageNames: Record<string, string> = {
+      '/admin/notifications/create': 'Create Notification',
+      '/admin/notifications/push': 'Push Notifications',
+      '/admin/notifications/executives': 'Executive Alerts',
+      '/admin/notifications/templates': 'Notification Templates',
+    };
+    items.push({ label: notificationPageNames[pathname] ?? 'Notifications', to: pathname });
   } else if (pathname === "/admin/territories") {
     items.push({ label: "Territory Management", to: "/admin/territories" });
     items.push({ label: "Territories", to: "/admin/territories" });
@@ -1166,6 +1190,9 @@ export default function AppShell() {
                     );
                   }
                   if (item.to.startsWith("/admin/performance")) {
+                    return location.pathname === item.to;
+                  }
+                  if (item.to.startsWith("/admin/notifications")) {
                     return location.pathname === item.to;
                   }
                   if (item.to === "/admin/leads/sources") {
