@@ -20,11 +20,27 @@ import {
   Users,
   Volume2,
   XCircle,
+  Filter,
+  Search,
+  Sparkles,
+  Shield,
+  ShieldAlert,
+  ArrowRight,
+  RotateCcw,
+  Check,
+  Calendar,
+  Clock,
+  Layers,
+  MessageSquare,
+  Mail,
+  Info,
+  Radio,
+  FileText
 } from 'lucide-react';
 import { Button, Checkbox, DataTable, Input, Select, type ColumnDef } from '../../components/ui';
 
 type PageKind = 'center' | 'create' | 'push' | 'alerts' | 'templates';
-type NoticeType = 'Announcement' | 'Alert' | 'Reminder' | 'Promotion' | 'Update';
+type NoticeType = 'Announcement' | 'Alert' | 'Reminder' | 'Promotion' | 'Update' | 'Other';
 
 interface NotificationRow {
   id: string;
@@ -41,12 +57,14 @@ interface NotificationRow {
 }
 
 const notificationRows: NotificationRow[] = [
-  { id: 'NOT-1001', title: 'Plan Renewal Reminder', description: 'Hi {{name}}, your plan will expire on {{date}}.', type: 'Reminder', audience: 'All Customers', channel: 'WhatsApp · Email', status: 'Sent', created: '22 May 2025 · 10:30 AM', delivery: '1,892 (88.2%)', icon: Send, tone: 'rose' },
-  { id: 'NOT-1002', title: 'Discount Offer – 20% Off', description: 'Exclusive offer for your active plan.', type: 'Promotion', audience: 'Active Customers', channel: 'WhatsApp · Email', status: 'Sent', created: '21 May 2025 · 04:15 PM', delivery: '1,401 (91.5%)', icon: Gift, tone: 'emerald' },
-  { id: 'NOT-1003', title: 'Field Visit Assigned', description: 'You have been assigned a new visit today.', type: 'Alert', audience: 'Field Executives', channel: 'In-App · WhatsApp', status: 'Sent', created: '21 May 2025 · 11:00 AM', delivery: '312 (97.5%)', icon: CalendarClock, tone: 'blue' },
-  { id: 'NOT-1004', title: 'New Feature Released', description: 'We are excited to introduce a new feature.', type: 'Announcement', audience: 'All Customers', channel: 'Email · In-App', status: 'Sent', created: '20 May 2025 · 03:30 PM', delivery: '1,723 (80.3%)', icon: Megaphone, tone: 'violet' },
-  { id: 'NOT-1005', title: 'Payment Failed Alert', description: 'We could not process your payment for this plan.', type: 'Alert', audience: 'Customers', channel: 'Email · WhatsApp', status: 'Failed', created: '20 May 2025 · 09:20 AM', delivery: '12 (14.1%)', icon: AlertCircle, tone: 'rose' },
-  { id: 'NOT-1006', title: 'Monthly Target Update', description: 'Your monthly target has been updated.', type: 'Update', audience: 'Sales Executives', channel: 'WhatsApp', status: 'Scheduled', created: '23 May 2025 · 09:00 AM', delivery: '—', icon: CheckCircle2, tone: 'emerald' },
+  { id: 'NOT-1001', title: 'Plan Renewal Reminder', description: 'Hi {{name}}, your plan will expire on {{date}}...', type: 'Reminder', audience: 'All Customers (2,145 Users)', channel: 'WhatsApp · Email', status: 'Sent', created: '22 May 2025 · 10:30 AM', delivery: '1,892 (88.2%)', icon: Send, tone: 'rose' },
+  { id: 'NOT-1002', title: 'Discount Offer – 20% Off', description: 'Exclusive offer for your active plan...', type: 'Promotion', audience: 'Active Customers (1,532 Users)', channel: 'WhatsApp · Email', status: 'Sent', created: '21 May 2025 · 04:15 PM', delivery: '1,401 (91.5%)', icon: Gift, tone: 'emerald' },
+  { id: 'NOT-1003', title: 'Field Visit Assigned', description: 'You have been assigned a new visit today...', type: 'Alert', audience: 'Field Executives (320 Users)', channel: 'In-App · WhatsApp', status: 'Sent', created: '21 May 2025 · 11:00 AM', delivery: '312 (97.5%)', icon: CalendarClock, tone: 'blue' },
+  { id: 'NOT-1004', title: 'New Feature Released', description: 'We are excited to introduce a new feature...', type: 'Announcement', audience: 'All Customers (2,145 Users)', channel: 'Email · In-App', status: 'Sent', created: '20 May 2025 · 03:30 PM', delivery: '1,723 (80.3%)', icon: Megaphone, tone: 'violet' },
+  { id: 'NOT-1005', title: 'Payment Failed Alert', description: 'We could not process your payment for this plan...', type: 'Alert', audience: 'Customers (85 Users)', channel: 'Email · WhatsApp', status: 'Failed', created: '20 May 2025 · 09:20 AM', delivery: '12 (14.1%)', icon: AlertCircle, tone: 'rose' },
+  { id: 'NOT-1006', title: 'Monthly Target Update', description: 'Your monthly target has been updated...', type: 'Update', audience: 'Sales Executives (150 Users)', channel: 'WhatsApp', status: 'Sent', created: '19 May 2025 · 10:45 AM', delivery: '147 (98.0%)', icon: CheckCircle2, tone: 'emerald' },
+  { id: 'NOT-1007', title: 'Incentive Announcement', description: 'Great news! New incentive scheme is live...', type: 'Announcement', audience: 'Sales Executives (150 Users)', channel: 'Email · WhatsApp', status: 'Sent', created: '18 May 2025 · 05:00 PM', delivery: '138 (92.0%)', icon: Sparkles, tone: 'violet' },
+  { id: 'NOT-1008', title: 'Survey Request', description: 'We value your feedback. Please take 2 mins...', type: 'Other', audience: 'Active Customers (1,200 Users)', channel: 'Email', status: 'Scheduled', created: '23 May 2025 · 09:00 AM', delivery: '—', icon: FileText, tone: 'cyan' },
 ];
 
 const executives = [
@@ -56,48 +74,860 @@ const executives = [
 ];
 
 const statCards = [
-  { label: 'Total Sent', value: '1,248', change: '+18.6%', icon: Send, color: 'text-rose-600 bg-rose-50' },
-  { label: 'Delivered', value: '1,089 (87.3%)', change: '+14.2%', icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
-  { label: 'Opened', value: '623 (57.2%)', change: '+12.7%', icon: Eye, color: 'text-amber-600 bg-amber-50' },
-  { label: 'Clicked', value: '248 (22.8%)', change: '+9.7%', icon: Bell, color: 'text-blue-600 bg-blue-50' },
-  { label: 'Failed', value: '42 (3.4%)', change: '−2.3%', icon: XCircle, color: 'text-rose-600 bg-rose-50' },
+  { label: 'Total Sent', value: '1,248', change: '↑ 18.6%', subtext: 'vs last 30 days', icon: Send, color: 'text-rose-600 bg-rose-50' },
+  { label: 'Delivered', value: '1,089', change: '↑ 14.2%', percent: '87.3%', subtext: 'vs last 30 days', icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
+  { label: 'Opened', value: '623', change: '↑ 12.7%', percent: '57.2%', subtext: 'vs last 30 days', icon: Eye, color: 'text-amber-600 bg-amber-50' },
+  { label: 'Clicked', value: '248', change: '↑ 9.7%', percent: '22.8%', subtext: 'vs last 30 days', icon: Bell, color: 'text-blue-600 bg-blue-50' },
+  { label: 'Failed', value: '42', change: '↓ 2.3%', percent: '3.4%', subtext: 'vs last 30 days', icon: XCircle, color: 'text-rose-600 bg-rose-50' },
 ];
 
 const typeStyles: Record<NoticeType, string> = {
-  Announcement: 'bg-violet-50 text-violet-700 border-violet-200', Alert: 'bg-rose-50 text-rose-700 border-rose-200', Reminder: 'bg-blue-50 text-blue-700 border-blue-200', Promotion: 'bg-emerald-50 text-emerald-700 border-emerald-200', Update: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  Announcement: 'bg-violet-50 text-violet-700 border-violet-200',
+  Alert: 'bg-rose-50 text-rose-700 border-rose-200',
+  Reminder: 'bg-blue-50 text-blue-700 border-blue-200',
+  Promotion: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  Update: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+  Other: 'bg-slate-100 text-slate-700 border-slate-200',
 };
 
 function PageHeader({ title, description, kind }: { title: string; description: string; kind: PageKind }) {
   const navigate = useNavigate();
-  const actions = kind === 'center' ? <><Button variant="outline" size="sm" onClick={() => navigate('/admin/notifications/push')} className="gap-2"><Send className="h-3.5 w-3.5" />Push Notification</Button><Button variant="outline" size="sm" onClick={() => navigate('/admin/notifications/create')} className="gap-2"><Plus className="h-3.5 w-3.5" />Create Notification</Button><Button variant="accent" size="sm" onClick={() => navigate('/admin/notifications/executives')} className="gap-2"><Bell className="h-3.5 w-3.5" />Executive Alerts</Button></> : kind === 'templates' ? <><Button variant="outline" size="sm" onClick={() => toast.info('Template import is ready for a file source.')}>Import Template</Button><Button variant="accent" size="sm" onClick={() => toast.success('New template draft created.') } className="gap-2"><Plus className="h-3.5 w-3.5" />Create Template</Button></> : kind === 'alerts' ? <><Button variant="outline" size="sm" onClick={() => toast.info('Alert settings opened.')}>Alert Settings</Button><Button variant="accent" size="sm" onClick={() => navigate('/admin/notifications/create')} className="gap-2"><Plus className="h-3.5 w-3.5" />Create Executive Alert</Button></> : kind === 'push' ? <><Button variant="outline" size="sm" onClick={() => navigate('/admin/notifications')}>Notification Center</Button><Button variant="accent" size="sm" onClick={() => toast.success('New push notification is ready to compose.') } className="gap-2"><Plus className="h-3.5 w-3.5" />New Push Notification</Button></> : <><Button variant="outline" size="sm" onClick={() => toast.success('Notification saved as a draft.')}>Save as Draft</Button><Button variant="accent" size="sm" onClick={() => toast.success('Notification is ready for review.') } className="gap-2"><Send className="h-3.5 w-3.5" />Review & Send</Button></>;
-  return <div className="flex flex-wrap items-end justify-between gap-4"><div><div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-500"><button onClick={() => navigate('/admin/notifications')} className="hover:text-[#0D1F3D]">Notifications</button><ChevronRight className="h-3.5 w-3.5" /><span className="text-[#0D1F3D]">{title}</span></div><h1 className="text-2xl font-extrabold text-[#0D1F3D]">{title}</h1><p className="mt-1 text-xs font-medium text-slate-500">{description}</p></div><div className="flex flex-wrap items-center gap-2">{actions}</div></div>;
+
+  const actions =
+    kind === 'center' ? (
+      <>
+        <Button variant="outline" size="sm" onClick={() => navigate('/admin/notifications/push')} className="gap-2 font-bold shadow-xs">
+          <Send className="h-3.5 w-3.5" /> Push Notification
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => navigate('/admin/notifications/create')} className="gap-2 font-bold shadow-xs">
+          <Plus className="h-3.5 w-3.5" /> Create Notification
+        </Button>
+        <Button variant="accent" size="sm" onClick={() => navigate('/admin/notifications/executives')} className="gap-2 font-bold shadow-xs">
+          <Bell className="h-3.5 w-3.5" /> Executive Alerts
+        </Button>
+      </>
+    ) : kind === 'templates' ? (
+      <>
+        <Button variant="outline" size="sm" onClick={() => toast.info('Template import wizard opened.')} className="font-bold shadow-xs">
+          Import Template
+        </Button>
+        <Button variant="accent" size="sm" onClick={() => navigate('/admin/notifications/create')} className="gap-2 font-bold shadow-xs">
+          <Plus className="h-3.5 w-3.5" /> Create Template
+        </Button>
+      </>
+    ) : kind === 'alerts' ? (
+      <>
+        <Button variant="outline" size="sm" onClick={() => toast.info('Alert settings panel opened.')} className="font-bold shadow-xs">
+          Alert Settings
+        </Button>
+        <Button variant="accent" size="sm" onClick={() => navigate('/admin/notifications/create')} className="gap-2 font-bold shadow-xs">
+          <Plus className="h-3.5 w-3.5" /> Create Executive Alert
+        </Button>
+      </>
+    ) : kind === 'push' ? (
+      <>
+        <Button variant="outline" size="sm" onClick={() => navigate('/admin/notifications')} className="font-bold shadow-xs">
+          ← Notification Center
+        </Button>
+        <Button variant="accent" size="sm" onClick={() => toast.success('New push notification draft created.')} className="gap-2 font-bold shadow-xs">
+          <Plus className="h-3.5 w-3.5" /> New Push Notification
+        </Button>
+      </>
+    ) : (
+      <>
+        <Button variant="outline" size="sm" onClick={() => toast.success('Notification saved as draft.')} className="font-bold shadow-xs">
+          Save as Draft
+        </Button>
+        <Button variant="accent" size="sm" onClick={() => toast.success('Notification submitted for final delivery!')} className="gap-2 font-bold shadow-xs">
+          <Send className="h-3.5 w-3.5" /> Review & Send
+        </Button>
+      </>
+    );
+
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200/80 pb-3">
+      <div>
+        <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+          <button onClick={() => navigate('/admin/notifications')} className="hover:text-[#0D1F3D] cursor-pointer">
+            Notifications
+          </button>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-[#0D1F3D] font-bold">{title}</span>
+        </div>
+        <h1 className="text-2xl font-extrabold text-[#0D1F3D] tracking-tight">{title}</h1>
+        <p className="mt-0.5 text-xs font-medium text-slate-500">{description}</p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2.5">{actions}</div>
+    </div>
+  );
 }
 
 function Stats({ alert = false, template = false }: { alert?: boolean; template?: boolean }) {
-  const cards = alert ? [{ label: 'Total Alerts', value: '156', change: '+18.6%', icon: Bell, color: 'text-rose-600 bg-rose-50' }, { label: 'Critical Alerts', value: '28', change: '+27.3%', icon: AlertCircle, color: 'text-orange-600 bg-orange-50' }, { label: 'Pending Alerts', value: '42', change: '+14.2%', icon: CalendarClock, color: 'text-amber-600 bg-amber-50' }, { label: 'Acknowledged', value: '72', change: '+16.8%', icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' }, { label: 'Resolved', value: '42', change: '+12.5%', icon: ClipboardCopy, color: 'text-violet-600 bg-violet-50' }] : template ? [{ label: 'Total Templates', value: '126', change: '+18.6%', icon: ClipboardCopy, color: 'text-blue-600 bg-blue-50' }, { label: 'Active Templates', value: '98', change: '+16.2%', icon: Send, color: 'text-emerald-600 bg-emerald-50' }, { label: 'Scheduled Templates', value: '14', change: '+12.5%', icon: CalendarClock, color: 'text-amber-600 bg-amber-50' }, { label: 'Archived Templates', value: '14', change: '+9.3%', icon: ClipboardCopy, color: 'text-violet-600 bg-violet-50' }, { label: 'Disabled Templates', value: '6', change: '−4.1%', icon: XCircle, color: 'text-rose-600 bg-rose-50' }] : statCards;
-  return <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">{cards.map(({ label, value, change, icon: Icon, color }) => <div key={label} className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><div className="flex items-center gap-3"><span className={`flex h-10 w-10 items-center justify-center rounded-full ${color}`}><Icon className="h-5 w-5" /></span><div><p className="text-[11px] font-bold text-[#0D1F3D]">{label}</p><p className="mt-1 text-lg font-extrabold text-[#0D1F3D]">{value}</p></div></div><p className="mt-3 text-[10px] font-semibold text-emerald-600">↑ {change} <span className="ml-1 text-slate-500">vs last 30 days</span></p></div>)}</div>;
+  const cards = alert
+    ? [
+        { label: 'Total Alerts', value: '156', change: '↑ 18.6%', percent: '', subtext: 'vs last 30 days', icon: Bell, color: 'text-rose-600 bg-rose-50' },
+        { label: 'Critical Alerts', value: '28', change: '↑ 27.3%', percent: '', subtext: 'vs last 30 days', icon: AlertCircle, color: 'text-rose-600 bg-rose-50' },
+        { label: 'Pending Alerts', value: '42', change: '↑ 14.2%', percent: '', subtext: 'vs last 30 days', icon: CalendarClock, color: 'text-amber-600 bg-amber-50' },
+        { label: 'Acknowledged', value: '72', change: '↑ 16.8%', percent: '', subtext: 'vs last 30 days', icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
+        { label: 'Resolved', value: '42', change: '↑ 12.5%', percent: '', subtext: 'vs last 30 days', icon: ClipboardCopy, color: 'text-violet-600 bg-violet-50' },
+      ]
+    : template
+    ? [
+        { label: 'Total Templates', value: '126', change: '↑ 18.6%', percent: '', subtext: 'vs last 30 days', icon: ClipboardCopy, color: 'text-blue-600 bg-blue-50' },
+        { label: 'Active Templates', value: '98', change: '↑ 16.2%', percent: '', subtext: 'vs last 30 days', icon: Send, color: 'text-emerald-600 bg-emerald-50' },
+        { label: 'Scheduled Templates', value: '14', change: '↑ 12.5%', percent: '', subtext: 'vs last 30 days', icon: CalendarClock, color: 'text-amber-600 bg-amber-50' },
+        { label: 'Archived Templates', value: '14', change: '↑ 9.3%', percent: '', subtext: 'vs last 30 days', icon: ClipboardCopy, color: 'text-violet-600 bg-violet-50' },
+        { label: 'Disabled Templates', value: '6', change: '↓ 4.1%', percent: '', subtext: 'vs last 30 days', icon: XCircle, color: 'text-rose-600 bg-rose-50' },
+      ]
+    : statCards;
+
+  return (
+    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+      {cards.map(({ label, value, change, percent, subtext, icon: Icon, color }) => (
+        <div key={label} className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center gap-3">
+            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-sm ${color}`}>
+              <Icon className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-xs font-semibold text-slate-500">{label}</p>
+              <div className="flex items-baseline gap-1.5">
+                <p className="text-xl font-extrabold text-[#0D1F3D]">{value}</p>
+                {percent && <span className="text-xs font-bold text-slate-600">({percent})</span>}
+              </div>
+            </div>
+          </div>
+          <p className="mt-2.5 text-[11px] font-semibold text-emerald-600">
+            {change} <span className="text-slate-400 font-normal">{subtext}</span>
+          </p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-function StatusBadge({ status }: { status: NotificationRow['status'] }) { const style = status === 'Failed' ? 'bg-rose-50 text-rose-700 border-rose-200' : status === 'Scheduled' || status === 'Pending' ? 'bg-amber-50 text-amber-700 border-amber-200' : status === 'Resolved' ? 'bg-violet-50 text-violet-700 border-violet-200' : status === 'Disabled' ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'; return <span className={`inline-flex rounded-sm border px-2 py-0.5 text-[10px] font-bold ${style}`}>{status}</span>; }
+function StatusBadge({ status }: { status: NotificationRow['status'] }) {
+  const style =
+    status === 'Failed'
+      ? 'bg-rose-50 text-rose-700 border-rose-200'
+      : status === 'Scheduled' || status === 'Pending'
+      ? 'bg-amber-50 text-amber-700 border-amber-200'
+      : status === 'Resolved'
+      ? 'bg-violet-50 text-violet-700 border-violet-200'
+      : status === 'Disabled'
+      ? 'bg-slate-100 text-slate-600 border-slate-200'
+      : 'bg-emerald-50 text-emerald-700 border-emerald-200';
 
-function Filters({ compact = false }: { compact?: boolean }) { const [search, setSearch] = useState(''); return <div className="grid grid-cols-1 gap-3 rounded-md border border-slate-200 bg-white p-3 shadow-xs sm:grid-cols-2 xl:grid-cols-5"><Input aria-label="Search notifications" placeholder="Search by title, message, or audience..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 bg-white py-2 text-xs" /><Select aria-label="Notification type" options={[{ value: 'all', label: 'All Types' }, { value: 'alert', label: 'Alert' }, { value: 'reminder', label: 'Reminder' }]} value="all" searchable={false} className="h-9 py-2" /><Select aria-label="Audience" options={[{ value: 'all', label: 'All Audiences' }, { value: 'executives', label: 'Field Executives' }, { value: 'customers', label: 'Customers' }]} value="all" searchable={false} className="h-9 py-2" /><Select aria-label="Status" options={[{ value: 'all', label: 'All Status' }, { value: 'sent', label: 'Sent' }, { value: 'scheduled', label: 'Scheduled' }]} value="all" searchable={false} className="h-9 py-2" />{!compact && <div className="flex items-end gap-2"><Button variant="outline" size="sm" onClick={() => toast.info('Filters cleared.')} className="h-9">Clear</Button><Button variant="accent" size="sm" onClick={() => toast.success('Filters applied.')} className="h-9">Apply Filters</Button></div>}</div>; }
+  return <span className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${style}`}>
+    <span className="h-1.5 w-1.5 rounded-full bg-current" />
+    {status}
+  </span>;
+}
 
-function NotificationTable({ mode = 'notifications' }: { mode?: 'notifications' | 'alerts' | 'templates' }) { const navigate = useNavigate(); const rows = useMemo(() => mode === 'alerts' ? notificationRows.map((row, index) => ({ ...row, title: ['Sales Target at Risk', 'Executive Inactive', 'High Pending Payments', 'Visit Verification Failed', 'Top Performer', 'Follow-ups Overdue'][index], description: ['Team Mumbai West is 35% behind the monthly target.', 'Rahul Kumar has been inactive for 2 days.', '5 payment leads are pending for more than 7 days.', '3 visits failed GPS verification yesterday.', 'Vikram Bansal achieved 120% of monthly target.', '18 follow-ups are overdue.'][index], status: (['Pending', 'Pending', 'Pending', 'Acknowledged', 'Resolved', 'Pending'][index] as NotificationRow['status']), type: 'Alert' as NoticeType, audience: executives[index % executives.length].label, delivery: ['Critical', 'High', 'High', 'Medium', 'Low', 'Medium'][index] })) : mode === 'templates' ? notificationRows.map((row) => ({ ...row, status: row.status === 'Failed' ? 'Disabled' : 'Active' as NotificationRow['status'], created: row.created.replace('2025', '2025') })) : notificationRows, [mode]);
-  const columns: ColumnDef<NotificationRow>[] = [{ header: mode === 'alerts' ? 'Alert Title' : mode === 'templates' ? 'Template Name' : 'Title & Message', cell: (row) => { const Icon = row.icon; return <div className="flex min-w-[210px] items-center gap-2.5"><span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${row.tone === 'emerald' ? 'bg-emerald-50 text-emerald-600' : row.tone === 'blue' ? 'bg-blue-50 text-blue-600' : row.tone === 'violet' ? 'bg-violet-50 text-violet-600' : 'bg-rose-50 text-rose-600'}`}><Icon className="h-4 w-4" /></span><div><p className="font-bold text-[#0D1F3D]">{row.title}</p><p className="mt-0.5 max-w-[250px] truncate text-[10px] font-medium text-slate-500">{row.description}</p></div></div> } }, { header: mode === 'alerts' ? 'Urgency' : 'Type', cell: (row) => mode === 'alerts' ? <StatusBadge status={row.delivery === 'Critical' ? 'Failed' : row.delivery === 'High' ? 'Pending' : 'Acknowledged'} /> : <span className={`rounded-sm border px-2 py-0.5 text-[10px] font-bold ${typeStyles[row.type]}`}>{row.type}</span> }, { header: mode === 'alerts' ? 'Executive / Role' : 'Audience', cell: (row) => <div><p className="font-bold text-[#0D1F3D]">{row.audience}</p><p className="mt-0.5 text-[10px] text-slate-500">{mode === 'alerts' ? 'Field Executive' : '320 Users'}</p></div> }, { header: mode === 'templates' ? 'Channel' : mode === 'alerts' ? 'Status' : 'Channel', cell: (row) => mode === 'alerts' ? <StatusBadge status={row.status} /> : <span className="text-[11px] font-semibold text-slate-600">{row.channel}</span> }, { header: mode === 'alerts' ? 'Assigned To' : mode === 'templates' ? 'Last Updated' : 'Sent / Scheduled', cell: (row) => <span className="text-[11px] font-semibold text-slate-600">{mode === 'alerts' ? row.audience : row.created}</span> }, { header: mode === 'alerts' ? 'Created On' : mode === 'templates' ? 'Status' : 'Delivery', cell: (row) => mode === 'templates' ? <StatusBadge status={row.status} /> : <span className="font-bold text-[#0D1F3D]">{row.delivery}</span> }, { header: 'Actions', align: 'right', cell: (row) => <div className="flex justify-end gap-1"><button aria-label={`View ${row.title}`} className="rounded-sm p-1.5 text-[#0D1F3D] hover:bg-slate-100" onClick={() => toast.info(`Viewing ${row.title}`)}><Eye className="h-4 w-4" /></button>{mode === 'templates' && <button aria-label={`Edit ${row.title}`} className="rounded-sm p-1.5 text-[#0D1F3D] hover:bg-slate-100" onClick={() => navigate('/admin/notifications/create')}><Pencil className="h-4 w-4" /></button>}<button aria-label={`More actions for ${row.title}`} className="rounded-sm p-1.5 text-[#0D1F3D] hover:bg-slate-100" onClick={() => toast.info('Additional actions are available.')}><MoreVertical className="h-4 w-4" /></button></div> }];
-  return <DataTable columns={columns} data={rows} keyExtractor={(row) => row.id} emptyMessage="No notifications found" density="compact" />; }
+function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'templates' }) {
+  const [search, setSearch] = useState('');
 
-function Overview({ title = 'Notification Overview' }: { title?: string }) { return <aside className="space-y-3"><div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">{title}</h2><div className="mt-4 flex items-center gap-4"><div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-[12px] border-rose-500 border-l-emerald-500 border-b-violet-500 border-r-amber-500"><div className="text-center"><p className="text-lg font-extrabold text-[#0D1F3D]">1,248</p><p className="text-[9px] font-semibold text-slate-500">Total</p></div></div><div className="space-y-2 text-[10px] font-semibold text-slate-600"><p><span className="mr-2 inline-block h-2 w-2 rounded-full bg-rose-500" />Reminder <b className="float-right ml-5 text-[#0D1F3D]">35.3%</b></p><p><span className="mr-2 inline-block h-2 w-2 rounded-full bg-amber-500" />Alert <b className="float-right ml-5 text-[#0D1F3D]">24.1%</b></p><p><span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500" />Promotion <b className="float-right ml-5 text-[#0D1F3D]">18.3%</b></p><p><span className="mr-2 inline-block h-2 w-2 rounded-full bg-violet-500" />Announcement <b className="float-right ml-5 text-[#0D1F3D]">12.8%</b></p></div></div></div><div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">Channel Wise Delivery</h2><div className="mt-4 space-y-3">{[['WhatsApp', '89.9%', 'bg-emerald-500'], ['Email', '78.0%', 'bg-violet-500'], ['In-App', '92.5%', 'bg-blue-600']].map(([channel, value, color]) => <div key={channel}><div className="mb-1 flex justify-between text-[10px] font-semibold text-slate-600"><span>{channel}</span><span>{value}</span></div><div className="h-1.5 rounded-full bg-slate-100"><div className={`h-full rounded-full ${color}`} style={{ width: value }} /></div></div>)}</div></div></aside>; }
+  return (
+    <div className="rounded-sm border border-slate-200 bg-white p-3.5 shadow-xs space-y-3">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="relative">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder={
+              mode === 'alerts'
+                ? 'Search by alert title or description...'
+                : mode === 'templates'
+                ? 'Search by template name or keyword...'
+                : 'Search by title, message, or audience...'
+            }
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-sm border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
+          />
+        </div>
 
-export function NotificationCenterPage() { return <div className="space-y-4"><PageHeader kind="center" title="Notification Center" description="Manage all system notifications, announcements and communication history." /><Stats /><div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]"><div className="space-y-3"><Filters /><div className="flex items-center justify-between"><div className="flex gap-5 text-xs font-bold"><span className="border-b-2 border-[#E20613] pb-2 text-[#E20613]">All Notifications (1,248)</span><span className="pb-2 text-slate-500">Sent</span><span className="pb-2 text-slate-500">Scheduled</span><span className="pb-2 text-slate-500">Drafts</span><span className="pb-2 text-slate-500">Failed</span></div></div><NotificationTable /></div><Overview /></div></div>; }
+        <Select
+          value="all"
+          onChange={() => {}}
+          options={[
+            { value: 'all', label: 'All Types' },
+            { value: 'announcement', label: 'Announcement' },
+            { value: 'alert', label: 'Alert' },
+            { value: 'reminder', label: 'Reminder' },
+            { value: 'promotion', label: 'Promotion' },
+          ]}
+          searchable={false}
+        />
 
-function AudienceOptions({ selected, onChange }: { selected: string; onChange: (value: string) => void }) { return <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">{[['all', 'All Users', Users], ['users', 'Users', Users], ['teams', 'Teams / Territories', CalendarClock], ['roles', 'Roles', CheckCircle2]].map(([value, label, Icon]) => <button key={value as string} type="button" onClick={() => onChange(value as string)} className={`flex items-center gap-2 rounded-md border p-3 text-left transition-colors ${selected === value ? 'border-[#E20613] bg-rose-50 text-[#0D1F3D]' : 'border-slate-200 bg-white hover:bg-slate-50'}`}><Icon className="h-5 w-5 text-[#0D1F3D]" /><span className="text-xs font-bold">{label as string}</span></button>)}</div>; }
+        <Select
+          value="all"
+          onChange={() => {}}
+          options={[
+            { value: 'all', label: 'All Audiences' },
+            { value: 'customers', label: 'All Customers' },
+            { value: 'executives', label: 'Field Executives' },
+            { value: 'managers', label: 'Sales Managers' },
+          ]}
+          searchable={false}
+        />
 
-function PreviewCard({ title, message, push = false }: { title: string; message: string; push?: boolean }) { return <div className={`rounded-md border border-slate-200 ${push ? 'bg-slate-950 p-4 text-white' : 'bg-white p-4'} shadow-xs`}><div className="flex items-center justify-between"><div className="flex items-center gap-2"><img src="/assets/sfw-icon.png" alt="Smart Field Work" className="h-7 w-7 rounded-full" /><span className={`text-[10px] font-bold ${push ? 'text-white' : 'text-[#0D1F3D]'}`}>Smart Field Work</span></div><span className={`text-[10px] ${push ? 'text-slate-300' : 'text-slate-500'}`}>now</span></div><p className={`mt-4 text-xs font-extrabold ${push ? 'text-white' : 'text-[#0D1F3D]'}`}>{title || 'Notification Title'}</p><p className={`mt-1 text-[11px] leading-5 ${push ? 'text-slate-200' : 'text-slate-600'}`}>{message || 'This is how your notification message will appear to the selected audience.'}</p><button className="mt-4 text-xs font-bold text-[#E20613]">View Details <ChevronRight className="inline h-3.5 w-3.5" /></button></div>; }
+        <Select
+          value="all"
+          onChange={() => {}}
+          options={[
+            { value: 'all', label: 'All Status' },
+            { value: 'sent', label: 'Sent' },
+            { value: 'scheduled', label: 'Scheduled' },
+            { value: 'failed', label: 'Failed' },
+          ]}
+          searchable={false}
+        />
 
-export function CreateNotificationPage() { const [type, setType] = useState<NoticeType>('Announcement'); const [audience, setAudience] = useState('all'); const [title, setTitle] = useState(''); const [message, setMessage] = useState(''); const [sendNow, setSendNow] = useState(true); return <div className="space-y-4"><PageHeader kind="create" title="Create Notification" description="Send updates, alerts and announcements to the right audience." /><div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_390px]"><div className="space-y-4"><div className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-5 py-4"><p className="text-xs font-bold text-[#E20613]">1&nbsp;&nbsp; Compose</p><p className="text-xs font-semibold text-slate-500">2&nbsp;&nbsp; Audience</p><p className="text-xs font-semibold text-slate-500">3&nbsp;&nbsp; Delivery</p><p className="text-xs font-semibold text-slate-500">4&nbsp;&nbsp; Review</p></div><section className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">Notification Type</h2><div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-5">{(['Announcement', 'Alert', 'Reminder', 'Promotion', 'Update'] as NoticeType[]).map((item) => <button key={item} type="button" onClick={() => setType(item)} className={`rounded-md border p-3 text-left ${type === item ? 'border-[#E20613] bg-rose-50' : 'border-slate-200 hover:bg-slate-50'}`}><p className="text-xs font-bold text-[#0D1F3D]">{item}</p><p className="mt-1 text-[10px] leading-4 text-slate-500">{item === 'Alert' ? 'Important alerts and notifications' : 'General updates and information'}</p></button>)}</div></section><section className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">Audience</h2><div className="mt-3"><AudienceOptions selected={audience} onChange={setAudience} /></div><div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3"><Select label="Customer / Executive" placeholder="Select customers or executives" options={executives} searchable /><Select label="Teams / Territories" options={[{ value: 'mumbai', label: 'Mumbai Sales Team' }, { value: 'pune', label: 'Pune Sales Team' }]} searchable /><Select label="Roles" options={[{ value: 'field', label: 'Field Executives' }, { value: 'manager', label: 'Sales Managers' }]} searchable /></div></section><section className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">Message Content</h2><div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2"><Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Enter notification title" /><Input label="Short Description (Optional)" placeholder="Enter short description" /></div><label className="mt-3 block text-xs font-semibold text-slate-500">Message<textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={5000} placeholder="Enter your message here..." className="mt-1.5 h-28 w-full resize-none rounded-sm border border-slate-200 bg-white p-3 text-xs font-medium text-[#0D1F3D] placeholder:text-slate-400 focus:border-[#E20613] focus:outline-none focus:ring-1 focus:ring-[#E20613]" /></label><div className="mt-2 flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={() => setMessage((current) => `${current} {{name}}`)}>Add Merge Field</Button><Button variant="outline" size="sm" onClick={() => setMessage((current) => `${current} 🙂`)}>Add Emoji</Button></div></section><section className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">Delivery Settings</h2><div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4"><button type="button" onClick={() => setSendNow(true)} className={`rounded-md border p-3 text-left text-xs font-bold ${sendNow ? 'border-[#E20613] bg-rose-50' : 'border-slate-200'}`}>Send Immediately</button><button type="button" onClick={() => setSendNow(false)} className={`rounded-md border p-3 text-left text-xs font-bold ${!sendNow ? 'border-[#E20613] bg-rose-50' : 'border-slate-200'}`}>Schedule For Later</button><Input label="Schedule Date" type="date" /><Select label="Priority" value="high" options={[{ value: 'high', label: 'High' }, { value: 'normal', label: 'Normal' }]} searchable={false} /></div></section></div><aside className="space-y-4"><div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">Live Preview</h2><div className="mt-3 border-b border-slate-200 pb-2 text-xs font-bold text-[#E20613]">In-App</div><div className="mt-4"><PreviewCard title={title} message={message} /></div></div><div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">Notification Summary</h2><dl className="mt-3 space-y-3 text-xs"><div className="flex justify-between"><dt className="text-slate-500">Type</dt><dd className="font-bold text-[#0D1F3D]">{type}</dd></div><div className="flex justify-between"><dt className="text-slate-500">Audience</dt><dd className="font-bold text-[#0D1F3D]">{audience === 'all' ? 'All Users' : audience}</dd></div><div className="flex justify-between"><dt className="text-slate-500">Delivery</dt><dd className="font-bold text-[#0D1F3D]">{sendNow ? 'Immediately' : 'Scheduled'}</dd></div></dl></div></aside></div></div>; }
+        <Select
+          value="all"
+          onChange={() => {}}
+          options={[
+            { value: 'all', label: 'All Channels' },
+            { value: 'whatsapp', label: 'WhatsApp' },
+            { value: 'email', label: 'Email' },
+            { value: 'inapp', label: 'In-App' },
+          ]}
+          searchable={false}
+        />
+      </div>
 
-export function PushNotificationsPage() { const [audience, setAudience] = useState('all'); const [platform, setPlatform] = useState('android'); const [title, setTitle] = useState('Plan Renewal Reminder'); const [message, setMessage] = useState('Hi {{name}}, your plan will expire on {{expiry_date}}. Please renew to continue using all features.'); const [sound, setSound] = useState(true); const [badge, setBadge] = useState(true); return <div className="space-y-4"><PageHeader kind="push" title="Push Notifications" description="Send instant push notifications to mobile app users." /><Stats /><div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_370px]"><div className="space-y-4 rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">Create Push Notification</h2><section><p className="mb-2 text-xs font-semibold text-slate-500">Send To</p><AudienceOptions selected={audience} onChange={setAudience} /></section><section><p className="mb-2 text-xs font-semibold text-slate-500">Platform</p><div className="grid grid-cols-3 gap-3">{[['android', 'Android'], ['ios', 'iOS'], ['both', 'Both']].map(([value, label]) => <button key={value} type="button" onClick={() => setPlatform(value)} className={`rounded-md border p-3 text-xs font-bold ${platform === value ? 'border-[#E20613] bg-rose-50 text-[#0D1F3D]' : 'border-slate-200 text-slate-600'}`}>{label}</button>)}</div></section><section className="space-y-3"><Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} /><label className="block text-xs font-semibold text-slate-500">Message<textarea value={message} onChange={(e) => setMessage(e.target.value)} className="mt-1.5 h-24 w-full resize-none rounded-sm border border-slate-200 p-3 text-xs font-medium focus:border-[#E20613] focus:outline-none" /></label><div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Input label="Deep Link (Optional)" value="sfw://renewal" readOnly /><Button variant="outline" size="sm" onClick={() => toast.info('Select an image file to attach.') } className="mt-5">Upload Image</Button></div></section><section className="rounded-md border border-slate-200 bg-slate-50/70 p-3"><p className="mb-3 text-xs font-bold text-[#0D1F3D]">Additional Options</p><div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Checkbox label="Include sound" checked={sound} onChange={setSound} /><Checkbox label="Include badge count" checked={badge} onChange={setBadge} /><Checkbox label="Require action" checked={false} onChange={() => toast.info('Action requirement enabled.')} /><Checkbox label="Show in notification center" checked={true} onChange={() => toast.info('Visibility preference saved.')} /></div></section><section className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 sm:grid-cols-3"><button type="button" className="rounded-md border border-[#E20613] bg-rose-50 p-3 text-left text-xs font-bold text-[#0D1F3D]">Send Now</button><button type="button" className="rounded-md border border-slate-200 p-3 text-left text-xs font-bold text-slate-600">Schedule For Later</button><Select label="TTL (Time To Live)" value="7" options={[{ value: '7', label: '7 Days' }, { value: '1', label: '1 Day' }]} searchable={false} /></section><div className="flex justify-between border-t border-slate-100 pt-4"><Button variant="outline" size="sm" onClick={() => toast.info('Push notification cancelled.')}>Cancel</Button><Button variant="accent" size="sm" onClick={() => toast.success('Push notification is ready for review.')} className="gap-2">Review & Send <Send className="h-3.5 w-3.5" /></Button></div></div><aside className="space-y-4"><div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">Preview</h2><div className="mt-4"><PreviewCard title={title} message={message} push /></div></div><div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">Push Summary</h2><dl className="mt-3 space-y-2 text-xs"><div className="flex justify-between"><dt className="text-slate-500">Audience</dt><dd className="font-bold text-[#0D1F3D]">{audience === 'all' ? 'All Users' : audience}</dd></div><div className="flex justify-between"><dt className="text-slate-500">Platform</dt><dd className="font-bold capitalize text-[#0D1F3D]">{platform}</dd></div><div className="flex justify-between"><dt className="text-slate-500">Priority</dt><dd className="font-bold text-rose-600">High</dd></div></dl></div></aside></div></div>; }
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-2.5">
+        <div className="flex flex-wrap items-center gap-2.5 text-xs">
+          <span className="font-bold text-slate-500">Date Range:</span>
+          <span className="font-mono font-bold text-[#0D1F3D] bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-sm">
+            01 May 2025 - 22 May 2025 📅
+          </span>
+        </div>
 
-export function ExecutiveAlertsPage() { return <div className="space-y-4"><PageHeader kind="alerts" title="Executive Alerts" description="Critical alerts and important notifications for executives and managers." /><Stats alert /><div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]"><div className="space-y-3"><Filters /><div className="flex gap-5 text-xs font-bold"><span className="border-b-2 border-[#E20613] pb-2 text-[#E20613]">All Alerts (156)</span><span className="pb-2 text-slate-500">Critical (28)</span><span className="pb-2 text-slate-500">Pending (42)</span><span className="pb-2 text-slate-500">Acknowledged (72)</span></div><NotificationTable mode="alerts" /></div><Overview title="Alert Distribution" /></div></div>; }
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => toast.info('Filters cleared')} className="font-bold">
+            Clear Filters
+          </Button>
+          <Button variant="accent" size="sm" onClick={() => toast.success('Filters applied')} className="font-bold shadow-xs">
+            Apply Filters
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-export function NotificationTemplatesPage() { return <div className="space-y-4"><PageHeader kind="templates" title="Notification Templates" description="Create, manage and reuse templates for notifications across all channels." /><Stats template /><div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px]"><div className="space-y-3"><Filters /><div className="flex gap-5 text-xs font-bold"><span className="border-b-2 border-[#E20613] pb-2 text-[#E20613]">All Templates (126)</span><span className="pb-2 text-slate-500">Announcements (28)</span><span className="pb-2 text-slate-500">Alerts (32)</span><span className="pb-2 text-slate-500">Reminders (24)</span></div><NotificationTable mode="templates" /></div><aside className="space-y-3"><div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs"><h2 className="text-sm font-extrabold text-[#0D1F3D]">Template Preview</h2><div className="mt-4"><PreviewCard title="Plan Renewal Reminder" message="Hi Rahul, your plan will expire on 22 May 2025. Please renew to continue using all features." push /></div></div><div className="rounded-md border border-amber-200 bg-amber-50/70 p-4"><h2 className="flex items-center gap-2 text-sm font-extrabold text-[#0D1F3D]"><Flag className="h-4 w-4 text-amber-500" />Tips</h2><ul className="mt-3 space-y-2 text-[11px] font-medium text-slate-600"><li>Use merge fields to personalize notifications.</li><li>Test templates before publishing.</li><li>Keep messages short and impactful.</li></ul></div></aside></div></div>; }
+// SCREEN 163: NOTIFICATION CENTER (/admin/notifications)
+export function NotificationCenterPage() {
+  const [activeTab, setActiveTab] = useState<'all' | 'sent' | 'scheduled' | 'drafts' | 'failed'>('all');
+
+  const columns: ColumnDef<NotificationRow>[] = [
+    {
+      header: 'Title & Message',
+      cell: (row) => {
+        const Icon = row.icon;
+        return (
+          <div className="flex items-center gap-3 min-w-[220px]">
+            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm ${
+              row.tone === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
+              row.tone === 'blue' ? 'bg-blue-50 text-blue-600' :
+              row.tone === 'violet' ? 'bg-purple-50 text-purple-600' : 'bg-rose-50 text-rose-600'
+            }`}>
+              <Icon className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="font-extrabold text-[#0D1F3D] text-xs">{row.title}</p>
+              <p className="text-[11px] font-medium text-slate-500 truncate max-w-[240px] mt-0.5">{row.description}</p>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      header: 'Type',
+      cell: (row) => (
+        <span className={`inline-flex rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${typeStyles[row.type]}`}>
+          {row.type}
+        </span>
+      ),
+    },
+    {
+      header: 'Audience',
+      cell: (row) => (
+        <div>
+          <p className="font-extrabold text-[#0D1F3D] text-xs">{row.audience}</p>
+        </div>
+      ),
+    },
+    {
+      header: 'Channel',
+      cell: (row) => (
+        <span className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-sm">
+          {row.channel}
+        </span>
+      ),
+    },
+    {
+      header: 'Status',
+      cell: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      header: 'Sent / Scheduled',
+      cell: (row) => <span className="text-xs font-semibold text-slate-600">{row.created}</span>,
+    },
+    {
+      header: 'Delivery',
+      cell: (row) => <span className="font-mono font-extrabold text-[#0D1F3D] text-xs">{row.delivery}</span>,
+    },
+    {
+      header: 'Actions',
+      align: 'right',
+      cell: (row) => (
+        <div className="flex justify-end gap-1">
+          <button
+            onClick={() => toast.info(`Viewing details for ${row.title}`)}
+            className="rounded-sm p-1.5 text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D] cursor-pointer"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => toast.info(`More options for ${row.title}`)}
+            className="rounded-sm p-1.5 text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D] cursor-pointer"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-4 font-sans pb-12">
+      <PageHeader kind="center" title="Notification Center" description="Manage all system notifications, announcements and communication history." />
+      
+      <Stats />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {/* Main Left Column (8 Cols) */}
+        <div className="lg:col-span-8 space-y-3">
+          <FilterBar mode="center" />
+
+          {/* Sub Tabs */}
+          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-3 pt-2 rounded-sm shadow-xs">
+            <div className="flex gap-6 text-xs font-bold">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={`pb-2 border-b-2 transition-colors cursor-pointer ${
+                  activeTab === 'all' ? 'border-[#E20613] text-[#E20613]' : 'border-transparent text-slate-500 hover:text-[#0D1F3D]'
+                }`}
+              >
+                All Notifications (1,248)
+              </button>
+              <button
+                onClick={() => setActiveTab('sent')}
+                className={`pb-2 border-b-2 transition-colors cursor-pointer ${
+                  activeTab === 'sent' ? 'border-[#E20613] text-[#E20613]' : 'border-transparent text-slate-500 hover:text-[#0D1F3D]'
+                }`}
+              >
+                Sent (1,089)
+              </button>
+              <button
+                onClick={() => setActiveTab('scheduled')}
+                className={`pb-2 border-b-2 transition-colors cursor-pointer ${
+                  activeTab === 'scheduled' ? 'border-[#E20613] text-[#E20613]' : 'border-transparent text-slate-500 hover:text-[#0D1F3D]'
+                }`}
+              >
+                Scheduled (117)
+              </button>
+              <button
+                onClick={() => setActiveTab('drafts')}
+                className={`pb-2 border-b-2 transition-colors cursor-pointer ${
+                  activeTab === 'drafts' ? 'border-[#E20613] text-[#E20613]' : 'border-transparent text-slate-500 hover:text-[#0D1F3D]'
+                }`}
+              >
+                Drafts (18)
+              </button>
+              <button
+                onClick={() => setActiveTab('failed')}
+                className={`pb-2 border-b-2 transition-colors cursor-pointer ${
+                  activeTab === 'failed' ? 'border-[#E20613] text-[#E20613]' : 'border-transparent text-slate-500 hover:text-[#0D1F3D]'
+                }`}
+              >
+                Failed (42)
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
+            <DataTable columns={columns} data={notificationRows} keyExtractor={(row) => row.id} density="compact" />
+          </div>
+        </div>
+
+        {/* Right Sidebar Widgets (4 Cols) */}
+        <div className="lg:col-span-4 space-y-4">
+          {/* Donut Overview */}
+          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Notification Overview</h3>
+            <div className="flex items-center gap-4 pt-1">
+              <div className="h-28 w-28 shrink-0 rounded-full border-[10px] border-purple-500 border-t-blue-500 border-r-emerald-500 border-b-amber-500 flex flex-col items-center justify-center bg-slate-50">
+                <span className="text-xl font-extrabold text-[#0D1F3D]">1,248</span>
+                <span className="text-[10px] font-bold text-slate-400">Total</span>
+              </div>
+              <div className="space-y-1.5 text-xs font-bold w-full">
+                <div className="flex items-center justify-between text-slate-700">
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" /> Reminder</span>
+                  <span className="font-mono text-[#0D1F3D]">35.3% (440)</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-700">
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Alert</span>
+                  <span className="font-mono text-[#0D1F3D]">24.1% (300)</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-700">
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Promotion</span>
+                  <span className="font-mono text-[#0D1F3D]">18.3% (228)</span>
+                </div>
+                <div className="flex items-center justify-between text-slate-700">
+                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Announcement</span>
+                  <span className="font-mono text-[#0D1F3D]">12.8% (160)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Channel Wise Delivery */}
+          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Channel Wise Delivery</h3>
+            <div className="space-y-3 pt-1">
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-1">
+                  <span className="text-slate-700">WhatsApp</span>
+                  <span className="text-emerald-600 font-mono">812 (89.9%)</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: '89.9%' }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-1">
+                  <span className="text-slate-700">Email</span>
+                  <span className="text-purple-600 font-mono">358 (78.0%)</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full bg-purple-600 rounded-full" style={{ width: '78.0%' }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-bold mb-1">
+                  <span className="text-slate-700">In-App Push</span>
+                  <span className="text-blue-600 font-mono">198 (92.5%)</span>
+                </div>
+                <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+                  <div className="h-full bg-blue-600 rounded-full" style={{ width: '92.5%' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Top Performing */}
+          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Top Performing Notifications</h3>
+            <div className="space-y-2.5 pt-1">
+              <div className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
+                <span className="font-extrabold text-[#0D1F3D]">Plan Renewal Reminder</span>
+                <span className="text-emerald-700 font-mono font-extrabold">62.4% Open</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
+                <span className="font-extrabold text-[#0D1F3D]">Discount Offer – 20% Off</span>
+                <span className="text-emerald-700 font-mono font-extrabold">58.7% Open</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
+                <span className="font-extrabold text-[#0D1F3D]">New Feature Released</span>
+                <span className="text-emerald-700 font-mono font-extrabold">55.1% Open</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// SCREEN 164: CREATE NOTIFICATION (/admin/notifications/create)
+export function CreateNotificationPage() {
+  const [noticeType, setNoticeType] = useState<NoticeType>('Announcement');
+  const [audienceTarget, setAudienceTarget] = useState('all');
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [sendNow, setSendNow] = useState(true);
+
+  return (
+    <div className="space-y-4 font-sans pb-12">
+      <PageHeader kind="create" title="Create Notification" description="Send updates, alerts and announcements to the right audience." />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {/* Main Compose Form (8 Cols) */}
+        <div className="lg:col-span-8 space-y-4">
+          {/* Stepper Bar */}
+          <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4 shadow-xs text-xs font-bold">
+            <span className="text-[#E20613] flex items-center gap-1.5"><span className="h-5 w-5 rounded-full bg-red-100 text-[#E20613] flex items-center justify-center text-[10px]">1</span> Compose</span>
+            <span className="text-slate-400 flex items-center gap-1.5"><span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">2</span> Audience</span>
+            <span className="text-slate-400 flex items-center gap-1.5"><span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">3</span> Delivery</span>
+            <span className="text-slate-400 flex items-center gap-1.5"><span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">4</span> Review</span>
+          </div>
+
+          {/* Type Selector Grid */}
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Notification Type</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {(['Announcement', 'Alert', 'Reminder', 'Promotion', 'Update', 'Other'] as NoticeType[]).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setNoticeType(t)}
+                  className={`p-3 rounded-sm border text-left transition-all cursor-pointer ${
+                    noticeType === t ? 'border-[#E20613] bg-red-50/50 shadow-xs' : 'border-slate-200 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <p className="text-xs font-extrabold text-[#0D1F3D]">{t}</p>
+                  <p className="text-[10px] text-slate-500 font-medium mt-1 leading-tight">
+                    {t === 'Announcement' ? 'General updates' : t === 'Alert' ? 'Important alerts' : 'Scheduled reminders'}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Audience Selection */}
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Audience</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <Select label="Send To *" options={[{ value: 'all', label: 'All Users' }, { value: 'custom', label: 'Custom Target' }]} searchable={false} />
+              <Select label="Customer / Executive" options={[{ value: 'customers', label: 'Select customers or executives' }]} searchable={true} />
+              <Select label="Teams / Territories" options={[{ value: 'mumbai', label: 'Select teams or territories' }]} searchable={true} />
+              <Select label="Roles" options={[{ value: 'field', label: 'Select roles' }]} searchable={true} />
+            </div>
+          </div>
+
+          {/* Message Content */}
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Message Content</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input label="Title *" placeholder="Enter notification title" value={title} onChange={(e) => setTitle(e.target.value)} />
+              <Input label="Short Description (Optional)" placeholder="Enter short description" />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700 block">Message *</label>
+              <textarea
+                rows={4}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Enter your message here..."
+                className="w-full rounded-sm border border-slate-200 bg-slate-50/50 p-3 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
+              />
+              <div className="flex justify-between text-[11px] text-slate-400 font-medium pt-1">
+                <span>Use merge fields to personalize. Example: <code>&#123;name&#125;</code>, <code>&#123;expiry_date&#125;</code></span>
+                <span>{message.length} / 5000</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+              <Button variant="outline" size="sm" onClick={() => setMessage((m) => m + ' {{name}}')} className="font-bold">
+                + Add Merge Field
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setMessage((m) => m + ' 😊')} className="font-bold">
+                😊 Add Emoji
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => toast.info('Media attachment opened')} className="font-bold">
+                📎 Add Media
+              </Button>
+            </div>
+          </div>
+
+          {/* Delivery Settings */}
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Delivery Settings</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <button
+                type="button"
+                onClick={() => setSendNow(true)}
+                className={`p-3 rounded-sm border text-left font-bold text-xs cursor-pointer ${
+                  sendNow ? 'border-[#E20613] bg-red-50/50 text-[#0D1F3D]' : 'border-slate-200 text-slate-600'
+                }`}
+              >
+                Send Immediately
+              </button>
+              <button
+                type="button"
+                onClick={() => setSendNow(false)}
+                className={`p-3 rounded-sm border text-left font-bold text-xs cursor-pointer ${
+                  !sendNow ? 'border-[#E20613] bg-red-50/50 text-[#0D1F3D]' : 'border-slate-200 text-slate-600'
+                }`}
+              >
+                Schedule For Later
+              </button>
+              <Input label="Schedule Date" type="date" defaultValue="2025-05-22" />
+              <Select label="Priority" options={[{ value: 'high', label: 'High Priority' }, { value: 'normal', label: 'Normal' }]} searchable={false} />
+            </div>
+          </div>
+        </div>
+
+        {/* Live Preview Sidebar (4 Cols) */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Live Mobile Preview</h3>
+            
+            {/* Phone Lockscreen Box */}
+            <div className="rounded-2xl border-4 border-slate-800 bg-slate-900 p-4 text-white space-y-3 shadow-lg">
+              <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold border-b border-slate-800 pb-2">
+                <span>10:30 AM</span>
+                <span>Smart Field Work</span>
+              </div>
+              <div className="bg-slate-800/80 rounded-xl p-3 space-y-1.5 border border-slate-700">
+                <div className="flex items-center gap-2">
+                  <img src="/assets/sfw-logo.png" alt="" className="h-5 w-auto object-contain" />
+                  <span className="text-xs font-extrabold text-white">{title || 'Notification Title'}</span>
+                </div>
+                <p className="text-[11px] text-slate-300 font-medium leading-relaxed">
+                  {message || 'This is how your notification message will appear on customer mobile screens.'}
+                </p>
+                <span className="text-[10px] font-bold text-blue-400 block pt-1 hover:underline cursor-pointer">View Details →</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3 text-xs font-semibold">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Notification Summary</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                <span className="text-slate-500">Type</span>
+                <span className="font-bold text-[#0D1F3D]">{noticeType}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                <span className="text-slate-500">Recipients</span>
+                <span className="font-bold text-emerald-600 font-mono">1,892 Users</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                <span className="text-slate-500">Delivery</span>
+                <span className="font-bold text-blue-600">{sendNow ? 'Immediately' : 'Scheduled'}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// SCREEN 165: PUSH NOTIFICATIONS (/admin/notifications/push)
+export function PushNotificationsPage() {
+  const [platform, setPlatform] = useState<'android' | 'ios' | 'both'>('both');
+
+  return (
+    <div className="space-y-4 font-sans pb-12">
+      <PageHeader kind="push" title="Push Notifications" description="Send instant push notifications to mobile app users." />
+
+      <Stats />
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {/* Push Form (8 Cols) */}
+        <div className="lg:col-span-8 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold">
+          <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Create Push Notification</h3>
+          
+          <div className="space-y-2">
+            <label className="font-bold text-[#0D1F3D] block">Platform Target *</label>
+            <div className="grid grid-cols-3 gap-3">
+              {(['android', 'ios', 'both'] as const).map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPlatform(p)}
+                  className={`p-3 rounded-sm border font-bold text-xs capitalize transition-all cursor-pointer ${
+                    platform === p ? 'border-[#E20613] bg-red-50/50 text-[#0D1F3D]' : 'border-slate-200 text-slate-600 bg-white'
+                  }`}
+                >
+                  {p === 'both' ? 'Both (Android & iOS)' : p}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Input label="Title *" defaultValue="Plan Renewal Reminder" />
+          
+          <div className="space-y-1">
+            <label className="font-bold text-[#0D1F3D] block">Message *</label>
+            <textarea
+              rows={3}
+              defaultValue="Hi {{name}}, your plan will expire on {{expiry_date}}. Please renew to continue using all features."
+              className="w-full rounded-sm border border-slate-200 bg-slate-50/60 p-3 font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:outline-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input label="Deep Link (Optional)" defaultValue="sfw://renewal" />
+            <div className="space-y-1">
+              <label className="font-bold text-[#0D1F3D] block">Image Attachment</label>
+              <Button variant="outline" size="sm" onClick={() => toast.info('Upload image dialog opened')} className="w-full font-bold">
+                📷 Upload Notification Banner
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-3 border-t border-slate-100">
+            <Button variant="accent" size="sm" onClick={() => toast.success('Push notification sent!')} className="font-bold shadow-xs">
+              <Send className="h-4 w-4 mr-1.5" /> Send Push Notification Now
+            </Button>
+          </div>
+        </div>
+
+        {/* Right Phone Mockup Preview (4 Cols) */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Phone Lockscreen Preview</h3>
+            
+            <div className="rounded-3xl border-4 border-slate-900 bg-slate-950 p-4 text-white shadow-xl space-y-3">
+              <div className="text-center text-[10px] text-slate-400 font-mono">10:30 AM • Mon, 22 May</div>
+              <div className="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 space-y-1">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="font-bold text-red-400">SFW Push</span>
+                  <span className="text-slate-500">now</span>
+                </div>
+                <p className="text-xs font-extrabold text-white">Plan Renewal Reminder</p>
+                <p className="text-[11px] text-slate-300 leading-snug">Hi Rahul, your plan will expire on 22 May 2025. Please renew to continue.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// SCREEN 166: EXECUTIVE ALERTS (/admin/notifications/executives)
+export function ExecutiveAlertsPage() {
+  const alertColumns: ColumnDef<NotificationRow>[] = [
+    {
+      header: 'Alert Title',
+      cell: (row) => (
+        <div className="flex items-center gap-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-50 text-rose-600 font-extrabold">
+            ⚠️
+          </span>
+          <div>
+            <p className="font-extrabold text-[#0D1F3D] text-xs">{row.title}</p>
+            <p className="text-[10px] text-slate-500 truncate max-w-[200px]">{row.description}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Type',
+      cell: () => <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-sm text-[10px] font-extrabold">Critical Alert</span>,
+    },
+    {
+      header: 'Urgency',
+      cell: () => <span className="bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-sm text-[10px]">CRITICAL</span>,
+    },
+    {
+      header: 'Executive / Role',
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          <img src={executives[0].avatar} alt="" className="h-6 w-6 rounded-full object-cover border border-slate-200" />
+          <div>
+            <p className="font-extrabold text-[#0D1F3D] text-xs">{row.audience}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Status',
+      cell: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      header: 'Actions',
+      align: 'right',
+      cell: (row) => (
+        <Button variant="outline" size="sm" onClick={() => toast.info(`Resolving alert: ${row.title}`)} className="text-[10px] font-bold py-1">
+          Acknowledge
+        </Button>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-4 font-sans pb-12">
+      <PageHeader kind="alerts" title="Executive Alerts" description="Critical alerts and important notifications for executives and managers." />
+      
+      <Stats alert />
+
+      <FilterBar mode="alerts" />
+
+      <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
+        <DataTable columns={alertColumns} data={notificationRows} keyExtractor={(row) => row.id} density="compact" />
+      </div>
+    </div>
+  );
+}
+
+// SCREEN 167: NOTIFICATION TEMPLATES (/admin/notifications/templates)
+export function NotificationTemplatesPage() {
+  const templateColumns: ColumnDef<NotificationRow>[] = [
+    {
+      header: 'Template Name',
+      cell: (row) => (
+        <div className="flex items-center gap-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-50 text-purple-600 font-extrabold">
+            📋
+          </span>
+          <div>
+            <p className="font-extrabold text-[#0D1F3D] text-xs">{row.title}</p>
+            <p className="text-[10px] text-slate-500">{row.description}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Type',
+      cell: (row) => <span className={`inline-flex rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${typeStyles[row.type]}`}>{row.type}</span>,
+    },
+    {
+      header: 'Channel',
+      cell: (row) => <span className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-sm">{row.channel}</span>,
+    },
+    {
+      header: 'Status',
+      cell: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      header: 'Actions',
+      align: 'right',
+      cell: (row) => (
+        <div className="flex justify-end gap-1">
+          <button onClick={() => toast.info(`Editing template ${row.title}`)} className="p-1 text-slate-600 hover:text-[#0D1F3D] cursor-pointer">
+            <Pencil className="h-4 w-4" />
+          </button>
+          <button onClick={() => toast.info(`Duplicating template ${row.title}`)} className="p-1 text-slate-600 hover:text-[#0D1F3D] cursor-pointer">
+            <ClipboardCopy className="h-4 w-4" />
+          </button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-4 font-sans pb-12">
+      <PageHeader kind="templates" title="Notification Templates" description="Create, manage and reuse templates for notifications across all channels." />
+
+      <Stats template />
+
+      <FilterBar mode="templates" />
+
+      <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
+        <DataTable columns={templateColumns} data={notificationRows} keyExtractor={(row) => row.id} density="compact" />
+      </div>
+    </div>
+  );
+}
