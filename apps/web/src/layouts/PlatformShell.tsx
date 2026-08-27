@@ -26,6 +26,7 @@ import {
   UserCheck,
   User,
   Monitor,
+  Check,
 } from "lucide-react";
 import { usePlatformPermissions } from "../features/platform/tenants/hooks/usePlatformPermissions";
 import {
@@ -182,6 +183,7 @@ export default function PlatformShell() {
   const [isHovered, setIsHovered] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [activeRole, setActiveRole] = useState<PlatformRole>(
     "PLATFORM_SUPER_ADMIN"
   );
@@ -196,6 +198,7 @@ export default function PlatformShell() {
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  const roleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -207,6 +210,9 @@ export default function PlatformShell() {
       }
       if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
         setHeaderMenuOpen(false);
+      }
+      if (roleRef.current && !roleRef.current.contains(e.target as Node)) {
+        setRoleMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -609,22 +615,63 @@ export default function PlatformShell() {
 
           {/* Right Header Controls */}
           <div className="flex items-center gap-4">
-            {/* Role Switcher using Reusable Select Component */}
-            <div className="w-52">
-              <Select
-                value={activeRole}
-                onChange={(e) => handleRoleChange(e.target.value as PlatformRole)}
-                searchable={false}
-                options={[
-                  { value: 'PLATFORM_SUPER_ADMIN', label: 'Super Admin (Full)' },
-                  { value: 'PLATFORM_OPERATIONS_ADMIN', label: 'Operations Admin' },
-                  { value: 'PLATFORM_ONBOARDING', label: 'Onboarding Admin' },
-                  { value: 'PLATFORM_SUPPORT', label: 'Support Agent' },
-                  { value: 'PLATFORM_BILLING', label: 'Billing Admin' },
-                  { value: 'PLATFORM_AUDITOR', label: 'Auditor' },
-                ]}
-                leftIcon={<ShieldAlert className="h-4 w-4 text-amber-600" />}
-              />
+            {/* Custom Role Selector Popover Pill (Matching User Mockup 100%) */}
+            <div className="relative" ref={roleRef}>
+              <button
+                type="button"
+                onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+                className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-1.5 text-xs text-amber-900 shadow-xs hover:bg-amber-100/80 transition-all cursor-pointer font-semibold"
+              >
+                <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0" />
+                <span className="font-bold text-amber-900">Role:</span>
+                <span className="font-bold text-amber-950">
+                  {activeRole === 'PLATFORM_SUPER_ADMIN'
+                    ? 'Super Admin (Full)'
+                    : activeRole === 'PLATFORM_OPERATIONS_ADMIN'
+                    ? 'Operations Admin'
+                    : activeRole === 'PLATFORM_ONBOARDING'
+                    ? 'Onboarding Admin'
+                    : activeRole === 'PLATFORM_SUPPORT'
+                    ? 'Support Agent'
+                    : activeRole === 'PLATFORM_BILLING'
+                    ? 'Billing Admin'
+                    : 'Auditor'}
+                </span>
+                <ChevronRight className={`h-3.5 w-3.5 text-amber-700 shrink-0 transition-transform ${roleMenuOpen ? 'rotate-90' : 'rotate-90'}`} />
+              </button>
+
+              {roleMenuOpen && (
+                <div className="absolute left-0 top-full mt-1.5 w-56 rounded-md border border-slate-200 bg-white p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 space-y-0.5">
+                  <div className="px-2.5 py-1 border-b border-slate-100 mb-1">
+                    <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Select Active Role</p>
+                  </div>
+                  {[
+                    { value: 'PLATFORM_SUPER_ADMIN', label: 'Super Admin (Full)' },
+                    { value: 'PLATFORM_OPERATIONS_ADMIN', label: 'Operations Admin' },
+                    { value: 'PLATFORM_ONBOARDING', label: 'Onboarding Admin' },
+                    { value: 'PLATFORM_SUPPORT', label: 'Support Agent' },
+                    { value: 'PLATFORM_BILLING', label: 'Billing Admin' },
+                    { value: 'PLATFORM_AUDITOR', label: 'Auditor' },
+                  ].map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() => {
+                        handleRoleChange(r.value as PlatformRole);
+                        setRoleMenuOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-between rounded-sm px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                        activeRole === r.value
+                          ? 'bg-blue-600 text-white font-bold'
+                          : 'text-slate-700 hover:bg-slate-50 hover:text-[#0D1F3D]'
+                      }`}
+                    >
+                      <span>{r.label}</span>
+                      {activeRole === r.value && <Check className="h-3.5 w-3.5 text-white" />}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Notification Bell Icon */}
