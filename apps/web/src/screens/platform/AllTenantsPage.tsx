@@ -21,6 +21,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
+import { Checkbox } from '../../components/ui/Checkbox';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 
@@ -195,41 +197,50 @@ export function AllTenantsPage() {
             />
           </div>
 
-          <select
-            value={selectedIndustry}
-            onChange={(e) => setSelectedIndustry(e.target.value)}
-            className="h-10 rounded-sm border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-none cursor-pointer min-w-[140px]"
-          >
-            <option value="All">All Industries</option>
-            <option value="Pharma">Pharma</option>
-            <option value="FMCG">FMCG</option>
-            <option value="Distributors">Distributors</option>
-            <option value="Solar">Solar</option>
-          </select>
+          <div className="w-40">
+            <Select
+              value={selectedIndustry}
+              onChange={(e) => setSelectedIndustry(e.target.value)}
+              searchable={true}
+              options={[
+                { value: 'All', label: 'All Industries' },
+                { value: 'Pharma', label: 'Pharma' },
+                { value: 'FMCG', label: 'FMCG' },
+                { value: 'Distributors', label: 'Distributors' },
+                { value: 'Solar', label: 'Solar' },
+              ]}
+            />
+          </div>
 
-          <select
-            value={selectedPlan}
-            onChange={(e) => setSelectedPlan(e.target.value)}
-            className="h-10 rounded-sm border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-none cursor-pointer min-w-[130px]"
-          >
-            <option value="All">All Plans</option>
-            <option value="Enterprise">Enterprise</option>
-            <option value="Growth">Growth</option>
-            <option value="Professional">Professional</option>
-            <option value="Starter">Starter</option>
-          </select>
+          <div className="w-40">
+            <Select
+              value={selectedPlan}
+              onChange={(e) => setSelectedPlan(e.target.value)}
+              searchable={true}
+              options={[
+                { value: 'All', label: 'All Plans' },
+                { value: 'Enterprise', label: 'Enterprise' },
+                { value: 'Growth', label: 'Growth' },
+                { value: 'Professional', label: 'Professional' },
+                { value: 'Starter', label: 'Starter' },
+              ]}
+            />
+          </div>
 
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="h-10 rounded-sm border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-none cursor-pointer min-w-[130px]"
-          >
-            <option value="All">All Statuses</option>
-            <option value="Active">Active</option>
-            <option value="Trial">Trial</option>
-            <option value="Past Due">Past Due</option>
-            <option value="Suspended">Suspended</option>
-          </select>
+          <div className="w-40">
+            <Select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+              searchable={true}
+              options={[
+                { value: 'All', label: 'All Statuses' },
+                { value: 'Active', label: 'Active' },
+                { value: 'Trial', label: 'Trial' },
+                { value: 'Past Due', label: 'Past Due' },
+                { value: 'Suspended', label: 'Suspended' },
+              ]}
+            />
+          </div>
 
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="gap-2 font-bold text-slate-700 h-10">

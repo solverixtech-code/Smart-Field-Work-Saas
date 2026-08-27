@@ -126,7 +126,7 @@ function Step1CompanyDetails() {
             label="Country *"
             value={formState.country}
             onChange={(e) => updateFormState({ country: e.target.value })}
-            searchable={false}
+            searchable={true}
             options={[
               { value: 'India', label: 'India' },
               { value: 'United States', label: 'United States' },
@@ -137,7 +137,7 @@ function Step1CompanyDetails() {
             label="State / Province *"
             value="Maharashtra"
             onChange={() => {}}
-            searchable={false}
+            searchable={true}
             options={[
               { value: 'Maharashtra', label: 'Maharashtra' },
               { value: 'Delhi', label: 'Delhi' },
@@ -182,28 +182,28 @@ function Step1CompanyDetails() {
             label="Timezone *"
             value="(GMT+05:30) Asia/Kolkata"
             onChange={() => {}}
-            searchable={false}
+            searchable={true}
             options={[{ value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' }]}
           />
           <Select
             label="Currency *"
             value="INR - Indian Rupee (₹)"
             onChange={() => {}}
-            searchable={false}
+            searchable={true}
             options={[{ value: 'INR - Indian Rupee (₹)', label: 'INR - Indian Rupee (₹)' }]}
           />
           <Select
             label="Date Format *"
             value="DD MMM YYYY"
             onChange={() => {}}
-            searchable={false}
+            searchable={true}
             options={[{ value: 'DD MMM YYYY', label: 'DD MMM YYYY' }]}
           />
           <Select
             label="Financial Year Start *"
             value="April"
             onChange={() => {}}
-            searchable={false}
+            searchable={true}
             options={[{ value: 'April', label: 'April' }]}
           />
         </div>
@@ -253,7 +253,7 @@ function Step2IndustryProfile() {
               label="Primary Industry *"
               value={formState.industryId || 'Pharma & Healthcare'}
               onChange={(e) => updateFormState({ industryId: e.target.value })}
-              searchable={false}
+              searchable={true}
               options={[
                 { value: 'Pharma & Healthcare', label: 'Pharma & Healthcare' },
                 { value: 'FMCG & Consumer Goods', label: 'FMCG & Consumer Goods' },
@@ -291,7 +291,7 @@ function Step2IndustryProfile() {
             label="Business Size *"
             value={formState.companySize || 'Medium (51 - 250 employees)'}
             onChange={(e) => updateFormState({ companySize: e.target.value })}
-            searchable={false}
+            searchable={true}
             options={[
               { value: 'Small (1 - 50 employees)', label: 'Small (1 - 50 employees)' },
               { value: 'Medium (51 - 250 employees)', label: 'Medium (51 - 250 employees)' },
@@ -303,15 +303,15 @@ function Step2IndustryProfile() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select label="Years in Business" value="5 - 10 Years" onChange={() => {}} searchable={false} options={[{ value: '5 - 10 Years', label: '5 - 10 Years' }]} />
-          <Select label="Business Model" value="B2B" onChange={() => {}} searchable={false} options={[{ value: 'B2B', label: 'B2B' }, { value: 'B2C', label: 'B2C' }]} />
+          <Select label="Years in Business" value="5 - 10 Years" onChange={() => {}} searchable={true} options={[{ value: '5 - 10 Years', label: '5 - 10 Years' }]} />
+          <Select label="Business Model" value="B2B" onChange={() => {}} searchable={true} options={[{ value: 'B2B', label: 'B2B' }, { value: 'B2C', label: 'B2C' }]} />
           <Input label="Number of Branches / Locations" placeholder="6" value="6" onChange={() => {}} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select label="Operating Countries" value="1 selected" onChange={() => {}} searchable={false} options={[{ value: '1 selected', label: '1 selected (India)' }]} />
-          <Select label="Preferred Currency *" value="INR - Indian Rupee (₹)" onChange={() => {}} searchable={false} options={[{ value: 'INR - Indian Rupee (₹)', label: 'INR - Indian Rupee (₹)' }]} />
-          <Select label="Preferred Language" value="English" onChange={() => {}} searchable={false} options={[{ value: 'English', label: 'English' }]} />
+          <Select label="Operating Countries" value="1 selected" onChange={() => {}} searchable={true} options={[{ value: '1 selected', label: '1 selected (India)' }]} />
+          <Select label="Preferred Currency *" value="INR - Indian Rupee (₹)" onChange={() => {}} searchable={true} options={[{ value: 'INR - Indian Rupee (₹)', label: 'INR - Indian Rupee (₹)' }]} />
+          <Select label="Preferred Language" value="English" onChange={() => {}} searchable={true} options={[{ value: 'English', label: 'English' }]} />
         </div>
 
         <div>
@@ -334,9 +334,9 @@ function Step2IndustryProfile() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select label="Working Timezone *" value="(GMT+05:30) Asia/Kolkata" onChange={() => {}} searchable={false} options={[{ value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' }]} />
-          <Select label="Financial Year Start *" value="April" onChange={() => {}} searchable={false} options={[{ value: 'April', label: 'April' }]} />
-          <Select label="Week Start Day *" value="Monday" onChange={() => {}} searchable={false} options={[{ value: 'Monday', label: 'Monday' }]} />
+          <Select label="Working Timezone *" value="(GMT+05:30) Asia/Kolkata" onChange={() => {}} searchable={true} options={[{ value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' }]} />
+          <Select label="Financial Year Start *" value="April" onChange={() => {}} searchable={true} options={[{ value: 'April', label: 'April' }]} />
+          <Select label="Week Start Day *" value="Monday" onChange={() => {}} searchable={true} options={[{ value: 'Monday', label: 'Monday' }]} />
         </div>
       </div>
     </div>
@@ -372,7 +372,7 @@ function Step3Administrator() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input label="Designation / Job Title *" placeholder="e.g., CEO, Admin Head" value="CEO" onChange={() => {}} />
-          <Select label="Department" value="Administration" onChange={() => {}} searchable={false} options={[{ value: 'Administration', label: 'Administration' }]} />
+          <Select label="Department" value="Administration" onChange={() => {}} searchable={true} options={[{ value: 'Administration', label: 'Administration' }]} />
           <div>
             <label className="font-bold text-slate-700 text-xs block mb-1">Phone Number</label>
             <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
@@ -385,8 +385,8 @@ function Step3Administrator() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select label="Preferred Language *" value="English" onChange={() => {}} searchable={false} options={[{ value: 'English', label: 'English' }]} />
-          <Select label="Time Zone *" value="(GMT+05:30) Asia/Kolkata" onChange={() => {}} searchable={false} options={[{ value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' }]} />
+          <Select label="Preferred Language *" value="English" onChange={() => {}} searchable={true} options={[{ value: 'English', label: 'English' }]} />
+          <Select label="Time Zone *" value="(GMT+05:30) Asia/Kolkata" onChange={() => {}} searchable={true} options={[{ value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' }]} />
           <Input label="Communication Email" placeholder="Enter communication email" value="rahul.sharma@sunrisehealthcare.com" onChange={() => {}} />
         </div>
 
@@ -429,7 +429,7 @@ function Step3Administrator() {
 
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-start">
           <div className="sm:col-span-4">
-            <Select label="Role *" value="Tenant Owner" onChange={() => {}} searchable={false} options={[{ value: 'Tenant Owner', label: 'Tenant Owner' }]} />
+            <Select label="Role *" value="Tenant Owner" onChange={() => {}} searchable={true} options={[{ value: 'Tenant Owner', label: 'Tenant Owner' }]} />
           </div>
 
           <div className="sm:col-span-5 rounded-xl border border-purple-100 bg-[#F4F0FF] p-4 text-xs space-y-2">
@@ -523,7 +523,7 @@ function Step4PlanSubscription() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="space-y-4">
-            <Select label="Billing Cycle" value="Yearly (Save 17%)" onChange={() => {}} searchable={false} options={[{ value: 'Yearly (Save 17%)', label: 'Yearly (Save 17%)' }]} />
+            <Select label="Billing Cycle" value="Yearly (Save 17%)" onChange={() => {}} searchable={true} options={[{ value: 'Yearly (Save 17%)', label: 'Yearly (Save 17%)' }]} />
             <Input label="Seat / User Limit" placeholder="150" value="150" onChange={() => {}} />
             <Input label="Storage Limit" placeholder="200 GB" value="200 GB" onChange={() => {}} />
             <Input label="Subscription Start Date" placeholder="24 May 2026" value="24 May 2026" onChange={() => {}} />
@@ -588,21 +588,33 @@ function Step4PlanSubscription() {
 function Step5Modules() {
   const { formState, updateFormState } = useTenantCreation();
 
-  const coreModules = [
-    { code: 'JOBS', name: 'Jobs & Work Management', desc: 'Create, assign and track jobs from scheduling to completion.', tag: 'Included' },
-    { code: 'FIELD', name: 'Field Workforce', desc: 'Manage field executives, attendance and locations.', tag: 'Included' },
-    { code: 'ATTENDANCE', name: 'Attendance & Time Tracking', desc: 'Track check-in/check-out and working hours.', tag: 'Included' },
-    { code: 'FORMS', name: 'Forms & Surveys', desc: 'Build custom forms, surveys and inspections.', tag: 'Included' },
-    { code: 'PHOTOS', name: 'Photos & Documents', desc: 'Capture and manage photos, documents and files.', tag: 'Included' },
-  ];
+  const [coreList, setCoreList] = useState([
+    { code: 'JOBS', name: 'Jobs & Work Management', desc: 'Create, assign and track jobs from scheduling to completion.', tag: 'Included', checked: true },
+    { code: 'FIELD', name: 'Field Workforce', desc: 'Manage field executives, attendance and locations.', tag: 'Included', checked: true },
+    { code: 'ATTENDANCE', name: 'Attendance & Time Tracking', desc: 'Track check-in/check-out and working hours.', tag: 'Included', checked: true },
+    { code: 'FORMS', name: 'Forms & Surveys', desc: 'Build custom forms, surveys and inspections.', tag: 'Included', checked: true },
+    { code: 'PHOTOS', name: 'Photos & Documents', desc: 'Capture and manage photos, documents and files.', tag: 'Included', checked: true },
+  ]);
 
-  const advancedModules = [
+  const [advList, setAdvList] = useState([
     { code: 'REPORTS', name: 'Reports & Analytics', desc: 'Real-time reports, dashboards and data insights.', tag: 'Included', checked: true },
     { code: 'TASKS', name: 'Task Management', desc: 'Create tasks, set due dates and track progress.', tag: 'Included', checked: true },
     { code: 'NOTIF', name: 'Notifications', desc: 'In-app, email and SMS notifications.', tag: 'Included', checked: true },
     { code: 'CHAT', name: 'Chat & Messaging', desc: 'Team communication and real-time messaging.', tag: 'Add-on', checked: false },
     { code: 'KB', name: 'Knowledge Base', desc: 'Create and manage help articles and guides.', tag: 'Add-on', checked: false },
-  ];
+  ]);
+
+  const toggleCore = (idx: number) => {
+    const updated = [...coreList];
+    updated[idx].checked = !updated[idx].checked;
+    setCoreList(updated);
+  };
+
+  const toggleAdv = (idx: number) => {
+    const updated = [...advList];
+    updated[idx].checked = !updated[idx].checked;
+    setAdvList(updated);
+  };
 
   return (
     <div className="space-y-6 font-sans">
@@ -621,12 +633,12 @@ function Step5Modules() {
           <div>
             <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider mb-3">Core Modules</h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-              {coreModules.map((mod) => (
+              {coreList.map((mod, idx) => (
                 <div key={mod.code} className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-extrabold text-[#0D1F3D]">{mod.name}</span>
-                      <Checkbox checked={true} onChange={() => {}} />
+                      <Checkbox checked={mod.checked} onChange={() => toggleCore(idx)} />
                     </div>
                     <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
                   </div>
@@ -641,12 +653,12 @@ function Step5Modules() {
           <div>
             <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider mb-3">Advanced Modules</h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-              {advancedModules.map((mod) => (
+              {advList.map((mod, idx) => (
                 <div key={mod.code} className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2 flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-extrabold text-[#0D1F3D]">{mod.name}</span>
-                      <Checkbox checked={mod.checked} onChange={() => {}} />
+                      <Checkbox checked={mod.checked} onChange={() => toggleAdv(idx)} />
                     </div>
                     <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
                   </div>
