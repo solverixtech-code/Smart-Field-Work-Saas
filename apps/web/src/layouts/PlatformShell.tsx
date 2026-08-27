@@ -496,10 +496,18 @@ export default function PlatformShell() {
                   showBigLogo ? "overflow-hidden" : "justify-center"
                 }`}
               >
-                <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-xs font-semibold text-white shadow-xs">
-                  {user?.fullName?.charAt(0) ?? "S"}
-                  <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-[#E20613] ring-2 ring-white" />
-                </div>
+                {user?.image || (user as any)?.avatar || (user as any)?.avatarUrl ? (
+                  <img
+                    src={user?.image || (user as any)?.avatar || (user as any)?.avatarUrl}
+                    alt="User Avatar"
+                    className="h-8 w-8 rounded-sm object-cover flex-shrink-0 shadow-xs border border-slate-200"
+                  />
+                ) : (
+                  <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-xs font-semibold text-white shadow-xs">
+                    {user?.fullName?.charAt(0) ?? "S"}
+                    <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-[#E20613] ring-2 ring-white" />
+                  </div>
+                )}
 
                 {showBigLogo && (
                   <div className="flex flex-col truncate">
@@ -716,9 +724,17 @@ export default function PlatformShell() {
                 onClick={() => setHeaderMenuOpen(!headerMenuOpen)}
                 className="flex items-center gap-2.5 p-1 rounded-sm cursor-pointer hover:bg-slate-100/80 transition-all"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-[#0D1F3D] text-xs font-bold text-white shadow-sm">
-                  {user?.fullName?.charAt(0) ?? "S"}
-                </div>
+                {user?.image || (user as any)?.avatar || (user as any)?.avatarUrl ? (
+                  <img
+                    src={user?.image || (user as any)?.avatar || (user as any)?.avatarUrl}
+                    alt="User Avatar"
+                    className="h-9 w-9 rounded-sm object-cover flex-shrink-0 shadow-sm border border-slate-200"
+                  />
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-[#0D1F3D] text-xs font-bold text-white shadow-sm">
+                    {user?.fullName?.charAt(0) ?? "S"}
+                  </div>
+                )}
                 <div className="hidden sm:block text-left">
                   <p className="text-xs font-bold text-[#0D1F3D]">
                     {user?.fullName || "Super Admin"}

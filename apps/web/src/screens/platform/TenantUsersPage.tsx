@@ -521,19 +521,29 @@ export function TenantUsersPage() {
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
             <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">User Seats & Usage</h3>
             <div className="flex items-center gap-4">
-              <div className="relative h-28 w-28 shrink-0">
+              <div className="relative flex h-28 w-28 shrink-0 items-center justify-center">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={seatChartData} cx="50%" cy="50%" innerRadius={32} outerRadius={48} paddingAngle={2} dataKey="value">
+                  <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                    <Pie
+                      data={seatChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={35}
+                      outerRadius={48}
+                      paddingAngle={2}
+                      dataKey="value"
+                      startAngle={90}
+                      endAngle={-270}
+                    >
                       {seatChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-base font-extrabold text-[#0D1F3D]">126 / 150</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase">84% Used</span>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+                  <span className="text-xs font-extrabold text-[#0D1F3D] leading-tight">126 / 150</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">84% Used</span>
                 </div>
               </div>
 
