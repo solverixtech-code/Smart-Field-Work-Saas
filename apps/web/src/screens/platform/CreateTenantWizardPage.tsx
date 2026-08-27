@@ -30,6 +30,15 @@ import {
   Lock,
   Plus,
   ArrowRight,
+  Briefcase,
+  Smartphone,
+  Mail,
+  MapPin,
+  Calendar,
+  Zap,
+  BookOpen,
+  MessageSquare,
+  Bell,
   CheckSquare,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
@@ -45,10 +54,10 @@ function Step1CompanyDetails() {
   return (
     <div className="space-y-6 font-sans">
       {/* Company Information Card */}
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
-          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Company Information</h3>
-          <p className="text-xs text-slate-500 font-medium">Basic information about the company/organization.</p>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Company Information</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Basic information about the company/organization.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -66,7 +75,7 @@ function Step1CompanyDetails() {
           />
           <div>
             <label className="font-bold text-slate-700 text-xs block mb-1">Tenant Code *</label>
-            <div className="flex rounded-sm border border-slate-200 bg-white overflow-hidden h-10">
+            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
               <span className="bg-slate-100 border-r border-slate-200 px-3 flex items-center text-xs font-bold text-slate-600">
                 SFW-TNT-
               </span>
@@ -97,7 +106,7 @@ function Step1CompanyDetails() {
           />
           <div>
             <label className="font-bold text-slate-700 text-xs block mb-1">Phone *</label>
-            <div className="flex rounded-sm border border-slate-200 bg-white overflow-hidden h-10">
+            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
               <div className="bg-slate-50 border-r border-slate-200 px-2.5 flex items-center text-xs font-bold text-slate-700 gap-1">
                 <span>🇮🇳</span> <span>+91 ▾</span>
               </div>
@@ -145,10 +154,10 @@ function Step1CompanyDetails() {
       </div>
 
       {/* Company Address Card */}
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
-          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Company Address</h3>
-          <p className="text-xs text-slate-500 font-medium">Registered business address of the company.</p>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Company Address</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Registered business address of the company.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -162,10 +171,10 @@ function Step1CompanyDetails() {
       </div>
 
       {/* Company Settings Card */}
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
-          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Company Settings</h3>
-          <p className="text-xs text-slate-500 font-medium">Basic operational settings for the tenant.</p>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Company Settings</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Basic operational settings for the tenant.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -201,10 +210,10 @@ function Step1CompanyDetails() {
       </div>
 
       {/* Contact Person Card */}
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
-          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Contact Person</h3>
-          <p className="text-xs text-slate-500 font-medium">Primary point of contact from the company.</p>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Contact Person</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Primary point of contact from the company.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -212,7 +221,7 @@ function Step1CompanyDetails() {
           <Input label="Designation" placeholder="e.g., CEO, Director, Admin" value="CEO" onChange={() => {}} />
           <div>
             <label className="font-bold text-slate-700 text-xs block mb-1">Mobile Number *</label>
-            <div className="flex rounded-sm border border-slate-200 bg-white overflow-hidden h-10">
+            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
               <div className="bg-slate-50 border-r border-slate-200 px-2 flex items-center text-xs font-bold text-slate-700 gap-1">
                 <span>🇮🇳</span> <span>+91 ▾</span>
               </div>
@@ -232,10 +241,10 @@ function Step2IndustryProfile() {
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
-          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Industry Information</h3>
-          <p className="text-xs text-slate-500 font-medium">Select the primary industry that best describes this tenant's business.</p>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Industry Information</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Select the primary industry that best describes this tenant's business.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-start">
@@ -256,11 +265,12 @@ function Step2IndustryProfile() {
             <p className="text-[11px] text-slate-400 font-medium">This will help us configure industry-specific defaults for the tenant.</p>
           </div>
 
-          <div className="sm:col-span-5 rounded-sm border border-indigo-100 bg-indigo-50/50 p-4 text-xs space-y-2">
-            <p className="font-extrabold text-indigo-950 flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-indigo-600" /> Why is this important?
+          <div className="sm:col-span-5 rounded-xl border border-purple-100 bg-[#F4F0FF] p-5 text-xs space-y-2">
+            <p className="font-extrabold text-purple-950 flex items-center gap-1.5 text-xs">
+              <Sparkles className="h-4 w-4 text-purple-600" /> Why is this important?
             </p>
-            <ul className="space-y-1.5 text-indigo-900 font-medium text-[11px]">
+            <p className="text-[11px] text-purple-900 font-medium">Industry selection helps us:</p>
+            <ul className="space-y-1.5 text-purple-900 font-medium text-[11px]">
               <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Pre-configure relevant modules</li>
               <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Set up industry-specific defaults</li>
               <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Provide better reporting & analytics</li>
@@ -270,10 +280,10 @@ function Step2IndustryProfile() {
         </div>
       </div>
 
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
-          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Business Profile</h3>
-          <p className="text-xs text-slate-500 font-medium">Tell us more about the business to help customize the workspace.</p>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Business Profile</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Tell us more about the business to help customize the workspace.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -297,6 +307,37 @@ function Step2IndustryProfile() {
           <Select label="Business Model" value="B2B" onChange={() => {}} searchable={false} options={[{ value: 'B2B', label: 'B2B' }, { value: 'B2C', label: 'B2C' }]} />
           <Input label="Number of Branches / Locations" placeholder="6" value="6" onChange={() => {}} />
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Select label="Operating Countries" value="1 selected" onChange={() => {}} searchable={false} options={[{ value: '1 selected', label: '1 selected (India)' }]} />
+          <Select label="Preferred Currency *" value="INR - Indian Rupee (₹)" onChange={() => {}} searchable={false} options={[{ value: 'INR - Indian Rupee (₹)', label: 'INR - Indian Rupee (₹)' }]} />
+          <Select label="Preferred Language" value="English" onChange={() => {}} searchable={false} options={[{ value: 'English', label: 'English' }]} />
+        </div>
+
+        <div>
+          <label className="font-bold text-slate-700 text-xs block mb-1">Short Description (Optional)</label>
+          <textarea
+            rows={3}
+            placeholder="Tell us about the company..."
+            value="Pharmaceutical distribution and healthcare solutions provider across western India."
+            onChange={() => {}}
+            className="w-full rounded-md border border-slate-200 p-3 text-xs font-semibold text-[#0D1F3D] focus:border-indigo-600 focus:outline-none"
+          />
+          <span className="text-[10px] text-slate-400 font-semibold block text-right">67 / 200</span>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+        <div>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Operational Profile</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Operational preferences and compliance information.</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Select label="Working Timezone *" value="(GMT+05:30) Asia/Kolkata" onChange={() => {}} searchable={false} options={[{ value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' }]} />
+          <Select label="Financial Year Start *" value="April" onChange={() => {}} searchable={false} options={[{ value: 'April', label: 'April' }]} />
+          <Select label="Week Start Day *" value="Monday" onChange={() => {}} searchable={false} options={[{ value: 'Monday', label: 'Monday' }]} />
+        </div>
       </div>
     </div>
   );
@@ -309,10 +350,10 @@ function Step3Administrator() {
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
-          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Primary Administrator</h3>
-          <p className="text-xs text-slate-500 font-medium">Add the primary administrator who will be the main point of contact for this tenant.</p>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Primary Administrator</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Add the primary administrator who will be the main point of contact for this tenant.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -320,7 +361,7 @@ function Step3Administrator() {
           <Input label="Email Address *" placeholder="Enter email address" value={formState.adminEmail} onChange={(e) => updateFormState({ adminEmail: e.target.value })} />
           <div>
             <label className="font-bold text-slate-700 text-xs block mb-1">Mobile Number *</label>
-            <div className="flex rounded-sm border border-slate-200 bg-white overflow-hidden h-10">
+            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
               <div className="bg-slate-50 border-r border-slate-200 px-2 flex items-center text-xs font-bold text-slate-700 gap-1">
                 <span>🇮🇳</span> <span>+91 ▾</span>
               </div>
@@ -334,7 +375,7 @@ function Step3Administrator() {
           <Select label="Department" value="Administration" onChange={() => {}} searchable={false} options={[{ value: 'Administration', label: 'Administration' }]} />
           <div>
             <label className="font-bold text-slate-700 text-xs block mb-1">Phone Number</label>
-            <div className="flex rounded-sm border border-slate-200 bg-white overflow-hidden h-10">
+            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
               <div className="bg-slate-50 border-r border-slate-200 px-2 flex items-center text-xs font-bold text-slate-700 gap-1">
                 <span>🇮🇳</span> <span>+91 ▾</span>
               </div>
@@ -344,9 +385,15 @@ function Step3Administrator() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Select label="Preferred Language *" value="English" onChange={() => {}} searchable={false} options={[{ value: 'English', label: 'English' }]} />
+          <Select label="Time Zone *" value="(GMT+05:30) Asia/Kolkata" onChange={() => {}} searchable={false} options={[{ value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' }]} />
+          <Input label="Communication Email" placeholder="Enter communication email" value="rahul.sharma@sunrisehealthcare.com" onChange={() => {}} />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="font-bold text-slate-700 text-xs block mb-1">Username *</label>
-            <div className="flex rounded-sm border border-slate-200 bg-white overflow-hidden h-10">
+            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
               <span className="bg-slate-100 border-r border-slate-200 px-3 flex items-center text-xs font-bold text-slate-500">@</span>
               <input type="text" placeholder="Enter username" value="rahul.sharma@sunrisehealthcare.com" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] focus:outline-none" />
             </div>
@@ -354,7 +401,7 @@ function Step3Administrator() {
           </div>
           <div>
             <label className="font-bold text-slate-700 text-xs block mb-1">Set Temporary Password *</label>
-            <div className="flex rounded-sm border border-slate-200 bg-white overflow-hidden h-10 relative">
+            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10 relative">
               <input type={showPassword ? 'text' : 'password'} value="••••••••••••" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] focus:outline-none pr-8" />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -363,12 +410,46 @@ function Step3Administrator() {
           </div>
           <div>
             <label className="font-bold text-slate-700 text-xs block mb-1">Confirm Password *</label>
-            <div className="flex rounded-sm border border-slate-200 bg-white overflow-hidden h-10 relative">
+            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10 relative">
               <input type={showPassword ? 'text' : 'password'} value="••••••••••••" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] focus:outline-none pr-8" />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Administrator Permissions Card */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+        <div>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Administrator Permissions</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Configure initial access level for the primary administrator.</p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-start">
+          <div className="sm:col-span-4">
+            <Select label="Role *" value="Tenant Owner" onChange={() => {}} searchable={false} options={[{ value: 'Tenant Owner', label: 'Tenant Owner' }]} />
+          </div>
+
+          <div className="sm:col-span-5 rounded-xl border border-purple-100 bg-[#F4F0FF] p-4 text-xs space-y-2">
+            <p className="font-extrabold text-purple-950 flex items-center gap-1.5">
+              <Shield className="h-4 w-4 text-purple-600" /> Tenant Owner will have:
+            </p>
+            <ul className="space-y-1 text-purple-900 font-medium text-[11px]">
+              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Full access to tenant workspace</li>
+              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Manage users, roles and permissions</li>
+              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Configure settings and modules</li>
+              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> View billing and subscription details</li>
+            </ul>
+          </div>
+
+          <div className="sm:col-span-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-extrabold text-[#0D1F3D] text-xs flex items-center gap-1.5"><Lock className="h-4 w-4 text-indigo-600" /> Enable 2FA</span>
+              <span className="h-5 w-9 rounded-full bg-indigo-600 inline-flex items-center justify-end px-0.5 cursor-pointer"><span className="h-4 w-4 rounded-full bg-white shadow-xs" /></span>
+            </div>
+            <p className="text-[10px] text-slate-500 font-medium leading-snug">Require two-factor authentication for this administrator account.</p>
           </div>
         </div>
       </div>
@@ -381,18 +462,18 @@ function Step4PlanSubscription() {
   const { formState, updateFormState } = useTenantCreation();
 
   const plansList = [
-    { id: 'starter', name: 'Starter', price: '₹4,999', subtitle: 'For small teams getting started', features: ['Up to 10 Users', 'Core Modules', '5 GB Storage', 'Email Support', 'Standard Reports'] },
-    { id: 'growth', name: 'Growth', price: '₹14,999', subtitle: 'For growing businesses', features: ['Up to 50 Users', 'Most Modules', '50 GB Storage', 'Priority Support', 'Advanced Reports'] },
-    { id: 'professional', name: 'Professional', price: '₹29,999', recommended: true, subtitle: 'For established organizations', features: ['Up to 150 Users', 'All Modules', '200 GB Storage', 'Priority Support + SLA', 'Advanced Reports & Dashboards'] },
-    { id: 'enterprise', name: 'Enterprise', price: 'Custom', subtitle: 'For large enterprises', features: ['Unlimited Users', 'All Modules & Features', 'Unlimited Storage', 'Dedicated Support + SLA', 'Custom Reports & Integrations'] },
+    { id: 'starter', name: 'Starter', price: '₹4,999', priceYear: '₹59,988 / year', subtitle: 'For small teams getting started', features: ['Up to 10 Users', 'Core Modules', '5 GB Storage', 'Email Support', 'Standard Reports'] },
+    { id: 'growth', name: 'Growth', price: '₹14,999', priceYear: '₹1,79,988 / year', subtitle: 'For growing businesses', features: ['Up to 50 Users', 'Most Modules', '50 GB Storage', 'Priority Support', 'Advanced Reports'] },
+    { id: 'professional', name: 'Professional', price: '₹29,999', priceYear: '₹3,59,988 / year', recommended: true, subtitle: 'For established organizations', features: ['Up to 150 Users', 'All Modules & Features', '200 GB Storage', 'Priority Support + SLA', 'Advanced Reports & Dashboards'] },
+    { id: 'enterprise', name: 'Enterprise', price: 'Custom', priceYear: 'Contact Sales', subtitle: 'For large enterprises', features: ['Unlimited Users', 'All Modules & Features', 'Unlimited Storage', 'Dedicated Support + SLA', 'Custom Reports & Integrations'] },
   ];
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
-          <h3 className="text-sm font-extrabold text-[#0D1F3D]">Choose Plan</h3>
-          <p className="text-xs text-slate-500 font-medium">Select a subscription plan and configure billing details for this tenant.</p>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Choose Plan</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Select a subscription plan and configure billing details for this tenant.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -402,25 +483,26 @@ function Step4PlanSubscription() {
               <div
                 key={plan.id}
                 onClick={() => updateFormState({ planId: plan.id })}
-                className={`relative rounded-sm border p-4 cursor-pointer transition-all ${
+                className={`relative rounded-xl border p-5 cursor-pointer transition-all ${
                   isSelected
                     ? 'border-indigo-600 bg-white ring-2 ring-indigo-500 shadow-md'
                     : 'border-slate-200 bg-white hover:border-slate-300'
                 }`}
               >
                 {plan.recommended && (
-                  <span className="absolute right-3 top-3 rounded-full bg-indigo-100 px-2 py-0.5 text-[9px] font-extrabold text-indigo-700">
+                  <span className="absolute right-3 top-3 rounded-full bg-purple-100 px-2.5 py-0.5 text-[9px] font-extrabold text-purple-700">
                     Recommended
                   </span>
                 )}
-                <p className="text-sm font-extrabold text-[#0D1F3D]">{plan.name}</p>
+                <p className="text-base font-extrabold text-[#0D1F3D]">{plan.name}</p>
                 <p className="text-[11px] text-slate-500 font-medium mb-3">{plan.subtitle}</p>
 
-                <p className="text-xl font-extrabold text-[#0D1F3D]">
+                <p className="text-2xl font-extrabold text-[#0D1F3D]">
                   {plan.price} <span className="text-xs font-normal text-slate-400">/ month</span>
                 </p>
+                <p className="text-[10px] text-slate-400 font-semibold mb-4">{plan.priceYear}</p>
 
-                <ul className="mt-4 space-y-2 text-xs text-slate-600">
+                <ul className="mt-4 space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
                   {plan.features.map((f, idx) => (
                     <li key={idx} className="flex items-center gap-1.5 text-[11px] font-semibold">
                       <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> {f}
@@ -430,6 +512,72 @@ function Step4PlanSubscription() {
               </div>
             );
           })}
+        </div>
+      </div>
+
+      {/* Subscription & Provisioning Card */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+        <div>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Subscription & Provisioning</h3>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="space-y-4">
+            <Select label="Billing Cycle" value="Yearly (Save 17%)" onChange={() => {}} searchable={false} options={[{ value: 'Yearly (Save 17%)', label: 'Yearly (Save 17%)' }]} />
+            <Input label="Seat / User Limit" placeholder="150" value="150" onChange={() => {}} />
+            <Input label="Storage Limit" placeholder="200 GB" value="200 GB" onChange={() => {}} />
+            <Input label="Subscription Start Date" placeholder="24 May 2026" value="24 May 2026" onChange={() => {}} />
+          </div>
+
+          <div className="space-y-3">
+            <label className="font-bold text-slate-700 text-xs block">Provisioning Type</label>
+            <div className="space-y-2 text-xs font-semibold">
+              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                <input type="radio" name="prov" />
+                <div>
+                  <p className="font-bold text-[#0D1F3D]">Free Trial</p>
+                  <p className="text-[10px] text-slate-400 font-normal">Start with a free trial. No payment required today.</p>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-indigo-600 bg-indigo-50/40 cursor-pointer">
+                <input type="radio" name="prov" defaultChecked />
+                <div>
+                  <p className="font-bold text-indigo-950">Payment Required</p>
+                  <p className="text-[10px] text-indigo-800 font-normal">Payment is required to activate the subscription.</p>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                <input type="radio" name="prov" />
+                <div>
+                  <p className="font-bold text-[#0D1F3D]">Invoice / Offline Payment</p>
+                  <p className="text-[10px] text-slate-400 font-normal">You will record payment received outside the platform.</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="font-bold text-slate-700 text-xs block">Payment Collection</label>
+            <div className="space-y-2 text-xs font-semibold">
+              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-indigo-600 bg-indigo-50/40 cursor-pointer">
+                <input type="radio" name="pay" defaultChecked />
+                <div>
+                  <p className="font-bold text-indigo-950">Send Checkout Link to Customer</p>
+                  <p className="text-[10px] text-indigo-800 font-normal">We will send a secure payment link to the billing contact.</p>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
+                <input type="radio" name="pay" />
+                <div>
+                  <p className="font-bold text-[#0D1F3D]">Record Confirmed Offline Payment</p>
+                  <p className="text-[10px] text-slate-400 font-normal">I will confirm payment has been received offline.</p>
+                </div>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -448,35 +596,80 @@ function Step5Modules() {
     { code: 'PHOTOS', name: 'Photos & Documents', desc: 'Capture and manage photos, documents and files.', tag: 'Included' },
   ];
 
+  const advancedModules = [
+    { code: 'REPORTS', name: 'Reports & Analytics', desc: 'Real-time reports, dashboards and data insights.', tag: 'Included', checked: true },
+    { code: 'TASKS', name: 'Task Management', desc: 'Create tasks, set due dates and track progress.', tag: 'Included', checked: true },
+    { code: 'NOTIF', name: 'Notifications', desc: 'In-app, email and SMS notifications.', tag: 'Included', checked: true },
+    { code: 'CHAT', name: 'Chat & Messaging', desc: 'Team communication and real-time messaging.', tag: 'Add-on', checked: false },
+    { code: 'KB', name: 'Knowledge Base', desc: 'Create and manage help articles and guides.', tag: 'Add-on', checked: false },
+  ];
+
   return (
     <div className="space-y-6 font-sans">
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Enable Modules & Features</h3>
-            <p className="text-xs text-slate-500 font-medium">Select the modules and features you want to enable for this tenant.</p>
+            <h3 className="text-base font-extrabold text-[#0D1F3D]">Enable Modules & Features</h3>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Select the modules and features you want to enable for this tenant.</p>
           </div>
-          <div className="rounded-sm bg-purple-50 px-3 py-1.5 text-xs text-purple-900 font-semibold border border-purple-100 flex items-center gap-1.5">
+          <div className="rounded-xl bg-[#F4F0FF] px-4 py-2 text-xs text-purple-900 font-semibold border border-purple-100 flex items-center gap-1.5">
             <Info className="h-4 w-4 text-purple-600" /> You can enable or disable modules anytime from the tenant settings.
           </div>
         </div>
 
-        <div>
-          <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider mb-3">Core Modules</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-            {coreModules.map((mod) => (
-              <div key={mod.code} className="rounded-sm border border-slate-200 bg-slate-50/50 p-3.5 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-[#0D1F3D]">{mod.name}</span>
-                  <Checkbox checked={true} onChange={() => {}} />
+        <div className="space-y-6">
+          <div>
+            <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider mb-3">Core Modules</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+              {coreModules.map((mod) => (
+                <div key={mod.code} className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-extrabold text-[#0D1F3D]">{mod.name}</span>
+                      <Checkbox checked={true} onChange={() => {}} />
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
+                  </div>
+                  <span className="inline-flex rounded-md bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 self-start">
+                    {mod.tag}
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
-                <span className="inline-flex rounded-xs bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-                  {mod.tag}
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+
+          <div>
+            <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider mb-3">Advanced Modules</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+              {advancedModules.map((mod) => (
+                <div key={mod.code} className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-extrabold text-[#0D1F3D]">{mod.name}</span>
+                      <Checkbox checked={mod.checked} onChange={() => {}} />
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
+                  </div>
+                  <span className={`inline-flex rounded-md px-2.5 py-0.5 text-[10px] font-bold self-start border ${
+                    mod.tag === 'Included' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'
+                  }`}>
+                    {mod.tag}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-4">
+          <div className="flex items-center gap-6 text-xs font-bold text-slate-600">
+            <span>Core Modules: <strong className="text-[#0D1F3D]">5 / 5 Enabled</strong></span>
+            <span>Advanced Modules: <strong className="text-[#0D1F3D]">4 / 5 Enabled</strong></span>
+            <span>Integrations: <strong className="text-[#0D1F3D]">1 / 5 Enabled</strong></span>
+          </div>
+          <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-extrabold text-purple-700">
+            Total Enabled: 10 Modules
+          </span>
         </div>
       </div>
     </div>
@@ -500,7 +693,7 @@ function Step6ReviewConfirm() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider">Company Details</h4>
             <span className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"><Edit2 className="h-3 w-3" /> Edit</span>
@@ -513,7 +706,7 @@ function Step6ReviewConfirm() {
           </div>
         </div>
 
-        <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider">Primary Administrator</h4>
             <span className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"><Edit2 className="h-3 w-3" /> Edit</span>
@@ -585,7 +778,7 @@ export function CreateTenantWizardPage() {
         </div>
 
         {/* 6 Step Progress Tracker Bar (Matching Create Tenant (Step 1).png 100%) */}
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-center">
             {stepsList.map((step) => {
               const isActive = currentStep === step.num;
@@ -595,7 +788,7 @@ export function CreateTenantWizardPage() {
                 <div
                   key={step.num}
                   onClick={() => setCurrentStep(step.num)}
-                  className={`flex items-center gap-3 p-2 rounded-sm cursor-pointer transition ${
+                  className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition ${
                     isActive ? 'bg-indigo-50/60 border-b-2 border-indigo-600' : 'hover:bg-slate-50'
                   }`}
                 >
@@ -631,7 +824,7 @@ export function CreateTenantWizardPage() {
             {currentStep === 6 && <Step6ReviewConfirm />}
 
             {/* Bottom Action Navigation Footer */}
-            <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
+            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
               <Button
                 variant="outline"
                 size="sm"
@@ -667,51 +860,51 @@ export function CreateTenantWizardPage() {
 
           {/* Right Live Summary Panel (Matching Create Tenant (Step 1).png 100%) */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-sans">
-              <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">
+            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-sans">
+              <h3 className="text-base font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">
                 Tenant Creation Summary
               </h3>
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-purple-50 text-purple-600 font-bold"><Building2 className="h-4 w-4" /></span>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600 font-bold"><Building2 className="h-4 w-4" /></span>
                     <div>
                       <p className="font-extrabold text-[#0D1F3D]">Company</p>
-                      <p className="text-[11px] text-slate-500 font-medium">{formState.companyName || 'Not provided'}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">{formState.companyName || 'Sunrise Healthcare Pvt Ltd'}</p>
                     </div>
                   </div>
                   <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" />
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 font-bold"><Globe className="h-4 w-4" /></span>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 font-bold"><Globe className="h-4 w-4" /></span>
                     <div>
                       <p className="font-extrabold text-[#0D1F3D]">Industry</p>
-                      <p className="text-[11px] text-slate-500 font-medium">{formState.industryId || 'Not selected'}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">{formState.industryId || 'Pharma & Healthcare'}</p>
                     </div>
                   </div>
                   <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" />
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-blue-50 text-blue-600 font-bold"><User className="h-4 w-4" /></span>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 font-bold"><User className="h-4 w-4" /></span>
                     <div>
                       <p className="font-extrabold text-[#0D1F3D]">Administrator</p>
-                      <p className="text-[11px] text-slate-500 font-medium">{formState.adminFullName || 'Not provided'}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">{formState.adminFullName || 'Rahul Sharma'}</p>
                     </div>
                   </div>
                   <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" />
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-amber-50 text-amber-600 font-bold"><CreditCard className="h-4 w-4" /></span>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 font-bold"><CreditCard className="h-4 w-4" /></span>
                     <div>
                       <p className="font-extrabold text-[#0D1F3D]">Plan & Subscription</p>
-                      <p className="text-[11px] text-slate-500 font-medium">{formState.planId || 'Not selected'}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">{formState.planId || 'Professional (Yearly)'}</p>
                     </div>
                   </div>
                   <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" />
@@ -719,12 +912,12 @@ export function CreateTenantWizardPage() {
               </div>
 
               {/* What happens next? card */}
-              <div className="rounded-sm bg-purple-50/60 p-4 border border-purple-100 space-y-2">
+              <div className="rounded-xl bg-[#F4F0FF] p-5 border border-purple-100 space-y-3">
                 <p className="font-extrabold text-purple-950 text-xs flex items-center gap-1.5">
                   <Sparkles className="h-4 w-4 text-purple-600" /> What happens next?
                 </p>
                 <p className="text-[11px] text-purple-900 font-medium">After creating the tenant, you will be able to:</p>
-                <ul className="space-y-1 text-[11px] text-purple-900 font-medium">
+                <ul className="space-y-1.5 text-[11px] text-purple-900 font-medium">
                   <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Invite team members</li>
                   <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Configure workspace settings</li>
                   <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Manage modules and features</li>
