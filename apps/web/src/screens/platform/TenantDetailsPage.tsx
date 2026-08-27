@@ -211,6 +211,16 @@ export function TenantDetailsPage() {
                   type="button"
                   onClick={() => {
                     setShowMoreActions(false);
+                    navigate("/platform/tenants/create");
+                  }}
+                  className="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-xs text-indigo-600 font-bold"
+                >
+                  Edit Tenant Details
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowMoreActions(false);
                     navigate(`/platform/tenants/${tenant.id}/users`);
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-xs"
@@ -244,7 +254,7 @@ export function TenantDetailsPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => setShowEditModal(true)}
+            onClick={() => navigate('/platform/tenants/create')}
             className="gap-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs h-9 px-4 cursor-pointer"
           >
             <Edit2 className="h-4 w-4" /> Edit Tenant
