@@ -49,6 +49,48 @@ async function main() {
       role: Role.SUPPORT,
       mobile: '+919876543215',
     },
+    {
+      employeeCode: 'PLAT-SA-001',
+      fullName: 'Sahibjit Singh',
+      email: 'platform.admin@smartfieldwork.com',
+      role: Role.PLATFORM_SUPER_ADMIN,
+      mobile: '+919900000001',
+    },
+    {
+      employeeCode: 'PLAT-OPS-001',
+      fullName: 'Rajesh Operations',
+      email: 'platform.ops@smartfieldwork.com',
+      role: Role.PLATFORM_OPERATIONS_ADMIN,
+      mobile: '+919900000002',
+    },
+    {
+      employeeCode: 'PLAT-ONB-001',
+      fullName: 'Neha Onboarding',
+      email: 'platform.onboarding@smartfieldwork.com',
+      role: Role.PLATFORM_ONBOARDING,
+      mobile: '+919900000003',
+    },
+    {
+      employeeCode: 'PLAT-SUP-001',
+      fullName: 'Support Helpdesk',
+      email: 'platform.support@smartfieldwork.com',
+      role: Role.PLATFORM_SUPPORT,
+      mobile: '+919900000004',
+    },
+    {
+      employeeCode: 'PLAT-BIL-001',
+      fullName: 'Finance Billing',
+      email: 'platform.billing@smartfieldwork.com',
+      role: Role.PLATFORM_BILLING,
+      mobile: '+919900000005',
+    },
+    {
+      employeeCode: 'PLAT-AUD-001',
+      fullName: 'Audit Compliance',
+      email: 'platform.auditor@smartfieldwork.com',
+      role: Role.PLATFORM_AUDITOR,
+      mobile: '+919900000006',
+    },
   ];
 
   for (const u of users) {
@@ -83,7 +125,7 @@ async function main() {
     },
   });
 
-  // Seed role 2FA settings — enable for SUPER_ADMIN only
+  // Seed role 2FA settings — enable for SUPER_ADMIN & PLATFORM_SUPER_ADMIN only
   const twoFactorRoles = [
     { role: Role.SUPER_ADMIN, enabled: true },
     { role: Role.ADMIN, enabled: false },
@@ -91,6 +133,12 @@ async function main() {
     { role: Role.TEAM_LEADER, enabled: false },
     { role: Role.FINANCE_OPS, enabled: false },
     { role: Role.SUPPORT, enabled: false },
+    { role: Role.PLATFORM_SUPER_ADMIN, enabled: true },
+    { role: Role.PLATFORM_OPERATIONS_ADMIN, enabled: false },
+    { role: Role.PLATFORM_ONBOARDING, enabled: false },
+    { role: Role.PLATFORM_SUPPORT, enabled: false },
+    { role: Role.PLATFORM_BILLING, enabled: false },
+    { role: Role.PLATFORM_AUDITOR, enabled: false },
   ];
 
   for (const setting of twoFactorRoles) {
