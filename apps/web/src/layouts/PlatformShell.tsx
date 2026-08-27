@@ -37,6 +37,7 @@ import { clearCredentials } from "../store/slices/authSlice";
 import { clearStoredRefreshToken } from "../common/authSession";
 import { api } from "../common/api";
 import { Button } from "../components/ui/Button";
+import { Select } from "../components/ui/Select";
 
 const bigLogo = "/assets/sfw-logo.png";
 const smallLogo = "/assets/sfw-icon.png";
@@ -608,24 +609,22 @@ export default function PlatformShell() {
 
           {/* Right Header Controls */}
           <div className="flex items-center gap-4">
-            {/* Test Role Switcher Dropdown */}
-            <div className="flex items-center gap-1.5 rounded-sm border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-900 shadow-xs">
-              <ShieldAlert className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-              <span className="font-bold text-[11px] text-amber-900 hidden sm:inline">
-                Role:
-              </span>
-              <select
+            {/* Role Switcher using Reusable Select Component */}
+            <div className="w-52">
+              <Select
                 value={activeRole}
                 onChange={(e) => handleRoleChange(e.target.value as PlatformRole)}
-                className="bg-transparent text-xs font-bold text-amber-900 focus:outline-none cursor-pointer"
-              >
-                <option value="PLATFORM_SUPER_ADMIN">Super Admin (Full)</option>
-                <option value="PLATFORM_OPERATIONS_ADMIN">Operations Admin</option>
-                <option value="PLATFORM_ONBOARDING">Onboarding Admin</option>
-                <option value="PLATFORM_SUPPORT">Support Agent</option>
-                <option value="PLATFORM_BILLING">Billing Admin</option>
-                <option value="PLATFORM_AUDITOR">Auditor</option>
-              </select>
+                searchable={false}
+                options={[
+                  { value: 'PLATFORM_SUPER_ADMIN', label: 'Super Admin (Full)' },
+                  { value: 'PLATFORM_OPERATIONS_ADMIN', label: 'Operations Admin' },
+                  { value: 'PLATFORM_ONBOARDING', label: 'Onboarding Admin' },
+                  { value: 'PLATFORM_SUPPORT', label: 'Support Agent' },
+                  { value: 'PLATFORM_BILLING', label: 'Billing Admin' },
+                  { value: 'PLATFORM_AUDITOR', label: 'Auditor' },
+                ]}
+                leftIcon={<ShieldAlert className="h-4 w-4 text-amber-600" />}
+              />
             </div>
 
             {/* Notification Bell Icon */}

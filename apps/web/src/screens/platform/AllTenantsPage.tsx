@@ -22,6 +22,21 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { KpiCard } from '../../components/dashboard/KpiCard';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+
+const industryChartData = [
+  { name: 'Pharma', value: 24, color: '#2563EB' },
+  { name: 'FMCG', value: 20, color: '#10B981' },
+  { name: 'Distributors', value: 18, color: '#6366F1' },
+  { name: 'Manufacturing', value: 16, color: '#14B8A6' },
+];
+
+const planChartData = [
+  { name: 'Enterprise', value: 32, color: '#2563EB' },
+  { name: 'Growth', value: 46, color: '#10B981' },
+  { name: 'Professional', value: 34, color: '#F59E0B' },
+  { name: 'Starter', value: 16, color: '#F43F5E' },
+];
 
 export function AllTenantsPage() {
   const navigate = useNavigate();
@@ -361,15 +376,24 @@ export function AllTenantsPage() {
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs">
             <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">Tenants by Industry</h3>
             <div className="flex items-center gap-4">
-              <div className="relative flex h-28 w-28 shrink-0 items-center justify-center">
-                <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E2E8F0" strokeWidth="4" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#2563EB" strokeWidth="4.5" strokeDasharray="25, 100" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#10B981" strokeWidth="4.5" strokeDasharray="20, 100" strokeDashoffset="-25" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#F59E0B" strokeWidth="4.5" strokeDasharray="18, 100" strokeDashoffset="-45" />
-                </svg>
-                <div className="absolute flex flex-col items-center text-center">
-                  <span className="text-lg font-extrabold text-[#0D1F3D]">128</span>
+              <div className="relative h-28 w-28 shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={industryChartData} cx="50%" cy="50%" innerRadius={32} outerRadius={48} paddingAngle={2} dataKey="value">
+                      {industryChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      wrapperStyle={{ zIndex: 100 }}
+                      contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none', color: '#fff' }}
+                      itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '11px' }}
+                      formatter={(val: any) => [`${val} Tenants`, 'Count']}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-base font-extrabold text-[#0D1F3D]">128</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase">Total</span>
                 </div>
               </div>
@@ -390,14 +414,24 @@ export function AllTenantsPage() {
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs">
             <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">Tenants by Plan</h3>
             <div className="flex items-center gap-4">
-              <div className="relative flex h-28 w-28 shrink-0 items-center justify-center">
-                <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E2E8F0" strokeWidth="4" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#2563EB" strokeWidth="4.5" strokeDasharray="36, 100" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#10B981" strokeWidth="4.5" strokeDasharray="26, 100" strokeDashoffset="-36" />
-                </svg>
-                <div className="absolute flex flex-col items-center text-center">
-                  <span className="text-lg font-extrabold text-[#0D1F3D]">128</span>
+              <div className="relative h-28 w-28 shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={planChartData} cx="50%" cy="50%" innerRadius={32} outerRadius={48} paddingAngle={2} dataKey="value">
+                      {planChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      wrapperStyle={{ zIndex: 100 }}
+                      contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none', color: '#fff' }}
+                      itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '11px' }}
+                      formatter={(val: any) => [`${val} Tenants`, 'Count']}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-base font-extrabold text-[#0D1F3D]">128</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase">Total</span>
                 </div>
               </div>

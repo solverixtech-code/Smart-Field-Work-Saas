@@ -24,6 +24,32 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { KpiCard } from '../../components/dashboard/KpiCard';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
+
+const mrrTrendData = [
+  { date: 'May 20', mrr: 2420000 },
+  { date: 'May 27', mrr: 2510000 },
+  { date: 'Jun 03', mrr: 2640000 },
+  { date: 'Jun 10', mrr: 2750000 },
+  { date: 'Jun 18', mrr: 2874320 },
+];
+
+const industryChartData = [
+  { name: 'Pharma', value: 24, color: '#2563EB' },
+  { name: 'FMCG', value: 20, color: '#10B981' },
+  { name: 'Distributors', value: 18, color: '#6366F1' },
+  { name: 'Manufacturing', value: 16, color: '#14B8A6' },
+  { name: 'Solar', value: 12, color: '#F59E0B' },
+  { name: 'Services', value: 10, color: '#F43F5E' },
+  { name: 'Other', value: 28, color: '#94A3B8' },
+];
+
+const planChartData = [
+  { name: 'Enterprise', value: 32, color: '#2563EB' },
+  { name: 'Growth', value: 46, color: '#10B981' },
+  { name: 'Professional', value: 34, color: '#F59E0B' },
+  { name: 'Starter', value: 16, color: '#F43F5E' },
+];
 
 export function PlatformDashboardPage() {
   const navigate = useNavigate();
@@ -200,44 +226,28 @@ export function PlatformDashboardPage() {
               <span className="text-xs font-bold text-emerald-600">▲ 18.6% vs last month</span>
             </div>
 
-            {/* Simulated Line / Area Chart */}
-            <div className="h-44 w-full pt-4">
-              <svg className="h-full w-full overflow-visible" viewBox="0 0 400 120" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="mrrGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2563EB" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
-                  </linearGradient>
-                </defs>
-                <line x1="0" y1="20" x2="400" y2="20" stroke="#F1F5F9" strokeDasharray="4 4" />
-                <line x1="0" y1="60" x2="400" y2="60" stroke="#F1F5F9" strokeDasharray="4 4" />
-                <line x1="0" y1="100" x2="400" y2="100" stroke="#F1F5F9" strokeDasharray="4 4" />
-
-                <path
-                  d="M0,80 Q50,75 100,70 T200,55 T300,45 T400,30 L400,120 L0,120 Z"
-                  fill="url(#mrrGrad)"
-                />
-                <path
-                  d="M0,80 Q50,75 100,70 T200,55 T300,45 T400,30"
-                  fill="none"
-                  stroke="#2563EB"
-                  strokeWidth="3"
-                />
-
-                <circle cx="0" cy="80" r="4" fill="#2563EB" stroke="#fff" strokeWidth="2" />
-                <circle cx="100" cy="70" r="4" fill="#2563EB" stroke="#fff" strokeWidth="2" />
-                <circle cx="200" cy="55" r="4" fill="#2563EB" stroke="#fff" strokeWidth="2" />
-                <circle cx="300" cy="45" r="4" fill="#2563EB" stroke="#fff" strokeWidth="2" />
-                <circle cx="400" cy="30" r="4" fill="#2563EB" stroke="#fff" strokeWidth="2" />
-              </svg>
-
-              <div className="flex justify-between pt-2 text-[10px] font-semibold text-slate-400">
-                <span>May 20</span>
-                <span>May 27</span>
-                <span>Jun 03</span>
-                <span>Jun 10</span>
-                <span>Jun 18</span>
-              </div>
+            {/* Interactive Recharts Area Chart */}
+            <div className="h-48 w-full pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={mrrTrendData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="mrrGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" stroke="#94A3B8" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#94A3B8" fontSize={11} tickLine={false} tickFormatter={(v) => `₹${v / 100000}L`} />
+                  <Tooltip
+                    wrapperStyle={{ zIndex: 100 }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none', color: '#fff' }}
+                    labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
+                    itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
+                    formatter={(val: any) => [`₹${Number(val).toLocaleString()}`, 'MRR']}
+                  />
+                  <Area type="monotone" dataKey="mrr" stroke="#2563EB" strokeWidth={3} fillOpacity={1} fill="url(#mrrGrad)" dot={{ r: 4, fill: '#2563EB', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
@@ -247,15 +257,24 @@ export function PlatformDashboardPage() {
           <div>
             <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">Tenants by Industry</h3>
 
-            <div className="flex items-center gap-6">
-              <div className="relative flex h-36 w-36 shrink-0 items-center justify-center">
-                <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E2E8F0" strokeWidth="4" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#2563EB" strokeWidth="4.5" strokeDasharray="25, 100" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#10B981" strokeWidth="4.5" strokeDasharray="20, 100" strokeDashoffset="-25" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#F59E0B" strokeWidth="4.5" strokeDasharray="18, 100" strokeDashoffset="-45" />
-                </svg>
-                <div className="absolute flex flex-col items-center text-center">
+            <div className="flex items-center gap-4">
+              <div className="relative h-36 w-36 shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={industryChartData} cx="50%" cy="50%" innerRadius={42} outerRadius={62} paddingAngle={3} dataKey="value">
+                      {industryChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      wrapperStyle={{ zIndex: 100 }}
+                      contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none', color: '#fff' }}
+                      itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
+                      formatter={(val: any) => [`${val} Tenants`, 'Count']}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-xl font-extrabold text-[#0D1F3D]">128</span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Total</span>
                 </div>
@@ -293,14 +312,24 @@ export function PlatformDashboardPage() {
           <div>
             <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">Tenants by Plan</h3>
 
-            <div className="flex items-center gap-6">
-              <div className="relative flex h-36 w-36 shrink-0 items-center justify-center">
-                <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E2E8F0" strokeWidth="4" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#2563EB" strokeWidth="4.5" strokeDasharray="36, 100" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#10B981" strokeWidth="4.5" strokeDasharray="26, 100" strokeDashoffset="-36" />
-                </svg>
-                <div className="absolute flex flex-col items-center text-center">
+            <div className="flex items-center gap-4">
+              <div className="relative h-36 w-36 shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={planChartData} cx="50%" cy="50%" innerRadius={42} outerRadius={62} paddingAngle={3} dataKey="value">
+                      {planChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      wrapperStyle={{ zIndex: 100 }}
+                      contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none', color: '#fff' }}
+                      itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
+                      formatter={(val: any) => [`${val} Tenants`, 'Count']}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-xl font-extrabold text-[#0D1F3D]">128</span>
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Total</span>
                 </div>
