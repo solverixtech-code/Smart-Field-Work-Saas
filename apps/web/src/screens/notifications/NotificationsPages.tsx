@@ -67,10 +67,83 @@ const notificationRows: NotificationRow[] = [
   { id: 'NOT-1008', title: 'Survey Request', description: 'We value your feedback. Please take 2 mins...', type: 'Other', audience: 'Active Customers (1,200 Users)', channel: 'Email', status: 'Scheduled', created: '23 May 2025 · 09:00 AM', delivery: '—', icon: FileText, tone: 'cyan' },
 ];
 
-const executives = [
-  { value: 'amit', label: 'Amit Verma', sublabel: 'Sales Manager · Mumbai West', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80' },
-  { value: 'rahul', label: 'Rahul Kumar', sublabel: 'Field Executive · Mumbai Central', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&auto=format&fit=crop&q=80' },
-  { value: 'priya', label: 'Priya Singh', sublabel: 'Team Leader · Mumbai East', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&auto=format&fit=crop&q=80' },
+const executiveSelectOptions = [
+  {
+    value: 'all_executives',
+    label: 'All Field Executives',
+    sublabel: '326 Active Field Sales Reps',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80',
+  },
+  {
+    value: 'rahul_verma',
+    label: 'Rahul Verma',
+    sublabel: 'FE-1001 • Mumbai North Zone',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+  },
+  {
+    value: 'priya_mehta',
+    label: 'Priya Mehta',
+    sublabel: 'FE-1002 • Western Suburbs Zone',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+  },
+  {
+    value: 'sanjay_yadav',
+    label: 'Sanjay Yadav',
+    sublabel: 'TL-1003 • Eastern Suburbs (Team Leader)',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+  },
+  {
+    value: 'karan_patil',
+    label: 'Karan Patil',
+    sublabel: 'FE-1009 • Thane Team',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+  },
+  {
+    value: 'neha_deshpande',
+    label: 'Neha Deshpande',
+    sublabel: 'FE-1014 • Pune Team',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+  },
+];
+
+const customerSelectOptions = [
+  {
+    value: 'all_customers',
+    label: 'All Active Customers',
+    sublabel: '2,145 Total Subscribed Stores',
+    avatar: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=150',
+  },
+  {
+    value: 'apex_electronics',
+    label: 'Apex Electronics',
+    sublabel: 'B2B Merchant • Bandra West, Mumbai',
+    avatar: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=150',
+  },
+  {
+    value: 'metro_retail',
+    label: 'Metro Retail Stores',
+    sublabel: 'Retail Chain • Andheri East, Mumbai',
+    avatar: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=150',
+  },
+  {
+    value: 'vanguard_pharma',
+    label: 'Vanguard Pharmacy',
+    sublabel: 'Healthcare Supplier • Dadar, Mumbai',
+    avatar: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=150',
+  },
+];
+
+const teamTerritorySelectOptions = [
+  { value: 'mumbai_west', label: 'Mumbai West Zone', sublabel: '24 Executives • Territory Pool' },
+  { value: 'mumbai_north', label: 'Mumbai North Zone', sublabel: '18 Executives • Territory Pool' },
+  { value: 'pune_central', label: 'Pune Central Zone', sublabel: '12 Executives • Territory Pool' },
+  { value: 'thane_team', label: 'Thane Sales Team', sublabel: '15 Executives • Team Pool' },
+];
+
+const roleSelectOptions = [
+  { value: 'field_executive', label: 'Field Executives (FE)', sublabel: '326 Active Field Sales Reps' },
+  { value: 'team_leader', label: 'Team Leaders (TL)', sublabel: '24 Active Supervisors' },
+  { value: 'sales_manager', label: 'Sales Managers (SM)', sublabel: '12 Regional Managers' },
 ];
 
 const statCards = [
@@ -226,6 +299,7 @@ function StatusBadge({ status }: { status: NotificationRow['status'] }) {
 
 function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'templates' }) {
   const [search, setSearch] = useState('');
+  const [selectedExec, setSelectedExec] = useState('all_executives');
 
   return (
     <div className="rounded-sm border border-slate-200 bg-white p-3.5 shadow-xs space-y-3">
@@ -257,19 +331,17 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
             { value: 'reminder', label: 'Reminder' },
             { value: 'promotion', label: 'Promotion' },
           ]}
-          searchable={false}
+          searchable={true}
+          placeholder="Filter Type..."
         />
 
+        {/* SEARCHABLE EXECUTIVE / ROLE SELECTOR WITH AVATAR, FULL NAME & SUBLABEL */}
         <Select
-          value="all"
-          onChange={() => {}}
-          options={[
-            { value: 'all', label: 'All Audiences' },
-            { value: 'customers', label: 'All Customers' },
-            { value: 'executives', label: 'Field Executives' },
-            { value: 'managers', label: 'Sales Managers' },
-          ]}
-          searchable={false}
+          value={selectedExec}
+          onChange={(e) => setSelectedExec(e.target.value)}
+          options={executiveSelectOptions}
+          searchable={true}
+          placeholder="Select Executive / Role..."
         />
 
         <Select
@@ -281,7 +353,8 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
             { value: 'scheduled', label: 'Scheduled' },
             { value: 'failed', label: 'Failed' },
           ]}
-          searchable={false}
+          searchable={true}
+          placeholder="Filter Status..."
         />
 
         <Select
@@ -293,7 +366,8 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
             { value: 'email', label: 'Email' },
             { value: 'inapp', label: 'In-App' },
           ]}
-          searchable={false}
+          searchable={true}
+          placeholder="Filter Channel..."
         />
       </div>
 
@@ -558,7 +632,10 @@ export function NotificationCenterPage() {
 // SCREEN 164: CREATE NOTIFICATION (/admin/notifications/create)
 export function CreateNotificationPage() {
   const [noticeType, setNoticeType] = useState<NoticeType>('Announcement');
-  const [audienceTarget, setAudienceTarget] = useState('all');
+  const [selectedExec, setSelectedExec] = useState('rahul_verma');
+  const [selectedCustomer, setSelectedCustomer] = useState('apex_electronics');
+  const [selectedTeam, setSelectedTeam] = useState('mumbai_west');
+  const [selectedRole, setSelectedRole] = useState('field_executive');
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [sendNow, setSendNow] = useState(true);
@@ -600,14 +677,40 @@ export function CreateNotificationPage() {
             </div>
           </div>
 
-          {/* Audience Selection */}
+          {/* Audience Selection - SEARCHABLE SELECTS WITH PROFILE AVATARS & SUBLABELS */}
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Audience</h3>
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Audience Target Selection</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              <Select label="Send To *" options={[{ value: 'all', label: 'All Users' }, { value: 'custom', label: 'Custom Target' }]} searchable={false} />
-              <Select label="Customer / Executive" options={[{ value: 'customers', label: 'Select customers or executives' }]} searchable={true} />
-              <Select label="Teams / Territories" options={[{ value: 'mumbai', label: 'Select teams or territories' }]} searchable={true} />
-              <Select label="Roles" options={[{ value: 'field', label: 'Select roles' }]} searchable={true} />
+              <Select
+                label="Send To *"
+                value="all"
+                options={[{ value: 'all', label: 'All Platform Users' }, { value: 'custom', label: 'Custom Targeted Audience' }]}
+                searchable={true}
+              />
+              <Select
+                label="Executive Target *"
+                value={selectedExec}
+                onChange={(e) => setSelectedExec(e.target.value)}
+                options={executiveSelectOptions}
+                searchable={true}
+                placeholder="Search executive..."
+              />
+              <Select
+                label="Customer / Merchant *"
+                value={selectedCustomer}
+                onChange={(e) => setSelectedCustomer(e.target.value)}
+                options={customerSelectOptions}
+                searchable={true}
+                placeholder="Search merchant..."
+              />
+              <Select
+                label="Teams / Territories *"
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value)}
+                options={teamTerritorySelectOptions}
+                searchable={true}
+                placeholder="Search territory..."
+              />
             </div>
           </div>
 
@@ -670,7 +773,7 @@ export function CreateNotificationPage() {
                 Schedule For Later
               </button>
               <Input label="Schedule Date" type="date" defaultValue="2025-05-22" />
-              <Select label="Priority" options={[{ value: 'high', label: 'High Priority' }, { value: 'normal', label: 'Normal' }]} searchable={false} />
+              <Select label="Priority" options={[{ value: 'high', label: 'High Priority' }, { value: 'normal', label: 'Normal' }]} searchable={true} />
             </div>
           </div>
         </div>
@@ -680,21 +783,23 @@ export function CreateNotificationPage() {
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
             <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Live Mobile Preview</h3>
             
-            {/* Phone Lockscreen Box */}
-            <div className="rounded-2xl border-4 border-slate-800 bg-slate-900 p-4 text-white space-y-3 shadow-lg">
-              <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold border-b border-slate-800 pb-2">
+            {/* Light Enterprise Mobile Preview Box */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold border-b border-slate-200/80 pb-2">
                 <span>10:30 AM</span>
-                <span>Smart Field Work</span>
+                <span className="font-semibold text-slate-400">Smart Field Work</span>
               </div>
-              <div className="bg-slate-800/80 rounded-xl p-3 space-y-1.5 border border-slate-700">
-                <div className="flex items-center gap-2">
-                  <img src="/assets/sfw-logo.png" alt="" className="h-5 w-auto object-contain" />
-                  <span className="text-xs font-extrabold text-white">{title || 'Notification Title'}</span>
+              <div className="bg-white rounded-xl p-3.5 space-y-1.5 border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-2 mb-1">
+                  <img src="/assets/sfw-logo.png" alt="Smart Field Work" className="h-5 w-auto object-contain" />
                 </div>
-                <p className="text-[11px] text-slate-300 font-medium leading-relaxed">
+                <h4 className="text-xs font-extrabold text-[#0D1F3D]">{title || 'Notification Title'}</h4>
+                <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
                   {message || 'This is how your notification message will appear on customer mobile screens.'}
                 </p>
-                <span className="text-[10px] font-bold text-blue-400 block pt-1 hover:underline cursor-pointer">View Details →</span>
+                <span className="text-[10px] font-extrabold text-[#E20613] hover:underline cursor-pointer pt-1 flex items-center gap-0.5">
+                  View Details <ChevronRight className="h-3 w-3" />
+                </span>
               </div>
             </div>
           </div>
@@ -725,6 +830,7 @@ export function CreateNotificationPage() {
 // SCREEN 165: PUSH NOTIFICATIONS (/admin/notifications/push)
 export function PushNotificationsPage() {
   const [platform, setPlatform] = useState<'android' | 'ios' | 'both'>('both');
+  const [selectedExec, setSelectedExec] = useState('rahul_verma');
 
   return (
     <div className="space-y-4 font-sans pb-12">
@@ -737,21 +843,32 @@ export function PushNotificationsPage() {
         <div className="lg:col-span-8 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold">
           <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Create Push Notification</h3>
           
-          <div className="space-y-2">
-            <label className="font-bold text-[#0D1F3D] block">Platform Target *</label>
-            <div className="grid grid-cols-3 gap-3">
-              {(['android', 'ios', 'both'] as const).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setPlatform(p)}
-                  className={`p-3 rounded-sm border font-bold text-xs capitalize transition-all cursor-pointer ${
-                    platform === p ? 'border-[#E20613] bg-red-50/50 text-[#0D1F3D]' : 'border-slate-200 text-slate-600 bg-white'
-                  }`}
-                >
-                  {p === 'both' ? 'Both (Android & iOS)' : p}
-                </button>
-              ))}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Select
+              label="Target Field Executive *"
+              value={selectedExec}
+              onChange={(e) => setSelectedExec(e.target.value)}
+              options={executiveSelectOptions}
+              searchable={true}
+              placeholder="Search field executive..."
+            />
+            
+            <div className="space-y-1">
+              <label className="font-bold text-[#0D1F3D] block">Platform Target *</label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['android', 'ios', 'both'] as const).map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => setPlatform(p)}
+                    className={`p-2.5 rounded-sm border font-bold text-xs capitalize transition-all cursor-pointer ${
+                      platform === p ? 'border-[#E20613] bg-red-50/50 text-[#0D1F3D]' : 'border-slate-200 text-slate-600 bg-white'
+                    }`}
+                  >
+                    {p === 'both' ? 'Both' : p}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -788,15 +905,23 @@ export function PushNotificationsPage() {
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
             <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Phone Lockscreen Preview</h3>
             
-            <div className="rounded-3xl border-4 border-slate-900 bg-slate-950 p-4 text-white shadow-xl space-y-3">
-              <div className="text-center text-[10px] text-slate-400 font-mono">10:30 AM • Mon, 22 May</div>
-              <div className="bg-slate-900/90 rounded-2xl p-3 border border-slate-800 space-y-1">
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="font-bold text-red-400">SFW Push</span>
-                  <span className="text-slate-500">now</span>
+            {/* Light Enterprise Mobile Notification Preview */}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3 shadow-xs">
+              <div className="text-center text-[10px] text-slate-500 font-mono font-bold">10:30 AM • Mon, 22 May</div>
+              <div className="bg-white rounded-xl p-3.5 space-y-1.5 border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-between text-[10px] pb-1 border-b border-slate-100">
+                  <div className="flex items-center gap-1.5">
+                    <img src="/assets/sfw-logo.png" alt="SFW Push" className="h-4.5 w-auto object-contain" />
+                  </div>
+                  <span className="text-slate-400 font-mono">now</span>
                 </div>
-                <p className="text-xs font-extrabold text-white">Plan Renewal Reminder</p>
-                <p className="text-[11px] text-slate-300 leading-snug">Hi Rahul, your plan will expire on 22 May 2025. Please renew to continue.</p>
+                <h4 className="text-xs font-extrabold text-[#0D1F3D]">Plan Renewal Reminder</h4>
+                <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+                  Hi Rahul, your plan will expire on 22 May 2025. Please renew to continue using all features.
+                </p>
+                <span className="text-[10px] font-extrabold text-[#E20613] hover:underline cursor-pointer pt-1 flex items-center gap-0.5">
+                  View Renewal Options <ChevronRight className="h-3 w-3" />
+                </span>
               </div>
             </div>
           </div>
@@ -835,7 +960,7 @@ export function ExecutiveAlertsPage() {
       header: 'Executive / Role',
       cell: (row) => (
         <div className="flex items-center gap-2">
-          <img src={executives[0].avatar} alt="" className="h-6 w-6 rounded-full object-cover border border-slate-200" />
+          <img src={executiveSelectOptions[1].avatar} alt="" className="h-6 w-6 rounded-full object-cover border border-slate-200" />
           <div>
             <p className="font-extrabold text-[#0D1F3D] text-xs">{row.audience}</p>
           </div>
