@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -7,7 +7,6 @@ import {
   Sparkles,
   ClipboardList,
   Layers,
-  Sliders,
   Globe,
   Users,
   Shield,
@@ -22,17 +21,9 @@ import {
   Bell,
   Search,
   ShieldAlert,
-  SlidersHorizontal,
-  ChevronDown,
-  HelpCircle,
-  Calendar,
-  Download,
-  Headphones,
-  UserCheck,
   Tag,
   Home,
-  User,
-  Monitor,
+  UserCheck,
 } from "lucide-react";
 import { usePlatformPermissions } from "../features/platform/tenants/hooks/usePlatformPermissions";
 import {
@@ -53,7 +44,6 @@ interface NavItem {
   icon: React.ElementType;
   to: string;
   badge?: string;
-  badgeColor?: string;
   permission: PlatformPermission;
 }
 
@@ -61,6 +51,120 @@ interface NavCategory {
   title: string;
   items: NavItem[];
 }
+
+const NAV_CATEGORIES: NavCategory[] = [
+  {
+    title: "Main Overview",
+    items: [
+      {
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        to: "/platform/dashboard",
+        permission: "platform.dashboard.view",
+      },
+    ],
+  },
+  {
+    title: "Tenant Management",
+    items: [
+      {
+        label: "All Tenants",
+        icon: Building2,
+        to: "/platform/tenants",
+        permission: "platform.tenants.view",
+      },
+      {
+        label: "Create Tenant",
+        icon: PlusCircle,
+        to: "/platform/tenants/create",
+        permission: "platform.tenants.create",
+      },
+      {
+        label: "Tenant Onboarding",
+        icon: Sparkles,
+        to: "/platform/tenants/onboarding",
+        permission: "platform.tenants.view",
+      },
+      {
+        label: "Tenant Requests",
+        icon: ClipboardList,
+        to: "/platform/tenants/requests",
+        badge: "8",
+        permission: "platform.tenants.view",
+      },
+    ],
+  },
+  {
+    title: "Platform Management",
+    items: [
+      {
+        label: "Plans & Pricing",
+        icon: Tag,
+        to: "/platform/plans",
+        permission: "platform.plans.view",
+      },
+      {
+        label: "Modules & Features",
+        icon: Layers,
+        to: "/platform/modules",
+        permission: "platform.modules.view",
+      },
+      {
+        label: "Industries",
+        icon: Globe,
+        to: "/platform/industries",
+        permission: "platform.industries.view",
+      },
+      {
+        label: "Platform Users",
+        icon: Users,
+        to: "/platform/users",
+        permission: "platform.users.view",
+      },
+      {
+        label: "Roles & Permissions",
+        icon: Shield,
+        to: "/platform/roles",
+        permission: "platform.roles.view",
+      },
+      {
+        label: "Audit Logs",
+        icon: FileText,
+        to: "/platform/audit",
+        permission: "platform.audit.view",
+      },
+    ],
+  },
+  {
+    title: "Billing & Finance",
+    items: [
+      {
+        label: "Subscriptions",
+        icon: CreditCard,
+        to: "/platform/subscriptions",
+        permission: "platform.subscriptions.manage",
+      },
+      {
+        label: "Invoices",
+        icon: Receipt,
+        to: "/platform/invoices",
+        permission: "platform.subscriptions.manage",
+      },
+      {
+        label: "Transactions",
+        icon: ArrowRightLeft,
+        to: "/platform/transactions",
+        permission: "platform.subscriptions.manage",
+      },
+      {
+        label: "Reports",
+        icon: PieChart,
+        to: "/platform/reports",
+        permission: "platform.dashboard.view",
+      },
+    ],
+  },
+];
 
 export default function PlatformShell() {
   const [collapsed, setCollapsed] = useState(false);
@@ -78,13 +182,13 @@ export default function PlatformShell() {
   const { role, setRole, hasPlatformPermission } =
     usePlatformPermissions(activeRole);
 
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        userMenuRef.current &&
-        !userMenuRef.current.contains(e.target as Node)
+        sidebarRef.current &&
+        !sidebarRef.current.contains(e.target as Node)
       ) {
         setUserMenuOpen(false);
       }
@@ -109,128 +213,13 @@ export default function PlatformShell() {
     navigate("/admin/login");
   };
 
-  const navCategories: NavCategory[] = [
-    {
-      title: "Main Overview",
-      items: [
-        {
-          label: "Dashboard",
-          icon: LayoutDashboard,
-          to: "/platform/dashboard",
-          permission: "platform.dashboard.view",
-        },
-      ],
-    },
-    {
-      title: "Tenant Management",
-      items: [
-        {
-          label: "All Tenants",
-          icon: Building2,
-          to: "/platform/tenants",
-          permission: "platform.tenants.view",
-        },
-        {
-          label: "Create Tenant",
-          icon: PlusCircle,
-          to: "/platform/tenants/create",
-          permission: "platform.tenants.create",
-        },
-        {
-          label: "Tenant Onboarding",
-          icon: Sparkles,
-          to: "/platform/tenants/onboarding",
-          permission: "platform.tenants.view",
-        },
-        {
-          label: "Tenant Requests",
-          icon: ClipboardList,
-          to: "/platform/tenants/requests",
-          badge: "8",
-          badgeColor: "bg-red-500 text-white",
-          permission: "platform.tenants.view",
-        },
-      ],
-    },
-    {
-      title: "Platform Management",
-      items: [
-        {
-          label: "Plans & Pricing",
-          icon: Tag,
-          to: "/platform/plans",
-          permission: "platform.plans.view",
-        },
-        {
-          label: "Modules & Features",
-          icon: Layers,
-          to: "/platform/modules",
-          permission: "platform.modules.view",
-        },
-        {
-          label: "Industries",
-          icon: Globe,
-          to: "/platform/industries",
-          permission: "platform.industries.view",
-        },
-        {
-          label: "Platform Users",
-          icon: Users,
-          to: "/platform/users",
-          permission: "platform.users.view",
-        },
-        {
-          label: "Roles & Permissions",
-          icon: Shield,
-          to: "/platform/roles",
-          permission: "platform.roles.view",
-        },
-        {
-          label: "Audit Logs",
-          icon: FileText,
-          to: "/platform/audit",
-          permission: "platform.audit.view",
-        },
-      ],
-    },
-    {
-      title: "Billing & Finance",
-      items: [
-        {
-          label: "Subscriptions",
-          icon: CreditCard,
-          to: "/platform/subscriptions",
-          permission: "platform.subscriptions.manage",
-        },
-        {
-          label: "Invoices",
-          icon: Receipt,
-          to: "/platform/invoices",
-          permission: "platform.subscriptions.manage",
-        },
-        {
-          label: "Transactions",
-          icon: ArrowRightLeft,
-          to: "/platform/transactions",
-          permission: "platform.subscriptions.manage",
-        },
-        {
-          label: "Reports",
-          icon: PieChart,
-          to: "/platform/reports",
-          permission: "platform.dashboard.view",
-        },
-      ],
-    },
-  ];
-
   const showBigLogo = !collapsed || isHovered;
 
-  // Breadcrumbs helper matching AppShell.tsx style
-  const getBreadcrumbs = () => {
+  // Breadcrumbs helper matching AppShell.tsx exact style
+  const breadcrumbs = useMemo(() => {
     const p = location.pathname;
     if (p === "/platform/dashboard") {
-      return [{ label: "Platform Console", to: "/platform/dashboard" }, { label: "Executive Dashboard", to: "/platform/dashboard" }];
+      return [{ label: "Executive Overview", to: "/platform/dashboard" }];
     }
     if (p === "/platform/tenants") {
       return [
@@ -264,15 +253,13 @@ export default function PlatformShell() {
     }
     return [
       { label: "Platform Console", to: "/platform/dashboard" },
-      { label: "Console Overview", to: p },
+      { label: "Overview", to: p },
     ];
-  };
-
-  const breadcrumbs = getBreadcrumbs();
+  }, [location.pathname]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 font-sans">
-      {/* Refined Enterprise White Theme Sidebar (100% Reusing AppShell.tsx Sidebar Architecture) */}
+      {/* 100% Identical Sidebar Architecture to AppShell.tsx */}
       <aside
         className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-slate-200 bg-white text-slate-700 shadow-xs transition-all duration-300 ease-in-out overflow-x-hidden ${
           showBigLogo ? "w-[295px]" : "w-[80px]"
@@ -332,7 +319,7 @@ export default function PlatformShell() {
               : "scrollbar-none"
           }`}
         >
-          {navCategories.map((cat, idx) => (
+          {NAV_CATEGORIES.map((cat, idx) => (
             <div key={idx} className="space-y-0.5">
               {showBigLogo && (
                 <p className="px-3 text-[11px] font-medium text-slate-400 pt-2 pb-1">
@@ -342,38 +329,94 @@ export default function PlatformShell() {
               {cat.items.map((item) => {
                 const isAllowed = hasPlatformPermission(item.permission);
                 const Icon = item.icon;
-                const isActive =
-                  location.pathname === item.to ||
-                  (item.to !== "/platform/dashboard" &&
-                    location.pathname.startsWith(item.to));
 
-                if (!isAllowed) return null;
+                // Strict active matching (Exact same logic as AppShell.tsx)
+                const isActive = (() => {
+                  if (
+                    [
+                      "/platform/dashboard",
+                      "/platform/tenants",
+                      "/platform/plans",
+                      "/platform/modules",
+                      "/platform/industries",
+                      "/platform/users",
+                      "/platform/roles",
+                      "/platform/audit",
+                      "/platform/subscriptions",
+                      "/platform/invoices",
+                      "/platform/transactions",
+                      "/platform/reports",
+                    ].includes(item.to)
+                  ) {
+                    return location.pathname === item.to;
+                  }
+                  return (
+                    location.pathname === item.to ||
+                    location.pathname.startsWith(item.to + "/")
+                  );
+                })();
 
                 return (
                   <NavLink
                     key={item.to}
                     to={item.to}
-                    className={({ isActive: linkActive }) => {
-                      const active = linkActive || isActive;
-                      return `group relative flex items-center gap-3 rounded-sm px-3 py-2.5 text-xs font-medium transition-all duration-150 ${
-                        active
-                          ? "bg-slate-100 font-bold text-[#0D1F3D] border-l-4 border-[#E20613] shadow-xs"
-                          : "text-slate-600 hover:bg-slate-50 hover:text-[#0D1F3D]"
-                      } ${!showBigLogo ? "justify-center px-0" : ""}`;
+                    onClick={(e) => {
+                      if (!isAllowed) {
+                        e.preventDefault();
+                      }
                     }}
+                    title={!showBigLogo ? item.label : undefined}
+                    className={`group relative flex items-center rounded-sm py-2 text-[13px] font-medium transition-all duration-150 ${
+                      showBigLogo
+                        ? "px-3 gap-3 justify-start"
+                        : "w-11 mx-auto justify-center px-0"
+                    } ${
+                      isActive
+                        ? "bg-[#0D1F3D] text-white shadow-xs font-semibold"
+                        : isAllowed
+                        ? "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
+                        : "text-slate-400 opacity-50 cursor-not-allowed hover:bg-slate-50"
+                    }`}
                   >
-                    <Icon className="h-4 w-4 shrink-0 text-slate-500 group-hover:text-[#0D1F3D]" />
+                    <Icon
+                      className={`h-4.5 w-4.5 flex-shrink-0 transition-colors ${
+                        isActive
+                          ? "text-white"
+                          : isAllowed
+                          ? "text-slate-400 group-hover:text-slate-700"
+                          : "text-slate-300"
+                      }`}
+                    />
+
                     {showBigLogo && (
-                      <span className="flex-1 truncate">{item.label}</span>
+                      <div className="flex flex-1 items-center justify-between min-w-0">
+                        <span className="whitespace-nowrap font-medium">
+                          {item.label}
+                        </span>
+                        {item.badge && (
+                          <span
+                            className={`ml-2 shrink-0 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-extrabold transition-colors ${
+                              isActive
+                                ? "bg-[#E20613] text-white border border-[#E20613]"
+                                : "bg-red-50 text-[#E20613] border border-red-200/60"
+                            }`}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                        {!isAllowed && (
+                          <span className="ml-2 shrink-0 whitespace-nowrap rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
+                            Locked
+                          </span>
+                        )}
+                      </div>
                     )}
-                    {showBigLogo && item.badge && (
-                      <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold leading-none ${
-                          item.badgeColor ?? "bg-red-500 text-white"
-                        }`}
-                      >
-                        {item.badge}
-                      </span>
+
+                    {/* Tooltip on Collapsed Hover */}
+                    {!showBigLogo && (
+                      <div className="pointer-events-none absolute left-full ml-3 z-50 whitespace-nowrap rounded-sm bg-slate-900 px-2.5 py-1 text-xs font-medium text-white shadow-xl opacity-0 transition-opacity group-hover:opacity-100">
+                        {item.label}
+                      </div>
                     )}
                   </NavLink>
                 );
@@ -382,91 +425,102 @@ export default function PlatformShell() {
           ))}
         </nav>
 
-        {/* User Profile Quick Actions Drawer at Bottom Left (Matching AppShell.tsx) */}
-        <div className="flex-none p-3 border-t border-slate-100 relative" ref={userMenuRef}>
-          <div
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className={`flex items-center rounded-sm p-2 transition-all cursor-pointer ${
-              showBigLogo ? "justify-between" : "justify-center"
-            } ${
-              userMenuOpen
-                ? "bg-slate-100 ring-1 ring-slate-200"
-                : "hover:bg-slate-50"
-            }`}
-          >
-            <div className={`flex items-center gap-2.5 ${showBigLogo ? "overflow-hidden" : "justify-center"}`}>
-              <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-xs font-semibold text-white shadow-xs">
-                {user?.fullName?.charAt(0) ?? "S"}
-                <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-[#E20613] ring-2 ring-white" />
-              </div>
-              {showBigLogo && (
-                <div className="flex flex-col truncate">
-                  <p className="text-xs font-semibold text-slate-800 truncate">
-                    {user?.fullName || "Super Admin"}
-                  </p>
-                  <p className="text-[11px] font-medium text-slate-500 truncate">
-                    Platform Super Admin
-                  </p>
-                </div>
-              )}
-            </div>
-            {showBigLogo && (
-              <ChevronRight
-                className={`h-4 w-4 text-slate-400 transition-transform ${
-                  userMenuOpen ? "-rotate-90 text-slate-600" : ""
-                }`}
-              />
-            )}
-          </div>
-
-          {/* User Popover Menu */}
-          {userMenuOpen && (
+        {/* User Footer Profile Card in Sidebar (100% Identical to AppShell.tsx) */}
+        <div
+          className="border-t border-slate-100 p-2.5 relative z-20 flex-shrink-0"
+          ref={sidebarRef}
+        >
+          <div className="relative">
             <div
-              className={`absolute bottom-full mb-2 rounded-sm border border-slate-200 bg-white p-2 shadow-2xl space-y-1 z-[100] ${
-                showBigLogo ? "left-3 right-3" : "left-3 w-56"
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className={`flex items-center rounded-sm p-2 transition-all cursor-pointer ${
+                showBigLogo ? "justify-between" : "justify-center"
+              } ${
+                userMenuOpen
+                  ? "bg-slate-100 ring-1 ring-slate-200"
+                  : "hover:bg-slate-50"
               }`}
             >
-              <div className="px-3 py-2 border-b border-slate-100 mb-1">
-                <p className="text-xs font-bold text-[#0D1F3D] truncate">
-                  {user?.fullName || "Super Admin"}
-                </p>
-                <p className="text-[11px] text-slate-400 truncate">
-                  {user?.email || "platform.admin@smartfieldwork.com"}
-                </p>
+              <div
+                className={`flex items-center gap-2.5 ${
+                  showBigLogo ? "overflow-hidden" : "justify-center"
+                }`}
+              >
+                <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-xs font-semibold text-white shadow-xs">
+                  {user?.fullName?.charAt(0) ?? "S"}
+                  <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-[#E20613] ring-2 ring-white" />
+                </div>
+
+                {showBigLogo && (
+                  <div className="flex flex-col truncate">
+                    <p className="text-xs font-semibold text-slate-800 truncate">
+                      {user?.fullName || "Super Admin"}
+                    </p>
+                    <p className="text-[11px] font-medium text-slate-500 truncate">
+                      Platform Super Admin
+                    </p>
+                  </div>
+                )}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setUserMenuOpen(false);
-                  navigate("/admin/dashboard");
-                }}
-                className="w-full flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors"
-              >
-                <UserCheck className="h-4 w-4 text-blue-600" /> Exit to Tenant CRM →
-              </button>
-              <Button
-                variant="ghost"
-                size="sm"
-                fullWidth
-                onClick={handleLogout}
-                className="flex items-center justify-start gap-2.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs mt-1 rounded-sm border-t border-slate-100 pt-2"
-              >
-                <LogOut className="h-4 w-4 text-rose-600" /> Sign Out
-              </Button>
+
+              {showBigLogo && (
+                <ChevronRight
+                  className={`h-4 w-4 text-slate-400 transition-transform ${
+                    userMenuOpen ? "-rotate-90 text-slate-600" : ""
+                  }`}
+                />
+              )}
             </div>
-          )}
+
+            {/* User Quick Actions Dropdown Card popping upwards (Identical to AppShell.tsx) */}
+            {userMenuOpen && (
+              <div
+                className={`absolute bottom-full mb-2 rounded-sm border border-slate-200 bg-white p-2 shadow-2xl space-y-1 z-[100] ${
+                  showBigLogo ? "left-0 right-0 w-full" : "left-0 w-56"
+                }`}
+              >
+                <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                  <p className="text-xs font-bold text-[#0D1F3D] truncate">
+                    {user?.fullName || "Super Admin"}
+                  </p>
+                  <p className="text-[11px] text-slate-400 truncate">
+                    {user?.email || "platform.admin@smartfieldwork.com"}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    navigate("/admin/dashboard");
+                  }}
+                  className="w-full flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors"
+                >
+                  <UserCheck className="h-4 w-4 text-blue-600" /> Exit to Tenant CRM →
+                </button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  fullWidth
+                  onClick={handleLogout}
+                  className="flex items-center justify-start gap-2.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs mt-1 rounded-sm border-t border-slate-100 pt-2"
+                >
+                  <LogOut className="h-4 w-4 text-rose-600" /> Sign Out
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content Area (100% Identical to AppShell.tsx) */}
       <div
         className={`flex flex-1 flex-col overflow-hidden transition-all duration-300 ${
           collapsed ? "ml-[80px]" : "ml-[295px]"
         }`}
       >
-        {/* Top Header (Matching AppShell.tsx Header & Breadcrumb Bar) */}
-        <header className="flex h-20 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-sm z-40">
-          {/* Left: Breadcrumbs */}
+        {/* Top Header (100% Identical to AppShell.tsx Header & Breadcrumbs) */}
+        <header className="flex h-20 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-sm">
+          {/* Mandatory Left Header Breadcrumb Navigation */}
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
             <NavLink
               to="/platform/dashboard"
@@ -504,7 +558,7 @@ export default function PlatformShell() {
               <input
                 type="text"
                 placeholder="Search by tenant, user, plan..."
-                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-12 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
+                className="h-9 w-full rounded-sm border border-slate-200 bg-slate-50 pl-9 pr-12 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
               />
               <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded bg-slate-200/60 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
                 Ctrl + K
@@ -512,7 +566,7 @@ export default function PlatformShell() {
             </div>
 
             {/* Test Role Switcher Dropdown */}
-            <div className="flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-900 shadow-xs">
+            <div className="flex items-center gap-1.5 rounded-sm border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-900 shadow-xs">
               <ShieldAlert className="h-3.5 w-3.5 text-amber-600 shrink-0" />
               <span className="font-bold text-[11px] text-amber-900 hidden sm:inline">
                 Role:
@@ -534,7 +588,7 @@ export default function PlatformShell() {
             {/* Notification Bell */}
             <button
               type="button"
-              className="relative flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition shadow-xs"
+              className="relative flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition shadow-xs"
             >
               <Bell className="h-4.5 w-4.5" />
               <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#E20613] text-[9px] font-bold text-white shadow-xs">
