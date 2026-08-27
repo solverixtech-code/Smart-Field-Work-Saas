@@ -792,33 +792,26 @@ function Step4PlanSubscription() {
 function Step5Modules() {
   const { formState, updateFormState } = useTenantCreation();
 
-  const [coreList, setCoreList] = useState([
-    { code: 'JOBS', name: 'Jobs & Work Management', desc: 'Create, assign and track jobs from scheduling to completion.', tag: 'Included', checked: true, icon: <Briefcase className="h-4 w-4 text-indigo-600" /> },
-    { code: 'FIELD', name: 'Field Workforce', desc: 'Manage field executives, attendance and locations.', tag: 'Included', checked: true, icon: <Users className="h-4 w-4 text-emerald-600" /> },
-    { code: 'ATTENDANCE', name: 'Attendance & Time Tracking', desc: 'Track check-in/check-out and working hours.', tag: 'Included', checked: true, icon: <Clock className="h-4 w-4 text-amber-600" /> },
-    { code: 'FORMS', name: 'Forms & Surveys', desc: 'Build custom forms, surveys and inspections.', tag: 'Included', checked: true, icon: <FileText className="h-4 w-4 text-purple-600" /> },
-    { code: 'PHOTOS', name: 'Photos & Documents', desc: 'Capture and manage photos, documents and files.', tag: 'Included', checked: true, icon: <ImageIcon className="h-4 w-4 text-blue-600" /> },
+  const [modulesList, setModulesList] = useState([
+    { code: 'core_crm', name: 'Core CRM & Lead Management', desc: 'Lead capture, pipeline stages, lead assignment & auto-routing.', tag: 'Core Included', price: 'Included', checked: true, icon: <Briefcase className="h-4 w-4 text-indigo-600" /> },
+    { code: 'field_visits', name: 'GPS Field Visit Tracking', desc: 'Geofenced check-ins, route map playback, visit proof attachments.', tag: 'Core Included', price: 'Included', checked: true, icon: <MapPin className="h-4 w-4 text-emerald-600" /> },
+    { code: 'demo_scheduler', name: 'Demo & Presentation Suite', desc: 'Product demo scheduling, collateral playback, client sign-off.', tag: 'Add-on', price: '₹499 / mo', checked: true, icon: <FileText className="h-4 w-4 text-purple-600" /> },
+    { code: 'order_management', name: 'Field Order Booking & Invoicing', desc: 'Product catalog, primary/secondary order booking, tax invoice PDF.', tag: 'Add-on', price: '₹799 / mo', checked: true, icon: <CreditCard className="h-4 w-4 text-blue-600" /> },
+    { code: 'attendance_plus', name: 'Face AI & Geofence Attendance', desc: 'Selfie biometric check-in, late arrival penalty rules, muster roll.', tag: 'Add-on', price: '₹399 / mo', checked: true, icon: <Clock className="h-4 w-4 text-amber-600" /> },
+    { code: 'payroll_engine', name: 'Field Executive Payroll & Payslips', desc: 'Salary calculations, TA/DA allowances, incentive payouts, PDF payslip.', tag: 'Add-on', price: '₹999 / mo', checked: false, icon: <BarChart3 className="h-4 w-4 text-emerald-600" /> },
+    { code: 'whatsapp_automation', name: 'WhatsApp & Meta Lead Sync', desc: 'Official WhatsApp Business API integration, auto-reply bots.', tag: 'Add-on', price: '₹1,299 / mo', checked: true, icon: <MessageSquare className="h-4 w-4 text-cyan-600" /> },
+    { code: 'ai_copilot', name: 'AI Sales Copilot & Target Coach', desc: 'AI recommended next best action, churn prediction, automated summary.', tag: 'Add-on', price: '₹1,499 / mo', checked: false, icon: <Zap className="h-4 w-4 text-purple-600" /> },
   ]);
 
-  const [advList, setAdvList] = useState([
-    { code: 'REPORTS', name: 'Reports & Analytics', desc: 'Real-time reports, dashboards and data insights.', tag: 'Included', checked: true, icon: <BarChart3 className="h-4 w-4 text-indigo-600" /> },
-    { code: 'TASKS', name: 'Task Management', desc: 'Create tasks, set due dates and track progress.', tag: 'Included', checked: true, icon: <CheckSquare className="h-4 w-4 text-rose-600" /> },
-    { code: 'NOTIF', name: 'Notifications', desc: 'In-app, email and SMS notifications.', tag: 'Included', checked: true, icon: <Bell className="h-4 w-4 text-amber-600" /> },
-    { code: 'CHAT', name: 'Chat & Messaging', desc: 'Team communication and real-time messaging.', tag: 'Add-on', checked: false, icon: <MessageSquare className="h-4 w-4 text-cyan-600" /> },
-    { code: 'KB', name: 'Knowledge Base', desc: 'Create and manage help articles and guides.', tag: 'Add-on', checked: false, icon: <BookOpen className="h-4 w-4 text-emerald-600" /> },
-  ]);
-
-  const toggleCore = (idx: number) => {
-    const updated = [...coreList];
+  const toggleModule = (idx: number) => {
+    const updated = [...modulesList];
+    // Core modules remain enabled
+    if (updated[idx].tag === 'Core Included') return;
     updated[idx].checked = !updated[idx].checked;
-    setCoreList(updated);
+    setModulesList(updated);
   };
 
-  const toggleAdv = (idx: number) => {
-    const updated = [...advList];
-    updated[idx].checked = !updated[idx].checked;
-    setAdvList(updated);
-  };
+  const enabledCount = modulesList.filter((m) => m.checked).length;
 
   return (
     <div className="space-y-6 font-sans">
@@ -826,71 +819,58 @@ function Step5Modules() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Enable Modules & Features</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Select the modules and features you want to enable for this tenant.</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Select the platform modules to activate for this tenant workspace.</p>
           </div>
           <div className="rounded-sm bg-[#F4F0FF] px-3.5 py-1.5 text-xs text-purple-900 font-semibold border border-purple-100 flex items-center gap-1.5">
-            <Info className="h-4 w-4 text-purple-600" /> You can enable or disable modules anytime from the tenant settings.
+            <Info className="h-4 w-4 text-purple-600" /> You can activate or modify tenant modules anytime from tenant settings.
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div>
-            <h4 className="text-xs font-extrabold text-[#0D1F3D] tracking-wide mb-3">Core Modules</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-              {coreList.map((mod, idx) => (
-                <div key={mod.code} className="rounded-sm border border-slate-200 bg-slate-50/50 p-4 space-y-3 flex flex-col justify-between hover:border-slate-300 transition-colors">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-white border border-slate-200 shadow-2xs">
-                        {mod.icon}
-                      </div>
-                      <Checkbox checked={mod.checked} onChange={() => toggleCore(idx)} />
+        <div>
+          <h4 className="text-xs font-extrabold text-[#0D1F3D] tracking-wide mb-3">Platform Modules</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            {modulesList.map((mod, idx) => (
+              <div
+                key={mod.code}
+                onClick={() => toggleModule(idx)}
+                className={`rounded-sm border p-4 space-y-3 flex flex-col justify-between transition-all cursor-pointer ${
+                  mod.checked
+                    ? 'border-[#0D1F3D] bg-slate-50/70 shadow-2xs'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-white border border-slate-200 shadow-2xs">
+                      {mod.icon}
                     </div>
-                    <p className="text-xs font-extrabold text-[#0D1F3D] mb-1">{mod.name}</p>
-                    <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
+                    <Checkbox checked={mod.checked} onChange={() => toggleModule(idx)} />
                   </div>
-                  <span className="inline-flex rounded-sm bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 self-start">
-                    {mod.tag}
-                  </span>
+                  <p className="text-xs font-extrabold text-[#0D1F3D] mb-1">{mod.name}</p>
+                  <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h4 className="text-xs font-extrabold text-[#0D1F3D] tracking-wide mb-3">Advanced Modules</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-              {advList.map((mod, idx) => (
-                <div key={mod.code} className="rounded-sm border border-slate-200 bg-slate-50/50 p-4 space-y-3 flex flex-col justify-between hover:border-slate-300 transition-colors">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-white border border-slate-200 shadow-2xs">
-                        {mod.icon}
-                      </div>
-                      <Checkbox checked={mod.checked} onChange={() => toggleAdv(idx)} />
-                    </div>
-                    <p className="text-xs font-extrabold text-[#0D1F3D] mb-1">{mod.name}</p>
-                    <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
-                  </div>
-                  <span className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-bold self-start border ${
-                    mod.tag === 'Included' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'
+                <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-2">
+                  <span className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-bold border ${
+                    mod.tag === 'Core Included'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-blue-50 text-blue-700 border-blue-200'
                   }`}>
                     {mod.tag}
                   </span>
+                  <span className="text-[11px] font-extrabold text-slate-700">{mod.price}</span>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
 
         <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-4">
           <div className="flex items-center gap-6 text-xs font-bold text-slate-600">
-            <span>Core Modules: <strong className="text-[#0D1F3D]">5 / 5 Enabled</strong></span>
-            <span>Advanced Modules: <strong className="text-[#0D1F3D]">4 / 5 Enabled</strong></span>
-            <span>Integrations: <strong className="text-[#0D1F3D]">1 / 5 Enabled</strong></span>
+            <span>Core Modules: <strong className="text-[#0D1F3D]">2 / 2 Active</strong></span>
+            <span>Add-on Modules: <strong className="text-[#0D1F3D]">{enabledCount - 2} / 6 Active</strong></span>
           </div>
           <span className="rounded-sm bg-purple-100 px-3 py-1 text-xs font-extrabold text-purple-700 border border-purple-200">
-            Total Enabled: 10 Modules
+            Total Active Modules: {enabledCount} / 8
           </span>
         </div>
       </div>
