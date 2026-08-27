@@ -211,7 +211,7 @@ export function TenantDetailsPage() {
                   type="button"
                   onClick={() => {
                     setShowMoreActions(false);
-                    navigate("/platform/tenants/create");
+                    navigate(`/platform/tenants/create?edit=true&tenantId=${tenant.id}`);
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-xs text-indigo-600 font-bold"
                 >
@@ -254,7 +254,7 @@ export function TenantDetailsPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => navigate('/platform/tenants/create')}
+            onClick={() => navigate(`/platform/tenants/create?edit=true&tenantId=${tenant.id}`)}
             className="gap-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs h-9 px-4 cursor-pointer"
           >
             <Edit2 className="h-4 w-4" /> Edit Tenant

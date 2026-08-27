@@ -40,6 +40,7 @@ interface TenantCreationContextType {
   setCurrentStep: (step: number) => void;
   formState: TenantCreateFormState;
   updateFormState: (updates: Partial<TenantCreateFormState>) => void;
+  loadTenantForEdit: (tenant: any) => void;
   resetForm: () => void;
   saveDraft: () => Promise<void>;
   submitTenant: () => Promise<any>;
@@ -57,7 +58,6 @@ export const TenantCreationProvider: React.FC<{ children: ReactNode }> = ({ chil
   const updateFormState = (updates: Partial<TenantCreateFormState>) => {
     setFormState((prev) => {
       const next = { ...prev, ...updates };
-      // Auto generate slug if companyName updated
       if (updates.companyName && !prev.slug) {
         next.slug = updates.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         next.domain = `${next.slug}.smartfieldwork.com`;
@@ -65,6 +65,40 @@ export const TenantCreationProvider: React.FC<{ children: ReactNode }> = ({ chil
       return next;
     });
     setIsDirty(true);
+  };
+
+  const loadTenantForEdit = (t: any) => {
+    setFormState({
+      companyName: t.companyName || 'Sunrise Healthcare Pvt Ltd',
+      legalEntityName: 'Sunrise Healthcare Private Limited',
+      slug: 'srhc-tnt',
+      domain: t.domain || 'srhc-tnt.smartfieldwork.com',
+      taxId: '27ABCDE1234F1ZH',
+      companySize: 'Medium (51 - 250 employees)',
+      country: 'India',
+      currency: 'INR - Indian Rupee (₹)',
+
+      industryId: t.industryLabel || 'Pharma & Healthcare',
+      timezone: '(GMT+05:30) Asia/Kolkata',
+
+      adminFullName: t.adminUser?.fullName || 'Rahul Sharma',
+      adminEmail: t.adminUser?.email || 'rahul.sharma@sunrisehealthcare.com',
+      adminPhone: '9876543210',
+      adminDesignation: 'CEO',
+      sendInviteEmail: true,
+
+      planId: 'professional',
+      provisioningType: 'Payment Required',
+      userLicensesCount: 150,
+      trialDurationDays: 0,
+      trialConversionPolicy: 'Auto-convert to Professional Plan',
+      paymentCollectionMethod: 'Send Checkout Link to Customer',
+      billingContactName: 'Rahul Sharma',
+      billingContactEmail: 'rahul.sharma@sunrisehealthcare.com',
+
+      selectedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance_plus', 'whatsapp_automation'],
+      isDraft: false,
+    });
   };
 
   const resetForm = () => {
@@ -93,6 +127,7 @@ export const TenantCreationProvider: React.FC<{ children: ReactNode }> = ({ chil
         setCurrentStep,
         formState,
         updateFormState,
+        loadTenantForEdit,
         resetForm,
         saveDraft,
         submitTenant,

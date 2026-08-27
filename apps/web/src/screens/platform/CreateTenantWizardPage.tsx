@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Building2,
@@ -1213,11 +1213,27 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
   );
 }
 
-// MAIN WIZARD PAGE
-export function CreateTenantWizardPage() {
+function CreateTenantWizardInner() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isEditMode = searchParams.get('edit') === 'true' || Boolean(searchParams.get('tenantId'));
+  
   const [currentStep, setCurrentStep] = useState(1);
-  const { formState, saveDraft, submitTenant } = useTenantCreation();
+  const { formState, saveDraft, submitTenant, loadTenantForEdit } = useTenantCreation();
+
+  useEffect(() => {
+    if (isEditMode) {
+      loadTenantForEdit({
+        companyName: 'Sunrise Healthcare Pvt Ltd',
+        domain: 'srhc-tnt.smartfieldwork.com',
+        industryLabel: 'Pharma & Healthcare',
+        adminUser: {
+          fullName: 'Rahul Sharma',
+          email: 'rahul.sharma@sunrisehealthcare.com',
+        },
+      });
+    }
+  }, [isEditMode]);
 
   const handleNext = () => {
     if (currentStep === 1 && !formState.companyName) {
@@ -1229,7 +1245,11 @@ export function CreateTenantWizardPage() {
 
   const handleFinish = async () => {
     const created = await submitTenant();
-    toast.success(`Tenant ${created.companyName} created successfully!`);
+    toast.success(
+      isEditMode
+        ? `Tenant ${formState.companyName} updated successfully!`
+        : `Tenant ${created?.companyName || formState.companyName} created successfully!`
+    );
     navigate('/platform/tenants');
   };
 
@@ -1239,35 +1259,38 @@ export function CreateTenantWizardPage() {
     { num: 3, label: 'Administrator', desc: 'Primary admin details' },
     { num: 4, label: 'Plan & Subscription', desc: 'Choose plan and limits' },
     { num: 5, label: 'Modules', desc: 'Enable modules' },
-    { num: 6, label: 'Review & Confirm', desc: 'Review and create tenant' },
+    { num: 6, label: 'Review & Confirm', desc: 'Review and confirm' },
   ];
 
   return (
-    <TenantCreationProvider>
-      <div className="space-y-6 font-sans pb-16">
-        {/* Page Top Header Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Create Tenant</h1>
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
-                <Layers className="h-4 w-4" />
-              </span>
-            </div>
-            <p className="text-xs font-medium text-slate-500 mt-0.5">
-              Set up a new tenant workspace on the Smart Field Work SaaS platform
-            </p>
+    <div className="space-y-6 font-sans pb-16">
+      {/* Page Top Header Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-extrabold text-[#0D1F3D]">
+              {isEditMode ? `Edit Tenant — ${formState.companyName || 'Sunrise Healthcare Pvt Ltd'}` : 'Create Tenant'}
+            </h1>
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+              <Layers className="h-4 w-4" />
+            </span>
           </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={() => navigate('/platform/tenants')} className="font-bold text-slate-700">
-              Cancel
-            </Button>
-            <Button variant="accent" size="sm" onClick={async () => { await saveDraft(); toast.success('Saved as draft'); }} className="gap-2 font-bold shadow-xs">
-              <Save className="h-4 w-4" /> Save as Draft
-            </Button>
-          </div>
+          <p className="text-xs font-medium text-slate-500 mt-0.5">
+            {isEditMode
+              ? 'Update tenant workspace configuration, subscription plan, administrator, and module entitlements'
+              : 'Set up a new tenant workspace on the Smart Field Work SaaS platform'}
+          </p>
         </div>
+
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" onClick={() => navigate('/platform/tenants')} className="font-bold text-slate-700">
+            Cancel
+          </Button>
+          <Button variant="accent" size="sm" onClick={async () => { await saveDraft(); toast.success('Saved as draft'); }} className="gap-2 font-bold shadow-xs">
+            <Save className="h-4 w-4" /> Save as Draft
+          </Button>
+        </div>
+      </div>
 
         {/* 6 Step Progress Tracker Bar */}
         <div className="rounded-sm border border-slate-200 bg-white p-3.5 shadow-xs">
@@ -1356,8 +1379,8 @@ export function CreateTenantWizardPage() {
                     Next <ArrowRight className="h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button variant="accent" size="sm" onClick={handleFinish} className="gap-2 font-extrabold shadow-xs px-6">
-                    <CheckCircle className="h-4 w-4" /> Create Tenant
+                  <Button variant="accent" size="sm" onClick={handleFinish} className="gap-2 font-extrabold shadow-xs px-6 bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <CheckCircle className="h-4 w-4" /> {isEditMode ? 'Update Tenant Details' : 'Create Tenant'}
                   </Button>
                 )}
               </div>
@@ -1482,6 +1505,13 @@ export function CreateTenantWizardPage() {
           </div>
         </div>
       </div>
+  );
+}
+
+export function CreateTenantWizardPage() {
+  return (
+    <TenantCreationProvider>
+      <CreateTenantWizardInner />
     </TenantCreationProvider>
   );
 }
