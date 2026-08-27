@@ -918,6 +918,24 @@ function getBreadcrumbTrail(pathname: string) {
       '/admin/notifications/templates': 'Notification Templates',
     };
     items.push({ label: notificationPageNames[pathname] ?? 'Notifications', to: pathname });
+  } else if (pathname === '/admin/reports') {
+    items.push({ label: 'Reports & Analytics', to: '/admin/reports' });
+    items.push({ label: 'Reports Dashboard', to: pathname });
+  } else if (pathname.startsWith('/admin/reports/')) {
+    items.push({ label: 'Reports & Analytics', to: '/admin/reports' });
+    const reportPageNames: Record<string, string> = {
+      '/admin/reports/daily-sales': 'Daily Sales Report',
+      '/admin/reports/executives': 'Executive Performance Report',
+      '/admin/reports/visits': 'Field Visit Report',
+      '/admin/reports/territories': 'Territory & Zone Report',
+      '/admin/reports/conversions': 'Lead Conversion Report',
+      '/admin/reports/revenue': 'Revenue & Growth Report',
+      '/admin/reports/payments': 'Payment Collection Report',
+      '/admin/reports/attendance': 'Executive Attendance Report',
+      '/admin/reports/incentives': 'Incentive & Payout Report',
+      '/admin/reports/categories': 'Category ROI Report',
+    };
+    items.push({ label: reportPageNames[pathname] ?? 'Report Details', to: pathname });
   } else if (pathname === "/admin/territories") {
     items.push({ label: "Territory Management", to: "/admin/territories" });
     items.push({ label: "Territories", to: "/admin/territories" });
@@ -1212,6 +1230,9 @@ export default function AppShell() {
                     return location.pathname === item.to;
                   }
                   if (item.to.startsWith("/admin/notifications")) {
+                    return location.pathname === item.to;
+                  }
+                  if (item.to.startsWith("/admin/reports")) {
                     return location.pathname === item.to;
                   }
                   if (item.to === "/admin/leads/sources") {
