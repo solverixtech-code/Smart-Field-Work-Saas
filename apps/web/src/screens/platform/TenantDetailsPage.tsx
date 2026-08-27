@@ -339,7 +339,7 @@ export function TenantDetailsPage() {
               <div className="space-y-2 text-xs flex-1">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold block">
+                    <span className="text-[11px] text-slate-500 font-semibold block">
                       Tenant Name
                     </span>
                     <span className="font-extrabold text-[#0D1F3D]">
@@ -347,7 +347,7 @@ export function TenantDetailsPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold block">
+                    <span className="text-[11px] text-slate-500 font-semibold block">
                       Website
                     </span>
                     <a
@@ -363,7 +363,7 @@ export function TenantDetailsPage() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold block">
+                    <span className="text-[11px] text-slate-500 font-semibold block">
                       Tenant Code
                     </span>
                     <span className="font-mono font-bold text-slate-800">
@@ -371,7 +371,7 @@ export function TenantDetailsPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold block">
+                    <span className="text-[11px] text-slate-500 font-semibold block">
                       Primary Contact
                     </span>
                     <span className="font-extrabold text-[#0D1F3D] block">
@@ -388,7 +388,7 @@ export function TenantDetailsPage() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold block">
+                    <span className="text-[11px] text-slate-500 font-semibold block">
                       Industry
                     </span>
                     <span className="font-bold text-indigo-700 inline-flex items-center gap-1">
@@ -397,7 +397,7 @@ export function TenantDetailsPage() {
                     </span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold block">
+                    <span className="text-[11px] text-slate-500 font-semibold block">
                       Business Type
                     </span>
                     <span className="font-semibold text-slate-700">
@@ -410,7 +410,7 @@ export function TenantDetailsPage() {
 
             <div className="space-y-2 text-xs border-t border-slate-100 pt-3">
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">
+                <span className="text-[11px] text-slate-500 font-semibold block">
                   Registered Address
                 </span>
                 <span className="text-slate-600 font-medium block text-[11px] leading-relaxed">
@@ -420,7 +420,7 @@ export function TenantDetailsPage() {
               </div>
               <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2">
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold block">
+                  <span className="text-[11px] text-slate-500 font-semibold block">
                     Created On
                   </span>
                   <span className="text-slate-700 font-bold text-[11px]">
@@ -428,12 +428,12 @@ export function TenantDetailsPage() {
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold block">
+                  <span className="text-[11px] text-slate-500 font-semibold block">
                     Created By
                   </span>
                   <span className="text-slate-700 font-bold text-[11px]">
                     Amit Sharma{" "}
-                    <span className="text-slate-400 font-medium">
+                    <span className="text-slate-500 font-normal">
                       (Platform Super Admin)
                     </span>
                   </span>
@@ -467,7 +467,7 @@ export function TenantDetailsPage() {
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">
+                <span className="text-[11px] text-slate-500 font-semibold block">
                   Plan
                 </span>
                 <span className="font-extrabold text-[#0D1F3D] text-sm">
@@ -475,7 +475,7 @@ export function TenantDetailsPage() {
                 </span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">
+                <span className="text-[11px] text-slate-500 font-semibold block">
                   Billing Cycle
                 </span>
                 <span className="font-extrabold text-[#0D1F3D] text-sm">
@@ -483,7 +483,7 @@ export function TenantDetailsPage() {
                 </span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">
+                <span className="text-[11px] text-slate-500 font-semibold block">
                   Users / Seats
                 </span>
                 <span className="font-extrabold text-[#0D1F3D] text-sm">
@@ -491,31 +491,41 @@ export function TenantDetailsPage() {
                 </span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-400 font-bold block">
+                <span className="text-[11px] text-slate-500 font-semibold block">
                   Subscription Start
                 </span>
-                <span className="font-bold text-slate-700 text-xs">
+                <span className="font-bold text-[#0D1F3D] text-xs">
                   24 May 2026
                 </span>
               </div>
             </div>
 
-            <div className="border-t border-slate-100 pt-3 space-y-1 text-xs">
-              <span className="text-[10px] text-slate-400 font-bold block">
+            <div className="border-t border-slate-100 pt-3 space-y-1.5 text-xs">
+              <span className="text-[11px] text-slate-500 font-semibold block">
                 Current Period
               </span>
-              <span className="font-extrabold text-[#0D1F3D] text-xs">
+              <span className="font-extrabold text-[#0D1F3D] text-xs block">
                 24 May 2026 – 23 May 2027
               </span>
-              <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold pt-1">
-                <span>29 days elapsed</span>
-                <span>336 days remaining</span>
+
+              {/* Progress Bar UI/UX for Subscription Period */}
+              <div className="space-y-1 pt-1">
+                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="bg-indigo-600 h-1.5 rounded-full"
+                    style={{ width: "7.9%" }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
+                  <span>29 days elapsed</span>
+                  <span>336 days remaining</span>
+                </div>
               </div>
             </div>
 
             <div className="border-t border-slate-100 pt-3 space-y-2 text-xs">
               <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-medium">
+                <span className="text-slate-500 font-semibold">
                   Payment Method
                 </span>
                 <span className="inline-flex rounded-sm bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-100">
@@ -523,7 +533,7 @@ export function TenantDetailsPage() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-medium">
+                <span className="text-slate-500 font-semibold">
                   Last Invoice
                 </span>
                 <span className="font-mono font-bold text-slate-800">
@@ -531,7 +541,7 @@ export function TenantDetailsPage() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-500 font-medium">Amount</span>
+                <span className="text-slate-500 font-semibold">Amount</span>
                 <span className="font-mono font-extrabold text-[#0D1F3D]">
                   ₹4,24,786
                 </span>
