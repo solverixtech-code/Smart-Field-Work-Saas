@@ -11,13 +11,11 @@ export class StorageService {
   private readonly region: string;
 
   constructor(private readonly configService: ConfigService) {
-    const accessKeyId =
-      this.configService.get<string>('S3_ACCESS_KEY') || 'AKIASK5MCZBLL42R5ZFA';
+    const accessKeyId = this.configService.get<string>('S3_ACCESS_KEY') || '';
     const secretAccessKey =
-      this.configService.get<string>('S3_SECRET_KEY') ||
-      'P+G+O7H9vxB/v8WjzuRmYTjFgCQbXDQE6i2G+uak';
+      this.configService.get<string>('S3_SECRET_KEY') || '';
     this.bucketName =
-      this.configService.get<string>('S3_BUCKET') || 'hrmsecolutionco';
+      this.configService.get<string>('S3_BUCKET') || '';
     this.region = this.configService.get<string>('S3_REGION') || 'ap-south-1';
     const endpoint = this.configService.get<string>('S3_ENDPOINT');
 
