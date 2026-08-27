@@ -899,59 +899,86 @@ function Step4PlanSubscription() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="space-y-4">
-            <Select label="Billing Cycle" value="Yearly (Save 17%)" onChange={() => {}} searchable={true} options={[{ value: 'Yearly (Save 17%)', label: 'Yearly (Save 17%)' }]} />
-            <Input label="Seat / User Limit" placeholder="150" value="150" onChange={() => {}} />
-            <Input label="Storage Limit" placeholder="200 GB" value="200 GB" onChange={() => {}} />
-            <DatePicker label="Subscription Start Date *" value="2026-05-24" onChange={() => {}} />
+            <Select
+              label="Billing Cycle"
+              value={formState.billingCycle}
+              onChange={(e) => updateFormState({ billingCycle: e.target.value })}
+              searchable={true}
+              options={[
+                { value: 'Monthly', label: 'Monthly' },
+                { value: 'Quarterly', label: 'Quarterly' },
+                { value: 'Yearly (Save 17%)', label: 'Yearly (Save 17%)' },
+              ]}
+            />
+            <Input label="Seat / User Limit" placeholder="Enter seat limit" value={formState.seatLimit} onChange={(e) => updateFormState({ seatLimit: e.target.value })} />
+            <Input label="Storage Limit" placeholder="e.g., 200 GB" value={formState.storageLimit} onChange={(e) => updateFormState({ storageLimit: e.target.value })} />
+            <DatePicker label="Subscription Start Date *" value={formState.subscriptionStartDate} onChange={(val) => updateFormState({ subscriptionStartDate: val })} />
           </div>
 
           <div className="space-y-3">
             <label className="font-bold text-slate-700 text-xs block">Provisioning Type</label>
             <div className="space-y-2 text-xs font-semibold">
-              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
-                <input type="radio" name="prov" />
-                <div>
-                  <p className="font-bold text-[#0D1F3D]">Free Trial</p>
-                  <p className="text-[10px] text-slate-400 font-normal">Start with a free trial. No payment required today.</p>
-                </div>
-              </label>
-
-              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-indigo-600 bg-indigo-50/40 cursor-pointer">
-                <input type="radio" name="prov" defaultChecked />
-                <div>
-                  <p className="font-bold text-indigo-950">Payment Required</p>
-                  <p className="text-[10px] text-indigo-800 font-normal">Payment is required to activate the subscription.</p>
-                </div>
-              </label>
-
-              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
-                <input type="radio" name="prov" />
-                <div>
-                  <p className="font-bold text-[#0D1F3D]">Invoice / Offline Payment</p>
-                  <p className="text-[10px] text-slate-400 font-normal">You will record payment received outside the platform.</p>
-                </div>
-              </label>
+              {([
+                { value: 'Free Trial' as const, title: 'Free Trial', desc: 'Start with a free trial. No payment required today.' },
+                { value: 'Payment Required' as const, title: 'Payment Required', desc: 'Payment is required to activate the subscription.' },
+                { value: 'Invoice / Offline Payment' as const, title: 'Invoice / Offline Payment', desc: 'You will record payment received outside the platform.' },
+              ] as const).map((opt) => {
+                const isActive = formState.provisioningType === opt.value;
+                return (
+                  <label
+                    key={opt.value}
+                    className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                      isActive
+                        ? 'border-indigo-600 bg-indigo-50/40'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="prov"
+                      checked={isActive}
+                      onChange={() => updateFormState({ provisioningType: opt.value })}
+                    />
+                    <div>
+                      <p className={`font-bold ${isActive ? 'text-indigo-950' : 'text-[#0D1F3D]'}`}>{opt.title}</p>
+                      <p className={`text-[10px] font-normal ${isActive ? 'text-indigo-800' : 'text-slate-400'}`}>{opt.desc}</p>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
           </div>
 
           <div className="space-y-3">
             <label className="font-bold text-slate-700 text-xs block">Payment Collection</label>
             <div className="space-y-2 text-xs font-semibold">
-              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-indigo-600 bg-indigo-50/40 cursor-pointer">
-                <input type="radio" name="pay" defaultChecked />
-                <div>
-                  <p className="font-bold text-indigo-950">Send Checkout Link to Customer</p>
-                  <p className="text-[10px] text-indigo-800 font-normal">We will send a secure payment link to the billing contact.</p>
-                </div>
-              </label>
-
-              <label className="flex items-start gap-2.5 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
-                <input type="radio" name="pay" />
-                <div>
-                  <p className="font-bold text-[#0D1F3D]">Record Confirmed Offline Payment</p>
-                  <p className="text-[10px] text-slate-400 font-normal">I will confirm payment has been received offline.</p>
-                </div>
-              </label>
+              {([
+                { value: 'Send Checkout Link to Customer' as const, title: 'Send Checkout Link to Customer', desc: 'We will send a secure payment link to the billing contact.' },
+                { value: 'Record Confirmed Offline Payment' as const, title: 'Record Confirmed Offline Payment', desc: 'I will confirm payment has been received offline.' },
+              ] as const).map((opt) => {
+                const isActive = formState.paymentCollectionMethod === opt.value;
+                return (
+                  <label
+                    key={opt.value}
+                    className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                      isActive
+                        ? 'border-indigo-600 bg-indigo-50/40'
+                        : 'border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="pay"
+                      checked={isActive}
+                      onChange={() => updateFormState({ paymentCollectionMethod: opt.value })}
+                    />
+                    <div>
+                      <p className={`font-bold ${isActive ? 'text-indigo-950' : 'text-[#0D1F3D]'}`}>{opt.title}</p>
+                      <p className={`text-[10px] font-normal ${isActive ? 'text-indigo-800' : 'text-slate-400'}`}>{opt.desc}</p>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
           </div>
         </div>
