@@ -307,9 +307,9 @@ function Step1CompanyDetails() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input
             label="Website"
-            placeholder="https://example.com"
-            value={formState.domain ? `https://${formState.domain}` : ''}
-            onChange={(e) => updateFormState({ domain: e.target.value })}
+            placeholder="www.example.com"
+            value={formState.website}
+            onChange={(e) => updateFormState({ website: e.target.value })}
           />
           <Input
             label="Email *"
@@ -329,31 +329,37 @@ function Step1CompanyDetails() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Select
             label="Country *"
-            value={formState.country || 'India'}
+            value={formState.country}
             onChange={(e) => updateFormState({ country: e.target.value })}
             searchable={true}
             options={[
               { value: 'India', label: 'India' },
               { value: 'United States', label: 'United States' },
               { value: 'United Arab Emirates', label: 'United Arab Emirates' },
+              { value: 'United Kingdom', label: 'United Kingdom' },
+              { value: 'Singapore', label: 'Singapore' },
+              { value: 'Australia', label: 'Australia' },
             ]}
           />
           <Select
             label="State / Province *"
-            value="Maharashtra"
-            onChange={() => {}}
+            value={formState.state}
+            onChange={(e) => updateFormState({ state: e.target.value })}
             searchable={true}
             options={[
               { value: 'Maharashtra', label: 'Maharashtra' },
               { value: 'Delhi', label: 'Delhi' },
               { value: 'Karnataka', label: 'Karnataka' },
+              { value: 'Tamil Nadu', label: 'Tamil Nadu' },
+              { value: 'Gujarat', label: 'Gujarat' },
+              { value: 'Rajasthan', label: 'Rajasthan' },
             ]}
           />
           <Input
             label="City *"
             placeholder="Enter city"
-            value="Mumbai"
-            onChange={() => {}}
+            value={formState.city}
+            onChange={(e) => updateFormState({ city: e.target.value })}
           />
         </div>
       </div>
@@ -366,11 +372,11 @@ function Step1CompanyDetails() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Address Line 1 *" placeholder="Enter address line 1" value="101, Business Park" onChange={() => {}} />
-          <Input label="Address Line 2" placeholder="Enter address line 2" value="Andheri East" onChange={() => {}} />
+          <Input label="Address Line 1 *" placeholder="Enter address line 1" value={formState.addressLine1} onChange={(e) => updateFormState({ addressLine1: e.target.value })} />
+          <Input label="Address Line 2" placeholder="Enter address line 2" value={formState.addressLine2} onChange={(e) => updateFormState({ addressLine2: e.target.value })} />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input label="Postal / ZIP Code *" placeholder="Enter postal code" value="400069" onChange={() => {}} />
+          <Input label="Postal / ZIP Code *" placeholder="Enter postal code" value={formState.pincode} onChange={(e) => updateFormState({ pincode: e.target.value })} />
           <Input label="GST / Tax ID (Optional)" placeholder="Enter GST or Tax ID" value={formState.taxId} onChange={(e) => updateFormState({ taxId: e.target.value })} />
         </div>
       </div>
@@ -385,31 +391,51 @@ function Step1CompanyDetails() {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Select
             label="Timezone *"
-            value="(GMT+05:30) Asia/Kolkata"
-            onChange={() => {}}
+            value={formState.timezone}
+            onChange={(e) => updateFormState({ timezone: e.target.value })}
             searchable={true}
-            options={[{ value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' }]}
+            options={[
+              { value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' },
+              { value: '(GMT+00:00) UTC', label: '(GMT+00:00) UTC' },
+              { value: '(GMT-05:00) America/New_York', label: '(GMT-05:00) America/New_York' },
+              { value: '(GMT+01:00) Europe/London', label: '(GMT+01:00) Europe/London' },
+              { value: '(GMT+08:00) Asia/Singapore', label: '(GMT+08:00) Asia/Singapore' },
+            ]}
           />
           <Select
             label="Currency *"
-            value="INR - Indian Rupee (₹)"
-            onChange={() => {}}
+            value={formState.currency}
+            onChange={(e) => updateFormState({ currency: e.target.value })}
             searchable={true}
-            options={[{ value: 'INR - Indian Rupee (₹)', label: 'INR - Indian Rupee (₹)' }]}
+            options={[
+              { value: 'INR - Indian Rupee (₹)', label: 'INR - Indian Rupee (₹)' },
+              { value: 'USD - US Dollar ($)', label: 'USD - US Dollar ($)' },
+              { value: 'EUR - Euro (€)', label: 'EUR - Euro (€)' },
+              { value: 'GBP - British Pound (£)', label: 'GBP - British Pound (£)' },
+            ]}
           />
           <Select
             label="Date Format *"
-            value="DD MMM YYYY"
-            onChange={() => {}}
+            value={formState.dateFormat}
+            onChange={(e) => updateFormState({ dateFormat: e.target.value })}
             searchable={true}
-            options={[{ value: 'DD MMM YYYY', label: 'DD MMM YYYY' }]}
+            options={[
+              { value: 'DD MMM YYYY', label: 'DD MMM YYYY (27 Aug 2026)' },
+              { value: 'MM/DD/YYYY', label: 'MM/DD/YYYY (08/27/2026)' },
+              { value: 'YYYY-MM-DD', label: 'YYYY-MM-DD (2026-08-27)' },
+            ]}
           />
           <Select
             label="Financial Year Start *"
-            value="April"
-            onChange={() => {}}
+            value={formState.financialYearStart}
+            onChange={(e) => updateFormState({ financialYearStart: e.target.value })}
             searchable={true}
-            options={[{ value: 'April', label: 'April' }]}
+            options={[
+              { value: 'January', label: 'January' },
+              { value: 'April', label: 'April' },
+              { value: 'July', label: 'July' },
+              { value: 'October', label: 'October' },
+            ]}
           />
         </div>
       </div>
@@ -423,7 +449,7 @@ function Step1CompanyDetails() {
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Input label="Full Name *" placeholder="Enter full name" value={formState.adminFullName} onChange={(e) => updateFormState({ adminFullName: e.target.value })} />
-          <Input label="Designation" placeholder="e.g., CEO, Director, Admin" value="CEO" onChange={() => {}} />
+          <Input label="Designation" placeholder="e.g., CEO, Director, Admin" value={formState.adminDesignation} onChange={(e) => updateFormState({ adminDesignation: e.target.value })} />
           <PhoneInput
             label="Mobile Number *"
             placeholder="Enter mobile number"
@@ -453,7 +479,7 @@ function Step2IndustryProfile() {
           <div className="sm:col-span-7 space-y-2">
             <Select
               label="Primary Industry *"
-              value={formState.industryId || 'Pharma & Healthcare'}
+              value={formState.industryId}
               onChange={(e) => updateFormState({ industryId: e.target.value })}
               searchable={true}
               options={[
@@ -462,6 +488,9 @@ function Step2IndustryProfile() {
                 { value: 'Distributors & Wholesalers', label: 'Distributors & Wholesalers' },
                 { value: 'Solar & Renewable Energy', label: 'Solar & Renewable Energy' },
                 { value: 'Manufacturing & Industrial', label: 'Manufacturing & Industrial' },
+                { value: 'Real Estate & Construction', label: 'Real Estate & Construction' },
+                { value: 'IT & Software Services', label: 'IT & Software Services' },
+                { value: 'Education & Training', label: 'Education & Training' },
               ]}
             />
             <p className="text-[11px] text-slate-400 font-medium">This will help us configure industry-specific defaults for the tenant.</p>
@@ -491,7 +520,7 @@ function Step2IndustryProfile() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Select
             label="Business Size *"
-            value={formState.companySize || 'Medium (51 - 250 employees)'}
+            value={formState.companySize}
             onChange={(e) => updateFormState({ companySize: e.target.value })}
             searchable={true}
             options={[
@@ -500,32 +529,91 @@ function Step2IndustryProfile() {
               { value: 'Enterprise (250+ employees)', label: 'Enterprise (250+ employees)' },
             ]}
           />
-          <Input label="Total Employees *" placeholder="126" value="126" onChange={() => {}} />
-          <Input label="Field Users (Approx.) *" placeholder="35" value="35" onChange={() => {}} />
+          <Input label="Total Employees *" placeholder="Enter total employees" value={formState.totalEmployees} onChange={(e) => updateFormState({ totalEmployees: e.target.value })} />
+          <Input label="Field Users (Approx.) *" placeholder="Enter field users count" value={formState.fieldUsers} onChange={(e) => updateFormState({ fieldUsers: e.target.value })} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select label="Years in Business" value="5 - 10 Years" onChange={() => {}} searchable={true} options={[{ value: '5 - 10 Years', label: '5 - 10 Years' }]} />
-          <Select label="Business Model" value="B2B" onChange={() => {}} searchable={true} options={[{ value: 'B2B', label: 'B2B' }, { value: 'B2C', label: 'B2C' }]} />
-          <Input label="Number of Branches / Locations" placeholder="6" value="6" onChange={() => {}} />
+          <Select
+            label="Years in Business"
+            value={formState.yearsInBusiness}
+            onChange={(e) => updateFormState({ yearsInBusiness: e.target.value })}
+            searchable={true}
+            options={[
+              { value: 'Less than 1 Year', label: 'Less than 1 Year' },
+              { value: '1 - 3 Years', label: '1 - 3 Years' },
+              { value: '3 - 5 Years', label: '3 - 5 Years' },
+              { value: '5 - 10 Years', label: '5 - 10 Years' },
+              { value: '10+ Years', label: '10+ Years' },
+            ]}
+          />
+          <Select
+            label="Business Model"
+            value={formState.businessModel}
+            onChange={(e) => updateFormState({ businessModel: e.target.value })}
+            searchable={true}
+            options={[
+              { value: 'B2B', label: 'B2B' },
+              { value: 'B2C', label: 'B2C' },
+              { value: 'B2B2C', label: 'B2B2C' },
+              { value: 'D2C', label: 'D2C' },
+            ]}
+          />
+          <Input label="Number of Branches / Locations" placeholder="Enter number of branches" value={formState.branchCount} onChange={(e) => updateFormState({ branchCount: e.target.value })} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select label="Operating Countries" value="1 selected" onChange={() => {}} searchable={true} options={[{ value: '1 selected', label: '1 selected (India)' }]} />
-          <Select label="Preferred Currency *" value="INR - Indian Rupee (₹)" onChange={() => {}} searchable={true} options={[{ value: 'INR - Indian Rupee (₹)', label: 'INR - Indian Rupee (₹)' }]} />
-          <Select label="Preferred Language" value="English" onChange={() => {}} searchable={true} options={[{ value: 'English', label: 'English' }]} />
+          <Select
+            label="Operating Countries"
+            value={formState.operatingCountries}
+            onChange={(e) => updateFormState({ operatingCountries: e.target.value })}
+            searchable={true}
+            options={[
+              { value: 'India', label: 'India' },
+              { value: 'India, UAE', label: 'India, UAE' },
+              { value: 'India, US', label: 'India, US' },
+              { value: 'Multiple Countries', label: 'Multiple Countries' },
+            ]}
+          />
+          <Select
+            label="Preferred Currency *"
+            value={formState.currency}
+            onChange={(e) => updateFormState({ currency: e.target.value })}
+            searchable={true}
+            options={[
+              { value: 'INR - Indian Rupee (₹)', label: 'INR - Indian Rupee (₹)' },
+              { value: 'USD - US Dollar ($)', label: 'USD - US Dollar ($)' },
+              { value: 'EUR - Euro (€)', label: 'EUR - Euro (€)' },
+              { value: 'GBP - British Pound (£)', label: 'GBP - British Pound (£)' },
+              { value: 'AED - UAE Dirham (د.إ)', label: 'AED - UAE Dirham (د.إ)' },
+            ]}
+          />
+          <Select
+            label="Preferred Language"
+            value={formState.preferredLanguage}
+            onChange={(e) => updateFormState({ preferredLanguage: e.target.value })}
+            searchable={true}
+            options={[
+              { value: 'English', label: 'English' },
+              { value: 'Hindi', label: 'Hindi' },
+              { value: 'Tamil', label: 'Tamil' },
+              { value: 'Marathi', label: 'Marathi' },
+              { value: 'Gujarati', label: 'Gujarati' },
+            ]}
+          />
         </div>
 
         <div>
           <label className="font-bold text-slate-700 text-xs block mb-1">Short Description (Optional)</label>
           <textarea
             rows={3}
+            maxLength={200}
             placeholder="Tell us about the company..."
-            value="Pharmaceutical distribution and healthcare solutions provider across western India."
-            onChange={() => {}}
+            value={formState.description}
+            onChange={(e) => updateFormState({ description: e.target.value })}
             className="w-full rounded-md border border-slate-200 bg-[#F8FAFC] p-3 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#0D1F3D] transition-all"
           />
-          <span className="text-[10px] text-slate-400 font-semibold block text-right mt-1">67 / 200</span>
+          <span className="text-[10px] text-slate-400 font-semibold block text-right mt-1">{formState.description.length} / 200</span>
         </div>
       </div>
 
@@ -536,9 +624,43 @@ function Step2IndustryProfile() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select label="Working Timezone *" value="(GMT+05:30) Asia/Kolkata" onChange={() => {}} searchable={true} options={[{ value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' }]} />
-          <Select label="Financial Year Start *" value="April" onChange={() => {}} searchable={true} options={[{ value: 'April', label: 'April' }]} />
-          <Select label="Week Start Day *" value="Monday" onChange={() => {}} searchable={true} options={[{ value: 'Monday', label: 'Monday' }]} />
+          <Select
+            label="Working Timezone *"
+            value={formState.timezone}
+            onChange={(e) => updateFormState({ timezone: e.target.value })}
+            searchable={true}
+            options={[
+              { value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' },
+              { value: '(GMT+00:00) UTC', label: '(GMT+00:00) UTC' },
+              { value: '(GMT-05:00) America/New_York', label: '(GMT-05:00) America/New_York' },
+              { value: '(GMT+01:00) Europe/London', label: '(GMT+01:00) Europe/London' },
+              { value: '(GMT+04:00) Asia/Dubai', label: '(GMT+04:00) Asia/Dubai' },
+              { value: '(GMT+08:00) Asia/Singapore', label: '(GMT+08:00) Asia/Singapore' },
+            ]}
+          />
+          <Select
+            label="Financial Year Start *"
+            value={formState.financialYearStart}
+            onChange={(e) => updateFormState({ financialYearStart: e.target.value })}
+            searchable={true}
+            options={[
+              { value: 'January', label: 'January' },
+              { value: 'April', label: 'April' },
+              { value: 'July', label: 'July' },
+              { value: 'October', label: 'October' },
+            ]}
+          />
+          <Select
+            label="Week Start Day *"
+            value={formState.weekStartDay}
+            onChange={(e) => updateFormState({ weekStartDay: e.target.value })}
+            searchable={true}
+            options={[
+              { value: 'Monday', label: 'Monday' },
+              { value: 'Sunday', label: 'Sunday' },
+              { value: 'Saturday', label: 'Saturday' },
+            ]}
+          />
         </div>
       </div>
     </div>
