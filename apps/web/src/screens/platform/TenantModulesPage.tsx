@@ -494,7 +494,6 @@ export function TenantModulesPage() {
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">Users / Limit</th>
                   <th className="py-3 px-4">Usage</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -561,24 +560,6 @@ export function TenantModulesPage() {
                         ) : (
                           <span className="text-slate-400">—</span>
                         )}
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="inline-flex items-center gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toast.info(`Configuring ${m.name}`)}
-                            className="h-7 px-2.5 text-[11px] font-bold text-indigo-600 border-slate-200 hover:bg-slate-50"
-                          >
-                            Configure
-                          </Button>
-                          <button
-                            type="button"
-                            className="p-1 text-slate-400 hover:text-slate-600"
-                          >
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   );
