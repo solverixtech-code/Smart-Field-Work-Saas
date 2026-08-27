@@ -60,6 +60,20 @@ export function TenantDetailsPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [showEditNotes, setShowEditNotes] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  // Edit Tenant Form State
+  const [editForm, setEditForm] = useState({
+    companyName: '',
+    tenantCode: '',
+    industryLabel: '',
+    planName: '',
+    fullName: '',
+    email: '',
+    phone: '',
+    address: '',
+    autoRenewal: true,
+  });
 
   // Internal Notes State
   const [noteContent, setNoteContent] = useState(
@@ -68,9 +82,43 @@ export function TenantDetailsPage() {
 
   useEffect(() => {
     if (tenantId) {
-      tenantService.getTenantById(tenantId).then((t) => setTenant(t || null));
+      tenantService.getTenantById(tenantId).then((t) => {
+        if (t) {
+          setTenant(t);
+          setEditForm({
+            companyName: t.companyName,
+            tenantCode: 'SRHC-TNT',
+            industryLabel: t.industryLabel,
+            planName: t.planName,
+            fullName: t.adminUser.fullName,
+            email: t.adminUser.email,
+            phone: t.adminUser.phone,
+            address: '201, Sunrise Tower, Andheri Kurla Road, Andheri East, Mumbai, Maharashtra - 400059, India',
+            autoRenewal: true,
+          });
+        }
+      });
     }
   }, [tenantId]);
+
+  const handleSaveTenantEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!tenant) return;
+    setTenant({
+      ...tenant,
+      companyName: editForm.companyName,
+      industryLabel: editForm.industryLabel,
+      planName: editForm.planName,
+      adminUser: {
+        ...tenant.adminUser,
+        fullName: editForm.fullName,
+        email: editForm.email,
+        phone: editForm.phone,
+      },
+    });
+    setShowEditModal(false);
+    toast.success('Tenant details updated successfully!');
+  };
 
   if (!tenant) {
     return (
@@ -196,8 +244,8 @@ export function TenantDetailsPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => toast.info("Opening Edit Tenant Wizard")}
-            className="gap-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs h-9 px-4"
+            onClick={() => setShowEditModal(true)}
+            className="gap-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs h-9 px-4 cursor-pointer"
           >
             <Edit2 className="h-4 w-4" /> Edit Tenant
           </Button>
@@ -1087,6 +1135,150 @@ export function TenantDetailsPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Tenant Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="w-full max-w-2xl rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-indigo-100 text-indigo-700 font-bold">
+                  <Edit2 className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#0D1F3D]">Edit Tenant Details</h3>
+                  <p className="text-[11px] text-slate-500 font-medium">Update organization settings, subscription plan, and primary administrator contact.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className="text-slate-400 hover:text-slate-600 text-xs font-bold p-1 rounded-sm hover:bg-slate-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTenantEdit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Company Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.companyName}
+                    onChange={(e) => setEditForm({ ...editForm, companyName: e.target.value })}
+                    className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Tenant Code</label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={editForm.tenantCode}
+                    className="w-full h-9 px-3 text-xs font-mono font-bold bg-slate-100 border border-slate-200 rounded-sm text-slate-600 cursor-not-allowed"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Industry Sector</label>
+                  <select
+                    value={editForm.industryLabel}
+                    onChange={(e) => setEditForm({ ...editForm, industryLabel: e.target.value })}
+                    className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
+                  >
+                    <option value="Pharma & Healthcare">Pharma & Healthcare</option>
+                    <option value="FMCG & Consumer Goods">FMCG & Consumer Goods</option>
+                    <option value="Retail & Distribution">Retail & Distribution</option>
+                    <option value="Construction & Engineering">Construction & Engineering</option>
+                    <option value="Banking & Financial Services">Banking & Financial Services</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Subscription Plan</label>
+                  <select
+                    value={editForm.planName}
+                    onChange={(e) => setEditForm({ ...editForm, planName: e.target.value })}
+                    className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
+                  >
+                    <option value="Professional">Professional (₹4,24,786 / Year)</option>
+                    <option value="Enterprise">Enterprise (₹8,99,999 / Year)</option>
+                    <option value="Starter">Starter (₹1,49,999 / Year)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Primary Administrator Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.fullName}
+                    onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                    className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Administrator Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Administrator Phone</label>
+                  <input
+                    type="tel"
+                    required
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className="w-full h-9 px-3 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-6">
+                  <input
+                    type="checkbox"
+                    id="autoRenewalCheck"
+                    checked={editForm.autoRenewal}
+                    onChange={(e) => setEditForm({ ...editForm, autoRenewal: e.target.checked })}
+                    className="h-4 w-4 rounded-sm border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="autoRenewalCheck" className="text-xs font-bold text-slate-700 cursor-pointer">
+                    Enable Automatic Subscription Renewal
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">Registered Address</label>
+                <textarea
+                  rows={2}
+                  value={editForm.address}
+                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  className="w-full p-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                <Button variant="outline" size="sm" type="button" onClick={() => setShowEditModal(false)}>
+                  Cancel
+                </Button>
+                <Button variant="accent" size="sm" type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold">
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
