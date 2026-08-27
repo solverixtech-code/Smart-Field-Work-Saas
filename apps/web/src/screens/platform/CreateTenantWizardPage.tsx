@@ -42,6 +42,10 @@ import {
   Bell,
   CheckSquare,
   Search,
+  Users,
+  Clock,
+  Image as ImageIcon,
+  BarChart3,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -263,7 +267,7 @@ function Step1CompanyDetails() {
   return (
     <div className="space-y-6 font-sans">
       {/* Company Information Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Company Information</h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5">Basic information about the company/organization.</p>
@@ -355,7 +359,7 @@ function Step1CompanyDetails() {
       </div>
 
       {/* Company Address Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Company Address</h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5">Registered business address of the company.</p>
@@ -372,7 +376,7 @@ function Step1CompanyDetails() {
       </div>
 
       {/* Company Settings Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Company Settings</h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5">Basic operational settings for the tenant.</p>
@@ -411,7 +415,7 @@ function Step1CompanyDetails() {
       </div>
 
       {/* Contact Person Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Contact Person</h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5">Primary point of contact from the company.</p>
@@ -439,7 +443,7 @@ function Step2IndustryProfile() {
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Industry Information</h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5">Select the primary industry that best describes this tenant's business.</p>
@@ -463,7 +467,7 @@ function Step2IndustryProfile() {
             <p className="text-[11px] text-slate-400 font-medium">This will help us configure industry-specific defaults for the tenant.</p>
           </div>
 
-          <div className="sm:col-span-5 rounded-xl border border-purple-100 bg-[#F4F0FF] p-5 text-xs space-y-2">
+          <div className="sm:col-span-5 rounded-sm border border-purple-100 bg-[#F4F0FF] p-5 text-xs space-y-2">
             <p className="font-extrabold text-purple-950 flex items-center gap-1.5 text-xs">
               <Sparkles className="h-4 w-4 text-purple-600" /> Why is this important?
             </p>
@@ -478,7 +482,7 @@ function Step2IndustryProfile() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Business Profile</h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5">Tell us more about the business to help customize the workspace.</p>
@@ -525,7 +529,7 @@ function Step2IndustryProfile() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Operational Profile</h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5">Operational preferences and compliance information.</p>
@@ -549,7 +553,7 @@ function Step3Administrator() {
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Primary Administrator</h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5">Add the primary administrator who will be the main point of contact for this tenant.</p>
@@ -614,7 +618,7 @@ function Step3Administrator() {
       </div>
 
       {/* Administrator Permissions Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Administrator Permissions</h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5">Configure initial access level for the primary administrator.</p>
@@ -625,7 +629,7 @@ function Step3Administrator() {
             <Select label="Role *" value="Tenant Owner" onChange={() => {}} searchable={true} options={[{ value: 'Tenant Owner', label: 'Tenant Owner' }]} />
           </div>
 
-          <div className="sm:col-span-5 rounded-xl border border-purple-100 bg-[#F4F0FF] p-4 text-xs space-y-2">
+          <div className="sm:col-span-5 rounded-sm border border-purple-100 bg-[#F4F0FF] p-4 text-xs space-y-2">
             <p className="font-extrabold text-purple-950 flex items-center gap-1.5">
               <Shield className="h-4 w-4 text-purple-600" /> Tenant Owner will have:
             </p>
@@ -637,7 +641,7 @@ function Step3Administrator() {
             </ul>
           </div>
 
-          <div className="sm:col-span-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-2">
+          <div className="sm:col-span-3 rounded-sm border border-slate-200 bg-slate-50/70 p-4 space-y-2">
             <div className="flex items-center justify-between">
               <Checkbox
                 checked={enable2FA}
@@ -670,7 +674,7 @@ function Step4PlanSubscription() {
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Choose Plan</h3>
           <p className="text-xs text-slate-500 font-medium mt-0.5">Select a subscription plan and configure billing details for this tenant.</p>
@@ -683,7 +687,7 @@ function Step4PlanSubscription() {
               <div
                 key={plan.id}
                 onClick={() => updateFormState({ planId: plan.id })}
-                className={`relative rounded-xl border p-5 cursor-pointer transition-all ${
+                className={`relative rounded-sm border p-5 cursor-pointer transition-all ${
                   isSelected
                     ? 'border-indigo-600 bg-white ring-2 ring-indigo-500 shadow-md'
                     : 'border-slate-200 bg-white hover:border-slate-300'
@@ -716,7 +720,7 @@ function Step4PlanSubscription() {
       </div>
 
       {/* Subscription & Provisioning Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Subscription & Provisioning</h3>
         </div>
@@ -789,19 +793,19 @@ function Step5Modules() {
   const { formState, updateFormState } = useTenantCreation();
 
   const [coreList, setCoreList] = useState([
-    { code: 'JOBS', name: 'Jobs & Work Management', desc: 'Create, assign and track jobs from scheduling to completion.', tag: 'Included', checked: true },
-    { code: 'FIELD', name: 'Field Workforce', desc: 'Manage field executives, attendance and locations.', tag: 'Included', checked: true },
-    { code: 'ATTENDANCE', name: 'Attendance & Time Tracking', desc: 'Track check-in/check-out and working hours.', tag: 'Included', checked: true },
-    { code: 'FORMS', name: 'Forms & Surveys', desc: 'Build custom forms, surveys and inspections.', tag: 'Included', checked: true },
-    { code: 'PHOTOS', name: 'Photos & Documents', desc: 'Capture and manage photos, documents and files.', tag: 'Included', checked: true },
+    { code: 'JOBS', name: 'Jobs & Work Management', desc: 'Create, assign and track jobs from scheduling to completion.', tag: 'Included', checked: true, icon: <Briefcase className="h-4 w-4 text-indigo-600" /> },
+    { code: 'FIELD', name: 'Field Workforce', desc: 'Manage field executives, attendance and locations.', tag: 'Included', checked: true, icon: <Users className="h-4 w-4 text-emerald-600" /> },
+    { code: 'ATTENDANCE', name: 'Attendance & Time Tracking', desc: 'Track check-in/check-out and working hours.', tag: 'Included', checked: true, icon: <Clock className="h-4 w-4 text-amber-600" /> },
+    { code: 'FORMS', name: 'Forms & Surveys', desc: 'Build custom forms, surveys and inspections.', tag: 'Included', checked: true, icon: <FileText className="h-4 w-4 text-purple-600" /> },
+    { code: 'PHOTOS', name: 'Photos & Documents', desc: 'Capture and manage photos, documents and files.', tag: 'Included', checked: true, icon: <ImageIcon className="h-4 w-4 text-blue-600" /> },
   ]);
 
   const [advList, setAdvList] = useState([
-    { code: 'REPORTS', name: 'Reports & Analytics', desc: 'Real-time reports, dashboards and data insights.', tag: 'Included', checked: true },
-    { code: 'TASKS', name: 'Task Management', desc: 'Create tasks, set due dates and track progress.', tag: 'Included', checked: true },
-    { code: 'NOTIF', name: 'Notifications', desc: 'In-app, email and SMS notifications.', tag: 'Included', checked: true },
-    { code: 'CHAT', name: 'Chat & Messaging', desc: 'Team communication and real-time messaging.', tag: 'Add-on', checked: false },
-    { code: 'KB', name: 'Knowledge Base', desc: 'Create and manage help articles and guides.', tag: 'Add-on', checked: false },
+    { code: 'REPORTS', name: 'Reports & Analytics', desc: 'Real-time reports, dashboards and data insights.', tag: 'Included', checked: true, icon: <BarChart3 className="h-4 w-4 text-indigo-600" /> },
+    { code: 'TASKS', name: 'Task Management', desc: 'Create tasks, set due dates and track progress.', tag: 'Included', checked: true, icon: <CheckSquare className="h-4 w-4 text-rose-600" /> },
+    { code: 'NOTIF', name: 'Notifications', desc: 'In-app, email and SMS notifications.', tag: 'Included', checked: true, icon: <Bell className="h-4 w-4 text-amber-600" /> },
+    { code: 'CHAT', name: 'Chat & Messaging', desc: 'Team communication and real-time messaging.', tag: 'Add-on', checked: false, icon: <MessageSquare className="h-4 w-4 text-cyan-600" /> },
+    { code: 'KB', name: 'Knowledge Base', desc: 'Create and manage help articles and guides.', tag: 'Add-on', checked: false, icon: <BookOpen className="h-4 w-4 text-emerald-600" /> },
   ]);
 
   const toggleCore = (idx: number) => {
@@ -818,31 +822,34 @@ function Step5Modules() {
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Enable Modules & Features</h3>
             <p className="text-xs text-slate-500 font-medium mt-0.5">Select the modules and features you want to enable for this tenant.</p>
           </div>
-          <div className="rounded-xl bg-[#F4F0FF] px-4 py-2 text-xs text-purple-900 font-semibold border border-purple-100 flex items-center gap-1.5">
+          <div className="rounded-sm bg-[#F4F0FF] px-3.5 py-1.5 text-xs text-purple-900 font-semibold border border-purple-100 flex items-center gap-1.5">
             <Info className="h-4 w-4 text-purple-600" /> You can enable or disable modules anytime from the tenant settings.
           </div>
         </div>
 
         <div className="space-y-6">
           <div>
-            <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider mb-3">Core Modules</h4>
+            <h4 className="text-xs font-extrabold text-[#0D1F3D] tracking-wide mb-3">Core Modules</h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
               {coreList.map((mod, idx) => (
-                <div key={mod.code} className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2 flex flex-col justify-between">
+                <div key={mod.code} className="rounded-sm border border-slate-200 bg-slate-50/50 p-4 space-y-3 flex flex-col justify-between hover:border-slate-300 transition-colors">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-extrabold text-[#0D1F3D]">{mod.name}</span>
+                      <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-white border border-slate-200 shadow-2xs">
+                        {mod.icon}
+                      </div>
                       <Checkbox checked={mod.checked} onChange={() => toggleCore(idx)} />
                     </div>
+                    <p className="text-xs font-extrabold text-[#0D1F3D] mb-1">{mod.name}</p>
                     <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
                   </div>
-                  <span className="inline-flex rounded-md bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 self-start">
+                  <span className="inline-flex rounded-sm bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200 self-start">
                     {mod.tag}
                   </span>
                 </div>
@@ -851,18 +858,21 @@ function Step5Modules() {
           </div>
 
           <div>
-            <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider mb-3">Advanced Modules</h4>
+            <h4 className="text-xs font-extrabold text-[#0D1F3D] tracking-wide mb-3">Advanced Modules</h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
               {advList.map((mod, idx) => (
-                <div key={mod.code} className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 space-y-2 flex flex-col justify-between">
+                <div key={mod.code} className="rounded-sm border border-slate-200 bg-slate-50/50 p-4 space-y-3 flex flex-col justify-between hover:border-slate-300 transition-colors">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-extrabold text-[#0D1F3D]">{mod.name}</span>
+                      <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-white border border-slate-200 shadow-2xs">
+                        {mod.icon}
+                      </div>
                       <Checkbox checked={mod.checked} onChange={() => toggleAdv(idx)} />
                     </div>
+                    <p className="text-xs font-extrabold text-[#0D1F3D] mb-1">{mod.name}</p>
                     <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
                   </div>
-                  <span className={`inline-flex rounded-md px-2.5 py-0.5 text-[10px] font-bold self-start border ${
+                  <span className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-bold self-start border ${
                     mod.tag === 'Included' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'
                   }`}>
                     {mod.tag}
@@ -879,7 +889,7 @@ function Step5Modules() {
             <span>Advanced Modules: <strong className="text-[#0D1F3D]">4 / 5 Enabled</strong></span>
             <span>Integrations: <strong className="text-[#0D1F3D]">1 / 5 Enabled</strong></span>
           </div>
-          <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-extrabold text-purple-700">
+          <span className="rounded-sm bg-purple-100 px-3 py-1 text-xs font-extrabold text-purple-700 border border-purple-200">
             Total Enabled: 10 Modules
           </span>
         </div>
@@ -905,7 +915,7 @@ function Step6ReviewConfirm() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider">Company Details</h4>
             <span className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"><Edit2 className="h-3 w-3" /> Edit</span>
@@ -918,7 +928,7 @@ function Step6ReviewConfirm() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
             <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider">Primary Administrator</h4>
             <span className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"><Edit2 className="h-3 w-3" /> Edit</span>
@@ -1050,7 +1060,7 @@ export function CreateTenantWizardPage() {
             {currentStep === 6 && <Step6ReviewConfirm />}
 
             {/* Bottom Action Navigation Footer */}
-            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+            <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
               <Button
                 variant="outline"
                 size="sm"
@@ -1086,7 +1096,7 @@ export function CreateTenantWizardPage() {
 
           {/* Right Live Summary Panel */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-sans">
+            <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-sans">
               <h3 className="text-base font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">
                 Tenant Creation Summary
               </h3>
@@ -1138,7 +1148,7 @@ export function CreateTenantWizardPage() {
               </div>
 
               {/* What happens next? card */}
-              <div className="rounded-xl bg-[#F4F0FF] p-5 border border-purple-100 space-y-3">
+              <div className="rounded-sm bg-[#F4F0FF] p-5 border border-purple-100 space-y-3">
                 <p className="font-extrabold text-purple-950 text-xs flex items-center gap-1.5">
                   <Sparkles className="h-4 w-4 text-purple-600" /> What happens next?
                 </p>
