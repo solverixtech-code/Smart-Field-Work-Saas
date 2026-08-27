@@ -138,20 +138,44 @@ export interface TenantCreateFormState {
   legalEntityName: string;
   slug: string;
   domain: string;
+  website: string;
   taxId: string;
   companySize: string;
   country: string;
   currency: string;
+  state: string;
+  city: string;
+  addressLine1: string;
+  addressLine2: string;
+  pincode: string;
+  dateFormat: string;
+  financialYearStart: string;
 
   // Step 2: Industry & Profile
   industryId: string;
   timezone: string;
+  totalEmployees: string;
+  fieldUsers: string;
+  yearsInBusiness: string;
+  businessModel: string;
+  branchCount: string;
+  operatingCountries: string;
+  preferredLanguage: string;
+  description: string;
+  weekStartDay: string;
 
   // Step 3: Administrator
   adminFullName: string;
   adminEmail: string;
   adminPhone: string;
   adminDesignation: string;
+  adminDepartment: string;
+  adminLanguage: string;
+  adminTimezone: string;
+  adminCommunicationEmail: string;
+  adminUsername: string;
+  adminPassword: string;
+  adminConfirmPassword: string;
   sendInviteEmail: boolean;
 
   // Step 4: Plan & Subscription
@@ -163,6 +187,10 @@ export interface TenantCreateFormState {
   paymentCollectionMethod: PaymentCollectionMethod;
   billingContactName: string;
   billingContactEmail: string;
+  billingCycle: string;
+  seatLimit: string;
+  storageLimit: string;
+  subscriptionStartDate: string;
 
   // Step 5: Modules
   selectedModuleCodes: string[];
