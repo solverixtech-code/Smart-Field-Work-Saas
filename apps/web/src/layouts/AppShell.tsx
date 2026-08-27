@@ -767,6 +767,13 @@ const navCategories: NavCategory[] = [
         badge: "40 Masters",
       },
       {
+        label: "Workspace Settings",
+        icon: Settings,
+        to: "/admin/settings/workspace",
+        allowed: [Role.SUPER_ADMIN, Role.ADMIN],
+        badge: "Settings",
+      },
+      {
         label: "Real-time Activity",
         icon: Radio,
         to: "/admin/dashboard/live",

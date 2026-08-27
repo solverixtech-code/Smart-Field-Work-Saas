@@ -19,6 +19,7 @@ import {
   Eye,
   Edit,
   Trash2,
+  Layers,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
@@ -337,10 +338,17 @@ export function AllTenantsPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => { setActiveMenuId(null); navigate(`/platform/tenants/${t.id}/edit`); }}
+                              onClick={() => { setActiveMenuId(null); navigate(`/platform/tenants/${t.id}/users`); }}
                               className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                             >
-                              <Edit className="h-4 w-4 text-emerald-600" /> Edit Tenant
+                              <Users className="h-4 w-4 text-purple-600" /> Manage Users
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setActiveMenuId(null); navigate(`/platform/tenants/${t.id}/modules`); }}
+                              className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                              <Layers className="h-4 w-4 text-indigo-600" /> Manage Modules
                             </button>
                             <button
                               type="button"
