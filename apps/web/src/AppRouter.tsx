@@ -29,6 +29,7 @@ import { CreateTenantWizardPage } from './screens/platform/CreateTenantWizardPag
 import { TenantDetailsPage } from './screens/platform/TenantDetailsPage';
 import { PlansPricingPage } from './screens/platform/PlansPricingPage';
 import { AuditLogsPage } from './screens/platform/AuditLogsPage';
+import { TenantCreationProvider } from './features/platform/tenants/context/TenantCreationContext';
 
 import ShiftManagementPage from './screens/shifts/ShiftManagementPage';
 import AttendanceMonitoringPage from './screens/attendance/AttendanceMonitoringPage';
@@ -737,6 +738,35 @@ export default function AppRouter() {
             >
               <Route path="/admin/masters" element={<MasterManagementPage />} />
             </Route>
+          </Route>
+        </Route>
+
+        {/* SaaS Platform Console Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route
+            element={
+              <TenantCreationProvider>
+                <PlatformShell />
+              </TenantCreationProvider>
+            }
+          >
+            <Route path="/platform" element={<Navigate to="/platform/dashboard" replace />} />
+            <Route path="/platform/dashboard" element={<PlatformDashboardPage />} />
+            <Route path="/platform/tenants" element={<AllTenantsPage />} />
+            <Route path="/platform/tenants/create" element={<CreateTenantWizardPage />} />
+            <Route path="/platform/tenants/onboarding" element={<AllTenantsPage />} />
+            <Route path="/platform/tenants/requests" element={<AllTenantsPage />} />
+            <Route path="/platform/tenants/:tenantId" element={<TenantDetailsPage />} />
+            <Route path="/platform/plans" element={<PlansPricingPage />} />
+            <Route path="/platform/modules" element={<PlatformDashboardPage />} />
+            <Route path="/platform/industries" element={<PlatformDashboardPage />} />
+            <Route path="/platform/users" element={<PlatformDashboardPage />} />
+            <Route path="/platform/roles" element={<PlatformDashboardPage />} />
+            <Route path="/platform/audit" element={<AuditLogsPage />} />
+            <Route path="/platform/subscriptions" element={<PlatformDashboardPage />} />
+            <Route path="/platform/invoices" element={<PlatformDashboardPage />} />
+            <Route path="/platform/transactions" element={<PlatformDashboardPage />} />
+            <Route path="/platform/reports" element={<PlatformDashboardPage />} />
           </Route>
         </Route>
 
