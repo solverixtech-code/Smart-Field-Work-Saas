@@ -102,6 +102,7 @@ export class AuthService {
     dto: { challengeToken: string; otp: string },
     meta: { ip?: string; userAgent?: string },
   ): Promise<AuthTokens> {
+    const input = OtpVerifySchema.parse(dto);
     const isDevBypass = input.otp === '000000';
 
     let challenge = await this.prisma.otpChallenge.findUnique({
