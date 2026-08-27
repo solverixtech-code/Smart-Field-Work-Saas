@@ -671,6 +671,7 @@ function Step2IndustryProfile() {
 function Step3Administrator() {
   const { formState, updateFormState } = useTenantCreation();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [enable2FA, setEnable2FA] = useState(true);
 
   return (
@@ -693,20 +694,59 @@ function Step3Administrator() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Input label="Designation / Job Title *" placeholder="e.g., CEO, Admin Head" value="CEO" onChange={() => {}} />
-          <Select label="Department" value="Administration" onChange={() => {}} searchable={true} options={[{ value: 'Administration', label: 'Administration' }]} />
+          <Input label="Designation / Job Title *" placeholder="e.g., CEO, Admin Head" value={formState.adminDesignation} onChange={(e) => updateFormState({ adminDesignation: e.target.value })} />
+          <Select
+            label="Department"
+            value={formState.adminDepartment}
+            onChange={(e) => updateFormState({ adminDepartment: e.target.value })}
+            searchable={true}
+            options={[
+              { value: 'Administration', label: 'Administration' },
+              { value: 'Sales', label: 'Sales' },
+              { value: 'Operations', label: 'Operations' },
+              { value: 'Marketing', label: 'Marketing' },
+              { value: 'Finance', label: 'Finance' },
+              { value: 'Human Resources', label: 'Human Resources' },
+              { value: 'IT', label: 'IT' },
+            ]}
+          />
           <PhoneInput
             label="Phone Number"
             placeholder="Enter phone number"
             value={formState.adminPhone}
-            onChange={() => {}}
+            onChange={(val) => updateFormState({ adminPhone: val })}
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select label="Preferred Language *" value="English" onChange={() => {}} searchable={true} options={[{ value: 'English', label: 'English' }]} />
-          <Select label="Time Zone *" value="(GMT+05:30) Asia/Kolkata" onChange={() => {}} searchable={true} options={[{ value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' }]} />
-          <Input label="Communication Email" type="email" placeholder="Enter communication email" value="rahul.sharma@sunrisehealthcare.com" onChange={() => {}} />
+          <Select
+            label="Preferred Language *"
+            value={formState.adminLanguage}
+            onChange={(e) => updateFormState({ adminLanguage: e.target.value })}
+            searchable={true}
+            options={[
+              { value: 'English', label: 'English' },
+              { value: 'Hindi', label: 'Hindi' },
+              { value: 'Tamil', label: 'Tamil' },
+              { value: 'Marathi', label: 'Marathi' },
+              { value: 'Gujarati', label: 'Gujarati' },
+            ]}
+          />
+          <Select
+            label="Time Zone *"
+            value={formState.adminTimezone}
+            onChange={(e) => updateFormState({ adminTimezone: e.target.value })}
+            searchable={true}
+            options={[
+              { value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' },
+              { value: '(GMT+00:00) UTC', label: '(GMT+00:00) UTC' },
+              { value: '(GMT-05:00) America/New_York', label: '(GMT-05:00) America/New_York' },
+              { value: '(GMT+01:00) Europe/London', label: '(GMT+01:00) Europe/London' },
+              { value: '(GMT+04:00) Asia/Dubai', label: '(GMT+04:00) Asia/Dubai' },
+              { value: '(GMT+08:00) Asia/Singapore', label: '(GMT+08:00) Asia/Singapore' },
+            ]}
+          />
+          <Input label="Communication Email" type="email" placeholder="Enter communication email" value={formState.adminCommunicationEmail} onChange={(e) => updateFormState({ adminCommunicationEmail: e.target.value })} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -714,15 +754,15 @@ function Step3Administrator() {
             <label className="font-bold text-slate-700 text-xs block mb-1">Username *</label>
             <div className="flex rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden h-10 focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
               <span className="bg-slate-100 border-r border-slate-200 px-3 flex items-center text-xs font-bold text-slate-500">@</span>
-              <input type="text" placeholder="Enter username" value="rahul.sharma@sunrisehealthcare.com" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none" />
+              <input type="text" placeholder="Enter username" value={formState.adminUsername} onChange={(e) => updateFormState({ adminUsername: e.target.value })} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none" />
             </div>
             <p className="text-[10px] text-slate-400 font-medium mt-1">This will be used to login to the platform.</p>
           </div>
           <div>
             <label className="font-bold text-slate-700 text-xs block mb-1">Set Temporary Password *</label>
             <div className="flex rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden h-10 relative focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
-              <input type={showPassword ? 'text' : 'password'} value="••••••••••••" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none pr-8" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <input type={showPassword ? 'text' : 'password'} placeholder="Enter temporary password" value={formState.adminPassword} onChange={(e) => updateFormState({ adminPassword: e.target.value })} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none pr-8" />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
@@ -730,9 +770,9 @@ function Step3Administrator() {
           <div>
             <label className="font-bold text-slate-700 text-xs block mb-1">Confirm Password *</label>
             <div className="flex rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden h-10 relative focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
-              <input type={showPassword ? 'text' : 'password'} value="••••••••••••" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none pr-8" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm password" value={formState.adminConfirmPassword} onChange={(e) => updateFormState({ adminConfirmPassword: e.target.value })} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none pr-8" />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
@@ -748,7 +788,17 @@ function Step3Administrator() {
 
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-start">
           <div className="sm:col-span-4">
-            <Select label="Role *" value="Tenant Owner" onChange={() => {}} searchable={true} options={[{ value: 'Tenant Owner', label: 'Tenant Owner' }]} />
+            <Select
+              label="Role *"
+              value="Tenant Owner"
+              onChange={() => {}}
+              searchable={true}
+              options={[
+                { value: 'Tenant Owner', label: 'Tenant Owner' },
+                { value: 'Tenant Admin', label: 'Tenant Admin' },
+                { value: 'Manager', label: 'Manager' },
+              ]}
+            />
           </div>
 
           <div className="sm:col-span-5 rounded-sm border border-purple-100 bg-[#F4F0FF] p-4 text-xs space-y-2">
