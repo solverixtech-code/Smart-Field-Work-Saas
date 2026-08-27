@@ -197,7 +197,7 @@ function Step3Administrator() {
       <div className="pt-2">
         <Checkbox
           checked={formState.sendInviteEmail}
-          onChange={(e) => updateFormState({ sendInviteEmail: e.target.checked })}
+          onChange={(checked) => updateFormState({ sendInviteEmail: checked })}
           label="Send welcome email with password setup link immediately after provisioning"
         />
       </div>
