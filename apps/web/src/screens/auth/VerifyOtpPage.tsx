@@ -125,12 +125,18 @@ export default function VerifyOtpPage() {
           </p>
         </div>
 
-        {/* Error Notification Banner */}
-        {error ? (
-          <div className="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-600 text-center animate-in fade-in">
-            {error}
+        {/* Fixed Reserved Error Slot - Prevents Height Fluctuation & Layout Shifts */}
+        <div className="h-10 flex items-center justify-center shrink-0">
+          <div
+            className={`w-full rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-semibold text-rose-600 text-center transition-all duration-200 ${
+              error
+                ? 'opacity-100 scale-100 pointer-events-auto'
+                : 'opacity-0 scale-95 pointer-events-none'
+            }`}
+          >
+            {error || ' '}
           </div>
-        ) : null}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -176,7 +182,7 @@ export default function VerifyOtpPage() {
               type="submit"
               variant="accent"
               size="lg"
-              className="w-full justify-center gap-2 font-bold py-2.5 text-xs sm:text-sm shadow-md"
+              className="w-full h-11 justify-center gap-2 font-bold text-xs sm:text-sm shadow-md"
               isLoading={loading}
             >
               <CheckCircle2 className="h-4 w-4" /> Verify & Continue
@@ -193,7 +199,7 @@ export default function VerifyOtpPage() {
             variant="outline"
             size="lg"
             onClick={() => toast.info('Please enter your 8-character backup security code.')}
-            className="w-full justify-center gap-2 font-semibold text-[#0D1F3D] border-slate-200 hover:bg-slate-50 py-2.5 text-xs"
+            className="w-full h-11 justify-center gap-2 font-semibold text-[#0D1F3D] border-slate-200 hover:bg-slate-50 text-xs"
           >
             <ShieldCheck className="h-4 w-4 text-blue-600" /> Use Backup Code
           </Button>
