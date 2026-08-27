@@ -51,16 +51,11 @@ export function AllTenantsPage() {
 
   // Tenants Mock Data
   const tenantsList = [
-    { id: '1', name: 'Sunrise Solar Pvt Ltd', domain: 'sunrisesolar.smartfieldwork.com', code: 'SFW-TNT-00124', industry: 'Solar', plan: 'Growth', users: '18 / 25', mrr: '₹14,999', status: 'Active', createdOn: '24 Aug 2025', iconBg: 'bg-amber-100 text-amber-600' },
-    { id: '2', name: 'Genix Pharma Pvt Ltd', domain: 'genixpharma.smartfieldwork.com', code: 'SFW-TNT-00123', industry: 'Pharma', plan: 'Growth', users: '35 / 50', mrr: '₹24,999', status: 'Active', createdOn: '22 Aug 2025', iconBg: 'bg-rose-100 text-rose-600' },
-    { id: '3', name: 'Metro FMCG Distributors', domain: 'metrofmcg.smartfieldwork.com', code: 'SFW-TNT-00122', industry: 'FMCG', plan: 'Enterprise', users: '120 / 150', mrr: '₹79,999', status: 'Active', createdOn: '20 Aug 2025', iconBg: 'bg-blue-100 text-blue-600' },
-    { id: '4', name: 'Blue Star Distributors', domain: 'bluestar.smartfieldwork.com', code: 'SFW-TNT-00121', industry: 'Distributors', plan: 'Growth', users: '22 / 30', mrr: '₹17,999', status: 'Active', createdOn: '18 Aug 2025', iconBg: 'bg-emerald-100 text-emerald-600' },
-    { id: '5', name: 'Apex Solar Pvt Ltd', domain: 'apexsolar.smartfieldwork.com', code: 'SFW-TNT-00120', industry: 'Solar', plan: 'Professional', users: '12 / 20', mrr: '₹9,999', status: 'Active', createdOn: '16 Aug 2025', iconBg: 'bg-amber-100 text-amber-600' },
-    { id: '6', name: 'Krishna FMCG Pvt Ltd', domain: 'krishnafmcg.smartfieldwork.com', code: 'SFW-TNT-00119', industry: 'FMCG', plan: 'Enterprise', users: '85 / 100', mrr: '₹59,999', status: 'Active', createdOn: '14 Aug 2025', iconBg: 'bg-blue-100 text-blue-600' },
-    { id: '7', name: 'Om Sai FMCG', domain: 'omsai.smartfieldwork.com', code: 'SFW-TNT-00118', industry: 'FMCG', plan: 'Growth', users: '16 / 25', mrr: '₹14,999', status: 'Past Due', createdOn: '12 Aug 2025', iconBg: 'bg-purple-100 text-purple-600' },
-    { id: '8', name: 'Bright Services', domain: 'brightservices.smartfieldwork.com', code: 'SFW-TNT-00117', industry: 'Services', plan: 'Professional', users: '10 / 15', mrr: '₹7,999', status: 'Active', createdOn: '10 Aug 2025', iconBg: 'bg-indigo-100 text-indigo-600' },
-    { id: '9', name: 'Vertex Manufacturing', domain: 'vertexmanufacturing.smartfieldwork.com', code: 'SFW-TNT-00116', industry: 'Manufacturing', plan: 'Growth', users: '28 / 40', mrr: '₹19,999', status: 'Trial', createdOn: '08 Aug 2025', iconBg: 'bg-teal-100 text-teal-600' },
-    { id: '10', name: 'Sagar Pharma', domain: 'sagarpharma.smartfieldwork.com', code: 'SFW-TNT-00115', industry: 'Pharma', plan: 'Growth', users: '15 / 25', mrr: '₹14,999', status: 'Suspended', createdOn: '06 Aug 2025', iconBg: 'bg-rose-100 text-rose-600' },
+    { id: 't_apex_pharma', name: 'Apex Healthcare Pvt Ltd', domain: 'apexpharma.smartfieldwork.com', code: 'SFW-TNT-00124', industry: 'Pharma', plan: 'Growth', users: '45 / 50', mrr: '₹40,455', status: 'Active', createdOn: '12 Jan 2025', iconBg: 'bg-[#0D1F3D] text-white font-extrabold' },
+    { id: 't_sunshine_solar', name: 'Sunshine Solar Energy', domain: 'sunshinesolar.smartfieldwork.com', code: 'SFW-TNT-00123', industry: 'Solar', plan: 'Starter', users: '15 / 15', mrr: '₹0', status: 'Trial', createdOn: '15 May 2025', iconBg: 'bg-amber-100 text-amber-800 font-extrabold' },
+    { id: 't_metro_retail', name: 'Metro Supermarkets Ltd', domain: 'metroretail.smartfieldwork.com', code: 'SFW-TNT-00122', industry: 'FMCG', plan: 'Enterprise', users: '180 / 200', mrr: '₹2,15,820', status: 'Active', createdOn: '01 Nov 2024', iconBg: 'bg-blue-100 text-blue-800 font-extrabold' },
+    { id: 't_vanguard_infra', name: 'Vanguard Builders & Infra', domain: 'vanguard.smartfieldwork.com', code: 'SFW-TNT-00121', industry: 'Construction', plan: 'Growth', users: '30 / 50', mrr: '₹26,970', status: 'Past Due', createdOn: '10 Feb 2025', iconBg: 'bg-amber-100 text-amber-800 font-extrabold' },
+    { id: 't_zenith_edtech', name: 'Zenith Learning Systems', domain: 'zenith.smartfieldwork.com', code: 'SFW-TNT-00120', industry: 'EdTech', plan: 'Starter', users: '10 / 15', mrr: '₹0', status: 'Suspended', createdOn: '05 Jan 2025', iconBg: 'bg-rose-100 text-rose-800 font-extrabold' },
   ];
 
   // Industry donut legend

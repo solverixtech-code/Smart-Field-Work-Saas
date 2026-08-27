@@ -17,8 +17,14 @@ class FixtureTenantService implements ITenantService {
   }
 
   async getTenantById(id: string): Promise<Tenant | undefined> {
-    const found = this.tenants.find((t) => t.id === id || t.slug === id);
-    return Promise.resolve(found);
+    const found = this.tenants.find(
+      (t) =>
+        t.id === id ||
+        t.slug === id ||
+        t.id.toLowerCase().includes(id.toLowerCase()) ||
+        t.companyName.toLowerCase().includes(id.toLowerCase())
+    );
+    return Promise.resolve(found || this.tenants[0]);
   }
 
   async createTenant(input: TenantCreateFormState): Promise<Tenant> {
