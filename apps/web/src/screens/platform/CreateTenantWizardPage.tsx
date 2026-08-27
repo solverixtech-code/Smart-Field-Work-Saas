@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   Save,
   Send,
   AlertCircle,
@@ -49,7 +50,18 @@ import { Checkbox } from '../../components/ui/Checkbox';
 import { DatePicker } from '../../components/ui/DatePicker';
 import { TenantCreationProvider, useTenantCreation } from '../../features/platform/tenants/context/TenantCreationContext';
 
-// Helper for Phone Number Inputs (Digit-only enforcement per Section 1 Rule 1)
+const COUNTRY_CODES = [
+  { code: 'IN', flag: '🇮🇳', dial: '+91', name: 'India', length: 10 },
+  { code: 'US', flag: '🇺🇸', dial: '+1', name: 'United States', length: 10 },
+  { code: 'AE', flag: '🇦🇪', dial: '+971', name: 'United Arab Emirates', length: 9 },
+  { code: 'GB', flag: '🇬🇧', dial: '+44', name: 'United Kingdom', length: 10 },
+  { code: 'SG', flag: '🇸🇬', dial: '+65', name: 'Singapore', length: 8 },
+  { code: 'AU', flag: '🇦🇺', dial: '+61', name: 'Australia', length: 9 },
+  { code: 'CA', flag: '🇨🇦', dial: '+1', name: 'Canada', length: 10 },
+  { code: 'DE', flag: '🇩🇪', dial: '+49', name: 'Germany', length: 11 },
+];
+
+// Interactive Country Flag & Dial Code PhoneInput Component
 function PhoneInput({
   label,
   value,
@@ -61,35 +73,52 @@ function PhoneInput({
   onChange: (val: string) => void;
   placeholder?: string;
 }) {
+  const [selectedCountry, setSelectedCountry] = useState(COUNTRY_CODES[0]);
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Allow navigation and edit keys: Backspace, Delete, Tab, Arrows
-    if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-      return;
-    }
-    // Block non-numeric keys
-    if (!/[0-9]/.test(e.key)) {
-      e.preventDefault();
-    }
+    if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+    if (!/[0-9]/.test(e.key)) e.preventDefault();
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, selectedCountry.length);
     onChange(digitsOnly);
   };
 
   return (
-    <div className="w-full space-y-1 text-left font-sans">
+    <div className="w-full space-y-1 text-left font-sans relative" ref={dropdownRef}>
       <label className="block text-xs font-bold text-slate-700">{label}</label>
+
       <div className="flex h-10 w-full rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
-        <div className="bg-slate-100/80 border-r border-slate-200 px-3 flex items-center text-xs font-bold text-slate-700 gap-1.5 shrink-0 select-none">
-          <span className="text-sm">🇮🇳</span>
-          <span className="text-slate-800">+91 ▾</span>
-        </div>
+        {/* Country Flag Trigger */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="bg-slate-100/80 border-r border-slate-200 px-2.5 flex items-center text-xs font-bold text-slate-700 gap-1 shrink-0 hover:bg-slate-200/80 cursor-pointer transition-colors"
+        >
+          <span className="text-sm">{selectedCountry.flag}</span>
+          <span className="text-slate-800 font-bold">{selectedCountry.dial}</span>
+          <ChevronDown className={`h-3 w-3 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {/* Digit Input */}
         <input
           type="tel"
           inputMode="numeric"
           pattern="[0-9]*"
-          maxLength={10}
+          maxLength={selectedCountry.length}
           placeholder={placeholder}
           value={value}
           onKeyDown={handleKeyDown}
@@ -97,6 +126,38 @@ function PhoneInput({
           className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent placeholder-slate-400 focus:outline-none"
         />
       </div>
+
+      {/* Floating Country Selector Card */}
+      {isOpen && (
+        <div className="absolute left-0 top-full mt-1 z-[9999] w-56 rounded-sm border border-slate-200 bg-white p-1.5 shadow-2xl space-y-0.5 animate-in fade-in zoom-in-95">
+          <div className="px-2 py-1 border-b border-slate-100 mb-1">
+            <p className="text-[10px] font-extrabold text-[#0D1F3D] uppercase tracking-wider">Select Country Code</p>
+          </div>
+          <div className="max-h-44 overflow-y-auto space-y-0.5 custom-scrollbar">
+            {COUNTRY_CODES.map((c) => (
+              <button
+                key={c.code}
+                type="button"
+                onClick={() => {
+                  setSelectedCountry(c);
+                  setIsOpen(false);
+                }}
+                className={`flex w-full items-center justify-between rounded-sm px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                  selectedCountry.code === c.code
+                    ? 'bg-[#0D1F3D] text-white font-extrabold shadow-xs'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span>{c.flag}</span>
+                  <span>{c.name}</span>
+                </div>
+                <span className="font-mono text-[11px] opacity-80">{c.dial}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -390,6 +451,7 @@ function Step2IndustryProfile() {
 function Step3Administrator() {
   const { formState, updateFormState } = useTenantCreation();
   const [showPassword, setShowPassword] = useState(false);
+  const [enable2FA, setEnable2FA] = useState(true);
 
   return (
     <div className="space-y-6 font-sans">
@@ -483,8 +545,15 @@ function Step3Administrator() {
 
           <div className="sm:col-span-3 rounded-xl border border-slate-200 bg-slate-50/70 p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-extrabold text-[#0D1F3D] text-xs flex items-center gap-1.5"><Lock className="h-4 w-4 text-indigo-600" /> Enable 2FA</span>
-              <span className="h-5 w-9 rounded-full bg-indigo-600 inline-flex items-center justify-end px-0.5 cursor-pointer"><span className="h-4 w-4 rounded-full bg-white shadow-xs" /></span>
+              <Checkbox
+                checked={enable2FA}
+                onChange={(val) => setEnable2FA(val)}
+                label={
+                  <span className="font-extrabold text-[#0D1F3D] text-xs flex items-center gap-1.5">
+                    <Lock className="h-4 w-4 text-indigo-600" /> Enable 2FA
+                  </span>
+                }
+              />
             </div>
             <p className="text-[10px] text-slate-500 font-medium leading-snug">Require two-factor authentication for this administrator account.</p>
           </div>
