@@ -46,6 +46,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Checkbox } from '../../components/ui/Checkbox';
+import { DatePicker } from '../../components/ui/DatePicker';
 import { TenantCreationProvider, useTenantCreation } from '../../features/platform/tenants/context/TenantCreationContext';
 
 // Helper for Phone Number Inputs (Digit-only enforcement per Section 1 Rule 1)
@@ -77,9 +78,9 @@ function PhoneInput({
   };
 
   return (
-    <div className="w-full space-y-1.5 font-sans">
+    <div className="w-full space-y-1 text-left font-sans">
       <label className="block text-xs font-bold text-slate-700">{label}</label>
-      <div className="flex h-11 w-full rounded-md border border-slate-200 bg-[#F8FAFC] overflow-hidden focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
+      <div className="flex h-10 w-full rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
         <div className="bg-slate-100/80 border-r border-slate-200 px-3 flex items-center text-xs font-bold text-slate-700 gap-1.5 shrink-0 select-none">
           <span className="text-sm">🇮🇳</span>
           <span className="text-slate-800">+91 ▾</span>
@@ -127,8 +128,8 @@ function Step1CompanyDetails() {
             onChange={(e) => updateFormState({ legalEntityName: e.target.value })}
           />
           <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1.5">Tenant Code *</label>
-            <div className="flex rounded-md border border-slate-200 bg-[#F8FAFC] overflow-hidden h-11 focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
+            <label className="font-bold text-slate-700 text-xs block mb-1">Tenant Code *</label>
+            <div className="flex rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden h-10 focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
               <span className="bg-slate-100 border-r border-slate-200 px-3 flex items-center text-xs font-bold text-slate-600">
                 SFW-TNT-
               </span>
@@ -428,16 +429,16 @@ function Step3Administrator() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1.5">Username *</label>
-            <div className="flex rounded-md border border-slate-200 bg-[#F8FAFC] overflow-hidden h-11 focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
+            <label className="font-bold text-slate-700 text-xs block mb-1">Username *</label>
+            <div className="flex rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden h-10 focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
               <span className="bg-slate-100 border-r border-slate-200 px-3 flex items-center text-xs font-bold text-slate-500">@</span>
               <input type="text" placeholder="Enter username" value="rahul.sharma@sunrisehealthcare.com" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none" />
             </div>
             <p className="text-[10px] text-slate-400 font-medium mt-1">This will be used to login to the platform.</p>
           </div>
           <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1.5">Set Temporary Password *</label>
-            <div className="flex rounded-md border border-slate-200 bg-[#F8FAFC] overflow-hidden h-11 relative focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
+            <label className="font-bold text-slate-700 text-xs block mb-1">Set Temporary Password *</label>
+            <div className="flex rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden h-10 relative focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
               <input type={showPassword ? 'text' : 'password'} value="••••••••••••" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none pr-8" />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -445,8 +446,8 @@ function Step3Administrator() {
             </div>
           </div>
           <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1.5">Confirm Password *</label>
-            <div className="flex rounded-md border border-slate-200 bg-[#F8FAFC] overflow-hidden h-11 relative focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
+            <label className="font-bold text-slate-700 text-xs block mb-1">Confirm Password *</label>
+            <div className="flex rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden h-10 relative focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
               <input type={showPassword ? 'text' : 'password'} value="••••••••••••" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none pr-8" />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -562,7 +563,7 @@ function Step4PlanSubscription() {
             <Select label="Billing Cycle" value="Yearly (Save 17%)" onChange={() => {}} searchable={true} options={[{ value: 'Yearly (Save 17%)', label: 'Yearly (Save 17%)' }]} />
             <Input label="Seat / User Limit" placeholder="150" value="150" onChange={() => {}} />
             <Input label="Storage Limit" placeholder="200 GB" value="200 GB" onChange={() => {}} />
-            <Input label="Subscription Start Date" placeholder="24 May 2026" value="24 May 2026" onChange={() => {}} />
+            <DatePicker label="Subscription Start Date *" value="2026-05-24" onChange={() => {}} />
           </div>
 
           <div className="space-y-3">
