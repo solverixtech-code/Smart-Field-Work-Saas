@@ -1,18 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './screens/auth/LoginPage';
-import ForgotPasswordPage from './screens/auth/ForgotPasswordPage';
-import ResetPasswordPage from './screens/auth/ResetPasswordPage';
-import VerifyOtpPage from './screens/auth/VerifyOtpPage';
-import ProfilePage from './screens/auth/ProfilePage';
-import ChangePasswordPage from './screens/auth/ChangePasswordPage';
-import ActiveSessionsPage from './screens/auth/ActiveSessionsPage';
-
-import ExecutiveDashboardPage from './screens/dashboard/ExecutiveDashboardPage';
-import SalesDashboardPage from './screens/dashboard/SalesDashboardPage';
-import FieldActivityDashboardPage from './screens/dashboard/FieldActivityDashboardPage';
-import RevenueDashboardPage from './screens/dashboard/RevenueDashboardPage';
 import ConversionDashboardPage from './screens/dashboard/ConversionDashboardPage';
 import RealTimeActivityDashboardPage from './screens/dashboard/RealTimeActivityDashboardPage';
 

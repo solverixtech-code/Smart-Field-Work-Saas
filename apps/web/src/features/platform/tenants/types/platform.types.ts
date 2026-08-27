@@ -1,0 +1,178 @@
+export type PlatformRole =
+  | 'PLATFORM_SUPER_ADMIN'
+  | 'PLATFORM_OPERATIONS_ADMIN'
+  | 'PLATFORM_ONBOARDING'
+  | 'PLATFORM_SUPPORT'
+  | 'PLATFORM_BILLING'
+  | 'PLATFORM_AUDITOR';
+
+export type PlatformPermission =
+  | 'platform.dashboard.view'
+  | 'platform.tenants.view'
+  | 'platform.tenants.create'
+  | 'platform.tenants.update'
+  | 'platform.tenants.provision'
+  | 'platform.tenants.suspend'
+  | 'platform.tenants.members.manage'
+  | 'platform.tenants.modules.manage'
+  | 'platform.subscriptions.view'
+  | 'platform.subscriptions.manage'
+  | 'platform.billing.view'
+  | 'platform.users.manage'
+  | 'platform.audit.view';
+
+export type TenantStatus =
+  | 'Draft'
+  | 'Pending Payment'
+  | 'Trial'
+  | 'Active'
+  | 'Past Due'
+  | 'Suspended'
+  | 'Cancelled'
+  | 'Archived';
+
+export type SubscriptionStatus =
+  | 'Trialing'
+  | 'Active'
+  | 'Past Due'
+  | 'Incomplete'
+  | 'Cancelled';
+
+export type ProvisioningType =
+  | 'Free Trial'
+  | 'Payment Required'
+  | 'Invoice / Offline Payment'
+  | 'Enterprise Contract';
+
+export type PaymentCollectionMethod =
+  | 'Send Checkout Link to Customer'
+  | 'Record Confirmed Offline Payment';
+
+export interface IndustryConfig {
+  id: string;
+  code: string;
+  label: string;
+  category: string;
+  description: string;
+  defaultModules: string[];
+}
+
+export interface PlatformModule {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  category: 'Core' | 'Sales' | 'Field Ops' | 'Automation' | 'Enterprise';
+  isAddon: boolean;
+  monthlyPrice: number;
+}
+
+export interface PlatformPlan {
+  id: string;
+  code: string;
+  name: string;
+  tier: 'Starter' | 'Growth' | 'Enterprise';
+  monthlyPricePerUser: number;
+  annualPricePerUser: number;
+  minUsers: number;
+  includedModules: string[];
+  features: string[];
+}
+
+export interface TenantAdminUser {
+  fullName: string;
+  email: string;
+  phone: string;
+  designation: string;
+  sendInviteEmail: boolean;
+}
+
+export interface Tenant {
+  id: string;
+  slug: string;
+  companyName: string;
+  legalEntityName: string;
+  taxId?: string;
+  domain: string;
+  logoUrl?: string;
+  industryId: string;
+  industryCode: string;
+  industryLabel: string;
+  companySize: string;
+  country: string;
+  timezone: string;
+  currency: string;
+  
+  tenantStatus: TenantStatus;
+  subscriptionStatus: SubscriptionStatus;
+  
+  adminUser: TenantAdminUser;
+  
+  planId: string;
+  planName: string;
+  provisioningType: ProvisioningType;
+  userLicensesCount: number;
+  enabledModuleCodes: string[];
+  
+  trialStartDate?: string;
+  trialEndDate?: string;
+  trialConversionPolicy?: string;
+  
+  billingContactName?: string;
+  billingContactEmail?: string;
+  paymentCollectionMethod?: PaymentCollectionMethod;
+  
+  mrr: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TenantCreateFormState {
+  // Step 1: Company Details
+  companyName: string;
+  legalEntityName: string;
+  slug: string;
+  domain: string;
+  taxId: string;
+  companySize: string;
+  country: string;
+  currency: string;
+
+  // Step 2: Industry & Profile
+  industryId: string;
+  timezone: string;
+
+  // Step 3: Administrator
+  adminFullName: string;
+  adminEmail: string;
+  adminPhone: string;
+  adminDesignation: string;
+  sendInviteEmail: boolean;
+
+  // Step 4: Plan & Subscription
+  planId: string;
+  provisioningType: ProvisioningType;
+  userLicensesCount: number;
+  trialDurationDays: number;
+  trialConversionPolicy: string;
+  paymentCollectionMethod: PaymentCollectionMethod;
+  billingContactName: string;
+  billingContactEmail: string;
+
+  // Step 5: Modules
+  selectedModuleCodes: string[];
+
+  // General Status
+  isDraft: boolean;
+}
+
+export interface PlatformAuditLog {
+  id: string;
+  timestamp: string;
+  actorName: string;
+  actorEmail: string;
+  action: string;
+  targetTenantName?: string;
+  ipAddress: string;
+  details: string;
+}
