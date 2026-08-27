@@ -108,16 +108,16 @@ export default function VerifyOtpPage() {
 
   return (
     <AuthLayout>
-      <div className="w-full min-h-[580px] flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-xl space-y-6">
+      <div className="w-full h-[600px] flex flex-col justify-between rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-10 shadow-xl space-y-4">
         {/* Top Brand Logo & Shield Lock Icon */}
         <div className="flex flex-col items-center text-center">
           <img
             src="/assets/sfw-logo.png"
             alt="Smart Field Work Logo"
-            className="h-14 sm:h-16 w-auto object-contain mb-4"
+            className="h-14 sm:h-16 w-auto object-contain mb-3"
           />
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-[#E20613] border border-red-100 mb-3 shadow-xs">
-            <Shield className="h-6 w-6" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-50 text-[#E20613] border border-red-100 mb-2.5 shadow-xs">
+            <Shield className="h-5.5 w-5.5" />
           </div>
           <h2 className="text-2xl font-extrabold text-[#0D1F3D]">Verify It's You</h2>
           <p className="mt-1 text-xs font-medium text-slate-500 max-w-xs leading-relaxed">
@@ -126,11 +126,14 @@ export default function VerifyOtpPage() {
           </p>
         </div>
 
-        {error && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-600 text-center animate-in fade-in">
-            {error}
-          </div>
-        )}
+        {/* Reserved Fixed Height Error Slot (Prevents Card Height Jumps) */}
+        <div className="h-10 flex items-center justify-center shrink-0">
+          {error ? (
+            <div className="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-600 text-center animate-in fade-in">
+              {error}
+            </div>
+          ) : null}
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
