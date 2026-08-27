@@ -50,15 +50,109 @@ import { Checkbox } from '../../components/ui/Checkbox';
 import { DatePicker } from '../../components/ui/DatePicker';
 import { TenantCreationProvider, useTenantCreation } from '../../features/platform/tenants/context/TenantCreationContext';
 
+function CountryFlag({ code, flagUrl }: { code: string; flagUrl?: string }) {
+  const [imgError, setImgError] = useState(false);
+
+  if (!imgError && flagUrl) {
+    return (
+      <img
+        src={flagUrl}
+        alt={code}
+        onError={() => setImgError(true)}
+        className="w-5 h-3.5 object-cover rounded-xs border border-slate-200/80 shadow-2xs shrink-0"
+      />
+    );
+  }
+
+  // Pure SVG Flag fallbacks guaranteed to render on Windows
+  switch (code) {
+    case 'IN':
+      return (
+        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
+          <rect width="30" height="6.67" fill="#FF9933" />
+          <rect y="6.67" width="30" height="6.67" fill="#FFFFFF" />
+          <rect y="13.33" width="30" height="6.67" fill="#138808" />
+          <circle cx="15" cy="10" r="2.2" fill="none" stroke="#000080" strokeWidth="0.8" />
+        </svg>
+      );
+    case 'US':
+      return (
+        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
+          <rect width="30" height="20" fill="#B22234" />
+          <path d="M0 3h30M0 6.2h30M0 9.4h30M0 12.6h30M0 15.8h30M0 19h30" stroke="#FFFFFF" strokeWidth="1.5" />
+          <rect width="12" height="10.8" fill="#3C3B6E" />
+        </svg>
+      );
+    case 'AE':
+      return (
+        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
+          <rect width="30" height="6.67" fill="#00732F" />
+          <rect y="6.67" width="30" height="6.67" fill="#FFFFFF" />
+          <rect y="13.33" width="30" height="6.67" fill="#000000" />
+          <rect width="7.5" height="20" fill="#FF0000" />
+        </svg>
+      );
+    case 'GB':
+      return (
+        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
+          <rect width="30" height="20" fill="#012169" />
+          <path d="M0 0l30 20M30 0L0 20" stroke="#FFFFFF" strokeWidth="3" />
+          <path d="M0 0l30 20M30 0L0 20" stroke="#C8102E" strokeWidth="1.5" />
+          <path d="M15 0v20M0 10h30" stroke="#FFFFFF" strokeWidth="5" />
+          <path d="M15 0v20M0 10h30" stroke="#C8102E" strokeWidth="3" />
+        </svg>
+      );
+    case 'SG':
+      return (
+        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
+          <rect width="30" height="10" fill="#ED2939" />
+          <rect y="10" width="30" height="10" fill="#FFFFFF" />
+          <circle cx="6" cy="5" r="3" fill="#FFFFFF" />
+          <circle cx="7.2" cy="5" r="3" fill="#ED2939" />
+        </svg>
+      );
+    case 'AU':
+      return (
+        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
+          <rect width="30" height="20" fill="#000085" />
+          <rect width="13" height="9" fill="#012169" />
+          <path d="M0 0l13 9M13 0L0 9" stroke="#FFFFFF" strokeWidth="1.5" />
+          <path d="M6.5 0v9M0 4.5h13" stroke="#FFFFFF" strokeWidth="2.5" />
+          <path d="M6.5 0v9M0 4.5h13" stroke="#C8102E" strokeWidth="1.2" />
+        </svg>
+      );
+    case 'CA':
+      return (
+        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
+          <rect width="30" height="20" fill="#FF0000" />
+          <rect x="7.5" width="15" height="20" fill="#FFFFFF" />
+          <polygon points="15,4 16,8 19,7 17,10 19,13 16,12 15,16 14,12 11,13 13,10 11,7 14,8" fill="#FF0000" />
+        </svg>
+      );
+    case 'DE':
+      return (
+        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
+          <rect width="30" height="6.67" fill="#000000" />
+          <rect y="6.67" width="30" height="6.67" fill="#DD0000" />
+          <rect y="13.33" width="30" height="6.67" fill="#FFCE00" />
+        </svg>
+      );
+    default:
+      return (
+        <span className="text-xs font-bold text-slate-600">{code}</span>
+      );
+  }
+}
+
 const COUNTRY_CODES = [
-  { code: 'IN', flag: '🇮🇳', dial: '+91', name: 'India', length: 10 },
-  { code: 'US', flag: '🇺🇸', dial: '+1', name: 'United States', length: 10 },
-  { code: 'AE', flag: '🇦🇪', dial: '+971', name: 'United Arab Emirates', length: 9 },
-  { code: 'GB', flag: '🇬🇧', dial: '+44', name: 'United Kingdom', length: 10 },
-  { code: 'SG', flag: '🇸🇬', dial: '+65', name: 'Singapore', length: 8 },
-  { code: 'AU', flag: '🇦🇺', dial: '+61', name: 'Australia', length: 9 },
-  { code: 'CA', flag: '🇨🇦', dial: '+1', name: 'Canada', length: 10 },
-  { code: 'DE', flag: '🇩🇪', dial: '+49', name: 'Germany', length: 11 },
+  { code: 'IN', flagUrl: 'https://flagcdn.com/24x18/in.png', dial: '+91', name: 'India', length: 10 },
+  { code: 'US', flagUrl: 'https://flagcdn.com/24x18/us.png', dial: '+1', name: 'United States', length: 10 },
+  { code: 'AE', flagUrl: 'https://flagcdn.com/24x18/ae.png', dial: '+971', name: 'United Arab Emirates', length: 9 },
+  { code: 'GB', flagUrl: 'https://flagcdn.com/24x18/gb.png', dial: '+44', name: 'United Kingdom', length: 10 },
+  { code: 'SG', flagUrl: 'https://flagcdn.com/24x18/sg.png', dial: '+65', name: 'Singapore', length: 8 },
+  { code: 'AU', flagUrl: 'https://flagcdn.com/24x18/au.png', dial: '+61', name: 'Australia', length: 9 },
+  { code: 'CA', flagUrl: 'https://flagcdn.com/24x18/ca.png', dial: '+1', name: 'Canada', length: 10 },
+  { code: 'DE', flagUrl: 'https://flagcdn.com/24x18/de.png', dial: '+49', name: 'Germany', length: 11 },
 ];
 
 // Interactive Country Flag & Dial Code PhoneInput Component
@@ -106,9 +200,9 @@ function PhoneInput({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="bg-slate-100/80 border-r border-slate-200 px-2.5 flex items-center text-xs font-bold text-slate-700 gap-1 shrink-0 hover:bg-slate-200/80 cursor-pointer transition-colors"
+          className="bg-slate-100/80 border-r border-slate-200 px-2.5 flex items-center text-xs font-bold text-slate-700 gap-1.5 shrink-0 hover:bg-slate-200/80 cursor-pointer transition-colors"
         >
-          <span className="text-sm">{selectedCountry.flag}</span>
+          <CountryFlag code={selectedCountry.code} flagUrl={selectedCountry.flagUrl} />
           <span className="text-slate-800 font-bold">{selectedCountry.dial}</span>
           <ChevronDown className={`h-3 w-3 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
@@ -129,11 +223,11 @@ function PhoneInput({
 
       {/* Floating Country Selector Card */}
       {isOpen && (
-        <div className="absolute left-0 top-full mt-1 z-[9999] w-56 rounded-sm border border-slate-200 bg-white p-1.5 shadow-2xl space-y-0.5 animate-in fade-in zoom-in-95">
+        <div className="absolute left-0 top-full mt-1 z-[9999] w-60 rounded-sm border border-slate-200 bg-white p-1.5 shadow-2xl space-y-0.5 animate-in fade-in zoom-in-95">
           <div className="px-2 py-1 border-b border-slate-100 mb-1">
             <p className="text-[10px] font-extrabold text-[#0D1F3D] uppercase tracking-wider">Select Country Code</p>
           </div>
-          <div className="max-h-44 overflow-y-auto space-y-0.5 custom-scrollbar">
+          <div className="max-h-48 overflow-y-auto space-y-0.5 custom-scrollbar">
             {COUNTRY_CODES.map((c) => (
               <button
                 key={c.code}
@@ -149,7 +243,7 @@ function PhoneInput({
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span>{c.flag}</span>
+                  <CountryFlag code={c.code} flagUrl={c.flagUrl} />
                   <span>{c.name}</span>
                 </div>
                 <span className="font-mono text-[11px] opacity-80">{c.dial}</span>
