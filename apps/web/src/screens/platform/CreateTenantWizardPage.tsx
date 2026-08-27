@@ -1119,35 +1119,35 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
           <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-medium">
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Company Name</span>
-              <span className="font-extrabold text-[#0D1F3D]">{formState.companyName || 'Sunrise Healthcare Pvt Ltd'}</span>
+              <span className="font-extrabold text-[#0D1F3D]">{formState.companyName || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Email</span>
-              <span className="font-semibold text-slate-700">{formState.billingContactEmail || 'info@sunrisehealthcare.com'}</span>
+              <span className="font-semibold text-slate-700">{formState.billingContactEmail || formState.adminEmail || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Legal Name</span>
-              <span className="font-semibold text-slate-700">{formState.legalEntityName || 'Sunrise Healthcare Private Limited'}</span>
+              <span className="font-semibold text-slate-700">{formState.legalEntityName || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Phone</span>
-              <span className="font-semibold text-slate-700">{formState.adminPhone ? `+91 ${formState.adminPhone}` : '+91 98765 43210'}</span>
+              <span className="font-semibold text-slate-700">{formState.adminPhone ? `+91 ${formState.adminPhone}` : '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Tenant Code</span>
-              <span className="font-mono font-bold text-slate-800">{formState.slug ? `SRHC-${formState.slug.toUpperCase()}` : 'SRHC-TNT'}</span>
+              <span className="font-mono font-bold text-slate-800">{formState.slug || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Country</span>
-              <span className="font-semibold text-slate-700">{formState.country || 'India'}</span>
+              <span className="font-semibold text-slate-700">{formState.country || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Website</span>
-              <span className="font-semibold text-slate-700 break-all">{formState.domain ? `https://${formState.domain}` : 'https://sunrisehealthcare.com'}</span>
+              <span className="font-semibold text-slate-700 break-all">{formState.website || formState.domain || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">City</span>
-              <span className="font-semibold text-slate-700">Mumbai, Maharashtra</span>
+              <span className="font-semibold text-slate-700">{formState.city && formState.state ? `${formState.city}, ${formState.state}` : formState.city || formState.state || '—'}</span>
             </div>
           </div>
         </div>
@@ -1177,7 +1177,7 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Operating Countries</span>
-              <span className="font-semibold text-slate-700">India</span>
+              <span className="font-semibold text-slate-700">{formState.operatingCountries || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Business Size</span>
@@ -1185,27 +1185,27 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Number of Branches / Locations</span>
-              <span className="font-semibold text-slate-700">6</span>
+              <span className="font-semibold text-slate-700">{formState.branchCount || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Years in Business</span>
-              <span className="font-semibold text-slate-700">5 - 10 Years</span>
+              <span className="font-semibold text-slate-700">{formState.yearsInBusiness || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Preferred Currency</span>
-              <span className="font-semibold text-slate-700">INR - Indian Rupee (₹)</span>
+              <span className="font-semibold text-slate-700">{formState.currency || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Business Model</span>
-              <span className="font-semibold text-slate-700">B2B</span>
+              <span className="font-semibold text-slate-700">{formState.businessModel || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Preferred Language</span>
-              <span className="font-semibold text-slate-700">English</span>
+              <span className="font-semibold text-slate-700">{formState.preferredLanguage || '—'}</span>
             </div>
             <div className="col-span-2 pt-1 border-t border-slate-100">
               <span className="text-slate-400 text-[11px] block mb-0.5">Short Description</span>
-              <span className="font-medium text-slate-600 text-[11px]">Pharmaceutical distribution and healthcare solutions provider across western India.</span>
+              <span className="font-medium text-slate-600 text-[11px]">{formState.description || '—'}</span>
             </div>
           </div>
         </div>
@@ -1231,35 +1231,35 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
           <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-medium">
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Full Name</span>
-              <span className="font-extrabold text-[#0D1F3D]">{formState.adminFullName || 'Rahul Sharma'}</span>
+              <span className="font-extrabold text-[#0D1F3D]">{formState.adminFullName || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Email</span>
-              <span className="font-semibold text-slate-700">{formState.adminEmail || 'rahul.sharma@sunrisehealthcare.com'}</span>
+              <span className="font-semibold text-slate-700">{formState.adminEmail || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Username</span>
-              <span className="font-semibold text-slate-700">{formState.adminEmail || 'rahul.sharma@sunrisehealthcare.com'}</span>
+              <span className="font-semibold text-slate-700">{formState.adminUsername || formState.adminEmail || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Phone</span>
-              <span className="font-semibold text-slate-700">{formState.adminPhone ? `+91 ${formState.adminPhone}` : '+91 98765 43210'}</span>
+              <span className="font-semibold text-slate-700">{formState.adminPhone ? `+91 ${formState.adminPhone}` : '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Designation</span>
-              <span className="font-semibold text-slate-700">CEO</span>
+              <span className="font-semibold text-slate-700">{formState.adminDesignation || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Time Zone</span>
-              <span className="font-semibold text-slate-700">(GMT+05:30) Asia/Kolkata</span>
+              <span className="font-semibold text-slate-700">{formState.adminTimezone || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Department</span>
-              <span className="font-semibold text-slate-700">Administration</span>
+              <span className="font-semibold text-slate-700">{formState.adminDepartment || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Language</span>
-              <span className="font-semibold text-slate-700">English</span>
+              <span className="font-semibold text-slate-700">{formState.adminLanguage || '—'}</span>
             </div>
           </div>
         </div>
@@ -1285,15 +1285,15 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
           <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-medium">
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Plan</span>
-              <span className="font-extrabold text-[#0D1F3D]">Professional (Yearly)</span>
+              <span className="font-extrabold text-[#0D1F3D]">{formState.planId ? `${formState.planId.charAt(0).toUpperCase() + formState.planId.slice(1)} (${formState.billingCycle || 'Yearly'})` : '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Subscription Start Date</span>
-              <span className="font-semibold text-slate-700">24 May 2025</span>
+              <span className="font-semibold text-slate-700">{formState.subscriptionStartDate || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Billing Cycle</span>
-              <span className="font-semibold text-slate-700">Yearly</span>
+              <span className="font-semibold text-slate-700">{formState.billingCycle || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Auto Renew</span>
@@ -1303,15 +1303,15 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Users / Seats Limit</span>
-              <span className="font-semibold text-slate-700">150</span>
+              <span className="font-semibold text-slate-700">{formState.seatLimit || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Trial Period</span>
-              <span className="font-semibold text-slate-700">0 Days</span>
+              <span className="font-semibold text-slate-700">{formState.trialDurationDays} Days</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Storage Limit</span>
-              <span className="font-semibold text-slate-700">200 GB</span>
+              <span className="font-semibold text-slate-700">{formState.storageLimit || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Grace Period</span>
