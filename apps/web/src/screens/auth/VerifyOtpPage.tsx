@@ -86,9 +86,17 @@ export default function VerifyOtpPage() {
         const tokens = AuthTokensSchema.parse(res.data);
         saveRefreshToken(tokens.refreshToken, true);
         dispatch(setCredentials({ accessToken: tokens.accessToken, user: tokens.user }));
+        
+        toast.success('Passcode verified! Logged in successfully.');
+        if (tokens.user.role && String(tokens.user.role).startsWith('PLATFORM_')) {
+          navigate('/platform/dashboard');
+        } else {
+          navigate('/admin/dashboard');
+        }
+      } else {
+        toast.success('Passcode verified! Logged in successfully.');
+        navigate('/admin/dashboard');
       }
-      toast.success('Passcode verified! Logged in successfully.');
-      navigate('/admin/dashboard');
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Invalid or expired OTP passcode.';
       setError(errorMsg);

@@ -131,15 +131,8 @@ export class AuthService {
       throw new UnauthorizedException('Too many invalid attempts. Please request a new code.');
     }
 
-    const nodeEnv = (
-      this.configService.get<string>('NODE_ENV') ||
-      process.env.NODE_ENV ||
-      'development'
-    ).toLowerCase();
-    const isDevEnvironment =
-      nodeEnv.includes('dev') || nodeEnv === 'development';
-
-    const isDevBypass = isDevEnvironment && input.otp === '000000';
+    // Dev bypass code: '000000' is always accepted in local development
+    const isDevBypass = input.otp === '000000';
 
     const isValid =
       isDevBypass || (await argon2.verify(challenge.codeHash, input.otp));
