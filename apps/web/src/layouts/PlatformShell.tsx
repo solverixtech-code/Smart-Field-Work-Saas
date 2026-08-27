@@ -30,6 +30,9 @@ import {
   Headphones,
   UserCheck,
   Tag,
+  Home,
+  User,
+  Monitor,
 } from "lucide-react";
 import { usePlatformPermissions } from "../features/platform/tenants/hooks/usePlatformPermissions";
 import {
@@ -40,6 +43,7 @@ import { useAppDispatch, useAppSelector } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
 import { clearStoredRefreshToken } from "../common/authSession";
 import { api } from "../common/api";
+import { Button } from "../components/ui/Button";
 
 const bigLogo = "/assets/sfw-logo.png";
 const smallLogo = "/assets/sfw-icon.png";
@@ -53,7 +57,7 @@ interface NavItem {
   permission: PlatformPermission;
 }
 
-interface NavGroup {
+interface NavCategory {
   title: string;
   items: NavItem[];
 }
@@ -63,7 +67,7 @@ export default function PlatformShell() {
   const [isHovered, setIsHovered] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [activeRole, setActiveRole] = useState<PlatformRole>(
-    "PLATFORM_SUPER_ADMIN",
+    "PLATFORM_SUPER_ADMIN"
   );
 
   const { user } = useAppSelector((s) => s.auth);
@@ -105,9 +109,9 @@ export default function PlatformShell() {
     navigate("/admin/login");
   };
 
-  const navGroups: NavGroup[] = [
+  const navCategories: NavCategory[] = [
     {
-      title: "PLATFORM OVERVIEW",
+      title: "Main Overview",
       items: [
         {
           label: "Dashboard",
@@ -118,7 +122,7 @@ export default function PlatformShell() {
       ],
     },
     {
-      title: "TENANT MANAGEMENT",
+      title: "Tenant Management",
       items: [
         {
           label: "All Tenants",
@@ -149,7 +153,7 @@ export default function PlatformShell() {
       ],
     },
     {
-      title: "PLATFORM MANAGEMENT",
+      title: "Platform Management",
       items: [
         {
           label: "Plans & Pricing",
@@ -190,7 +194,7 @@ export default function PlatformShell() {
       ],
     },
     {
-      title: "BILLING & FINANCE",
+      title: "Billing & Finance",
       items: [
         {
           label: "Subscriptions",
@@ -222,47 +226,45 @@ export default function PlatformShell() {
 
   const showBigLogo = !collapsed || isHovered;
 
-  // Breadcrumbs helper
+  // Breadcrumbs helper matching AppShell.tsx style
   const getBreadcrumbs = () => {
     const p = location.pathname;
     if (p === "/platform/dashboard") {
-      return [{ label: "Dashboard", to: "/platform/dashboard" }];
+      return [{ label: "Platform Console", to: "/platform/dashboard" }, { label: "Executive Dashboard", to: "/platform/dashboard" }];
     }
     if (p === "/platform/tenants") {
       return [
-        { label: "Dashboard", to: "/platform/dashboard" },
-        { label: "Tenants", to: "/platform/tenants" },
+        { label: "Tenant Management", to: "/platform/tenants" },
+        { label: "All Tenants", to: "/platform/tenants" },
       ];
     }
     if (p === "/platform/tenants/create") {
       return [
-        { label: "Dashboard", to: "/platform/dashboard" },
-        { label: "Tenants", to: "/platform/tenants" },
-        { label: "Create Tenant", to: "/platform/tenants/create" },
+        { label: "Tenant Management", to: "/platform/tenants" },
+        { label: "Create Tenant Wizard", to: "/platform/tenants/create" },
       ];
     }
     if (p.startsWith("/platform/tenants/")) {
       return [
-        { label: "Dashboard", to: "/platform/dashboard" },
-        { label: "Tenants", to: "/platform/tenants" },
-        { label: "Tenant Details", to: p },
+        { label: "Tenant Management", to: "/platform/tenants" },
+        { label: "Tenant Workspace Details", to: p },
       ];
     }
     if (p === "/platform/plans") {
       return [
-        { label: "Dashboard", to: "/platform/dashboard" },
+        { label: "Platform Management", to: "/platform/plans" },
         { label: "Plans & Pricing", to: "/platform/plans" },
       ];
     }
     if (p === "/platform/audit") {
       return [
-        { label: "Dashboard", to: "/platform/dashboard" },
+        { label: "Platform Management", to: "/platform/audit" },
         { label: "Audit Logs", to: "/platform/audit" },
       ];
     }
     return [
-      { label: "Dashboard", to: "/platform/dashboard" },
-      { label: "Platform Console", to: p },
+      { label: "Platform Console", to: "/platform/dashboard" },
+      { label: "Console Overview", to: p },
     ];
   };
 
@@ -270,41 +272,37 @@ export default function PlatformShell() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 font-sans">
-      {/* Dark Navy Enterprise Platform Console Sidebar (Matching Platform Dashboard.png) */}
+      {/* Refined Enterprise White Theme Sidebar (100% Reusing AppShell.tsx Sidebar Architecture) */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-[#1E293B] bg-[#0A1931] text-slate-300 shadow-xl transition-all duration-300 ease-in-out overflow-x-hidden ${
-          showBigLogo ? "w-[280px]" : "w-[80px]"
+        className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-slate-200 bg-white text-slate-700 shadow-xs transition-all duration-300 ease-in-out overflow-x-hidden ${
+          showBigLogo ? "w-[295px]" : "w-[80px]"
         }`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Brand Header */}
         <div
-          className={`flex h-20 flex-none items-center border-b border-[#1E293B] transition-all duration-300 ${
+          className={`flex h-20 flex-none items-center border-b border-slate-100 transition-all duration-300 ${
             showBigLogo ? "justify-between px-4" : "justify-center px-2"
           }`}
         >
           {showBigLogo ? (
             <>
-              <NavLink to="/platform/dashboard" className="flex flex-col">
+              <NavLink to="/platform/dashboard" className="flex items-center">
                 <img
                   src={bigLogo}
-                  alt="Smart Field Work SaaS Platform"
+                  alt="Smart Field Work Logo"
                   style={{
-                    width: "210px",
-                    maxHeight: "48px",
+                    width: "240px",
+                    maxHeight: "64px",
                     objectFit: "contain",
-                    filter: "brightness(0) invert(1)",
                   }}
                 />
-                <span className="text-[10px] font-bold tracking-widest text-slate-400 pl-1 -mt-1 uppercase">
-                  SaaS Platform
-                </span>
               </NavLink>
               <button
                 type="button"
                 onClick={() => setCollapsed(!collapsed)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-[#1E293B] hover:text-white transition duration-200"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition duration-200"
                 title="Collapse Sidebar"
               >
                 <ChevronLeft className="h-5 w-5" />
@@ -314,13 +312,13 @@ export default function PlatformShell() {
             <button
               type="button"
               onClick={() => setCollapsed(!collapsed)}
-              className="flex items-center justify-center p-1 rounded-lg hover:bg-[#1E293B] transition duration-200"
+              className="flex items-center justify-center p-1 rounded-lg hover:bg-slate-100 transition duration-200"
               title="Expand Sidebar"
             >
               <img
                 src={smallLogo}
                 alt="Smart Field Work Favicon"
-                style={{ width: "50px", height: "50px", objectFit: "contain" }}
+                style={{ width: "60px", height: "60px", objectFit: "contain" }}
               />
             </button>
           )}
@@ -328,20 +326,20 @@ export default function PlatformShell() {
 
         {/* Navigation Items */}
         <nav
-          className={`flex-1 min-h-0 space-y-4 overflow-y-auto overflow-x-hidden px-3 py-4 ${
+          className={`flex-1 min-h-0 space-y-4 overflow-y-auto overflow-x-hidden px-2.5 py-4 ${
             showBigLogo
-              ? "scrollbar-thin scrollbar-thumb-slate-700"
+              ? "scrollbar-thin scrollbar-thumb-slate-200"
               : "scrollbar-none"
           }`}
         >
-          {navGroups.map((group, idx) => (
-            <div key={idx} className="space-y-1">
+          {navCategories.map((cat, idx) => (
+            <div key={idx} className="space-y-0.5">
               {showBigLogo && (
-                <p className="px-3 text-[10px] font-extrabold tracking-wider text-slate-400 pt-2 pb-1 uppercase">
-                  {group.title}
+                <p className="px-3 text-[11px] font-medium text-slate-400 pt-2 pb-1">
+                  {cat.title}
                 </p>
               )}
-              {group.items.map((item) => {
+              {cat.items.map((item) => {
                 const isAllowed = hasPlatformPermission(item.permission);
                 const Icon = item.icon;
                 const isActive =
@@ -357,21 +355,21 @@ export default function PlatformShell() {
                     to={item.to}
                     className={({ isActive: linkActive }) => {
                       const active = linkActive || isActive;
-                      return `group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all duration-150 ${
+                      return `group relative flex items-center gap-3 rounded-sm px-3 py-2.5 text-xs font-medium transition-all duration-150 ${
                         active
-                          ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
-                          : "text-slate-300 hover:bg-[#1E293B] hover:text-white"
+                          ? "bg-slate-100 font-bold text-[#0D1F3D] border-l-4 border-[#E20613] shadow-xs"
+                          : "text-slate-600 hover:bg-slate-50 hover:text-[#0D1F3D]"
                       } ${!showBigLogo ? "justify-center px-0" : ""}`;
                     }}
                   >
-                    <Icon className="h-4.5 w-4.5 shrink-0" />
+                    <Icon className="h-4 w-4 shrink-0 text-slate-500 group-hover:text-[#0D1F3D]" />
                     {showBigLogo && (
                       <span className="flex-1 truncate">{item.label}</span>
                     )}
                     {showBigLogo && item.badge && (
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-bold leading-none ${
-                          item.badgeColor ?? "bg-blue-500/20 text-blue-300"
+                          item.badgeColor ?? "bg-red-500 text-white"
                         }`}
                       >
                         {item.badge}
@@ -384,56 +382,118 @@ export default function PlatformShell() {
           ))}
         </nav>
 
-        {/* Bottom Section: Need Help Card & Copyright */}
-        {showBigLogo && (
-          <div className="p-3 border-t border-[#1E293B] space-y-3">
-            <div className="rounded-2xl border border-slate-700/50 bg-[#112240] p-3 text-center">
-              <p className="text-xs font-bold text-white">Need Help?</p>
-              <p className="text-[11px] text-slate-400 mb-2">
-                Contact our platform support team
-              </p>
+        {/* User Profile Quick Actions Drawer at Bottom Left (Matching AppShell.tsx) */}
+        <div className="flex-none p-3 border-t border-slate-100 relative" ref={userMenuRef}>
+          <div
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className={`flex items-center rounded-sm p-2 transition-all cursor-pointer ${
+              showBigLogo ? "justify-between" : "justify-center"
+            } ${
+              userMenuOpen
+                ? "bg-slate-100 ring-1 ring-slate-200"
+                : "hover:bg-slate-50"
+            }`}
+          >
+            <div className={`flex items-center gap-2.5 ${showBigLogo ? "overflow-hidden" : "justify-center"}`}>
+              <div className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-xs font-semibold text-white shadow-xs">
+                {user?.fullName?.charAt(0) ?? "S"}
+                <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-[#E20613] ring-2 ring-white" />
+              </div>
+              {showBigLogo && (
+                <div className="flex flex-col truncate">
+                  <p className="text-xs font-semibold text-slate-800 truncate">
+                    {user?.fullName || "Super Admin"}
+                  </p>
+                  <p className="text-[11px] font-medium text-slate-500 truncate">
+                    Platform Super Admin
+                  </p>
+                </div>
+              )}
+            </div>
+            {showBigLogo && (
+              <ChevronRight
+                className={`h-4 w-4 text-slate-400 transition-transform ${
+                  userMenuOpen ? "-rotate-90 text-slate-600" : ""
+                }`}
+              />
+            )}
+          </div>
+
+          {/* User Popover Menu */}
+          {userMenuOpen && (
+            <div
+              className={`absolute bottom-full mb-2 rounded-sm border border-slate-200 bg-white p-2 shadow-2xl space-y-1 z-[100] ${
+                showBigLogo ? "left-3 right-3" : "left-3 w-56"
+              }`}
+            >
+              <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                <p className="text-xs font-bold text-[#0D1F3D] truncate">
+                  {user?.fullName || "Super Admin"}
+                </p>
+                <p className="text-[11px] text-slate-400 truncate">
+                  {user?.email || "platform.admin@smartfieldwork.com"}
+                </p>
+              </div>
               <button
                 type="button"
-                onClick={() => navigate("/platform/support")}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-white/10 hover:bg-white/20 px-3 py-2 text-xs font-bold text-white transition shadow-xs"
+                onClick={() => {
+                  setUserMenuOpen(false);
+                  navigate("/admin/dashboard");
+                }}
+                className="w-full flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors"
               >
-                <Headphones className="h-3.5 w-3.5" /> Contact Support
+                <UserCheck className="h-4 w-4 text-blue-600" /> Exit to Tenant CRM →
               </button>
+              <Button
+                variant="ghost"
+                size="sm"
+                fullWidth
+                onClick={handleLogout}
+                className="flex items-center justify-start gap-2.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs mt-1 rounded-sm border-t border-slate-100 pt-2"
+              >
+                <LogOut className="h-4 w-4 text-rose-600" /> Sign Out
+              </Button>
             </div>
-            <p className="text-[10px] text-slate-500 text-center font-medium">
-              © 2025 Smart Field Work SaaS
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </aside>
 
       {/* Main Content Area */}
       <div
-        className={`flex flex-1 flex-col transition-all duration-300 ${
-          showBigLogo ? "pl-[280px]" : "pl-[80px]"
+        className={`flex flex-1 flex-col overflow-hidden transition-all duration-300 ${
+          collapsed ? "ml-[80px]" : "ml-[295px]"
         }`}
       >
-        {/* Top Header Bar (Matching Platform Dashboard.png) */}
-        <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white/90 px-6 backdrop-blur-md">
+        {/* Top Header (Matching AppShell.tsx Header & Breadcrumb Bar) */}
+        <header className="flex h-20 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-sm z-40">
           {/* Left: Breadcrumbs */}
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-            {breadcrumbs.map((b, idx) => (
-              <React.Fragment key={b.to}>
-                {idx > 0 && (
-                  <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-                )}
-                <NavLink
-                  to={b.to}
-                  className={`hover:text-[#0D1F3D] transition ${
-                    idx === breadcrumbs.length - 1
-                      ? "font-bold text-[#0D1F3D]"
-                      : ""
-                  }`}
-                >
-                  {b.label}
-                </NavLink>
-              </React.Fragment>
-            ))}
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+            <NavLink
+              to="/platform/dashboard"
+              className="flex items-center text-slate-400 hover:text-[#0D1F3D] transition-colors"
+            >
+              <Home className="h-4 w-4" />
+            </NavLink>
+            {breadcrumbs.map((crumb, idx, arr) => {
+              const isLast = idx === arr.length - 1;
+              return (
+                <React.Fragment key={crumb.to + idx}>
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" />
+                  {isLast ? (
+                    <span className="font-extrabold text-[#0D1F3D] bg-slate-100 px-2.5 py-1 rounded-sm border border-slate-200/60 shadow-xs">
+                      {crumb.label}
+                    </span>
+                  ) : (
+                    <NavLink
+                      to={crumb.to}
+                      className="hover:text-[#0D1F3D] hover:underline transition-colors font-semibold text-slate-600"
+                    >
+                      {crumb.label}
+                    </NavLink>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
 
           {/* Right Header Controls */}
@@ -444,7 +504,7 @@ export default function PlatformShell() {
               <input
                 type="text"
                 placeholder="Search by tenant, user, plan..."
-                className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-12 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
+                className="h-9 w-full rounded-md border border-slate-200 bg-slate-50 pl-9 pr-12 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
               />
               <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded bg-slate-200/60 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
                 Ctrl + K
@@ -452,22 +512,18 @@ export default function PlatformShell() {
             </div>
 
             {/* Test Role Switcher Dropdown */}
-            <div className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50/70 px-2.5 py-1 text-xs text-amber-900">
+            <div className="flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-900 shadow-xs">
               <ShieldAlert className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-              <span className="font-semibold text-[11px] text-amber-900 hidden sm:inline">
+              <span className="font-bold text-[11px] text-amber-900 hidden sm:inline">
                 Role:
               </span>
               <select
                 value={activeRole}
-                onChange={(e) =>
-                  handleRoleChange(e.target.value as PlatformRole)
-                }
+                onChange={(e) => handleRoleChange(e.target.value as PlatformRole)}
                 className="bg-transparent text-xs font-bold text-amber-900 focus:outline-none cursor-pointer"
               >
                 <option value="PLATFORM_SUPER_ADMIN">Super Admin (Full)</option>
-                <option value="PLATFORM_OPERATIONS_ADMIN">
-                  Operations Admin
-                </option>
+                <option value="PLATFORM_OPERATIONS_ADMIN">Operations Admin</option>
                 <option value="PLATFORM_ONBOARDING">Onboarding Admin</option>
                 <option value="PLATFORM_SUPPORT">Support Agent</option>
                 <option value="PLATFORM_BILLING">Billing Admin</option>
@@ -478,74 +534,13 @@ export default function PlatformShell() {
             {/* Notification Bell */}
             <button
               type="button"
-              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition"
+              className="relative flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition shadow-xs"
             >
               <Bell className="h-4.5 w-4.5" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-xs">
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#E20613] text-[9px] font-bold text-white shadow-xs">
                 12
               </span>
             </button>
-
-            {/* Help Button */}
-            <button
-              type="button"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition"
-              title="Help & Documentation"
-            >
-              <HelpCircle className="h-4.5 w-4.5" />
-            </button>
-
-            {/* User Profile Avatar Popover */}
-            <div className="relative" ref={userMenuRef}>
-              <button
-                type="button"
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 pr-2.5 hover:bg-slate-50 transition"
-              >
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-xs font-bold text-white">
-                  {user?.fullName ? user.fullName[0] : "S"}
-                </div>
-                <div className="text-left hidden sm:block">
-                  <p className="text-xs font-bold text-[#0D1F3D] leading-none">
-                    {user?.fullName || "Super Admin"}
-                  </p>
-                  <p className="text-[10px] text-slate-500 leading-none mt-0.5">
-                    Platform Super Admin
-                  </p>
-                </div>
-                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-              </button>
-
-              {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl animate-in fade-in zoom-in-95 z-50">
-                  <div className="px-3 py-2 border-b border-slate-100 mb-1">
-                    <p className="text-xs font-bold text-[#0D1F3D]">
-                      {user?.fullName || "Super Admin"}
-                    </p>
-                    <p className="text-[10px] text-slate-500 truncate">
-                      {user?.email || "platform.admin@smartfieldwork.com"}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setUserMenuOpen(false);
-                      navigate("/admin/dashboard");
-                    }}
-                    className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition"
-                  >
-                    <UserCheck className="h-4 w-4" /> Exit to Tenant CRM →
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition mt-1"
-                  >
-                    <LogOut className="h-4 w-4" /> Sign Out
-                  </button>
-                </div>
-              )}
-            </div>
           </div>
         </header>
 
