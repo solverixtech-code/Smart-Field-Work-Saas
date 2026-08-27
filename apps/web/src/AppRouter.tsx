@@ -80,6 +80,19 @@ import ConvertedCustomersPage from './screens/customers/ConvertedCustomersPage';
 import CustomerDetailsPage from './screens/customers/CustomerDetailsPage';
 import SubscriptionDetailsPage from './screens/customers/SubscriptionDetailsPage';
 import RenewalStatusPage from './screens/customers/RenewalStatusPage';
+import {
+  ReportsDashboardPage,
+  DailySalesReportPage,
+  ExecutiveReportPage,
+  VisitReportPage,
+  TerritoryReportPage,
+  LeadConversionReportPage,
+  RevenueReportPage,
+  PaymentReportPage,
+  AttendanceReportPage,
+  IncentiveReportPage,
+  CategoryRoiReportPage,
+} from './screens/reports/ReportsPages';
 
 import AllBusinessesPage from './screens/businesses/AllBusinessesPage';
 import AddBusinessPage from './screens/businesses/AddBusinessPage';
@@ -465,6 +478,27 @@ export default function AppRouter() {
               <Route path="/admin/notifications/push" element={<PushNotificationsPage />} />
               <Route path="/admin/notifications/executives" element={<ExecutiveAlertsPage />} />
               <Route path="/admin/notifications/templates" element={<NotificationTemplatesPage />} />
+            </Route>
+
+            {/* Reports & Analytics (Screens 168 to 179) */}
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={[Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER]}
+                />
+              }
+            >
+              <Route path="/admin/reports" element={<ReportsDashboardPage />} />
+              <Route path="/admin/reports/daily-sales" element={<DailySalesReportPage />} />
+              <Route path="/admin/reports/executives" element={<ExecutiveReportPage />} />
+              <Route path="/admin/reports/visits" element={<VisitReportPage />} />
+              <Route path="/admin/reports/territories" element={<TerritoryReportPage />} />
+              <Route path="/admin/reports/conversions" element={<LeadConversionReportPage />} />
+              <Route path="/admin/reports/revenue" element={<RevenueReportPage />} />
+              <Route path="/admin/reports/payments" element={<PaymentReportPage />} />
+              <Route path="/admin/reports/attendance" element={<AttendanceReportPage />} />
+              <Route path="/admin/reports/incentives" element={<IncentiveReportPage />} />
+              <Route path="/admin/reports/categories" element={<CategoryRoiReportPage />} />
             </Route>
 
             <Route

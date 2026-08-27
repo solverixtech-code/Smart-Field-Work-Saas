@@ -38,6 +38,7 @@ import {
   FileText
 } from 'lucide-react';
 import { Button, Checkbox, DataTable, Input, Select, type ColumnDef } from '../../components/ui';
+import { DateRangePicker } from '../../components/ui/DateRangePicker';
 
 type PageKind = 'center' | 'create' | 'push' | 'alerts' | 'templates';
 type NoticeType = 'Announcement' | 'Alert' | 'Reminder' | 'Promotion' | 'Update' | 'Other';
@@ -138,12 +139,6 @@ const teamTerritorySelectOptions = [
   { value: 'mumbai_north', label: 'Mumbai North Zone', sublabel: '18 Executives • Territory Pool' },
   { value: 'pune_central', label: 'Pune Central Zone', sublabel: '12 Executives • Territory Pool' },
   { value: 'thane_team', label: 'Thane Sales Team', sublabel: '15 Executives • Team Pool' },
-];
-
-const roleSelectOptions = [
-  { value: 'field_executive', label: 'Field Executives (FE)', sublabel: '326 Active Field Sales Reps' },
-  { value: 'team_leader', label: 'Team Leaders (TL)', sublabel: '24 Active Supervisors' },
-  { value: 'sales_manager', label: 'Sales Managers (SM)', sublabel: '12 Regional Managers' },
 ];
 
 const statCards = [
@@ -335,7 +330,6 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
           placeholder="Filter Type..."
         />
 
-        {/* SEARCHABLE EXECUTIVE / ROLE SELECTOR WITH AVATAR, FULL NAME & SUBLABEL */}
         <Select
           value={selectedExec}
           onChange={(e) => setSelectedExec(e.target.value)}
@@ -374,9 +368,8 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-2.5">
         <div className="flex flex-wrap items-center gap-2.5 text-xs">
           <span className="font-bold text-slate-500">Date Range:</span>
-          <span className="font-mono font-bold text-[#0D1F3D] bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-sm">
-            01 May 2025 - 22 May 2025 📅
-          </span>
+          {/* REUSABLE DATE RANGE PICKER COMPONENT */}
+          <DateRangePicker />
         </div>
 
         <div className="flex items-center gap-2">
@@ -395,6 +388,14 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
 // SCREEN 163: NOTIFICATION CENTER (/admin/notifications)
 export function NotificationCenterPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'sent' | 'scheduled' | 'drafts' | 'failed'>('all');
+
+  const filteredRows = useMemo(() => {
+    if (activeTab === 'sent') return notificationRows.filter((r) => r.status === 'Sent');
+    if (activeTab === 'scheduled') return notificationRows.filter((r) => r.status === 'Scheduled');
+    if (activeTab === 'failed') return notificationRows.filter((r) => r.status === 'Failed');
+    if (activeTab === 'drafts') return notificationRows.filter((r) => r.type === 'Other');
+    return notificationRows;
+  }, [activeTab]);
 
   const columns: ColumnDef<NotificationRow>[] = [
     {
@@ -476,6 +477,14 @@ export function NotificationCenterPage() {
     },
   ];
 
+  const tabs = [
+    { id: 'all', label: 'All Notifications', count: 1248 },
+    { id: 'sent', label: 'Sent', count: 1089 },
+    { id: 'scheduled', label: 'Scheduled', count: 117 },
+    { id: 'drafts', label: 'Drafts', count: 18 },
+    { id: 'failed', label: 'Failed', count: 42 },
+  ] as const;
+
   return (
     <div className="space-y-4 font-sans pb-12">
       <PageHeader kind="center" title="Notification Center" description="Manage all system notifications, announcements and communication history." />
@@ -487,54 +496,28 @@ export function NotificationCenterPage() {
         <div className="lg:col-span-8 space-y-3">
           <FilterBar mode="center" />
 
-          {/* Sub Tabs */}
-          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-3 pt-2 rounded-sm shadow-xs">
-            <div className="flex gap-6 text-xs font-bold">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`pb-2 border-b-2 transition-colors cursor-pointer ${
-                  activeTab === 'all' ? 'border-[#E20613] text-[#E20613]' : 'border-transparent text-slate-500 hover:text-[#0D1F3D]'
-                }`}
-              >
-                All Notifications (1,248)
-              </button>
-              <button
-                onClick={() => setActiveTab('sent')}
-                className={`pb-2 border-b-2 transition-colors cursor-pointer ${
-                  activeTab === 'sent' ? 'border-[#E20613] text-[#E20613]' : 'border-transparent text-slate-500 hover:text-[#0D1F3D]'
-                }`}
-              >
-                Sent (1,089)
-              </button>
-              <button
-                onClick={() => setActiveTab('scheduled')}
-                className={`pb-2 border-b-2 transition-colors cursor-pointer ${
-                  activeTab === 'scheduled' ? 'border-[#E20613] text-[#E20613]' : 'border-transparent text-slate-500 hover:text-[#0D1F3D]'
-                }`}
-              >
-                Scheduled (117)
-              </button>
-              <button
-                onClick={() => setActiveTab('drafts')}
-                className={`pb-2 border-b-2 transition-colors cursor-pointer ${
-                  activeTab === 'drafts' ? 'border-[#E20613] text-[#E20613]' : 'border-transparent text-slate-500 hover:text-[#0D1F3D]'
-                }`}
-              >
-                Drafts (18)
-              </button>
-              <button
-                onClick={() => setActiveTab('failed')}
-                className={`pb-2 border-b-2 transition-colors cursor-pointer ${
-                  activeTab === 'failed' ? 'border-[#E20613] text-[#E20613]' : 'border-transparent text-slate-500 hover:text-[#0D1F3D]'
-                }`}
-              >
-                Failed (42)
-              </button>
-            </div>
+          {/* SYSTEM CONSISTENT SUB TABS NAVBAR */}
+          <div className="flex items-center gap-1 border-b border-slate-200 bg-white px-2 pt-1.5 rounded-sm shadow-xs overflow-x-auto custom-scrollbar">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 whitespace-nowrap cursor-pointer ${
+                    isActive
+                      ? 'border-indigo-600 text-indigo-700 bg-slate-50/80 rounded-t-sm'
+                      : 'border-transparent text-slate-500 hover:text-[#0D1F3D] hover:border-slate-300'
+                  }`}
+                >
+                  <span>{tab.label} ({tab.count})</span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-            <DataTable columns={columns} data={notificationRows} keyExtractor={(row) => row.id} density="compact" />
+            <DataTable columns={columns} data={filteredRows} keyExtractor={(row) => row.id} density="compact" />
           </div>
         </div>
 
@@ -635,7 +618,7 @@ export function CreateNotificationPage() {
   const [selectedExec, setSelectedExec] = useState('rahul_verma');
   const [selectedCustomer, setSelectedCustomer] = useState('apex_electronics');
   const [selectedTeam, setSelectedTeam] = useState('mumbai_west');
-  const [selectedRole, setSelectedRole] = useState('field_executive');
+
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [sendNow, setSendNow] = useState(true);
@@ -677,7 +660,7 @@ export function CreateNotificationPage() {
             </div>
           </div>
 
-          {/* Audience Selection - SEARCHABLE SELECTS WITH PROFILE AVATARS & SUBLABELS */}
+          {/* Audience Selection */}
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
             <h3 className="text-sm font-extrabold text-[#0D1F3D]">Audience Target Selection</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -933,6 +916,24 @@ export function PushNotificationsPage() {
 
 // SCREEN 166: EXECUTIVE ALERTS (/admin/notifications/executives)
 export function ExecutiveAlertsPage() {
+  const [activeTab, setActiveTab] = useState<'all' | 'critical' | 'pending' | 'acknowledged' | 'resolved'>('all');
+
+  const alertRows = useMemo(() => {
+    const base = [
+      { id: 'ALT-1001', title: 'Sales Target at Risk', description: 'Team Mumbai West is 35% behind the monthly target.', type: 'Alert' as NoticeType, audience: 'Amit Verma (Sales Manager)', channel: 'WhatsApp · Push', status: 'Pending' as const, created: '22 May 2025 · 10:30 AM', delivery: 'Critical', icon: AlertCircle, tone: 'rose' },
+      { id: 'ALT-1002', title: 'Executive Inactive', description: 'Rahul Kumar has been inactive for 2 days.', type: 'Alert' as NoticeType, audience: 'Rahul Kumar (Field Executive)', channel: 'WhatsApp · Push', status: 'Pending' as const, created: '22 May 2025 · 09:15 AM', delivery: 'High', icon: AlertCircle, tone: 'rose' },
+      { id: 'ALT-1003', title: 'High Pending Payments', description: '5 payment leads are pending for more than 7 days.', type: 'Alert' as NoticeType, audience: 'Neha Patel (Sales Manager)', channel: 'Email · WhatsApp', status: 'Pending' as const, created: '22 May 2025 · 08:45 AM', delivery: 'High', icon: AlertCircle, tone: 'rose' },
+      { id: 'ALT-1004', title: 'Visit Verification Failed', description: '3 visits failed GPS verification yesterday.', type: 'Alert' as NoticeType, audience: 'Suresh Tiwari (Area Manager)', channel: 'In-App', status: 'Acknowledged' as const, created: '21 May 2025 · 07:30 PM', delivery: 'Medium', icon: CalendarClock, tone: 'amber' },
+      { id: 'ALT-1005', title: 'Top Performer', description: 'Vikram Bansal achieved 120% of monthly target.', type: 'Announcement' as NoticeType, audience: 'Vikram Bansal (Field Executive)', channel: 'In-App', status: 'Resolved' as const, created: '21 May 2025 · 06:20 PM', delivery: 'Low', icon: CheckCircle2, tone: 'emerald' },
+    ];
+
+    if (activeTab === 'critical') return base.filter((r) => r.delivery === 'Critical');
+    if (activeTab === 'pending') return base.filter((r) => r.status === 'Pending');
+    if (activeTab === 'acknowledged') return base.filter((r) => r.status === 'Acknowledged');
+    if (activeTab === 'resolved') return base.filter((r) => r.status === 'Resolved');
+    return base;
+  }, [activeTab]);
+
   const alertColumns: ColumnDef<NotificationRow>[] = [
     {
       header: 'Alert Title',
@@ -954,7 +955,14 @@ export function ExecutiveAlertsPage() {
     },
     {
       header: 'Urgency',
-      cell: () => <span className="bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-sm text-[10px]">CRITICAL</span>,
+      cell: (row) => (
+        <span className={`font-extrabold px-2 py-0.5 rounded-sm text-[10px] ${
+          row.delivery === 'Critical' ? 'bg-red-600 text-white' :
+          row.delivery === 'High' ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white'
+        }`}>
+          {row.delivery.toUpperCase()}
+        </span>
+      ),
     },
     {
       header: 'Executive / Role',
@@ -982,6 +990,14 @@ export function ExecutiveAlertsPage() {
     },
   ];
 
+  const alertTabs = [
+    { id: 'all', label: 'All Alerts', count: 156 },
+    { id: 'critical', label: 'Critical', count: 28 },
+    { id: 'pending', label: 'Pending', count: 42 },
+    { id: 'acknowledged', label: 'Acknowledged', count: 72 },
+    { id: 'resolved', label: 'Resolved', count: 42 },
+  ] as const;
+
   return (
     <div className="space-y-4 font-sans pb-12">
       <PageHeader kind="alerts" title="Executive Alerts" description="Critical alerts and important notifications for executives and managers." />
@@ -990,8 +1006,28 @@ export function ExecutiveAlertsPage() {
 
       <FilterBar mode="alerts" />
 
+      {/* SYSTEM CONSISTENT SUB TABS NAVBAR */}
+      <div className="flex items-center gap-1 border-b border-slate-200 bg-white px-2 pt-1.5 rounded-sm shadow-xs overflow-x-auto custom-scrollbar">
+        {alertTabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 whitespace-nowrap cursor-pointer ${
+                isActive
+                  ? 'border-indigo-600 text-indigo-700 bg-slate-50/80 rounded-t-sm'
+                  : 'border-transparent text-slate-500 hover:text-[#0D1F3D] hover:border-slate-300'
+              }`}
+            >
+              <span>{tab.label} ({tab.count})</span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-        <DataTable columns={alertColumns} data={notificationRows} keyExtractor={(row) => row.id} density="compact" />
+        <DataTable columns={alertColumns} data={alertRows} keyExtractor={(row) => row.id} density="compact" />
       </div>
     </div>
   );
@@ -999,6 +1035,18 @@ export function ExecutiveAlertsPage() {
 
 // SCREEN 167: NOTIFICATION TEMPLATES (/admin/notifications/templates)
 export function NotificationTemplatesPage() {
+  const [activeTab, setActiveTab] = useState<'all' | 'announcements' | 'alerts' | 'reminders' | 'promotions' | 'updates' | 'other'>('all');
+
+  const templateRows = useMemo(() => {
+    if (activeTab === 'announcements') return notificationRows.filter((r) => r.type === 'Announcement');
+    if (activeTab === 'alerts') return notificationRows.filter((r) => r.type === 'Alert');
+    if (activeTab === 'reminders') return notificationRows.filter((r) => r.type === 'Reminder');
+    if (activeTab === 'promotions') return notificationRows.filter((r) => r.type === 'Promotion');
+    if (activeTab === 'updates') return notificationRows.filter((r) => r.type === 'Update');
+    if (activeTab === 'other') return notificationRows.filter((r) => r.type === 'Other');
+    return notificationRows;
+  }, [activeTab]);
+
   const templateColumns: ColumnDef<NotificationRow>[] = [
     {
       header: 'Template Name',
@@ -1042,6 +1090,16 @@ export function NotificationTemplatesPage() {
     },
   ];
 
+  const templateTabs = [
+    { id: 'all', label: 'All Templates', count: 126 },
+    { id: 'announcements', label: 'Announcements', count: 28 },
+    { id: 'alerts', label: 'Alerts', count: 32 },
+    { id: 'reminders', label: 'Reminders', count: 24 },
+    { id: 'promotions', label: 'Promotions', count: 18 },
+    { id: 'updates', label: 'Updates', count: 16 },
+    { id: 'other', label: 'Other', count: 8 },
+  ] as const;
+
   return (
     <div className="space-y-4 font-sans pb-12">
       <PageHeader kind="templates" title="Notification Templates" description="Create, manage and reuse templates for notifications across all channels." />
@@ -1050,8 +1108,28 @@ export function NotificationTemplatesPage() {
 
       <FilterBar mode="templates" />
 
+      {/* SYSTEM CONSISTENT SUB TABS NAVBAR */}
+      <div className="flex items-center gap-1 border-b border-slate-200 bg-white px-2 pt-1.5 rounded-sm shadow-xs overflow-x-auto custom-scrollbar">
+        {templateTabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 whitespace-nowrap cursor-pointer ${
+                isActive
+                  ? 'border-indigo-600 text-indigo-700 bg-slate-50/80 rounded-t-sm'
+                  : 'border-transparent text-slate-500 hover:text-[#0D1F3D] hover:border-slate-300'
+              }`}
+            >
+              <span>{tab.label} ({tab.count})</span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-        <DataTable columns={templateColumns} data={notificationRows} keyExtractor={(row) => row.id} density="compact" />
+        <DataTable columns={templateColumns} data={templateRows} keyExtractor={(row) => row.id} density="compact" />
       </div>
     </div>
   );
