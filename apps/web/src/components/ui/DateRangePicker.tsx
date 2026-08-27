@@ -139,28 +139,28 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   return (
-    <div className="relative inline-block" ref={dropdownRef}>
+    <div className="relative inline-block font-sans" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-[#0D1F3D] shadow-xs transition-all hover:bg-slate-50 focus:border-[#E20613] focus:outline-none focus:ring-1 focus:ring-[#E20613]"
+        className="flex items-center gap-2.5 rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D] shadow-xs transition-all hover:bg-slate-50 focus:border-[#E20613] focus:outline-none"
       >
         <CalendarIcon className="h-4 w-4 text-[#E20613]" />
-        <span>📅 {selectedRange.label}</span>
+        <span>{selectedRange.label}</span>
         <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl">
+        <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded-sm border border-slate-200 bg-white p-3 shadow-xl">
           {mode === 'presets' ? (
             <div className="space-y-1">
               <div className="flex items-center justify-between px-2 py-1 border-b border-slate-100 pb-2">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                <span className="text-xs font-semibold text-slate-500">
                   Select Date Range
                 </span>
                 <button
                   onClick={() => setMode('custom')}
-                  className="flex items-center gap-1 text-[11px] font-bold text-[#E20613] hover:underline"
+                  className="flex items-center gap-1 text-xs font-bold text-[#E20613] hover:underline cursor-pointer"
                 >
                   <SlidersHorizontal className="h-3 w-3" /> Custom Calendar
                 </button>
@@ -173,7 +173,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <button
                       key={preset.label}
                       onClick={() => handleSelectPreset(preset)}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition-all ${
+                      className={`flex w-full items-center justify-between rounded-sm px-3 py-2 text-xs font-semibold transition-all cursor-pointer ${
                         isSelected
                           ? 'bg-[#0D1F3D] text-white'
                           : 'text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]'
@@ -187,7 +187,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
                 <button
                   onClick={() => setMode('custom')}
-                  className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-bold text-[#E20613] bg-red-50/60 hover:bg-red-100/80 transition-all mt-1"
+                  className="flex w-full items-center justify-between rounded-sm px-3 py-2 text-xs font-bold text-[#E20613] bg-red-50/60 hover:bg-red-100/80 transition-all mt-1 cursor-pointer"
                 >
                   <span>Custom Date Range...</span>
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -195,42 +195,36 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               </div>
             </div>
           ) : (
-            /* Custom Interactive Calendar Picker */
+            /* Custom Interactive Calendar Picker (No Native Input Tags) */
             <div className="space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <button
                   onClick={() => setMode('presets')}
-                  className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-800"
+                  className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
                 >
                   <ChevronLeft className="h-3.5 w-3.5" /> Back to Presets
                 </button>
                 <span className="text-xs font-extrabold text-[#0D1F3D]">Custom Calendar</span>
               </div>
 
-              {/* Start & End Date Inputs */}
-              <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
+              {/* Clean Date Display Cards (No Native Input Tags) */}
+              <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 block mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    value={customStart}
-                    onChange={(e) => setCustomStart(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 p-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none"
-                  />
+                  <label className="text-xs font-semibold text-slate-500 block mb-1">Start Date</label>
+                  <div className="w-full rounded-sm border border-slate-200 bg-slate-50/80 px-2.5 py-1.5 text-xs font-bold text-[#0D1F3D]">
+                    {customStart ? formatDateLabel(customStart, customStart) : 'Select Start'}
+                  </div>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 block mb-1">End Date</label>
-                  <input
-                    type="date"
-                    value={customEnd}
-                    onChange={(e) => setCustomEnd(e.target.value)}
-                    className="w-full rounded-lg border border-slate-200 bg-slate-50 p-1.5 text-xs font-bold text-[#0D1F3D] focus:outline-none"
-                  />
+                  <label className="text-xs font-semibold text-slate-500 block mb-1">End Date</label>
+                  <div className="w-full rounded-sm border border-slate-200 bg-slate-50/80 px-2.5 py-1.5 text-xs font-bold text-[#0D1F3D]">
+                    {customEnd ? formatDateLabel(customEnd, customEnd) : 'Select End'}
+                  </div>
                 </div>
               </div>
 
               {/* Month Navigation */}
-              <div className="flex items-center justify-between px-1">
+              <div className="flex items-center justify-between px-1 border-t border-slate-100 pt-2">
                 <button
                   onClick={() => {
                     if (currentMonth === 0) {
@@ -240,11 +234,11 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                       setCurrentMonth(currentMonth - 1);
                     }
                   }}
-                  className="p-1 rounded-lg text-slate-500 hover:bg-slate-100"
+                  className="p-1 rounded-sm text-slate-600 hover:bg-slate-100 cursor-pointer"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="text-xs font-bold text-[#0D1F3D]">
+                <span className="text-xs font-extrabold text-[#0D1F3D]">
                   {MONTH_NAMES[currentMonth]} {currentYear}
                 </span>
                 <button
@@ -256,16 +250,16 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                       setCurrentMonth(currentMonth + 1);
                     }
                   }}
-                  className="p-1 rounded-lg text-slate-500 hover:bg-slate-100"
+                  className="p-1 rounded-sm text-slate-600 hover:bg-slate-100 cursor-pointer"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
 
               {/* Interactive Calendar Days Grid */}
-              <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold">
+              <div className="grid grid-cols-7 gap-1 text-center text-xs">
                 {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                  <span key={d} className="text-slate-400 py-1">{d}</span>
+                  <span key={d} className="text-xs font-bold text-slate-700 py-1">{d}</span>
                 ))}
 
                 {/* Empty cells for padding */}
@@ -283,7 +277,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                     <button
                       key={day}
                       onClick={() => handleDayClick(day)}
-                      className={`h-7 w-7 rounded-lg text-xs font-bold transition-all ${
+                      className={`h-7 w-7 rounded-sm text-xs font-bold transition-all cursor-pointer ${
                         selected
                           ? 'bg-[#E20613] text-white shadow-xs'
                           : inRange
@@ -301,13 +295,13 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   onClick={() => setMode('presets')}
-                  className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100"
+                  className="rounded-sm px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleApplyCustom}
-                  className="rounded-lg bg-[#E20613] px-4 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#c4040f]"
+                  className="rounded-sm bg-[#E20613] px-4 py-1.5 text-xs font-extrabold text-white shadow-xs hover:bg-[#c4040f] cursor-pointer"
                 >
                   Apply Range
                 </button>
