@@ -2,447 +2,475 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Layers,
   ChevronLeft,
+  ChevronDown,
   Search,
   CheckCircle2,
-  AlertTriangle,
-  Info,
-  Shield,
-  Sliders,
-  Sparkles,
-  Zap,
-  Globe,
-  Lock,
-  ExternalLink,
-  RefreshCw,
-  Plus,
-  Check,
-  Briefcase,
-  MapPin,
-  FileText,
-  CreditCard,
-  Clock,
-  BarChart3,
-  MessageSquare,
   Users,
-  Settings,
-  BookOpen,
-  Bell,
+  HardDrive,
+  Code2,
+  Link2,
+  Info,
+  PlusCircle,
+  Puzzle,
+  Download,
+  Save,
+  MessageSquare,
+  MapPin,
+  Clock,
+  FileText,
   CheckSquare,
+  BarChart3,
   Image as ImageIcon,
-  Key,
-  Workflow,
-  Box,
-  Truck,
-  DollarSign,
-  FileSpreadsheet,
-  Receipt,
-  Mail,
-  Smartphone,
-  Calendar,
-  Code,
-  Share2,
+  Bell,
+  Zap,
+  Layers,
+  Building2,
+  Shield,
+  CreditCard,
+  Sliders,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Select } from '../../components/ui/Select';
-import { Checkbox } from '../../components/ui/Checkbox';
 
 interface ModuleItem {
-  key: string;
+  id: string;
   name: string;
-  desc: string;
-  category: string;
-  tag: 'Included In Plan' | 'Industry Recommended' | 'Tenant Enabled' | 'Add-on' | 'Upgrade Required' | 'Not Available';
+  code: string;
+  description: string;
+  icon: React.ElementType;
+  iconBg: string;
+  iconColor: string;
   enabled: boolean;
-  requires?: string[];
-  usageLimit?: string;
-  price?: string;
-  icon: React.ReactNode;
-}
-
-interface IntegrationItem {
-  key: string;
-  name: string;
-  category: 'Communication' | 'Sales & Marketing' | 'Productivity' | 'Finance & ERP' | 'Technical';
-  status: 'Not Configured' | 'Connected' | 'Attention Required' | 'Sync Error' | 'Disabled';
-  enabled: boolean;
-  lastSync?: string;
-  account?: string;
-  icon: React.ReactNode;
+  usersLimit?: string;
+  usagePercent?: number;
+  category: 'core' | 'advanced' | 'integrations';
 }
 
 export function TenantModulesPage() {
   const { tenantId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'core';
+  const activeTab = (searchParams.get('tab') as 'core' | 'advanced' | 'integrations') || 'core';
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedConfigModule, setSelectedConfigModule] = useState<ModuleItem | null>(null);
+  const [showMoreActions, setShowMoreActions] = useState(false);
 
   const setTab = (tab: string) => {
     setSearchParams({ tab });
   };
 
-  // Core Modules Data
-  const [coreModules, setCoreModules] = useState<ModuleItem[]>([
-    { key: 'crm', name: 'CRM & Leads', desc: 'Lead capture, pipeline stages, lead assignment & auto-routing.', category: 'Core', tag: 'Included In Plan', enabled: true, usageLimit: 'Unlimited Leads', icon: <Briefcase className="h-4 w-4 text-indigo-600" /> },
-    { key: 'field_visits', name: 'Field Workforce & Visits', desc: 'Geofenced check-ins, route map playback, visit proof attachments.', category: 'Core', tag: 'Included In Plan', enabled: true, usageLimit: '50 Active Field Reps', icon: <MapPin className="h-4 w-4 text-emerald-600" /> },
-    { key: 'attendance', name: 'Attendance & Time Tracking', desc: 'Selfie biometric check-in, late arrival penalty rules, muster roll.', category: 'Core', tag: 'Included In Plan', enabled: true, usageLimit: 'Unlimited Geo-Punches', icon: <Clock className="h-4 w-4 text-amber-600" /> },
-    { key: 'forms', name: 'Forms & Surveys', desc: 'Build custom inspection forms, audit surveys & field data capture.', category: 'Core', tag: 'Included In Plan', enabled: true, usageLimit: '25 Active Forms', icon: <FileText className="h-4 w-4 text-purple-600" /> },
-    { key: 'tasks', name: 'Tasks & Activities', desc: 'Create tasks, set due dates, assign executives and track progress.', category: 'Core', tag: 'Included In Plan', enabled: true, usageLimit: 'Unlimited Tasks', icon: <CheckSquare className="h-4 w-4 text-rose-600" /> },
-    { key: 'reports', name: 'Reports & Analytics', desc: 'Real-time reports, executive performance dashboards & data exports.', category: 'Core', tag: 'Included In Plan', enabled: true, usageLimit: 'Standard Reports', icon: <BarChart3 className="h-4 w-4 text-blue-600" /> },
+  const [modules, setModules] = useState<ModuleItem[]>([
+    // Core Modules
+    { id: 'm1', name: 'CRM & Leads', code: 'CRM_LEADS', description: 'Manage leads, accounts, contacts, opportunities and pipelines.', icon: Users, iconBg: 'bg-indigo-100', iconColor: 'text-indigo-600', enabled: true, category: 'core' },
+    { id: 'm2', name: 'Field Workforce', code: 'FIELD_WORKFORCE', description: 'Manage field executives, territories, attendance and activities.', icon: Users, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', enabled: true, usersLimit: '126 / 150', usagePercent: 84, category: 'core' },
+    { id: 'm3', name: 'Attendance & Time Tracking', code: 'ATTENDANCE', description: 'Track check-in/out, timesheets, leaves and approvals.', icon: Clock, iconBg: 'bg-blue-100', iconColor: 'text-blue-600', enabled: true, usersLimit: '120 / 150', usagePercent: 80, category: 'core' },
+    { id: 'm4', name: 'Forms & Surveys', code: 'FORMS', description: 'Create and manage custom forms and surveys.', icon: FileText, iconBg: 'bg-amber-100', iconColor: 'text-amber-600', enabled: true, category: 'core' },
+    { id: 'm5', name: 'Tasks & Activities', code: 'TASKS', description: 'Assign, track and manage tasks and activities.', icon: CheckSquare, iconBg: 'bg-teal-100', iconColor: 'text-teal-600', enabled: true, category: 'core' },
+    { id: 'm6', name: 'Reports & Analytics', code: 'REPORTS', description: 'Advanced reports, dashboards and analytics.', icon: BarChart3, iconBg: 'bg-purple-100', iconColor: 'text-purple-600', enabled: true, category: 'core' },
+    { id: 'm7', name: 'Media & Attachments', code: 'MEDIA', description: 'Upload, manage and share media and documents.', icon: ImageIcon, iconBg: 'bg-pink-100', iconColor: 'text-pink-600', enabled: true, usersLimit: '128 GB / 200 GB', usagePercent: 64, category: 'core' },
+    { id: 'm8', name: 'GPS & Location Tracking', code: 'GPS_TRACKING', description: 'Real-time GPS tracking and location insights.', icon: MapPin, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', enabled: true, usersLimit: '118 / 150', usagePercent: 79, category: 'core' },
+    { id: 'm9', name: 'Chat & Messaging', code: 'CHAT', description: 'In-app team chat and announcements.', icon: MessageSquare, iconBg: 'bg-blue-100', iconColor: 'text-blue-600', enabled: true, category: 'core' },
+    { id: 'm10', name: 'Notifications', code: 'NOTIFICATIONS', description: 'Email, SMS and in-app notifications.', icon: Bell, iconBg: 'bg-amber-100', iconColor: 'text-amber-600', enabled: true, category: 'core' },
+
+    // Advanced Modules
+    { id: 'm11', name: 'Field Sales & Orders', code: 'ORDERS', description: 'Take field orders, generate quotes, and manage product catalogs.', icon: ShoppingCartIcon, iconBg: 'bg-purple-100', iconColor: 'text-purple-600', enabled: true, category: 'advanced' },
+    { id: 'm12', name: 'Service Jobs & Ticketing', code: 'SERVICE_JOBS', description: 'Dispatch field technicians, manage SLAs and work orders.', icon: WrenchIcon, iconBg: 'bg-orange-100', iconColor: 'text-orange-600', enabled: false, category: 'advanced' },
+
+    // Integrations
+    { id: 'm13', name: 'WhatsApp Business API', code: 'WHATSAPP', description: 'Send automated updates and visit reports via WhatsApp.', icon: MessageSquare, iconBg: 'bg-emerald-100', iconColor: 'text-emerald-600', enabled: true, category: 'integrations' },
   ]);
 
-  // Advanced Modules Data
-  const [advancedModules, setAdvancedModules] = useState<ModuleItem[]>([
-    { key: 'gps_tracking', name: 'GPS & Live Location Tracking', desc: 'Real-time live rep location streaming, route playback & geofence alerts.', category: 'Advanced', tag: 'Tenant Enabled', enabled: true, usageLimit: 'Real-Time Stream', icon: <MapPin className="h-4 w-4 text-emerald-600" /> },
-    { key: 'orders', name: 'Quotes & Field Orders', desc: 'Product catalog, primary/secondary order booking, PDF invoices.', category: 'Sales', tag: 'Tenant Enabled', enabled: true, requires: ['crm'], usageLimit: '1,000 Orders / mo', icon: <CreditCard className="h-4 w-4 text-blue-600" /> },
-    { key: 'service_jobs', name: 'Service Jobs & Dispatch', desc: 'Schedule maintenance jobs, assign site technicians & sign-off.', category: 'Operations', tag: 'Industry Recommended', enabled: true, requires: ['field_visits'], usageLimit: '500 Jobs / mo', icon: <Box className="h-4 w-4 text-indigo-600" /> },
-    { key: 'chat', name: 'Team Chat & Messaging', desc: 'Internal encrypted team communication and real-time broadcast alerts.', category: 'Communication', tag: 'Add-on', enabled: false, usageLimit: 'Add-on (₹499/mo)', icon: <MessageSquare className="h-4 w-4 text-cyan-600" /> },
-    { key: 'notifications', name: 'Multi-Channel Notifications', desc: 'Automated SMS, email, and push notification dispatch engine.', category: 'Automation', tag: 'Tenant Enabled', enabled: true, usageLimit: '10,000 Alerts / mo', icon: <Bell className="h-4 w-4 text-amber-600" /> },
-    { key: 'knowledge_base', name: 'Knowledge Base & Collaterals', desc: 'Store product brochures, demo videos & technical guides for reps.', category: 'Enablement', tag: 'Add-on', enabled: false, usageLimit: '5 GB Storage', icon: <BookOpen className="h-4 w-4 text-purple-600" /> },
-    { key: 'api_access', name: 'REST API & Webhooks', desc: 'Developer API access, webhook callbacks and custom endpoints.', category: 'Technical', tag: 'Upgrade Required', enabled: false, usageLimit: 'Enterprise Plan Only', icon: <Code className="h-4 w-4 text-slate-700" /> },
-    { key: 'inventory', name: 'Sample & Stock Inventory', desc: 'Track stock distribution, medical samples, and promotional materials.', category: 'Inventory', tag: 'Industry Recommended', enabled: true, usageLimit: '5 Warehouses', icon: <Truck className="h-4 w-4 text-emerald-600" /> },
-  ]);
-
-  // Optional Integrations Data
-  const [integrations, setIntegrations] = useState<IntegrationItem[]>([
-    { key: 'whatsapp', name: 'WhatsApp Business API', category: 'Communication', status: 'Connected', enabled: true, lastSync: '2 mins ago', account: '+91 98765 43210', icon: <MessageSquare className="h-4 w-4 text-emerald-600" /> },
-    { key: 'meta_leads', name: 'Meta Lead Ads (Facebook & IG)', category: 'Sales & Marketing', status: 'Connected', enabled: true, lastSync: '10 mins ago', account: 'Sunrise Healthcare Page', icon: <Share2 className="h-4 w-4 text-blue-600" /> },
-    { key: 'google_maps', name: 'Google Maps Geocoding API', category: 'Productivity', status: 'Connected', enabled: true, lastSync: 'Live', account: 'Key: AIzaSy...9982', icon: <Globe className="h-4 w-4 text-red-600" /> },
-    { key: 'razorpay', name: 'Razorpay Payment Gateway', category: 'Finance & ERP', status: 'Not Configured', enabled: false, account: 'Not connected', icon: <DollarSign className="h-4 w-4 text-indigo-600" /> },
-    { key: 'tally', name: 'Tally / Zoho ERP Sync', category: 'Finance & ERP', status: 'Attention Required', enabled: true, lastSync: 'Failed (Invalid API Token)', account: 'Tally Prime v3.0', icon: <FileSpreadsheet className="h-4 w-4 text-amber-600" /> },
-    { key: 'smtp_email', name: 'Custom SMTP Email Server', category: 'Communication', status: 'Connected', enabled: true, lastSync: '1 hour ago', account: 'smtp.sunrisehealthcare.com', icon: <Mail className="h-4 w-4 text-purple-600" /> },
-  ]);
-
-  const toggleCore = (key: string) => {
-    setCoreModules((prev) =>
-      prev.map((m) => (m.key === key ? { ...m, enabled: !m.enabled } : m))
+  const toggleModule = (id: string) => {
+    setModules((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m))
     );
-    toast.success('Core module status updated');
+    toast.success('Module entitlement updated');
   };
 
-  const toggleAdvanced = (key: string) => {
-    const target = advancedModules.find((m) => m.key === key);
-    if (!target) return;
-
-    // Check dependency enforcement
-    if (!target.enabled && target.requires) {
-      const missing = target.requires.filter(
-        (reqKey) =>
-          !coreModules.find((c) => c.key === reqKey && c.enabled) &&
-          !advancedModules.find((a) => a.key === reqKey && a.enabled)
-      );
-      if (missing.length > 0) {
-        toast.error(`Cannot enable ${target.name}. Requires: ${missing.join(', ')}`);
-        return;
-      }
-    }
-
-    setAdvancedModules((prev) =>
-      prev.map((m) => (m.key === key ? { ...m, enabled: !m.enabled } : m))
-    );
-    toast.success('Advanced module status updated');
-  };
-
-  const toggleIntegration = (key: string) => {
-    setIntegrations((prev) =>
-      prev.map((i) =>
-        i.key === key
-          ? { ...i, enabled: !i.enabled, status: !i.enabled ? 'Connected' : 'Disabled' }
-          : i
-      )
-    );
-    toast.success('Integration status updated');
-  };
+  const filteredModules = modules.filter(
+    (m) =>
+      m.category === activeTab &&
+      (m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* Top Breadcrumb & Navigation Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+    <div className="space-y-6 font-sans text-slate-800 pb-16">
+      {/* 1. Header Breadcrumb & Title */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => navigate(`/platform/tenants/${tenantId}`)}
-              className="text-xs font-bold text-slate-500 hover:text-[#0D1F3D] flex items-center gap-1"
-            >
-              <ChevronLeft className="h-4 w-4" /> Back to Tenant
-            </button>
-            <span className="text-slate-300">/</span>
-            <span className="text-xs font-extrabold text-[#0D1F3D]">Modules & Features</span>
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+            <button type="button" onClick={() => navigate('/platform/dashboard')} className="hover:text-[#0D1F3D]">Dashboard</button>
+            <span>›</span>
+            <button type="button" onClick={() => navigate('/platform/tenants')} className="hover:text-[#0D1F3D]">Tenants</button>
+            <span>›</span>
+            <button type="button" onClick={() => navigate('/platform/tenants')} className="hover:text-[#0D1F3D]">All Tenants</button>
+            <span>›</span>
+            <button type="button" onClick={() => navigate(`/platform/tenants/${tenantId}`)} className="hover:text-[#0D1F3D]">Sunrise Healthcare Pvt Ltd</button>
+            <span>›</span>
+            <span className="font-extrabold text-[#0D1F3D]">Modules & Features</span>
           </div>
-          <h1 className="text-xl font-extrabold text-[#0D1F3D] mt-1">Tenant Module Entitlements</h1>
-          <p className="text-xs text-slate-500 font-medium">
-            Manage feature activation, plan entitlements, and third-party integrations for tenant <strong className="text-slate-800">{tenantId || 'apex-pharma'}</strong>.
+
+          <div className="flex items-center gap-2 mt-1.5">
+            <h1 className="text-2xl font-extrabold text-[#0D1F3D] tracking-tight">Tenant Modules & Features</h1>
+            <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-purple-100 text-purple-700">
+              <Puzzle className="h-4.5 w-4.5" />
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Manage enabled modules, features and entitlements for this tenant.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => toast.success('Module settings saved')} className="font-bold text-slate-700">
-            Save Entitlements
+          <Button variant="outline" size="sm" onClick={() => navigate(`/platform/tenants/${tenantId}`)} className="gap-1.5 font-bold text-slate-700">
+            ← Back to Tenant
+          </Button>
+
+          <div className="relative">
+            <Button variant="outline" size="sm" onClick={() => setShowMoreActions(!showMoreActions)} className="gap-1.5 font-bold text-slate-700">
+              More Actions <ChevronDown className="h-3.5 w-3.5" />
+            </Button>
+            {showMoreActions && (
+              <div className="absolute right-0 top-full mt-1.5 z-50 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl text-xs font-semibold space-y-1">
+                <button type="button" onClick={() => { setShowMoreActions(false); navigate(`/platform/tenants/${tenantId}/users`); }} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-xs">Manage Users</button>
+                <button type="button" onClick={() => { setShowMoreActions(false); navigate('/platform/audit'); }} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-xs">Audit Logs</button>
+              </div>
+            )}
+          </div>
+
+          <Button variant="accent" size="sm" onClick={() => toast.success('Module changes saved successfully')} className="gap-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">
+            <Save className="h-4 w-4" /> Save Changes
           </Button>
         </div>
       </div>
 
-      {/* Sub-Tab Navigation Bar (URL-aware) */}
-      <div className="flex items-center justify-between border-b border-slate-200">
-        <div className="flex gap-6">
-          <button
-            type="button"
-            onClick={() => setTab('core')}
-            className={`pb-3 text-xs font-extrabold transition-all border-b-2 ${
-              activeTab === 'core'
-                ? 'border-[#0D1F3D] text-[#0D1F3D]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Core Modules ({coreModules.filter((m) => m.enabled).length}/{coreModules.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('advanced')}
-            className={`pb-3 text-xs font-extrabold transition-all border-b-2 ${
-              activeTab === 'advanced'
-                ? 'border-[#0D1F3D] text-[#0D1F3D]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Advanced Modules ({advancedModules.filter((m) => m.enabled).length}/{advancedModules.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('integrations')}
-            className={`pb-3 text-xs font-extrabold transition-all border-b-2 ${
-              activeTab === 'integrations'
-                ? 'border-[#0D1F3D] text-[#0D1F3D]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Optional Integrations ({integrations.filter((i) => i.enabled).length}/{integrations.length})
-          </button>
+      {/* 2. Top Tenant Banner Card (3 Columns) - Matching exact image mockup */}
+      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        {/* Col 1: Logo & Company Details */}
+        <div className="lg:col-span-5 flex items-start gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-amber-200 bg-amber-50 text-amber-700 font-extrabold text-lg">
+            <Building2 className="h-7 w-7 text-amber-600" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-extrabold text-[#0D1F3D]">Sunrise Healthcare Pvt Ltd</h2>
+              <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Active</span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">
+              Industry: <strong className="text-slate-800">Pharma & Healthcare</strong> • Plan: <strong className="text-slate-800">Professional (Yearly)</strong>
+            </p>
+            <p className="text-xs text-slate-500 font-medium">
+              Tenant Code: <strong className="font-mono text-slate-800">SRHC-TNT</strong> • Users: <strong className="text-slate-800">126 / 150</strong>
+            </p>
+          </div>
         </div>
 
-        {/* Filter Search */}
-        <div className="w-64 pb-2">
-          <div className="relative flex items-center">
-            <Search className="absolute left-3 h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search modules..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-8 pl-9 pr-3 text-xs font-semibold bg-[#F8FAFC] border border-slate-200 rounded-sm focus:outline-none focus:border-[#0D1F3D]"
-            />
+        {/* Col 2: Subscription Status */}
+        <div className="lg:col-span-4 border-l border-slate-100 pl-6 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500">Subscription Status</span>
+            <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Active</span>
           </div>
+          <p className="text-xs font-extrabold text-[#0D1F3D]">24 May 2026 – 23 May 2027</p>
+          <p className="text-[11px] text-slate-400 font-medium">29 days elapsed</p>
+        </div>
+
+        {/* Col 3: Auto Renewal */}
+        <div className="lg:col-span-3 border-l border-slate-100 pl-6 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500">Auto Renewal</span>
+            <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Enabled</span>
+          </div>
+          <p className="text-xs font-extrabold text-[#0D1F3D]">24 Jun 2026</p>
+          <p className="text-[11px] font-mono font-bold text-slate-600">₹4,24,786 (Yearly)</p>
         </div>
       </div>
 
-      {/* TAB A: CORE MODULES */}
-      {activeTab === 'core' && (
-        <div className="space-y-4">
-          <div className="rounded-sm bg-[#F4F0FF] p-4 border border-purple-100 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-purple-600 shrink-0" />
-              <span className="text-purple-950 font-semibold">Core modules are included in the tenant's base subscription plan.</span>
+      {/* 3. Main Grid Layout (2/3 Left Main, 1/3 Right Sidebar) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* LEFT MAIN AREA */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Sub-Tabs & Action Bar */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200">
+              <div className="flex gap-8">
+                <button
+                  type="button"
+                  onClick={() => setTab('core')}
+                  className={`pb-3 text-xs font-extrabold transition-all border-b-2 ${
+                    activeTab === 'core' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Core Modules
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab('advanced')}
+                  className={`pb-3 text-xs font-extrabold transition-all border-b-2 ${
+                    activeTab === 'advanced' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Advanced Modules
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTab('integrations')}
+                  className={`pb-3 text-xs font-extrabold transition-all border-b-2 ${
+                    activeTab === 'integrations' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Optional Integrations
+                </button>
+              </div>
             </div>
-            <span className="font-extrabold text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-sm">Growth Plan Entitlement</span>
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="text-xs text-slate-500 font-medium">
+                Enable or disable modules for this tenant. Changes will apply based on subscription and entitlements.
+              </p>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" onClick={() => toast.info('Viewing entitlements matrix')} className="h-8 text-xs font-bold text-indigo-600 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100/50">
+                  View Entitlements
+                </Button>
+                <div className="relative w-52">
+                  <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search modules..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full h-8 pl-9 pr-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
+          {/* Modules Table */}
           <div className="rounded-sm border border-slate-200 bg-white overflow-hidden shadow-xs">
             <table className="w-full text-left text-xs whitespace-nowrap">
               <thead>
                 <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
-                  <th className="py-3 px-4">Module Name</th>
+                  <th className="py-3 px-4">Module</th>
                   <th className="py-3 px-4">Description</th>
-                  <th className="py-3 px-4">Entitlement Tag</th>
-                  <th className="py-3 px-4">Usage / Limit</th>
                   <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4">Users / Limit</th>
+                  <th className="py-3 px-4">Usage</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {coreModules
-                  .filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                  .map((mod) => (
-                    <tr key={mod.key} className="hover:bg-slate-50/80 transition-colors">
+                {filteredModules.map((m) => {
+                  const Icon = m.icon;
+                  return (
+                    <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-slate-100 border border-slate-200">
-                            {mod.icon}
+                          <div className={`flex h-8 w-8 items-center justify-center rounded-sm ${m.iconBg} ${m.iconColor} font-bold shrink-0`}>
+                            <Icon className="h-4 w-4" />
                           </div>
-                          <div>
-                            <p className="font-extrabold text-[#0D1F3D]">{mod.name}</p>
-                            <p className="text-[10px] font-mono text-slate-400">Key: {mod.key}</p>
-                          </div>
+                          <span className="font-extrabold text-[#0D1F3D]">{m.name}</span>
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 max-w-xs truncate text-slate-600 font-medium">{mod.desc}</td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex rounded-sm bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-                          {mod.tag}
-                        </span>
+                      <td className="py-3.5 px-4 max-w-xs truncate text-slate-500 font-medium">
+                        {m.description}
                       </td>
-                      <td className="py-3.5 px-4 font-semibold text-slate-700">{mod.usageLimit}</td>
                       <td className="py-3.5 px-4">
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <Checkbox checked={mod.enabled} onChange={() => toggleCore(mod.key)} label={mod.enabled ? 'Enabled' : 'Disabled'} />
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleModule(m.id)}
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                              m.enabled ? 'bg-indigo-600' : 'bg-slate-300'
+                            }`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                                m.enabled ? 'translate-x-4' : 'translate-x-0'
+                              }`}
+                            />
+                          </button>
+                          <span className={`text-[11px] font-extrabold ${m.enabled ? 'text-emerald-700' : 'text-slate-400'}`}>
+                            {m.enabled ? 'Enabled' : 'Disabled'}
+                          </span>
                         </div>
+                      </td>
+                      <td className="py-3.5 px-4 font-semibold text-slate-700">
+                        {m.usersLimit || '—'}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        {m.usagePercent ? (
+                          <div className="flex items-center gap-2.5 w-32">
+                            <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                              <div className="bg-indigo-600 h-1.5 rounded-full" style={{ width: `${m.usagePercent}%` }} />
+                            </div>
+                            <span className="text-[11px] font-bold text-slate-700">{m.usagePercent}%</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <Button variant="outline" size="sm" onClick={() => setSelectedConfigModule(mod)} className="h-7 px-2.5 text-[11px]">
-                          Configure
-                        </Button>
+                        <div className="inline-flex items-center gap-1">
+                          <Button variant="outline" size="sm" onClick={() => toast.info(`Configuring ${m.name}`)} className="h-7 px-2.5 text-[11px] font-bold text-indigo-600 border-slate-200 hover:bg-slate-50">
+                            Configure
+                          </Button>
+                          <button type="button" className="p-1 text-slate-400 hover:text-slate-600">
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
-                  ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
 
-      {/* TAB B: ADVANCED MODULES */}
-      {activeTab === 'advanced' && (
-        <div className="space-y-4">
-          <div className="rounded-sm bg-blue-50 p-4 border border-blue-100 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2">
-              <Info className="h-4 w-4 text-blue-600 shrink-0" />
-              <span className="text-blue-950 font-semibold">Advanced modules may require plan upgrades or explicit prerequisite modules to be active.</span>
-            </div>
-            <span className="font-extrabold text-blue-700 bg-blue-100 px-2.5 py-0.5 rounded-sm">Dependency Enforced</span>
-          </div>
-
+          {/* Bottom 2 Callout Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {advancedModules
-              .filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
-              .map((mod) => (
-                <div
-                  key={mod.key}
-                  className={`rounded-sm border p-4 space-y-3 bg-white shadow-xs transition-all ${
-                    mod.enabled ? 'border-slate-300' : 'border-slate-200 opacity-90'
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-slate-100 border border-slate-200">
-                        {mod.icon}
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-extrabold text-[#0D1F3D]">{mod.name}</h4>
-                        <p className="text-[10px] font-mono text-slate-400">Key: {mod.key}</p>
-                      </div>
-                    </div>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <Checkbox checked={mod.enabled} onChange={() => toggleAdvanced(mod.key)} />
-                    </div>
-                  </div>
+            {/* Dotted Purple Request Card */}
+            <div className="rounded-sm border border-dashed border-indigo-300 bg-indigo-50/30 p-5 space-y-3 flex flex-col justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold">
+                  <PlusCircle className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-extrabold text-[#0D1F3D]">Request Additional Module</h4>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    Can't find the module you need? Submit a request to enable it for this tenant.
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => toast.success('Module request submitted')} className="w-fit text-xs font-bold text-indigo-600 border-indigo-200 bg-white">
+                Request Module
+              </Button>
+            </div>
 
-                  <p className="text-xs text-slate-500 font-medium leading-relaxed">{mod.desc}</p>
+            {/* Soft Blue Info Card */}
+            <div className="rounded-sm border border-indigo-100 bg-indigo-50/50 p-5 space-y-2 text-xs">
+              <div className="flex items-center gap-2 text-indigo-950 font-extrabold">
+                <Info className="h-4 w-4 text-indigo-600 shrink-0" />
+                <span>Module Changes Information</span>
+              </div>
+              <ul className="space-y-1 text-[11px] text-indigo-900 font-medium pt-1">
+                <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 shrink-0" /> Enabled modules are immediately available to users.</li>
+                <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 shrink-0" /> Disabled modules will hide all related features and data.</li>
+                <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-indigo-600 shrink-0" /> Billing adjustments will reflect at the next renewal.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
 
-                  {mod.requires && (
-                    <div className="rounded-sm bg-amber-50 px-2.5 py-1 border border-amber-200 text-[10px] text-amber-800 font-semibold flex items-center gap-1.5">
-                      <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
-                      <span>Requires: <strong>{mod.requires.join(', ')}</strong></span>
-                    </div>
-                  )}
+        {/* RIGHT SIDEBAR AREA ("MODULES SUMMARY") */}
+        <div className="lg:col-span-4 space-y-6">
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">Modules Summary</h3>
 
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                    <span className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-bold border ${
-                      mod.tag === 'Tenant Enabled'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : mod.tag === 'Industry Recommended'
-                        ? 'bg-purple-50 text-purple-700 border-purple-200'
-                        : 'bg-slate-100 text-slate-600 border-slate-200'
-                    }`}>
-                      {mod.tag}
-                    </span>
-                    <span className="text-xs font-bold text-slate-700">{mod.usageLimit}</span>
+            {/* 5 Stat Cards with Circular Icon Badges */}
+            <div className="space-y-3">
+              <div className="p-3.5 rounded-sm border border-emerald-100 bg-emerald-50/40 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] text-slate-500 font-medium block">Enabled Modules</span>
+                  <span className="text-base font-extrabold text-[#0D1F3D]">10 / 17</span>
+                  <span className="text-[10px] text-slate-400 block font-medium">Core + Advanced</span>
+                </div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-white font-bold">
+                  <CheckCircle2 className="h-5 w-5" />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-sm border border-blue-100 bg-blue-50/40 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] text-slate-500 font-medium block">Total Users Impacted</span>
+                  <span className="text-base font-extrabold text-[#0D1F3D]">126 / 150</span>
+                  <span className="text-[10px] text-slate-400 block font-medium">84% of user limit</span>
+                </div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-500 text-white font-bold">
+                  <Users className="h-5 w-5" />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-sm border border-purple-100 bg-purple-50/40 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] text-slate-500 font-medium block">Storage Utilization</span>
+                  <span className="text-base font-extrabold text-[#0D1F3D]">128 GB / 200 GB</span>
+                  <span className="text-[10px] text-slate-400 block font-medium">64% used</span>
+                </div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-500 text-white font-bold">
+                  <HardDrive className="h-5 w-5" />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-sm border border-amber-100 bg-amber-50/40 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] text-slate-500 font-medium block">API Requests (Monthly)</span>
+                  <span className="text-base font-extrabold text-[#0D1F3D]">64,250 / 100,000</span>
+                  <span className="text-[10px] text-slate-400 block font-medium">64% used</span>
+                </div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 text-white font-bold">
+                  <Code2 className="h-5 w-5" />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-sm border border-emerald-100 bg-emerald-50/40 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] text-slate-500 font-medium block">Active Integrations</span>
+                  <span className="text-base font-extrabold text-[#0D1F3D]">3 / 8</span>
+                  <span className="text-[10px] text-emerald-700 font-bold block">Connected</span>
+                </div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-white font-bold">
+                  <Link2 className="h-5 w-5" />
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Module Changes Card */}
+            <div className="border-t border-slate-100 pt-4 space-y-3">
+              <h4 className="text-xs font-extrabold text-[#0D1F3D]">Recent Module Changes</h4>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-bold text-slate-800">Advanced Reports enabled</p>
+                    <p className="text-[10px] text-slate-400 font-medium">by Amit Sharma • 24 May 2026, 10:15 AM</p>
                   </div>
                 </div>
-              ))}
-          </div>
-        </div>
-      )}
 
-      {/* TAB C: OPTIONAL INTEGRATIONS */}
-      {activeTab === 'integrations' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {integrations
-              .filter((i) => i.name.toLowerCase().includes(searchQuery.toLowerCase()))
-              .map((item) => (
-                <div key={item.key} className="rounded-sm border border-slate-200 bg-white p-4 space-y-3 shadow-xs">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-slate-100 border border-slate-200">
-                        {item.icon}
-                      </div>
-                      <div>
-                        <h4 className="text-xs font-extrabold text-[#0D1F3D]">{item.name}</h4>
-                        <span className="text-[10px] text-slate-400 font-semibold block">{item.category}</span>
-                      </div>
-                    </div>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <Checkbox checked={item.enabled} onChange={() => toggleIntegration(item.key)} />
-                    </div>
-                  </div>
-
-                  <div className="text-xs space-y-1 bg-slate-50 p-2.5 rounded-sm border border-slate-100">
-                    <div className="flex justify-between">
-                      <span className="text-slate-400 text-[11px]">Account:</span>
-                      <span className="font-bold text-slate-700 text-[11px] truncate max-w-[140px]">{item.account}</span>
-                    </div>
-                    {item.lastSync && (
-                      <div className="flex justify-between">
-                        <span className="text-slate-400 text-[11px]">Last Sync:</span>
-                        <span className="font-semibold text-slate-600 text-[11px]">{item.lastSync}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-2.5">
-                    <span className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-bold border ${
-                      item.status === 'Connected'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : item.status === 'Attention Required'
-                        ? 'bg-amber-50 text-amber-700 border-amber-200'
-                        : 'bg-slate-100 text-slate-600 border-slate-200'
-                    }`}>
-                      {item.status}
-                    </span>
-                    <Button variant="outline" size="sm" onClick={() => toast.info(`Configure ${item.name}`)} className="h-7 px-2.5 text-[11px]">
-                      Configure
-                    </Button>
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-bold text-slate-800">GPS & Location Tracking enabled</p>
+                    <p className="text-[10px] text-slate-400 font-medium">by Amit Sharma • 24 May 2026, 10:15 AM</p>
                   </div>
                 </div>
-              ))}
-          </div>
-        </div>
-      )}
 
-      {/* Configure Modal */}
-      {selectedConfigModule && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-md rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Configure {selectedConfigModule.name}</h3>
-              <button type="button" onClick={() => setSelectedConfigModule(null)} className="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
-            </div>
-            <div className="space-y-3 text-xs">
-              <Input label="Max Usage Limit / Quota" defaultValue={selectedConfigModule.usageLimit} />
-              <Select label="Access Level" value="All Field Reps" onChange={() => {}} searchable={true} options={[{ value: 'All Field Reps', label: 'All Field Reps' }, { value: 'Managers Only', label: 'Managers Only' }]} />
-              <p className="text-[11px] text-slate-500">Changes apply immediately to this tenant workspace.</p>
-            </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
-              <Button variant="outline" size="sm" onClick={() => setSelectedConfigModule(null)}>Cancel</Button>
-              <Button variant="accent" size="sm" onClick={() => { toast.success('Module parameters updated'); setSelectedConfigModule(null); }}>Save Parameters</Button>
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-bold text-slate-800">Media & Attachments storage increased</p>
+                    <p className="text-[10px] text-slate-400 font-medium">by Amit Sharma • 24 May 2026, 10:15 AM</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 text-center">
+                <button type="button" onClick={() => navigate('/platform/audit')} className="text-xs font-bold text-indigo-600 hover:underline">
+                  View Full Activity Logs
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
+}
+
+function ShoppingCartIcon(props: any) {
+  return <FileText {...props} />;
+}
+
+function WrenchIcon(props: any) {
+  return <Sliders {...props} />;
 }

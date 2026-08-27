@@ -2,88 +2,54 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Users,
   ChevronLeft,
+  ChevronDown,
   Search,
+  CheckCircle2,
+  Users,
   Shield,
-  UserCheck,
-  UserX,
-  Mail,
-  Clock,
-  Key,
-  ShieldAlert,
   Plus,
   MoreVertical,
-  CheckCircle2,
-  AlertTriangle,
-  RefreshCw,
-  Copy,
-  Trash2,
+  Download,
+  Filter,
+  RotateCcw,
   Check,
-  X,
-  Lock,
-  Smartphone,
-  Eye,
-  Edit2,
-  Send,
   Building2,
-  Sliders,
+  UserPlus,
+  ShieldCheck,
+  Lock,
+  AlertTriangle,
+  Info,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Checkbox } from '../../components/ui/Checkbox';
+import { Input } from '../../components/ui/Input';
+import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-interface UserMembership {
+interface UserRow {
   id: string;
   name: string;
   email: string;
-  role: string;
+  avatar: string;
+  isYou?: boolean;
+  roleLabel: string;
+  roleBg: string;
+  roleColor: string;
   department: string;
-  status: 'Active' | 'Inactive' | 'Suspended' | 'Pending';
+  status: 'Active' | 'Suspended' | 'Invited';
   joinedOn: string;
   lastActive: string;
-  twoFactorEnabled: boolean;
-  activeSessionsCount: number;
+  twoFactor: boolean;
+  sessions: number;
 }
 
-interface PlatformAccessMember {
-  id: string;
-  platformUserName: string;
-  platformEmail: string;
-  platformRole: 'Platform Operations Admin' | 'Platform Support' | 'Platform Auditor';
-  accessType: 'Temporary Audit' | 'Incident Investigation' | 'Onboarding Assistance';
-  reason: string;
-  grantedBy: string;
-  grantedOn: string;
-  expiresOn: string;
-  lastAccess: string;
-  lastActive: string;
-  status: 'Active' | 'Expiring Soon' | 'Expired' | 'Revoked';
-}
-
-interface PendingInvitation {
-  id: string;
-  inviteeName: string;
-  email: string;
-  role: string;
-  department: string;
-  invitedBy: string;
-  invitedOn: string;
-  expiresOn: string;
-  status: 'Pending' | 'Sent' | 'Expiring Soon' | 'Expired';
-}
-
-interface AccessRequest {
-  id: string;
-  requestedBy: string;
-  email: string;
-  requestType: 'Workspace Access' | 'Role Upgrade' | 'Support Elevation';
-  requestedRole: string;
-  reason: string;
-  requestedOn: string;
-  status: 'Pending' | 'Approved' | 'Rejected';
-}
+const seatChartData = [
+  { name: 'Active Users', value: 112, color: '#4F46E5' },
+  { name: 'Invited', value: 4, color: '#3B82F6' },
+  { name: 'Suspended', value: 2, color: '#EF4444' },
+  { name: 'Available Seats', value: 24, color: '#E2E8F0' },
+];
 
 export function TenantUsersPage() {
   const { tenantId } = useParams();
@@ -91,458 +57,602 @@ export function TenantUsersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'all-users';
   const [searchQuery, setSearchQuery] = useState('');
+  const [showMoreActions, setShowMoreActions] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<AccessRequest | null>(null);
 
   const setTab = (tab: string) => {
     setSearchParams({ tab });
   };
 
-  // Mock Tenant Memberships
-  const [memberships, setMemberships] = useState<UserMembership[]>([
-    { id: 'usr_1', name: 'Rahul Sharma', email: 'rahul.sharma@sunrisehealthcare.com', role: 'Tenant Owner', department: 'Management', status: 'Active', joinedOn: '12 Jan 2025', lastActive: '2 mins ago', twoFactorEnabled: true, activeSessionsCount: 2 },
-    { id: 'usr_2', name: 'Priya Verma', email: 'priya.v@sunrisehealthcare.com', role: 'Sales Manager', department: 'West Zone', status: 'Active', joinedOn: '15 Jan 2025', lastActive: '15 mins ago', twoFactorEnabled: true, activeSessionsCount: 1 },
-    { id: 'usr_3', name: 'Amit Patel', email: 'amit.p@sunrisehealthcare.com', role: 'Field Executive', department: 'Mumbai City', status: 'Active', joinedOn: '01 Feb 2025', lastActive: '1 hour ago', twoFactorEnabled: false, activeSessionsCount: 1 },
-    { id: 'usr_4', name: 'Neha Joshi', email: 'neha.j@sunrisehealthcare.com', role: 'Field Executive', department: 'Pune Zone', status: 'Active', joinedOn: '10 Feb 2025', lastActive: '3 hours ago', twoFactorEnabled: false, activeSessionsCount: 1 },
-  ]);
-
-  // Mock Platform Managed Access Personnel (SFW Internal)
-  const [platformPersonnel, setPlatformPersonnel] = useState<PlatformAccessMember[]>([
-    { id: 'p_1', platformUserName: 'Sahibjit Singh', platformEmail: 'sahib@smartfieldwork.com', platformRole: 'Platform Operations Admin', accessType: 'Onboarding Assistance', reason: 'Tenant SLA setup & WhatsApp integration configuration', grantedBy: 'Rahul Sharma (Tenant Owner)', grantedOn: '20 May 2026', expiresOn: '03 Jun 2026', lastAccess: 'Yesterday', lastActive: 'Yesterday', status: 'Active' },
-    { id: 'p_2', platformUserName: 'Ananya Roy', platformEmail: 'ananya.r@smartfieldwork.com', platformRole: 'Platform Support', accessType: 'Incident Investigation', reason: 'Resolving Tally ERP sync failure log #INC-4402', grantedBy: 'Platform Auto-Policy', grantedOn: '26 May 2026', expiresOn: '28 May 2026', lastAccess: '4 hours ago', lastActive: '4 hours ago', status: 'Expiring Soon' },
-  ]);
-
-  // Mock Pending Invitations
-  const [invitations, setInvitations] = useState<PendingInvitation[]>([
-    { id: 'inv_1', inviteeName: 'Karan Mehra', email: 'karan.m@sunrisehealthcare.com', role: 'Team Leader', department: 'North Zone', invitedBy: 'Rahul Sharma', invitedOn: '25 May 2026', expiresOn: '01 Jun 2026', status: 'Sent' },
-    { id: 'inv_2', inviteeName: 'Siddharth Rao', email: 'siddharth.r@sunrisehealthcare.com', role: 'Field Executive', department: 'Goa Region', invitedBy: 'Priya Verma', invitedOn: '26 May 2026', expiresOn: '02 Jun 2026', status: 'Pending' },
-  ]);
-
-  // Mock Suspended Users
-  const [suspendedUsers, setSuspendedUsers] = useState([
-    { id: 'susp_1', name: 'Vikram Rane', email: 'vikram.r@sunrisehealthcare.com', previousRole: 'Field Executive', suspendedOn: '18 May 2026', suspendedBy: 'Priya Verma', reason: 'Policy violation: Unverified GPS check-ins', lastLogin: '17 May 2026' },
-  ]);
-
-  // Mock Access Requests
-  const [accessRequests, setAccessRequests] = useState<AccessRequest[]>([
-    { id: 'req_1', requestedBy: 'Sneha Deshmukh', email: 'sneha.d@sunrisehealthcare.com', requestType: 'Role Upgrade', requestedRole: 'Sales Manager', reason: 'Promoted to West Zone regional lead', requestedOn: '26 May 2026', status: 'Pending' },
-  ]);
-
-  const revokePlatformAccess = (id: string) => {
-    setPlatformPersonnel((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: 'Revoked' } : p))
-    );
-    toast.success('Platform personnel access revoked successfully');
-  };
-
-  const handleApproveRequest = (id: string) => {
-    setAccessRequests((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: 'Approved' } : r))
-    );
-    toast.success('Access request approved');
-    setSelectedRequest(null);
-  };
-
-  const handleRejectRequest = (id: string) => {
-    setAccessRequests((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status: 'Rejected' } : r))
-    );
-    toast.success('Access request rejected');
-    setSelectedRequest(null);
-  };
+  const usersList: UserRow[] = [
+    {
+      id: 'u1',
+      name: 'Rahul Sharma',
+      email: 'rahul.sharma@sunrisehealthcare.com',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+      isYou: true,
+      roleLabel: 'Tenant Owner',
+      roleBg: 'bg-purple-100',
+      roleColor: 'text-purple-700',
+      department: 'Executive Management',
+      status: 'Active',
+      joinedOn: '24 May 2026',
+      lastActive: '2 minutes ago',
+      twoFactor: true,
+      sessions: 2,
+    },
+    {
+      id: 'u2',
+      name: 'Priya Mehta',
+      email: 'priya.mehta@sunrisehealthcare.com',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
+      roleLabel: 'Tenant Admin',
+      roleBg: 'bg-blue-100',
+      roleColor: 'text-blue-700',
+      department: 'Operations',
+      status: 'Active',
+      joinedOn: '24 May 2026',
+      lastActive: '15 minutes ago',
+      twoFactor: true,
+      sessions: 1,
+    },
+    {
+      id: 'u3',
+      name: 'Vikram Singh',
+      email: 'vikram.singh@sunrisehealthcare.com',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+      roleLabel: 'Sales Manager',
+      roleBg: 'bg-indigo-100',
+      roleColor: 'text-indigo-700',
+      department: 'Sales',
+      status: 'Active',
+      joinedOn: '24 May 2026',
+      lastActive: '1 hour ago',
+      twoFactor: true,
+      sessions: 1,
+    },
+    {
+      id: 'u4',
+      name: 'Anita Desai',
+      email: 'anita.desai@sunrisehealthcare.com',
+      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+      roleLabel: 'Finance Manager',
+      roleBg: 'bg-amber-100',
+      roleColor: 'text-amber-800',
+      department: 'Finance',
+      status: 'Active',
+      joinedOn: '24 May 2026',
+      lastActive: '3 hours ago',
+      twoFactor: false,
+      sessions: 1,
+    },
+    {
+      id: 'u5',
+      name: 'Sandeep Patel',
+      email: 'sandeep.patel@sunrisehealthcare.com',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+      roleLabel: 'Field Operations Lead',
+      roleBg: 'bg-emerald-100',
+      roleColor: 'text-emerald-700',
+      department: 'Field Operations',
+      status: 'Active',
+      joinedOn: '24 May 2026',
+      lastActive: '5 hours ago',
+      twoFactor: true,
+      sessions: 2,
+    },
+    {
+      id: 'u6',
+      name: 'Neha Kapoor',
+      email: 'neha.kapoor@sunrisehealthcare.com',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=80',
+      roleLabel: 'Team Leader',
+      roleBg: 'bg-teal-100',
+      roleColor: 'text-teal-700',
+      department: 'Field Operations',
+      status: 'Active',
+      joinedOn: '25 May 2026',
+      lastActive: '1 day ago',
+      twoFactor: true,
+      sessions: 1,
+    },
+    {
+      id: 'u7',
+      name: 'Arjun Nair',
+      email: 'arjun.nair@sunrisehealthcare.com',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
+      roleLabel: 'Field Executive',
+      roleBg: 'bg-emerald-100',
+      roleColor: 'text-emerald-700',
+      department: 'Field Operations',
+      status: 'Active',
+      joinedOn: '25 May 2026',
+      lastActive: '2 days ago',
+      twoFactor: false,
+      sessions: 1,
+    },
+    {
+      id: 'u8',
+      name: 'Megha Iyer',
+      email: 'megha.iyer@sunrisehealthcare.com',
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80',
+      roleLabel: 'Data Entry Operator',
+      roleBg: 'bg-purple-100',
+      roleColor: 'text-purple-700',
+      department: 'Operations',
+      status: 'Active',
+      joinedOn: '25 May 2026',
+      lastActive: '2 days ago',
+      twoFactor: false,
+      sessions: 1,
+    },
+    {
+      id: 'u9',
+      name: 'Rohit Verma',
+      email: 'rohit.verma@sunrisehealthcare.com',
+      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
+      roleLabel: 'Support Specialist',
+      roleBg: 'bg-indigo-100',
+      roleColor: 'text-indigo-700',
+      department: 'Customer Support',
+      status: 'Suspended',
+      joinedOn: '23 May 2026',
+      lastActive: '8 days ago',
+      twoFactor: false,
+      sessions: 0,
+    },
+    {
+      id: 'u10',
+      name: 'Karan Malhotra',
+      email: 'karan.malhotra@sunrisehealthcare.com',
+      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80',
+      roleLabel: 'Field Executive',
+      roleBg: 'bg-emerald-100',
+      roleColor: 'text-emerald-700',
+      department: 'Field Operations',
+      status: 'Invited',
+      joinedOn: '25 May 2026',
+      lastActive: '—',
+      twoFactor: false,
+      sessions: 0,
+    },
+  ];
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* Top Breadcrumb & Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
+    <div className="space-y-6 font-sans text-slate-800 pb-16">
+      {/* 1. Header Breadcrumb & Title */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => navigate(`/platform/tenants/${tenantId}`)}
-              className="text-xs font-bold text-slate-500 hover:text-[#0D1F3D] flex items-center gap-1"
-            >
-              <ChevronLeft className="h-4 w-4" /> Back to Tenant
-            </button>
-            <span className="text-slate-300">/</span>
-            <span className="text-xs font-extrabold text-[#0D1F3D]">Users & Access</span>
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+            <button type="button" onClick={() => navigate('/platform/dashboard')} className="hover:text-[#0D1F3D]">Dashboard</button>
+            <span>›</span>
+            <button type="button" onClick={() => navigate('/platform/tenants')} className="hover:text-[#0D1F3D]">Tenants</button>
+            <span>›</span>
+            <button type="button" onClick={() => navigate('/platform/tenants')} className="hover:text-[#0D1F3D]">All Tenants</button>
+            <span>›</span>
+            <button type="button" onClick={() => navigate(`/platform/tenants/${tenantId}`)} className="hover:text-[#0D1F3D]">Sunrise Healthcare Pvt Ltd</button>
+            <span>›</span>
+            <span className="font-extrabold text-[#0D1F3D]">Users & Memberships</span>
           </div>
-          <h1 className="text-xl font-extrabold text-[#0D1F3D] mt-1">Tenant User Memberships</h1>
-          <p className="text-xs text-slate-500 font-medium">
-            Manage user seats, platform support access, pending invitations, and access permissions for <strong className="text-slate-800">{tenantId || 'apex-pharma'}</strong>.
+
+          <div className="flex items-center gap-2 mt-1.5">
+            <h1 className="text-2xl font-extrabold text-[#0D1F3D] tracking-tight">Tenant Users & Memberships</h1>
+            <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-purple-100 text-purple-700">
+              <Users className="h-4.5 w-4.5" />
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Manage users, roles and access for this tenant. Invite, activate or suspend members and control their permissions.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="accent" size="sm" onClick={() => setShowInviteModal(true)} className="gap-2 font-bold shadow-xs">
-            <Plus className="h-4 w-4" /> Invite User
+          <Button variant="outline" size="sm" onClick={() => navigate(`/platform/tenants/${tenantId}`)} className="gap-1.5 font-bold text-slate-700">
+            ← Back to Tenant
+          </Button>
+
+          <div className="relative">
+            <Button variant="outline" size="sm" onClick={() => setShowMoreActions(!showMoreActions)} className="gap-1.5 font-bold text-slate-700">
+              More Actions <ChevronDown className="h-3.5 w-3.5" />
+            </Button>
+            {showMoreActions && (
+              <div className="absolute right-0 top-full mt-1.5 z-50 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl text-xs font-semibold space-y-1">
+                <button type="button" onClick={() => { setShowMoreActions(false); navigate(`/platform/tenants/${tenantId}/modules`); }} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-xs">Manage Modules</button>
+                <button type="button" onClick={() => { setShowMoreActions(false); navigate('/platform/audit'); }} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-xs">Audit Logs</button>
+              </div>
+            )}
+          </div>
+
+          <Button variant="accent" size="sm" onClick={() => setShowInviteModal(true)} className="gap-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">
+            <UserPlus className="h-4 w-4" /> Invite User
           </Button>
         </div>
       </div>
 
-      {/* Sub-Tab Navigation Bar */}
-      <div className="flex items-center justify-between border-b border-slate-200">
-        <div className="flex gap-6 overflow-x-auto custom-scrollbar">
-          <button
-            type="button"
-            onClick={() => setTab('all-users')}
-            className={`pb-3 text-xs font-extrabold transition-all border-b-2 whitespace-nowrap ${
-              activeTab === 'all-users'
-                ? 'border-[#0D1F3D] text-[#0D1F3D]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            All Users ({memberships.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('platform-access')}
-            className={`pb-3 text-xs font-extrabold transition-all border-b-2 flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'platform-access'
-                ? 'border-[#0D1F3D] text-[#0D1F3D]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Shield className="h-3.5 w-3.5 text-purple-600" /> Platform Managed Access ({platformPersonnel.filter((p) => p.status !== 'Revoked').length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('pending-invitations')}
-            className={`pb-3 text-xs font-extrabold transition-all border-b-2 whitespace-nowrap ${
-              activeTab === 'pending-invitations'
-                ? 'border-[#0D1F3D] text-[#0D1F3D]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Pending Invitations ({invitations.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('suspended-users')}
-            className={`pb-3 text-xs font-extrabold transition-all border-b-2 whitespace-nowrap ${
-              activeTab === 'suspended-users'
-                ? 'border-[#0D1F3D] text-[#0D1F3D]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Suspended Users ({suspendedUsers.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('access-requests')}
-            className={`pb-3 text-xs font-extrabold transition-all border-b-2 flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'access-requests'
-                ? 'border-[#0D1F3D] text-[#0D1F3D]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Access Requests ({accessRequests.filter((r) => r.status === 'Pending').length})
-          </button>
+      {/* 2. Top Tenant Banner Card (3 Columns) */}
+      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div className="lg:col-span-5 flex items-start gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-amber-200 bg-amber-50 text-amber-700 font-extrabold text-lg">
+            <Building2 className="h-7 w-7 text-amber-600" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-extrabold text-[#0D1F3D]">Sunrise Healthcare Pvt Ltd</h2>
+              <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Active</span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">
+              Industry: <strong className="text-slate-800">Pharma & Healthcare</strong> • Plan: <strong className="text-slate-800">Professional (Yearly)</strong>
+            </p>
+            <p className="text-xs text-slate-500 font-medium">
+              Tenant Code: <strong className="font-mono text-slate-800">SRHC-TNT</strong> • Users: <strong className="text-slate-800">126 / 150</strong>
+            </p>
+          </div>
         </div>
 
-        {/* Search */}
-        <div className="w-56 pb-2 shrink-0">
-          <div className="relative flex items-center">
-            <Search className="absolute left-3 h-3.5 w-3.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search personnel..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-8 pl-9 pr-3 text-xs font-semibold bg-[#F8FAFC] border border-slate-200 rounded-sm focus:outline-none focus:border-[#0D1F3D]"
-            />
+        <div className="lg:col-span-4 border-l border-slate-100 pl-6 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500">Subscription Status</span>
+            <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Active</span>
           </div>
+          <p className="text-xs font-extrabold text-[#0D1F3D]">24 May 2026 – 23 May 2027</p>
+          <p className="text-[11px] text-slate-400 font-medium">29 days elapsed</p>
+        </div>
+
+        <div className="lg:col-span-3 border-l border-slate-100 pl-6 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500">Auto Renewal</span>
+            <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Enabled</span>
+          </div>
+          <p className="text-xs font-extrabold text-[#0D1F3D]">24 Jun 2026</p>
+          <p className="text-[11px] font-mono font-bold text-slate-600">₹4,24,786 (Yearly)</p>
         </div>
       </div>
 
-      {/* TAB A: ALL USERS */}
-      {activeTab === 'all-users' && (
-        <div className="space-y-4">
-          <div className="rounded-sm border border-slate-200 bg-white overflow-hidden shadow-xs">
-            <table className="w-full text-left text-xs whitespace-nowrap">
-              <thead>
-                <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
-                  <th className="py-3 px-4">User</th>
-                  <th className="py-3 px-4">Role & Department</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Joined On</th>
-                  <th className="py-3 px-4">Last Active</th>
-                  <th className="py-3 px-4">2FA</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {memberships
-                  .filter((u) => u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase()))
-                  .map((user) => (
-                    <tr key={user.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 font-extrabold text-slate-700 text-xs">
-                            {user.name.split(' ').map((n) => n[0]).join('')}
-                          </div>
-                          <div>
-                            <p className="font-extrabold text-[#0D1F3D]">{user.name}</p>
-                            <p className="text-[11px] text-slate-500 font-medium">{user.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="font-bold text-slate-800">{user.role}</span>
-                        <span className="text-[11px] text-slate-400 block font-medium">{user.department}</span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex rounded-sm bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-                          {user.status}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-semibold text-slate-600">{user.joinedOn}</td>
-                      <td className="py-3.5 px-4 font-semibold text-slate-600">{user.lastActive}</td>
-                      <td className="py-3.5 px-4">
-                        {user.twoFactorEnabled ? (
-                          <span className="inline-flex items-center gap-1 text-emerald-700 font-bold text-[10px]"><Check className="h-3 w-3" /> Enabled</span>
-                        ) : (
-                          <span className="text-slate-400 font-medium text-[10px]">Off</span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <Button variant="outline" size="sm" onClick={() => toast.info(`Managing ${user.name}`)} className="h-7 px-2 text-[11px]">
-                          Edit Role
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+      {/* 3. Main Grid Layout (2/3 Left Main, 1/3 Right Sidebar) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* LEFT MAIN AREA */}
+        <div className="lg:col-span-8 space-y-5">
+          {/* Sub-Tabs */}
+          <div className="flex items-center gap-8 border-b border-slate-200">
+            <button
+              type="button"
+              onClick={() => setTab('all-users')}
+              className={`pb-3 text-xs font-extrabold transition-all border-b-2 ${
+                activeTab === 'all-users' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              All Users
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('platform-access')}
+              className={`pb-3 text-xs font-extrabold transition-all border-b-2 ${
+                activeTab === 'platform-access' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Platform Managed Access (3)
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('pending-invitations')}
+              className={`pb-3 text-xs font-extrabold transition-all border-b-2 ${
+                activeTab === 'pending-invitations' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Pending Invitations (4)
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('suspended-users')}
+              className={`pb-3 text-xs font-extrabold transition-all border-b-2 ${
+                activeTab === 'suspended-users' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Suspended Users (2)
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('access-requests')}
+              className={`pb-3 text-xs font-extrabold transition-all border-b-2 ${
+                activeTab === 'access-requests' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Access Requests (1)
+            </button>
           </div>
-        </div>
-      )}
 
-      {/* TAB B: PLATFORM MANAGED ACCESS (INTERNAL SFW PERSONNEL) */}
-      {activeTab === 'platform-access' && (
-        <div className="space-y-4">
-          <div className="rounded-sm bg-purple-50 p-4 border border-purple-100 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2.5">
-              <Shield className="h-4 w-4 text-purple-600 shrink-0" />
+          {/* Filters Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="relative flex-1 min-w-[240px]">
+              <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search by name, email, phone or role..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 w-full rounded-sm border border-slate-200 bg-slate-50/50 pl-9 pr-3 text-xs font-medium focus:border-indigo-600 focus:bg-white focus:outline-none"
+              />
+            </div>
+
+            <div className="w-32">
+              <Select value="All Roles" onChange={() => {}} options={[{ value: 'All Roles', label: 'All Roles' }]} />
+            </div>
+            <div className="w-32">
+              <Select value="All Status" onChange={() => {}} options={[{ value: 'All Status', label: 'All Status' }]} />
+            </div>
+            <div className="w-36">
+              <Select value="All Departments" onChange={() => {}} options={[{ value: 'All Departments', label: 'All Departments' }]} />
+            </div>
+            <div className="w-28">
+              <Select value="2FA: All" onChange={() => {}} options={[{ value: '2FA: All', label: '2FA: All' }]} />
+            </div>
+
+            <Button variant="outline" size="sm" className="h-9 text-xs font-bold text-slate-700 gap-1.5">
+              <Filter className="h-3.5 w-3.5 text-slate-400" /> More Filters
+            </Button>
+            <Button variant="outline" size="sm" className="h-9 text-xs font-bold text-slate-700">
+              Reset
+            </Button>
+          </div>
+
+          {/* Summary Stats Strip */}
+          <div className="rounded-sm border border-slate-200 bg-white p-3.5 shadow-xs flex flex-wrap items-center justify-between gap-4 text-xs">
+            <div className="flex items-center gap-6 divide-x divide-slate-100">
               <div>
-                <p className="font-extrabold text-purple-950">Internal Smart Field Work Platform Support Personnel</p>
-                <p className="text-[11px] text-purple-900 font-medium mt-0.5">
-                  These internal support & operations admins have time-bound authorized access to this tenant. They do <strong>NOT</strong> count toward tenant license seats.
-                </p>
+                <span className="text-slate-400 text-[10px] block font-bold">Total Users</span>
+                <span className="font-extrabold text-[#0D1F3D] text-sm">126 / 150</span>
+                <span className="text-[10px] text-slate-400 block font-medium">84% of seat limit used</span>
+              </div>
+              <div className="pl-6">
+                <span className="text-slate-400 text-[10px] block font-bold">Active Users</span>
+                <span className="font-extrabold text-[#0D1F3D] text-sm">112</span>
+                <span className="text-[10px] text-slate-400 block font-medium">88.9% ⓘ</span>
+              </div>
+              <div className="pl-6">
+                <span className="text-slate-400 text-[10px] block font-bold">Invited</span>
+                <span className="font-extrabold text-[#0D1F3D] text-sm">4</span>
+                <span className="text-[10px] text-slate-400 block font-medium">3.2% ⓘ</span>
+              </div>
+              <div className="pl-6">
+                <span className="text-slate-400 text-[10px] block font-bold">Suspended</span>
+                <span className="font-extrabold text-[#0D1F3D] text-sm">2</span>
+                <span className="text-[10px] text-slate-400 block font-medium">1.6% ⓘ</span>
+              </div>
+              <div className="pl-6">
+                <span className="text-slate-400 text-[10px] block font-bold">Platform Access</span>
+                <span className="font-extrabold text-[#0D1F3D] text-sm">3</span>
+                <span className="text-[10px] text-slate-400 block font-medium">2.4% ⓘ</span>
               </div>
             </div>
-            <span className="font-extrabold text-purple-700 bg-purple-100 px-3 py-1 rounded-sm">Audited Support Access</span>
+
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="h-8 text-xs font-bold text-slate-700">Bulk Actions ∨</Button>
+              <Button variant="outline" size="sm" className="h-8 text-xs font-bold text-slate-700 gap-1.5"><Download className="h-3.5 w-3.5 text-slate-400" /> Export</Button>
+            </div>
           </div>
 
+          {/* Table */}
           <div className="rounded-sm border border-slate-200 bg-white overflow-hidden shadow-xs">
             <table className="w-full text-left text-xs whitespace-nowrap">
               <thead>
                 <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
-                  <th className="py-3 px-4">Platform Personnel</th>
-                  <th className="py-3 px-4">Platform Role</th>
-                  <th className="py-3 px-4">Access Reason</th>
-                  <th className="py-3 px-4">Granted By / On</th>
-                  <th className="py-3 px-4">Expires On</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-3 px-3 w-8"><Checkbox checked={false} onChange={() => {}} /></th>
+                  <th className="py-3 px-3">User</th>
+                  <th className="py-3 px-3">Role & Department</th>
+                  <th className="py-3 px-3">Status</th>
+                  <th className="py-3 px-3">Joined On</th>
+                  <th className="py-3 px-3">Last Active</th>
+                  <th className="py-3 px-3">2FA</th>
+                  <th className="py-3 px-3">Sessions</th>
+                  <th className="py-3 px-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {platformPersonnel.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4">
+                {usersList.map((u) => (
+                  <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3 px-3"><Checkbox checked={false} onChange={() => {}} /></td>
+                    <td className="py-3 px-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-100 text-purple-800 font-extrabold text-xs border border-purple-200">
-                          <Shield className="h-4 w-4" />
-                        </div>
+                        <img src={u.avatar} alt={u.name} className="h-8 w-8 rounded-full object-cover shrink-0" />
                         <div>
-                          <p className="font-extrabold text-[#0D1F3D]">{p.platformUserName}</p>
-                          <p className="text-[10px] text-slate-500 font-medium">{p.platformEmail}</p>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-extrabold text-[#0D1F3D]">{u.name}</span>
+                            {u.isYou && <span className="rounded-sm bg-indigo-100 px-1.5 py-0.2 text-[9px] font-bold text-indigo-700">You</span>}
+                          </div>
+                          <span className="text-[11px] text-slate-500 font-medium">{u.email}</span>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4">
-                      <span className="font-bold text-slate-800">{p.platformRole}</span>
-                      <span className="text-[10px] text-slate-400 block font-medium">{p.accessType}</span>
+                    <td className="py-3 px-3">
+                      <span className={`inline-block rounded-xs px-2 py-0.5 text-[10px] font-extrabold ${u.roleBg} ${u.roleColor}`}>
+                        {u.roleLabel}
+                      </span>
+                      <span className="text-[11px] text-slate-400 block font-medium mt-0.5">{u.department}</span>
                     </td>
-                    <td className="py-3.5 px-4 max-w-xs truncate text-slate-600 font-medium">{p.reason}</td>
-                    <td className="py-3.5 px-4">
-                      <span className="font-semibold text-slate-700 block">{p.grantedBy}</span>
-                      <span className="text-[10px] text-slate-400">{p.grantedOn}</span>
-                    </td>
-                    <td className="py-3.5 px-4 font-extrabold text-amber-700">{p.expiresOn}</td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-bold border ${
-                        p.status === 'Active'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : p.status === 'Expiring Soon'
-                          ? 'bg-amber-50 text-amber-700 border-amber-200'
-                          : 'bg-rose-50 text-rose-700 border-rose-200'
+                    <td className="py-3 px-3">
+                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                        u.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        u.status === 'Suspended' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                        'bg-amber-50 text-amber-700 border border-amber-200'
                       }`}>
-                        {p.status}
+                        {u.status}
                       </span>
                     </td>
-                    <td className="py-3.5 px-4 text-right space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => toast.success('Access extended by 7 days')} className="h-7 px-2 text-[11px]">
-                        Extend Access
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => revokePlatformAccess(p.id)} className="h-7 px-2 text-[11px] text-rose-600 hover:bg-rose-50 border-rose-200">
-                        Revoke Access
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB C: PENDING INVITATIONS */}
-      {activeTab === 'pending-invitations' && (
-        <div className="space-y-4">
-          <div className="rounded-sm border border-slate-200 bg-white overflow-hidden shadow-xs">
-            <table className="w-full text-left text-xs whitespace-nowrap">
-              <thead>
-                <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
-                  <th className="py-3 px-4">Invitee</th>
-                  <th className="py-3 px-4">Intended Role</th>
-                  <th className="py-3 px-4">Invited By</th>
-                  <th className="py-3 px-4">Invited On</th>
-                  <th className="py-3 px-4">Expires On</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {invitations.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <p className="font-extrabold text-[#0D1F3D]">{inv.inviteeName}</p>
-                      <p className="text-[10px] text-slate-500 font-medium">{inv.email}</p>
-                    </td>
-                    <td className="py-3.5 px-4">
-                      <span className="font-bold text-slate-800">{inv.role}</span>
-                      <span className="text-[10px] text-slate-400 block">{inv.department}</span>
-                    </td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-700">{inv.invitedBy}</td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-600">{inv.invitedOn}</td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-600">{inv.expiresOn}</td>
-                    <td className="py-3.5 px-4">
-                      <span className="inline-flex rounded-sm bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
-                        {inv.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right space-x-2">
-                      <Button variant="outline" size="sm" onClick={() => toast.success(`Invitation resent to ${inv.email}`)} className="h-7 px-2 text-[11px]">
-                        Resend
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => toast.success('Link copied to clipboard')} className="h-7 px-2 text-[11px]">
-                        Copy Link
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB D: SUSPENDED USERS */}
-      {activeTab === 'suspended-users' && (
-        <div className="space-y-4">
-          <div className="rounded-sm border border-slate-200 bg-white overflow-hidden shadow-xs">
-            <table className="w-full text-left text-xs whitespace-nowrap">
-              <thead>
-                <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
-                  <th className="py-3 px-4">User</th>
-                  <th className="py-3 px-4">Previous Role</th>
-                  <th className="py-3 px-4">Suspended On / By</th>
-                  <th className="py-3 px-4">Suspension Reason</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {suspendedUsers.map((s) => (
-                  <tr key={s.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <p className="font-extrabold text-[#0D1F3D]">{s.name}</p>
-                      <p className="text-[10px] text-slate-500 font-medium">{s.email}</p>
-                    </td>
-                    <td className="py-3.5 px-4 font-bold text-slate-800">{s.previousRole}</td>
-                    <td className="py-3.5 px-4">
-                      <span className="font-semibold text-slate-700 block">{s.suspendedOn}</span>
-                      <span className="text-[10px] text-slate-400">By: {s.suspendedBy}</span>
-                    </td>
-                    <td className="py-3.5 px-4 text-slate-600 font-medium max-w-xs truncate">{s.reason}</td>
-                    <td className="py-3.5 px-4 text-right">
-                      <Button variant="outline" size="sm" onClick={() => toast.success(`Reactivated membership for ${s.name}`)} className="h-7 px-2.5 text-[11px] text-emerald-700 border-emerald-200 hover:bg-emerald-50">
-                        Reactivate Membership
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB E: ACCESS REQUESTS */}
-      {activeTab === 'access-requests' && (
-        <div className="space-y-4">
-          <div className="rounded-sm border border-slate-200 bg-white overflow-hidden shadow-xs">
-            <table className="w-full text-left text-xs whitespace-nowrap">
-              <thead>
-                <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
-                  <th className="py-3 px-4">Requested By</th>
-                  <th className="py-3 px-4">Request Type</th>
-                  <th className="py-3 px-4">Requested Role</th>
-                  <th className="py-3 px-4">Reason</th>
-                  <th className="py-3 px-4">Requested On</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {accessRequests.map((req) => (
-                  <tr key={req.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <p className="font-extrabold text-[#0D1F3D]">{req.requestedBy}</p>
-                      <p className="text-[10px] text-slate-500 font-medium">{req.email}</p>
-                    </td>
-                    <td className="py-3.5 px-4 font-bold text-slate-800">{req.requestType}</td>
-                    <td className="py-3.5 px-4 font-bold text-indigo-700">{req.requestedRole}</td>
-                    <td className="py-3.5 px-4 text-slate-600 font-medium max-w-xs truncate">{req.reason}</td>
-                    <td className="py-3.5 px-4 font-semibold text-slate-600">{req.requestedOn}</td>
-                    <td className="py-3.5 px-4">
-                      <span className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-bold border ${
-                        req.status === 'Pending'
-                          ? 'bg-amber-50 text-amber-700 border-amber-200'
-                          : req.status === 'Approved'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : 'bg-rose-50 text-rose-700 border-rose-200'
-                      }`}>
-                        {req.status}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-4 text-right space-x-2">
-                      {req.status === 'Pending' && (
-                        <>
-                          <Button variant="accent" size="sm" onClick={() => setSelectedRequest(req)} className="h-7 px-2.5 text-[11px]">
-                            Review Request
-                          </Button>
-                        </>
+                    <td className="py-3 px-3 font-semibold text-slate-600">{u.joinedOn}</td>
+                    <td className="py-3 px-3 font-semibold text-slate-600">
+                      {u.lastActive.includes('ago') ? (
+                        <span className="flex items-center gap-1.5 text-slate-700 font-medium">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          {u.lastActive}
+                        </span>
+                      ) : (
+                        u.lastActive
                       )}
                     </td>
+                    <td className="py-3 px-3">
+                      {u.twoFactor ? (
+                        <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                      ) : (
+                        <Shield className="h-4 w-4 text-slate-300" />
+                      )}
+                    </td>
+                    <td className="py-3 px-3">
+                      {u.sessions > 0 ? (
+                        <span className="inline-flex items-center gap-1 font-bold text-slate-700"><Lock className="h-3 w-3 text-slate-400" /> {u.sessions}</span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-3 text-right">
+                      <button type="button" className="p-1 text-slate-400 hover:text-slate-600">
+                        <MoreVertical className="h-4 w-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
-      )}
+
+        {/* RIGHT SIDEBAR AREA */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Card 1: User Seats & Usage */}
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">User Seats & Usage</h3>
+            <div className="flex items-center gap-4">
+              <div className="relative h-28 w-28 shrink-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={seatChartData} cx="50%" cy="50%" innerRadius={32} outerRadius={48} paddingAngle={2} dataKey="value">
+                      {seatChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-base font-extrabold text-[#0D1F3D]">126 / 150</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase">84% Used</span>
+                </div>
+              </div>
+
+              <div className="flex-1 space-y-1.5 text-xs font-semibold">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-slate-600"><span className="h-2 w-2 rounded-full bg-indigo-600" /> Active Users</span>
+                  <span className="font-extrabold text-[#0D1F3D]">112</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-500" /> Invited</span>
+                  <span className="font-extrabold text-[#0D1F3D]">4</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-slate-600"><span className="h-2 w-2 rounded-full bg-rose-500" /> Suspended</span>
+                  <span className="font-extrabold text-[#0D1F3D]">2</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-slate-600"><span className="h-2 w-2 rounded-full bg-slate-300" /> Available Seats</span>
+                  <span className="font-extrabold text-[#0D1F3D]">24</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Platform Managed Access */}
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-sm font-extrabold text-[#0D1F3D] flex items-center gap-1">
+                  Platform Managed Access <Info className="h-3.5 w-3.5 text-slate-400" />
+                </h3>
+                <p className="text-[10px] text-slate-400 font-medium">Users from platform with access to this tenant</p>
+              </div>
+              <button type="button" onClick={() => setTab('platform-access')} className="text-xs font-bold text-indigo-600 hover:underline">View All (3)</button>
+            </div>
+
+            <div className="space-y-2.5 text-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-7 w-7 rounded-full bg-slate-200 font-bold text-slate-700 flex items-center justify-center text-xs">AS</div>
+                  <div>
+                    <p className="font-bold text-slate-800">Amit Sharma</p>
+                    <p className="text-[10px] text-slate-400">Platform Operations</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Active</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-7 w-7 rounded-full bg-slate-200 font-bold text-slate-700 flex items-center justify-center text-xs">SR</div>
+                  <div>
+                    <p className="font-bold text-slate-800">Sneha Reddy</p>
+                    <p className="text-[10px] text-slate-400">Platform Support</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Active</span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-7 w-7 rounded-full bg-slate-200 font-bold text-slate-700 flex items-center justify-center text-xs">RI</div>
+                  <div>
+                    <p className="font-bold text-slate-800">Rakesh Iyer</p>
+                    <p className="text-[10px] text-slate-400">Platform Auditor</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Active</span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 text-center">
+              <button type="button" onClick={() => setTab('platform-access')} className="text-xs font-bold text-indigo-600 hover:underline">View Access Details</button>
+            </div>
+          </div>
+
+          {/* Card 3: Role Distribution */}
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Role Distribution</h3>
+              <button type="button" className="text-xs font-bold text-indigo-600 hover:underline">View All</button>
+            </div>
+
+            <div className="space-y-2 text-xs font-semibold">
+              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-blue-600" /> Tenant Owner</span><span className="font-extrabold">1</span></div>
+              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-indigo-500" /> Tenant Admin</span><span className="font-extrabold">2</span></div>
+              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-sky-500" /> Sales Manager</span><span className="font-extrabold">3</span></div>
+              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-amber-500" /> Finance Manager</span><span className="font-extrabold">2</span></div>
+              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Field Operations Lead</span><span className="font-extrabold">1</span></div>
+              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-teal-500" /> Team Leader</span><span className="font-extrabold">6</span></div>
+              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-green-500" /> Field Executive</span><span className="font-extrabold">78</span></div>
+              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-slate-400" /> Others</span><span className="font-extrabold">33</span></div>
+            </div>
+          </div>
+
+          {/* Card 4: Security Overview */}
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">Security Overview</h3>
+            <div className="space-y-2 text-xs font-semibold">
+              <div className="flex items-center justify-between text-slate-700">
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> 2FA Enabled Users</span>
+                <span className="font-extrabold text-[#0D1F3D]">102 (81%)</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-700">
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Active Sessions</span>
+                <span className="font-extrabold text-[#0D1F3D]">89</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-700">
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Inactive &gt; 30 Days</span>
+                <span className="font-extrabold text-[#0D1F3D]">5</span>
+              </div>
+              <div className="flex items-center justify-between text-slate-700">
+                <span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-500" /> Suspicious Logins (7 Days)</span>
+                <span className="font-extrabold text-[#0D1F3D]">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Invite Modal */}
       {showInviteModal && (
@@ -561,27 +671,6 @@ export function TenantUsersPage() {
             <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
               <Button variant="outline" size="sm" onClick={() => setShowInviteModal(false)}>Cancel</Button>
               <Button variant="accent" size="sm" onClick={() => { toast.success('Invitation sent'); setShowInviteModal(false); }}>Send Invitation</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Access Request Review Modal */}
-      {selectedRequest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-md rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 font-sans">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Review Access Request</h3>
-              <button type="button" onClick={() => setSelectedRequest(null)} className="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
-            </div>
-            <div className="space-y-2 text-xs text-slate-700 bg-slate-50 p-3 rounded-sm border border-slate-100">
-              <p><strong>User:</strong> {selectedRequest.requestedBy} ({selectedRequest.email})</p>
-              <p><strong>Requested Role:</strong> {selectedRequest.requestedRole}</p>
-              <p><strong>Reason:</strong> {selectedRequest.reason}</p>
-            </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
-              <Button variant="outline" size="sm" onClick={() => handleRejectRequest(selectedRequest.id)} className="text-rose-600 hover:bg-rose-50 border-rose-200">Reject Request</Button>
-              <Button variant="accent" size="sm" onClick={() => handleApproveRequest(selectedRequest.id)}>Approve Request</Button>
             </div>
           </div>
         </div>
