@@ -27,6 +27,12 @@ import {
   User,
   Monitor,
   Check,
+  UserPlus,
+  Compass,
+  MessageSquare,
+  Puzzle,
+  ShieldCheck,
+  BarChart3,
 } from "lucide-react";
 import { usePlatformPermissions } from "../features/platform/tenants/hooks/usePlatformPermissions";
 import {
@@ -62,7 +68,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     items: [
       {
         label: "Dashboard",
-        icon: LayoutDashboard,
+        icon: Home,
         to: "/platform/dashboard",
         permission: "platform.dashboard.view",
       },
@@ -79,21 +85,21 @@ const NAV_CATEGORIES: NavCategory[] = [
       },
       {
         label: "Create Tenant",
-        icon: PlusCircle,
+        icon: UserPlus,
         to: "/platform/tenants/create",
         permission: "platform.tenants.create",
       },
       {
         label: "Tenant Onboarding",
-        icon: Sparkles,
+        icon: Compass,
         to: "/platform/tenants/onboarding",
         permission: "platform.tenants.view",
       },
       {
         label: "Tenant Requests",
-        icon: ClipboardList,
+        icon: MessageSquare,
         to: "/platform/tenants/requests",
-        badge: "8",
+        badge: "3",
         permission: "platform.tenants.view",
       },
     ],
@@ -109,7 +115,7 @@ const NAV_CATEGORIES: NavCategory[] = [
       },
       {
         label: "Modules & Features",
-        icon: Layers,
+        icon: Puzzle,
         to: "/platform/modules",
         permission: "platform.modules.view",
       },
@@ -127,7 +133,7 @@ const NAV_CATEGORIES: NavCategory[] = [
       },
       {
         label: "Roles & Permissions",
-        icon: Shield,
+        icon: ShieldCheck,
         to: "/platform/roles",
         permission: "platform.roles.view",
       },
@@ -162,7 +168,7 @@ const NAV_CATEGORIES: NavCategory[] = [
       },
       {
         label: "Reports",
-        icon: PieChart,
+        icon: BarChart3,
         to: "/platform/reports",
         permission: "platform.dashboard.view",
       },
@@ -172,7 +178,7 @@ const NAV_CATEGORIES: NavCategory[] = [
     title: "Account",
     items: [
       { label: "My Profile", icon: User, to: "/platform/profile" },
-      { label: "Security & 2FA", icon: Shield, to: "/platform/profile/security" },
+      { label: "Security & 2FA", icon: ShieldCheck, to: "/platform/profile/security" },
       { label: "Active Sessions", icon: Monitor, to: "/platform/profile/sessions" },
     ],
   },
