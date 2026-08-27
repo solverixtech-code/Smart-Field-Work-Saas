@@ -767,6 +767,9 @@ export default function AppRouter() {
             <Route path="/platform/invoices" element={<PlatformDashboardPage />} />
             <Route path="/platform/transactions" element={<PlatformDashboardPage />} />
             <Route path="/platform/reports" element={<PlatformDashboardPage />} />
+            <Route path="/platform/profile" element={<ProfilePage />} />
+            <Route path="/platform/profile/security" element={<ChangePasswordPage />} />
+            <Route path="/platform/profile/sessions" element={<ActiveSessionsPage />} />
           </Route>
         </Route>
 

@@ -25,6 +25,7 @@ import {
   Home,
   UserCheck,
   User,
+  Monitor,
 } from "lucide-react";
 import { usePlatformPermissions } from "../features/platform/tenants/hooks/usePlatformPermissions";
 import {
@@ -45,7 +46,7 @@ interface NavItem {
   icon: React.ElementType;
   to: string;
   badge?: string;
-  permission: PlatformPermission;
+  permission?: PlatformPermission;
 }
 
 interface NavCategory {
@@ -165,6 +166,14 @@ const NAV_CATEGORIES: NavCategory[] = [
       },
     ],
   },
+  {
+    title: "Account",
+    items: [
+      { label: "My Profile", icon: User, to: "/platform/profile" },
+      { label: "Security & 2FA", icon: Shield, to: "/platform/profile/security" },
+      { label: "Active Sessions", icon: Monitor, to: "/platform/profile/sessions" },
+    ],
+  },
 ];
 
 export default function PlatformShell() {
@@ -257,6 +266,24 @@ export default function PlatformShell() {
         { label: "Audit Logs", to: "/platform/audit" },
       ];
     }
+    if (p === "/platform/profile") {
+      return [
+        { label: "Account", to: "/platform/profile" },
+        { label: "My Profile", to: "/platform/profile" },
+      ];
+    }
+    if (p === "/platform/profile/security") {
+      return [
+        { label: "Account", to: "/platform/profile" },
+        { label: "Security & 2FA", to: "/platform/profile/security" },
+      ];
+    }
+    if (p === "/platform/profile/sessions") {
+      return [
+        { label: "Account", to: "/platform/profile" },
+        { label: "Active Sessions", to: "/platform/profile/sessions" },
+      ];
+    }
     return [
       { label: "Platform Console", to: "/platform/dashboard" },
       { label: "Overview", to: p },
@@ -333,7 +360,7 @@ export default function PlatformShell() {
                 </p>
               )}
               {cat.items.map((item) => {
-                const isAllowed = hasPlatformPermission(item.permission);
+                const isAllowed = !item.permission || hasPlatformPermission(item.permission);
                 const Icon = item.icon;
 
                 // Strict active matching (Exact same logic as AppShell.tsx)
@@ -352,6 +379,9 @@ export default function PlatformShell() {
                       "/platform/invoices",
                       "/platform/transactions",
                       "/platform/reports",
+                      "/platform/profile",
+                      "/platform/profile/security",
+                      "/platform/profile/sessions",
                     ].includes(item.to)
                   ) {
                     return location.pathname === item.to;
@@ -497,9 +527,29 @@ export default function PlatformShell() {
                   type="button"
                   onClick={() => {
                     setUserMenuOpen(false);
+                    navigate("/platform/profile");
+                  }}
+                  className="w-full flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
+                >
+                  <User className="h-4 w-4 text-[#E20613]" /> My Profile
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    navigate("/platform/profile/security");
+                  }}
+                  className="w-full flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
+                >
+                  <Shield className="h-4 w-4 text-blue-600" /> Security & 2FA
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserMenuOpen(false);
                     navigate("/admin/dashboard");
                   }}
-                  className="w-full flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors"
+                  className="w-full flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 transition-colors border-t border-slate-100 pt-2"
                 >
                   <UserCheck className="h-4 w-4 text-blue-600" /> Exit to Tenant CRM →
                 </button>
@@ -518,15 +568,15 @@ export default function PlatformShell() {
         </div>
       </aside>
 
-      {/* Main Content Area (100% Identical to AppShell.tsx) */}
+      {/* Main Content Area */}
       <div
         className={`flex flex-1 flex-col overflow-hidden transition-all duration-300 ${
           collapsed ? "ml-[80px]" : "ml-[295px]"
         }`}
       >
-        {/* Top Header (100% Identical to AppShell.tsx Header Bar) */}
+        {/* Top Header */}
         <header className="flex h-20 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-sm">
-          {/* Mandatory Left Header Breadcrumb Navigation */}
+          {/* Left Header Breadcrumb Navigation */}
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
             <NavLink
               to="/platform/dashboard"
@@ -556,7 +606,7 @@ export default function PlatformShell() {
             })}
           </div>
 
-          {/* Right Header Controls (100% Reusing AppShell.tsx Notification & Header Profile Card) */}
+          {/* Right Header Controls */}
           <div className="flex items-center gap-4">
             {/* Test Role Switcher Dropdown */}
             <div className="flex items-center gap-1.5 rounded-sm border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-900 shadow-xs">
@@ -578,7 +628,7 @@ export default function PlatformShell() {
               </select>
             </div>
 
-            {/* Notification Bell Icon (100% Identical to AppShell.tsx Line 1491-1494) */}
+            {/* Notification Bell Icon */}
             <button
               type="button"
               className="relative inline-flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100"
@@ -587,7 +637,7 @@ export default function PlatformShell() {
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#E20613]" />
             </button>
 
-            {/* Header User Profile Avatar Card & Dropdown (100% Identical to AppShell.tsx Line 1497-1563) */}
+            {/* Header User Profile Avatar Card & Dropdown */}
             <div className="relative" ref={headerRef}>
               <div
                 onClick={() => setHeaderMenuOpen(!headerMenuOpen)}
@@ -617,7 +667,7 @@ export default function PlatformShell() {
                     </p>
                   </div>
                   <NavLink
-                    to="/admin/profile"
+                    to="/platform/profile"
                     onClick={() => setHeaderMenuOpen(false)}
                     className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
                   >
@@ -645,7 +695,7 @@ export default function PlatformShell() {
           </div>
         </header>
 
-        {/* Main Page Render in Single Unified Shell Container (100% Identical to AppShell.tsx Line 1568-1570) */}
+        {/* Main Page Render */}
         <main className="flex-1 overflow-y-auto bg-[#F3F5F7]">
           <div className="mx-auto w-full max-w-[1720px] p-6 lg:p-8 space-y-6 font-sans">
             <Outlet />

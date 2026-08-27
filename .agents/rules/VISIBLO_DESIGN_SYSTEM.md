@@ -102,3 +102,6 @@ This document establishes the binding design system, component standards, typogr
    - **Header Bar**: Fixed height `h-20` white header bar with breadcrumb navigation (`Home > Category > Page`), search input, notification bell button with red indicator dot (`<Bell className="h-4 w-4" /><span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#E20613]" />`), and top-right header user profile card with role label dropdown.
    - **Stat Cards**: Must ALWAYS use the pre-built `<KpiCard title={...} value={...} icon={...} iconBgColor={...} iconTextColor={...} />` component.
    - **Background Container**: Use `<main className="flex-1 overflow-y-auto bg-[#F3F5F7]"><div className="mx-auto w-full max-w-[1720px] p-6 lg:p-8 space-y-6 font-sans">`.
+
+3. **Constant Account Navigation & Profile Drawer Across All Roles**:
+   - The `Account` category (`My Profile`, `Security & 2FA`, `Active Sessions`) and the bottom user profile card drawer MUST ALWAYS be present in the sidebar for EVERY role without exception.
