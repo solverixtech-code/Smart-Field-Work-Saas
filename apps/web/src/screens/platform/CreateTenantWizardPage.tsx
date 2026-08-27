@@ -881,44 +881,332 @@ function Step5Modules() {
 }
 
 // STEP 6: REVIEW & CONFIRM
-function Step6ReviewConfirm() {
+function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number) => void }) {
   const { formState } = useTenantCreation();
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+      {/* Top Header Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
           <h3 className="text-lg font-extrabold text-[#0D1F3D]">Review & Confirm</h3>
-          <p className="text-xs text-slate-500 font-medium">Please review all details before creating the tenant. You can go back and edit any section if needed.</p>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Please review all details before creating the tenant. You can go back and edit any section if needed.</p>
         </div>
         <Button variant="outline" size="sm" className="gap-2 font-bold text-slate-700">
           <Download className="h-4 w-4 text-slate-400" /> Download Summary
         </Button>
       </div>
 
+      {/* 2x2 Grid for Steps 1-4 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider">Company Details</h4>
-            <span className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"><Edit2 className="h-3 w-3" /> Edit</span>
+        {/* Card 1: Company Details */}
+        <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-50 text-purple-600 border border-purple-100 font-bold">
+                <Building2 className="h-4 w-4" />
+              </span>
+              <h4 className="text-sm font-extrabold text-[#0D1F3D]">Company Details</h4>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigateStep(1)}
+              className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"
+            >
+              <Edit2 className="h-3 w-3" /> Edit
+            </button>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs font-medium">
-            <div><span className="text-slate-400 text-[11px] block">Company Name</span><span className="font-bold text-[#0D1F3D]">{formState.companyName || 'Sunrise Healthcare Pvt Ltd'}</span></div>
-            <div><span className="text-slate-400 text-[11px] block">Email</span><span className="font-semibold text-slate-700">info@sunrisehealthcare.com</span></div>
-            <div><span className="text-slate-400 text-[11px] block">Tenant Code</span><span className="font-mono font-bold text-slate-800">SRHC-TNT</span></div>
-            <div><span className="text-slate-400 text-[11px] block">Country</span><span className="font-semibold text-slate-700">India</span></div>
+
+          <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-medium">
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Company Name</span>
+              <span className="font-extrabold text-[#0D1F3D]">{formState.companyName || 'Sunrise Healthcare Pvt Ltd'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Email</span>
+              <span className="font-semibold text-slate-700">{formState.billingContactEmail || 'info@sunrisehealthcare.com'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Legal Name</span>
+              <span className="font-semibold text-slate-700">{formState.legalEntityName || 'Sunrise Healthcare Private Limited'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Phone</span>
+              <span className="font-semibold text-slate-700">{formState.adminPhone ? `+91 ${formState.adminPhone}` : '+91 98765 43210'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Tenant Code</span>
+              <span className="font-mono font-bold text-slate-800">{formState.slug ? `SRHC-${formState.slug.toUpperCase()}` : 'SRHC-TNT'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Country</span>
+              <span className="font-semibold text-slate-700">{formState.country || 'India'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Website</span>
+              <span className="font-semibold text-slate-700 break-all">{formState.domain ? `https://${formState.domain}` : 'https://sunrisehealthcare.com'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">City</span>
+              <span className="font-semibold text-slate-700">Mumbai, Maharashtra</span>
+            </div>
           </div>
         </div>
 
-        <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider">Primary Administrator</h4>
-            <span className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"><Edit2 className="h-3 w-3" /> Edit</span>
+        {/* Card 2: Industry & Profile */}
+        <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 border border-emerald-100 font-bold">
+                <Globe className="h-4 w-4" />
+              </span>
+              <h4 className="text-sm font-extrabold text-[#0D1F3D]">Industry & Profile</h4>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigateStep(2)}
+              className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"
+            >
+              <Edit2 className="h-3 w-3" /> Edit
+            </button>
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs font-medium">
-            <div><span className="text-slate-400 text-[11px] block">Full Name</span><span className="font-bold text-[#0D1F3D]">{formState.adminFullName || 'Rahul Sharma'}</span></div>
-            <div><span className="text-slate-400 text-[11px] block">Email</span><span className="font-semibold text-slate-700">{formState.adminEmail || 'rahul.sharma@sunrisehealthcare.com'}</span></div>
+
+          <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-medium">
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Industry</span>
+              <span className="font-extrabold text-[#0D1F3D]">{formState.industryId || 'Pharma & Healthcare'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Operating Countries</span>
+              <span className="font-semibold text-slate-700">India</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Business Size</span>
+              <span className="font-semibold text-slate-700">{formState.companySize || 'Medium (51 - 250 employees)'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Number of Branches / Locations</span>
+              <span className="font-semibold text-slate-700">6</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Years in Business</span>
+              <span className="font-semibold text-slate-700">5 - 10 Years</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Preferred Currency</span>
+              <span className="font-semibold text-slate-700">INR - Indian Rupee (₹)</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Business Model</span>
+              <span className="font-semibold text-slate-700">B2B</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Preferred Language</span>
+              <span className="font-semibold text-slate-700">English</span>
+            </div>
+            <div className="col-span-2 pt-1 border-t border-slate-100">
+              <span className="text-slate-400 text-[11px] block mb-0.5">Short Description</span>
+              <span className="font-medium text-slate-600 text-[11px]">Pharmaceutical distribution and healthcare solutions provider across western India.</span>
+            </div>
           </div>
+        </div>
+
+        {/* Card 3: Administrator */}
+        <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-blue-50 text-blue-600 border border-blue-100 font-bold">
+                <User className="h-4 w-4" />
+              </span>
+              <h4 className="text-sm font-extrabold text-[#0D1F3D]">Administrator</h4>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigateStep(3)}
+              className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"
+            >
+              <Edit2 className="h-3 w-3" /> Edit
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-medium">
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Full Name</span>
+              <span className="font-extrabold text-[#0D1F3D]">{formState.adminFullName || 'Rahul Sharma'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Email</span>
+              <span className="font-semibold text-slate-700">{formState.adminEmail || 'rahul.sharma@sunrisehealthcare.com'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Username</span>
+              <span className="font-semibold text-slate-700">{formState.adminEmail || 'rahul.sharma@sunrisehealthcare.com'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Phone</span>
+              <span className="font-semibold text-slate-700">{formState.adminPhone ? `+91 ${formState.adminPhone}` : '+91 98765 43210'}</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Designation</span>
+              <span className="font-semibold text-slate-700">CEO</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Time Zone</span>
+              <span className="font-semibold text-slate-700">(GMT+05:30) Asia/Kolkata</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Department</span>
+              <span className="font-semibold text-slate-700">Administration</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Language</span>
+              <span className="font-semibold text-slate-700">English</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Plan & Subscription */}
+        <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-amber-50 text-amber-600 border border-amber-100 font-bold">
+                <CreditCard className="h-4 w-4" />
+              </span>
+              <h4 className="text-sm font-extrabold text-[#0D1F3D]">Plan & Subscription</h4>
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigateStep(4)}
+              className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"
+            >
+              <Edit2 className="h-3 w-3" /> Edit
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-medium">
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Plan</span>
+              <span className="font-extrabold text-[#0D1F3D]">Professional (Yearly)</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Subscription Start Date</span>
+              <span className="font-semibold text-slate-700">24 May 2025</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Billing Cycle</span>
+              <span className="font-semibold text-slate-700">Yearly</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Auto Renew</span>
+              <span className="inline-flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-sm border border-emerald-200 text-[10px]">
+                <Check className="h-3 w-3" /> Enabled
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Users / Seats Limit</span>
+              <span className="font-semibold text-slate-700">150</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Trial Period</span>
+              <span className="font-semibold text-slate-700">0 Days</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Storage Limit</span>
+              <span className="font-semibold text-slate-700">200 GB</span>
+            </div>
+            <div>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Grace Period</span>
+              <span className="font-semibold text-slate-700">7 Days</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Full Width Card 5: Modules */}
+      <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-4 shadow-xs">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 border border-emerald-100 font-bold">
+              <Layers className="h-4 w-4" />
+            </span>
+            <h4 className="text-sm font-extrabold text-[#0D1F3D]">Modules</h4>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigateStep(5)}
+            className="text-xs font-bold text-indigo-600 hover:underline cursor-pointer flex items-center gap-1"
+          >
+            <Edit2 className="h-3 w-3" /> Edit
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs">
+          <div>
+            <p className="font-extrabold text-[#0D1F3D] mb-2.5">Core Modules (5)</p>
+            <ul className="space-y-2 font-medium text-slate-700">
+              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Jobs & Work Management</li>
+              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Field Workforce</li>
+              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Attendance & Time Tracking</li>
+              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Forms & Surveys</li>
+              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Photos & Documents</li>
+            </ul>
+          </div>
+
+          <div>
+            <p className="font-extrabold text-[#0D1F3D] mb-2.5">Advanced Modules (4)</p>
+            <ul className="space-y-2 font-medium text-slate-700">
+              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Reports & Analytics</li>
+              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Task Management</li>
+              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Notifications</li>
+              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Chat & Messaging</li>
+            </ul>
+          </div>
+
+          <div>
+            <p className="font-extrabold text-[#0D1F3D] mb-2.5">Integrations (1)</p>
+            <ul className="space-y-2 font-medium text-slate-700">
+              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> GPS & Location Tracking</li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-3">
+          <span className="text-xs font-bold text-slate-600">Total Enabled Modules</span>
+          <span className="rounded-sm bg-purple-100 px-3 py-1 text-xs font-extrabold text-purple-700 border border-purple-200">
+            10 Modules
+          </span>
+        </div>
+      </div>
+
+      {/* Full Width Card 6: Subscription Cost (Yearly) */}
+      <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-4 shadow-xs">
+        <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-50 text-purple-600 border border-purple-100 font-bold">
+            <CreditCard className="h-4 w-4" />
+          </span>
+          <h4 className="text-sm font-extrabold text-[#0D1F3D]">Subscription Cost (Yearly)</h4>
+        </div>
+
+        <div className="space-y-2 text-xs">
+          <div className="flex items-center justify-between text-slate-600 font-medium">
+            <span>Plan Amount</span>
+            <span className="font-extrabold text-[#0D1F3D]">₹3,59,988</span>
+          </div>
+
+          <div className="flex items-center justify-between text-slate-600 font-medium">
+            <span>Taxes (18%)</span>
+            <span className="font-extrabold text-[#0D1F3D]">₹64,798</span>
+          </div>
+
+          <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
+            <span className="text-sm font-extrabold text-[#0D1F3D]">Total (Yearly)</span>
+            <span className="text-xl font-extrabold text-indigo-600">₹4,24,786</span>
+          </div>
+        </div>
+
+        <div className="rounded-sm bg-emerald-50 p-3 border border-emerald-200 text-xs text-emerald-800 font-semibold flex items-center gap-2">
+          <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>All amounts are in INR. Taxes are calculated as per applicable rates.</span>
         </div>
       </div>
     </div>
@@ -1039,7 +1327,7 @@ export function CreateTenantWizardPage() {
             {currentStep === 3 && <Step3Administrator />}
             {currentStep === 4 && <Step4PlanSubscription />}
             {currentStep === 5 && <Step5Modules />}
-            {currentStep === 6 && <Step6ReviewConfirm />}
+            {currentStep === 6 && <Step6ReviewConfirm onNavigateStep={(step) => setCurrentStep(step)} />}
 
             {/* Bottom Action Navigation Footer */}
             <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
@@ -1083,63 +1371,111 @@ export function CreateTenantWizardPage() {
                 Tenant Creation Summary
               </h3>
 
-              <div className="space-y-3">
+              <div className="space-y-3.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-50 text-purple-600 font-bold"><Building2 className="h-4 w-4" /></span>
+                    <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-50 text-purple-600 font-bold border border-purple-100"><Building2 className="h-4 w-4" /></span>
                     <div>
                       <p className="font-extrabold text-[#0D1F3D]">Company</p>
                       <p className="text-[11px] text-slate-500 font-medium">{formState.companyName || 'Sunrise Healthcare Pvt Ltd'}</p>
                     </div>
                   </div>
-                  <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" />
+                  {currentStep === 6 ? (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" /></span>
+                  ) : (
+                    <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => setCurrentStep(1)} />
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 font-bold"><Globe className="h-4 w-4" /></span>
+                    <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 font-bold border border-emerald-100"><Globe className="h-4 w-4" /></span>
                     <div>
                       <p className="font-extrabold text-[#0D1F3D]">Industry</p>
                       <p className="text-[11px] text-slate-500 font-medium">{formState.industryId || 'Pharma & Healthcare'}</p>
                     </div>
                   </div>
-                  <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" />
+                  {currentStep === 6 ? (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" /></span>
+                  ) : (
+                    <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => setCurrentStep(2)} />
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 font-bold"><User className="h-4 w-4" /></span>
+                    <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-blue-50 text-blue-600 font-bold border border-blue-100"><User className="h-4 w-4" /></span>
                     <div>
                       <p className="font-extrabold text-[#0D1F3D]">Administrator</p>
                       <p className="text-[11px] text-slate-500 font-medium">{formState.adminFullName || 'Rahul Sharma'}</p>
                     </div>
                   </div>
-                  <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" />
+                  {currentStep === 6 ? (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" /></span>
+                  ) : (
+                    <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => setCurrentStep(3)} />
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600 font-bold"><CreditCard className="h-4 w-4" /></span>
+                    <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-amber-50 text-amber-600 font-bold border border-amber-100"><CreditCard className="h-4 w-4" /></span>
                     <div>
                       <p className="font-extrabold text-[#0D1F3D]">Plan & Subscription</p>
                       <p className="text-[11px] text-slate-500 font-medium">{formState.planId || 'Professional (Yearly)'}</p>
                     </div>
                   </div>
-                  <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" />
+                  {currentStep === 6 ? (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" /></span>
+                  ) : (
+                    <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => setCurrentStep(4)} />
+                  )}
                 </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-50 text-purple-600 font-bold border border-purple-100"><Layers className="h-4 w-4" /></span>
+                    <div>
+                      <p className="font-extrabold text-[#0D1F3D]">Modules</p>
+                      <p className="text-[11px] text-slate-500 font-medium">10 modules selected</p>
+                    </div>
+                  </div>
+                  {currentStep === 6 ? (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" /></span>
+                  ) : (
+                    <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => setCurrentStep(5)} />
+                  )}
+                </div>
+
+                {currentStep === 6 && (
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-indigo-50 text-indigo-600 font-bold border border-indigo-100"><Shield className="h-4 w-4" /></span>
+                      <div>
+                        <p className="font-extrabold text-[#0D1F3D]">Review & Confirm</p>
+                        <p className="text-[11px] text-slate-500 font-medium">Ready to create</p>
+                      </div>
+                    </div>
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white font-extrabold text-[10px]">6</span>
+                  </div>
+                )}
               </div>
 
-              {/* What happens next? card */}
+              {/* Ready to create tenant? box */}
               <div className="rounded-sm bg-[#F4F0FF] p-5 border border-purple-100 space-y-3">
                 <p className="font-extrabold text-purple-950 text-xs flex items-center gap-1.5">
-                  <Sparkles className="h-4 w-4 text-purple-600" /> What happens next?
+                  <Sparkles className="h-4 w-4 text-purple-600" /> {currentStep === 6 ? 'Ready to create tenant?' : 'What happens next?'}
                 </p>
-                <p className="text-[11px] text-purple-900 font-medium">After creating the tenant, you will be able to:</p>
+                <p className="text-[11px] text-purple-900 font-medium">
+                  {currentStep === 6
+                    ? 'Once you create the tenant, the administrator will receive an email with workspace access details.'
+                    : 'After creating the tenant, you will be able to:'}
+                </p>
                 <ul className="space-y-1.5 text-[11px] text-purple-900 font-medium">
-                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Invite team members</li>
-                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Configure workspace settings</li>
-                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Manage modules and features</li>
-                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Monitor usage and billing</li>
+                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Tenant workspace will be provisioned</li>
+                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Administrator will be notified via email</li>
+                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> You can start onboarding users</li>
+                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> You can manage settings anytime</li>
                 </ul>
               </div>
             </div>
