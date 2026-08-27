@@ -16,19 +16,12 @@ import {
   MoreVertical,
   ChevronLeft,
   ChevronRight,
-  Sun,
-  Activity,
-  Box,
-  Cpu,
-  Layers,
-  ArrowRight,
   Eye,
   Edit,
   Trash2,
-  ShieldAlert,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { Checkbox } from '../../components/ui/Checkbox';
+import { KpiCard } from '../../components/dashboard/KpiCard';
 
 export function AllTenantsPage() {
   const navigate = useNavigate();
@@ -38,17 +31,7 @@ export function AllTenantsPage() {
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
-  // 6 KPI Summary Cards
-  const kpis = [
-    { title: 'Total Tenants', value: '128', change: '↑ 12 this month', color: 'text-blue-600 bg-blue-50 border-blue-100', icon: Building2 },
-    { title: 'Active Tenants', value: '102', change: '79.7% of total', color: 'text-emerald-600 bg-emerald-50 border-emerald-100', icon: CheckCircle2 },
-    { title: 'Trial Tenants', value: '18', change: '14.1% of total', color: 'text-amber-600 bg-amber-50 border-amber-100', icon: Clock },
-    { title: 'Suspended Tenants', value: '6', change: '4.7% of total', color: 'text-rose-600 bg-rose-50 border-rose-100', icon: AlertOctagon },
-    { title: 'Total SaaS Users', value: '2,845', change: '↑ 156 this month', color: 'text-purple-600 bg-purple-50 border-purple-100', icon: Users },
-    { title: 'MRR', value: '₹28,74,320', change: '↑ 18.6% vs last month', color: 'text-sky-600 bg-sky-50 border-sky-100', icon: TrendingUp },
-  ];
-
-  // Tenants Mock Data (Matching All Tenants Page.png)
+  // Tenants Mock Data
   const tenantsList = [
     { id: '1', name: 'Sunrise Solar Pvt Ltd', domain: 'sunrisesolar.smartfieldwork.com', code: 'SFW-TNT-00124', industry: 'Solar', plan: 'Growth', users: '18 / 25', mrr: '₹14,999', status: 'Active', createdOn: '24 Aug 2025', iconBg: 'bg-amber-100 text-amber-600' },
     { id: '2', name: 'Genix Pharma Pvt Ltd', domain: 'genixpharma.smartfieldwork.com', code: 'SFW-TNT-00123', industry: 'Pharma', plan: 'Growth', users: '35 / 50', mrr: '₹24,999', status: 'Active', createdOn: '22 Aug 2025', iconBg: 'bg-rose-100 text-rose-600' },
@@ -68,9 +51,6 @@ export function AllTenantsPage() {
     { name: 'FMCG', count: 20, percentage: '15.6%', color: 'bg-emerald-500' },
     { name: 'Distributors', count: 18, percentage: '14.1%', color: 'bg-indigo-500' },
     { name: 'Manufacturing', count: 16, percentage: '12.5%', color: 'bg-teal-500' },
-    { name: 'Solar', count: 12, percentage: '9.4%', color: 'bg-amber-500' },
-    { name: 'Services', count: 10, percentage: '7.8%', color: 'bg-rose-500' },
-    { name: 'Other', count: 28, percentage: '21.9%', color: 'bg-slate-400' },
   ];
 
   // Plan donut legend
@@ -99,7 +79,7 @@ export function AllTenantsPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Header Row */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-extrabold text-[#0D1F3D]">All Tenants</h1>
@@ -123,36 +103,72 @@ export function AllTenantsPage() {
             variant="accent"
             size="sm"
             onClick={() => navigate('/platform/tenants/create')}
-            className="gap-2 font-bold shadow-sm"
+            className="gap-2 font-bold shadow-xs"
           >
             <Plus className="h-4 w-4" /> Create Tenant
           </Button>
         </div>
       </div>
 
-      {/* Top 6 KPI Cards */}
+      {/* Top 6 KPI Summary Cards (Reusing KpiCard Component 100%) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
-        {kpis.map((kpi, idx) => {
-          const Icon = kpi.icon;
-          return (
-            <div key={idx} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs hover:shadow-md transition">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-500">{kpi.title}</span>
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl border ${kpi.color}`}>
-                  <Icon className="h-4.5 w-4.5" />
-                </div>
-              </div>
-              <p className="text-2xl font-extrabold text-[#0D1F3D]">{kpi.value}</p>
-              <p className="mt-1 text-[11px] font-bold text-slate-500">{kpi.change}</p>
-            </div>
-          );
-        })}
+        <KpiCard
+          title="Total Tenants"
+          value="128"
+          change="12 this month"
+          changeType="positive"
+          icon={Building2}
+          iconBgColor="bg-blue-50"
+          iconTextColor="text-blue-700"
+        />
+        <KpiCard
+          title="Active Tenants"
+          value="102"
+          subValue="79.7% of total"
+          icon={CheckCircle2}
+          iconBgColor="bg-emerald-50"
+          iconTextColor="text-emerald-700"
+        />
+        <KpiCard
+          title="Trial Tenants"
+          value="18"
+          subValue="14.1% of total"
+          icon={Clock}
+          iconBgColor="bg-amber-50"
+          iconTextColor="text-amber-700"
+        />
+        <KpiCard
+          title="Suspended Tenants"
+          value="6"
+          subValue="4.7% of total"
+          icon={AlertOctagon}
+          iconBgColor="bg-red-50"
+          iconTextColor="text-[#E20613]"
+        />
+        <KpiCard
+          title="Total SaaS Users"
+          value="2,845"
+          change="156 this month"
+          changeType="positive"
+          icon={Users}
+          iconBgColor="bg-purple-50"
+          iconTextColor="text-purple-700"
+        />
+        <KpiCard
+          title="MRR"
+          value="₹28,74,320"
+          change="18.6%"
+          changeType="positive"
+          timeframe="vs last month"
+          icon={TrendingUp}
+          iconBgColor="bg-emerald-50"
+          iconTextColor="text-emerald-700"
+        />
       </div>
 
       {/* Filters Bar */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
+      <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          {/* Search Box */}
           <div className="relative flex-1 min-w-[280px]">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -160,30 +176,26 @@ export function AllTenantsPage() {
               placeholder="Search tenants by name, code, domain, email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
+              className="h-10 w-full rounded-sm border border-slate-200 bg-slate-50/50 pl-10 pr-4 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
             />
           </div>
 
-          {/* Industry Filter Dropdown */}
           <select
             value={selectedIndustry}
             onChange={(e) => setSelectedIndustry(e.target.value)}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-none cursor-pointer min-w-[140px]"
+            className="h-10 rounded-sm border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-none cursor-pointer min-w-[140px]"
           >
             <option value="All">All Industries</option>
             <option value="Pharma">Pharma</option>
             <option value="FMCG">FMCG</option>
             <option value="Distributors">Distributors</option>
             <option value="Solar">Solar</option>
-            <option value="Manufacturing">Manufacturing</option>
-            <option value="Services">Services</option>
           </select>
 
-          {/* Plan Filter Dropdown */}
           <select
             value={selectedPlan}
             onChange={(e) => setSelectedPlan(e.target.value)}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-none cursor-pointer min-w-[130px]"
+            className="h-10 rounded-sm border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-none cursor-pointer min-w-[130px]"
           >
             <option value="All">All Plans</option>
             <option value="Enterprise">Enterprise</option>
@@ -192,11 +204,10 @@ export function AllTenantsPage() {
             <option value="Starter">Starter</option>
           </select>
 
-          {/* Status Filter Dropdown */}
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="h-10 rounded-xl border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-none cursor-pointer min-w-[130px]"
+            className="h-10 rounded-sm border border-slate-200 bg-white px-3.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-none cursor-pointer min-w-[130px]"
           >
             <option value="All">All Statuses</option>
             <option value="Active">Active</option>
@@ -205,7 +216,6 @@ export function AllTenantsPage() {
             <option value="Suspended">Suspended</option>
           </select>
 
-          {/* Filter Actions */}
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="gap-2 font-bold text-slate-700 h-10">
               <Filter className="h-4 w-4 text-slate-400" /> More Filters
@@ -227,10 +237,9 @@ export function AllTenantsPage() {
         </div>
       </div>
 
-      {/* Main Content Layout: Table Left (2 Cols) + Analytics Right (1 Col) */}
+      {/* Main Content Layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Table Section */}
-        <div className="lg:col-span-2 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-2 rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-[#0D1F3D]">All Tenants</h3>
@@ -239,7 +248,6 @@ export function AllTenantsPage() {
               </span>
             </div>
 
-            {/* 100% Full-Width Data Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs whitespace-nowrap">
                 <thead>
@@ -262,7 +270,7 @@ export function AllTenantsPage() {
                       <td className="py-3.5 text-slate-400 font-semibold">{idx + 1}</td>
                       <td className="py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-bold ${t.iconBg}`}>
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm font-bold ${t.iconBg}`}>
                             {t.name[0]}
                           </div>
                           <div>
@@ -287,32 +295,31 @@ export function AllTenantsPage() {
                         <button
                           type="button"
                           onClick={() => setActiveMenuId(activeMenuId === t.id ? null : t.id)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
                         >
                           <MoreVertical className="h-4 w-4" />
                         </button>
 
-                        {/* Three-Dots Floating Popover Menu */}
                         {activeMenuId === t.id && (
-                          <div className="absolute right-0 top-full z-30 mt-1 w-44 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95">
+                          <div className="absolute right-0 top-full z-30 mt-1 w-44 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95">
                             <button
                               type="button"
                               onClick={() => { setActiveMenuId(null); navigate(`/platform/tenants/${t.id}`); }}
-                              className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                              className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                             >
                               <Eye className="h-4 w-4 text-blue-600" /> View Details
                             </button>
                             <button
                               type="button"
                               onClick={() => { setActiveMenuId(null); navigate(`/platform/tenants/${t.id}/edit`); }}
-                              className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                              className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                             >
                               <Edit className="h-4 w-4 text-emerald-600" /> Edit Tenant
                             </button>
                             <button
                               type="button"
                               onClick={() => setActiveMenuId(null)}
-                              className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                              className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50"
                             >
                               <Trash2 className="h-4 w-4" /> Delete Tenant
                             </button>
@@ -325,11 +332,10 @@ export function AllTenantsPage() {
               </table>
             </div>
 
-            {/* Bottom Pagination Bar */}
             <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-4 text-xs font-medium text-slate-500">
               <div className="flex items-center gap-2">
                 <span>Rows per page:</span>
-                <select className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 focus:outline-none">
+                <select className="rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold text-slate-700 focus:outline-none">
                   <option>25</option>
                   <option>50</option>
                   <option>100</option>
@@ -338,13 +344,13 @@ export function AllTenantsPage() {
 
               <div className="flex items-center gap-1">
                 <span>1-25 of 128</span>
-                <button type="button" className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></button>
-                <button type="button" className="h-8 w-8 rounded-lg bg-blue-600 text-white font-bold flex items-center justify-center">1</button>
-                <button type="button" className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">2</button>
-                <button type="button" className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">3</button>
-                <button type="button" className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">4</button>
-                <button type="button" className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">5</button>
-                <button type="button" className="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></button>
+                <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></button>
+                <button type="button" className="h-8 w-8 rounded-sm bg-blue-600 text-white font-bold flex items-center justify-center">1</button>
+                <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">2</button>
+                <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">3</button>
+                <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">4</button>
+                <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">5</button>
+                <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></button>
               </div>
             </div>
           </div>
@@ -352,8 +358,7 @@ export function AllTenantsPage() {
 
         {/* Right Analytics Widgets Column */}
         <div className="space-y-6">
-          {/* Tenants by Industry Donut Chart */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs">
             <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">Tenants by Industry</h3>
             <div className="flex items-center gap-4">
               <div className="relative flex h-28 w-28 shrink-0 items-center justify-center">
@@ -369,7 +374,7 @@ export function AllTenantsPage() {
                 </div>
               </div>
               <div className="flex-1 space-y-1">
-                {industries.slice(0, 4).map((ind, idx) => (
+                {industries.map((ind, idx) => (
                   <div key={idx} className="flex items-center justify-between text-[11px] font-semibold">
                     <div className="flex items-center gap-1.5">
                       <span className={`h-2 w-2 rounded-full ${ind.color}`} />
@@ -382,8 +387,7 @@ export function AllTenantsPage() {
             </div>
           </div>
 
-          {/* Tenants by Plan Donut Chart */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs">
             <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">Tenants by Plan</h3>
             <div className="flex items-center gap-4">
               <div className="relative flex h-28 w-28 shrink-0 items-center justify-center">
@@ -407,42 +411,6 @@ export function AllTenantsPage() {
                     <span className="text-[#0D1F3D] font-bold">{pl.count} ({pl.percentage})</span>
                   </div>
                 ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Tenant Status Overview Progress Bars */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3">
-            <h3 className="text-sm font-bold text-[#0D1F3D]">Tenant Status Overview</h3>
-            <div className="space-y-2">
-              <div>
-                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-                  <span>Active</span>
-                  <span>102 (79.7%)</span>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: '79.7%' }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-                  <span>Trial</span>
-                  <span>18 (14.1%)</span>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-amber-500 rounded-full" style={{ width: '14.1%' }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-                  <span>Suspended</span>
-                  <span>6 (4.7%)</span>
-                </div>
-                <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-rose-500 rounded-full" style={{ width: '4.7%' }} />
-                </div>
               </div>
             </div>
           </div>

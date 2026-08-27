@@ -23,57 +23,12 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { KpiCard } from '../../components/dashboard/KpiCard';
 
 export function PlatformDashboardPage() {
   const navigate = useNavigate();
   const [dateRange, setDateRange] = useState('May 20 - Jun 18, 2025');
   const [mrrTimeframe, setMrrTimeframe] = useState('Last 30 Days');
-
-  // KPI summary statistics
-  const kpis = [
-    {
-      title: 'Total Tenants',
-      value: '128',
-      change: '↑ 12 this month',
-      color: 'text-blue-600 bg-blue-50 border-blue-100',
-      icon: Building2,
-    },
-    {
-      title: 'Active Tenants',
-      value: '102',
-      change: '79.7% of total',
-      color: 'text-emerald-600 bg-emerald-50 border-emerald-100',
-      icon: CheckCircle2,
-    },
-    {
-      title: 'Trial Tenants',
-      value: '18',
-      change: '14.1% of total',
-      color: 'text-amber-600 bg-amber-50 border-amber-100',
-      icon: Clock,
-    },
-    {
-      title: 'Suspended Tenants',
-      value: '6',
-      change: '4.7% of total',
-      color: 'text-rose-600 bg-rose-50 border-rose-100',
-      icon: AlertOctagon,
-    },
-    {
-      title: 'Total SaaS Users',
-      value: '2,845',
-      change: '↑ 156 this month',
-      color: 'text-purple-600 bg-purple-50 border-purple-100',
-      icon: Users,
-    },
-    {
-      title: 'MRR',
-      value: '₹28,74,320',
-      change: '↑ 18.6% vs last month',
-      color: 'text-sky-600 bg-sky-50 border-sky-100',
-      icon: TrendingUp,
-    },
-  ];
 
   // Industry breakdown donut data
   const industries = [
@@ -133,7 +88,7 @@ export function PlatformDashboardPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Header Row */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-5">
         <div>
           <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Platform Dashboard</h1>
           <p className="text-xs font-medium text-slate-500">
@@ -142,53 +97,85 @@ export function PlatformDashboardPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Date Range Picker Button */}
           <button
             type="button"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition"
+            className="inline-flex items-center gap-2 rounded-sm border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition"
           >
             <Calendar className="h-4 w-4 text-slate-400" />
             <span>{dateRange}</span>
           </button>
 
-          {/* Export Report Button */}
           <Button
             variant="accent"
             size="sm"
             onClick={() => navigate('/platform/reports')}
-            className="gap-2 font-bold shadow-sm"
+            className="gap-2 font-bold shadow-xs"
           >
             <Download className="h-4 w-4" /> Export Report
           </Button>
         </div>
       </div>
 
-      {/* Top 6 KPI Summary Cards */}
+      {/* Top 6 KPI Summary Cards (Reusing KpiCard Component 100%) */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
-        {kpis.map((kpi, idx) => {
-          const Icon = kpi.icon;
-          return (
-            <div
-              key={idx}
-              className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs hover:shadow-md transition"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-slate-500">{kpi.title}</span>
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl border ${kpi.color}`}>
-                  <Icon className="h-4.5 w-4.5" />
-                </div>
-              </div>
-              <p className="text-2xl font-extrabold text-[#0D1F3D]">{kpi.value}</p>
-              <p className="mt-1 text-[11px] font-bold text-slate-500">{kpi.change}</p>
-            </div>
-          );
-        })}
+        <KpiCard
+          title="Total Tenants"
+          value="128"
+          change="12 this month"
+          changeType="positive"
+          icon={Building2}
+          iconBgColor="bg-blue-50"
+          iconTextColor="text-blue-700"
+        />
+        <KpiCard
+          title="Active Tenants"
+          value="102"
+          subValue="79.7% of total"
+          icon={CheckCircle2}
+          iconBgColor="bg-emerald-50"
+          iconTextColor="text-emerald-700"
+        />
+        <KpiCard
+          title="Trial Tenants"
+          value="18"
+          subValue="14.1% of total"
+          icon={Clock}
+          iconBgColor="bg-amber-50"
+          iconTextColor="text-amber-700"
+        />
+        <KpiCard
+          title="Suspended Tenants"
+          value="6"
+          subValue="4.7% of total"
+          icon={AlertOctagon}
+          iconBgColor="bg-red-50"
+          iconTextColor="text-[#E20613]"
+        />
+        <KpiCard
+          title="Total SaaS Users"
+          value="2,845"
+          change="156 this month"
+          changeType="positive"
+          icon={Users}
+          iconBgColor="bg-purple-50"
+          iconTextColor="text-purple-700"
+        />
+        <KpiCard
+          title="MRR"
+          value="₹28,74,320"
+          change="18.6%"
+          changeType="positive"
+          timeframe="vs last month"
+          icon={TrendingUp}
+          iconBgColor="bg-emerald-50"
+          iconTextColor="text-emerald-700"
+        />
       </div>
 
       {/* Middle Row 1: Charts (MRR Trend, Tenants by Industry, Tenants by Plan) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* MRR Trend Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-1.5">
@@ -199,7 +186,7 @@ export function PlatformDashboardPage() {
                 <select
                   value={mrrTimeframe}
                   onChange={(e) => setMrrTimeframe(e.target.value)}
-                  className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
+                  className="rounded-sm border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option>Last 30 Days</option>
                   <option>Last 90 Days</option>
@@ -222,18 +209,14 @@ export function PlatformDashboardPage() {
                     <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
-                {/* Y Gridlines */}
                 <line x1="0" y1="20" x2="400" y2="20" stroke="#F1F5F9" strokeDasharray="4 4" />
                 <line x1="0" y1="60" x2="400" y2="60" stroke="#F1F5F9" strokeDasharray="4 4" />
                 <line x1="0" y1="100" x2="400" y2="100" stroke="#F1F5F9" strokeDasharray="4 4" />
 
-                {/* Area */}
                 <path
                   d="M0,80 Q50,75 100,70 T200,55 T300,45 T400,30 L400,120 L0,120 Z"
                   fill="url(#mrrGrad)"
                 />
-
-                {/* Line */}
                 <path
                   d="M0,80 Q50,75 100,70 T200,55 T300,45 T400,30"
                   fill="none"
@@ -241,7 +224,6 @@ export function PlatformDashboardPage() {
                   strokeWidth="3"
                 />
 
-                {/* Dots */}
                 <circle cx="0" cy="80" r="4" fill="#2563EB" stroke="#fff" strokeWidth="2" />
                 <circle cx="100" cy="70" r="4" fill="#2563EB" stroke="#fff" strokeWidth="2" />
                 <circle cx="200" cy="55" r="4" fill="#2563EB" stroke="#fff" strokeWidth="2" />
@@ -249,7 +231,6 @@ export function PlatformDashboardPage() {
                 <circle cx="400" cy="30" r="4" fill="#2563EB" stroke="#fff" strokeWidth="2" />
               </svg>
 
-              {/* X Axis Labels */}
               <div className="flex justify-between pt-2 text-[10px] font-semibold text-slate-400">
                 <span>May 20</span>
                 <span>May 27</span>
@@ -262,51 +243,17 @@ export function PlatformDashboardPage() {
         </div>
 
         {/* Tenants by Industry Donut Chart Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">Tenants by Industry</h3>
 
             <div className="flex items-center gap-6">
-              {/* Donut graphic */}
               <div className="relative flex h-36 w-36 shrink-0 items-center justify-center">
                 <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#E2E8F0"
-                    strokeWidth="4"
-                  />
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                    fill="none"
-                    stroke="#2563EB"
-                    strokeWidth="4.5"
-                    strokeDasharray="25, 100"
-                  />
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                    fill="none"
-                    stroke="#10B981"
-                    strokeWidth="4.5"
-                    strokeDasharray="20, 100"
-                    strokeDashoffset="-25"
-                  />
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                    fill="none"
-                    stroke="#F59E0B"
-                    strokeWidth="4.5"
-                    strokeDasharray="18, 100"
-                    strokeDashoffset="-45"
-                  />
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                    fill="none"
-                    stroke="#EF4444"
-                    strokeWidth="4.5"
-                    strokeDasharray="15, 100"
-                    strokeDashoffset="-63"
-                  />
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E2E8F0" strokeWidth="4" />
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#2563EB" strokeWidth="4.5" strokeDasharray="25, 100" />
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#10B981" strokeWidth="4.5" strokeDasharray="20, 100" strokeDashoffset="-25" />
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#F59E0B" strokeWidth="4.5" strokeDasharray="18, 100" strokeDashoffset="-45" />
                 </svg>
                 <div className="absolute flex flex-col items-center text-center">
                   <span className="text-xl font-extrabold text-[#0D1F3D]">128</span>
@@ -314,7 +261,6 @@ export function PlatformDashboardPage() {
                 </div>
               </div>
 
-              {/* Legend List */}
               <div className="flex-1 space-y-1.5">
                 {industries.slice(0, 5).map((ind, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs font-semibold">
@@ -343,51 +289,16 @@ export function PlatformDashboardPage() {
         </div>
 
         {/* Tenants by Plan Donut Chart Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">Tenants by Plan</h3>
 
             <div className="flex items-center gap-6">
-              {/* Donut graphic */}
               <div className="relative flex h-36 w-36 shrink-0 items-center justify-center">
                 <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    fill="none"
-                    stroke="#E2E8F0"
-                    strokeWidth="4"
-                  />
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                    fill="none"
-                    stroke="#2563EB"
-                    strokeWidth="4.5"
-                    strokeDasharray="36, 100"
-                  />
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                    fill="none"
-                    stroke="#10B981"
-                    strokeWidth="4.5"
-                    strokeDasharray="26, 100"
-                    strokeDashoffset="-36"
-                  />
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                    fill="none"
-                    stroke="#F59E0B"
-                    strokeWidth="4.5"
-                    strokeDasharray="25, 100"
-                    strokeDashoffset="-62"
-                  />
-                  <path
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831"
-                    fill="none"
-                    stroke="#EF4444"
-                    strokeWidth="4.5"
-                    strokeDasharray="13, 100"
-                    strokeDashoffset="-87"
-                  />
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#E2E8F0" strokeWidth="4" />
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#2563EB" strokeWidth="4.5" strokeDasharray="36, 100" />
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831" fill="none" stroke="#10B981" strokeWidth="4.5" strokeDasharray="26, 100" strokeDashoffset="-36" />
                 </svg>
                 <div className="absolute flex flex-col items-center text-center">
                   <span className="text-xl font-extrabold text-[#0D1F3D]">128</span>
@@ -395,7 +306,6 @@ export function PlatformDashboardPage() {
                 </div>
               </div>
 
-              {/* Legend List */}
               <div className="flex-1 space-y-2">
                 {plans.map((pl, idx) => (
                   <div key={idx} className="flex items-center justify-between text-xs font-semibold">
@@ -427,7 +337,7 @@ export function PlatformDashboardPage() {
       {/* Middle Row 2: Recent Signups, Renewals, Status Overview + Quick Actions */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Recent Tenant Signups Table */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-[#0D1F3D] mb-3">Recent Tenant Signups</h3>
             <div className="overflow-x-auto">
@@ -470,7 +380,7 @@ export function PlatformDashboardPage() {
         </div>
 
         {/* Upcoming Renewals Table */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex flex-col justify-between">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
           <div>
             <h3 className="text-sm font-bold text-[#0D1F3D] mb-3">Upcoming Renewals</h3>
             <div className="overflow-x-auto">
@@ -510,8 +420,7 @@ export function PlatformDashboardPage() {
 
         {/* Tenant Status Overview + Quick Actions */}
         <div className="flex flex-col gap-6">
-          {/* Status Progress Bars */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-3">
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
             <h3 className="text-sm font-bold text-[#0D1F3D]">Tenant Status Overview</h3>
             <div className="space-y-2.5">
               <div>
@@ -543,16 +452,6 @@ export function PlatformDashboardPage() {
                   <div className="h-full bg-rose-500 rounded-full" style={{ width: '4.7%' }} />
                 </div>
               </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold text-slate-700 mb-1">
-                  <span>Cancelled</span>
-                  <span>2 (1.6%)</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-slate-400 rounded-full" style={{ width: '1.6%' }} />
-                </div>
-              </div>
             </div>
 
             <div className="pt-2 text-center">
@@ -566,8 +465,7 @@ export function PlatformDashboardPage() {
             </div>
           </div>
 
-          {/* Quick Actions Panel */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs space-y-2">
+          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-2">
             <h4 className="text-xs font-extrabold text-[#0D1F3D] px-2 mb-1 uppercase tracking-wider">
               Quick Actions
             </h4>
@@ -582,142 +480,10 @@ export function PlatformDashboardPage() {
             <button
               type="button"
               onClick={() => navigate('/platform/tenants')}
-              className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
+              className="w-full flex items-center justify-between rounded-sm border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
             >
               <span className="flex items-center gap-2"><Building2 className="h-3.5 w-3.5 text-slate-500" /> All Tenants</span>
               <ChevronDown className="h-3.5 w-3.5 text-slate-400 -rotate-90" />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/platform/plans')}
-              className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
-            >
-              <span className="flex items-center gap-2"><Tag className="h-3.5 w-3.5 text-slate-500" /> Manage Plans</span>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-400 -rotate-90" />
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate('/platform/tenants/requests')}
-              className="w-full flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
-            >
-              <span className="flex items-center gap-2">
-                <FileText className="h-3.5 w-3.5 text-slate-500" /> Tenant Requests
-              </span>
-              <span className="rounded-full bg-red-500 px-1.5 py-0.2 text-[10px] font-extrabold text-white">8</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Row: Platform Usage, Top Active Tenants, Recent Platform Activity */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Platform Usage Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-[#0D1F3D]">Platform Usage</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold text-slate-500">Users</p>
-              <p className="text-lg font-extrabold text-[#0D1F3D]">2,845 / 5,000</p>
-              <p className="text-[10px] font-bold text-blue-600 mt-1">56.9%</p>
-              <div className="h-1.5 w-full rounded-full bg-slate-200 mt-1">
-                <div className="h-full bg-blue-600 rounded-full" style={{ width: '56.9%' }} />
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold text-slate-500">Storage</p>
-              <p className="text-lg font-extrabold text-[#0D1F3D]">284.6 GB / 1 TB</p>
-              <p className="text-[10px] font-bold text-emerald-600 mt-1">27.8%</p>
-              <div className="h-1.5 w-full rounded-full bg-slate-200 mt-1">
-                <div className="h-full bg-emerald-500 rounded-full" style={{ width: '27.8%' }} />
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold text-slate-500">AI Credits</p>
-              <p className="text-lg font-extrabold text-[#0D1F3D]">45,320 / 100k</p>
-              <p className="text-[10px] font-bold text-purple-600 mt-1">45.3%</p>
-              <div className="h-1.5 w-full rounded-full bg-slate-200 mt-1">
-                <div className="h-full bg-purple-500 rounded-full" style={{ width: '45.3%' }} />
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-              <p className="text-[11px] font-bold text-slate-500">API Calls</p>
-              <p className="text-lg font-extrabold text-[#0D1F3D]">1.2M / 5M</p>
-              <p className="text-[10px] font-bold text-amber-600 mt-1">24.0%</p>
-              <div className="h-1.5 w-full rounded-full bg-slate-200 mt-1">
-                <div className="h-full bg-amber-500 rounded-full" style={{ width: '24.0%' }} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Top Active Tenants (Users) Card */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-[#0D1F3D] mb-3">Top Active Tenants (Users)</h3>
-            <div className="space-y-3">
-              {topTenants.map((t, idx) => (
-                <div key={idx} className="space-y-1">
-                  <div className="flex justify-between text-xs font-bold">
-                    <span className="text-slate-700">{t.name}</span>
-                    <span className="text-[#0D1F3D]">{t.users}</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                    <div
-                      className="h-full bg-blue-600 rounded-full"
-                      style={{ width: `${t.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-slate-100 mt-3 text-center">
-            <button
-              type="button"
-              onClick={() => navigate('/platform/tenants')}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700"
-            >
-              View all tenants <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Recent Platform Activity Feed */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-[#0D1F3D] mb-3">Recent Platform Activity</h3>
-            <div className="space-y-3">
-              {recentActivities.map((act, idx) => {
-                const Icon = act.icon;
-                return (
-                  <div key={idx} className="flex items-start gap-3 text-xs">
-                    <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${act.color}`}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-slate-800 leading-snug">{act.title}</p>
-                      <p className="text-[11px] font-medium text-slate-400 mt-0.5">{act.time}</p>
-                    </div>
-                    {act.amount && (
-                      <span className="font-bold text-emerald-600 text-xs">{act.amount}</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="pt-3 border-t border-slate-100 mt-3 text-center">
-            <button
-              type="button"
-              onClick={() => navigate('/platform/audit')}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:text-blue-700"
-            >
-              View all activity <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>

@@ -24,6 +24,7 @@ import {
   Tag,
   Home,
   UserCheck,
+  User,
 } from "lucide-react";
 import { usePlatformPermissions } from "../features/platform/tenants/hooks/usePlatformPermissions";
 import {
@@ -170,6 +171,7 @@ export default function PlatformShell() {
   const [collapsed, setCollapsed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const [activeRole, setActiveRole] = useState<PlatformRole>(
     "PLATFORM_SUPER_ADMIN"
   );
@@ -183,6 +185,7 @@ export default function PlatformShell() {
     usePlatformPermissions(activeRole);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -191,6 +194,9 @@ export default function PlatformShell() {
         !sidebarRef.current.contains(e.target as Node)
       ) {
         setUserMenuOpen(false);
+      }
+      if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
+        setHeaderMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -219,7 +225,7 @@ export default function PlatformShell() {
   const breadcrumbs = useMemo(() => {
     const p = location.pathname;
     if (p === "/platform/dashboard") {
-      return [{ label: "Executive Overview", to: "/platform/dashboard" }];
+      return [{ label: "Platform Console", to: "/platform/dashboard" }, { label: "Executive Dashboard", to: "/platform/dashboard" }];
     }
     if (p === "/platform/tenants") {
       return [
@@ -518,7 +524,7 @@ export default function PlatformShell() {
           collapsed ? "ml-[80px]" : "ml-[295px]"
         }`}
       >
-        {/* Top Header (100% Identical to AppShell.tsx Header & Breadcrumbs) */}
+        {/* Top Header (100% Identical to AppShell.tsx Header Bar) */}
         <header className="flex h-20 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-sm">
           {/* Mandatory Left Header Breadcrumb Navigation */}
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
@@ -550,21 +556,8 @@ export default function PlatformShell() {
             })}
           </div>
 
-          {/* Right Header Controls */}
-          <div className="flex items-center gap-3">
-            {/* Global Search Bar */}
-            <div className="relative hidden md:block w-72">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by tenant, user, plan..."
-                className="h-9 w-full rounded-sm border border-slate-200 bg-slate-50 pl-9 pr-12 text-xs text-slate-800 placeholder-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
-              />
-              <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded bg-slate-200/60 px-1.5 py-0.5 text-[10px] font-semibold text-slate-500">
-                Ctrl + K
-              </kbd>
-            </div>
-
+          {/* Right Header Controls (100% Reusing AppShell.tsx Notification & Header Profile Card) */}
+          <div className="flex items-center gap-4">
             {/* Test Role Switcher Dropdown */}
             <div className="flex items-center gap-1.5 rounded-sm border border-amber-200 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-900 shadow-xs">
               <ShieldAlert className="h-3.5 w-3.5 text-amber-600 shrink-0" />
@@ -585,22 +578,78 @@ export default function PlatformShell() {
               </select>
             </div>
 
-            {/* Notification Bell */}
+            {/* Notification Bell Icon (100% Identical to AppShell.tsx Line 1491-1494) */}
             <button
               type="button"
-              className="relative flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition shadow-xs"
+              className="relative inline-flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100"
             >
-              <Bell className="h-4.5 w-4.5" />
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#E20613] text-[9px] font-bold text-white shadow-xs">
-                12
-              </span>
+              <Bell className="h-4 w-4" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#E20613]" />
             </button>
+
+            {/* Header User Profile Avatar Card & Dropdown (100% Identical to AppShell.tsx Line 1497-1563) */}
+            <div className="relative" ref={headerRef}>
+              <div
+                onClick={() => setHeaderMenuOpen(!headerMenuOpen)}
+                className="flex items-center gap-2.5 p-1 rounded-sm cursor-pointer hover:bg-slate-100/80 transition-all"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-[#0D1F3D] text-xs font-bold text-white shadow-sm">
+                  {user?.fullName?.charAt(0) ?? "S"}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-xs font-bold text-[#0D1F3D]">
+                    {user?.fullName || "Super Admin"}
+                  </p>
+                  <p className="text-[11px] font-semibold text-[#E20613]">
+                    Platform Super Admin
+                  </p>
+                </div>
+              </div>
+
+              {headerMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-sm border border-slate-200 bg-white p-2 shadow-2xl space-y-1 z-50">
+                  <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                    <p className="text-xs font-bold text-[#0D1F3D] truncate">
+                      {user?.fullName || "Super Admin"}
+                    </p>
+                    <p className="text-[11px] text-slate-400 truncate">
+                      {user?.email || "platform.admin@smartfieldwork.com"}
+                    </p>
+                  </div>
+                  <NavLink
+                    to="/admin/profile"
+                    onClick={() => setHeaderMenuOpen(false)}
+                    className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
+                  >
+                    <User className="h-4 w-4 text-[#E20613]" /> My Profile
+                  </NavLink>
+                  <NavLink
+                    to="/admin/dashboard"
+                    onClick={() => setHeaderMenuOpen(false)}
+                    className="flex items-center gap-2.5 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]"
+                  >
+                    <UserCheck className="h-4 w-4 text-blue-600" /> Exit to Tenant CRM →
+                  </NavLink>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    fullWidth
+                    onClick={handleLogout}
+                    className="flex items-center justify-start gap-2.5 text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs mt-1 rounded-sm"
+                  >
+                    <LogOut className="h-4 w-4 text-rose-600" /> Sign Out
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
-        {/* Page Content Outlet */}
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
-          <Outlet />
+        {/* Main Page Render in Single Unified Shell Container (100% Identical to AppShell.tsx Line 1568-1570) */}
+        <main className="flex-1 overflow-y-auto bg-[#F3F5F7]">
+          <div className="mx-auto w-full max-w-[1720px] p-6 lg:p-8 space-y-6 font-sans">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

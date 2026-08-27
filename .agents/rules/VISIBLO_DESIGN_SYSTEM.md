@@ -88,3 +88,17 @@ This document establishes the binding design system, component standards, typogr
 
 2. **Breadcrumb Hierarchy**:
    - Every page must feature a clean breadcrumb navigation header (e.g. `Dashboard > Follow-up Management > Today's Follow-ups`).
+
+---
+
+## 6. Layout, Role Screens & Reusable Admin Components (STRICT BINDING RULE)
+
+1. **Reusing Admin Dashboard Architecture**:
+   - Whenever creating screens, layouts, or navigation for a new role (e.g. Platform Super Admin, SaaS Console, Operations, Onboarding, Support, Billing, Auditor), NEVER build custom or alternative UI/UX layouts, custom headers, custom notification icons, or one-off stat card designs.
+   - The UI, UX, Sidebar, Header, Notification Bell, User Avatar Dropdown, Breadcrumbs, Stat Cards (`<KpiCard />`), Date Pickers, and Footers MUST strictly refer to and reuse the exact components and architecture established in the Admin Dashboard (`AppShell.tsx` & `src/components/dashboard/KpiCard.tsx`).
+
+2. **Unified Component Reuse Standards**:
+   - **Sidebar**: White enterprise theme (`bg-white border-r border-slate-200 shadow-xs`), active pill (`bg-[#0D1F3D] text-white shadow-xs font-semibold`), collapsible behavior, and bottom left user card drawer.
+   - **Header Bar**: Fixed height `h-20` white header bar with breadcrumb navigation (`Home > Category > Page`), search input, notification bell button with red indicator dot (`<Bell className="h-4 w-4" /><span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#E20613]" />`), and top-right header user profile card with role label dropdown.
+   - **Stat Cards**: Must ALWAYS use the pre-built `<KpiCard title={...} value={...} icon={...} iconBgColor={...} iconTextColor={...} />` component.
+   - **Background Container**: Use `<main className="flex-1 overflow-y-auto bg-[#F3F5F7]"><div className="mx-auto w-full max-w-[1720px] p-6 lg:p-8 space-y-6 font-sans">`.
