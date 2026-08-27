@@ -64,6 +64,23 @@ export function TenantUsersPage() {
     setSearchParams({ tab });
   };
 
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [showBulkMenu, setShowBulkMenu] = useState(false);
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedUserIds(usersList.map((u) => u.id));
+    } else {
+      setSelectedUserIds([]);
+    }
+  };
+
+  const handleSelectUser = (id: string) => {
+    setSelectedUserIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   const usersList: UserRow[] = [
     {
       id: 'u1',
@@ -426,8 +443,62 @@ export function TenantUsersPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" className="h-8 text-xs font-bold text-slate-700">Bulk Actions ∨</Button>
-              <Button variant="outline" size="sm" className="h-8 text-xs font-bold text-slate-700 gap-1.5"><Download className="h-3.5 w-3.5 text-slate-400" /> Export</Button>
+              <div className="relative">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowBulkMenu(!showBulkMenu)}
+                  className="h-8 text-xs font-bold text-slate-700 gap-1.5"
+                >
+                  {selectedUserIds.length > 0 ? `Bulk Actions (${selectedUserIds.length})` : 'Bulk Actions'}
+                  <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+                </Button>
+
+                {showBulkMenu && (
+                  <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl text-xs font-medium space-y-0.5 animate-in fade-in zoom-in-95">
+                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 border-b border-slate-100 mb-1">
+                      {selectedUserIds.length > 0 ? `${selectedUserIds.length} users selected` : 'Select users first'}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={selectedUserIds.length === 0}
+                      onClick={() => { setShowBulkMenu(false); toast.success(`Resent invitations to ${selectedUserIds.length} users`); }}
+                      className="w-full text-left px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50 rounded-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Resend Invitations
+                    </button>
+                    <button
+                      type="button"
+                      disabled={selectedUserIds.length === 0}
+                      onClick={() => { setShowBulkMenu(false); toast.success(`Enforced 2FA policy on ${selectedUserIds.length} users`); }}
+                      className="w-full text-left px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50 rounded-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Enforce 2FA Policy
+                    </button>
+                    <button
+                      type="button"
+                      disabled={selectedUserIds.length === 0}
+                      onClick={() => { setShowBulkMenu(false); toast.success(`Exported data for ${selectedUserIds.length} users`); }}
+                      className="w-full text-left px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50 rounded-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Export Selected Users
+                    </button>
+                    <div className="border-t border-slate-100 my-1" />
+                    <button
+                      type="button"
+                      disabled={selectedUserIds.length === 0}
+                      onClick={() => { setShowBulkMenu(false); toast.success(`Suspended ${selectedUserIds.length} user memberships`); }}
+                      className="w-full text-left px-3 py-1.5 font-semibold text-rose-600 hover:bg-rose-50 rounded-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Suspend Selected Users
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <Button variant="outline" size="sm" onClick={() => toast.success('Exporting users list')} className="h-8 text-xs font-bold text-slate-700 gap-1.5">
+                <Download className="h-3.5 w-3.5 text-slate-400" /> Export
+              </Button>
             </div>
           </div>
 
@@ -436,7 +507,12 @@ export function TenantUsersPage() {
             <table className="w-full text-left text-xs whitespace-nowrap">
               <thead>
                 <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
-                  <th className="py-3 px-3 w-8"><Checkbox checked={false} onChange={() => {}} /></th>
+                  <th className="py-3 px-3 w-8">
+                    <Checkbox
+                      checked={selectedUserIds.length === usersList.length && usersList.length > 0}
+                      onChange={handleSelectAll}
+                    />
+                  </th>
                   <th className="py-3 px-3">User</th>
                   <th className="py-3 px-3">Role & Department</th>
                   <th className="py-3 px-3">Status</th>
@@ -448,9 +524,16 @@ export function TenantUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {usersList.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-3"><Checkbox checked={false} onChange={() => {}} /></td>
+                {usersList.map((u) => {
+                  const isSelected = selectedUserIds.includes(u.id);
+                  return (
+                    <tr key={u.id} className={`transition-colors ${isSelected ? 'bg-indigo-50/60' : 'hover:bg-slate-50/80'}`}>
+                      <td className="py-3 px-3">
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={() => handleSelectUser(u.id)}
+                        />
+                      </td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-3">
                         <img src={u.avatar} alt={u.name} className="h-8 w-8 rounded-full object-cover shrink-0" />
@@ -509,7 +592,8 @@ export function TenantUsersPage() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           </div>
