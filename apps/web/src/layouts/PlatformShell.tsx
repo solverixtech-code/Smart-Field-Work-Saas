@@ -89,19 +89,6 @@ const NAV_CATEGORIES: NavCategory[] = [
         to: "/platform/tenants/create",
         permission: "platform.tenants.create",
       },
-      {
-        label: "Tenant Onboarding",
-        icon: Compass,
-        to: "/platform/tenants/onboarding",
-        permission: "platform.tenants.view",
-      },
-      {
-        label: "Tenant Requests",
-        icon: MessageSquare,
-        to: "/platform/tenants/requests",
-        badge: "3",
-        permission: "platform.tenants.view",
-      },
     ],
   },
   {
