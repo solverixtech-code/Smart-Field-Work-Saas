@@ -27,6 +27,9 @@ import { PlatformDashboardPage } from './screens/platform/PlatformDashboardPage'
 import { AllTenantsPage } from './screens/platform/AllTenantsPage';
 import { CreateTenantWizardPage } from './screens/platform/CreateTenantWizardPage';
 import { TenantDetailsPage } from './screens/platform/TenantDetailsPage';
+import { TenantModulesPage } from './screens/platform/TenantModulesPage';
+import { TenantUsersPage } from './screens/platform/TenantUsersPage';
+import { WorkspaceSettingsPage } from './screens/admin/settings/WorkspaceSettingsPage';
 import { PlansPricingPage } from './screens/platform/PlansPricingPage';
 import { AuditLogsPage } from './screens/platform/AuditLogsPage';
 import { TenantCreationProvider } from './features/platform/tenants/context/TenantCreationContext';
@@ -737,6 +740,7 @@ export default function AppRouter() {
               }
             >
               <Route path="/admin/masters" element={<MasterManagementPage />} />
+              <Route path="/admin/settings/workspace" element={<WorkspaceSettingsPage />} />
             </Route>
           </Route>
         </Route>
@@ -757,6 +761,8 @@ export default function AppRouter() {
             <Route path="/platform/tenants/onboarding" element={<AllTenantsPage />} />
             <Route path="/platform/tenants/requests" element={<AllTenantsPage />} />
             <Route path="/platform/tenants/:tenantId" element={<TenantDetailsPage />} />
+            <Route path="/platform/tenants/:tenantId/modules" element={<TenantModulesPage />} />
+            <Route path="/platform/tenants/:tenantId/users" element={<TenantUsersPage />} />
             <Route path="/platform/plans" element={<PlansPricingPage />} />
             <Route path="/platform/modules" element={<PlatformDashboardPage />} />
             <Route path="/platform/industries" element={<PlatformDashboardPage />} />
