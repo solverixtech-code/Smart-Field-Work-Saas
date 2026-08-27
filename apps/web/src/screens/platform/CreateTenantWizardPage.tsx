@@ -990,7 +990,7 @@ export function CreateTenantWizardPage() {
         </div>
 
         {/* 6 Step Progress Tracker Bar */}
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+        <div className="rounded-sm border border-slate-200 bg-white p-3.5 shadow-xs">
           <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-center">
             {stepsList.map((step) => {
               const isActive = currentStep === step.num;
@@ -1000,21 +1000,35 @@ export function CreateTenantWizardPage() {
                 <div
                   key={step.num}
                   onClick={() => setCurrentStep(step.num)}
-                  className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition ${
-                    isActive ? 'bg-indigo-50/60 border-b-2 border-indigo-600' : 'hover:bg-slate-50'
+                  className={`flex items-center gap-2.5 p-2.5 rounded-sm cursor-pointer transition-all ${
+                    isActive
+                      ? 'bg-slate-50 border border-slate-300 shadow-2xs'
+                      : isDone
+                      ? 'hover:bg-slate-50/80'
+                      : 'hover:bg-slate-50/60 opacity-80'
                   }`}
                 >
-                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ${
-                    isDone
-                      ? 'bg-emerald-600 text-white'
-                      : isActive
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-500 border border-slate-200'
-                  }`}>
-                    {isDone ? <Check className="h-4 w-4" /> : step.num}
+                  <div
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold transition-all ${
+                      isDone
+                        ? 'bg-emerald-600 text-white shadow-2xs'
+                        : isActive
+                        ? 'bg-[#0D1F3D] text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-500 border border-slate-200'
+                    }`}
+                  >
+                    {isDone ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : step.num}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className={`text-xs font-extrabold truncate ${isActive ? 'text-indigo-900' : isDone ? 'text-slate-800' : 'text-slate-500'}`}>
+                    <p
+                      className={`text-xs truncate transition-colors ${
+                        isActive
+                          ? 'font-extrabold text-[#0D1F3D]'
+                          : isDone
+                          ? 'font-bold text-slate-800'
+                          : 'font-semibold text-slate-500'
+                      }`}
+                    >
                       {step.label}
                     </p>
                     <p className="text-[10px] text-slate-400 font-medium truncate">{step.desc}</p>
