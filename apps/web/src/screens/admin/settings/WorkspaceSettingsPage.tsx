@@ -154,7 +154,7 @@ function ProfileTab() {
       {/* Row 2: Branding & Workspace Identity */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Branding */}
-        <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+        <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
             <Sliders className="h-4 w-4 text-indigo-600 shrink-0" />
             <div>
@@ -163,29 +163,83 @@ function ProfileTab() {
             </div>
           </div>
 
-          <div className="space-y-4 text-xs">
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-[#0B2E6B] block mb-1">Primary Color</label>
-                <div className="flex items-center gap-2 border border-slate-200 rounded-sm p-1.5 bg-[#F8FAFC] focus-within:border-[#0D1F3D] focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
-                  <span className="h-6 w-6 rounded-xs shrink-0 shadow-xs border border-slate-200" style={{ backgroundColor: primaryColor }} />
-                  <input type="text" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-full font-mono text-xs font-bold text-[#0D1F3D] bg-transparent border-none focus:outline-none" />
+          {/* Color Pickers */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Primary Color */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#0B2E6B] block">Primary Color</label>
+                <div className="flex items-center h-10 rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden focus-within:border-[#0D1F3D] focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
+                  <label className="relative h-full w-10 shrink-0 cursor-pointer border-r border-slate-200" style={{ backgroundColor: primaryColor }}>
+                    <input
+                      type="color"
+                      value={primaryColor}
+                      onChange={(e) => setPrimaryColor(e.target.value.toUpperCase())}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                  </label>
+                  <input
+                    type="text"
+                    value={primaryColor}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v.match(/^#[0-9A-Fa-f]{0,6}$/)) setPrimaryColor(v.toUpperCase());
+                    }}
+                    maxLength={7}
+                    className="flex-1 px-3 text-xs font-mono font-bold text-[#0D1F3D] bg-transparent focus:outline-none"
+                    placeholder="#000000"
+                  />
                 </div>
               </div>
-              <div>
-                <label className="text-xs font-semibold text-[#0B2E6B] block mb-1">Secondary Color</label>
-                <div className="flex items-center gap-2 border border-slate-200 rounded-sm p-1.5 bg-[#F8FAFC] focus-within:border-[#0D1F3D] focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
-                  <span className="h-6 w-6 rounded-xs shrink-0 shadow-xs border border-slate-200" style={{ backgroundColor: secondaryColor }} />
-                  <input type="text" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="w-full font-mono text-xs font-bold text-[#0D1F3D] bg-transparent border-none focus:outline-none" />
+
+              {/* Secondary Color */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-[#0B2E6B] block">Secondary Color</label>
+                <div className="flex items-center h-10 rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden focus-within:border-[#0D1F3D] focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
+                  <label className="relative h-full w-10 shrink-0 cursor-pointer border-r border-slate-200" style={{ backgroundColor: secondaryColor }}>
+                    <input
+                      type="color"
+                      value={secondaryColor}
+                      onChange={(e) => setSecondaryColor(e.target.value.toUpperCase())}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                  </label>
+                  <input
+                    type="text"
+                    value={secondaryColor}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v.match(/^#[0-9A-Fa-f]{0,6}$/)) setSecondaryColor(v.toUpperCase());
+                    }}
+                    maxLength={7}
+                    className="flex-1 px-3 text-xs font-mono font-bold text-[#0D1F3D] bg-transparent focus:outline-none"
+                    placeholder="#000000"
+                  />
                 </div>
               </div>
             </div>
 
+            {/* Live Brand Preview */}
+            <div className="rounded-sm border border-slate-100 bg-slate-50/60 p-3 space-y-2">
+              <span className="text-[10px] font-bold text-slate-500 block">Live Preview</span>
+              <div className="flex items-center gap-2">
+                <div className="h-7 rounded-sm px-3 flex items-center text-[11px] font-bold text-white shadow-xs" style={{ backgroundColor: primaryColor }}>Primary Button</div>
+                <div className="h-7 rounded-sm px-3 flex items-center text-[11px] font-bold text-white shadow-xs" style={{ backgroundColor: secondaryColor }}>Secondary</div>
+                <div className="h-1.5 flex-1 rounded-full overflow-hidden bg-slate-200">
+                  <div className="h-full rounded-full" style={{ width: '60%', backgroundColor: primaryColor }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Toggles & Favicon */}
+          <div className="space-y-3.5 border-t border-slate-100 pt-4">
             <ToggleSwitch checked={logoInLogin} onChange={setLogoInLogin} label="Logo in Login" description="Show custom logo on login screen" />
 
-            <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+            <div className="flex items-center justify-between border-t border-slate-100 pt-3.5">
               <div>
                 <span className="font-extrabold text-[#0D1F3D] text-xs">Favicon</span>
+                <p className="text-[10px] text-slate-500 font-medium">Browser tab icon (16×16px)</p>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-7 w-7 rounded-sm border border-slate-200 bg-amber-50 flex items-center justify-center text-amber-600 font-bold text-xs">
