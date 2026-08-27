@@ -40,12 +40,65 @@ import {
   MessageSquare,
   Bell,
   CheckSquare,
+  Search,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { TenantCreationProvider, useTenantCreation } from '../../features/platform/tenants/context/TenantCreationContext';
+
+// Helper for Phone Number Inputs (Digit-only enforcement per Section 1 Rule 1)
+function PhoneInput({
+  label,
+  value,
+  onChange,
+  placeholder = 'Enter mobile number',
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  placeholder?: string;
+}) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Allow navigation and edit keys: Backspace, Delete, Tab, Arrows
+    if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      return;
+    }
+    // Block non-numeric keys
+    if (!/[0-9]/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+    onChange(digitsOnly);
+  };
+
+  return (
+    <div className="w-full space-y-1.5 font-sans">
+      <label className="block text-xs font-bold text-slate-700">{label}</label>
+      <div className="flex h-11 w-full rounded-md border border-slate-200 bg-[#F8FAFC] overflow-hidden focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
+        <div className="bg-slate-100/80 border-r border-slate-200 px-3 flex items-center text-xs font-bold text-slate-700 gap-1.5 shrink-0 select-none">
+          <span className="text-sm">🇮🇳</span>
+          <span className="text-slate-800">+91 ▾</span>
+        </div>
+        <input
+          type="tel"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={10}
+          placeholder={placeholder}
+          value={value}
+          onKeyDown={handleKeyDown}
+          onChange={handleChange}
+          className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent placeholder-slate-400 focus:outline-none"
+        />
+      </div>
+    </div>
+  );
+}
 
 // STEP 1: COMPANY DETAILS
 function Step1CompanyDetails() {
@@ -74,8 +127,8 @@ function Step1CompanyDetails() {
             onChange={(e) => updateFormState({ legalEntityName: e.target.value })}
           />
           <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1">Tenant Code *</label>
-            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
+            <label className="font-bold text-slate-700 text-xs block mb-1.5">Tenant Code *</label>
+            <div className="flex rounded-md border border-slate-200 bg-[#F8FAFC] overflow-hidden h-11 focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
               <span className="bg-slate-100 border-r border-slate-200 px-3 flex items-center text-xs font-bold text-slate-600">
                 SFW-TNT-
               </span>
@@ -84,7 +137,7 @@ function Step1CompanyDetails() {
                 placeholder="Enter code"
                 value={formState.slug}
                 onChange={(e) => updateFormState({ slug: e.target.value, domain: `${e.target.value}.smartfieldwork.com` })}
-                className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] focus:outline-none"
+                className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none"
               />
             </div>
             <p className="text-[10px] text-slate-400 font-medium mt-1">Unique code for this tenant</p>
@@ -100,31 +153,23 @@ function Step1CompanyDetails() {
           />
           <Input
             label="Email *"
+            type="email"
             placeholder="admin@company.com"
             value={formState.billingContactEmail}
             onChange={(e) => updateFormState({ billingContactEmail: e.target.value })}
           />
-          <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1">Phone *</label>
-            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
-              <div className="bg-slate-50 border-r border-slate-200 px-2.5 flex items-center text-xs font-bold text-slate-700 gap-1">
-                <span>🇮🇳</span> <span>+91 ▾</span>
-              </div>
-              <input
-                type="tel"
-                placeholder="Enter phone number"
-                value={formState.adminPhone}
-                onChange={(e) => updateFormState({ adminPhone: e.target.value })}
-                className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] focus:outline-none"
-              />
-            </div>
-          </div>
+          <PhoneInput
+            label="Phone *"
+            placeholder="Enter phone number"
+            value={formState.adminPhone}
+            onChange={(val) => updateFormState({ adminPhone: val })}
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Select
             label="Country *"
-            value={formState.country}
+            value={formState.country || 'India'}
             onChange={(e) => updateFormState({ country: e.target.value })}
             searchable={true}
             options={[
@@ -219,16 +264,13 @@ function Step1CompanyDetails() {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <Input label="Full Name *" placeholder="Enter full name" value={formState.adminFullName} onChange={(e) => updateFormState({ adminFullName: e.target.value })} />
           <Input label="Designation" placeholder="e.g., CEO, Director, Admin" value="CEO" onChange={() => {}} />
-          <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1">Mobile Number *</label>
-            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
-              <div className="bg-slate-50 border-r border-slate-200 px-2 flex items-center text-xs font-bold text-slate-700 gap-1">
-                <span>🇮🇳</span> <span>+91 ▾</span>
-              </div>
-              <input type="tel" placeholder="Enter mobile number" value={formState.adminPhone} onChange={(e) => updateFormState({ adminPhone: e.target.value })} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] focus:outline-none" />
-            </div>
-          </div>
-          <Input label="Email *" placeholder="Enter email address" value={formState.adminEmail} onChange={(e) => updateFormState({ adminEmail: e.target.value })} />
+          <PhoneInput
+            label="Mobile Number *"
+            placeholder="Enter mobile number"
+            value={formState.adminPhone}
+            onChange={(val) => updateFormState({ adminPhone: val })}
+          />
+          <Input label="Email *" type="email" placeholder="Enter email address" value={formState.adminEmail} onChange={(e) => updateFormState({ adminEmail: e.target.value })} />
         </div>
       </div>
     </div>
@@ -321,9 +363,9 @@ function Step2IndustryProfile() {
             placeholder="Tell us about the company..."
             value="Pharmaceutical distribution and healthcare solutions provider across western India."
             onChange={() => {}}
-            className="w-full rounded-md border border-slate-200 p-3 text-xs font-semibold text-[#0D1F3D] focus:border-indigo-600 focus:outline-none"
+            className="w-full rounded-md border border-slate-200 bg-[#F8FAFC] p-3 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#0D1F3D] transition-all"
           />
-          <span className="text-[10px] text-slate-400 font-semibold block text-right">67 / 200</span>
+          <span className="text-[10px] text-slate-400 font-semibold block text-right mt-1">67 / 200</span>
         </div>
       </div>
 
@@ -358,60 +400,54 @@ function Step3Administrator() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input label="Full Name *" placeholder="Enter full name" value={formState.adminFullName} onChange={(e) => updateFormState({ adminFullName: e.target.value })} />
-          <Input label="Email Address *" placeholder="Enter email address" value={formState.adminEmail} onChange={(e) => updateFormState({ adminEmail: e.target.value })} />
-          <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1">Mobile Number *</label>
-            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
-              <div className="bg-slate-50 border-r border-slate-200 px-2 flex items-center text-xs font-bold text-slate-700 gap-1">
-                <span>🇮🇳</span> <span>+91 ▾</span>
-              </div>
-              <input type="tel" placeholder="Enter mobile number" value={formState.adminPhone} onChange={(e) => updateFormState({ adminPhone: e.target.value })} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] focus:outline-none" />
-            </div>
-          </div>
+          <Input label="Email Address *" type="email" placeholder="Enter email address" value={formState.adminEmail} onChange={(e) => updateFormState({ adminEmail: e.target.value })} />
+          <PhoneInput
+            label="Mobile Number *"
+            placeholder="Enter mobile number"
+            value={formState.adminPhone}
+            onChange={(val) => updateFormState({ adminPhone: val })}
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input label="Designation / Job Title *" placeholder="e.g., CEO, Admin Head" value="CEO" onChange={() => {}} />
           <Select label="Department" value="Administration" onChange={() => {}} searchable={true} options={[{ value: 'Administration', label: 'Administration' }]} />
-          <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1">Phone Number</label>
-            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
-              <div className="bg-slate-50 border-r border-slate-200 px-2 flex items-center text-xs font-bold text-slate-700 gap-1">
-                <span>🇮🇳</span> <span>+91 ▾</span>
-              </div>
-              <input type="tel" placeholder="Enter phone number" value={formState.adminPhone} onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] focus:outline-none" />
-            </div>
-          </div>
+          <PhoneInput
+            label="Phone Number"
+            placeholder="Enter phone number"
+            value={formState.adminPhone}
+            onChange={() => {}}
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Select label="Preferred Language *" value="English" onChange={() => {}} searchable={true} options={[{ value: 'English', label: 'English' }]} />
           <Select label="Time Zone *" value="(GMT+05:30) Asia/Kolkata" onChange={() => {}} searchable={true} options={[{ value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' }]} />
-          <Input label="Communication Email" placeholder="Enter communication email" value="rahul.sharma@sunrisehealthcare.com" onChange={() => {}} />
+          <Input label="Communication Email" type="email" placeholder="Enter communication email" value="rahul.sharma@sunrisehealthcare.com" onChange={() => {}} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1">Username *</label>
-            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10">
+            <label className="font-bold text-slate-700 text-xs block mb-1.5">Username *</label>
+            <div className="flex rounded-md border border-slate-200 bg-[#F8FAFC] overflow-hidden h-11 focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
               <span className="bg-slate-100 border-r border-slate-200 px-3 flex items-center text-xs font-bold text-slate-500">@</span>
-              <input type="text" placeholder="Enter username" value="rahul.sharma@sunrisehealthcare.com" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] focus:outline-none" />
+              <input type="text" placeholder="Enter username" value="rahul.sharma@sunrisehealthcare.com" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none" />
             </div>
             <p className="text-[10px] text-slate-400 font-medium mt-1">This will be used to login to the platform.</p>
           </div>
           <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1">Set Temporary Password *</label>
-            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10 relative">
-              <input type={showPassword ? 'text' : 'password'} value="••••••••••••" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] focus:outline-none pr-8" />
+            <label className="font-bold text-slate-700 text-xs block mb-1.5">Set Temporary Password *</label>
+            <div className="flex rounded-md border border-slate-200 bg-[#F8FAFC] overflow-hidden h-11 relative focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
+              <input type={showPassword ? 'text' : 'password'} value="••••••••••••" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none pr-8" />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
           <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1">Confirm Password *</label>
-            <div className="flex rounded-md border border-slate-200 bg-white overflow-hidden h-10 relative">
-              <input type={showPassword ? 'text' : 'password'} value="••••••••••••" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] focus:outline-none pr-8" />
+            <label className="font-bold text-slate-700 text-xs block mb-1.5">Confirm Password *</label>
+            <div className="flex rounded-md border border-slate-200 bg-[#F8FAFC] overflow-hidden h-11 relative focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
+              <input type={showPassword ? 'text' : 'password'} value="••••••••••••" onChange={() => {}} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none pr-8" />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -789,7 +825,7 @@ export function CreateTenantWizardPage() {
           </div>
         </div>
 
-        {/* 6 Step Progress Tracker Bar (Matching Create Tenant (Step 1).png 100%) */}
+        {/* 6 Step Progress Tracker Bar */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
           <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-center">
             {stepsList.map((step) => {
@@ -870,7 +906,7 @@ export function CreateTenantWizardPage() {
             </div>
           </div>
 
-          {/* Right Live Summary Panel (Matching Create Tenant (Step 1).png 100%) */}
+          {/* Right Live Summary Panel */}
           <div className="lg:col-span-4 space-y-4">
             <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-sans">
               <h3 className="text-base font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">
