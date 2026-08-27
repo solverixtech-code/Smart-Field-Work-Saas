@@ -33,6 +33,7 @@ import {
   Puzzle,
   ShieldCheck,
   BarChart3,
+  Settings,
 } from "lucide-react";
 import { usePlatformPermissions } from "../features/platform/tenants/hooks/usePlatformPermissions";
 import {
@@ -129,6 +130,12 @@ const NAV_CATEGORIES: NavCategory[] = [
         icon: FileText,
         to: "/platform/audit",
         permission: "platform.audit.view",
+      },
+      {
+        label: "Workspace Settings",
+        icon: Settings,
+        to: "/admin/settings/workspace",
+        badge: "Settings",
       },
     ],
   },
