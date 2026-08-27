@@ -844,7 +844,9 @@ function Step5Modules() {
                     <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-white border border-slate-200 shadow-2xs">
                       {mod.icon}
                     </div>
-                    <Checkbox checked={mod.checked} onChange={() => toggleModule(idx)} />
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Checkbox checked={mod.checked} onChange={() => toggleModule(idx)} />
+                    </div>
                   </div>
                   <p className="text-xs font-extrabold text-[#0D1F3D] mb-1">{mod.name}</p>
                   <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
