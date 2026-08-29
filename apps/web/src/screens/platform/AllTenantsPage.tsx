@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Building2,
@@ -26,53 +26,116 @@ import { Select } from '../../components/ui/Select';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import { tenantService } from '../../features/platform/tenants/services/tenant.service';
+import { Tenant } from '../../features/platform/tenants/types/platform.types';
+import { toast } from 'sonner';
 
-const industryChartData = [
-  { name: 'Pharma', value: 24, color: '#2563EB' },
-  { name: 'FMCG', value: 20, color: '#10B981' },
-  { name: 'Distributors', value: 18, color: '#6366F1' },
-  { name: 'Manufacturing', value: 16, color: '#14B8A6' },
-];
+const INDUSTRY_COLORS: Record<string, string> = {
+  'Pharma & Healthcare': '#2563EB',
+  'FMCG & Consumer Goods': '#10B981',
+  'Solar & Renewable Energy': '#F59E0B',
+  'Construction & Real Estate': '#6366F1',
+  'EdTech & Higher Education': '#14B8A6',
+};
 
-const planChartData = [
-  { name: 'Enterprise', value: 32, color: '#2563EB' },
-  { name: 'Growth', value: 46, color: '#10B981' },
-  { name: 'Professional', value: 34, color: '#F59E0B' },
-  { name: 'Starter', value: 16, color: '#F43F5E' },
-];
+const PLAN_COLORS: Record<string, string> = {
+  'Starter Field CRM': '#F43F5E',
+  'Growth Field Automation': '#10B981',
+  'Enterprise Field Suite': '#2563EB',
+};
+
+const INDUSTRY_DOT_COLORS: Record<string, string> = {
+  'Pharma & Healthcare': 'bg-blue-600',
+  'FMCG & Consumer Goods': 'bg-emerald-500',
+  'Solar & Renewable Energy': 'bg-amber-500',
+  'Construction & Real Estate': 'bg-indigo-500',
+  'EdTech & Higher Education': 'bg-teal-500',
+};
+
+const PLAN_DOT_COLORS: Record<string, string> = {
+  'Starter Field CRM': 'bg-rose-500',
+  'Growth Field Automation': 'bg-emerald-500',
+  'Enterprise Field Suite': 'bg-blue-600',
+};
+
+const formatCurrency = (amount: number): string => {
+  if (amount === 0) return '₹0';
+  return '₹' + amount.toLocaleString('en-IN');
+};
 
 export function AllTenantsPage() {
   const navigate = useNavigate();
+  const [tenants, setTenants] = useState<Tenant[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('All');
   const [selectedPlan, setSelectedPlan] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
-  // Tenants Mock Data
-  const tenantsList = [
-    { id: 't_apex_pharma', name: 'Apex Healthcare Pvt Ltd', domain: 'apexpharma.smartfieldwork.com', code: 'SFW-TNT-00124', industry: 'Pharma', plan: 'Growth', users: '45 / 50', mrr: '₹40,455', status: 'Active', createdOn: '12 Jan 2025', iconBg: 'bg-[#0D1F3D] text-white font-extrabold' },
-    { id: 't_sunshine_solar', name: 'Sunshine Solar Energy', domain: 'sunshinesolar.smartfieldwork.com', code: 'SFW-TNT-00123', industry: 'Solar', plan: 'Starter', users: '15 / 15', mrr: '₹0', status: 'Trial', createdOn: '15 May 2025', iconBg: 'bg-amber-100 text-amber-800 font-extrabold' },
-    { id: 't_metro_retail', name: 'Metro Supermarkets Ltd', domain: 'metroretail.smartfieldwork.com', code: 'SFW-TNT-00122', industry: 'FMCG', plan: 'Enterprise', users: '180 / 200', mrr: '₹2,15,820', status: 'Active', createdOn: '01 Nov 2024', iconBg: 'bg-blue-100 text-blue-800 font-extrabold' },
-    { id: 't_vanguard_infra', name: 'Vanguard Builders & Infra', domain: 'vanguard.smartfieldwork.com', code: 'SFW-TNT-00121', industry: 'Construction', plan: 'Growth', users: '30 / 50', mrr: '₹26,970', status: 'Past Due', createdOn: '10 Feb 2025', iconBg: 'bg-amber-100 text-amber-800 font-extrabold' },
-    { id: 't_zenith_edtech', name: 'Zenith Learning Systems', domain: 'zenith.smartfieldwork.com', code: 'SFW-TNT-00120', industry: 'EdTech', plan: 'Starter', users: '10 / 15', mrr: '₹0', status: 'Suspended', createdOn: '05 Jan 2025', iconBg: 'bg-rose-100 text-rose-800 font-extrabold' },
-  ];
+  useEffect(() => {
+    tenantService.getTenants().then(setTenants);
+  }, []);
 
-  // Industry donut legend
-  const industries = [
-    { name: 'Pharma', count: 24, percentage: '18.8%', color: 'bg-blue-600' },
-    { name: 'FMCG', count: 20, percentage: '15.6%', color: 'bg-emerald-500' },
-    { name: 'Distributors', count: 18, percentage: '14.1%', color: 'bg-indigo-500' },
-    { name: 'Manufacturing', count: 16, percentage: '12.5%', color: 'bg-teal-500' },
-  ];
+  const filteredTenants = tenants.filter((t) => {
+    const matchSearch = searchTerm === '' ||
+      t.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.domain.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.adminUser.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchIndustry = selectedIndustry === 'All' || t.industryLabel === selectedIndustry;
+    const matchPlan = selectedPlan === 'All' || t.planName === selectedPlan;
+    const matchStatus = selectedStatus === 'All' || t.tenantStatus === selectedStatus;
+    return matchSearch && matchIndustry && matchPlan && matchStatus;
+  });
 
-  // Plan donut legend
-  const plans = [
-    { name: 'Enterprise', count: 32, percentage: '25.0%', color: 'bg-blue-600' },
-    { name: 'Growth', count: 46, percentage: '35.9%', color: 'bg-emerald-500' },
-    { name: 'Professional', count: 34, percentage: '26.6%', color: 'bg-amber-500' },
-    { name: 'Starter', count: 16, percentage: '12.5%', color: 'bg-rose-500' },
-  ];
+  // Compute KPIs from live data
+  const totalTenants = tenants.length;
+  const activeTenants = tenants.filter((t) => t.tenantStatus === 'Active').length;
+  const trialTenants = tenants.filter((t) => t.tenantStatus === 'Trial').length;
+  const suspendedTenants = tenants.filter((t) => t.tenantStatus === 'Suspended').length;
+  const totalUsers = tenants.reduce((sum, t) => sum + t.userLicensesCount, 0);
+  const totalMrr = tenants.reduce((sum, t) => sum + t.mrr, 0);
+
+  // Derive industry chart from tenants
+  const industryMap = new Map<string, number>();
+  tenants.forEach((t) => industryMap.set(t.industryLabel, (industryMap.get(t.industryLabel) || 0) + 1));
+  const industryChartData = Array.from(industryMap.entries()).map(([name, value]) => ({
+    name, value, color: INDUSTRY_COLORS[name] || '#94A3B8',
+  }));
+  const industries = Array.from(industryMap.entries()).map(([name, count]) => ({
+    name, count, percentage: totalTenants > 0 ? ((count / totalTenants) * 100).toFixed(1) + '%' : '0%',
+    color: INDUSTRY_DOT_COLORS[name] || 'bg-slate-400',
+  }));
+
+  // Derive plan chart from tenants
+  const planMap = new Map<string, number>();
+  tenants.forEach((t) => planMap.set(t.planName, (planMap.get(t.planName) || 0) + 1));
+  const planChartData = Array.from(planMap.entries()).map(([name, value]) => ({
+    name, value, color: PLAN_COLORS[name] || '#94A3B8',
+  }));
+  const plans = Array.from(planMap.entries()).map(([name, count]) => ({
+    name, count, percentage: totalTenants > 0 ? ((count / totalTenants) * 100).toFixed(1) + '%' : '0%',
+    color: PLAN_DOT_COLORS[name] || 'bg-slate-400',
+  }));
+
+  const handleDeleteTenant = async (id: string) => {
+    try {
+      await tenantService.deleteTenant(id);
+      const refreshed = await tenantService.getTenants();
+      setTenants(refreshed);
+      setActiveMenuId(null);
+      toast.success('Tenant deleted successfully');
+    } catch {
+      toast.error('Failed to delete tenant');
+    }
+  };
+
+  const getIconBg = (t: Tenant): string => {
+    if (t.tenantStatus === 'Suspended') return 'bg-rose-100 text-rose-800 font-extrabold';
+    if (t.tenantStatus === 'Past Due') return 'bg-amber-100 text-amber-800 font-extrabold';
+    if (t.tenantStatus === 'Trial') return 'bg-amber-100 text-amber-800 font-extrabold';
+    return 'bg-[#0D1F3D] text-white font-extrabold';
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -127,52 +190,45 @@ export function AllTenantsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <KpiCard
           title="Total Tenants"
-          value="128"
-          change="12 this month"
-          changeType="positive"
+          value={String(totalTenants)}
           icon={Building2}
           iconBgColor="bg-blue-50"
           iconTextColor="text-blue-700"
         />
         <KpiCard
           title="Active Tenants"
-          value="102"
-          subValue="79.7% of total"
+          value={String(activeTenants)}
+          subValue={totalTenants > 0 ? `${((activeTenants / totalTenants) * 100).toFixed(1)}% of total` : '0%'}
           icon={CheckCircle2}
           iconBgColor="bg-emerald-50"
           iconTextColor="text-emerald-700"
         />
         <KpiCard
           title="Trial Tenants"
-          value="18"
-          subValue="14.1% of total"
+          value={String(trialTenants)}
+          subValue={totalTenants > 0 ? `${((trialTenants / totalTenants) * 100).toFixed(1)}% of total` : '0%'}
           icon={Clock}
           iconBgColor="bg-amber-50"
           iconTextColor="text-amber-700"
         />
         <KpiCard
           title="Suspended Tenants"
-          value="6"
-          subValue="4.7% of total"
+          value={String(suspendedTenants)}
+          subValue={totalTenants > 0 ? `${((suspendedTenants / totalTenants) * 100).toFixed(1)}% of total` : '0%'}
           icon={AlertOctagon}
           iconBgColor="bg-red-50"
           iconTextColor="text-[#E20613]"
         />
         <KpiCard
           title="Total SaaS Users"
-          value="2,845"
-          change="156 this month"
-          changeType="positive"
+          value={totalUsers.toLocaleString('en-IN')}
           icon={Users}
           iconBgColor="bg-purple-50"
           iconTextColor="text-purple-700"
         />
         <KpiCard
           title="MRR"
-          value="₹28,74,320"
-          change="18.6%"
-          changeType="positive"
-          timeframe="vs last month"
+          value={formatCurrency(totalMrr)}
           icon={TrendingUp}
           iconBgColor="bg-emerald-50"
           iconTextColor="text-emerald-700"
@@ -200,10 +256,7 @@ export function AllTenantsPage() {
               searchable={true}
               options={[
                 { value: 'All', label: 'All Industries' },
-                { value: 'Pharma', label: 'Pharma' },
-                { value: 'FMCG', label: 'FMCG' },
-                { value: 'Distributors', label: 'Distributors' },
-                { value: 'Solar', label: 'Solar' },
+                ...Array.from(new Set(tenants.map((t) => t.industryLabel))).map((label) => ({ value: label, label })),
               ]}
             />
           </div>
@@ -215,10 +268,7 @@ export function AllTenantsPage() {
               searchable={true}
               options={[
                 { value: 'All', label: 'All Plans' },
-                { value: 'Enterprise', label: 'Enterprise' },
-                { value: 'Growth', label: 'Growth' },
-                { value: 'Professional', label: 'Professional' },
-                { value: 'Starter', label: 'Starter' },
+                ...Array.from(new Set(tenants.map((t) => t.planName))).map((name) => ({ value: name, label: name })),
               ]}
             />
           </div>
@@ -266,7 +316,7 @@ export function AllTenantsPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-[#0D1F3D]">All Tenants</h3>
               <span className="text-xs font-medium text-slate-500">
-                Showing <span className="font-bold text-[#0D1F3D]">1 to 10</span> of <span className="font-bold text-[#0D1F3D]">128</span> tenants
+                Showing <span className="font-bold text-[#0D1F3D]">{filteredTenants.length}</span> of <span className="font-bold text-[#0D1F3D]">{totalTenants}</span> tenants
               </span>
             </div>
 
@@ -287,32 +337,32 @@ export function AllTenantsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                  {tenantsList.map((t, idx) => (
+                  {filteredTenants.map((t, idx) => (
                     <tr key={t.id} className="hover:bg-slate-50/80 transition group">
                       <td className="py-3.5 text-slate-400 font-semibold">{idx + 1}</td>
                       <td className="py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm font-bold ${t.iconBg}`}>
-                            {t.name[0]}
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm font-bold ${getIconBg(t)}`}>
+                            {t.companyName[0]}
                           </div>
                           <div>
                             <p
                               onClick={() => navigate(`/platform/tenants/${t.id}`)}
                               className="font-bold text-[#0D1F3D] hover:text-blue-600 hover:underline cursor-pointer"
                             >
-                              {t.name}
+                              {t.companyName}
                             </p>
                             <p className="text-[11px] font-medium text-slate-400">{t.domain}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="py-3.5 font-mono text-xs font-bold text-slate-800">{t.code}</td>
-                      <td className="py-3.5 text-slate-600 font-semibold">{t.industry}</td>
-                      <td className="py-3.5 text-slate-700 font-bold">{t.plan}</td>
-                      <td className="py-3.5 text-slate-700 font-semibold">{t.users}</td>
-                      <td className="py-3.5 font-bold text-[#0D1F3D]">{t.mrr}</td>
-                      <td className="py-3.5">{getStatusBadge(t.status)}</td>
-                      <td className="py-3.5 text-slate-500 font-medium">{t.createdOn}</td>
+                      <td className="py-3.5 font-mono text-xs font-bold text-slate-800">{t.slug.toUpperCase()}</td>
+                      <td className="py-3.5 text-slate-600 font-semibold">{t.industryLabel}</td>
+                      <td className="py-3.5 text-slate-700 font-bold">{t.planName}</td>
+                      <td className="py-3.5 text-slate-700 font-semibold">{t.userLicensesCount}</td>
+                      <td className="py-3.5 font-bold text-[#0D1F3D]">{formatCurrency(t.mrr)}</td>
+                      <td className="py-3.5">{getStatusBadge(t.tenantStatus)}</td>
+                      <td className="py-3.5 text-slate-500 font-medium">{t.createdAt.split(' ·')[0]}</td>
                       <td className="py-3.5 text-right relative">
                         <button
                           type="button"
@@ -347,7 +397,7 @@ export function AllTenantsPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setActiveMenuId(null)}
+                              onClick={() => handleDeleteTenant(t.id)}
                               className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50"
                             >
                               <Trash2 className="h-4 w-4" /> Delete Tenant
@@ -372,7 +422,7 @@ export function AllTenantsPage() {
               </div>
 
               <div className="flex items-center gap-1">
-                <span>1-25 of 128</span>
+                <span>1-{filteredTenants.length} of {totalTenants}</span>
                 <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></button>
                 <button type="button" className="h-8 w-8 rounded-sm bg-blue-600 text-white font-bold flex items-center justify-center">1</button>
                 <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">2</button>
@@ -445,7 +495,7 @@ export function AllTenantsPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-base font-extrabold text-[#0D1F3D]">128</span>
+                  <span className="text-base font-extrabold text-[#0D1F3D]">{totalTenants}</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase">Total</span>
                 </div>
               </div>

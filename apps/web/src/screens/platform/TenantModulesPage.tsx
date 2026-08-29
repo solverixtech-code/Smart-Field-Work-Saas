@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -31,6 +31,9 @@ import {
   Sliders,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
+import { tenantService } from "../../features/platform/tenants/services/tenant.service";
+import { Tenant, PlatformModule } from "../../features/platform/tenants/types/platform.types";
+import { PLATFORM_MODULES } from "../../features/platform/tenants/fixtures/platform.fixtures";
 
 interface ModuleItem {
   id: string;
@@ -46,6 +49,17 @@ interface ModuleItem {
   category: "core" | "advanced" | "integrations";
 }
 
+const MODULE_ICONS: Record<string, { icon: React.ElementType; iconBg: string; iconColor: string }> = {
+  core_crm: { icon: Users, iconBg: "bg-indigo-100", iconColor: "text-indigo-600" },
+  field_visits: { icon: MapPin, iconBg: "bg-emerald-100", iconColor: "text-emerald-600" },
+  demo_scheduler: { icon: BarChart3, iconBg: "bg-purple-100", iconColor: "text-purple-600" },
+  order_management: { icon: FileText, iconBg: "bg-blue-100", iconColor: "text-blue-600" },
+  attendance_plus: { icon: Clock, iconBg: "bg-teal-100", iconColor: "text-teal-600" },
+  payroll_engine: { icon: CreditCard, iconBg: "bg-amber-100", iconColor: "text-amber-600" },
+  whatsapp_automation: { icon: MessageSquare, iconBg: "bg-emerald-100", iconColor: "text-emerald-600" },
+  ai_copilot: { icon: Zap, iconBg: "bg-pink-100", iconColor: "text-pink-600" },
+};
+
 export function TenantModulesPage() {
   const { tenantId } = useParams();
   const navigate = useNavigate();
@@ -54,178 +68,62 @@ export function TenantModulesPage() {
     (searchParams.get("tab") as "core" | "advanced" | "integrations") || "core";
   const [searchQuery, setSearchQuery] = useState("");
   const [showMoreActions, setShowMoreActions] = useState(false);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [modules, setModules] = useState<ModuleItem[]>([]);
 
   const setTab = (tab: string) => {
     setSearchParams({ tab });
   };
 
-  const [modules, setModules] = useState<ModuleItem[]>([
-    // Core Modules
-    {
-      id: "m1",
-      name: "CRM & Leads",
-      code: "CRM_LEADS",
-      description:
-        "Manage leads, accounts, contacts, opportunities and pipelines.",
-      icon: Users,
-      iconBg: "bg-indigo-100",
-      iconColor: "text-indigo-600",
-      enabled: true,
-      category: "core",
-    },
-    {
-      id: "m2",
-      name: "Field Workforce",
-      code: "FIELD_WORKFORCE",
-      description:
-        "Manage field executives, territories, attendance and activities.",
-      icon: Users,
-      iconBg: "bg-emerald-100",
-      iconColor: "text-emerald-600",
-      enabled: true,
-      usersLimit: "126 / 150",
-      usagePercent: 84,
-      category: "core",
-    },
-    {
-      id: "m3",
-      name: "Attendance & Time Tracking",
-      code: "ATTENDANCE",
-      description: "Track check-in/out, timesheets, leaves and approvals.",
-      icon: Clock,
-      iconBg: "bg-blue-100",
-      iconColor: "text-blue-600",
-      enabled: true,
-      usersLimit: "120 / 150",
-      usagePercent: 80,
-      category: "core",
-    },
-    {
-      id: "m4",
-      name: "Forms & Surveys",
-      code: "FORMS",
-      description: "Create and manage custom forms and surveys.",
-      icon: FileText,
-      iconBg: "bg-amber-100",
-      iconColor: "text-amber-600",
-      enabled: true,
-      category: "core",
-    },
-    {
-      id: "m5",
-      name: "Tasks & Activities",
-      code: "TASKS",
-      description: "Assign, track and manage tasks and activities.",
-      icon: CheckSquare,
-      iconBg: "bg-teal-100",
-      iconColor: "text-teal-600",
-      enabled: true,
-      category: "core",
-    },
-    {
-      id: "m6",
-      name: "Reports & Analytics",
-      code: "REPORTS",
-      description: "Advanced reports, dashboards and analytics.",
-      icon: BarChart3,
-      iconBg: "bg-purple-100",
-      iconColor: "text-purple-600",
-      enabled: true,
-      category: "core",
-    },
-    {
-      id: "m7",
-      name: "Media & Attachments",
-      code: "MEDIA",
-      description: "Upload, manage and share media and documents.",
-      icon: ImageIcon,
-      iconBg: "bg-pink-100",
-      iconColor: "text-pink-600",
-      enabled: true,
-      usersLimit: "128 GB / 200 GB",
-      usagePercent: 64,
-      category: "core",
-    },
-    {
-      id: "m8",
-      name: "GPS & Location Tracking",
-      code: "GPS_TRACKING",
-      description: "Real-time GPS tracking and location insights.",
-      icon: MapPin,
-      iconBg: "bg-emerald-100",
-      iconColor: "text-emerald-600",
-      enabled: true,
-      usersLimit: "118 / 150",
-      usagePercent: 79,
-      category: "core",
-    },
-    {
-      id: "m9",
-      name: "Chat & Messaging",
-      code: "CHAT",
-      description: "In-app team chat and announcements.",
-      icon: MessageSquare,
-      iconBg: "bg-blue-100",
-      iconColor: "text-blue-600",
-      enabled: true,
-      category: "core",
-    },
-    {
-      id: "m10",
-      name: "Notifications",
-      code: "NOTIFICATIONS",
-      description: "Email, SMS and in-app notifications.",
-      icon: Bell,
-      iconBg: "bg-amber-100",
-      iconColor: "text-amber-600",
-      enabled: true,
-      category: "core",
-    },
+  useEffect(() => {
+    if (tenantId) {
+      tenantService.getTenantById(tenantId).then((t) => {
+        if (t) {
+          setTenant(t);
+          const mappedModules: ModuleItem[] = PLATFORM_MODULES.map((pm) => {
+            const iconMeta = MODULE_ICONS[pm.code] || { icon: Layers, iconBg: "bg-slate-100", iconColor: "text-slate-600" };
+            const category: "core" | "advanced" | "integrations" =
+              pm.category === "Core" ? "core" : pm.category === "Automation" ? "integrations" : "advanced";
+            return {
+              id: pm.id,
+              name: pm.name,
+              code: pm.code,
+              description: pm.description,
+              icon: iconMeta.icon,
+              iconBg: iconMeta.iconBg,
+              iconColor: iconMeta.iconColor,
+              enabled: t.enabledModuleCodes.includes(pm.code),
+              category,
+            };
+          });
+          setModules(mappedModules);
+        }
+      });
+    }
+  }, [tenantId]);
 
-    // Advanced Modules
-    {
-      id: "m11",
-      name: "Field Sales & Orders",
-      code: "ORDERS",
-      description:
-        "Take field orders, generate quotes, and manage product catalogs.",
-      icon: ShoppingCartIcon,
-      iconBg: "bg-purple-100",
-      iconColor: "text-purple-600",
-      enabled: true,
-      category: "advanced",
-    },
-    {
-      id: "m12",
-      name: "Service Jobs & Ticketing",
-      code: "SERVICE_JOBS",
-      description: "Dispatch field technicians, manage SLAs and work orders.",
-      icon: WrenchIcon,
-      iconBg: "bg-orange-100",
-      iconColor: "text-orange-600",
-      enabled: false,
-      category: "advanced",
-    },
+  const toggleModule = async (id: string) => {
+    if (!tenant) return;
+    const targetModule = modules.find((m) => m.id === id);
+    if (!targetModule) return;
 
-    // Integrations
-    {
-      id: "m13",
-      name: "WhatsApp Business API",
-      code: "WHATSAPP",
-      description: "Send automated updates and visit reports via WhatsApp.",
-      icon: MessageSquare,
-      iconBg: "bg-emerald-100",
-      iconColor: "text-emerald-600",
-      enabled: true,
-      category: "integrations",
-    },
-  ]);
+    const newEnabled = !targetModule.enabled;
+    const updatedCodes = newEnabled
+      ? [...tenant.enabledModuleCodes, targetModule.code]
+      : tenant.enabledModuleCodes.filter((c) => c !== targetModule.code);
 
-  const toggleModule = (id: string) => {
-    setModules((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m)),
-    );
-    toast.success("Module entitlement updated");
+    try {
+      const updatedTenant = await tenantService.updateTenant(tenant.id, {
+        enabledModuleCodes: updatedCodes,
+      });
+      setTenant(updatedTenant);
+      setModules((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, enabled: newEnabled } : m))
+      );
+      toast.success(`Module '${targetModule.name}' ${newEnabled ? 'enabled' : 'disabled'}`);
+    } catch {
+      toast.error("Failed to update module entitlement");
+    }
   };
 
   const filteredModules = modules.filter(
@@ -270,7 +168,7 @@ export function TenantModulesPage() {
               onClick={() => navigate(`/platform/tenants/${tenantId}`)}
               className="hover:text-[#0D1F3D]"
             >
-              Sunrise Healthcare Pvt Ltd
+              {tenant?.companyName || 'Tenant'}
             </button>
             <span>›</span>
             <span className="font-extrabold text-[#0D1F3D]">
@@ -287,7 +185,7 @@ export function TenantModulesPage() {
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Manage enabled modules, features and entitlements for this tenant.
+            Manage enabled modules, features and entitlements for {tenant?.companyName || 'this tenant'}.
           </p>
         </div>
 
@@ -352,27 +250,31 @@ export function TenantModulesPage() {
         {/* Col 1: Logo & Company Details */}
         <div className="lg:col-span-5 flex items-start gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-amber-200 bg-amber-50 text-amber-700 font-extrabold text-lg">
-            <Building2 className="h-7 w-7 text-amber-600" />
+            {tenant?.logoUrl ? (
+              <img src={tenant.logoUrl} alt={tenant.companyName} className="h-10 w-10 object-contain rounded-sm" />
+            ) : (
+              <Building2 className="h-7 w-7 text-amber-600" />
+            )}
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <h2 className="text-base font-extrabold text-[#0D1F3D]">
-                Sunrise Healthcare Pvt Ltd
+                {tenant?.companyName || 'Loading...'}
               </h2>
               <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-                Active
+                {tenant?.tenantStatus || 'Active'}
               </span>
             </div>
             <p className="text-xs text-slate-500 font-medium">
               Industry:{" "}
-              <strong className="text-slate-800">Pharma & Healthcare</strong> •
+              <strong className="text-slate-800">{tenant?.industryLabel || '—'}</strong> •
               Plan:{" "}
-              <strong className="text-slate-800">Professional (Yearly)</strong>
+              <strong className="text-slate-800">{tenant?.planName || '—'}</strong>
             </p>
             <p className="text-xs text-slate-500 font-medium">
               Tenant Code:{" "}
-              <strong className="font-mono text-slate-800">SRHC-TNT</strong> •
-              Users: <strong className="text-slate-800">126 / 150</strong>
+              <strong className="font-mono text-slate-800">{tenant?.slug.toUpperCase() || '—'}</strong> •
+              Licenses: <strong className="text-slate-800">{tenant?.userLicensesCount || 0}</strong>
             </p>
           </div>
         </div>
@@ -384,14 +286,14 @@ export function TenantModulesPage() {
               Subscription Status
             </span>
             <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-              Active
+              {tenant?.subscriptionStatus || 'Active'}
             </span>
           </div>
           <p className="text-xs font-extrabold text-[#0D1F3D]">
-            24 May 2026 – 23 May 2027
+            Created {tenant?.createdAt.split(' ·')[0] || '—'}
           </p>
           <p className="text-[11px] text-slate-400 font-medium">
-            29 days elapsed
+            MRR: ₹{tenant?.mrr.toLocaleString('en-IN') || 0} / mo
           </p>
         </div>
 

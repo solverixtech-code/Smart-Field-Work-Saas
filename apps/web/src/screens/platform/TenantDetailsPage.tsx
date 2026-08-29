@@ -87,13 +87,13 @@ export function TenantDetailsPage() {
           setTenant(t);
           setEditForm({
             companyName: t.companyName,
-            tenantCode: 'SRHC-TNT',
+            tenantCode: t.slug.toUpperCase(),
             industryLabel: t.industryLabel,
             planName: t.planName,
             fullName: t.adminUser.fullName,
             email: t.adminUser.email,
             phone: t.adminUser.phone,
-            address: '201, Sunrise Tower, Andheri Kurla Road, Andheri East, Mumbai, Maharashtra - 400059, India',
+            address: `${t.country} · ${t.timezone}`,
             autoRenewal: true,
           });
         }
@@ -101,23 +101,27 @@ export function TenantDetailsPage() {
     }
   }, [tenantId]);
 
-  const handleSaveTenantEdit = (e: React.FormEvent) => {
+  const handleSaveTenantEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tenant) return;
-    setTenant({
-      ...tenant,
-      companyName: editForm.companyName,
-      industryLabel: editForm.industryLabel,
-      planName: editForm.planName,
-      adminUser: {
-        ...tenant.adminUser,
-        fullName: editForm.fullName,
-        email: editForm.email,
-        phone: editForm.phone,
-      },
-    });
-    setShowEditModal(false);
-    toast.success('Tenant details updated successfully!');
+    try {
+      const updated = await tenantService.updateTenant(tenant.id, {
+        companyName: editForm.companyName,
+        industryLabel: editForm.industryLabel,
+        planName: editForm.planName,
+        adminUser: {
+          ...tenant.adminUser,
+          fullName: editForm.fullName,
+          email: editForm.email,
+          phone: editForm.phone,
+        },
+      });
+      setTenant(updated);
+      setShowEditModal(false);
+      toast.success('Tenant details updated successfully!');
+    } catch {
+      toast.error('Failed to update tenant');
+    }
   };
 
   if (!tenant) {
@@ -168,7 +172,7 @@ export function TenantDetailsPage() {
             </button>
             <span>›</span>
             <span className="font-extrabold text-[#0D1F3D]">
-              Sunrise Healthcare Pvt Ltd
+              {tenant.companyName}
             </span>
           </div>
 
@@ -273,10 +277,10 @@ export function TenantDetailsPage() {
               Tenant Status
             </span>
             <span className="text-base font-extrabold text-emerald-600 block leading-tight">
-              Active
+              {tenant.tenantStatus}
             </span>
             <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-              Since 24 May 2026
+              Since {tenant.createdAt.split(' ·')[0]}
             </span>
           </div>
         </div>
@@ -290,10 +294,10 @@ export function TenantDetailsPage() {
               Subscription Status
             </span>
             <span className="text-base font-extrabold text-indigo-600 block leading-tight">
-              Active
+              {tenant.subscriptionStatus}
             </span>
             <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-              Professional • Yearly
+              {tenant.planName}
             </span>
           </div>
         </div>
@@ -306,11 +310,11 @@ export function TenantDetailsPage() {
             <span className="text-[11px] text-slate-500 font-semibold block">
               Plan & Billing
             </span>
-            <span className="text-base font-extrabold text-[#0D1F3D] block leading-tight">
-              Professional
+            <span className="text-base font-extrabold text-[#0D1F3D] block leading-tight truncate max-w-[110px]" title={tenant.planName}>
+              {tenant.planName}
             </span>
             <span className="text-[10px] font-mono text-slate-500 font-bold block mt-0.5">
-              ₹4,24,786 / Year
+              ₹{(tenant.mrr * 12).toLocaleString('en-IN')} / Year
             </span>
           </div>
         </div>
@@ -324,10 +328,10 @@ export function TenantDetailsPage() {
               Active Users
             </span>
             <span className="text-base font-extrabold text-[#0D1F3D] block leading-tight">
-              126 / 150
+              {tenant.userLicensesCount} Licenses
             </span>
             <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-              84% of user limit used
+              Provisioned
             </span>
           </div>
         </div>
@@ -358,10 +362,10 @@ export function TenantDetailsPage() {
               MRR (Monthly)
             </span>
             <span className="text-base font-extrabold text-blue-600 block leading-tight">
-              ₹35,399
+              ₹{tenant.mrr.toLocaleString('en-IN')}
             </span>
             <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-              Next billing: 24 Jun 2026
+              Provisioning: {tenant.provisioningType}
             </span>
           </div>
         </div>
@@ -378,20 +382,12 @@ export function TenantDetailsPage() {
             </h3>
 
             <div className="flex items-start gap-4 pt-1">
-              <div className="flex h-24 w-28 shrink-0 items-center justify-center rounded-sm border border-amber-200 bg-white p-2 text-center shadow-xs">
-                <div>
-                  <div className="flex justify-center mb-1">
-                    <span className="h-5 w-5 rounded-full bg-amber-400 text-white font-bold flex items-center justify-center text-[10px]">
-                      ☀
-                    </span>
-                  </div>
-                  <p className="font-extrabold text-amber-600 text-xs tracking-tight">
-                    SUNRISE
-                  </p>
-                  <p className="text-[8px] font-bold text-slate-400 tracking-wider">
-                    HEALTHCARE
-                  </p>
-                </div>
+              <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-sm border border-slate-200 bg-slate-50 p-2 text-center shadow-xs">
+                {tenant.logoUrl ? (
+                  <img src={tenant.logoUrl} alt={tenant.companyName} className="h-16 w-16 object-contain rounded-sm" />
+                ) : (
+                  <span className="text-2xl font-extrabold text-[#0D1F3D]">{tenant.companyName[0]}</span>
+                )}
               </div>
 
               <div className="space-y-2 text-xs flex-1">
@@ -401,20 +397,20 @@ export function TenantDetailsPage() {
                       Tenant Name
                     </span>
                     <span className="font-extrabold text-[#0D1F3D]">
-                      Sunrise Healthcare Pvt Ltd
+                      {tenant.companyName}
                     </span>
                   </div>
                   <div>
                     <span className="text-[11px] text-slate-500 font-semibold block">
-                      Website
+                      Domain
                     </span>
                     <a
-                      href="https://www.sunrisehealthcare.com"
+                      href={`https://${tenant.domain}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-bold text-indigo-600 hover:underline"
+                      className="font-bold text-indigo-600 hover:underline truncate block"
                     >
-                      www.sunrisehealthcare.com
+                      {tenant.domain}
                     </a>
                   </div>
                 </div>
@@ -422,10 +418,10 @@ export function TenantDetailsPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <span className="text-[11px] text-slate-500 font-semibold block">
-                      Tenant Code
+                      Tenant Code / Slug
                     </span>
                     <span className="font-mono font-bold text-slate-800">
-                      SRHC-TNT
+                      {tenant.slug.toUpperCase()}
                     </span>
                   </div>
                   <div>
@@ -433,13 +429,13 @@ export function TenantDetailsPage() {
                       Primary Contact
                     </span>
                     <span className="font-extrabold text-[#0D1F3D] block">
-                      Rahul Sharma (CEO)
+                      {tenant.adminUser.fullName} ({tenant.adminUser.designation})
                     </span>
                     <span className="font-mono text-slate-600 block text-[11px]">
-                      +91 98765 43210
+                      {tenant.adminUser.phone}
                     </span>
                     <span className="text-slate-500 block text-[11px] truncate">
-                      rahul.sharma@sunrisehealthcare.com
+                      {tenant.adminUser.email}
                     </span>
                   </div>
                 </div>
@@ -450,16 +446,15 @@ export function TenantDetailsPage() {
                       Industry
                     </span>
                     <span className="font-bold text-indigo-700 inline-flex items-center gap-1">
-                      <Building2 className="h-3 w-3 text-indigo-500" /> Pharma &
-                      Healthcare
+                      <Building2 className="h-3 w-3 text-indigo-500" /> {tenant.industryLabel}
                     </span>
                   </div>
                   <div>
                     <span className="text-[11px] text-slate-500 font-semibold block">
-                      Business Type
+                      Company Size
                     </span>
                     <span className="font-semibold text-slate-700">
-                      Private Limited
+                      {tenant.companySize}
                     </span>
                   </div>
                 </div>
@@ -469,11 +464,10 @@ export function TenantDetailsPage() {
             <div className="space-y-2 text-xs border-t border-slate-100 pt-3">
               <div>
                 <span className="text-[11px] text-slate-500 font-semibold block">
-                  Registered Address
+                  Region & Timezone
                 </span>
                 <span className="text-slate-600 font-medium block text-[11px] leading-relaxed">
-                  201, Sunrise Tower, Andheri Kurla Road, Andheri East, Mumbai,
-                  Maharashtra - 400059, India
+                  {tenant.country} · {tenant.timezone} ({tenant.currency})
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-2">
@@ -482,18 +476,15 @@ export function TenantDetailsPage() {
                     Created On
                   </span>
                   <span className="text-slate-700 font-bold text-[11px]">
-                    24 May 2026, 10:30 AM
+                    {tenant.createdAt}
                   </span>
                 </div>
                 <div>
                   <span className="text-[11px] text-slate-500 font-semibold block">
-                    Created By
+                    Legal Entity Name
                   </span>
                   <span className="text-slate-700 font-bold text-[11px]">
-                    Amit Sharma{" "}
-                    <span className="text-slate-500 font-normal">
-                      (Platform Super Admin)
-                    </span>
+                    {tenant.legalEntityName}
                   </span>
                 </div>
               </div>

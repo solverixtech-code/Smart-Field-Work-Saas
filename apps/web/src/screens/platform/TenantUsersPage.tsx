@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -26,6 +26,8 @@ import { Select } from '../../components/ui/Select';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { Input } from '../../components/ui/Input';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { tenantService } from '../../features/platform/tenants/services/tenant.service';
+import { Tenant } from '../../features/platform/tenants/types/platform.types';
 
 interface UserRow {
   id: string;
@@ -59,6 +61,15 @@ export function TenantUsersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+
+  useEffect(() => {
+    if (tenantId) {
+      tenantService.getTenantById(tenantId).then((t) => {
+        if (t) setTenant(t);
+      });
+    }
+  }, [tenantId]);
 
   const setTab = (tab: string) => {
     setSearchParams({ tab });
@@ -247,7 +258,7 @@ export function TenantUsersPage() {
             <span>›</span>
             <button type="button" onClick={() => navigate('/platform/tenants')} className="hover:text-[#0D1F3D]">All Tenants</button>
             <span>›</span>
-            <button type="button" onClick={() => navigate(`/platform/tenants/${tenantId}`)} className="hover:text-[#0D1F3D]">Sunrise Healthcare Pvt Ltd</button>
+            <button type="button" onClick={() => navigate(`/platform/tenants/${tenantId}`)} className="hover:text-[#0D1F3D]">{tenant?.companyName || 'Tenant'}</button>
             <span>›</span>
             <span className="font-extrabold text-[#0D1F3D]">Users & Memberships</span>
           </div>
@@ -259,7 +270,7 @@ export function TenantUsersPage() {
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Manage users, roles and access for this tenant. Invite, activate or suspend members and control their permissions.
+            Manage users, roles and access for {tenant?.companyName || 'this tenant'}. Invite, activate or suspend members and control their permissions.
           </p>
         </div>
 
@@ -290,18 +301,22 @@ export function TenantUsersPage() {
       <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
         <div className="lg:col-span-5 flex items-start gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-amber-200 bg-amber-50 text-amber-700 font-extrabold text-lg">
-            <Building2 className="h-7 w-7 text-amber-600" />
+            {tenant?.logoUrl ? (
+              <img src={tenant.logoUrl} alt={tenant.companyName} className="h-10 w-10 object-contain rounded-sm" />
+            ) : (
+              <Building2 className="h-7 w-7 text-amber-600" />
+            )}
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-extrabold text-[#0D1F3D]">Sunrise Healthcare Pvt Ltd</h2>
-              <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Active</span>
+              <h2 className="text-base font-extrabold text-[#0D1F3D]">{tenant?.companyName || 'Loading...'}</h2>
+              <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">{tenant?.tenantStatus || 'Active'}</span>
             </div>
             <p className="text-xs text-slate-500 font-medium">
-              Industry: <strong className="text-slate-800">Pharma & Healthcare</strong> • Plan: <strong className="text-slate-800">Professional (Yearly)</strong>
+              Industry: <strong className="text-slate-800">{tenant?.industryLabel || '—'}</strong> • Plan: <strong className="text-slate-800">{tenant?.planName || '—'}</strong>
             </p>
             <p className="text-xs text-slate-500 font-medium">
-              Tenant Code: <strong className="font-mono text-slate-800">SRHC-TNT</strong> • Users: <strong className="text-slate-800">126 / 150</strong>
+              Tenant Code: <strong className="font-mono text-slate-800">{tenant?.slug.toUpperCase() || '—'}</strong> • Licenses: <strong className="text-slate-800">{tenant?.userLicensesCount || 0}</strong>
             </p>
           </div>
         </div>
@@ -309,10 +324,10 @@ export function TenantUsersPage() {
         <div className="lg:col-span-4 border-l border-slate-100 pl-6 space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-500">Subscription Status</span>
-            <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Active</span>
+            <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">{tenant?.subscriptionStatus || 'Active'}</span>
           </div>
-          <p className="text-xs font-extrabold text-[#0D1F3D]">24 May 2026 – 23 May 2027</p>
-          <p className="text-[11px] text-slate-400 font-medium">29 days elapsed</p>
+          <p className="text-xs font-extrabold text-[#0D1F3D]">Created {tenant?.createdAt.split(' ·')[0] || '—'}</p>
+          <p className="text-[11px] text-slate-400 font-medium">MRR: ₹{tenant?.mrr.toLocaleString('en-IN') || 0} / mo</p>
         </div>
 
         <div className="lg:col-span-3 border-l border-slate-100 pl-6 space-y-1">
