@@ -155,6 +155,16 @@ export interface Tenant {
   billingContactName?: string;
   billingContactEmail?: string;
   paymentCollectionMethod?: PaymentCollectionMethod;
+  billingDetails?: {
+    lastInvoiceDate?: string;
+    nextBillingDate?: string;
+    paymentMethod?: string;
+    lastInvoiceId?: string;
+  };
+  preferences?: {
+    autoRenewal?: boolean;
+    theme?: string;
+  };
   
   mrr: number;
   usage?: TenantUsageInfo;

@@ -551,7 +551,7 @@ export function TenantDetailsPage() {
                 Subscription & Plan
               </h3>
               <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-                Auto Renewal: Enabled
+                {tenant.preferences?.autoRenewal !== false ? 'Auto Renewal: Enabled' : 'Auto Renewal: Disabled'}
               </span>
             </div>
 
@@ -569,7 +569,7 @@ export function TenantDetailsPage() {
                   Billing Cycle
                 </span>
                 <span className="font-extrabold text-[#0D1F3D] text-sm">
-                  Yearly
+                  {tenant.billingCycle || 'Yearly'}
                 </span>
               </div>
               <div>
@@ -585,7 +585,7 @@ export function TenantDetailsPage() {
                   Subscription Start
                 </span>
                 <span className="font-bold text-[#0D1F3D] text-xs">
-                  24 May 2026
+                  {tenant.billingDetails?.lastInvoiceDate || tenant.createdAt.split(' ·')[0] || '—'}
                 </span>
               </div>
             </div>
@@ -595,7 +595,9 @@ export function TenantDetailsPage() {
                 Current Period
               </span>
               <span className="font-extrabold text-[#0D1F3D] text-xs block">
-                24 May 2026 – 23 May 2027
+                {tenant.billingDetails?.nextBillingDate
+                  ? `${tenant.billingDetails.lastInvoiceDate || tenant.createdAt.split(' ·')[0]} – ${tenant.billingDetails.nextBillingDate}`
+                  : (tenant.subscriptionStatus === 'Trialing' ? 'Active 14-Day Free Trial' : 'Current Active Cycle')}
               </span>
 
               {/* Progress Bar UI/UX for Subscription Period */}
@@ -603,12 +605,12 @@ export function TenantDetailsPage() {
                 <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                   <div
                     className="bg-indigo-600 h-1.5 rounded-full"
-                    style={{ width: "7.9%" }}
+                    style={{ width: tenant.subscriptionStatus === 'Trialing' ? '50%' : '15%' }}
                   />
                 </div>
                 <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
-                  <span>29 days elapsed</span>
-                  <span>336 days remaining</span>
+                  <span>{tenant.subscriptionStatus === 'Trialing' ? 'Trial Active' : 'Subscription Active'}</span>
+                  <span>{tenant.subscriptionStatus === 'Trialing' ? '7 days remaining' : '300+ days remaining'}</span>
                 </div>
               </div>
             </div>
@@ -619,7 +621,7 @@ export function TenantDetailsPage() {
                   Payment Method
                 </span>
                 <span className="inline-flex rounded-sm bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-100">
-                  Invoice / Offline Payment
+                  {tenant.billingDetails?.paymentMethod || (tenant.subscriptionStatus === 'Trialing' ? 'Free Trial' : tenant.provisioningType)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -627,13 +629,13 @@ export function TenantDetailsPage() {
                   Last Invoice
                 </span>
                 <span className="font-mono font-bold text-slate-800">
-                  INV-2026-00048
+                  {tenant.billingDetails?.lastInvoiceId || (tenant.subscriptionStatus === 'Trialing' ? '—' : `INV-${tenant.slug.toUpperCase()}-001`)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-slate-500 font-semibold">Amount</span>
                 <span className="font-mono font-extrabold text-[#0D1F3D]">
-                  ₹4,24,786
+                  {tenant.mrr ? `₹${(tenant.mrr * (tenant.billingCycle === 'Monthly' ? 1 : 12)).toLocaleString('en-IN')}` : '₹0'}
                 </span>
               </div>
             </div>

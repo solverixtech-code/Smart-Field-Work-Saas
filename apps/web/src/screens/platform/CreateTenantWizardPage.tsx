@@ -1135,6 +1135,17 @@ function CreateTenantWizardInner() {
     setSearchParams(newParams);
   };
 
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
   const handleNext = () => {
     if (currentStep === 1) {
       if (!formState.companyName.trim()) {
@@ -1165,10 +1176,53 @@ function CreateTenantWizardInner() {
       }
     }
 
+    if (currentStep === 4) {
+      const selectedPlan = PLATFORM_PLANS.find((p) => p.id === formState.planId);
+      if (!selectedPlan) {
+        toast.error('Please select a valid Subscription Plan to continue');
+        return;
+      }
+      if (formState.userLicensesCount < selectedPlan.minUsers) {
+        toast.error(`The selected plan '${selectedPlan.name}' requires at least ${selectedPlan.minUsers} user licenses.`);
+        return;
+      }
+      if (!formState.subscriptionStartDate) {
+        toast.error('Please select a Subscription Start Date');
+        return;
+      }
+    }
+
+    if (currentStep === 5) {
+      if (formState.selectedModuleCodes.length === 0) {
+        toast.error('Please select at least one module for this tenant');
+        return;
+      }
+      const selectedPlan = PLATFORM_PLANS.find((p) => p.id === formState.planId);
+      const missingMandatory = (selectedPlan?.includedModules || []).filter(
+        (code) => !formState.selectedModuleCodes.includes(code)
+      );
+      if (missingMandatory.length > 0) {
+        toast.error(`Plan '${selectedPlan?.name}' requires modules: ${missingMandatory.join(', ')}`);
+        return;
+      }
+    }
+
     updateStepInUrl(Math.min(6, currentStep + 1));
   };
 
   const handleFinish = async () => {
+    // End-to-end validation before final creation
+    if (!formState.companyName.trim() || !formState.slug.trim()) {
+      toast.error('Missing Company Name or Tenant Code. Please review Step 1.');
+      updateStepInUrl(1);
+      return;
+    }
+    if (!formState.adminFullName.trim() || !formState.adminEmail.trim()) {
+      toast.error('Missing Administrator details. Please review Step 3.');
+      updateStepInUrl(3);
+      return;
+    }
+
     try {
       const result = await submitTenant();
       toast.success(

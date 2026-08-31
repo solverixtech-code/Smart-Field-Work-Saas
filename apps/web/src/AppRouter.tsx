@@ -756,13 +756,15 @@ export default function AppRouter() {
             <Route element={<PlatformAccessGuard requiredPermission="platform.dashboard.view" />}>
               <Route path="/platform" element={<Navigate to="/platform/dashboard" replace />} />
               <Route path="/platform/dashboard" element={<PlatformDashboardPage />} />
-              <Route path="/platform/tenants" element={<AllTenantsPage />} />
+              <Route element={<PlatformAccessGuard requiredPermission="platform.tenants.view" />}>
+                <Route path="/platform/tenants" element={<AllTenantsPage />} />
+                <Route path="/platform/tenants/:tenantId" element={<TenantDetailsPage />} />
+              </Route>
               <Route element={<PlatformAccessGuard requiredPermission="platform.tenants.create" />}>
                 <Route path="/platform/tenants/create" element={<CreateTenantWizardPage />} />
               </Route>
               <Route path="/platform/tenants/onboarding" element={<Navigate to="/platform/tenants" replace />} />
               <Route path="/platform/tenants/requests" element={<Navigate to="/platform/tenants" replace />} />
-              <Route path="/platform/tenants/:tenantId" element={<TenantDetailsPage />} />
               <Route element={<PlatformAccessGuard requiredPermission="platform.tenants.modules.manage" />}>
                 <Route path="/platform/tenants/:tenantId/modules" element={<TenantModulesPage />} />
               </Route>

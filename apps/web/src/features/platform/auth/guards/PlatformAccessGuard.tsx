@@ -19,15 +19,11 @@ export function PlatformAccessGuard({
   const navigate = useNavigate();
   const user = useAppSelector((state) => state.auth.user);
 
-  // Check user role from auth store or fallback to platformAuthService principal
-  const isPlatformUser =
-    user &&
-    (user.role === Role.SUPER_ADMIN ||
-      (user.role as string) === 'PLATFORM_SUPER_ADMIN' ||
-      user.role === Role.ADMIN);
+  // Strictly look up platform principal from user identity (tenant ADMIN != Platform Admin)
+  const principal = platformAuthService.getPlatformPrincipalForUser(user);
 
   const hasAccess =
-    isPlatformUser && platformAuthService.hasPermission(requiredPermission);
+    principal !== null && principal.permissions.includes(requiredPermission);
 
   if (!hasAccess) {
     return (
