@@ -85,6 +85,11 @@ export function usePlatformPermissions(currentRole: PlatformRole = 'PLATFORM_SUP
   const canSuspendTenant = hasPlatformPermission('platform.tenants.suspend');
   const canViewAuditLogs = hasPlatformPermission('platform.audit.view');
 
+  const canCreatePlan = hasPlatformPermission('platform.plans.create');
+  const canUpdatePlan = hasPlatformPermission('platform.plans.update');
+  const canArchivePlan = hasPlatformPermission('platform.plans.archive');
+  const canPublishPlan = hasPlatformPermission('platform.plans.publish');
+
   return {
     role,
     setRole,
@@ -93,6 +98,10 @@ export function usePlatformPermissions(currentRole: PlatformRole = 'PLATFORM_SUP
     canCreateTenant,
     canManageSubscriptions,
     canSuspendTenant,
-    canViewAuditLogs
+    canViewAuditLogs,
+    canCreatePlan,
+    canUpdatePlan,
+    canArchivePlan,
+    canPublishPlan
   };
 }

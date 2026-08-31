@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { usePlans } from '../../features/platform/catalog/plans/hooks/usePlans';
 import { Plan } from '../../features/platform/catalog/plans/types/plan.types';
 import { planService } from '../../features/platform/catalog/plans/services/plan.service';
+import { usePlatformPermissions } from '../../features/platform/tenants/hooks/usePlatformPermissions';
 import {
   formatCurrency,
   formatPlanMonthlyPrice,
@@ -40,6 +41,7 @@ const PIE_COLORS = ['#6366F1', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#3B8
 export function PlansPricingPage() {
   const navigate = useNavigate();
   const { plans, metrics, loading, error, refreshPlans } = usePlans();
+  const { canCreatePlan, canUpdatePlan, canArchivePlan } = usePlatformPermissions();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
@@ -292,40 +294,46 @@ export function PlansPricingPage() {
                 >
                   <Eye className="h-4 w-4 text-blue-600" /> View Plan
                 </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveMenuPlanId(null);
-                    navigate(`/platform/plans/create?planId=${plan.id}&step=basic`);
-                  }}
-                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  <Edit className="h-4 w-4 text-indigo-600" /> Edit Plan
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDuplicate(plan)}
-                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  <Copy className="h-4 w-4 text-emerald-600" /> Duplicate Plan
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveMenuPlanId(null);
-                    setArchivingPlan(plan);
-                  }}
-                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 border-t border-slate-100"
-                >
-                  <Archive className="h-4 w-4 text-rose-600" /> Archive Plan
-                </button>
+                {canUpdatePlan && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMenuPlanId(null);
+                      navigate(`/platform/plans/create?planId=${plan.id}&step=basic`);
+                    }}
+                    className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <Edit className="h-4 w-4 text-indigo-600" /> Edit Plan
+                  </button>
+                )}
+                {canCreatePlan && (
+                  <button
+                    type="button"
+                    onClick={() => handleDuplicate(plan)}
+                    className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    <Copy className="h-4 w-4 text-emerald-600" /> Duplicate Plan
+                  </button>
+                )}
+                {canArchivePlan && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMenuPlanId(null);
+                      setArchivingPlan(plan);
+                    }}
+                    className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 border-t border-slate-100"
+                  >
+                    <Archive className="h-4 w-4 text-rose-600" /> Archive Plan
+                  </button>
+                )}
               </div>
             )}
           </div>
         ),
       },
     ],
-    [currentPage, pageSize, metrics, activeMenuPlanId, navigate]
+    [currentPage, pageSize, metrics, activeMenuPlanId, navigate, canCreatePlan, canUpdatePlan, canArchivePlan]
   );
 
   return (
@@ -353,14 +361,16 @@ export function PlansPricingPage() {
           >
             <Download className="h-4 w-4 text-slate-400" /> Export Catalog
           </Button>
-          <Button
-            variant="accent"
-            size="sm"
-            onClick={() => navigate('/platform/plans/create?step=basic')}
-            className="gap-2 font-bold shadow-xs"
-          >
-            <Plus className="h-4 w-4" /> Create Plan
-          </Button>
+          {canCreatePlan && (
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => navigate('/platform/plans/create?step=basic')}
+              className="gap-2 font-bold shadow-xs"
+            >
+              <Plus className="h-4 w-4" /> Create Plan
+            </Button>
+          )}
         </div>
       </div>
 
