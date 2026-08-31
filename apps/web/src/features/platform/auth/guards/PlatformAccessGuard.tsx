@@ -1,12 +1,14 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { platformAuthService } from '../services/platform-auth.service';
 import { PlatformPermission } from '../../tenants/types/platform.types';
 import { Button } from '../../../../components/ui/Button';
+import { useAppSelector } from '../../../../store';
+import { Role } from '@visiblo/shared';
 
 interface PlatformAccessGuardProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   requiredPermission?: PlatformPermission;
 }
 
@@ -15,8 +17,17 @@ export function PlatformAccessGuard({
   requiredPermission = 'platform.dashboard.view',
 }: PlatformAccessGuardProps) {
   const navigate = useNavigate();
-  const principal = platformAuthService.getPlatformPrincipal();
-  const hasAccess = principal && platformAuthService.hasPermission(requiredPermission);
+  const user = useAppSelector((state) => state.auth.user);
+
+  // Check user role from auth store or fallback to platformAuthService principal
+  const isPlatformUser =
+    user &&
+    (user.role === Role.SUPER_ADMIN ||
+      (user.role as string) === 'PLATFORM_SUPER_ADMIN' ||
+      user.role === Role.ADMIN);
+
+  const hasAccess =
+    isPlatformUser && platformAuthService.hasPermission(requiredPermission);
 
   if (!hasAccess) {
     return (
@@ -46,5 +57,5 @@ export function PlatformAccessGuard({
     );
   }
 
-  return <>{children}</>;
+  return children ? <>{children}</> : <Outlet />;
 }

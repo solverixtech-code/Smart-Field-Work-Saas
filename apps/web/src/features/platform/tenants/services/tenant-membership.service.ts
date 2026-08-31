@@ -1,14 +1,19 @@
-import { TenantMember, PlatformTenantAccess, TenantAccessRequest } from '../types/membership.types';
+import { TenantMember, PlatformTenantAccess, TenantAccessRequest, MemberStatus } from '../types/membership.types';
 import { tenantService } from './tenant.service';
 
 export interface ITenantMembershipService {
   getMembers(tenantId: string): Promise<TenantMember[]>;
-  inviteMember(tenantId: string, input: { name: string; email: string; role: string; department: string }): Promise<TenantMember>;
+  getMemberships(tenantId: string): Promise<TenantMember[]>;
+  inviteMember(tenantId: string, input: { name: string; email: string; roleLabel: string; department: string }): Promise<TenantMember>;
   updateMember(tenantId: string, memberId: string, updates: Partial<TenantMember>): Promise<TenantMember>;
+  updateMemberStatus(tenantId: string, memberId: string, status: MemberStatus): Promise<TenantMember>;
   suspendMember(tenantId: string, memberId: string): Promise<TenantMember>;
   reactivateMember(tenantId: string, memberId: string): Promise<TenantMember>;
+  resendInvite(tenantId: string, memberId: string): Promise<void>;
   resendInvitation(tenantId: string, memberId: string): Promise<void>;
   revokeInvitation(tenantId: string, memberId: string): Promise<void>;
+  bulkUpdateStatus(tenantId: string, memberIds: string[], status: MemberStatus): Promise<TenantMember[]>;
+  bulkResendInvites(tenantId: string, memberIds: string[]): Promise<void>;
   getPlatformAccess(tenantId: string): Promise<PlatformTenantAccess[]>;
   getAccessRequests(tenantId: string): Promise<TenantAccessRequest[]>;
 }
@@ -22,6 +27,8 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
       email: 'admin@apexpharma.com',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
       roleLabel: 'Tenant Owner',
+      roleBg: 'bg-purple-50',
+      roleColor: 'text-purple-700',
       department: 'Executive Management',
       status: 'Active',
       joinedOn: '12 Jan 2025',
@@ -37,6 +44,8 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
       email: 'priya.mehta@apexpharma.com',
       avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
       roleLabel: 'Tenant Admin',
+      roleBg: 'bg-blue-50',
+      roleColor: 'text-blue-700',
       department: 'Operations',
       status: 'Active',
       joinedOn: '14 Jan 2025',
@@ -51,6 +60,8 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
       email: 'sandeep.patel@apexpharma.com',
       avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
       roleLabel: 'Field Operations Lead',
+      roleBg: 'bg-indigo-50',
+      roleColor: 'text-indigo-700',
       department: 'Field Operations',
       status: 'Active',
       joinedOn: '20 Jan 2025',
@@ -65,6 +76,8 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
       email: 'karan.m@apexpharma.com',
       avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80',
       roleLabel: 'Field Executive',
+      roleBg: 'bg-emerald-50',
+      roleColor: 'text-emerald-700',
       department: 'Field Operations',
       status: 'Invited',
       joinedOn: '25 May 2026',
@@ -79,6 +92,8 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
       email: 'rohit.verma@apexpharma.com',
       avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
       roleLabel: 'Support Specialist',
+      roleBg: 'bg-amber-50',
+      roleColor: 'text-amber-700',
       department: 'Customer Support',
       status: 'Suspended',
       joinedOn: '23 Jan 2025',
@@ -95,6 +110,8 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
       name: 'Amit Sharma',
       email: 'amit.sharma@smartfieldwork.com',
       roleLabel: 'Platform Super Admin',
+      platformRole: 'Platform Super Admin',
+      accessLevel: 'Full System Access',
       department: 'Platform Operations',
       status: 'Active',
       grantedOn: '12 Jan 2025',
@@ -105,6 +122,8 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
       name: 'Sneha Reddy',
       email: 'sneha.reddy@smartfieldwork.com',
       roleLabel: 'Platform Support Lead',
+      platformRole: 'Platform Support Lead',
+      accessLevel: 'Support & Read-Only',
       department: 'Platform Support',
       status: 'Active',
       grantedOn: '15 Feb 2025',
@@ -115,6 +134,8 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
       name: 'Rakesh Iyer',
       email: 'rakesh.iyer@smartfieldwork.com',
       roleLabel: 'Platform Auditor',
+      platformRole: 'Platform Auditor',
+      accessLevel: 'Audit & Compliance',
       department: 'Compliance',
       status: 'Active',
       grantedOn: '01 Mar 2025',
@@ -163,9 +184,13 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
     return Promise.resolve(tenantMembers);
   }
 
+  async getMemberships(tenantId: string): Promise<TenantMember[]> {
+    return this.getMembers(tenantId);
+  }
+
   async inviteMember(
     tenantId: string,
-    input: { name: string; email: string; role: string; department: string }
+    input: { name: string; email: string; roleLabel: string; department: string }
   ): Promise<TenantMember> {
     const newMember: TenantMember = {
       id: `mem_${Date.now()}`,
@@ -173,7 +198,7 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
       name: input.name,
       email: input.email,
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
-      roleLabel: input.role,
+      roleLabel: input.roleLabel,
       department: input.department,
       status: 'Invited',
       joinedOn: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -193,18 +218,26 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
     return Promise.resolve({ ...member });
   }
 
+  async updateMemberStatus(tenantId: string, memberId: string, status: MemberStatus): Promise<TenantMember> {
+    return this.updateMember(tenantId, memberId, { status });
+  }
+
   async suspendMember(tenantId: string, memberId: string): Promise<TenantMember> {
-    return this.updateMember(tenantId, memberId, { status: 'Suspended' });
+    return this.updateMemberStatus(tenantId, memberId, 'Suspended');
   }
 
   async reactivateMember(tenantId: string, memberId: string): Promise<TenantMember> {
-    return this.updateMember(tenantId, memberId, { status: 'Active' });
+    return this.updateMemberStatus(tenantId, memberId, 'Active');
   }
 
-  async resendInvitation(tenantId: string, memberId: string): Promise<void> {
+  async resendInvite(tenantId: string, memberId: string): Promise<void> {
     const member = this.members.find((m) => m.tenantId === tenantId && m.id === memberId);
     if (!member) throw new Error('Member not found');
     return Promise.resolve();
+  }
+
+  async resendInvitation(tenantId: string, memberId: string): Promise<void> {
+    return this.resendInvite(tenantId, memberId);
   }
 
   async revokeInvitation(tenantId: string, memberId: string): Promise<void> {
@@ -215,12 +248,29 @@ class FixtureTenantMembershipService implements ITenantMembershipService {
     return Promise.resolve();
   }
 
+  async bulkUpdateStatus(tenantId: string, memberIds: string[], status: MemberStatus): Promise<TenantMember[]> {
+    const updated: TenantMember[] = [];
+    for (const memberId of memberIds) {
+      const res = await this.updateMemberStatus(tenantId, memberId, status);
+      updated.push(res);
+    }
+    return updated;
+  }
+
+  async bulkResendInvites(tenantId: string, memberIds: string[]): Promise<void> {
+    for (const memberId of memberIds) {
+      await this.resendInvite(tenantId, memberId);
+    }
+  }
+
   async getPlatformAccess(tenantId: string): Promise<PlatformTenantAccess[]> {
-    return Promise.resolve(this.platformAccess.filter((pa) => pa.tenantId === tenantId || pa.tenantId === 't_apex_pharma'));
+    // STRICT FIX: Only return platform access records matching the requested tenantId (no leakage)
+    return Promise.resolve(this.platformAccess.filter((pa) => pa.tenantId === tenantId));
   }
 
   async getAccessRequests(tenantId: string): Promise<TenantAccessRequest[]> {
-    return Promise.resolve(this.accessRequests.filter((ar) => ar.tenantId === tenantId || ar.tenantId === 't_apex_pharma'));
+    // STRICT FIX: Only return access requests matching the requested tenantId (no leakage)
+    return Promise.resolve(this.accessRequests.filter((ar) => ar.tenantId === tenantId));
   }
 }
 

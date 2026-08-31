@@ -752,29 +752,33 @@ export default function AppRouter() {
 
         {/* SaaS Platform Console Routes */}
         <Route element={<ProtectedRoute />}>
-          <Route
-            element={
-              <TenantCreationProvider>
-                <PlatformShell />
-              </TenantCreationProvider>
-            }
-          >
+          <Route element={<PlatformShell />}>
             <Route element={<PlatformAccessGuard requiredPermission="platform.dashboard.view" />}>
               <Route path="/platform" element={<Navigate to="/platform/dashboard" replace />} />
               <Route path="/platform/dashboard" element={<PlatformDashboardPage />} />
               <Route path="/platform/tenants" element={<AllTenantsPage />} />
-              <Route path="/platform/tenants/create" element={<CreateTenantWizardPage />} />
+              <Route element={<PlatformAccessGuard requiredPermission="platform.tenants.create" />}>
+                <Route path="/platform/tenants/create" element={<CreateTenantWizardPage />} />
+              </Route>
               <Route path="/platform/tenants/onboarding" element={<Navigate to="/platform/tenants" replace />} />
               <Route path="/platform/tenants/requests" element={<Navigate to="/platform/tenants" replace />} />
               <Route path="/platform/tenants/:tenantId" element={<TenantDetailsPage />} />
-              <Route path="/platform/tenants/:tenantId/modules" element={<TenantModulesPage />} />
-              <Route path="/platform/tenants/:tenantId/users" element={<TenantUsersPage />} />
-              <Route path="/platform/plans" element={<PlansPricingPage />} />
+              <Route element={<PlatformAccessGuard requiredPermission="platform.tenants.modules.manage" />}>
+                <Route path="/platform/tenants/:tenantId/modules" element={<TenantModulesPage />} />
+              </Route>
+              <Route element={<PlatformAccessGuard requiredPermission="platform.tenants.members.manage" />}>
+                <Route path="/platform/tenants/:tenantId/users" element={<TenantUsersPage />} />
+              </Route>
+              <Route element={<PlatformAccessGuard requiredPermission="platform.plans.view" />}>
+                <Route path="/platform/plans" element={<PlansPricingPage />} />
+              </Route>
               <Route path="/platform/modules" element={<PlatformPlaceholderPage title="Platform Modules Catalog" />} />
               <Route path="/platform/industries" element={<PlatformPlaceholderPage title="Industry Verticals" />} />
               <Route path="/platform/users" element={<PlatformPlaceholderPage title="Platform Operators" />} />
               <Route path="/platform/roles" element={<PlatformPlaceholderPage title="Platform RBAC & Roles" />} />
-              <Route path="/platform/audit" element={<AuditLogsPage />} />
+              <Route element={<PlatformAccessGuard requiredPermission="platform.audit.view" />}>
+                <Route path="/platform/audit" element={<AuditLogsPage />} />
+              </Route>
               <Route path="/platform/subscriptions" element={<PlatformPlaceholderPage title="Subscription Management" />} />
               <Route path="/platform/invoices" element={<PlatformPlaceholderPage title="Invoices & Billing" />} />
               <Route path="/platform/transactions" element={<PlatformPlaceholderPage title="Payment Transactions" />} />

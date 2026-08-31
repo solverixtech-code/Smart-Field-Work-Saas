@@ -225,8 +225,10 @@ export interface TenantCreateFormState {
   // Step 5: Modules
   selectedModuleCodes: string[];
 
-  // General Status
+  // General Status & Edit/Draft tracking
   isDraft: boolean;
+  draftTenantId?: string;
+  editingTenantId?: string;
 }
 
 export interface PlatformAuditLog {

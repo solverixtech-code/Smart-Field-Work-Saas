@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { workspaceSettingsService, WorkspaceSettings } from '../../../features/platform/tenants/services/workspace-settings.service';
 import {
   Building2,
   Globe,
@@ -826,6 +827,33 @@ function RightSidebar() {
 export function WorkspaceSettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'profile';
+  const [settings, setSettings] = useState<WorkspaceSettings | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const tenantId = 't_apex_pharma';
+
+  const loadSettings = async () => {
+    const data = await workspaceSettingsService.getWorkspaceSettings(tenantId);
+    setSettings(data);
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const handleSave = async () => {
+    if (!settings) return;
+    setIsSaving(true);
+    await workspaceSettingsService.updateWorkspaceSettings(tenantId, settings);
+    setIsSaving(false);
+    toast.success('Workspace settings updated and persisted successfully!');
+  };
+
+  const handleReset = async () => {
+    const resetData = await workspaceSettingsService.resetWorkspaceSettings(tenantId);
+    setSettings(resetData);
+    toast.info('Workspace settings reset to saved default configuration!');
+  };
 
   const setTab = (tab: string) => {
     setSearchParams({ tab });
@@ -860,10 +888,10 @@ export function WorkspaceSettingsPage() {
           <Button variant="outline" size="sm" onClick={() => toast.info('Viewing preview mode')} className="gap-1.5 font-bold text-slate-700">
             <UserCheck className="h-4 w-4" /> View as Other Role
           </Button>
-          <Button variant="accent" size="sm" onClick={() => toast.success('Workspace settings saved')} className="gap-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">
-            <Save className="h-4 w-4" /> Save Changes
+          <Button variant="accent" size="sm" onClick={handleSave} disabled={isSaving} className="gap-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs">
+            <Save className="h-4 w-4" /> {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
-          <Button variant="outline" size="sm" onClick={() => toast.info('Form reset to saved defaults')} className="gap-1.5 font-bold text-slate-700">
+          <Button variant="outline" size="sm" onClick={handleReset} className="gap-1.5 font-bold text-slate-700">
             <RotateCcw className="h-4 w-4 text-slate-400" /> Reset
           </Button>
         </div>

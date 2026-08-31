@@ -43,7 +43,11 @@ import {
   Tenant,
   TenantStatus,
 } from "../../features/platform/tenants/types/platform.types";
-import { ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import {
+  PLATFORM_PLANS,
+  PLATFORM_INDUSTRIES,
+} from "../../features/platform/tenants/fixtures/platform.fixtures";
+import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 
 const userRoleChartData = [
   { name: "Tenant Owner", value: 1, color: "#2563EB" },
@@ -64,32 +68,33 @@ export function TenantDetailsPage() {
 
   // Edit Tenant Form State
   const [editForm, setEditForm] = useState({
-    companyName: '',
-    tenantCode: '',
-    industryLabel: '',
-    planName: '',
-    fullName: '',
-    email: '',
-    phone: '',
-    address: '',
+    companyName: "",
+    tenantCode: "",
+    industryId: "",
+    planId: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    address: "",
     autoRenewal: true,
   });
 
   // Internal Notes State
-  const [noteContent, setNoteContent] = useState(
-    "Key enterprise tenant in Pharma domain. Onboarded with Professional plan (Yearly). Advanced reports and API access enabled. Primary workflow: Field sales, doctor visits, order management, stock tracking. Special request: Custom integration with their ERP system in Q3.",
-  );
+  const [noteContent, setNoteContent] = useState("");
 
   useEffect(() => {
     if (tenantId) {
       tenantService.getTenantById(tenantId).then((t) => {
         if (t) {
           setTenant(t);
+          setNoteContent(
+            `Account notes for ${t.companyName} (${t.industryLabel}). Operating on ${t.planName} plan (${t.provisioningType}).`,
+          );
           setEditForm({
             companyName: t.companyName,
             tenantCode: t.slug.toUpperCase(),
-            industryLabel: t.industryLabel,
-            planName: t.planName,
+            industryId: t.industryId || "ind_pharma",
+            planId: t.planId || "plan_growth",
             fullName: t.adminUser.fullName,
             email: t.adminUser.email,
             phone: t.adminUser.phone,
@@ -105,10 +110,19 @@ export function TenantDetailsPage() {
     e.preventDefault();
     if (!tenant) return;
     try {
+      const matchedPlan = PLATFORM_PLANS.find((p) => p.id === editForm.planId);
+      const matchedIndustry = PLATFORM_INDUSTRIES.find(
+        (i) => i.id === editForm.industryId,
+      );
+
       const updated = await tenantService.updateTenant(tenant.id, {
         companyName: editForm.companyName,
-        industryLabel: editForm.industryLabel,
-        planName: editForm.planName,
+        planId: editForm.planId,
+        planName: matchedPlan ? matchedPlan.name : tenant.planName,
+        industryId: editForm.industryId,
+        industryLabel: matchedIndustry
+          ? matchedIndustry.label
+          : tenant.industryLabel,
         adminUser: {
           ...tenant.adminUser,
           fullName: editForm.fullName,
@@ -118,9 +132,9 @@ export function TenantDetailsPage() {
       });
       setTenant(updated);
       setShowEditModal(false);
-      toast.success('Tenant details updated successfully!');
+      toast.success("Tenant details updated successfully!");
     } catch {
-      toast.error('Failed to update tenant');
+      toast.error("Failed to update tenant");
     }
   };
 
@@ -131,7 +145,9 @@ export function TenantDetailsPage() {
           <AlertCircle className="h-7 w-7" />
         </div>
         <div>
-          <h2 className="text-xl font-extrabold text-[#0D1F3D]">Tenant Not Found</h2>
+          <h2 className="text-xl font-extrabold text-[#0D1F3D]">
+            Tenant Not Found
+          </h2>
           <p className="text-xs text-slate-500 font-medium mt-1">
             This tenant could not be found or may no longer be available.
           </p>
@@ -222,7 +238,9 @@ export function TenantDetailsPage() {
                   type="button"
                   onClick={() => {
                     setShowMoreActions(false);
-                    navigate(`/platform/tenants/create?edit=true&tenantId=${tenant.id}`);
+                    navigate(
+                      `/platform/tenants/create?edit=true&tenantId=${tenant.id}`,
+                    );
                   }}
                   className="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-xs text-indigo-600 font-bold"
                 >
@@ -265,7 +283,11 @@ export function TenantDetailsPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => navigate(`/platform/tenants/create?edit=true&tenantId=${tenant.id}`)}
+            onClick={() =>
+              navigate(
+                `/platform/tenants/create?edit=true&tenantId=${tenant.id}`,
+              )
+            }
             className="gap-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs h-9 px-4 cursor-pointer"
           >
             <Edit2 className="h-4 w-4" /> Edit Tenant
@@ -287,7 +309,7 @@ export function TenantDetailsPage() {
               {tenant.tenantStatus}
             </span>
             <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-              Since {tenant.createdAt.split(' ·')[0]}
+              Since {tenant.createdAt.split(" ·")[0]}
             </span>
           </div>
         </div>
@@ -317,11 +339,14 @@ export function TenantDetailsPage() {
             <span className="text-[11px] text-slate-500 font-semibold block">
               Plan & Billing
             </span>
-            <span className="text-base font-extrabold text-[#0D1F3D] block leading-tight truncate max-w-[110px]" title={tenant.planName}>
+            <span
+              className="text-base font-extrabold text-[#0D1F3D] block leading-tight truncate max-w-[110px]"
+              title={tenant.planName}
+            >
               {tenant.planName}
             </span>
             <span className="text-[10px] font-mono text-slate-500 font-bold block mt-0.5">
-              ₹{(tenant.mrr * 12).toLocaleString('en-IN')} / Year
+              ₹{(tenant.mrr * 12).toLocaleString("en-IN")} / Year
             </span>
           </div>
         </div>
@@ -352,10 +377,11 @@ export function TenantDetailsPage() {
               Storage Used
             </span>
             <span className="text-base font-extrabold text-[#0D1F3D] block leading-tight">
-              128 GB / 200 GB
+              {tenant.usage?.storageUsedGb ?? 45} GB /{" "}
+              {tenant.storageLimit ?? "200 GB"}
             </span>
             <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-              64% of storage limit used
+              Storage quota limit
             </span>
           </div>
         </div>
@@ -369,7 +395,7 @@ export function TenantDetailsPage() {
               MRR (Monthly)
             </span>
             <span className="text-base font-extrabold text-blue-600 block leading-tight">
-              ₹{tenant.mrr.toLocaleString('en-IN')}
+              ₹{tenant.mrr.toLocaleString("en-IN")}
             </span>
             <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
               Provisioning: {tenant.provisioningType}
@@ -391,9 +417,15 @@ export function TenantDetailsPage() {
             <div className="flex items-start gap-4 pt-1">
               <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-sm border border-slate-200 bg-slate-50 p-2 text-center shadow-xs">
                 {tenant.logoUrl ? (
-                  <img src={tenant.logoUrl} alt={tenant.companyName} className="h-16 w-16 object-contain rounded-sm" />
+                  <img
+                    src={tenant.logoUrl}
+                    alt={tenant.companyName}
+                    className="h-16 w-16 object-contain rounded-sm"
+                  />
                 ) : (
-                  <span className="text-2xl font-extrabold text-[#0D1F3D]">{tenant.companyName[0]}</span>
+                  <span className="text-2xl font-extrabold text-[#0D1F3D]">
+                    {tenant.companyName[0]}
+                  </span>
                 )}
               </div>
 
@@ -436,7 +468,8 @@ export function TenantDetailsPage() {
                       Primary Contact
                     </span>
                     <span className="font-extrabold text-[#0D1F3D] block">
-                      {tenant.adminUser.fullName} ({tenant.adminUser.designation})
+                      {tenant.adminUser.fullName} (
+                      {tenant.adminUser.designation})
                     </span>
                     <span className="font-mono text-slate-600 block text-[11px]">
                       {tenant.adminUser.phone}
@@ -453,7 +486,8 @@ export function TenantDetailsPage() {
                       Industry
                     </span>
                     <span className="font-bold text-indigo-700 inline-flex items-center gap-1">
-                      <Building2 className="h-3 w-3 text-indigo-500" /> {tenant.industryLabel}
+                      <Building2 className="h-3 w-3 text-indigo-500" />{" "}
+                      {tenant.industryLabel}
                     </span>
                   </div>
                   <div>
@@ -527,7 +561,7 @@ export function TenantDetailsPage() {
                   Plan
                 </span>
                 <span className="font-extrabold text-[#0D1F3D] text-sm">
-                  Professional
+                  {tenant.planName}
                 </span>
               </div>
               <div>
@@ -543,7 +577,7 @@ export function TenantDetailsPage() {
                   Users / Seats
                 </span>
                 <span className="font-extrabold text-[#0D1F3D] text-sm">
-                  150
+                  {tenant.userLicensesCount}
                 </span>
               </div>
               <div>
@@ -865,9 +899,7 @@ export function TenantDetailsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  navigate(`/platform/tenants/${tenant.id}/users`)
-                }
+                onClick={() => navigate(`/platform/tenants/${tenant.id}/users`)}
                 className="h-7 px-2.5 text-[11px] font-bold text-indigo-600 border-slate-200 hover:bg-slate-50"
               >
                 View All Users
@@ -926,8 +958,8 @@ export function TenantDetailsPage() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="flex items-center gap-1.5 text-slate-600">
-                    <span className="h-2 w-2 rounded-full bg-amber-500" />{" "}
-                    Sales Manager
+                    <span className="h-2 w-2 rounded-full bg-amber-500" /> Sales
+                    Manager
                   </span>
                   <span className="font-extrabold text-[#0D1F3D]">
                     8 (6.3%)
@@ -1154,8 +1186,13 @@ export function TenantDetailsPage() {
                   <Edit2 className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-extrabold text-[#0D1F3D]">Edit Tenant Details</h3>
-                  <p className="text-[11px] text-slate-500 font-medium">Update organization settings, subscription plan, and primary administrator contact.</p>
+                  <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+                    Edit Tenant Details
+                  </h3>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Update organization settings, subscription plan, and primary
+                    administrator contact.
+                  </p>
                 </div>
               </div>
               <button
@@ -1170,18 +1207,24 @@ export function TenantDetailsPage() {
             <form onSubmit={handleSaveTenantEdit} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Company Name</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    Company Name
+                  </label>
                   <input
                     type="text"
                     required
                     value={editForm.companyName}
-                    onChange={(e) => setEditForm({ ...editForm, companyName: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, companyName: e.target.value })
+                    }
                     className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Tenant Code</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    Tenant Code
+                  </label>
                   <input
                     type="text"
                     readOnly
@@ -1191,62 +1234,85 @@ export function TenantDetailsPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Industry Sector</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    Industry Sector
+                  </label>
                   <select
-                    value={editForm.industryLabel}
-                    onChange={(e) => setEditForm({ ...editForm, industryLabel: e.target.value })}
+                    value={editForm.industryId}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, industryId: e.target.value })
+                    }
                     className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
                   >
-                    <option value="Pharma & Healthcare">Pharma & Healthcare</option>
-                    <option value="FMCG & Consumer Goods">FMCG & Consumer Goods</option>
-                    <option value="Retail & Distribution">Retail & Distribution</option>
-                    <option value="Construction & Engineering">Construction & Engineering</option>
-                    <option value="Banking & Financial Services">Banking & Financial Services</option>
+                    {PLATFORM_INDUSTRIES.map((ind) => (
+                      <option key={ind.id} value={ind.id}>
+                        {ind.label} ({ind.category})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Subscription Plan</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    Subscription Plan
+                  </label>
                   <select
-                    value={editForm.planName}
-                    onChange={(e) => setEditForm({ ...editForm, planName: e.target.value })}
+                    value={editForm.planId}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, planId: e.target.value })
+                    }
                     className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
                   >
-                    <option value="Professional">Professional (₹4,24,786 / Year)</option>
-                    <option value="Enterprise">Enterprise (₹8,99,999 / Year)</option>
-                    <option value="Starter">Starter (₹1,49,999 / Year)</option>
+                    {PLATFORM_PLANS.map((plan) => (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.name} ({plan.tier}) — ₹{plan.annualPricePerUser}
+                        /user/yr
+                      </option>
+                    ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Primary Administrator Name</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    Primary Administrator Name
+                  </label>
                   <input
                     type="text"
                     required
                     value={editForm.fullName}
-                    onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, fullName: e.target.value })
+                    }
                     className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Administrator Email</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    Administrator Email
+                  </label>
                   <input
                     type="email"
                     required
                     value={editForm.email}
-                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, email: e.target.value })
+                    }
                     className="w-full h-9 px-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-slate-700 block mb-1">Administrator Phone</label>
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">
+                    Administrator Phone
+                  </label>
                   <input
                     type="tel"
                     required
                     value={editForm.phone}
-                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, phone: e.target.value })
+                    }
                     className="w-full h-9 px-3 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
                   />
                 </div>
@@ -1256,30 +1322,52 @@ export function TenantDetailsPage() {
                     type="checkbox"
                     id="autoRenewalCheck"
                     checked={editForm.autoRenewal}
-                    onChange={(e) => setEditForm({ ...editForm, autoRenewal: e.target.checked })}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        autoRenewal: e.target.checked,
+                      })
+                    }
                     className="h-4 w-4 rounded-sm border-slate-300 text-indigo-600 focus:ring-indigo-500"
                   />
-                  <label htmlFor="autoRenewalCheck" className="text-xs font-bold text-slate-700 cursor-pointer">
+                  <label
+                    htmlFor="autoRenewalCheck"
+                    className="text-xs font-bold text-slate-700 cursor-pointer"
+                  >
                     Enable Automatic Subscription Renewal
                   </label>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-slate-700 block mb-1">Registered Address</label>
+                <label className="text-xs font-semibold text-slate-700 block mb-1">
+                  Registered Address
+                </label>
                 <textarea
                   rows={2}
                   value={editForm.address}
-                  onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, address: e.target.value })
+                  }
                   className="w-full p-3 text-xs font-medium bg-slate-50 border border-slate-200 rounded-sm focus:outline-none focus:border-indigo-600"
                 />
               </div>
 
               <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
-                <Button variant="outline" size="sm" type="button" onClick={() => setShowEditModal(false)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                >
                   Cancel
                 </Button>
-                <Button variant="accent" size="sm" type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold">
+                <Button
+                  variant="accent"
+                  size="sm"
+                  type="submit"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                >
                   Save Changes
                 </Button>
               </div>

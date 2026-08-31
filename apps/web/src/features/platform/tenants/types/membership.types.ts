@@ -8,6 +8,8 @@ export interface TenantMember {
   avatar: string;
   roleLabel: string;
   roleCode?: string;
+  roleBg?: string;
+  roleColor?: string;
   department: string;
   status: MemberStatus;
   joinedOn: string;
@@ -23,6 +25,8 @@ export interface PlatformTenantAccess {
   name: string;
   email: string;
   roleLabel: string;
+  platformRole?: string;
+  accessLevel?: string;
   department: string;
   status: 'Active' | 'Revoked';
   grantedOn: string;

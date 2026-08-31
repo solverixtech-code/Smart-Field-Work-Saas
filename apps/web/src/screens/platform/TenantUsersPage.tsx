@@ -29,7 +29,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { tenantService } from '../../features/platform/tenants/services/tenant.service';
 import { tenantMembershipService } from '../../features/platform/tenants/services/tenant-membership.service';
 import { Tenant } from '../../features/platform/tenants/types/platform.types';
-import { TenantMember, PlatformAccessMember, AccessRequest } from '../../features/platform/tenants/types/membership.types';
+import { TenantMember, PlatformTenantAccess, TenantAccessRequest, MemberStatus } from '../../features/platform/tenants/types/membership.types';
 
 export function TenantUsersPage() {
   const { tenantId } = useParams();
@@ -39,8 +39,8 @@ export function TenantUsersPage() {
 
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [members, setMembers] = useState<TenantMember[]>([]);
-  const [platformAccess, setPlatformAccess] = useState<PlatformAccessMember[]>([]);
-  const [accessRequests, setAccessRequests] = useState<AccessRequest[]>([]);
+  const [platformAccess, setPlatformAccess] = useState<PlatformTenantAccess[]>([]);
+  const [accessRequests, setAccessRequests] = useState<TenantAccessRequest[]>([]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showMoreActions, setShowMoreActions] = useState(false);
@@ -59,17 +59,18 @@ export function TenantUsersPage() {
     setSearchParams({ tab });
   };
 
-  const loadData = () => {
+  const loadData = async () => {
     if (!tenantId) return;
-    tenantService.getTenantById(tenantId).then((t) => {
-      if (t) {
-        setTenant(t);
-        const mems = tenantMembershipService.getMemberships(t.id);
-        setMembers(mems);
-        setPlatformAccess(tenantMembershipService.getPlatformAccess(t.id));
-        setAccessRequests(tenantMembershipService.getAccessRequests(t.id));
-      }
-    });
+    const t = await tenantService.getTenantById(tenantId);
+    if (t) {
+      setTenant(t);
+      const mems = await tenantMembershipService.getMemberships(t.id);
+      setMembers(mems);
+      const pa = await tenantMembershipService.getPlatformAccess(t.id);
+      setPlatformAccess(pa);
+      const ar = await tenantMembershipService.getAccessRequests(t.id);
+      setAccessRequests(ar);
+    }
   };
 
   useEffect(() => {
@@ -145,14 +146,14 @@ export function TenantUsersPage() {
     );
   };
 
-  const handleInviteSubmit = (e: React.FormEvent) => {
+  const handleInviteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inviteName.trim() || !inviteEmail.trim()) {
       toast.error('Please enter Full Name and Email Address');
       return;
     }
 
-    tenantMembershipService.inviteMember(tenant.id, {
+    await tenantMembershipService.inviteMember(tenant.id, {
       name: inviteName,
       email: inviteEmail,
       roleLabel: inviteRole,
@@ -163,28 +164,28 @@ export function TenantUsersPage() {
     setInviteName('');
     setInviteEmail('');
     setShowInviteModal(false);
-    loadData();
+    await loadData();
   };
 
-  const handleUpdateUserStatus = (memberId: string, status: 'Active' | 'Suspended') => {
-    tenantMembershipService.updateMemberStatus(tenant.id, memberId, status);
+  const handleUpdateUserStatus = async (memberId: string, status: 'Active' | 'Suspended') => {
+    await tenantMembershipService.updateMemberStatus(tenant.id, memberId, status);
     toast.success(`User membership status updated to ${status}`);
     setActiveRowMenuId(null);
-    loadData();
+    await loadData();
   };
 
-  const handleResendInvite = (memberId: string) => {
-    tenantMembershipService.resendInvite(tenant.id, memberId);
+  const handleResendInvite = async (memberId: string) => {
+    await tenantMembershipService.resendInvite(tenant.id, memberId);
     toast.success('Invitation email resent successfully');
     setActiveRowMenuId(null);
   };
 
-  const handleBulkStatusChange = (status: 'Active' | 'Suspended') => {
-    tenantMembershipService.bulkUpdateStatus(tenant.id, selectedUserIds, status);
+  const handleBulkStatusChange = async (status: 'Active' | 'Suspended') => {
+    await tenantMembershipService.bulkUpdateStatus(tenant.id, selectedUserIds, status);
     toast.success(`Updated ${selectedUserIds.length} user status to ${status}`);
     setSelectedUserIds([]);
     setShowBulkMenu(false);
-    loadData();
+    await loadData();
   };
 
   return (
