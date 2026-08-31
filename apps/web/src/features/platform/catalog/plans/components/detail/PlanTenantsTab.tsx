@@ -20,7 +20,7 @@ import { Tenant } from '../../../../tenants/types/platform.types';
 import { PlanDetailMetrics } from '../../hooks/usePlanDetails';
 import { KpiCard } from '../../../../../../components/dashboard/KpiCard';
 import { formatCurrency } from '../../utils/plan-pricing.utils';
-import { DataTable } from '../../../../../../components/ui/DataTable';
+import { DataTable, ColumnDef } from '../../../../../../components/ui/DataTable';
 import { Select } from '../../../../../../components/ui/Select';
 import { Button } from '../../../../../../components/ui/Button';
 
@@ -48,17 +48,20 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
   const filteredTenants = useMemo(() => {
     return planTenants.filter((t) => {
       const q = searchTerm.toLowerCase().trim();
+      const contactName = t.adminUser?.fullName || '';
+      const contactEmail = t.adminUser?.email || '';
+
       const matchSearch =
         q === '' ||
         t.companyName.toLowerCase().includes(q) ||
         (t.domain && t.domain.toLowerCase().includes(q)) ||
-        (t.primaryContactName && t.primaryContactName.toLowerCase().includes(q)) ||
-        (t.primaryContactEmail && t.primaryContactEmail.toLowerCase().includes(q));
+        contactName.toLowerCase().includes(q) ||
+        contactEmail.toLowerCase().includes(q);
 
       const matchStatus = statusFilter === 'All' || t.tenantStatus === statusFilter;
       const matchBilling =
         billingFilter === 'All' ||
-        (billingFilter === 'Paid' ? (t.subscriptionPrice || t.mrr || 0) > 0 : (t.subscriptionPrice || t.mrr || 0) === 0);
+        (billingFilter === 'Paid' ? (t.mrr || 0) > 0 : (t.mrr || 0) === 0);
 
       return matchSearch && matchStatus && matchBilling;
     });
@@ -67,7 +70,10 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
   // Average Seats per Tenant calculation
   const avgSeats = useMemo(() => {
     if (!planTenants || planTenants.length === 0) return 0;
-    const totalUsers = planTenants.reduce((acc, curr) => acc + (curr.activeUserCount || curr.userCount || 0), 0);
+    const totalUsers = planTenants.reduce(
+      (acc, curr) => acc + (curr.usage?.usersUsed ?? curr.userLicensesCount ?? 0),
+      0
+    );
     return Math.round(totalUsers / planTenants.length);
   }, [planTenants]);
 
@@ -85,12 +91,12 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
   const topTenants = useMemo(() => {
     if (!planTenants || planTenants.length === 0) return [];
     return [...planTenants]
-      .sort((a, b) => (b.subscriptionPrice || b.mrr || 0) - (a.subscriptionPrice || a.mrr || 0))
+      .sort((a, b) => (b.mrr || 0) - (a.mrr || 0))
       .slice(0, 5);
   }, [planTenants]);
 
   // Table Columns
-  const columns = [
+  const columns: ColumnDef<Tenant>[] = [
     {
       header: 'Tenant Name',
       accessorKey: 'companyName',
@@ -128,8 +134,8 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
     {
       header: 'Seats Usage',
       cell: (t: Tenant) => {
-        const used = t.activeUserCount || t.userCount || 0;
-        const limit = t.maxUsers || plan.limits.defaultSeatLimit || 50;
+        const used = t.usage?.usersUsed ?? 0;
+        const limit = Number(t.seatLimit) || t.userLicensesCount || plan.limits.defaultSeatLimit;
         const percent = limit > 0 ? Math.min(Math.round((used / limit) * 100), 100) : 0;
 
         return (
@@ -154,7 +160,7 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
     {
       header: 'MRR',
       cell: (t: Tenant) => {
-        const amount = t.subscriptionPrice !== undefined ? t.subscriptionPrice : t.mrr || 0;
+        const amount = t.mrr || 0;
         return (
           <div className="min-w-[100px]">
             <span className="font-extrabold text-[#0D1F3D] text-xs block">
@@ -182,8 +188,8 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
       header: 'Primary Contact',
       cell: (t: Tenant) => (
         <div className="min-w-[150px]">
-          <p className="font-extrabold text-[#0D1F3D] text-xs truncate">{t.primaryContactName || '—'}</p>
-          <p className="text-[10px] text-slate-500 font-medium truncate">{t.primaryContactEmail || '—'}</p>
+          <p className="font-extrabold text-[#0D1F3D] text-xs truncate">{t.adminUser?.fullName || '—'}</p>
+          <p className="text-[10px] text-slate-500 font-medium truncate">{t.adminUser?.email || '—'}</p>
         </div>
       ),
     },
@@ -347,7 +353,7 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
               const csvData =
                 'data:text/csv;charset=utf-8,' +
                 ['Company,Status,MRR,Contact'].concat(
-                  filteredTenants.map((t) => `${t.companyName},${t.tenantStatus},${t.subscriptionPrice || t.mrr || 0},${t.primaryContactName || ''}`)
+                  filteredTenants.map((t) => `${t.companyName},${t.tenantStatus},${t.mrr || 0},${t.adminUser?.fullName || ''}`)
                 ).join('\n');
               const encodedUri = encodeURI(csvData);
               const link = document.createElement('a');
@@ -451,7 +457,7 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
           {topTenants.length > 0 ? (
             <div className="space-y-3">
               {topTenants.map((t, idx) => {
-                const mrrVal = t.subscriptionPrice !== undefined ? t.subscriptionPrice : t.mrr || 0;
+                const mrrVal = t.mrr || 0;
                 return (
                   <div key={t.id} className="flex items-center justify-between text-xs gap-2">
                     <div className="flex items-center gap-2.5 min-w-0 truncate">

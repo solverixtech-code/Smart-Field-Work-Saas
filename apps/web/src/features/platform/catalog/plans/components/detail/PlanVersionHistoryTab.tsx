@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   CheckCircle2,
   Clock,
@@ -11,143 +11,46 @@ import {
   X,
 } from 'lucide-react';
 import { Plan } from '../../types/plan.types';
+import { planVersionService } from '../../services/plan-version.service';
+import { PlanVersionRecord as ServiceVersionRecord } from '../../types/plan-version.types';
 import { Button } from '../../../../../../components/ui/Button';
 
 export interface PlanVersionHistoryTabProps {
   plan: Plan;
 }
 
-export interface PlanVersionRecord {
-  version: string;
-  status: 'Active' | 'Replaced' | 'Superseded' | 'Archived';
-  publishedOn: string;
-  publishedBy: {
-    name: string;
-    avatar: string;
-    role: string;
-  };
-  effectiveFrom: string;
-  effectiveTo?: string;
-  changesCount: number;
-  changesSummary: string;
-  changes: Array<{
-    category: string;
-    field: string;
-    oldValue: string;
-    newValue: string;
-  }>;
-}
-
 export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
-  const [selectedSnapshot, setSelectedSnapshot] = useState<PlanVersionRecord | null>(null);
+  const [versionRecords, setVersionRecords] = useState<ServiceVersionRecord[]>([]);
+  const [selectedSnapshot, setSelectedSnapshot] = useState<ServiceVersionRecord | null>(null);
   const [showCompareModal, setShowCompareModal] = useState(false);
 
-  // Derive version history dynamically based on current plan & previous revisions
-  const versionHistory: PlanVersionRecord[] = useMemo(() => {
-    const currentVersionStr = `v${plan.version || 1}.0`;
-
-    const activeRecord: PlanVersionRecord = {
-      version: currentVersionStr,
-      status: plan.status === 'Active' ? 'Active' : 'Archived',
-      publishedOn: plan.updatedAt
-        ? new Date(plan.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-        : '28 May 2024, 04:20 PM',
-      publishedBy: {
-        name: 'Sahibjit Singh',
-        avatar: 'S',
-        role: 'Super Admin',
-      },
-      effectiveFrom: plan.updatedAt
-        ? new Date(plan.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-        : '28 May 2024',
-      changesCount: 3,
-      changesSummary: `Active production version for ${plan.name} (${plan.code}). Configured with ${plan.pricing.model} model and ${plan.limits.defaultSeatLimit} default seats.`,
-      changes: [
-        { category: 'Pricing', field: 'Monthly Price', oldValue: '₹1,799', newValue: `₹${plan.pricing.monthlyPerUser || 1999}` },
-        { category: 'Pricing', field: 'Annual Price', oldValue: '₹17,990', newValue: `₹${plan.pricing.annualPerUser || 19990}` },
-        { category: 'Limits', field: 'Storage Included', oldValue: '150 GB', newValue: `${plan.limits.storageGB || 200} GB` },
-      ],
+  useEffect(() => {
+    let isMounted = true;
+    planVersionService.getVersions(plan.id).then((list) => {
+      if (isMounted) {
+        setVersionRecords(list);
+      }
+    });
+    return () => {
+      isMounted = false;
     };
+  }, [plan.id]);
 
-    const historicRecords: PlanVersionRecord[] = [
-      {
-        version: 'v0.9',
-        status: 'Replaced',
-        publishedOn: '15 Mar 2024, 11:30 AM',
-        publishedBy: {
-          name: 'Sahibjit Singh',
-          avatar: 'S',
-          role: 'Super Admin',
-        },
-        effectiveFrom: '15 Mar 2024',
-        effectiveTo: '28 May 2024',
-        changesCount: 2,
-        changesSummary: 'Added Collection Management module and increased custom forms quota.',
-        changes: [
-          { category: 'Modules', field: 'Included Modules', oldValue: '5 Modules', newValue: '6 Modules (+ Collection Mgmt)' },
-          { category: 'Limits', field: 'Custom Forms', oldValue: '50 Forms', newValue: '100 Forms' },
-        ],
-      },
-      {
-        version: 'v0.8',
-        status: 'Replaced',
-        publishedOn: '10 Feb 2024, 02:15 PM',
-        publishedBy: {
-          name: 'Ananya Sharma',
-          avatar: 'A',
-          role: 'Product Manager',
-        },
-        effectiveFrom: '10 Feb 2024',
-        effectiveTo: '15 Mar 2024',
-        changesCount: 1,
-        changesSummary: 'Adjusted minimum seat requirement from 15 to 20 seats.',
-        changes: [
-          { category: 'Limits', field: 'Minimum Seats', oldValue: '15 Seats', newValue: '20 Seats' },
-        ],
-      },
-      {
-        version: 'v0.7',
-        status: 'Replaced',
-        publishedOn: '20 Jan 2024, 09:45 AM',
-        publishedBy: {
-          name: 'Sahibjit Singh',
-          avatar: 'S',
-          role: 'Super Admin',
-        },
-        effectiveFrom: '20 Jan 2024',
-        effectiveTo: '10 Feb 2024',
-        changesCount: 2,
-        changesSummary: 'Updated AI credits allowance and API monthly request quota.',
-        changes: [
-          { category: 'Limits', field: 'AI Credits / Month', oldValue: '2,500', newValue: '5,000' },
-          { category: 'Limits', field: 'API Requests', oldValue: '50,000', newValue: '100,000' },
-        ],
-      },
-      {
-        version: 'v0.6',
-        status: 'Archived',
-        publishedOn: '10 Jan 2024, 10:00 AM',
-        publishedBy: {
-          name: 'Sahibjit Singh',
-          avatar: 'S',
-          role: 'Super Admin',
-        },
-        effectiveFrom: '10 Jan 2024',
-        effectiveTo: '20 Jan 2024',
-        changesCount: 4,
-        changesSummary: 'Initial plan launch setup and commercial baseline configuration.',
-        changes: [
-          { category: 'General', field: 'Plan Created', oldValue: 'Draft', newValue: 'v0.6 Published' },
-        ],
-      },
-    ];
+  const activeRecord = useMemo(() => {
+    return versionRecords.find((v) => v.status === 'Current') || versionRecords[0];
+  }, [versionRecords]);
 
-    return [activeRecord, ...historicRecords];
-  }, [plan]);
+  const previousRecord = useMemo(() => {
+    return versionRecords.find((v) => v.status === 'Replaced') || versionRecords[1] || null;
+  }, [versionRecords]);
 
-  const activeVersionRecord = versionHistory.find((v) => v.status === 'Active') || versionHistory[0];
-  const replacedCount = versionHistory.filter((v) => v.status === 'Replaced').length;
-  const archivedCount = versionHistory.filter((v) => v.status === 'Archived').length;
+  const replacedCount = useMemo(() => {
+    return versionRecords.filter((v) => v.status === 'Replaced').length;
+  }, [versionRecords]);
+
+  const archivedCount = useMemo(() => {
+    return versionRecords.filter((v) => v.status === 'Archived').length;
+  }, [versionRecords]);
 
   return (
     <div className="space-y-6 font-sans w-full max-w-full overflow-hidden">
@@ -157,7 +60,7 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
           <div className="flex items-center gap-2.5">
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Version History</h3>
             <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
-              {versionHistory.length} Versions Logged
+              {versionRecords.length > 0 ? versionRecords.length : 1} Versions Logged
             </span>
           </div>
           <p className="text-xs font-semibold text-slate-500 mt-0.5 leading-relaxed">
@@ -185,15 +88,15 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
               <span className="text-xs font-semibold text-slate-500">Ordered by most recent</span>
             </div>
 
-            {/* Timeline List - Fixed spacing to prevent timeline dot from bleeding out of padding */}
+            {/* Timeline List */}
             <div className="relative pl-8 space-y-6 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200 min-w-0">
-              {versionHistory.map((ver) => {
-                const isActive = ver.status === 'Active';
+              {versionRecords.map((ver) => {
+                const isActive = ver.status === 'Current';
                 const isArchived = ver.status === 'Archived';
+                const versionLabel = `v${ver.version.toFixed(1)}`;
 
                 return (
-                  <div key={ver.version} className="relative group min-w-0">
-                    {/* Node Circle - Positioned safely inside padding (center alignment at left-3) */}
+                  <div key={ver.id} className="relative group min-w-0">
                     <div
                       className={`absolute -left-8 top-1 flex h-6 w-6 items-center justify-center rounded-full border-2 bg-white transition ${
                         isActive
@@ -216,7 +119,7 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
                     <div className="rounded-sm border border-slate-200 bg-slate-50/50 p-4 hover:bg-white hover:border-slate-300 transition space-y-3 min-w-0">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex flex-wrap items-center gap-2.5">
-                          <span className="text-base font-extrabold text-[#0D1F3D]">{ver.version}</span>
+                          <span className="text-base font-extrabold text-[#0D1F3D]">{versionLabel}</span>
                           <span
                             className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-extrabold border ${
                               isActive
@@ -245,21 +148,23 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
                         </Button>
                       </div>
 
-                      <p className="text-xs text-slate-700 font-medium leading-relaxed break-words">
-                        {ver.changesSummary}
-                      </p>
+                      <div className="space-y-1 text-xs text-slate-700 font-medium">
+                        {ver.changeSummary.map((summaryItem, idx) => (
+                          <p key={idx} className="leading-relaxed break-words">• {summaryItem}</p>
+                        ))}
+                      </div>
 
                       {/* Meta Information Bar */}
                       <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200/60 text-xs font-medium text-slate-600 min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="h-5 w-5 rounded-full bg-[#0D1F3D] text-white text-[9px] font-bold flex items-center justify-center shrink-0">
-                            {ver.publishedBy.avatar}
+                            {ver.actorName ? ver.actorName[0] : 'S'}
                           </span>
-                          <span className="truncate">Published by <strong className="text-slate-800 font-bold">{ver.publishedBy.name}</strong> ({ver.publishedBy.role})</span>
+                          <span className="truncate">Published by <strong className="text-slate-800 font-bold">{ver.actorName}</strong></span>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-500">
-                          <span>Published: <strong className="text-slate-800">{ver.publishedOn}</strong></span>
+                          <span>Published: <strong className="text-slate-800">{ver.publishedAt}</strong></span>
                           <span>Effective: <strong className="text-slate-800">{ver.effectiveFrom}</strong></span>
                         </div>
                       </div>
@@ -271,7 +176,7 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
 
             <div className="p-3 rounded-sm bg-blue-50/60 border border-blue-100 flex items-center gap-2 text-xs text-blue-700 font-medium">
               <Info className="h-4 w-4 shrink-0 text-blue-600" />
-              <span>Only the current version ({activeVersionRecord.version}) is active and available for new subscriptions.</span>
+              <span>Only the current version (v{plan.version || 1.0}) is active and available for new subscriptions.</span>
             </div>
           </div>
         </div>
@@ -284,12 +189,12 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
             <div className="space-y-2.5 text-xs">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">Total Logged Revisions</span>
-                <span className="font-extrabold text-[#0D1F3D]">{versionHistory.length}</span>
+                <span className="font-extrabold text-[#0D1F3D]">{versionRecords.length}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">Active Version</span>
                 <span className="font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  {activeVersionRecord.version}
+                  v{plan.version || 1.0}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -301,12 +206,16 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
                 <span className="font-extrabold text-[#0D1F3D]">{archivedCount}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">First Published</span>
-                <span className="font-semibold text-slate-700">10 Jan 2024</span>
+                <span className="text-xs font-semibold text-slate-500">Created On</span>
+                <span className="font-semibold text-slate-700">
+                  {plan.createdAt ? new Date(plan.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '10 Jan 2024'}
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">Last Revised</span>
-                <span className="font-semibold text-slate-700">{activeVersionRecord.effectiveFrom}</span>
+                <span className="font-semibold text-slate-700">
+                  {plan.updatedAt ? new Date(plan.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '28 May 2024'}
+                </span>
               </div>
             </div>
           </div>
@@ -317,11 +226,11 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
             <div className="space-y-2.5 text-xs text-slate-600 font-medium">
               <div className="flex items-start gap-2">
                 <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span className="break-words">Every change to pricing or limits automatically snapshots a new version.</span>
+                <span className="break-words">Plan versioning tracks commercial revisions and limit updates over time.</span>
               </div>
               <div className="flex items-start gap-2">
                 <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span className="break-words">Existing subscribers remain on their contracted version until manual migration.</span>
+                <span className="break-words">Active subscriptions inherit updated plan definitions upon renewal.</span>
               </div>
               <div className="flex items-start gap-2">
                 <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -338,7 +247,7 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
           <div className="w-full max-w-lg rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 font-sans max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-extrabold text-[#0D1F3D]">Version Snapshot: {selectedSnapshot.version}</h3>
+                <h3 className="text-base font-extrabold text-[#0D1F3D]">Version Snapshot: v{selectedSnapshot.version.toFixed(1)}</h3>
                 <span className="inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
                   {selectedSnapshot.status}
                 </span>
@@ -353,20 +262,32 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
             </div>
 
             <div className="space-y-3 text-xs">
-              <p className="text-slate-700 font-medium break-words">{selectedSnapshot.changesSummary}</p>
+              <div className="space-y-1 text-slate-700 font-medium">
+                {selectedSnapshot.changeSummary.map((s, i) => (
+                  <p key={i}>• {s}</p>
+                ))}
+              </div>
 
               <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 space-y-2">
-                <h5 className="font-extrabold text-[#0D1F3D]">Modifications in this version:</h5>
-                {selectedSnapshot.changes.map((ch, i) => (
-                  <div key={i} className="flex flex-wrap items-center justify-between py-1 border-b border-slate-200/60 last:border-none gap-2">
-                    <span className="font-bold text-slate-700">{ch.field}:</span>
-                    <div className="flex items-center gap-2">
-                      <span className="line-through text-slate-500 font-medium">{ch.oldValue}</span>
-                      <ArrowRight className="h-3 w-3 text-slate-400" />
-                      <span className="font-extrabold text-emerald-700">{ch.newValue}</span>
-                    </div>
+                <h5 className="font-extrabold text-[#0D1F3D]">Snapshot Specs:</h5>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-slate-500 font-semibold block">Monthly Price</span>
+                    <span className="font-extrabold text-[#0D1F3D]">₹{selectedSnapshot.snapshot?.pricing?.monthlyPerUser ?? 0}</span>
                   </div>
-                ))}
+                  <div>
+                    <span className="text-slate-500 font-semibold block">Annual Price</span>
+                    <span className="font-extrabold text-[#0D1F3D]">₹{selectedSnapshot.snapshot?.pricing?.annualPerUser ?? 0}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-semibold block">Storage Limit</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{selectedSnapshot.snapshot?.limits?.storageGb ?? 0} GB</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-semibold block">API Requests</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{(selectedSnapshot.snapshot?.limits?.apiRequestsPerMonth ?? 0).toLocaleString()}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -389,7 +310,9 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="w-full max-w-xl rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 font-sans max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-base font-extrabold text-[#0D1F3D]">Compare Versions ({activeVersionRecord.version} vs v0.9)</h3>
+              <h3 className="text-base font-extrabold text-[#0D1F3D]">
+                Compare Versions (v{plan.version || 1.0} vs {previousRecord ? `v${previousRecord.version.toFixed(1)}` : 'v0.9'})
+              </h3>
               <button
                 type="button"
                 onClick={() => setShowCompareModal(false)}
@@ -402,31 +325,37 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-3 gap-2 p-2 bg-slate-100 rounded-sm font-extrabold text-[#0D1F3D]">
                 <span>Parameter</span>
-                <span>v0.9 (Previous)</span>
-                <span>{activeVersionRecord.version} (Current)</span>
+                <span>{previousRecord ? `v${previousRecord.version.toFixed(1)}` : 'v0.9 (Previous)'}</span>
+                <span>v{plan.version || 1.0} (Current)</span>
               </div>
 
               <div className="grid grid-cols-3 gap-2 py-2 border-b border-slate-100">
                 <span className="font-semibold text-slate-700">Monthly Price</span>
-                <span className="text-slate-600">₹1,799</span>
+                <span className="text-slate-600">
+                  {previousRecord?.snapshot?.pricing?.monthlyPerUser ? `₹${previousRecord.snapshot.pricing.monthlyPerUser}` : '₹1,099'}
+                </span>
                 <span className="font-extrabold text-emerald-700">
-                  {plan.pricing.monthlyPerUser ? `₹${plan.pricing.monthlyPerUser}` : '₹1,999'}
+                  {plan.pricing.monthlyPerUser ? `₹${plan.pricing.monthlyPerUser}` : '₹1,199'}
                 </span>
               </div>
 
               <div className="grid grid-cols-3 gap-2 py-2 border-b border-slate-100">
                 <span className="font-semibold text-slate-700">Annual Price</span>
-                <span className="text-slate-600">₹17,990</span>
+                <span className="text-slate-600">
+                  {previousRecord?.snapshot?.pricing?.annualPerUser ? `₹${previousRecord.snapshot.pricing.annualPerUser}` : '₹899'}
+                </span>
                 <span className="font-extrabold text-emerald-700">
-                  {plan.pricing.annualPerUser ? `₹${plan.pricing.annualPerUser}` : '₹19,990'}
+                  {plan.pricing.annualPerUser ? `₹${plan.pricing.annualPerUser}` : '₹999'}
                 </span>
               </div>
 
               <div className="grid grid-cols-3 gap-2 py-2 border-b border-slate-100">
                 <span className="font-semibold text-slate-700">Storage Included</span>
-                <span className="text-slate-600">150 GB</span>
+                <span className="text-slate-600">
+                  {previousRecord?.snapshot?.limits?.storageGb ? `${previousRecord.snapshot.limits.storageGb} GB` : '80 GB'}
+                </span>
                 <span className="font-extrabold text-emerald-700">
-                  {plan.limits.storageGB ? `${plan.limits.storageGB} GB` : '200 GB'}
+                  {plan.limits.storageGb ? `${plan.limits.storageGb} GB` : '100 GB'}
                 </span>
               </div>
             </div>
@@ -447,3 +376,4 @@ export function PlanVersionHistoryTab({ plan }: PlanVersionHistoryTabProps) {
     </div>
   );
 }
+
