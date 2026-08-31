@@ -31,6 +31,8 @@ import {
 } from '../../features/platform/catalog/plans/utils/plan-pricing.utils';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
+import { DataTable, ColumnDef } from '../../components/ui/DataTable';
 
 const PIE_COLORS = ['#6366F1', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#3B82F6'];
 
@@ -42,6 +44,10 @@ export function PlansPricingPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
   const [selectedModel, setSelectedModel] = useState<string>('All');
   const [selectedBilling, setSelectedBilling] = useState<string>('All');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   // Action Menu state
   const [activeMenuPlanId, setActiveMenuPlanId] = useState<string | null>(null);
@@ -75,6 +81,11 @@ export function PlansPricingPage() {
       return matchesSearch && matchesStatus && matchesModel && matchesBilling;
     });
   }, [plans, searchTerm, selectedStatus, selectedModel, selectedBilling]);
+
+  const paginatedPlans = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredPlans.slice(start, start + pageSize);
+  }, [filteredPlans, currentPage, pageSize]);
 
   // Actions
   const handleDuplicate = async (plan: Plan) => {
@@ -125,9 +136,179 @@ export function PlansPricingPage() {
     }));
   }, [plans, metrics]);
 
+  // Columns definition using reusable DataTable
+  const columns: ColumnDef<Plan>[] = useMemo(
+    () => [
+      {
+        header: '#',
+        width: '48px',
+        align: 'center',
+        cell: (_, index) => (
+          <span className="text-slate-400 font-semibold">
+            {(currentPage - 1) * pageSize + index + 1}
+          </span>
+        ),
+      },
+      {
+        header: 'Plan Name',
+        cell: (plan) => (
+          <div
+            className="flex items-center gap-3 cursor-pointer group"
+            onClick={() => navigate(`/platform/plans/create?planId=${plan.id}&step=basic`)}
+          >
+            <div
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-white font-extrabold text-xs shadow-2xs"
+              style={{ backgroundColor: plan.color || '#6366F1' }}
+            >
+              {plan.name.charAt(0)}
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-[#0D1F3D] group-hover:text-indigo-600 group-hover:underline flex items-center gap-1.5 truncate">
+                {plan.name}
+                {plan.badge && plan.badge !== 'None' && (
+                  <span className="inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-extrabold text-indigo-700 border border-indigo-100 shrink-0">
+                    {plan.badge}
+                  </span>
+                )}
+              </p>
+              <p className="text-[11px] font-medium text-slate-400 truncate max-w-[220px]">
+                {plan.description}
+              </p>
+            </div>
+          </div>
+        ),
+      },
+      {
+        header: 'Plan Code',
+        cell: (plan) => (
+          <span className="font-mono text-xs font-bold text-[#0D1F3D]">{plan.code}</span>
+        ),
+      },
+      {
+        header: 'Status',
+        cell: (plan) => {
+          const badge = getPlanStatusBadge(plan.status);
+          return (
+            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold border ${badge.className}`}>
+              {badge.label}
+            </span>
+          );
+        },
+      },
+      {
+        header: 'Pricing Model',
+        cell: (plan) => <span className="text-slate-700 font-semibold">{plan.pricing.model}</span>,
+      },
+      {
+        header: 'Monthly Price',
+        cell: (plan) => (
+          <span className="font-bold text-[#0D1F3D]">{formatPlanMonthlyPrice(plan.pricing)}</span>
+        ),
+      },
+      {
+        header: 'Annual Price',
+        cell: (plan) => (
+          <span className="font-bold text-emerald-700">{formatPlanAnnualPrice(plan.pricing)}</span>
+        ),
+      },
+      {
+        header: 'Min Seats',
+        cell: (plan) => <span className="font-mono text-slate-800 font-bold">{plan.limits.minimumSeats}</span>,
+      },
+      {
+        header: 'Default Seats',
+        cell: (plan) => <span className="font-mono text-slate-800 font-bold">{plan.limits.defaultSeatLimit}</span>,
+      },
+      {
+        header: 'Storage',
+        cell: (plan) => <span className="text-slate-700 font-semibold">{plan.limits.storageGb} GB</span>,
+      },
+      {
+        header: 'Modules',
+        cell: (plan) => (
+          <span className="text-indigo-700 font-bold">{plan.includedModuleCodes.length} modules</span>
+        ),
+      },
+      {
+        header: 'Trial',
+        cell: (plan) => (
+          <span className="text-slate-700 font-medium">
+            {plan.commercialRules.trialEnabled ? `${plan.commercialRules.trialDurationDays} days` : 'No Trial'}
+          </span>
+        ),
+      },
+      {
+        header: 'Tenants',
+        cell: (plan) => {
+          const tenantCount = metrics.tenantsByPlan[plan.id] || 0;
+          return (
+            <span className="inline-flex rounded-md bg-slate-100 px-2.5 py-0.5 text-xs font-extrabold text-slate-700 border border-slate-200">
+              {tenantCount}
+            </span>
+          );
+        },
+      },
+      {
+        header: 'MRR',
+        cell: (plan) => {
+          const planMrr = metrics.mrrByPlan[plan.id] || 0;
+          return <span className="font-mono font-bold text-[#0D1F3D]">{formatCurrency(planMrr)}</span>;
+        },
+      },
+      {
+        header: 'Actions',
+        align: 'right',
+        cell: (plan) => (
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setActiveMenuPlanId(activeMenuPlanId === plan.id ? null : plan.id)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+
+            {activeMenuPlanId === plan.id && (
+              <div className="absolute right-0 top-full z-30 mt-1 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 font-sans text-left">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMenuPlanId(null);
+                    navigate(`/platform/plans/create?planId=${plan.id}&step=basic`);
+                  }}
+                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  <Edit className="h-4 w-4 text-indigo-600" /> Edit Plan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDuplicate(plan)}
+                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  <Copy className="h-4 w-4 text-emerald-600" /> Duplicate Plan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMenuPlanId(null);
+                    setArchivingPlan(plan);
+                  }}
+                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 border-t border-slate-100"
+                >
+                  <Archive className="h-4 w-4 text-rose-600" /> Archive Plan
+                </button>
+              </div>
+            )}
+          </div>
+        ),
+      },
+    ],
+    [currentPage, pageSize, metrics, activeMenuPlanId, navigate]
+  );
+
   return (
     <div className="space-y-6 pb-12 font-sans">
-      {/* Header Row (100% Identical to AllTenantsPage.tsx) */}
+      {/* Header Row */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
@@ -222,43 +403,46 @@ export function PlansPricingPage() {
           </div>
 
           <div className="w-40">
-            <select
+            <Select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full h-10 px-3 text-xs font-semibold rounded-sm border border-slate-200 bg-[#F8FAFC] text-slate-700 focus:outline-none focus:border-[#0D1F3D]"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Draft">Draft</option>
-              <option value="Archived">Archived</option>
-            </select>
+              searchable={true}
+              options={[
+                { value: 'All', label: 'All Statuses' },
+                { value: 'Active', label: 'Active' },
+                { value: 'Draft', label: 'Draft' },
+                { value: 'Archived', label: 'Archived' },
+              ]}
+            />
           </div>
 
           <div className="w-48">
-            <select
+            <Select
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
-              className="w-full h-10 px-3 text-xs font-semibold rounded-sm border border-slate-200 bg-[#F8FAFC] text-slate-700 focus:outline-none focus:border-[#0D1F3D]"
-            >
-              <option value="All">All Pricing Models</option>
-              <option value="Per User">Per User</option>
-              <option value="Base + Per User">Base + Per User</option>
-              <option value="Flat Monthly">Flat Monthly</option>
-              <option value="Custom Contract">Custom Contract</option>
-            </select>
+              searchable={true}
+              options={[
+                { value: 'All', label: 'All Pricing Models' },
+                { value: 'Per User', label: 'Per User' },
+                { value: 'Base + Per User', label: 'Base + Per User' },
+                { value: 'Flat Monthly', label: 'Flat Monthly' },
+                { value: 'Custom Contract', label: 'Custom Contract' },
+              ]}
+            />
           </div>
 
           <div className="w-44">
-            <select
+            <Select
               value={selectedBilling}
               onChange={(e) => setSelectedBilling(e.target.value)}
-              className="w-full h-10 px-3 text-xs font-semibold rounded-sm border border-slate-200 bg-[#F8FAFC] text-slate-700 focus:outline-none focus:border-[#0D1F3D]"
-            >
-              <option value="All">All Billing Cycles</option>
-              <option value="Monthly">Monthly Billing</option>
-              <option value="Annual">Annual Billing</option>
-              <option value="Both">Both Enabled</option>
-            </select>
+              searchable={true}
+              options={[
+                { value: 'All', label: 'All Billing Cycles' },
+                { value: 'Monthly', label: 'Monthly Billing' },
+                { value: 'Annual', label: 'Annual Billing' },
+                { value: 'Both', label: 'Both Enabled' },
+              ]}
+            />
           </div>
 
           <Button
@@ -269,6 +453,7 @@ export function PlansPricingPage() {
               setSelectedStatus('All');
               setSelectedModel('All');
               setSelectedBilling('All');
+              setCurrentPage(1);
             }}
             className="gap-2 font-bold text-slate-700 h-10"
           >
@@ -277,228 +462,78 @@ export function PlansPricingPage() {
         </div>
       </div>
 
-      {/* Main Content Layout: Table + Right Analytics Sidebar */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Table Container */}
-        <div className="lg:col-span-2 rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-[#0D1F3D]">All Commercial Plans</h3>
-              <span className="text-xs font-medium text-slate-500">
-                Showing <span className="font-bold text-[#0D1F3D]">{filteredPlans.length}</span> of <span className="font-bold text-[#0D1F3D]">{plans.length}</span> plans
-              </span>
+      {/* 100% Full-Width DataTable (Unconstrained Width & Spacing) */}
+      <DataTable
+        columns={columns}
+        data={paginatedPlans}
+        keyExtractor={(p) => p.id}
+        isLoading={loading}
+        emptyMessage="No commercial plans found matching filters."
+        pagination={{
+          currentPage,
+          totalPages: Math.ceil(filteredPlans.length / pageSize) || 1,
+          totalEntries: filteredPlans.length,
+          pageSize,
+          onPageChange: (page) => setCurrentPage(page),
+        }}
+      />
+
+      {/* Bottom Analytics Cards Section (Moved below table to next line) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2 font-sans">
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs">
+          <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">Tenants by Plan</h3>
+          <div className="flex items-center gap-4">
+            <div className="relative h-28 w-28 shrink-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={pieChartData} cx="50%" cy="50%" innerRadius={32} outerRadius={48} paddingAngle={2} dataKey="value">
+                    {pieChartData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    wrapperStyle={{ zIndex: 100 }}
+                    contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none', color: '#fff' }}
+                    itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '11px' }}
+                    formatter={(val: any) => [`${val} Tenants`, 'Count']}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-base font-extrabold text-[#0D1F3D]">{metrics.activeSubscriptions}</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase">Total</span>
+              </div>
             </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs whitespace-nowrap border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 text-xs font-bold text-[#0D1F3D]">
-                    <th className="pb-3 w-8">#</th>
-                    <th className="pb-3">Plan Name</th>
-                    <th className="pb-3">Plan Code</th>
-                    <th className="pb-3">Status</th>
-                    <th className="pb-3">Pricing Model</th>
-                    <th className="pb-3">Monthly Price</th>
-                    <th className="pb-3">Annual Price</th>
-                    <th className="pb-3">Min Seats</th>
-                    <th className="pb-3">Default Seats</th>
-                    <th className="pb-3">Storage</th>
-                    <th className="pb-3">Modules</th>
-                    <th className="pb-3">Trial</th>
-                    <th className="pb-3">Tenants</th>
-                    <th className="pb-3">MRR</th>
-                    <th className="pb-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={15} className="py-12 text-center text-slate-500 font-sans">
-                        <div className="inline-block animate-spin h-5 w-5 border-2 border-indigo-600 border-t-transparent rounded-full mb-2" />
-                        <p className="text-xs font-semibold">Loading plan catalog...</p>
-                      </td>
-                    </tr>
-                  ) : error ? (
-                    <tr>
-                      <td colSpan={15} className="py-8 text-center text-rose-600">
-                        <AlertTriangle className="h-6 w-6 mx-auto mb-2 opacity-80" />
-                        <p className="text-xs font-bold">{error}</p>
-                      </td>
-                    </tr>
-                  ) : filteredPlans.length === 0 ? (
-                    <tr>
-                      <td colSpan={15} className="py-12 text-center text-slate-500 font-sans">
-                        <Layers className="mx-auto h-8 w-8 text-slate-400 mb-2" />
-                        <p className="text-sm font-bold text-[#0D1F3D]">No plans found</p>
-                        <p className="text-xs text-slate-400 font-medium">Try adjusting search query or filters.</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredPlans.map((plan, index) => {
-                      const badge = getPlanStatusBadge(plan.status);
-                      const tenantCount = metrics.tenantsByPlan[plan.id] || 0;
-                      const planMrr = metrics.mrrByPlan[plan.id] || 0;
-
-                      return (
-                        <tr
-                          key={plan.id}
-                          className="hover:bg-slate-50/80 transition cursor-pointer"
-                          onClick={() => navigate(`/platform/plans/create?planId=${plan.id}&step=basic`)}
-                        >
-                          <td className="py-3.5 text-slate-400 font-semibold">{index + 1}</td>
-                          <td className="py-3.5">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-white font-extrabold text-xs shadow-2xs"
-                                style={{ backgroundColor: plan.color || '#6366F1' }}
-                              >
-                                {plan.name.charAt(0)}
-                              </div>
-                              <div>
-                                <p className="font-bold text-[#0D1F3D] hover:text-indigo-600 hover:underline flex items-center gap-1.5">
-                                  {plan.name}
-                                  {plan.badge && plan.badge !== 'None' && (
-                                    <span className="inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-extrabold text-indigo-700 border border-indigo-100">
-                                      {plan.badge}
-                                    </span>
-                                  )}
-                                </p>
-                                <p className="text-[11px] font-medium text-slate-400 truncate max-w-[180px]">
-                                  {plan.description}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-3.5 font-mono text-xs font-bold text-[#0D1F3D]">{plan.code}</td>
-                          <td className="py-3.5">
-                            <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold border ${badge.className}`}>
-                              {badge.label}
-                            </span>
-                          </td>
-                          <td className="py-3.5 text-slate-700 font-semibold">{plan.pricing.model}</td>
-                          <td className="py-3.5 font-bold text-[#0D1F3D]">{formatPlanMonthlyPrice(plan.pricing)}</td>
-                          <td className="py-3.5 font-bold text-emerald-700">{formatPlanAnnualPrice(plan.pricing)}</td>
-                          <td className="py-3.5 font-mono text-slate-800 font-bold">{plan.limits.minimumSeats}</td>
-                          <td className="py-3.5 font-mono text-slate-800 font-bold">{plan.limits.defaultSeatLimit}</td>
-                          <td className="py-3.5 text-slate-700 font-semibold">{plan.limits.storageGb} GB</td>
-                          <td className="py-3.5 text-indigo-700 font-bold">{plan.includedModuleCodes.length} modules</td>
-                          <td className="py-3.5 text-slate-700 font-medium">
-                            {plan.commercialRules.trialEnabled ? `${plan.commercialRules.trialDurationDays} days` : 'No Trial'}
-                          </td>
-                          <td className="py-3.5 font-bold text-slate-800">
-                            <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-xs font-extrabold text-slate-700">
-                              {tenantCount}
-                            </span>
-                          </td>
-                          <td className="py-3.5 font-mono font-bold text-[#0D1F3D]">{formatCurrency(planMrr)}</td>
-                          <td className="py-3.5 text-right relative" onClick={(e) => e.stopPropagation()}>
-                            <button
-                              type="button"
-                              onClick={() => setActiveMenuPlanId(activeMenuPlanId === plan.id ? null : plan.id)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
-
-                            {activeMenuPlanId === plan.id && (
-                              <div className="absolute right-0 top-full z-30 mt-1 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 font-sans text-left">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveMenuPlanId(null);
-                                    navigate(`/platform/plans/create?planId=${plan.id}&step=basic`);
-                                  }}
-                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                                >
-                                  <Edit className="h-4 w-4 text-indigo-600" /> Edit Plan
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleDuplicate(plan)}
-                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                                >
-                                  <Copy className="h-4 w-4 text-emerald-600" /> Duplicate Plan
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveMenuPlanId(null);
-                                    setArchivingPlan(plan);
-                                  }}
-                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 border-t border-slate-100"
-                                >
-                                  <Archive className="h-4 w-4 text-rose-600" /> Archive Plan
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+            <div className="flex-1 space-y-1">
+              {plans.map((p, idx) => (
+                <div key={p.id} className="flex items-center justify-between text-[11px] font-semibold">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }} />
+                    <span className="text-slate-600 truncate max-w-[140px]">{p.name}</span>
+                  </div>
+                  <span className="text-[#0D1F3D] font-bold">{metrics.tenantsByPlan[p.id] || 0}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Right Analytics Sidebar */}
-        <div className="space-y-6">
-          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs">
-            <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">Tenants by Plan</h3>
-            <div className="flex items-center gap-4">
-              <div className="relative h-28 w-28 shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={pieChartData} cx="50%" cy="50%" innerRadius={32} outerRadius={48} paddingAngle={2} dataKey="value">
-                      {pieChartData.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      wrapperStyle={{ zIndex: 100 }}
-                      contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none', color: '#fff' }}
-                      itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '11px' }}
-                      formatter={(val: any) => [`${val} Tenants`, 'Count']}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-base font-extrabold text-[#0D1F3D]">{metrics.activeSubscriptions}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase">Total</span>
-                </div>
-              </div>
-              <div className="flex-1 space-y-1">
-                {plans.map((p, idx) => (
-                  <div key={p.id} className="flex items-center justify-between text-[11px] font-semibold">
-                    <div className="flex items-center gap-1.5">
-                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[idx % PIE_COLORS.length] }} />
-                      <span className="text-slate-600 truncate max-w-[100px]">{p.name}</span>
-                    </div>
-                    <span className="text-[#0D1F3D] font-bold">{metrics.tenantsByPlan[p.id] || 0}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs">
-            <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">MRR Contribution by Plan</h3>
-            <div className="h-36 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={barChartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip formatter={(val: number) => [formatCurrency(val), 'MRR']} />
-                  <Bar dataKey="mrr" fill="#6366F1" radius={[2, 2, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs">
+          <h3 className="text-sm font-bold text-[#0D1F3D] mb-4">MRR Contribution by Plan</h3>
+          <div className="h-36 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barChartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
+                <Tooltip formatter={(val: any) => [formatCurrency(Number(val) || 0), 'MRR']} />
+                <Bar dataKey="mrr" fill="#6366F1" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Archive Confirmation Modal (Identical to CreateTenant Modal) */}
+      {/* Archive Confirmation Modal */}
       {archivingPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
           <div className="w-full max-w-sm rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 text-center font-sans">
