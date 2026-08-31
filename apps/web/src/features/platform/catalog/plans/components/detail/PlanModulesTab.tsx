@@ -25,6 +25,7 @@ import { Button } from '../../../../../../components/ui/Button';
 
 export interface PlanModulesTabProps {
   plan: Plan;
+  allModules?: PlatformModule[];
   includedModules: PlatformModule[];
 }
 

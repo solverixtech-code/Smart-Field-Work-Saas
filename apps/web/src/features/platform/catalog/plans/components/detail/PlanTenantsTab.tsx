@@ -432,7 +432,7 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
             </div>
 
             {/* 100% Full Width DataTable */}
-            <DataTable data={filteredTenants} columns={columns} />
+            <DataTable data={filteredTenants} columns={columns} keyExtractor={(t: any) => t.id} />
           </div>
         </div>
 

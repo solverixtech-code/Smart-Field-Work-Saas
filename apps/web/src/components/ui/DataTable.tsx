@@ -22,7 +22,7 @@ export interface PaginationConfig {
 export interface DataTableProps<T> {
   columns: ColumnDef<T>[];
   data: T[];
-  keyExtractor: (item: T, index: number) => string;
+  keyExtractor?: (item: T, index: number) => string;
   selectable?: boolean;
   selectedIds?: string[];
   onSelectAll?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -37,7 +37,7 @@ export interface DataTableProps<T> {
 export function DataTable<T>({
   columns,
   data,
-  keyExtractor,
+  keyExtractor = (item: any, index: number) => item?.id || item?.code || item?.key || String(index),
   selectable = false,
   selectedIds = [],
   onSelectAll,
