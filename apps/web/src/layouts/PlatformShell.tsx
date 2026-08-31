@@ -261,6 +261,20 @@ export default function PlatformShell() {
         { label: "Plans & Pricing", to: "/platform/plans" },
       ];
     }
+    if (p === "/platform/plans/create") {
+      return [
+        { label: "Platform Management", to: "/platform/plans" },
+        { label: "Plans & Pricing", to: "/platform/plans" },
+        { label: "Create Plan Wizard", to: "/platform/plans/create" },
+      ];
+    }
+    if (p.startsWith("/platform/plans/")) {
+      return [
+        { label: "Platform Management", to: "/platform/plans" },
+        { label: "Plans & Pricing", to: "/platform/plans" },
+        { label: "Commercial Plan Details", to: p },
+      ];
+    }
     if (p === "/platform/audit") {
       return [
         { label: "Platform Management", to: "/platform/audit" },
@@ -366,11 +380,13 @@ export default function PlatformShell() {
 
                 // Strict active matching (Exact same logic as AppShell.tsx)
                 const isActive = (() => {
+                  if (item.to === "/platform/plans") {
+                    return location.pathname.startsWith("/platform/plans");
+                  }
                   if (
                     [
                       "/platform/dashboard",
                       "/platform/tenants",
-                      "/platform/plans",
                       "/platform/modules",
                       "/platform/industries",
                       "/platform/users",

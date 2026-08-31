@@ -32,6 +32,7 @@ import { TenantUsersPage } from './screens/platform/TenantUsersPage';
 import { WorkspaceSettingsPage } from './screens/admin/settings/WorkspaceSettingsPage';
 import { PlansPricingPage } from './screens/platform/PlansPricingPage';
 import { CreatePlanWizardPage } from './screens/platform/CreatePlanWizardPage';
+import { PlanDetailsPage } from './screens/platform/PlanDetailsPage';
 import { AuditLogsPage } from './screens/platform/AuditLogsPage';
 import { TenantCreationProvider } from './features/platform/tenants/context/TenantCreationContext';
 import { PlatformAccessGuard } from './features/platform/auth/guards/PlatformAccessGuard';
@@ -772,11 +773,17 @@ export default function AppRouter() {
               <Route element={<PlatformAccessGuard requiredPermission="platform.tenants.members.manage" />}>
                 <Route path="/platform/tenants/:tenantId/users" element={<TenantUsersPage />} />
               </Route>
-              <Route element={<PlatformAccessGuard requiredPermission="platform.plans.view" />}>
-                <Route path="/platform/plans" element={<PlansPricingPage />} />
-              </Route>
               <Route element={<PlatformAccessGuard requiredPermission="platform.plans.create" />}>
                 <Route path="/platform/plans/create" element={<CreatePlanWizardPage />} />
+              </Route>
+              <Route element={<PlatformAccessGuard requiredPermission="platform.plans.view" />}>
+                <Route path="/platform/plans" element={<PlansPricingPage />} />
+                <Route path="/platform/plans/:planId" element={<PlanDetailsPage />} />
+                <Route path="/platform/plans/:planId/pricing" element={<PlanDetailsPage />} />
+                <Route path="/platform/plans/:planId/limits" element={<PlanDetailsPage />} />
+                <Route path="/platform/plans/:planId/modules" element={<PlanDetailsPage />} />
+                <Route path="/platform/plans/:planId/tenants" element={<PlanDetailsPage />} />
+                <Route path="/platform/plans/:planId/versions" element={<PlanDetailsPage />} />
               </Route>
               <Route path="/platform/modules" element={<PlatformPlaceholderPage title="Platform Modules Catalog" />} />
               <Route path="/platform/industries" element={<PlatformPlaceholderPage title="Industry Verticals" />} />

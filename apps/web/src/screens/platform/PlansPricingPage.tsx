@@ -6,6 +6,7 @@ import {
   Search,
   RotateCcw,
   MoreVertical,
+  Eye,
   Edit,
   Copy,
   Archive,
@@ -116,7 +117,18 @@ export function PlansPricingPage() {
   };
 
   const handleExportCatalog = () => {
-    toast.success('Plan catalog exported as JSON payload.');
+    try {
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(plans, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', `plan-catalog-${new Date().toISOString().slice(0, 10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      toast.success('Plan catalog exported as JSON payload file.');
+    } catch {
+      toast.error('Failed to export catalog');
+    }
   };
 
   // Chart data for Adoption & MRR
@@ -154,7 +166,7 @@ export function PlansPricingPage() {
         cell: (plan) => (
           <div
             className="flex items-center gap-3 cursor-pointer group"
-            onClick={() => navigate(`/platform/plans/create?planId=${plan.id}&step=basic`)}
+            onClick={() => navigate(`/platform/plans/${plan.id}`)}
           >
             <div
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-white font-extrabold text-xs shadow-2xs"
@@ -270,6 +282,16 @@ export function PlansPricingPage() {
 
             {activeMenuPlanId === plan.id && (
               <div className="absolute right-0 top-full z-30 mt-1 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 font-sans text-left">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveMenuPlanId(null);
+                    navigate(`/platform/plans/${plan.id}`);
+                  }}
+                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  <Eye className="h-4 w-4 text-blue-600" /> View Plan
+                </button>
                 <button
                   type="button"
                   onClick={() => {
