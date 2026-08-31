@@ -2,24 +2,24 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  ChevronLeft,
-  ChevronDown,
   Search,
-  CheckCircle2,
   Users,
   Shield,
-  Plus,
+  UserPlus,
   MoreVertical,
   Download,
   Filter,
-  RotateCcw,
-  Check,
   Building2,
-  UserPlus,
   ShieldCheck,
   Lock,
   AlertTriangle,
   Info,
+  ChevronDown,
+  Mail,
+  UserCheck,
+  PauseCircle,
+  PlayCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
@@ -27,60 +27,113 @@ import { Checkbox } from '../../components/ui/Checkbox';
 import { Input } from '../../components/ui/Input';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { tenantService } from '../../features/platform/tenants/services/tenant.service';
+import { tenantMembershipService } from '../../features/platform/tenants/services/tenant-membership.service';
 import { Tenant } from '../../features/platform/tenants/types/platform.types';
-
-interface UserRow {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  isYou?: boolean;
-  roleLabel: string;
-  roleBg: string;
-  roleColor: string;
-  department: string;
-  status: 'Active' | 'Suspended' | 'Invited';
-  joinedOn: string;
-  lastActive: string;
-  twoFactor: boolean;
-  sessions: number;
-}
-
-const seatChartData = [
-  { name: 'Active Users', value: 112, color: '#4F46E5' },
-  { name: 'Invited', value: 4, color: '#3B82F6' },
-  { name: 'Suspended', value: 2, color: '#EF4444' },
-  { name: 'Available Seats', value: 24, color: '#E2E8F0' },
-];
+import { TenantMember, PlatformAccessMember, AccessRequest } from '../../features/platform/tenants/types/membership.types';
 
 export function TenantUsersPage() {
   const { tenantId } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'all-users';
+
+  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [members, setMembers] = useState<TenantMember[]>([]);
+  const [platformAccess, setPlatformAccess] = useState<PlatformAccessMember[]>([]);
+  const [accessRequests, setAccessRequests] = useState<AccessRequest[]>([]);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [tenant, setTenant] = useState<Tenant | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [showBulkMenu, setShowBulkMenu] = useState(false);
+  const [activeRowMenuId, setActiveRowMenuId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (tenantId) {
-      tenantService.getTenantById(tenantId).then((t) => {
-        if (t) setTenant(t);
-      });
-    }
-  }, [tenantId]);
+  // Invite Form State
+  const [inviteName, setInviteName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('Field Executive');
+  const [inviteDept, setInviteDept] = useState('Field Operations');
 
   const setTab = (tab: string) => {
     setSearchParams({ tab });
   };
 
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
-  const [showBulkMenu, setShowBulkMenu] = useState(false);
+  const loadData = () => {
+    if (!tenantId) return;
+    tenantService.getTenantById(tenantId).then((t) => {
+      if (t) {
+        setTenant(t);
+        const mems = tenantMembershipService.getMemberships(t.id);
+        setMembers(mems);
+        setPlatformAccess(tenantMembershipService.getPlatformAccess(t.id));
+        setAccessRequests(tenantMembershipService.getAccessRequests(t.id));
+      }
+    });
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [tenantId]);
+
+  if (!tenantId || !tenant) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center font-sans space-y-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+          <Info className="h-7 w-7" />
+        </div>
+        <div>
+          <h2 className="text-xl font-extrabold text-[#0D1F3D]">Tenant Not Found</h2>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            This tenant could not be found or may no longer be available.
+          </p>
+        </div>
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={() => navigate('/platform/tenants')}
+          className="font-bold px-6 shadow-xs"
+        >
+          Back to All Tenants
+        </Button>
+      </div>
+    );
+  }
+
+  // Filter members according to active tab
+  let displayedMembers = members;
+  if (activeTab === 'pending-invitations') {
+    displayedMembers = members.filter((m) => m.status === 'Invited');
+  } else if (activeTab === 'suspended-users') {
+    displayedMembers = members.filter((m) => m.status === 'Suspended');
+  }
+
+  if (searchQuery.trim()) {
+    displayedMembers = displayedMembers.filter(
+      (m) =>
+        m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.roleLabel.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+
+  // Derived counts
+  const activeCount = members.filter((m) => m.status === 'Active').length;
+  const invitedCount = members.filter((m) => m.status === 'Invited').length;
+  const suspendedCount = members.filter((m) => m.status === 'Suspended').length;
+  const seatLimit = tenant.seatLimit ? parseInt(tenant.seatLimit, 10) || tenant.userLicensesCount : tenant.userLicensesCount;
+  const availableSeats = Math.max(0, seatLimit - members.length);
+
+  const seatChartData = [
+    { name: 'Active Users', value: activeCount, color: '#4F46E5' },
+    { name: 'Invited', value: invitedCount, color: '#3B82F6' },
+    { name: 'Suspended', value: suspendedCount, color: '#EF4444' },
+    { name: 'Available Seats', value: availableSeats, color: '#E2E8F0' },
+  ];
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedUserIds(usersList.map((u) => u.id));
+      setSelectedUserIds(displayedMembers.map((u) => u.id));
     } else {
       setSelectedUserIds([]);
     }
@@ -92,163 +145,51 @@ export function TenantUsersPage() {
     );
   };
 
-  const usersList: UserRow[] = [
-    {
-      id: 'u1',
-      name: 'Rahul Sharma',
-      email: 'rahul.sharma@sunrisehealthcare.com',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-      isYou: true,
-      roleLabel: 'Tenant Owner',
-      roleBg: 'bg-purple-100',
-      roleColor: 'text-purple-700',
-      department: 'Executive Management',
-      status: 'Active',
-      joinedOn: '24 May 2026',
-      lastActive: '2 minutes ago',
-      twoFactor: true,
-      sessions: 2,
-    },
-    {
-      id: 'u2',
-      name: 'Priya Mehta',
-      email: 'priya.mehta@sunrisehealthcare.com',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-      roleLabel: 'Tenant Admin',
-      roleBg: 'bg-blue-100',
-      roleColor: 'text-blue-700',
-      department: 'Operations',
-      status: 'Active',
-      joinedOn: '24 May 2026',
-      lastActive: '15 minutes ago',
-      twoFactor: true,
-      sessions: 1,
-    },
-    {
-      id: 'u3',
-      name: 'Vikram Singh',
-      email: 'vikram.singh@sunrisehealthcare.com',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-      roleLabel: 'Sales Manager',
-      roleBg: 'bg-indigo-100',
-      roleColor: 'text-indigo-700',
-      department: 'Sales',
-      status: 'Active',
-      joinedOn: '24 May 2026',
-      lastActive: '1 hour ago',
-      twoFactor: true,
-      sessions: 1,
-    },
-    {
-      id: 'u4',
-      name: 'Anita Desai',
-      email: 'anita.desai@sunrisehealthcare.com',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-      roleLabel: 'Finance Manager',
-      roleBg: 'bg-amber-100',
-      roleColor: 'text-amber-800',
-      department: 'Finance',
-      status: 'Active',
-      joinedOn: '24 May 2026',
-      lastActive: '3 hours ago',
-      twoFactor: false,
-      sessions: 1,
-    },
-    {
-      id: 'u5',
-      name: 'Sandeep Patel',
-      email: 'sandeep.patel@sunrisehealthcare.com',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-      roleLabel: 'Field Operations Lead',
-      roleBg: 'bg-emerald-100',
-      roleColor: 'text-emerald-700',
-      department: 'Field Operations',
-      status: 'Active',
-      joinedOn: '24 May 2026',
-      lastActive: '5 hours ago',
-      twoFactor: true,
-      sessions: 2,
-    },
-    {
-      id: 'u6',
-      name: 'Neha Kapoor',
-      email: 'neha.kapoor@sunrisehealthcare.com',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&auto=format&fit=crop&q=80',
-      roleLabel: 'Team Leader',
-      roleBg: 'bg-teal-100',
-      roleColor: 'text-teal-700',
-      department: 'Field Operations',
-      status: 'Active',
-      joinedOn: '25 May 2026',
-      lastActive: '1 day ago',
-      twoFactor: true,
-      sessions: 1,
-    },
-    {
-      id: 'u7',
-      name: 'Arjun Nair',
-      email: 'arjun.nair@sunrisehealthcare.com',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&auto=format&fit=crop&q=80',
-      roleLabel: 'Field Executive',
-      roleBg: 'bg-emerald-100',
-      roleColor: 'text-emerald-700',
-      department: 'Field Operations',
-      status: 'Active',
-      joinedOn: '25 May 2026',
-      lastActive: '2 days ago',
-      twoFactor: false,
-      sessions: 1,
-    },
-    {
-      id: 'u8',
-      name: 'Megha Iyer',
-      email: 'megha.iyer@sunrisehealthcare.com',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80',
-      roleLabel: 'Data Entry Operator',
-      roleBg: 'bg-purple-100',
-      roleColor: 'text-purple-700',
-      department: 'Operations',
-      status: 'Active',
-      joinedOn: '25 May 2026',
-      lastActive: '2 days ago',
-      twoFactor: false,
-      sessions: 1,
-    },
-    {
-      id: 'u9',
-      name: 'Rohit Verma',
-      email: 'rohit.verma@sunrisehealthcare.com',
-      avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=100&auto=format&fit=crop&q=80',
-      roleLabel: 'Support Specialist',
-      roleBg: 'bg-indigo-100',
-      roleColor: 'text-indigo-700',
-      department: 'Customer Support',
-      status: 'Suspended',
-      joinedOn: '23 May 2026',
-      lastActive: '8 days ago',
-      twoFactor: false,
-      sessions: 0,
-    },
-    {
-      id: 'u10',
-      name: 'Karan Malhotra',
-      email: 'karan.malhotra@sunrisehealthcare.com',
-      avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&auto=format&fit=crop&q=80',
-      roleLabel: 'Field Executive',
-      roleBg: 'bg-emerald-100',
-      roleColor: 'text-emerald-700',
-      department: 'Field Operations',
-      status: 'Invited',
-      joinedOn: '25 May 2026',
-      lastActive: '—',
-      twoFactor: false,
-      sessions: 0,
-    },
-  ];
+  const handleInviteSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteName.trim() || !inviteEmail.trim()) {
+      toast.error('Please enter Full Name and Email Address');
+      return;
+    }
+
+    tenantMembershipService.inviteMember(tenant.id, {
+      name: inviteName,
+      email: inviteEmail,
+      roleLabel: inviteRole,
+      department: inviteDept,
+    });
+
+    toast.success(`Invitation sent to ${inviteEmail}`);
+    setInviteName('');
+    setInviteEmail('');
+    setShowInviteModal(false);
+    loadData();
+  };
+
+  const handleUpdateUserStatus = (memberId: string, status: 'Active' | 'Suspended') => {
+    tenantMembershipService.updateMemberStatus(tenant.id, memberId, status);
+    toast.success(`User membership status updated to ${status}`);
+    setActiveRowMenuId(null);
+    loadData();
+  };
+
+  const handleResendInvite = (memberId: string) => {
+    tenantMembershipService.resendInvite(tenant.id, memberId);
+    toast.success('Invitation email resent successfully');
+    setActiveRowMenuId(null);
+  };
+
+  const handleBulkStatusChange = (status: 'Active' | 'Suspended') => {
+    tenantMembershipService.bulkUpdateStatus(tenant.id, selectedUserIds, status);
+    toast.success(`Updated ${selectedUserIds.length} user status to ${status}`);
+    setSelectedUserIds([]);
+    setShowBulkMenu(false);
+    loadData();
+  };
 
   return (
     <div className="space-y-6 font-sans text-slate-800 pb-16">
-      {/* 1. Header Breadcrumb & Title */}
+      {/* Top Header Breadcrumb & Title */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div>
           <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
@@ -256,9 +197,7 @@ export function TenantUsersPage() {
             <span>›</span>
             <button type="button" onClick={() => navigate('/platform/tenants')} className="hover:text-[#0D1F3D]">Tenants</button>
             <span>›</span>
-            <button type="button" onClick={() => navigate('/platform/tenants')} className="hover:text-[#0D1F3D]">All Tenants</button>
-            <span>›</span>
-            <button type="button" onClick={() => navigate(`/platform/tenants/${tenantId}`)} className="hover:text-[#0D1F3D]">{tenant?.companyName || 'Tenant'}</button>
+            <button type="button" onClick={() => navigate(`/platform/tenants/${tenant.id}`)} className="hover:text-[#0D1F3D]">{tenant.companyName}</button>
             <span>›</span>
             <span className="font-extrabold text-[#0D1F3D]">Users & Memberships</span>
           </div>
@@ -270,12 +209,12 @@ export function TenantUsersPage() {
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Manage users, roles and access for {tenant?.companyName || 'this tenant'}. Invite, activate or suspend members and control their permissions.
+            Manage users, roles and access for {tenant.companyName}. Invite, activate or suspend members and control their permissions.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => navigate(`/platform/tenants/${tenantId}`)} className="gap-1.5 font-bold text-slate-700">
+          <Button variant="outline" size="sm" onClick={() => navigate(`/platform/tenants/${tenant.id}`)} className="gap-1.5 font-bold text-slate-700">
             ← Back to Tenant
           </Button>
 
@@ -285,7 +224,7 @@ export function TenantUsersPage() {
             </Button>
             {showMoreActions && (
               <div className="absolute right-0 top-full mt-1.5 z-50 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl text-xs font-semibold space-y-1">
-                <button type="button" onClick={() => { setShowMoreActions(false); navigate(`/platform/tenants/${tenantId}/modules`); }} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-xs">Manage Modules</button>
+                <button type="button" onClick={() => { setShowMoreActions(false); navigate(`/platform/tenants/${tenant.id}/modules`); }} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-xs">Manage Modules</button>
                 <button type="button" onClick={() => { setShowMoreActions(false); navigate('/platform/audit'); }} className="w-full text-left px-3 py-1.5 hover:bg-slate-50 rounded-xs">Audit Logs</button>
               </div>
             )}
@@ -297,26 +236,22 @@ export function TenantUsersPage() {
         </div>
       </div>
 
-      {/* 2. Top Tenant Banner Card (3 Columns) */}
+      {/* Top Tenant Banner Card */}
       <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
         <div className="lg:col-span-5 flex items-start gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-amber-200 bg-amber-50 text-amber-700 font-extrabold text-lg">
-            {tenant?.logoUrl ? (
-              <img src={tenant.logoUrl} alt={tenant.companyName} className="h-10 w-10 object-contain rounded-sm" />
-            ) : (
-              <Building2 className="h-7 w-7 text-amber-600" />
-            )}
+            {tenant.companyName[0]}
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-extrabold text-[#0D1F3D]">{tenant?.companyName || 'Loading...'}</h2>
-              <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">{tenant?.tenantStatus || 'Active'}</span>
+              <h2 className="text-base font-extrabold text-[#0D1F3D]">{tenant.companyName}</h2>
+              <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">{tenant.tenantStatus}</span>
             </div>
             <p className="text-xs text-slate-500 font-medium">
-              Industry: <strong className="text-slate-800">{tenant?.industryLabel || '—'}</strong> • Plan: <strong className="text-slate-800">{tenant?.planName || '—'}</strong>
+              Industry: <strong className="text-slate-800">{tenant.industryLabel}</strong> • Plan: <strong className="text-slate-800">{tenant.planName}</strong>
             </p>
             <p className="text-xs text-slate-500 font-medium">
-              Tenant Code: <strong className="font-mono text-slate-800">{tenant?.slug.toUpperCase() || '—'}</strong> • Licenses: <strong className="text-slate-800">{tenant?.userLicensesCount || 0}</strong>
+              Tenant Code: <strong className="font-mono text-slate-800">{tenant.slug.toUpperCase()}</strong> • Licenses: <strong className="text-slate-800">{seatLimit}</strong>
             </p>
           </div>
         </div>
@@ -324,23 +259,22 @@ export function TenantUsersPage() {
         <div className="lg:col-span-4 border-l border-slate-100 pl-6 space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-500">Subscription Status</span>
-            <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">{tenant?.subscriptionStatus || 'Active'}</span>
+            <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">{tenant.subscriptionStatus}</span>
           </div>
-          <p className="text-xs font-extrabold text-[#0D1F3D]">Created {tenant?.createdAt.split(' ·')[0] || '—'}</p>
-          <p className="text-[11px] text-slate-400 font-medium">MRR: ₹{tenant?.mrr.toLocaleString('en-IN') || 0} / mo</p>
+          <p className="text-xs font-extrabold text-[#0D1F3D]">Created {tenant.createdAt.split(' ·')[0]}</p>
+          <p className="text-[11px] text-slate-400 font-medium">MRR: ₹{tenant.mrr.toLocaleString('en-IN')} / mo</p>
         </div>
 
         <div className="lg:col-span-3 border-l border-slate-100 pl-6 space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500">Auto Renewal</span>
-            <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Enabled</span>
+            <span className="text-xs font-semibold text-slate-500">Active Seat Usage</span>
+            <span className="inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200">{members.length} / {seatLimit}</span>
           </div>
-          <p className="text-xs font-extrabold text-[#0D1F3D]">24 Jun 2026</p>
-          <p className="text-[11px] font-mono font-bold text-slate-600">₹4,24,786 (Yearly)</p>
+          <p className="text-xs font-extrabold text-[#0D1F3D]">{availableSeats} Available Seats</p>
         </div>
       </div>
 
-      {/* 3. Main Grid Layout (2/3 Left Main, 1/3 Right Sidebar) */}
+      {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* LEFT MAIN AREA */}
         <div className="lg:col-span-8 space-y-5">
@@ -353,7 +287,7 @@ export function TenantUsersPage() {
                 activeTab === 'all-users' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              All Users
+              All Users ({members.length})
             </button>
             <button
               type="button"
@@ -362,7 +296,7 @@ export function TenantUsersPage() {
                 activeTab === 'platform-access' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              Platform Managed Access (3)
+              Platform Managed Access ({platformAccess.length})
             </button>
             <button
               type="button"
@@ -371,7 +305,7 @@ export function TenantUsersPage() {
                 activeTab === 'pending-invitations' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              Pending Invitations (4)
+              Pending Invitations ({invitedCount})
             </button>
             <button
               type="button"
@@ -380,7 +314,7 @@ export function TenantUsersPage() {
                 activeTab === 'suspended-users' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              Suspended Users (2)
+              Suspended Users ({suspendedCount})
             </button>
             <button
               type="button"
@@ -389,72 +323,21 @@ export function TenantUsersPage() {
                 activeTab === 'access-requests' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-800'
               }`}
             >
-              Access Requests (1)
+              Access Requests ({accessRequests.length})
             </button>
           </div>
 
-          {/* Filters Bar */}
+          {/* Search & Bulk Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="relative flex-1 min-w-[240px]">
               <Search className="absolute left-3.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search by name, email, phone or role..."
+                placeholder="Search by name, email, role..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="h-9 w-full rounded-sm border border-slate-200 bg-slate-50/50 pl-9 pr-3 text-xs font-medium focus:border-indigo-600 focus:bg-white focus:outline-none"
               />
-            </div>
-
-            <div className="w-32">
-              <Select value="All Roles" onChange={() => {}} options={[{ value: 'All Roles', label: 'All Roles' }]} />
-            </div>
-            <div className="w-32">
-              <Select value="All Status" onChange={() => {}} options={[{ value: 'All Status', label: 'All Status' }]} />
-            </div>
-            <div className="w-36">
-              <Select value="All Departments" onChange={() => {}} options={[{ value: 'All Departments', label: 'All Departments' }]} />
-            </div>
-            <div className="w-28">
-              <Select value="2FA: All" onChange={() => {}} options={[{ value: '2FA: All', label: '2FA: All' }]} />
-            </div>
-
-            <Button variant="outline" size="sm" className="h-9 text-xs font-bold text-slate-700 gap-1.5">
-              <Filter className="h-3.5 w-3.5 text-slate-400" /> More Filters
-            </Button>
-            <Button variant="outline" size="sm" className="h-9 text-xs font-bold text-slate-700">
-              Reset
-            </Button>
-          </div>
-
-          {/* Summary Stats Strip */}
-          <div className="rounded-sm border border-slate-200 bg-white p-3.5 shadow-xs flex flex-wrap items-center justify-between gap-4 text-xs">
-            <div className="flex items-center gap-6 divide-x divide-slate-100">
-              <div>
-                <span className="text-slate-400 text-[10px] block font-bold">Total Users</span>
-                <span className="font-extrabold text-[#0D1F3D] text-sm">126 / 150</span>
-                <span className="text-[10px] text-slate-400 block font-medium">84% of seat limit used</span>
-              </div>
-              <div className="pl-6">
-                <span className="text-slate-400 text-[10px] block font-bold">Active Users</span>
-                <span className="font-extrabold text-[#0D1F3D] text-sm">112</span>
-                <span className="text-[10px] text-slate-400 block font-medium">88.9% ⓘ</span>
-              </div>
-              <div className="pl-6">
-                <span className="text-slate-400 text-[10px] block font-bold">Invited</span>
-                <span className="font-extrabold text-[#0D1F3D] text-sm">4</span>
-                <span className="text-[10px] text-slate-400 block font-medium">3.2% ⓘ</span>
-              </div>
-              <div className="pl-6">
-                <span className="text-slate-400 text-[10px] block font-bold">Suspended</span>
-                <span className="font-extrabold text-[#0D1F3D] text-sm">2</span>
-                <span className="text-[10px] text-slate-400 block font-medium">1.6% ⓘ</span>
-              </div>
-              <div className="pl-6">
-                <span className="text-slate-400 text-[10px] block font-bold">Platform Access</span>
-                <span className="font-extrabold text-[#0D1F3D] text-sm">3</span>
-                <span className="text-[10px] text-slate-400 block font-medium">2.4% ⓘ</span>
-              </div>
             </div>
 
             <div className="flex items-center gap-2">
@@ -471,152 +354,169 @@ export function TenantUsersPage() {
 
                 {showBulkMenu && (
                   <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl text-xs font-medium space-y-0.5 animate-in fade-in zoom-in-95">
-                    <div className="px-3 py-1 text-[10px] font-bold text-slate-400 border-b border-slate-100 mb-1">
-                      {selectedUserIds.length > 0 ? `${selectedUserIds.length} users selected` : 'Select users first'}
-                    </div>
                     <button
                       type="button"
                       disabled={selectedUserIds.length === 0}
-                      onClick={() => { setShowBulkMenu(false); toast.success(`Resent invitations to ${selectedUserIds.length} users`); }}
-                      className="w-full text-left px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50 rounded-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                      onClick={() => handleBulkStatusChange('Active')}
+                      className="w-full text-left px-3 py-1.5 font-semibold text-emerald-700 hover:bg-emerald-50 rounded-xs disabled:opacity-40"
                     >
-                      Resend Invitations
+                      Reactivate Selected
                     </button>
                     <button
                       type="button"
                       disabled={selectedUserIds.length === 0}
-                      onClick={() => { setShowBulkMenu(false); toast.success(`Enforced 2FA policy on ${selectedUserIds.length} users`); }}
-                      className="w-full text-left px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50 rounded-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                      onClick={() => handleBulkStatusChange('Suspended')}
+                      className="w-full text-left px-3 py-1.5 font-semibold text-rose-600 hover:bg-rose-50 rounded-xs disabled:opacity-40"
                     >
-                      Enforce 2FA Policy
-                    </button>
-                    <button
-                      type="button"
-                      disabled={selectedUserIds.length === 0}
-                      onClick={() => { setShowBulkMenu(false); toast.success(`Exported data for ${selectedUserIds.length} users`); }}
-                      className="w-full text-left px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-50 rounded-xs disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      Export Selected Users
-                    </button>
-                    <div className="border-t border-slate-100 my-1" />
-                    <button
-                      type="button"
-                      disabled={selectedUserIds.length === 0}
-                      onClick={() => { setShowBulkMenu(false); toast.success(`Suspended ${selectedUserIds.length} user memberships`); }}
-                      className="w-full text-left px-3 py-1.5 font-semibold text-rose-600 hover:bg-rose-50 rounded-xs disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
-                      Suspend Selected Users
+                      Suspend Selected
                     </button>
                   </div>
                 )}
               </div>
-
-              <Button variant="outline" size="sm" onClick={() => toast.success('Exporting users list')} className="h-8 text-xs font-bold text-slate-700 gap-1.5">
-                <Download className="h-3.5 w-3.5 text-slate-400" /> Export
-              </Button>
             </div>
           </div>
 
-          {/* Table */}
-          <div className="rounded-sm border border-slate-200 bg-white overflow-hidden shadow-xs">
-            <table className="w-full text-left text-xs whitespace-nowrap">
-              <thead>
-                <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
-                  <th className="py-3 px-3 w-8">
-                    <Checkbox
-                      checked={selectedUserIds.length === usersList.length && usersList.length > 0}
-                      onChange={handleSelectAll}
-                    />
-                  </th>
-                  <th className="py-3 px-3">User</th>
-                  <th className="py-3 px-3">Role & Department</th>
-                  <th className="py-3 px-3">Status</th>
-                  <th className="py-3 px-3">Joined On</th>
-                  <th className="py-3 px-3">Last Active</th>
-                  <th className="py-3 px-3">2FA</th>
-                  <th className="py-3 px-3">Sessions</th>
-                  <th className="py-3 px-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {usersList.map((u) => {
-                  const isSelected = selectedUserIds.includes(u.id);
-                  return (
-                    <tr key={u.id} className={`transition-colors ${isSelected ? 'bg-indigo-50/60' : 'hover:bg-slate-50/80'}`}>
-                      <td className="py-3 px-3">
-                        <Checkbox
-                          checked={isSelected}
-                          onChange={() => handleSelectUser(u.id)}
-                        />
-                      </td>
-                    <td className="py-3 px-3">
-                      <div className="flex items-center gap-3">
-                        <img src={u.avatar} alt={u.name} className="h-8 w-8 rounded-full object-cover shrink-0" />
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-extrabold text-[#0D1F3D]">{u.name}</span>
-                            {u.isYou && <span className="rounded-sm bg-indigo-100 px-1.5 py-0.2 text-[9px] font-bold text-indigo-700">You</span>}
-                          </div>
-                          <span className="text-[11px] text-slate-500 font-medium">{u.email}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-3">
-                      <span className={`inline-block rounded-xs px-2 py-0.5 text-[10px] font-extrabold ${u.roleBg} ${u.roleColor}`}>
-                        {u.roleLabel}
-                      </span>
-                      <span className="text-[11px] text-slate-400 block font-medium mt-0.5">{u.department}</span>
-                    </td>
-                    <td className="py-3 px-3">
-                      <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                        u.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                        u.status === 'Suspended' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
-                        'bg-amber-50 text-amber-700 border border-amber-200'
-                      }`}>
-                        {u.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-3 font-semibold text-slate-600">{u.joinedOn}</td>
-                    <td className="py-3 px-3 font-semibold text-slate-600">
-                      {u.lastActive.includes('ago') ? (
-                        <span className="flex items-center gap-1.5 text-slate-700 font-medium">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                          {u.lastActive}
-                        </span>
-                      ) : (
-                        u.lastActive
-                      )}
-                    </td>
-                    <td className="py-3 px-3">
-                      {u.twoFactor ? (
-                        <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                      ) : (
-                        <Shield className="h-4 w-4 text-slate-300" />
-                      )}
-                    </td>
-                    <td className="py-3 px-3">
-                      {u.sessions > 0 ? (
-                        <span className="inline-flex items-center gap-1 font-bold text-slate-700"><Lock className="h-3 w-3 text-slate-400" /> {u.sessions}</span>
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-3 text-right">
-                      <button type="button" className="p-1 text-slate-400 hover:text-slate-600">
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                    </td>
+          {/* Table for Platform Access Tab vs Regular Users Tab */}
+          {activeTab === 'platform-access' ? (
+            <div className="rounded-sm border border-slate-200 bg-white overflow-hidden shadow-xs">
+              <table className="w-full text-left text-xs whitespace-nowrap">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
+                    <th className="py-3 px-3">Platform Super Admin</th>
+                    <th className="py-3 px-3">Role</th>
+                    <th className="py-3 px-3">Access Level</th>
+                    <th className="py-3 px-3">Granted On</th>
                   </tr>
-                );
-              })}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {platformAccess.map((pa) => (
+                    <tr key={pa.id} className="hover:bg-slate-50">
+                      <td className="py-3 px-3 font-extrabold text-[#0D1F3D]">
+                        {pa.name} <span className="text-[11px] text-slate-400 font-normal block">{pa.email}</span>
+                      </td>
+                      <td className="py-3 px-3 text-purple-700 font-bold">{pa.platformRole}</td>
+                      <td className="py-3 px-3 text-slate-600 font-semibold">{pa.accessLevel}</td>
+                      <td className="py-3 px-3 text-slate-500">{pa.grantedOn}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : activeTab === 'access-requests' ? (
+            <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs text-center space-y-3">
+              <UserCheck className="mx-auto h-8 w-8 text-indigo-500" />
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">No Pending Access Requests</h3>
+              <p className="text-xs text-slate-500">All tenant user membership requests have been reviewed.</p>
+            </div>
+          ) : (
+            <div className="rounded-sm border border-slate-200 bg-white overflow-hidden shadow-xs">
+              <table className="w-full text-left text-xs whitespace-nowrap">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
+                    <th className="py-3 px-3 w-8">
+                      <Checkbox
+                        checked={selectedUserIds.length === displayedMembers.length && displayedMembers.length > 0}
+                        onChange={handleSelectAll}
+                      />
+                    </th>
+                    <th className="py-3 px-3">User</th>
+                    <th className="py-3 px-3">Role & Department</th>
+                    <th className="py-3 px-3">Status</th>
+                    <th className="py-3 px-3">Joined On</th>
+                    <th className="py-3 px-3">Last Active</th>
+                    <th className="py-3 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {displayedMembers.map((u) => {
+                    const isSelected = selectedUserIds.includes(u.id);
+                    return (
+                      <tr key={u.id} className={`transition-colors ${isSelected ? 'bg-indigo-50/60' : 'hover:bg-slate-50/80'}`}>
+                        <td className="py-3 px-3">
+                          <Checkbox
+                            checked={isSelected}
+                            onChange={() => handleSelectUser(u.id)}
+                          />
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-3">
+                            <img src={u.avatar} alt={u.name} className="h-8 w-8 rounded-full object-cover shrink-0" />
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-extrabold text-[#0D1F3D]">{u.name}</span>
+                                {u.isOwner && <span className="rounded-sm bg-purple-100 px-1.5 py-0.2 text-[9px] font-bold text-purple-700">Owner</span>}
+                              </div>
+                              <span className="text-[11px] text-slate-500 font-medium">{u.email}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-block rounded-xs px-2 py-0.5 text-[10px] font-extrabold ${u.roleBg} ${u.roleColor}`}>
+                            {u.roleLabel}
+                          </span>
+                          <span className="text-[11px] text-slate-400 block font-medium mt-0.5">{u.department}</span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                            u.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                            u.status === 'Suspended' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                            'bg-amber-50 text-amber-700 border border-amber-200'
+                          }`}>
+                            {u.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 font-semibold text-slate-600">{u.joinedOn}</td>
+                        <td className="py-3 px-3 font-semibold text-slate-600">{u.lastActive}</td>
+                        <td className="py-3 px-3 text-right relative">
+                          <button
+                            type="button"
+                            onClick={() => setActiveRowMenuId(activeRowMenuId === u.id ? null : u.id)}
+                            className="p-1 text-slate-400 hover:text-slate-600 cursor-pointer"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+
+                          {activeRowMenuId === u.id && (
+                            <div className="absolute right-0 top-full z-30 mt-1 w-44 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl text-xs font-semibold space-y-0.5 animate-in fade-in zoom-in-95">
+                              {u.status === 'Invited' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleResendInvite(u.id)}
+                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-1.5 text-slate-700 hover:bg-slate-50"
+                                >
+                                  <Mail className="h-3.5 w-3.5 text-indigo-600" /> Resend Invite
+                                </button>
+                              ) : u.status === 'Active' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateUserStatus(u.id, 'Suspended')}
+                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-1.5 text-rose-600 hover:bg-rose-50"
+                                >
+                                  <PauseCircle className="h-3.5 w-3.5 text-rose-600" /> Suspend Access
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateUserStatus(u.id, 'Active')}
+                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-1.5 text-emerald-700 hover:bg-emerald-50"
+                                >
+                                  <PlayCircle className="h-3.5 w-3.5 text-emerald-600" /> Reactivate User
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* RIGHT SIDEBAR AREA */}
         <div className="lg:col-span-4 space-y-6">
-          {/* Card 1: User Seats & Usage */}
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
             <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">User Seats & Usage</h3>
             <div className="flex items-center gap-4">
@@ -641,122 +541,30 @@ export function TenantUsersPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-                  <span className="text-xs font-extrabold text-[#0D1F3D] leading-tight">126 / 150</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">84% Used</span>
+                  <span className="text-xs font-extrabold text-[#0D1F3D] leading-tight">{members.length} / {seatLimit}</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase mt-0.5">
+                    {seatLimit > 0 ? Math.round((members.length / seatLimit) * 100) : 0}% Used
+                  </span>
                 </div>
               </div>
 
               <div className="flex-1 space-y-1.5 text-xs font-semibold">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-slate-600"><span className="h-2 w-2 rounded-full bg-indigo-600" /> Active Users</span>
-                  <span className="font-extrabold text-[#0D1F3D]">112</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{activeCount}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-slate-600"><span className="h-2 w-2 rounded-full bg-blue-500" /> Invited</span>
-                  <span className="font-extrabold text-[#0D1F3D]">4</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{invitedCount}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-slate-600"><span className="h-2 w-2 rounded-full bg-rose-500" /> Suspended</span>
-                  <span className="font-extrabold text-[#0D1F3D]">2</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{suspendedCount}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1.5 text-slate-600"><span className="h-2 w-2 rounded-full bg-slate-300" /> Available Seats</span>
-                  <span className="font-extrabold text-[#0D1F3D]">24</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{availableSeats}</span>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Platform Managed Access */}
-          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-sm font-extrabold text-[#0D1F3D] flex items-center gap-1">
-                  Platform Managed Access <Info className="h-3.5 w-3.5 text-slate-400" />
-                </h3>
-                <p className="text-[10px] text-slate-400 font-medium">Users from platform with access to this tenant</p>
-              </div>
-              <button type="button" onClick={() => setTab('platform-access')} className="text-xs font-bold text-indigo-600 hover:underline">View All (3)</button>
-            </div>
-
-            <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-7 w-7 rounded-full bg-slate-200 font-bold text-slate-700 flex items-center justify-center text-xs">AS</div>
-                  <div>
-                    <p className="font-bold text-slate-800">Amit Sharma</p>
-                    <p className="text-[10px] text-slate-400">Platform Operations</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Active</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-7 w-7 rounded-full bg-slate-200 font-bold text-slate-700 flex items-center justify-center text-xs">SR</div>
-                  <div>
-                    <p className="font-bold text-slate-800">Sneha Reddy</p>
-                    <p className="text-[10px] text-slate-400">Platform Support</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Active</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="h-7 w-7 rounded-full bg-slate-200 font-bold text-slate-700 flex items-center justify-center text-xs">RI</div>
-                  <div>
-                    <p className="font-bold text-slate-800">Rakesh Iyer</p>
-                    <p className="text-[10px] text-slate-400">Platform Auditor</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Active</span>
-              </div>
-            </div>
-
-            <div className="pt-2 border-t border-slate-100 text-center">
-              <button type="button" onClick={() => setTab('platform-access')} className="text-xs font-bold text-indigo-600 hover:underline">View Access Details</button>
-            </div>
-          </div>
-
-          {/* Card 3: Role Distribution */}
-          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Role Distribution</h3>
-              <button type="button" className="text-xs font-bold text-indigo-600 hover:underline">View All</button>
-            </div>
-
-            <div className="space-y-2 text-xs font-semibold">
-              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-blue-600" /> Tenant Owner</span><span className="font-extrabold">1</span></div>
-              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-indigo-500" /> Tenant Admin</span><span className="font-extrabold">2</span></div>
-              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-sky-500" /> Sales Manager</span><span className="font-extrabold">3</span></div>
-              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-amber-500" /> Finance Manager</span><span className="font-extrabold">2</span></div>
-              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Field Operations Lead</span><span className="font-extrabold">1</span></div>
-              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-teal-500" /> Team Leader</span><span className="font-extrabold">6</span></div>
-              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-green-500" /> Field Executive</span><span className="font-extrabold">78</span></div>
-              <div className="flex justify-between items-center"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-slate-400" /> Others</span><span className="font-extrabold">33</span></div>
-            </div>
-          </div>
-
-          {/* Card 4: Security Overview */}
-          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">Security Overview</h3>
-            <div className="space-y-2 text-xs font-semibold">
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> 2FA Enabled Users</span>
-                <span className="font-extrabold text-[#0D1F3D]">102 (81%)</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Active Sessions</span>
-                <span className="font-extrabold text-[#0D1F3D]">89</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" /> Inactive &gt; 30 Days</span>
-                <span className="font-extrabold text-[#0D1F3D]">5</span>
-              </div>
-              <div className="flex items-center justify-between text-slate-700">
-                <span className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-500" /> Suspicious Logins (7 Days)</span>
-                <span className="font-extrabold text-[#0D1F3D]">0</span>
               </div>
             </div>
           </div>
@@ -766,22 +574,44 @@ export function TenantUsersPage() {
       {/* Invite Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
-          <div className="w-full max-w-md rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 font-sans">
+          <form onSubmit={handleInviteSubmit} className="w-full max-w-md rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 font-sans">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-sm font-extrabold text-[#0D1F3D]">Invite User to Tenant Workspace</h3>
               <button type="button" onClick={() => setShowInviteModal(false)} className="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
             </div>
             <div className="space-y-3">
-              <Input label="Full Name *" placeholder="Enter full name" />
-              <Input label="Email Address *" type="email" placeholder="user@company.com" />
-              <Select label="Role *" value="Field Executive" onChange={() => {}} searchable={true} options={[{ value: 'Field Executive', label: 'Field Executive' }, { value: 'Sales Manager', label: 'Sales Manager' }, { value: 'Team Leader', label: 'Team Leader' }]} />
-              <Select label="Department / Zone *" value="West Zone" onChange={() => {}} searchable={true} options={[{ value: 'West Zone', label: 'West Zone' }, { value: 'East Zone', label: 'East Zone' }, { value: 'North Zone', label: 'North Zone' }]} />
+              <Input label="Full Name *" placeholder="Enter full name" value={inviteName} onChange={(e) => setInviteName(e.target.value)} />
+              <Input label="Email Address *" type="email" placeholder="user@company.com" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
+              <Select
+                label="Role *"
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value)}
+                searchable={true}
+                options={[
+                  { value: 'Field Executive', label: 'Field Executive' },
+                  { value: 'Sales Manager', label: 'Sales Manager' },
+                  { value: 'Team Leader', label: 'Team Leader' },
+                  { value: 'Tenant Admin', label: 'Tenant Admin' },
+                ]}
+              />
+              <Select
+                label="Department / Zone *"
+                value={inviteDept}
+                onChange={(e) => setInviteDept(e.target.value)}
+                searchable={true}
+                options={[
+                  { value: 'Field Operations', label: 'Field Operations' },
+                  { value: 'Sales', label: 'Sales' },
+                  { value: 'Operations', label: 'Operations' },
+                  { value: 'Customer Support', label: 'Customer Support' },
+                ]}
+              />
             </div>
             <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
-              <Button variant="outline" size="sm" onClick={() => setShowInviteModal(false)}>Cancel</Button>
-              <Button variant="accent" size="sm" onClick={() => { toast.success('Invitation sent'); setShowInviteModal(false); }}>Send Invitation</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => setShowInviteModal(false)}>Cancel</Button>
+              <Button type="submit" variant="accent" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Send Invitation</Button>
             </div>
-          </div>
+          </form>
         </div>
       )}
     </div>

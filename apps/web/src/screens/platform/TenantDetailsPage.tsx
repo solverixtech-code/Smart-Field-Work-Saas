@@ -126,16 +126,23 @@ export function TenantDetailsPage() {
 
   if (!tenant) {
     return (
-      <div className="p-8 text-center font-sans space-y-3">
-        <p className="text-sm font-bold text-slate-500">
-          Tenant not found or loading...
-        </p>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center font-sans space-y-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+          <AlertCircle className="h-7 w-7" />
+        </div>
+        <div>
+          <h2 className="text-xl font-extrabold text-[#0D1F3D]">Tenant Not Found</h2>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            This tenant could not be found or may no longer be available.
+          </p>
+        </div>
         <Button
-          variant="outline"
+          variant="accent"
           size="sm"
           onClick={() => navigate("/platform/tenants")}
+          className="font-bold px-6 shadow-xs"
         >
-          ← Back to Tenants
+          Back to All Tenants
         </Button>
       </div>
     );

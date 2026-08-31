@@ -63,6 +63,17 @@ export const PLATFORM_PLANS: PlatformPlan[] = [
     features: ['Up to 50 Field Executives', 'Order Booking & Invoicing', 'Demo & Presentation Suite', 'Biometric Selfie Attendance', 'WhatsApp Lead Integration', 'Priority 24/7 Support']
   },
   {
+    id: 'plan_professional',
+    code: 'PROFESSIONAL',
+    name: 'Professional Field Suite',
+    tier: 'Professional',
+    monthlyPricePerUser: 1199,
+    annualPricePerUser: 999,
+    minUsers: 15,
+    includedModules: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance_plus', 'whatsapp_automation'],
+    features: ['Up to 150 Field Executives', 'Advanced CRM & Order Management', 'Demo & Presentation Suite', 'Biometric Selfie Attendance', 'WhatsApp Business Integration', 'Advanced Analytics & Reports']
+  },
+  {
     id: 'plan_enterprise',
     code: 'ENTERPRISE',
     name: 'Enterprise Field Suite',

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { TenantCreateFormState, ProvisioningType, PaymentCollectionMethod } from '../types/platform.types';
+import { TenantCreateFormState, Tenant } from '../types/platform.types';
 import { tenantService } from '../services/tenant.service';
 
 const INITIAL_STATE: TenantCreateFormState = {
@@ -20,7 +20,7 @@ const INITIAL_STATE: TenantCreateFormState = {
   dateFormat: 'DD MMM YYYY',
   financialYearStart: 'April',
 
-  industryId: 'Pharma & Healthcare',
+  industryId: 'ind_pharma',
   timezone: '(GMT+05:30) Asia/Kolkata',
   totalEmployees: '',
   fieldUsers: '',
@@ -68,12 +68,14 @@ interface TenantCreationContextType {
   setCurrentStep: (step: number) => void;
   formState: TenantCreateFormState;
   updateFormState: (updates: Partial<TenantCreateFormState>) => void;
-  loadTenantForEdit: (tenant: any) => void;
+  loadTenantForEdit: (tenant: Tenant) => void;
   resetForm: () => void;
   saveDraft: () => Promise<void>;
-  submitTenant: () => Promise<any>;
+  submitTenant: () => Promise<Tenant>;
+  updateExistingTenant: (tenantId: string) => Promise<Tenant>;
   isDirty: boolean;
   setIsDirty: (dirty: boolean) => void;
+  editingTenantId: string | null;
 }
 
 const TenantCreationContext = createContext<TenantCreationContextType | undefined>(undefined);
@@ -81,12 +83,13 @@ const TenantCreationContext = createContext<TenantCreationContextType | undefine
 export const TenantCreationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formState, setFormState] = useState<TenantCreateFormState>(INITIAL_STATE);
+  const [editingTenantId, setEditingTenantId] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
 
   const updateFormState = (updates: Partial<TenantCreateFormState>) => {
     setFormState((prev) => {
       const next = { ...prev, ...updates };
-      if (updates.companyName && !prev.slug) {
+      if (updates.companyName && !prev.slug && !editingTenantId) {
         next.slug = updates.companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         next.domain = `${next.slug}.smartfieldwork.com`;
       }
@@ -95,71 +98,74 @@ export const TenantCreationProvider: React.FC<{ children: ReactNode }> = ({ chil
     setIsDirty(true);
   };
 
-  const loadTenantForEdit = (t: any) => {
+  const loadTenantForEdit = (tenant: Tenant) => {
+    setEditingTenantId(tenant.id);
     setFormState({
-      companyName: t.companyName || '',
-      legalEntityName: t.legalEntityName || t.companyName || '',
-      slug: t.slug || '',
-      domain: t.domain || '',
-      website: '',
-      taxId: t.taxId || '',
-      companySize: t.companySize || 'Medium (51 - 250 employees)',
-      country: t.country || 'India',
-      currency: t.currency || 'INR - Indian Rupee (₹)',
-      state: '',
-      city: '',
-      addressLine1: '',
-      addressLine2: '',
-      pincode: '',
-      dateFormat: 'DD MMM YYYY',
-      financialYearStart: 'April',
+      companyName: tenant.companyName || '',
+      legalEntityName: tenant.legalEntityName || tenant.companyName || '',
+      slug: tenant.slug || '',
+      domain: tenant.domain || '',
+      website: tenant.website || '',
+      taxId: tenant.taxId || '',
+      companySize: tenant.companySize || 'Medium (51 - 250 employees)',
+      country: tenant.country || 'India',
+      currency: tenant.currency || 'INR - Indian Rupee (₹)',
+      state: tenant.state || 'Maharashtra',
+      city: tenant.city || 'Mumbai',
+      addressLine1: tenant.addressLine1 || '',
+      addressLine2: tenant.addressLine2 || '',
+      pincode: tenant.pincode || '',
+      dateFormat: tenant.dateFormat || 'DD MMM YYYY',
+      financialYearStart: tenant.financialYearStart || 'April',
 
-      industryId: t.industryId || '',
-      timezone: t.timezone || '(GMT+05:30) Asia/Kolkata',
-      totalEmployees: String(t.userLicensesCount || ''),
-      fieldUsers: '',
-      yearsInBusiness: '5 - 10 Years',
-      businessModel: 'B2B',
-      branchCount: '',
-      operatingCountries: t.country || 'India',
+      industryId: tenant.industryId || 'ind_pharma',
+      timezone: tenant.timezone || '(GMT+05:30) Asia/Kolkata',
+      totalEmployees: tenant.totalEmployees || String(tenant.userLicensesCount || ''),
+      fieldUsers: tenant.fieldUsers || '',
+      yearsInBusiness: tenant.yearsInBusiness || '5 - 10 Years',
+      businessModel: tenant.businessModel || 'B2B',
+      branchCount: tenant.branchCount || '',
+      operatingCountries: tenant.country || 'India',
       preferredLanguage: 'English',
       description: '',
-      weekStartDay: 'Monday',
+      weekStartDay: tenant.weekStartDay || 'Monday',
 
-      adminFullName: t.adminUser?.fullName || '',
-      adminEmail: t.adminUser?.email || '',
-      adminPhone: t.adminUser?.phone || '',
-      adminDesignation: t.adminUser?.designation || '',
+      adminFullName: tenant.adminUser?.fullName || '',
+      adminEmail: tenant.adminUser?.email || '',
+      adminPhone: tenant.adminUser?.phone || '',
+      adminDesignation: tenant.adminUser?.designation || '',
       adminDepartment: 'Administration',
       adminLanguage: 'English',
-      adminTimezone: t.timezone || '(GMT+05:30) Asia/Kolkata',
-      adminCommunicationEmail: t.adminUser?.email || '',
-      adminUsername: t.adminUser?.email || '',
+      adminTimezone: tenant.timezone || '(GMT+05:30) Asia/Kolkata',
+      adminCommunicationEmail: tenant.adminUser?.email || '',
+      adminUsername: tenant.adminUser?.email || '',
       adminPassword: '',
       adminConfirmPassword: '',
-      sendInviteEmail: t.adminUser?.sendInviteEmail ?? true,
+      sendInviteEmail: tenant.adminUser?.sendInviteEmail ?? true,
 
-      planId: t.planId || 'plan_growth',
-      provisioningType: t.provisioningType || 'Payment Required',
-      userLicensesCount: t.userLicensesCount || 25,
-      trialDurationDays: t.trialStartDate && t.trialEndDate
-        ? Math.ceil((new Date(t.trialEndDate).getTime() - new Date(t.trialStartDate).getTime()) / 86400000)
-        : 0,
-      trialConversionPolicy: t.trialConversionPolicy || '',
-      paymentCollectionMethod: t.paymentCollectionMethod || 'Send Checkout Link to Customer',
-      billingContactName: t.billingContactName || t.adminUser?.fullName || '',
-      billingContactEmail: t.billingContactEmail || t.adminUser?.email || '',
-      billingCycle: 'Yearly (Save 17%)',
-      seatLimit: String(t.userLicensesCount || '150'),
-      storageLimit: '200 GB',
-      subscriptionStartDate: t.trialStartDate || t.createdAt?.split(' ·')[0] || '',
+      planId: tenant.planId || 'plan_growth',
+      provisioningType: tenant.provisioningType || 'Payment Required',
+      userLicensesCount: tenant.userLicensesCount || 25,
+      trialDurationDays: tenant.trialDurationDays || (tenant.trialStartDate && tenant.trialEndDate
+        ? Math.ceil((new Date(tenant.trialEndDate).getTime() - new Date(tenant.trialStartDate).getTime()) / 86400000)
+        : 14),
+      trialConversionPolicy: tenant.trialConversionPolicy || '',
+      paymentCollectionMethod: tenant.paymentCollectionMethod || 'Send Checkout Link to Customer',
+      billingContactName: tenant.billingContactName || tenant.adminUser?.fullName || '',
+      billingContactEmail: tenant.billingContactEmail || tenant.adminUser?.email || '',
+      billingCycle: tenant.billingCycle || 'Yearly (Save 17%)',
+      seatLimit: tenant.seatLimit || String(tenant.userLicensesCount || '150'),
+      storageLimit: tenant.storageLimit || '200 GB',
+      subscriptionStartDate: tenant.subscriptionStartDate || tenant.trialStartDate || tenant.createdAt?.split(' ·')[0] || '',
 
-      selectedModuleCodes: t.enabledModuleCodes || ['core_crm', 'field_visits'],
-      isDraft: t.tenantStatus === 'Draft',
+      selectedModuleCodes: tenant.enabledModuleCodes || ['core_crm', 'field_visits'],
+      isDraft: tenant.tenantStatus === 'Draft',
     });
+    setIsDirty(false);
   };
 
   const resetForm = () => {
+    setEditingTenantId(null);
     setFormState(INITIAL_STATE);
     setCurrentStep(1);
     setIsDirty(false);
@@ -167,15 +173,81 @@ export const TenantCreationProvider: React.FC<{ children: ReactNode }> = ({ chil
 
   const saveDraft = async () => {
     const draftState = { ...formState, isDraft: true };
-    await tenantService.createTenant(draftState);
+    if (editingTenantId) {
+      await tenantService.updateTenant(editingTenantId, {
+        companyName: draftState.companyName,
+        legalEntityName: draftState.legalEntityName,
+        industryId: draftState.industryId,
+        planId: draftState.planId,
+        enabledModuleCodes: draftState.selectedModuleCodes,
+        userLicensesCount: draftState.userLicensesCount,
+        provisioningType: draftState.provisioningType,
+        paymentCollectionMethod: draftState.paymentCollectionMethod,
+        tenantStatus: 'Draft',
+      });
+    } else {
+      const created = await tenantService.createTenant(draftState);
+      setEditingTenantId(created.id);
+    }
     setIsDirty(false);
   };
 
   const submitTenant = async () => {
     const finalState = { ...formState, isDraft: false };
+    if (editingTenantId) {
+      const updated = await tenantService.updateTenant(editingTenantId, {
+        companyName: finalState.companyName,
+        legalEntityName: finalState.legalEntityName,
+        slug: finalState.slug,
+        domain: finalState.domain,
+        website: finalState.website,
+        taxId: finalState.taxId,
+        country: finalState.country,
+        currency: finalState.currency,
+        timezone: finalState.timezone,
+        companySize: finalState.companySize,
+        industryId: finalState.industryId,
+        planId: finalState.planId,
+        provisioningType: finalState.provisioningType,
+        paymentCollectionMethod: finalState.paymentCollectionMethod,
+        userLicensesCount: finalState.userLicensesCount,
+        enabledModuleCodes: finalState.selectedModuleCodes,
+        adminUser: {
+          fullName: finalState.adminFullName,
+          email: finalState.adminEmail,
+          phone: finalState.adminPhone,
+          designation: finalState.adminDesignation,
+          sendInviteEmail: finalState.sendInviteEmail,
+        },
+        addressLine1: finalState.addressLine1,
+        addressLine2: finalState.addressLine2,
+        city: finalState.city,
+        state: finalState.state,
+        pincode: finalState.pincode,
+        dateFormat: finalState.dateFormat,
+        financialYearStart: finalState.financialYearStart,
+        weekStartDay: finalState.weekStartDay,
+        totalEmployees: finalState.totalEmployees,
+        fieldUsers: finalState.fieldUsers,
+        yearsInBusiness: finalState.yearsInBusiness,
+        businessModel: finalState.businessModel,
+        branchCount: finalState.branchCount,
+        billingCycle: finalState.billingCycle,
+        seatLimit: finalState.seatLimit,
+        storageLimit: finalState.storageLimit,
+      });
+      setIsDirty(false);
+      return updated;
+    }
+
     const created = await tenantService.createTenant(finalState);
     setIsDirty(false);
     return created;
+  };
+
+  const updateExistingTenant = async (tenantId: string) => {
+    setEditingTenantId(tenantId);
+    return submitTenant();
   };
 
   return (
@@ -189,8 +261,10 @@ export const TenantCreationProvider: React.FC<{ children: ReactNode }> = ({ chil
         resetForm,
         saveDraft,
         submitTenant,
+        updateExistingTenant,
         isDirty,
         setIsDirty,
+        editingTenantId,
       }}
     >
       {children}

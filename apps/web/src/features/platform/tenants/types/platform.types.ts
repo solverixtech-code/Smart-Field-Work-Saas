@@ -41,7 +41,8 @@ export type SubscriptionStatus =
   | 'Active'
   | 'Past Due'
   | 'Incomplete'
-  | 'Cancelled';
+  | 'Cancelled'
+  | 'Expired';
 
 export type ProvisioningType =
   | 'Free Trial'
@@ -76,7 +77,7 @@ export interface PlatformPlan {
   id: string;
   code: string;
   name: string;
-  tier: 'Starter' | 'Growth' | 'Enterprise';
+  tier: 'Starter' | 'Growth' | 'Professional' | 'Enterprise';
   monthlyPricePerUser: number;
   annualPricePerUser: number;
   minUsers: number;
@@ -92,6 +93,12 @@ export interface TenantAdminUser {
   sendInviteEmail: boolean;
 }
 
+export interface TenantUsageInfo {
+  usersUsed: number;
+  storageUsedGb: number;
+  apiRequestsUsed: number;
+}
+
 export interface Tenant {
   id: string;
   slug: string;
@@ -99,6 +106,7 @@ export interface Tenant {
   legalEntityName: string;
   taxId?: string;
   domain: string;
+  website?: string;
   logoUrl?: string;
   industryId: string;
   industryCode: string;
@@ -107,6 +115,27 @@ export interface Tenant {
   country: string;
   timezone: string;
   currency: string;
+  
+  // Optional Extended Address & Workspace Preferences for 100% Roundtrip
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  dateFormat?: string;
+  financialYearStart?: string;
+  weekStartDay?: string;
+  totalEmployees?: string;
+  fieldUsers?: string;
+  yearsInBusiness?: string;
+  businessModel?: string;
+  branchCount?: string;
+  billingCycle?: string;
+  seatLimit?: string;
+  storageLimit?: string;
+  subscriptionStartDate?: string;
+  trialDurationDays?: number;
+  draftTenantId?: string;
   
   tenantStatus: TenantStatus;
   subscriptionStatus: SubscriptionStatus;
@@ -128,6 +157,7 @@ export interface Tenant {
   paymentCollectionMethod?: PaymentCollectionMethod;
   
   mrr: number;
+  usage?: TenantUsageInfo;
   createdAt: string;
   updatedAt: string;
 }

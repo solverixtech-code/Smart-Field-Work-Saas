@@ -18,16 +18,17 @@ import {
   ChevronRight,
   Eye,
   Edit,
-  Trash2,
+  ShieldAlert,
   Layers,
+  PauseCircle,
+  Archive,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
-import { Checkbox } from '../../components/ui/Checkbox';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { tenantService } from '../../features/platform/tenants/services/tenant.service';
-import { Tenant } from '../../features/platform/tenants/types/platform.types';
+import { Tenant, TenantStatus } from '../../features/platform/tenants/types/platform.types';
 import { toast } from 'sonner';
 
 const INDUSTRY_COLORS: Record<string, string> = {
@@ -41,6 +42,7 @@ const INDUSTRY_COLORS: Record<string, string> = {
 const PLAN_COLORS: Record<string, string> = {
   'Starter Field CRM': '#F43F5E',
   'Growth Field Automation': '#10B981',
+  'Professional Field Suite': '#8B5CF6',
   'Enterprise Field Suite': '#2563EB',
 };
 
@@ -55,6 +57,7 @@ const INDUSTRY_DOT_COLORS: Record<string, string> = {
 const PLAN_DOT_COLORS: Record<string, string> = {
   'Starter Field CRM': 'bg-rose-500',
   'Growth Field Automation': 'bg-emerald-500',
+  'Professional Field Suite': 'bg-purple-500',
   'Enterprise Field Suite': 'bg-blue-600',
 };
 
@@ -66,24 +69,31 @@ const formatCurrency = (amount: number): string => {
 export function AllTenantsPage() {
   const navigate = useNavigate();
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState('All');
   const [selectedPlan, setSelectedPlan] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [suspendTarget, setSuspendTarget] = useState<Tenant | null>(null);
 
   useEffect(() => {
-    tenantService.getTenants().then(setTenants);
+    setLoading(true);
+    tenantService
+      .getTenants()
+      .then((data) => setTenants(data))
+      .finally(() => setLoading(false));
   }, []);
 
   const filteredTenants = tenants.filter((t) => {
-    const matchSearch = searchTerm === '' ||
+    const matchSearch =
+      searchTerm === '' ||
       t.companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.slug.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.domain.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.adminUser.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchIndustry = selectedIndustry === 'All' || t.industryLabel === selectedIndustry;
-    const matchPlan = selectedPlan === 'All' || t.planName === selectedPlan;
+    const matchIndustry = selectedIndustry === 'All' || t.industryLabel === selectedIndustry || t.industryId === selectedIndustry;
+    const matchPlan = selectedPlan === 'All' || t.planName === selectedPlan || t.planId === selectedPlan;
     const matchStatus = selectedStatus === 'All' || t.tenantStatus === selectedStatus;
     return matchSearch && matchIndustry && matchPlan && matchStatus;
   });
@@ -100,10 +110,14 @@ export function AllTenantsPage() {
   const industryMap = new Map<string, number>();
   tenants.forEach((t) => industryMap.set(t.industryLabel, (industryMap.get(t.industryLabel) || 0) + 1));
   const industryChartData = Array.from(industryMap.entries()).map(([name, value]) => ({
-    name, value, color: INDUSTRY_COLORS[name] || '#94A3B8',
+    name,
+    value,
+    color: INDUSTRY_COLORS[name] || '#94A3B8',
   }));
   const industries = Array.from(industryMap.entries()).map(([name, count]) => ({
-    name, count, percentage: totalTenants > 0 ? ((count / totalTenants) * 100).toFixed(1) + '%' : '0%',
+    name,
+    count,
+    percentage: totalTenants > 0 ? ((count / totalTenants) * 100).toFixed(1) + '%' : '0%',
     color: INDUSTRY_DOT_COLORS[name] || 'bg-slate-400',
   }));
 
@@ -111,22 +125,27 @@ export function AllTenantsPage() {
   const planMap = new Map<string, number>();
   tenants.forEach((t) => planMap.set(t.planName, (planMap.get(t.planName) || 0) + 1));
   const planChartData = Array.from(planMap.entries()).map(([name, value]) => ({
-    name, value, color: PLAN_COLORS[name] || '#94A3B8',
+    name,
+    value,
+    color: PLAN_COLORS[name] || '#94A3B8',
   }));
   const plans = Array.from(planMap.entries()).map(([name, count]) => ({
-    name, count, percentage: totalTenants > 0 ? ((count / totalTenants) * 100).toFixed(1) + '%' : '0%',
+    name,
+    count,
+    percentage: totalTenants > 0 ? ((count / totalTenants) * 100).toFixed(1) + '%' : '0%',
     color: PLAN_DOT_COLORS[name] || 'bg-slate-400',
   }));
 
-  const handleDeleteTenant = async (id: string) => {
+  const handleUpdateStatus = async (id: string, status: TenantStatus) => {
     try {
-      await tenantService.deleteTenant(id);
+      await tenantService.updateTenantStatus(id, status);
       const refreshed = await tenantService.getTenants();
       setTenants(refreshed);
       setActiveMenuId(null);
-      toast.success('Tenant deleted successfully');
+      setSuspendTarget(null);
+      toast.success(`Tenant status updated to ${status}`);
     } catch {
-      toast.error('Failed to delete tenant');
+      toast.error('Failed to update tenant status');
     }
   };
 
@@ -137,23 +156,31 @@ export function AllTenantsPage() {
     return 'bg-[#0D1F3D] text-white font-extrabold';
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: TenantStatus) => {
     switch (status) {
       case 'Active':
         return <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">Active</span>;
-      case 'Past Due':
-        return <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 border border-amber-200">Past Due</span>;
       case 'Trial':
         return <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">Trial</span>;
+      case 'Pending Payment':
+        return <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 border border-amber-200">Pending Payment</span>;
+      case 'Past Due':
+        return <span className="inline-flex items-center rounded-full bg-orange-50 px-2.5 py-0.5 text-xs font-bold text-orange-700 border border-orange-200">Past Due</span>;
       case 'Suspended':
         return <span className="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-bold text-rose-700 border border-rose-200">Suspended</span>;
+      case 'Draft':
+        return <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600 border border-slate-200">Draft</span>;
+      case 'Cancelled':
+        return <span className="inline-flex items-center rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">Cancelled</span>;
+      case 'Archived':
+        return <span className="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-0.5 text-xs font-bold text-purple-700 border border-purple-200">Archived</span>;
       default:
         return <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">{status}</span>;
     }
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 font-sans">
       {/* Header Row */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-5">
         <div>
@@ -169,10 +196,10 @@ export function AllTenantsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" className="gap-2 font-bold text-slate-700">
+          <Button variant="outline" size="sm" onClick={() => toast.info('Exporting tenant data')} className="gap-2 font-bold text-slate-700">
             <Download className="h-4 w-4 text-slate-400" /> Export
           </Button>
-          <Button variant="outline" size="sm" className="gap-2 font-bold text-slate-700">
+          <Button variant="outline" size="sm" onClick={() => toast.info('Import wizard available in next release')} className="gap-2 font-bold text-slate-700">
             <Upload className="h-4 w-4 text-slate-400" /> Import
           </Button>
           <Button
@@ -186,7 +213,7 @@ export function AllTenantsPage() {
         </div>
       </div>
 
-      {/* Top 6 KPI Summary Cards (Reusing KpiCard Component 100%) */}
+      {/* Top 6 KPI Summary Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
         <KpiCard
           title="Total Tenants"
@@ -249,7 +276,7 @@ export function AllTenantsPage() {
             />
           </div>
 
-          <div className="w-40">
+          <div className="w-44">
             <Select
               value={selectedIndustry}
               onChange={(e) => setSelectedIndustry(e.target.value)}
@@ -261,7 +288,7 @@ export function AllTenantsPage() {
             />
           </div>
 
-          <div className="w-40">
+          <div className="w-44">
             <Select
               value={selectedPlan}
               onChange={(e) => setSelectedPlan(e.target.value)}
@@ -273,7 +300,7 @@ export function AllTenantsPage() {
             />
           </div>
 
-          <div className="w-40">
+          <div className="w-44">
             <Select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
@@ -282,16 +309,16 @@ export function AllTenantsPage() {
                 { value: 'All', label: 'All Statuses' },
                 { value: 'Active', label: 'Active' },
                 { value: 'Trial', label: 'Trial' },
+                { value: 'Pending Payment', label: 'Pending Payment' },
                 { value: 'Past Due', label: 'Past Due' },
                 { value: 'Suspended', label: 'Suspended' },
+                { value: 'Draft', label: 'Draft' },
+                { value: 'Archived', label: 'Archived' },
               ]}
             />
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-2 font-bold text-slate-700 h-10">
-              <Filter className="h-4 w-4 text-slate-400" /> More Filters
-            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -337,76 +364,138 @@ export function AllTenantsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                  {filteredTenants.map((t, idx) => (
-                    <tr key={t.id} className="hover:bg-slate-50/80 transition group">
-                      <td className="py-3.5 text-slate-400 font-semibold">{idx + 1}</td>
-                      <td className="py-3.5">
-                        <div className="flex items-center gap-3">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm font-bold ${getIconBg(t)}`}>
-                            {t.companyName[0]}
-                          </div>
-                          <div>
-                            <p
-                              onClick={() => navigate(`/platform/tenants/${t.id}`)}
-                              className="font-bold text-[#0D1F3D] hover:text-blue-600 hover:underline cursor-pointer"
-                            >
-                              {t.companyName}
-                            </p>
-                            <p className="text-[11px] font-medium text-slate-400">{t.domain}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 font-mono text-xs font-bold text-slate-800">{t.slug.toUpperCase()}</td>
-                      <td className="py-3.5 text-slate-600 font-semibold">{t.industryLabel}</td>
-                      <td className="py-3.5 text-slate-700 font-bold">{t.planName}</td>
-                      <td className="py-3.5 text-slate-700 font-semibold">{t.userLicensesCount}</td>
-                      <td className="py-3.5 font-bold text-[#0D1F3D]">{formatCurrency(t.mrr)}</td>
-                      <td className="py-3.5">{getStatusBadge(t.tenantStatus)}</td>
-                      <td className="py-3.5 text-slate-500 font-medium">{t.createdAt.split(' ·')[0]}</td>
-                      <td className="py-3.5 text-right relative">
-                        <button
-                          type="button"
-                          onClick={() => setActiveMenuId(activeMenuId === t.id ? null : t.id)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </button>
-
-                        {activeMenuId === t.id && (
-                          <div className="absolute right-0 top-full z-30 mt-1 w-44 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95">
-                            <button
-                              type="button"
-                              onClick={() => { setActiveMenuId(null); navigate(`/platform/tenants/${t.id}`); }}
-                              className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                            >
-                              <Eye className="h-4 w-4 text-blue-600" /> View Details
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => { setActiveMenuId(null); navigate(`/platform/tenants/${t.id}/users`); }}
-                              className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                            >
-                              <Users className="h-4 w-4 text-purple-600" /> Manage Users
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => { setActiveMenuId(null); navigate(`/platform/tenants/${t.id}/modules`); }}
-                              className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                            >
-                              <Layers className="h-4 w-4 text-indigo-600" /> Manage Modules
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteTenant(t.id)}
-                              className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50"
-                            >
-                              <Trash2 className="h-4 w-4" /> Delete Tenant
-                            </button>
-                          </div>
-                        )}
+                  {loading ? (
+                    <tr>
+                      <td colSpan={10} className="py-12 text-center text-slate-500 font-sans">
+                        <div className="inline-block animate-spin h-5 w-5 border-2 border-indigo-600 border-t-transparent rounded-full mb-2" />
+                        <p className="text-xs font-semibold">Loading datatable records...</p>
                       </td>
                     </tr>
-                  ))}
+                  ) : filteredTenants.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} className="py-12 text-center text-slate-500 font-sans">
+                        <Building2 className="mx-auto h-8 w-8 text-slate-400 mb-2" />
+                        <p className="text-sm font-bold text-[#0D1F3D]">No tenants found</p>
+                        <p className="text-xs text-slate-400 font-medium">Try adjusting search query or filters.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredTenants.map((t, idx) => (
+                      <tr key={t.id} className="hover:bg-slate-50/80 transition group">
+                        <td className="py-3.5 text-slate-400 font-semibold">{idx + 1}</td>
+                        <td className="py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm font-bold ${getIconBg(t)}`}>
+                              {t.companyName[0]}
+                            </div>
+                            <div>
+                              <p
+                                onClick={() => navigate(`/platform/tenants/${t.id}`)}
+                                className="font-bold text-[#0D1F3D] hover:text-blue-600 hover:underline cursor-pointer"
+                              >
+                                {t.companyName}
+                              </p>
+                              <p className="text-[11px] font-medium text-slate-400">{t.domain}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 font-mono text-xs font-bold text-slate-800">{t.slug.toUpperCase()}</td>
+                        <td className="py-3.5 text-slate-600 font-semibold">{t.industryLabel}</td>
+                        <td className="py-3.5 text-slate-700 font-bold">{t.planName}</td>
+                        <td className="py-3.5 text-slate-700 font-semibold">{t.userLicensesCount}</td>
+                        <td className="py-3.5 font-bold text-[#0D1F3D]">{formatCurrency(t.mrr)}</td>
+                        <td className="py-3.5">{getStatusBadge(t.tenantStatus)}</td>
+                        <td className="py-3.5 text-slate-500 font-medium">{t.createdAt.split(' ·')[0]}</td>
+                        <td className="py-3.5 text-right relative">
+                          <button
+                            type="button"
+                            onClick={() => setActiveMenuId(activeMenuId === t.id ? null : t.id)}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </button>
+
+                          {activeMenuId === t.id && (
+                            <div className="absolute right-0 top-full z-30 mt-1 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveMenuId(null);
+                                  navigate(`/platform/tenants/${t.id}`);
+                                }}
+                                className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                              >
+                                <Eye className="h-4 w-4 text-blue-600" /> View Details
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveMenuId(null);
+                                  navigate(`/platform/tenants/create?tenantId=${t.id}`);
+                                }}
+                                className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                              >
+                                <Edit className="h-4 w-4 text-emerald-600" /> Edit Tenant
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveMenuId(null);
+                                  navigate(`/platform/tenants/${t.id}/users`);
+                                }}
+                                className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                              >
+                                <Users className="h-4 w-4 text-purple-600" /> Manage Users
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveMenuId(null);
+                                  navigate(`/platform/tenants/${t.id}/modules`);
+                                }}
+                                className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                              >
+                                <Layers className="h-4 w-4 text-indigo-600" /> Manage Modules
+                              </button>
+                              {t.tenantStatus === 'Active' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveMenuId(null);
+                                    setSuspendTarget(t);
+                                  }}
+                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50 border-t border-slate-100"
+                                >
+                                  <PauseCircle className="h-4 w-4 text-amber-600" /> Suspend Tenant
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActiveMenuId(null);
+                                    handleUpdateStatus(t.id, 'Active');
+                                  }}
+                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 border-t border-slate-100"
+                                >
+                                  <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Activate Tenant
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActiveMenuId(null);
+                                  handleUpdateStatus(t.id, 'Archived');
+                                }}
+                                className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                              >
+                                <Archive className="h-4 w-4 text-slate-500" /> Archive Tenant
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -425,10 +514,6 @@ export function AllTenantsPage() {
                 <span>1-{filteredTenants.length} of {totalTenants}</span>
                 <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50"><ChevronLeft className="h-4 w-4" /></button>
                 <button type="button" className="h-8 w-8 rounded-sm bg-blue-600 text-white font-bold flex items-center justify-center">1</button>
-                <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">2</button>
-                <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">3</button>
-                <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">4</button>
-                <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-700 font-bold hover:bg-slate-50">5</button>
                 <button type="button" className="h-8 w-8 rounded-sm border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50"><ChevronRight className="h-4 w-4" /></button>
               </div>
             </div>
@@ -457,7 +542,7 @@ export function AllTenantsPage() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-base font-extrabold text-[#0D1F3D]">128</span>
+                  <span className="text-base font-extrabold text-[#0D1F3D]">{totalTenants}</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase">Total</span>
                 </div>
               </div>
@@ -514,6 +599,41 @@ export function AllTenantsPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Modal for Suspend Action */}
+      {suspendTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="w-full max-w-sm rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 text-center font-sans">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <ShieldAlert className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-[#0D1F3D]">Suspend Tenant?</h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                Suspending <strong>{suspendTarget.companyName}</strong> will temporarily restrict executive logins until reactivated.
+              </p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSuspendTarget(null)}
+                className="flex-1 font-bold justify-center"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="accent"
+                size="sm"
+                onClick={() => handleUpdateStatus(suspendTarget.id, 'Suspended')}
+                className="flex-1 font-bold bg-amber-600 hover:bg-amber-700 text-white justify-center"
+              >
+                Suspend Workspace
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

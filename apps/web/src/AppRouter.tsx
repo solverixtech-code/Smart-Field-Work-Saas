@@ -33,6 +33,9 @@ import { WorkspaceSettingsPage } from './screens/admin/settings/WorkspaceSetting
 import { PlansPricingPage } from './screens/platform/PlansPricingPage';
 import { AuditLogsPage } from './screens/platform/AuditLogsPage';
 import { TenantCreationProvider } from './features/platform/tenants/context/TenantCreationContext';
+import { PlatformAccessGuard } from './features/platform/auth/guards/PlatformAccessGuard';
+import { WorkspaceSettingsGuard } from './layouts/WorkspaceSettingsGuard';
+import { PlatformPlaceholderPage } from './screens/platform/PlatformPlaceholderPage';
 
 import ShiftManagementPage from './screens/shifts/ShiftManagementPage';
 import AttendanceMonitoringPage from './screens/attendance/AttendanceMonitoringPage';
@@ -724,7 +727,7 @@ export default function AppRouter() {
               <Route path="/admin/territories/:territoryId/map" element={<TerritoryDetailsPage initialTab="Map" />} />
             </Route>
 
-            {/* System Masters Management Route */}
+            {/* System Masters Management & Workspace Settings Route */}
             <Route
               element={
                 <ProtectedRoute
@@ -740,7 +743,9 @@ export default function AppRouter() {
               }
             >
               <Route path="/admin/masters" element={<MasterManagementPage />} />
-              <Route path="/admin/settings/workspace" element={<WorkspaceSettingsPage />} />
+              <Route element={<WorkspaceSettingsGuard />}>
+                <Route path="/admin/settings/workspace" element={<WorkspaceSettingsPage />} />
+              </Route>
             </Route>
           </Route>
         </Route>
@@ -754,28 +759,30 @@ export default function AppRouter() {
               </TenantCreationProvider>
             }
           >
-            <Route path="/platform" element={<Navigate to="/platform/dashboard" replace />} />
-            <Route path="/platform/dashboard" element={<PlatformDashboardPage />} />
-            <Route path="/platform/tenants" element={<AllTenantsPage />} />
-            <Route path="/platform/tenants/create" element={<CreateTenantWizardPage />} />
-            <Route path="/platform/tenants/onboarding" element={<AllTenantsPage />} />
-            <Route path="/platform/tenants/requests" element={<AllTenantsPage />} />
-            <Route path="/platform/tenants/:tenantId" element={<TenantDetailsPage />} />
-            <Route path="/platform/tenants/:tenantId/modules" element={<TenantModulesPage />} />
-            <Route path="/platform/tenants/:tenantId/users" element={<TenantUsersPage />} />
-            <Route path="/platform/plans" element={<PlansPricingPage />} />
-            <Route path="/platform/modules" element={<PlatformDashboardPage />} />
-            <Route path="/platform/industries" element={<PlatformDashboardPage />} />
-            <Route path="/platform/users" element={<PlatformDashboardPage />} />
-            <Route path="/platform/roles" element={<PlatformDashboardPage />} />
-            <Route path="/platform/audit" element={<AuditLogsPage />} />
-            <Route path="/platform/subscriptions" element={<PlatformDashboardPage />} />
-            <Route path="/platform/invoices" element={<PlatformDashboardPage />} />
-            <Route path="/platform/transactions" element={<PlatformDashboardPage />} />
-            <Route path="/platform/reports" element={<PlatformDashboardPage />} />
-            <Route path="/platform/profile" element={<ProfilePage />} />
-            <Route path="/platform/profile/security" element={<ChangePasswordPage />} />
-            <Route path="/platform/profile/sessions" element={<ActiveSessionsPage />} />
+            <Route element={<PlatformAccessGuard requiredPermission="platform.dashboard.view" />}>
+              <Route path="/platform" element={<Navigate to="/platform/dashboard" replace />} />
+              <Route path="/platform/dashboard" element={<PlatformDashboardPage />} />
+              <Route path="/platform/tenants" element={<AllTenantsPage />} />
+              <Route path="/platform/tenants/create" element={<CreateTenantWizardPage />} />
+              <Route path="/platform/tenants/onboarding" element={<Navigate to="/platform/tenants" replace />} />
+              <Route path="/platform/tenants/requests" element={<Navigate to="/platform/tenants" replace />} />
+              <Route path="/platform/tenants/:tenantId" element={<TenantDetailsPage />} />
+              <Route path="/platform/tenants/:tenantId/modules" element={<TenantModulesPage />} />
+              <Route path="/platform/tenants/:tenantId/users" element={<TenantUsersPage />} />
+              <Route path="/platform/plans" element={<PlansPricingPage />} />
+              <Route path="/platform/modules" element={<PlatformPlaceholderPage title="Platform Modules Catalog" />} />
+              <Route path="/platform/industries" element={<PlatformPlaceholderPage title="Industry Verticals" />} />
+              <Route path="/platform/users" element={<PlatformPlaceholderPage title="Platform Operators" />} />
+              <Route path="/platform/roles" element={<PlatformPlaceholderPage title="Platform RBAC & Roles" />} />
+              <Route path="/platform/audit" element={<AuditLogsPage />} />
+              <Route path="/platform/subscriptions" element={<PlatformPlaceholderPage title="Subscription Management" />} />
+              <Route path="/platform/invoices" element={<PlatformPlaceholderPage title="Invoices & Billing" />} />
+              <Route path="/platform/transactions" element={<PlatformPlaceholderPage title="Payment Transactions" />} />
+              <Route path="/platform/reports" element={<PlatformPlaceholderPage title="Platform Analytics & Reports" />} />
+              <Route path="/platform/profile" element={<ProfilePage />} />
+              <Route path="/platform/profile/security" element={<ChangePasswordPage />} />
+              <Route path="/platform/profile/sessions" element={<ActiveSessionsPage />} />
+            </Route>
           </Route>
         </Route>
 

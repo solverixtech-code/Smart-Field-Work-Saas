@@ -4,19 +4,7 @@ import { toast } from 'sonner';
 import {
   Building2,
   Globe,
-  UserCheck,
   CreditCard,
-  Sliders,
-  CheckCircle2,
-  ChevronRight,
-  ChevronLeft,
-  ChevronDown,
-  Save,
-  Send,
-  AlertCircle,
-  HelpCircle,
-  Sparkles,
-  ShieldAlert,
   Check,
   CheckCircle,
   Info,
@@ -29,23 +17,19 @@ import {
   Shield,
   FileText,
   Lock,
-  Plus,
   ArrowRight,
   Briefcase,
-  Smartphone,
-  Mail,
   MapPin,
-  Calendar,
-  Zap,
-  BookOpen,
-  MessageSquare,
-  Bell,
-  CheckSquare,
-  Search,
-  Users,
   Clock,
-  Image as ImageIcon,
   BarChart3,
+  MessageSquare,
+  Zap,
+  Sparkles,
+  ChevronDown,
+  ChevronLeft,
+  Save,
+  AlertTriangle,
+  Building,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -53,6 +37,28 @@ import { Select } from '../../components/ui/Select';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { DatePicker } from '../../components/ui/DatePicker';
 import { TenantCreationProvider, useTenantCreation } from '../../features/platform/tenants/context/TenantCreationContext';
+import { PLATFORM_INDUSTRIES, PLATFORM_PLANS, PLATFORM_MODULES } from '../../features/platform/tenants/fixtures/platform.fixtures';
+import { tenantService } from '../../features/platform/tenants/services/tenant.service';
+import { Tenant, ProvisioningType, PaymentCollectionMethod } from '../../features/platform/tenants/types/platform.types';
+import { calculatePlanPrice } from '../../features/platform/tenants/utils/cost-calculation.utils';
+
+const STEP_PARAM_MAP: Record<string, number> = {
+  company: 1,
+  industry: 2,
+  administrator: 3,
+  subscription: 4,
+  modules: 5,
+  review: 6,
+};
+
+const STEP_NUM_MAP: Record<number, string> = {
+  1: 'company',
+  2: 'industry',
+  3: 'administrator',
+  4: 'subscription',
+  5: 'modules',
+  6: 'review',
+};
 
 function CountryFlag({ code, flagUrl }: { code: string; flagUrl?: string }) {
   const [imgError, setImgError] = useState(false);
@@ -68,7 +74,6 @@ function CountryFlag({ code, flagUrl }: { code: string; flagUrl?: string }) {
     );
   }
 
-  // Pure SVG Flag fallbacks guaranteed to render on Windows
   switch (code) {
     case 'IN':
       return (
@@ -106,45 +111,8 @@ function CountryFlag({ code, flagUrl }: { code: string; flagUrl?: string }) {
           <path d="M15 0v20M0 10h30" stroke="#C8102E" strokeWidth="3" />
         </svg>
       );
-    case 'SG':
-      return (
-        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
-          <rect width="30" height="10" fill="#ED2939" />
-          <rect y="10" width="30" height="10" fill="#FFFFFF" />
-          <circle cx="6" cy="5" r="3" fill="#FFFFFF" />
-          <circle cx="7.2" cy="5" r="3" fill="#ED2939" />
-        </svg>
-      );
-    case 'AU':
-      return (
-        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
-          <rect width="30" height="20" fill="#000085" />
-          <rect width="13" height="9" fill="#012169" />
-          <path d="M0 0l13 9M13 0L0 9" stroke="#FFFFFF" strokeWidth="1.5" />
-          <path d="M6.5 0v9M0 4.5h13" stroke="#FFFFFF" strokeWidth="2.5" />
-          <path d="M6.5 0v9M0 4.5h13" stroke="#C8102E" strokeWidth="1.2" />
-        </svg>
-      );
-    case 'CA':
-      return (
-        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
-          <rect width="30" height="20" fill="#FF0000" />
-          <rect x="7.5" width="15" height="20" fill="#FFFFFF" />
-          <polygon points="15,4 16,8 19,7 17,10 19,13 16,12 15,16 14,12 11,13 13,10 11,7 14,8" fill="#FF0000" />
-        </svg>
-      );
-    case 'DE':
-      return (
-        <svg className="w-5 h-3.5 rounded-xs border border-slate-200 shrink-0" viewBox="0 0 30 20">
-          <rect width="30" height="6.67" fill="#000000" />
-          <rect y="6.67" width="30" height="6.67" fill="#DD0000" />
-          <rect y="13.33" width="30" height="6.67" fill="#FFCE00" />
-        </svg>
-      );
     default:
-      return (
-        <span className="text-xs font-bold text-slate-600">{code}</span>
-      );
+      return <span className="text-xs font-bold text-slate-600">{code}</span>;
   }
 }
 
@@ -153,13 +121,8 @@ const COUNTRY_CODES = [
   { code: 'US', flagUrl: 'https://flagcdn.com/24x18/us.png', dial: '+1', name: 'United States', length: 10 },
   { code: 'AE', flagUrl: 'https://flagcdn.com/24x18/ae.png', dial: '+971', name: 'United Arab Emirates', length: 9 },
   { code: 'GB', flagUrl: 'https://flagcdn.com/24x18/gb.png', dial: '+44', name: 'United Kingdom', length: 10 },
-  { code: 'SG', flagUrl: 'https://flagcdn.com/24x18/sg.png', dial: '+65', name: 'Singapore', length: 8 },
-  { code: 'AU', flagUrl: 'https://flagcdn.com/24x18/au.png', dial: '+61', name: 'Australia', length: 9 },
-  { code: 'CA', flagUrl: 'https://flagcdn.com/24x18/ca.png', dial: '+1', name: 'Canada', length: 10 },
-  { code: 'DE', flagUrl: 'https://flagcdn.com/24x18/de.png', dial: '+49', name: 'Germany', length: 11 },
 ];
 
-// Interactive Country Flag & Dial Code PhoneInput Component
 function PhoneInput({
   label,
   value,
@@ -200,7 +163,6 @@ function PhoneInput({
       <label className="block text-xs font-bold text-slate-700">{label}</label>
 
       <div className="flex h-10 w-full rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
-        {/* Country Flag Trigger */}
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
@@ -211,7 +173,6 @@ function PhoneInput({
           <ChevronDown className={`h-3 w-3 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
 
-        {/* Digit Input */}
         <input
           type="tel"
           inputMode="numeric"
@@ -225,7 +186,6 @@ function PhoneInput({
         />
       </div>
 
-      {/* Floating Country Selector Card */}
       {isOpen && (
         <div className="absolute left-0 top-full mt-1 z-[9999] w-60 rounded-sm border border-slate-200 bg-white p-1.5 shadow-2xl space-y-0.5 animate-in fade-in zoom-in-95">
           <div className="px-2 py-1 border-b border-slate-100 mb-1">
@@ -266,7 +226,6 @@ function Step1CompanyDetails() {
 
   return (
     <div className="space-y-6 font-sans">
-      {/* Company Information Card */}
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Company Information</h3>
@@ -364,7 +323,6 @@ function Step1CompanyDetails() {
         </div>
       </div>
 
-      {/* Company Address Card */}
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Company Address</h3>
@@ -381,7 +339,6 @@ function Step1CompanyDetails() {
         </div>
       </div>
 
-      {/* Company Settings Card */}
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Company Settings</h3>
@@ -439,26 +396,6 @@ function Step1CompanyDetails() {
           />
         </div>
       </div>
-
-      {/* Contact Person Card */}
-      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-        <div>
-          <h3 className="text-base font-extrabold text-[#0D1F3D]">Contact Person</h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">Primary point of contact from the company.</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <Input label="Full Name *" placeholder="Enter full name" value={formState.adminFullName} onChange={(e) => updateFormState({ adminFullName: e.target.value })} />
-          <Input label="Designation" placeholder="e.g., CEO, Director, Admin" value={formState.adminDesignation} onChange={(e) => updateFormState({ adminDesignation: e.target.value })} />
-          <PhoneInput
-            label="Mobile Number *"
-            placeholder="Enter mobile number"
-            value={formState.adminPhone}
-            onChange={(val) => updateFormState({ adminPhone: val })}
-          />
-          <Input label="Email *" type="email" placeholder="Enter email address" value={formState.adminEmail} onChange={(e) => updateFormState({ adminEmail: e.target.value })} />
-        </div>
-      </div>
     </div>
   );
 }
@@ -467,12 +404,32 @@ function Step1CompanyDetails() {
 function Step2IndustryProfile() {
   const { formState, updateFormState } = useTenantCreation();
 
+  const industryOptions = PLATFORM_INDUSTRIES.map((ind) => ({
+    value: ind.id,
+    label: ind.label,
+  }));
+
+  const handleIndustryChange = (selectedId: string) => {
+    const selectedInd = PLATFORM_INDUSTRIES.find((i) => i.id === selectedId);
+    let updatedModules = [...formState.selectedModuleCodes];
+
+    if (selectedInd && selectedInd.defaultModules) {
+      // Merge industry default modules into current selection
+      updatedModules = Array.from(new Set([...updatedModules, ...selectedInd.defaultModules]));
+    }
+
+    updateFormState({
+      industryId: selectedId,
+      selectedModuleCodes: updatedModules,
+    });
+  };
+
   return (
     <div className="space-y-6 font-sans">
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D]">Industry Information</h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">Select the primary industry that best describes this tenant's business.</p>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Select the primary industry from the 25+ canonical industry registry.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-start">
@@ -480,33 +437,18 @@ function Step2IndustryProfile() {
             <Select
               label="Primary Industry *"
               value={formState.industryId}
-              onChange={(e) => updateFormState({ industryId: e.target.value })}
+              onChange={(e) => handleIndustryChange(e.target.value)}
               searchable={true}
-              options={[
-                { value: 'Pharma & Healthcare', label: 'Pharma & Healthcare' },
-                { value: 'FMCG & Consumer Goods', label: 'FMCG & Consumer Goods' },
-                { value: 'Distributors & Wholesalers', label: 'Distributors & Wholesalers' },
-                { value: 'Solar & Renewable Energy', label: 'Solar & Renewable Energy' },
-                { value: 'Manufacturing & Industrial', label: 'Manufacturing & Industrial' },
-                { value: 'Real Estate & Construction', label: 'Real Estate & Construction' },
-                { value: 'IT & Software Services', label: 'IT & Software Services' },
-                { value: 'Education & Training', label: 'Education & Training' },
-              ]}
+              options={industryOptions}
             />
-            <p className="text-[11px] text-slate-400 font-medium">This will help us configure industry-specific defaults for the tenant.</p>
+            <p className="text-[11px] text-slate-400 font-medium">Selected ID: <strong className="font-mono text-slate-700">{formState.industryId}</strong></p>
           </div>
 
           <div className="sm:col-span-5 rounded-sm border border-purple-100 bg-[#F4F0FF] p-5 text-xs space-y-2">
             <p className="font-extrabold text-purple-950 flex items-center gap-1.5 text-xs">
-              <Sparkles className="h-4 w-4 text-purple-600" /> Why is this important?
+              <Sparkles className="h-4 w-4 text-purple-600" /> Industry Defaults Pre-configured
             </p>
-            <p className="text-[11px] text-purple-900 font-medium">Industry selection helps us:</p>
-            <ul className="space-y-1.5 text-purple-900 font-medium text-[11px]">
-              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Pre-configure relevant modules</li>
-              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Set up industry-specific defaults</li>
-              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Provide better reporting & analytics</li>
-              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Enable the right workflows</li>
-            </ul>
+            <p className="text-[11px] text-purple-900 font-medium">Selecting an industry automatically recommends tailored field modules while honoring plan restrictions.</p>
           </div>
         </div>
       </div>
@@ -561,107 +503,6 @@ function Step2IndustryProfile() {
           />
           <Input label="Number of Branches / Locations" placeholder="Enter number of branches" value={formState.branchCount} onChange={(e) => updateFormState({ branchCount: e.target.value })} />
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select
-            label="Operating Countries"
-            value={formState.operatingCountries}
-            onChange={(e) => updateFormState({ operatingCountries: e.target.value })}
-            searchable={true}
-            options={[
-              { value: 'India', label: 'India' },
-              { value: 'India, UAE', label: 'India, UAE' },
-              { value: 'India, US', label: 'India, US' },
-              { value: 'Multiple Countries', label: 'Multiple Countries' },
-            ]}
-          />
-          <Select
-            label="Preferred Currency *"
-            value={formState.currency}
-            onChange={(e) => updateFormState({ currency: e.target.value })}
-            searchable={true}
-            options={[
-              { value: 'INR - Indian Rupee (₹)', label: 'INR - Indian Rupee (₹)' },
-              { value: 'USD - US Dollar ($)', label: 'USD - US Dollar ($)' },
-              { value: 'EUR - Euro (€)', label: 'EUR - Euro (€)' },
-              { value: 'GBP - British Pound (£)', label: 'GBP - British Pound (£)' },
-              { value: 'AED - UAE Dirham (د.إ)', label: 'AED - UAE Dirham (د.إ)' },
-            ]}
-          />
-          <Select
-            label="Preferred Language"
-            value={formState.preferredLanguage}
-            onChange={(e) => updateFormState({ preferredLanguage: e.target.value })}
-            searchable={true}
-            options={[
-              { value: 'English', label: 'English' },
-              { value: 'Hindi', label: 'Hindi' },
-              { value: 'Tamil', label: 'Tamil' },
-              { value: 'Marathi', label: 'Marathi' },
-              { value: 'Gujarati', label: 'Gujarati' },
-            ]}
-          />
-        </div>
-
-        <div>
-          <label className="font-bold text-slate-700 text-xs block mb-1">Short Description (Optional)</label>
-          <textarea
-            rows={3}
-            maxLength={200}
-            placeholder="Tell us about the company..."
-            value={formState.description}
-            onChange={(e) => updateFormState({ description: e.target.value })}
-            className="w-full rounded-md border border-slate-200 bg-[#F8FAFC] p-3 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#0D1F3D] transition-all"
-          />
-          <span className="text-[10px] text-slate-400 font-semibold block text-right mt-1">{formState.description.length} / 200</span>
-        </div>
-      </div>
-
-      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-        <div>
-          <h3 className="text-base font-extrabold text-[#0D1F3D]">Operational Profile</h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">Operational preferences and compliance information.</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select
-            label="Working Timezone *"
-            value={formState.timezone}
-            onChange={(e) => updateFormState({ timezone: e.target.value })}
-            searchable={true}
-            options={[
-              { value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' },
-              { value: '(GMT+00:00) UTC', label: '(GMT+00:00) UTC' },
-              { value: '(GMT-05:00) America/New_York', label: '(GMT-05:00) America/New_York' },
-              { value: '(GMT+01:00) Europe/London', label: '(GMT+01:00) Europe/London' },
-              { value: '(GMT+04:00) Asia/Dubai', label: '(GMT+04:00) Asia/Dubai' },
-              { value: '(GMT+08:00) Asia/Singapore', label: '(GMT+08:00) Asia/Singapore' },
-            ]}
-          />
-          <Select
-            label="Financial Year Start *"
-            value={formState.financialYearStart}
-            onChange={(e) => updateFormState({ financialYearStart: e.target.value })}
-            searchable={true}
-            options={[
-              { value: 'January', label: 'January' },
-              { value: 'April', label: 'April' },
-              { value: 'July', label: 'July' },
-              { value: 'October', label: 'October' },
-            ]}
-          />
-          <Select
-            label="Week Start Day *"
-            value={formState.weekStartDay}
-            onChange={(e) => updateFormState({ weekStartDay: e.target.value })}
-            searchable={true}
-            options={[
-              { value: 'Monday', label: 'Monday' },
-              { value: 'Sunday', label: 'Sunday' },
-              { value: 'Saturday', label: 'Saturday' },
-            ]}
-          />
-        </div>
       </div>
     </div>
   );
@@ -672,7 +513,6 @@ function Step3Administrator() {
   const { formState, updateFormState } = useTenantCreation();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [enable2FA, setEnable2FA] = useState(true);
 
   return (
     <div className="space-y-6 font-sans">
@@ -684,7 +524,7 @@ function Step3Administrator() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Input label="Full Name *" placeholder="Enter full name" value={formState.adminFullName} onChange={(e) => updateFormState({ adminFullName: e.target.value })} />
-          <Input label="Email Address *" type="email" placeholder="Enter email address" value={formState.adminEmail} onChange={(e) => updateFormState({ adminEmail: e.target.value })} />
+          <Input label="Email Address *" type="email" placeholder="Enter email address" value={formState.adminEmail} onChange={(e) => updateFormState({ adminEmail: e.target.value, adminUsername: e.target.value })} />
           <PhoneInput
             label="Mobile Number *"
             placeholder="Enter mobile number"
@@ -704,62 +544,15 @@ function Step3Administrator() {
               { value: 'Administration', label: 'Administration' },
               { value: 'Sales', label: 'Sales' },
               { value: 'Operations', label: 'Operations' },
-              { value: 'Marketing', label: 'Marketing' },
-              { value: 'Finance', label: 'Finance' },
-              { value: 'Human Resources', label: 'Human Resources' },
               { value: 'IT', label: 'IT' },
             ]}
           />
-          <PhoneInput
-            label="Phone Number"
-            placeholder="Enter phone number"
-            value={formState.adminPhone}
-            onChange={(val) => updateFormState({ adminPhone: val })}
-          />
+          <Input label="Username *" placeholder="Username" value={formState.adminUsername || formState.adminEmail} onChange={(e) => updateFormState({ adminUsername: e.target.value })} />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Select
-            label="Preferred Language *"
-            value={formState.adminLanguage}
-            onChange={(e) => updateFormState({ adminLanguage: e.target.value })}
-            searchable={true}
-            options={[
-              { value: 'English', label: 'English' },
-              { value: 'Hindi', label: 'Hindi' },
-              { value: 'Tamil', label: 'Tamil' },
-              { value: 'Marathi', label: 'Marathi' },
-              { value: 'Gujarati', label: 'Gujarati' },
-            ]}
-          />
-          <Select
-            label="Time Zone *"
-            value={formState.adminTimezone}
-            onChange={(e) => updateFormState({ adminTimezone: e.target.value })}
-            searchable={true}
-            options={[
-              { value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' },
-              { value: '(GMT+00:00) UTC', label: '(GMT+00:00) UTC' },
-              { value: '(GMT-05:00) America/New_York', label: '(GMT-05:00) America/New_York' },
-              { value: '(GMT+01:00) Europe/London', label: '(GMT+01:00) Europe/London' },
-              { value: '(GMT+04:00) Asia/Dubai', label: '(GMT+04:00) Asia/Dubai' },
-              { value: '(GMT+08:00) Asia/Singapore', label: '(GMT+08:00) Asia/Singapore' },
-            ]}
-          />
-          <Input label="Communication Email" type="email" placeholder="Enter communication email" value={formState.adminCommunicationEmail} onChange={(e) => updateFormState({ adminCommunicationEmail: e.target.value })} />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1">Username *</label>
-            <div className="flex rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden h-10 focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
-              <span className="bg-slate-100 border-r border-slate-200 px-3 flex items-center text-xs font-bold text-slate-500">@</span>
-              <input type="text" placeholder="Enter username" value={formState.adminUsername} onChange={(e) => updateFormState({ adminUsername: e.target.value })} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none" />
-            </div>
-            <p className="text-[10px] text-slate-400 font-medium mt-1">This will be used to login to the platform.</p>
-          </div>
-          <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1">Set Temporary Password *</label>
+            <label className="font-bold text-slate-700 text-xs block mb-1">Temporary Password (Optional)</label>
             <div className="flex rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden h-10 relative focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
               <input type={showPassword ? 'text' : 'password'} placeholder="Enter temporary password" value={formState.adminPassword} onChange={(e) => updateFormState({ adminPassword: e.target.value })} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none pr-8" />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
@@ -768,64 +561,13 @@ function Step3Administrator() {
             </div>
           </div>
           <div>
-            <label className="font-bold text-slate-700 text-xs block mb-1">Confirm Password *</label>
+            <label className="font-bold text-slate-700 text-xs block mb-1">Confirm Password</label>
             <div className="flex rounded-sm border border-slate-200 bg-[#F8FAFC] overflow-hidden h-10 relative focus-within:border-[#0D1F3D] focus-within:bg-white focus-within:ring-1 focus-within:ring-[#0D1F3D] transition-all">
               <input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm password" value={formState.adminConfirmPassword} onChange={(e) => updateFormState({ adminConfirmPassword: e.target.value })} className="flex-1 px-3 text-xs font-semibold text-[#0D1F3D] bg-transparent focus:outline-none pr-8" />
               <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
                 {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Administrator Permissions Card */}
-      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-        <div>
-          <h3 className="text-base font-extrabold text-[#0D1F3D]">Administrator Permissions</h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">Configure initial access level for the primary administrator.</p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-start">
-          <div className="sm:col-span-4">
-            <Select
-              label="Role *"
-              value="Tenant Owner"
-              onChange={() => {}}
-              searchable={true}
-              options={[
-                { value: 'Tenant Owner', label: 'Tenant Owner' },
-                { value: 'Tenant Admin', label: 'Tenant Admin' },
-                { value: 'Manager', label: 'Manager' },
-              ]}
-            />
-          </div>
-
-          <div className="sm:col-span-5 rounded-sm border border-purple-100 bg-[#F4F0FF] p-4 text-xs space-y-2">
-            <p className="font-extrabold text-purple-950 flex items-center gap-1.5">
-              <Shield className="h-4 w-4 text-purple-600" /> Tenant Owner will have:
-            </p>
-            <ul className="space-y-1 text-purple-900 font-medium text-[11px]">
-              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Full access to tenant workspace</li>
-              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Manage users, roles and permissions</li>
-              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Configure settings and modules</li>
-              <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> View billing and subscription details</li>
-            </ul>
-          </div>
-
-          <div className="sm:col-span-3 rounded-sm border border-slate-200 bg-slate-50/70 p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <Checkbox
-                checked={enable2FA}
-                onChange={(val) => setEnable2FA(val)}
-                label={
-                  <span className="font-extrabold text-[#0D1F3D] text-xs flex items-center gap-1.5">
-                    <Lock className="h-4 w-4 text-indigo-600" /> Enable 2FA
-                  </span>
-                }
-              />
-            </div>
-            <p className="text-[10px] text-slate-500 font-medium leading-snug">Require two-factor authentication for this administrator account.</p>
           </div>
         </div>
       </div>
@@ -837,46 +579,54 @@ function Step3Administrator() {
 function Step4PlanSubscription() {
   const { formState, updateFormState } = useTenantCreation();
 
-  const plansList = [
-    { id: 'starter', name: 'Starter', price: '₹4,999', priceYear: '₹59,988 / year', subtitle: 'For small teams getting started', features: ['Up to 10 Users', 'Core Modules', '5 GB Storage', 'Email Support', 'Standard Reports'] },
-    { id: 'growth', name: 'Growth', price: '₹14,999', priceYear: '₹1,79,988 / year', subtitle: 'For growing businesses', features: ['Up to 50 Users', 'Most Modules', '50 GB Storage', 'Priority Support', 'Advanced Reports'] },
-    { id: 'professional', name: 'Professional', price: '₹29,999', priceYear: '₹3,59,988 / year', recommended: true, subtitle: 'For established organizations', features: ['Up to 150 Users', 'All Modules & Features', '200 GB Storage', 'Priority Support + SLA', 'Advanced Reports & Dashboards'] },
-    { id: 'enterprise', name: 'Enterprise', price: 'Custom', priceYear: 'Contact Sales', subtitle: 'For large enterprises', features: ['Unlimited Users', 'All Modules & Features', 'Unlimited Storage', 'Dedicated Support + SLA', 'Custom Reports & Integrations'] },
-  ];
+  const handlePlanSelect = (planId: string) => {
+    const selectedPlan = PLATFORM_PLANS.find((p) => p.id === planId);
+    let updatedModules = [...formState.selectedModuleCodes];
+
+    if (selectedPlan) {
+      // Ensure plan mandatory included modules are always present
+      updatedModules = Array.from(new Set([...updatedModules, ...selectedPlan.includedModules]));
+    }
+
+    updateFormState({
+      planId,
+      selectedModuleCodes: updatedModules,
+    });
+  };
 
   return (
     <div className="space-y-6 font-sans">
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
-          <h3 className="text-base font-extrabold text-[#0D1F3D]">Choose Plan</h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">Select a subscription plan and configure billing details for this tenant.</p>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Choose Canonical Subscription Plan</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Select a subscription plan from the canonical PLATFORM_PLANS catalog.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          {plansList.map((plan) => {
-            const isSelected = formState.planId === plan.id || (plan.id === 'professional' && !formState.planId);
+          {PLATFORM_PLANS.map((plan) => {
+            const isSelected = formState.planId === plan.id;
             return (
               <div
                 key={plan.id}
-                onClick={() => updateFormState({ planId: plan.id })}
+                onClick={() => handlePlanSelect(plan.id)}
                 className={`relative rounded-sm border p-5 cursor-pointer transition-all ${
                   isSelected
                     ? 'border-indigo-600 bg-white ring-2 ring-indigo-500 shadow-md'
                     : 'border-slate-200 bg-white hover:border-slate-300'
                 }`}
               >
-                {plan.recommended && (
+                {plan.code === 'PROFESSIONAL' && (
                   <span className="absolute right-3 top-3 rounded-full bg-purple-100 px-2.5 py-0.5 text-[9px] font-extrabold text-purple-700">
                     Recommended
                   </span>
                 )}
                 <p className="text-base font-extrabold text-[#0D1F3D]">{plan.name}</p>
-                <p className="text-[11px] text-slate-500 font-medium mb-3">{plan.subtitle}</p>
+                <p className="text-[11px] text-slate-500 font-medium mb-3 font-mono">ID: {plan.id}</p>
 
                 <p className="text-2xl font-extrabold text-[#0D1F3D]">
-                  {plan.price} <span className="text-xs font-normal text-slate-400">/ month</span>
+                  ₹{plan.monthlyPricePerUser.toLocaleString('en-IN')} <span className="text-xs font-normal text-slate-400">/ user / mo</span>
                 </p>
-                <p className="text-[10px] text-slate-400 font-semibold mb-4">{plan.priceYear}</p>
+                <p className="text-[10px] text-slate-400 font-semibold mb-4">Min Users: {plan.minUsers}</p>
 
                 <ul className="mt-4 space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
                   {plan.features.map((f, idx) => (
@@ -891,10 +641,9 @@ function Step4PlanSubscription() {
         </div>
       </div>
 
-      {/* Subscription & Provisioning Card */}
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
         <div>
-          <h3 className="text-base font-extrabold text-[#0D1F3D]">Subscription & Provisioning</h3>
+          <h3 className="text-base font-extrabold text-[#0D1F3D]">Subscription & Provisioning Policy</h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -906,22 +655,31 @@ function Step4PlanSubscription() {
               searchable={true}
               options={[
                 { value: 'Monthly', label: 'Monthly' },
-                { value: 'Quarterly', label: 'Quarterly' },
                 { value: 'Yearly (Save 17%)', label: 'Yearly (Save 17%)' },
               ]}
             />
-            <Input label="Seat / User Limit" placeholder="Enter seat limit" value={formState.seatLimit} onChange={(e) => updateFormState({ seatLimit: e.target.value })} />
-            <Input label="Storage Limit" placeholder="e.g., 200 GB" value={formState.storageLimit} onChange={(e) => updateFormState({ storageLimit: e.target.value })} />
+            <div>
+              <label className="font-bold text-slate-700 text-xs block mb-1">User Licenses Count *</label>
+              <input
+                type="number"
+                min={1}
+                value={formState.userLicensesCount}
+                onChange={(e) => updateFormState({ userLicensesCount: parseInt(e.target.value, 10) || 1 })}
+                className="w-full h-10 px-3 text-xs font-bold text-[#0D1F3D] bg-[#F8FAFC] border border-slate-200 rounded-sm focus:bg-white focus:outline-none focus:border-indigo-600"
+              />
+            </div>
             <DatePicker label="Subscription Start Date *" value={formState.subscriptionStartDate} onChange={(val) => updateFormState({ subscriptionStartDate: val })} />
           </div>
 
+          {/* Provisioning Type Radio Cards - Including Enterprise Contract */}
           <div className="space-y-3">
             <label className="font-bold text-slate-700 text-xs block">Provisioning Type</label>
             <div className="space-y-2 text-xs font-semibold">
               {([
-                { value: 'Free Trial' as const, title: 'Free Trial', desc: 'Start with a free trial. No payment required today.' },
-                { value: 'Payment Required' as const, title: 'Payment Required', desc: 'Payment is required to activate the subscription.' },
-                { value: 'Invoice / Offline Payment' as const, title: 'Invoice / Offline Payment', desc: 'You will record payment received outside the platform.' },
+                { value: 'Free Trial' as ProvisioningType, title: 'Free Trial', desc: 'Start 14-day trial. Status = Trial, MRR = 0.' },
+                { value: 'Payment Required' as ProvisioningType, title: 'Payment Required', desc: 'Status = Pending Payment, MRR = 0 until activated.' },
+                { value: 'Invoice / Offline Payment' as ProvisioningType, title: 'Invoice / Offline Payment', desc: 'Offline payment tracking.' },
+                { value: 'Enterprise Contract' as ProvisioningType, title: 'Enterprise Contract', desc: 'Status = Pending Payment until billing approval.' },
               ] as const).map((opt) => {
                 const isActive = formState.provisioningType === opt.value;
                 return (
@@ -950,11 +708,11 @@ function Step4PlanSubscription() {
           </div>
 
           <div className="space-y-3">
-            <label className="font-bold text-slate-700 text-xs block">Payment Collection</label>
+            <label className="font-bold text-slate-700 text-xs block">Payment Collection Method</label>
             <div className="space-y-2 text-xs font-semibold">
               {([
-                { value: 'Send Checkout Link to Customer' as const, title: 'Send Checkout Link to Customer', desc: 'We will send a secure payment link to the billing contact.' },
-                { value: 'Record Confirmed Offline Payment' as const, title: 'Record Confirmed Offline Payment', desc: 'I will confirm payment has been received offline.' },
+                { value: 'Send Checkout Link to Customer' as PaymentCollectionMethod, title: 'Send Checkout Link to Customer', desc: 'Status remains Pending Payment until paid.' },
+                { value: 'Record Confirmed Offline Payment' as PaymentCollectionMethod, title: 'Record Confirmed Offline Payment', desc: 'Activates tenant immediately & calculates MRR.' },
               ] as const).map((opt) => {
                 const isActive = formState.paymentCollectionMethod === opt.value;
                 return (
@@ -990,27 +748,24 @@ function Step4PlanSubscription() {
 // STEP 5: MODULES
 function Step5Modules() {
   const { formState, updateFormState } = useTenantCreation();
+  const selectedPlan = PLATFORM_PLANS.find((p) => p.id === formState.planId) || PLATFORM_PLANS[0];
+  const mandatoryCodes = selectedPlan.includedModules || [];
 
-  const [modulesList, setModulesList] = useState([
-    { code: 'core_crm', name: 'Core CRM & Lead Management', desc: 'Lead capture, pipeline stages, lead assignment & auto-routing.', tag: 'Core Included', price: 'Included', checked: true, icon: <Briefcase className="h-4 w-4 text-indigo-600" /> },
-    { code: 'field_visits', name: 'GPS Field Visit Tracking', desc: 'Geofenced check-ins, route map playback, visit proof attachments.', tag: 'Core Included', price: 'Included', checked: true, icon: <MapPin className="h-4 w-4 text-emerald-600" /> },
-    { code: 'demo_scheduler', name: 'Demo & Presentation Suite', desc: 'Product demo scheduling, collateral playback, client sign-off.', tag: 'Add-on', price: '₹499 / mo', checked: true, icon: <FileText className="h-4 w-4 text-purple-600" /> },
-    { code: 'order_management', name: 'Field Order Booking & Invoicing', desc: 'Product catalog, primary/secondary order booking, tax invoice PDF.', tag: 'Add-on', price: '₹799 / mo', checked: true, icon: <CreditCard className="h-4 w-4 text-blue-600" /> },
-    { code: 'attendance_plus', name: 'Face AI & Geofence Attendance', desc: 'Selfie biometric check-in, late arrival penalty rules, muster roll.', tag: 'Add-on', price: '₹399 / mo', checked: true, icon: <Clock className="h-4 w-4 text-amber-600" /> },
-    { code: 'payroll_engine', name: 'Field Executive Payroll & Payslips', desc: 'Salary calculations, TA/DA allowances, incentive payouts, PDF payslip.', tag: 'Add-on', price: '₹999 / mo', checked: false, icon: <BarChart3 className="h-4 w-4 text-emerald-600" /> },
-    { code: 'whatsapp_automation', name: 'WhatsApp & Meta Lead Sync', desc: 'Official WhatsApp Business API integration, auto-reply bots.', tag: 'Add-on', price: '₹1,299 / mo', checked: true, icon: <MessageSquare className="h-4 w-4 text-cyan-600" /> },
-    { code: 'ai_copilot', name: 'AI Sales Copilot & Target Coach', desc: 'AI recommended next best action, churn prediction, automated summary.', tag: 'Add-on', price: '₹1,499 / mo', checked: false, icon: <Zap className="h-4 w-4 text-purple-600" /> },
-  ]);
+  const toggleModuleCode = (code: string) => {
+    // Cannot toggle plan mandatory modules
+    if (mandatoryCodes.includes(code)) {
+      toast.info(`Module '${code}' is mandatory for the selected plan (${selectedPlan.name})`);
+      return;
+    }
 
-  const toggleModule = (idx: number) => {
-    const updated = [...modulesList];
-    // Core modules remain enabled
-    if (updated[idx].tag === 'Core Included') return;
-    updated[idx].checked = !updated[idx].checked;
-    setModulesList(updated);
+    const currentSelected = formState.selectedModuleCodes;
+    const isSelected = currentSelected.includes(code);
+    const updatedCodes = isSelected
+      ? currentSelected.filter((c) => c !== code)
+      : [...currentSelected, code];
+
+    updateFormState({ selectedModuleCodes: updatedCodes });
   };
-
-  const enabledCount = modulesList.filter((m) => m.checked).length;
 
   return (
     <div className="space-y-6 font-sans">
@@ -1018,60 +773,70 @@ function Step5Modules() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Enable Modules & Features</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Select the platform modules to activate for this tenant workspace.</p>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">Select from canonical PLATFORM_MODULES catalog. Plan-mandatory modules are locked.</p>
           </div>
           <div className="rounded-sm bg-[#F4F0FF] px-3.5 py-1.5 text-xs text-purple-900 font-semibold border border-purple-100 flex items-center gap-1.5">
-            <Info className="h-4 w-4 text-purple-600" /> You can activate or modify tenant modules anytime from tenant settings.
+            <Info className="h-4 w-4 text-purple-600" /> Selected Plan: <strong className="font-extrabold">{selectedPlan.name}</strong>
           </div>
         </div>
 
         <div>
-          <h4 className="text-xs font-extrabold text-[#0D1F3D] tracking-wide mb-3">Platform Modules</h4>
+          <h4 className="text-xs font-extrabold text-[#0D1F3D] tracking-wide mb-3">Canonical Platform Modules</h4>
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            {modulesList.map((mod, idx) => (
-              <div
-                key={mod.code}
-                onClick={() => toggleModule(idx)}
-                className={`rounded-sm border p-4 space-y-3 flex flex-col justify-between transition-all cursor-pointer ${
-                  mod.checked
-                    ? 'border-[#0D1F3D] bg-slate-50/70 shadow-2xs'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-white border border-slate-200 shadow-2xs">
-                      {mod.icon}
+            {PLATFORM_MODULES.map((mod) => {
+              const isChecked = formState.selectedModuleCodes.includes(mod.code);
+              const isMandatory = mandatoryCodes.includes(mod.code);
+
+              return (
+                <div
+                  key={mod.id}
+                  onClick={() => toggleModuleCode(mod.code)}
+                  className={`rounded-sm border p-4 space-y-3 flex flex-col justify-between transition-all cursor-pointer ${
+                    isChecked
+                      ? 'border-[#0D1F3D] bg-slate-50/70 shadow-2xs'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-white border border-slate-200 shadow-2xs font-bold text-indigo-600">
+                        <Layers className="h-4 w-4" />
+                      </div>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={isChecked}
+                          onChange={() => toggleModuleCode(mod.code)}
+                          disabled={isMandatory}
+                        />
+                      </div>
                     </div>
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <Checkbox checked={mod.checked} onChange={() => toggleModule(idx)} />
-                    </div>
+                    <p className="text-xs font-extrabold text-[#0D1F3D] mb-1">{mod.name}</p>
+                    <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.description}</p>
                   </div>
-                  <p className="text-xs font-extrabold text-[#0D1F3D] mb-1">{mod.name}</p>
-                  <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.desc}</p>
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-2">
+                    <span className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-bold border ${
+                      isMandatory
+                        ? 'bg-purple-50 text-purple-700 border-purple-200'
+                        : 'bg-blue-50 text-blue-700 border-blue-200'
+                    }`}>
+                      {isMandatory ? 'Plan Mandatory' : mod.category}
+                    </span>
+                    <span className="text-[11px] font-extrabold text-slate-700">
+                      {mod.monthlyPrice === 0 ? 'Included' : `₹${mod.monthlyPrice} / mo`}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-2">
-                  <span className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-bold border ${
-                    mod.tag === 'Core Included'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : 'bg-blue-50 text-blue-700 border-blue-200'
-                  }`}>
-                    {mod.tag}
-                  </span>
-                  <span className="text-[11px] font-extrabold text-slate-700">{mod.price}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
         <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-4">
-          <div className="flex items-center gap-6 text-xs font-bold text-slate-600">
-            <span>Core Modules: <strong className="text-[#0D1F3D]">2 / 2 Active</strong></span>
-            <span>Add-on Modules: <strong className="text-[#0D1F3D]">{enabledCount - 2} / 6 Active</strong></span>
-          </div>
+          <span className="text-xs font-bold text-slate-600">
+            Selected Plan Mandatory Modules: <strong className="text-[#0D1F3D]">{mandatoryCodes.length}</strong>
+          </span>
           <span className="rounded-sm bg-purple-100 px-3 py-1 text-xs font-extrabold text-purple-700 border border-purple-200">
-            Total Active Modules: {enabledCount} / 8
+            Total Selected Modules: {formState.selectedModuleCodes.length} / {PLATFORM_MODULES.length}
           </span>
         </div>
       </div>
@@ -1083,20 +848,28 @@ function Step5Modules() {
 function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number) => void }) {
   const { formState } = useTenantCreation();
 
+  const selectedIndustry = PLATFORM_INDUSTRIES.find((i) => i.id === formState.industryId) || PLATFORM_INDUSTRIES[0];
+  const selectedPlan = PLATFORM_PLANS.find((p) => p.id === formState.planId) || PLATFORM_PLANS[0];
+
+  const priceResult = calculatePlanPrice({
+    plan: selectedPlan,
+    billingCycle: formState.billingCycle,
+    userLicensesCount: formState.userLicensesCount,
+  });
+
+  const selectedModuleNames = PLATFORM_MODULES.filter((m) => formState.selectedModuleCodes.includes(m.code)).map(
+    (m) => m.name
+  );
+
   return (
     <div className="space-y-6 font-sans">
-      {/* Top Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
         <div>
-          <h3 className="text-lg font-extrabold text-[#0D1F3D]">Review & Confirm</h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">Please review all details before creating the tenant. You can go back and edit any section if needed.</p>
+          <h3 className="text-lg font-extrabold text-[#0D1F3D]">Review & Confirm Details</h3>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">Please review all configuration fields derived from canonical fixtures before submitting.</p>
         </div>
-        <Button variant="outline" size="sm" className="gap-2 font-bold text-slate-700">
-          <Download className="h-4 w-4 text-slate-400" /> Download Summary
-        </Button>
       </div>
 
-      {/* 2x2 Grid for Steps 1-4 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Card 1: Company Details */}
         <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-4 shadow-xs">
@@ -1122,32 +895,16 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
               <span className="font-extrabold text-[#0D1F3D]">{formState.companyName || '—'}</span>
             </div>
             <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Email</span>
-              <span className="font-semibold text-slate-700">{formState.billingContactEmail || formState.adminEmail || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Legal Name</span>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Legal Entity</span>
               <span className="font-semibold text-slate-700">{formState.legalEntityName || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Phone</span>
-              <span className="font-semibold text-slate-700">{formState.adminPhone ? `+91 ${formState.adminPhone}` : '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Tenant Code</span>
               <span className="font-mono font-bold text-slate-800">{formState.slug || '—'}</span>
             </div>
             <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Country</span>
-              <span className="font-semibold text-slate-700">{formState.country || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Website</span>
-              <span className="font-semibold text-slate-700 break-all">{formState.website || formState.domain || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">City</span>
-              <span className="font-semibold text-slate-700">{formState.city && formState.state ? `${formState.city}, ${formState.state}` : formState.city || formState.state || '—'}</span>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Country & City</span>
+              <span className="font-semibold text-slate-700">{formState.city ? `${formState.city}, ${formState.country}` : formState.country}</span>
             </div>
           </div>
         </div>
@@ -1172,40 +929,16 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
 
           <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-medium">
             <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Industry</span>
-              <span className="font-extrabold text-[#0D1F3D]">{formState.industryId || 'Pharma & Healthcare'}</span>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Industry Label</span>
+              <span className="font-extrabold text-[#0D1F3D]">{selectedIndustry.label}</span>
             </div>
             <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Operating Countries</span>
-              <span className="font-semibold text-slate-700">{formState.operatingCountries || '—'}</span>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Canonical ID</span>
+              <span className="font-mono font-bold text-slate-800">{selectedIndustry.id}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Business Size</span>
-              <span className="font-semibold text-slate-700">{formState.companySize || 'Medium (51 - 250 employees)'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Number of Branches / Locations</span>
-              <span className="font-semibold text-slate-700">{formState.branchCount || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Years in Business</span>
-              <span className="font-semibold text-slate-700">{formState.yearsInBusiness || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Preferred Currency</span>
-              <span className="font-semibold text-slate-700">{formState.currency || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Business Model</span>
-              <span className="font-semibold text-slate-700">{formState.businessModel || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Preferred Language</span>
-              <span className="font-semibold text-slate-700">{formState.preferredLanguage || '—'}</span>
-            </div>
-            <div className="col-span-2 pt-1 border-t border-slate-100">
-              <span className="text-slate-400 text-[11px] block mb-0.5">Short Description</span>
-              <span className="font-medium text-slate-600 text-[11px]">{formState.description || '—'}</span>
+              <span className="font-semibold text-slate-700">{formState.companySize}</span>
             </div>
           </div>
         </div>
@@ -1217,7 +950,7 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
               <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-blue-50 text-blue-600 border border-blue-100 font-bold">
                 <User className="h-4 w-4" />
               </span>
-              <h4 className="text-sm font-extrabold text-[#0D1F3D]">Administrator</h4>
+              <h4 className="text-sm font-extrabold text-[#0D1F3D]">Administrator Account</h4>
             </div>
             <button
               type="button"
@@ -1230,36 +963,12 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
 
           <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-medium">
             <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Full Name</span>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Admin Full Name</span>
               <span className="font-extrabold text-[#0D1F3D]">{formState.adminFullName || '—'}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Email</span>
               <span className="font-semibold text-slate-700">{formState.adminEmail || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Username</span>
-              <span className="font-semibold text-slate-700">{formState.adminUsername || formState.adminEmail || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Phone</span>
-              <span className="font-semibold text-slate-700">{formState.adminPhone ? `+91 ${formState.adminPhone}` : '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Designation</span>
-              <span className="font-semibold text-slate-700">{formState.adminDesignation || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Time Zone</span>
-              <span className="font-semibold text-slate-700">{formState.adminTimezone || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Department</span>
-              <span className="font-semibold text-slate-700">{formState.adminDepartment || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Language</span>
-              <span className="font-semibold text-slate-700">{formState.adminLanguage || '—'}</span>
             </div>
           </div>
         </div>
@@ -1271,7 +980,7 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
               <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-amber-50 text-amber-600 border border-amber-100 font-bold">
                 <CreditCard className="h-4 w-4" />
               </span>
-              <h4 className="text-sm font-extrabold text-[#0D1F3D]">Plan & Subscription</h4>
+              <h4 className="text-sm font-extrabold text-[#0D1F3D]">Plan & Provisioning</h4>
             </div>
             <button
               type="button"
@@ -1284,52 +993,31 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
 
           <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-xs font-medium">
             <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Plan</span>
-              <span className="font-extrabold text-[#0D1F3D]">{formState.planId ? `${formState.planId.charAt(0).toUpperCase() + formState.planId.slice(1)} (${formState.billingCycle || 'Yearly'})` : '—'}</span>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Plan Name</span>
+              <span className="font-extrabold text-[#0D1F3D]">{selectedPlan.name}</span>
             </div>
             <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Subscription Start Date</span>
-              <span className="font-semibold text-slate-700">{formState.subscriptionStartDate || '—'}</span>
+              <span className="text-slate-400 text-[11px] block mb-0.5">User Licenses</span>
+              <span className="font-semibold text-slate-700">{formState.userLicensesCount} seats</span>
             </div>
             <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Billing Cycle</span>
-              <span className="font-semibold text-slate-700">{formState.billingCycle || '—'}</span>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Provisioning Type</span>
+              <span className="font-semibold text-slate-700">{formState.provisioningType}</span>
             </div>
             <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Auto Renew</span>
-              <span className="inline-flex items-center gap-1 text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-sm border border-emerald-200 text-[10px]">
-                <Check className="h-3 w-3" /> Enabled
-              </span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Users / Seats Limit</span>
-              <span className="font-semibold text-slate-700">{formState.seatLimit || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Trial Period</span>
-              <span className="font-semibold text-slate-700">{formState.trialDurationDays} Days</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Storage Limit</span>
-              <span className="font-semibold text-slate-700">{formState.storageLimit || '—'}</span>
-            </div>
-            <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Grace Period</span>
-              <span className="font-semibold text-slate-700">7 Days</span>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Collection Method</span>
+              <span className="font-semibold text-slate-700">{formState.paymentCollectionMethod}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Full Width Card 5: Modules */}
-      <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-4 shadow-xs">
+      {/* Modules List Card */}
+      <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 border border-emerald-100 font-bold">
-              <Layers className="h-4 w-4" />
-            </span>
-            <h4 className="text-sm font-extrabold text-[#0D1F3D]">Modules</h4>
-          </div>
+          <h4 className="text-sm font-extrabold text-[#0D1F3D]">
+            Selected Modules ({formState.selectedModuleCodes.length})
+          </h4>
           <button
             type="button"
             onClick={() => onNavigateStep(5)}
@@ -1339,73 +1027,52 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs">
-          <div>
-            <p className="font-extrabold text-[#0D1F3D] mb-2.5">Core Modules (5)</p>
-            <ul className="space-y-2 font-medium text-slate-700">
-              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Jobs & Work Management</li>
-              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Field Workforce</li>
-              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Attendance & Time Tracking</li>
-              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Forms & Surveys</li>
-              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Photos & Documents</li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="font-extrabold text-[#0D1F3D] mb-2.5">Advanced Modules (4)</p>
-            <ul className="space-y-2 font-medium text-slate-700">
-              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Reports & Analytics</li>
-              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Task Management</li>
-              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Notifications</li>
-              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Chat & Messaging</li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="font-extrabold text-[#0D1F3D] mb-2.5">Integrations (1)</p>
-            <ul className="space-y-2 font-medium text-slate-700">
-              <li className="flex items-center gap-2"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> GPS & Location Tracking</li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between border-t border-slate-100 pt-3 mt-3">
-          <span className="text-xs font-bold text-slate-600">Total Enabled Modules</span>
-          <span className="rounded-sm bg-purple-100 px-3 py-1 text-xs font-extrabold text-purple-700 border border-purple-200">
-            10 Modules
-          </span>
+        <div className="flex flex-wrap gap-2 text-xs">
+          {selectedModuleNames.map((name) => (
+            <span
+              key={name}
+              className="inline-flex items-center gap-1.5 rounded-sm bg-slate-100 px-2.5 py-1 font-semibold text-slate-700 border border-slate-200"
+            >
+              <Check className="h-3.5 w-3.5 text-emerald-600" /> {name}
+            </span>
+          ))}
         </div>
       </div>
 
-      {/* Full Width Card 6: Subscription Cost (Yearly) */}
+      {/* Dynamic Subscription Cost Card */}
       <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-4 shadow-xs">
         <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
           <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-50 text-purple-600 border border-purple-100 font-bold">
             <CreditCard className="h-4 w-4" />
           </span>
-          <h4 className="text-sm font-extrabold text-[#0D1F3D]">Subscription Cost (Yearly)</h4>
+          <h4 className="text-sm font-extrabold text-[#0D1F3D]">Estimated Subscription Cost Summary</h4>
         </div>
 
         <div className="space-y-2 text-xs">
           <div className="flex items-center justify-between text-slate-600 font-medium">
-            <span>Plan Amount</span>
-            <span className="font-extrabold text-[#0D1F3D]">₹3,59,988</span>
+            <span>Price Per User ({formState.billingCycle})</span>
+            <span className="font-extrabold text-[#0D1F3D]">₹{priceResult.pricePerUser.toLocaleString('en-IN')} / mo</span>
           </div>
 
           <div className="flex items-center justify-between text-slate-600 font-medium">
-            <span>Taxes (18%)</span>
-            <span className="font-extrabold text-[#0D1F3D]">₹64,798</span>
+            <span>Monthly Total ({formState.userLicensesCount} users)</span>
+            <span className="font-extrabold text-[#0D1F3D]">₹{priceResult.monthlyTotal.toLocaleString('en-IN')}</span>
+          </div>
+
+          <div className="flex items-center justify-between text-slate-600 font-medium">
+            <span>Annual Subtotal</span>
+            <span className="font-extrabold text-[#0D1F3D]">₹{priceResult.annualTotal.toLocaleString('en-IN')}</span>
+          </div>
+
+          <div className="flex items-center justify-between text-slate-600 font-medium">
+            <span>Estimated Taxes (18%)</span>
+            <span className="font-extrabold text-[#0D1F3D]">₹{priceResult.estimatedTax.toLocaleString('en-IN')}</span>
           </div>
 
           <div className="border-t border-slate-200 pt-3 flex items-center justify-between">
-            <span className="text-sm font-extrabold text-[#0D1F3D]">Total (Yearly)</span>
-            <span className="text-xl font-extrabold text-indigo-600">₹4,24,786</span>
+            <span className="text-sm font-extrabold text-[#0D1F3D]">Grand Total</span>
+            <span className="text-xl font-extrabold text-indigo-600">₹{priceResult.finalGrandTotal.toLocaleString('en-IN')}</span>
           </div>
-        </div>
-
-        <div className="rounded-sm bg-emerald-50 p-3 border border-emerald-200 text-xs text-emerald-800 font-semibold flex items-center gap-2">
-          <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-          <span>All amounts are in INR. Taxes are calculated as per applicable rates.</span>
         </div>
       </div>
     </div>
@@ -1414,61 +1081,160 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
 
 function CreateTenantWizardInner() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const isEditMode = searchParams.get('edit') === 'true' || Boolean(searchParams.get('tenantId'));
-  
-  const [currentStep, setCurrentStep] = useState(1);
-  const { formState, saveDraft, submitTenant, loadTenantForEdit } = useTenantCreation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tenantIdParam = searchParams.get('tenantId');
+  const stepParam = searchParams.get('step');
+  const isEditMode = Boolean(tenantIdParam);
 
+  const {
+    currentStep,
+    setCurrentStep,
+    formState,
+    saveDraft,
+    submitTenant,
+    loadTenantForEdit,
+    isDirty,
+    resetForm,
+  } = useTenantCreation();
+
+  const [loadingTenant, setLoadingTenant] = useState(false);
+  const [tenantNotFound, setTenantNotFound] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+
+  // Sync step from query param if available
   useEffect(() => {
-    if (isEditMode) {
-      loadTenantForEdit({
-        companyName: 'Sunrise Healthcare Pvt Ltd',
-        domain: 'srhc-tnt.smartfieldwork.com',
-        industryLabel: 'Pharma & Healthcare',
-        adminUser: {
-          fullName: 'Rahul Sharma',
-          email: 'rahul.sharma@sunrisehealthcare.com',
-        },
-      });
+    if (stepParam && STEP_PARAM_MAP[stepParam]) {
+      setCurrentStep(STEP_PARAM_MAP[stepParam]);
     }
-  }, [isEditMode]);
+  }, [stepParam, setCurrentStep]);
+
+  // If in edit mode, fetch tenant by target ID
+  useEffect(() => {
+    if (tenantIdParam) {
+      setLoadingTenant(true);
+      tenantService
+        .getTenantById(tenantIdParam)
+        .then((found) => {
+          if (found) {
+            loadTenantForEdit(found);
+            setTenantNotFound(false);
+          } else {
+            setTenantNotFound(true);
+          }
+        })
+        .catch(() => setTenantNotFound(true))
+        .finally(() => setLoadingTenant(false));
+    }
+  }, [tenantIdParam]);
+
+  const updateStepInUrl = (stepNum: number) => {
+    setCurrentStep(stepNum);
+    const stepName = STEP_NUM_MAP[stepNum] || 'company';
+    const newParams: Record<string, string> = { step: stepName };
+    if (tenantIdParam) newParams.tenantId = tenantIdParam;
+    setSearchParams(newParams);
+  };
 
   const handleNext = () => {
-    if (currentStep === 1 && !formState.companyName) {
-      toast.error('Please enter company name to continue');
-      return;
+    if (currentStep === 1) {
+      if (!formState.companyName.trim()) {
+        toast.error('Please enter Company Name to continue');
+        return;
+      }
+      if (!formState.slug.trim()) {
+        toast.error('Please enter Tenant Code to continue');
+        return;
+      }
     }
-    setCurrentStep(Math.min(6, currentStep + 1));
+
+    if (currentStep === 2) {
+      if (!formState.industryId) {
+        toast.error('Please select an Industry to continue');
+        return;
+      }
+    }
+
+    if (currentStep === 3) {
+      if (!formState.adminFullName.trim() || !formState.adminEmail.trim()) {
+        toast.error('Please enter Administrator Name and Email to continue');
+        return;
+      }
+      if (formState.adminPassword && formState.adminPassword !== formState.adminConfirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+    }
+
+    updateStepInUrl(Math.min(6, currentStep + 1));
   };
 
   const handleFinish = async () => {
-    const created = await submitTenant();
-    toast.success(
-      isEditMode
-        ? `Tenant ${formState.companyName} updated successfully!`
-        : `Tenant ${created?.companyName || formState.companyName} created successfully!`
-    );
-    navigate('/platform/tenants');
+    try {
+      const result = await submitTenant();
+      toast.success(
+        isEditMode
+          ? `Tenant '${result?.companyName || formState.companyName}' updated successfully!`
+          : `Tenant '${result?.companyName || formState.companyName}' created successfully!`
+      );
+      resetForm();
+      navigate('/platform/tenants');
+    } catch {
+      toast.error('Failed to save tenant');
+    }
   };
 
+  const handleCancel = () => {
+    if (isDirty) {
+      setShowCancelConfirm(true);
+    } else {
+      resetForm();
+      navigate('/platform/tenants');
+    }
+  };
+
+  if (loadingTenant) {
+    return (
+      <div className="p-12 text-center text-slate-500 font-sans">
+        <div className="inline-block animate-spin h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full mb-2" />
+        <p className="text-xs font-semibold">Loading tenant details...</p>
+      </div>
+    );
+  }
+
+  if (tenantNotFound) {
+    return (
+      <div className="p-12 text-center text-slate-700 font-sans max-w-md mx-auto space-y-4">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+          <AlertTriangle className="h-6 w-6" />
+        </div>
+        <h2 className="text-lg font-extrabold text-[#0D1F3D]">Edit Target Not Found</h2>
+        <p className="text-xs text-slate-500 font-medium">
+          This tenant could not be found or may no longer be available for editing.
+        </p>
+        <Button variant="accent" size="sm" onClick={() => navigate('/platform/tenants')} className="w-full font-bold justify-center">
+          Back to All Tenants
+        </Button>
+      </div>
+    );
+  }
+
   const stepsList = [
-    { num: 1, label: 'Company Details', desc: 'Basic company information' },
-    { num: 2, label: 'Industry & Profile', desc: 'Industry and business profile' },
-    { num: 3, label: 'Administrator', desc: 'Primary admin details' },
-    { num: 4, label: 'Plan & Subscription', desc: 'Choose plan and limits' },
-    { num: 5, label: 'Modules', desc: 'Enable modules' },
-    { num: 6, label: 'Review & Confirm', desc: 'Review and confirm' },
+    { num: 1, label: 'Company Details', desc: 'Basic info & code' },
+    { num: 2, label: 'Industry & Profile', desc: 'Canonical registry' },
+    { num: 3, label: 'Administrator', desc: 'Primary contact' },
+    { num: 4, label: 'Plan & Subscription', desc: 'PLATFORM_PLANS' },
+    { num: 5, label: 'Modules', desc: 'Module selection' },
+    { num: 6, label: 'Review & Confirm', desc: 'Review & submit' },
   ];
 
   return (
     <div className="space-y-6 font-sans pb-16">
-      {/* Page Top Header Bar */}
+      {/* Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-extrabold text-[#0D1F3D]">
-              {isEditMode ? `Edit Tenant — ${formState.companyName || 'Sunrise Healthcare Pvt Ltd'}` : 'Create Tenant'}
+              {isEditMode ? `Edit Tenant — ${formState.companyName || 'Loading...'}` : 'Create Tenant'}
             </h1>
             <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
               <Layers className="h-4 w-4" />
@@ -1482,228 +1248,243 @@ function CreateTenantWizardInner() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => navigate('/platform/tenants')} className="font-bold text-slate-700">
+          <Button variant="outline" size="sm" onClick={handleCancel} className="font-bold text-slate-700">
             Cancel
           </Button>
-          <Button variant="accent" size="sm" onClick={async () => { await saveDraft(); toast.success('Saved as draft'); }} className="gap-2 font-bold shadow-xs">
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={async () => {
+              await saveDraft();
+              toast.success('Saved as draft');
+            }}
+            className="gap-2 font-bold shadow-xs"
+          >
             <Save className="h-4 w-4" /> Save as Draft
           </Button>
         </div>
       </div>
 
-        {/* 6 Step Progress Tracker Bar */}
-        <div className="rounded-sm border border-slate-200 bg-white p-3.5 shadow-xs">
-          <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-center">
-            {stepsList.map((step) => {
-              const isActive = currentStep === step.num;
-              const isDone = currentStep > step.num;
+      {/* 6 Step Stepper Bar */}
+      <div className="rounded-sm border border-slate-200 bg-white p-3.5 shadow-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-center">
+          {stepsList.map((step) => {
+            const isActive = currentStep === step.num;
+            const isDone = currentStep > step.num;
 
-              return (
+            return (
+              <div
+                key={step.num}
+                onClick={() => updateStepInUrl(step.num)}
+                className={`flex items-center gap-2.5 p-2.5 rounded-sm cursor-pointer transition-all ${
+                  isActive
+                    ? 'bg-slate-50 border border-slate-300 shadow-2xs'
+                    : isDone
+                    ? 'hover:bg-slate-50/80'
+                    : 'hover:bg-slate-50/60 opacity-80'
+                }`}
+              >
                 <div
-                  key={step.num}
-                  onClick={() => setCurrentStep(step.num)}
-                  className={`flex items-center gap-2.5 p-2.5 rounded-sm cursor-pointer transition-all ${
-                    isActive
-                      ? 'bg-slate-50 border border-slate-300 shadow-2xs'
-                      : isDone
-                      ? 'hover:bg-slate-50/80'
-                      : 'hover:bg-slate-50/60 opacity-80'
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold transition-all ${
+                    isDone
+                      ? 'bg-emerald-600 text-white shadow-2xs'
+                      : isActive
+                      ? 'bg-[#0D1F3D] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-500 border border-slate-200'
                   }`}
                 >
-                  <div
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-extrabold transition-all ${
-                      isDone
-                        ? 'bg-emerald-600 text-white shadow-2xs'
-                        : isActive
-                        ? 'bg-[#0D1F3D] text-white shadow-xs'
-                        : 'bg-slate-100 text-slate-500 border border-slate-200'
+                  {isDone ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : step.num}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={`text-xs truncate transition-colors ${
+                      isActive
+                        ? 'font-extrabold text-[#0D1F3D]'
+                        : isDone
+                        ? 'font-bold text-slate-800'
+                        : 'font-semibold text-slate-500'
                     }`}
                   >
-                    {isDone ? <Check className="h-3.5 w-3.5 stroke-[3]" /> : step.num}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className={`text-xs truncate transition-colors ${
-                        isActive
-                          ? 'font-extrabold text-[#0D1F3D]'
-                          : isDone
-                          ? 'font-bold text-slate-800'
-                          : 'font-semibold text-slate-500'
-                      }`}
-                    >
-                      {step.label}
-                    </p>
-                    <p className="text-[10px] text-slate-400 font-medium truncate">{step.desc}</p>
-                  </div>
+                    {step.label}
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-medium truncate">{step.desc}</p>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Step Content Layout + Right Summary Card */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
-          <div className="lg:col-span-8 space-y-6">
-            {currentStep === 1 && <Step1CompanyDetails />}
-            {currentStep === 2 && <Step2IndustryProfile />}
-            {currentStep === 3 && <Step3Administrator />}
-            {currentStep === 4 && <Step4PlanSubscription />}
-            {currentStep === 5 && <Step5Modules />}
-            {currentStep === 6 && <Step6ReviewConfirm onNavigateStep={(step) => setCurrentStep(step)} />}
+      {/* Main Grid Layout */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
+        <div className="lg:col-span-8 space-y-6">
+          {currentStep === 1 && <Step1CompanyDetails />}
+          {currentStep === 2 && <Step2IndustryProfile />}
+          {currentStep === 3 && <Step3Administrator />}
+          {currentStep === 4 && <Step4PlanSubscription />}
+          {currentStep === 5 && <Step5Modules />}
+          {currentStep === 6 && <Step6ReviewConfirm onNavigateStep={(step) => updateStepInUrl(step)} />}
 
-            {/* Bottom Action Navigation Footer */}
-            <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
+          {/* Navigation Actions Footer */}
+          <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
+            <Button variant="outline" size="sm" onClick={handleCancel} className="font-bold text-slate-700">
+              Cancel
+            </Button>
+
+            <div className="flex items-center gap-3">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate('/platform/tenants')}
-                className="font-bold text-slate-700"
+                disabled={currentStep === 1}
+                onClick={() => updateStepInUrl(Math.max(1, currentStep - 1))}
+                className="gap-2 font-bold text-slate-700"
               >
-                Cancel
+                <ChevronLeft className="h-4 w-4" /> Previous
               </Button>
 
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={currentStep === 1}
-                  onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-                  className="gap-2 font-bold text-slate-700"
-                >
-                  <ChevronLeft className="h-4 w-4" /> Previous
+              {currentStep < 6 ? (
+                <Button variant="accent" size="sm" onClick={handleNext} className="gap-2 font-extrabold shadow-xs px-6">
+                  Next <ArrowRight className="h-4 w-4" />
                 </Button>
-
-                {currentStep < 6 ? (
-                  <Button variant="accent" size="sm" onClick={handleNext} className="gap-2 font-extrabold shadow-xs px-6">
-                    Next <ArrowRight className="h-4 w-4" />
-                  </Button>
-                ) : (
-                  <Button variant="accent" size="sm" onClick={handleFinish} className="gap-2 font-extrabold shadow-xs px-6 bg-indigo-600 hover:bg-indigo-700 text-white">
-                    <CheckCircle className="h-4 w-4" /> {isEditMode ? 'Update Tenant Details' : 'Create Tenant'}
-                  </Button>
-                )}
-              </div>
+              ) : (
+                <Button
+                  variant="accent"
+                  size="sm"
+                  onClick={handleFinish}
+                  className="gap-2 font-extrabold shadow-xs px-6 bg-indigo-600 hover:bg-indigo-700 text-white"
+                >
+                  <CheckCircle className="h-4 w-4" /> {isEditMode ? 'Update Tenant Details' : 'Create Tenant'}
+                </Button>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* Right Live Summary Panel */}
-          <div className="lg:col-span-4 space-y-4">
-            <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-sans">
-              <h3 className="text-base font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">
-                Tenant Creation Summary
-              </h3>
+        {/* Right Live Summary Panel */}
+        <div className="lg:col-span-4 space-y-4">
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-sans">
+            <h3 className="text-base font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">
+              Tenant Summary
+            </h3>
 
-              <div className="space-y-3.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-50 text-purple-600 font-bold border border-purple-100"><Building2 className="h-4 w-4" /></span>
-                    <div>
-                      <p className="font-extrabold text-[#0D1F3D]">Company</p>
-                      <p className="text-[11px] text-slate-500 font-medium">{formState.companyName || 'Sunrise Healthcare Pvt Ltd'}</p>
-                    </div>
+            <div className="space-y-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-50 text-purple-600 font-bold border border-purple-100">
+                    <Building2 className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-extrabold text-[#0D1F3D]">Company</p>
+                    <p className="text-[11px] text-slate-500 font-medium">{formState.companyName || '—'}</p>
                   </div>
-                  {currentStep === 6 ? (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" /></span>
-                  ) : (
-                    <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => setCurrentStep(1)} />
-                  )}
                 </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 font-bold border border-emerald-100"><Globe className="h-4 w-4" /></span>
-                    <div>
-                      <p className="font-extrabold text-[#0D1F3D]">Industry</p>
-                      <p className="text-[11px] text-slate-500 font-medium">{formState.industryId || 'Pharma & Healthcare'}</p>
-                    </div>
-                  </div>
-                  {currentStep === 6 ? (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" /></span>
-                  ) : (
-                    <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => setCurrentStep(2)} />
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-blue-50 text-blue-600 font-bold border border-blue-100"><User className="h-4 w-4" /></span>
-                    <div>
-                      <p className="font-extrabold text-[#0D1F3D]">Administrator</p>
-                      <p className="text-[11px] text-slate-500 font-medium">{formState.adminFullName || 'Rahul Sharma'}</p>
-                    </div>
-                  </div>
-                  {currentStep === 6 ? (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" /></span>
-                  ) : (
-                    <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => setCurrentStep(3)} />
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-amber-50 text-amber-600 font-bold border border-amber-100"><CreditCard className="h-4 w-4" /></span>
-                    <div>
-                      <p className="font-extrabold text-[#0D1F3D]">Plan & Subscription</p>
-                      <p className="text-[11px] text-slate-500 font-medium">{formState.planId || 'Professional (Yearly)'}</p>
-                    </div>
-                  </div>
-                  {currentStep === 6 ? (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" /></span>
-                  ) : (
-                    <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => setCurrentStep(4)} />
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-50 text-purple-600 font-bold border border-purple-100"><Layers className="h-4 w-4" /></span>
-                    <div>
-                      <p className="font-extrabold text-[#0D1F3D]">Modules</p>
-                      <p className="text-[11px] text-slate-500 font-medium">10 modules selected</p>
-                    </div>
-                  </div>
-                  {currentStep === 6 ? (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white"><Check className="h-3 w-3" /></span>
-                  ) : (
-                    <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => setCurrentStep(5)} />
-                  )}
-                </div>
-
-                {currentStep === 6 && (
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-indigo-50 text-indigo-600 font-bold border border-indigo-100"><Shield className="h-4 w-4" /></span>
-                      <div>
-                        <p className="font-extrabold text-[#0D1F3D]">Review & Confirm</p>
-                        <p className="text-[11px] text-slate-500 font-medium">Ready to create</p>
-                      </div>
-                    </div>
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white font-extrabold text-[10px]">6</span>
-                  </div>
-                )}
+                <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => updateStepInUrl(1)} />
               </div>
 
-              {/* Ready to create tenant? box */}
-              <div className="rounded-sm bg-[#F4F0FF] p-5 border border-purple-100 space-y-3">
-                <p className="font-extrabold text-purple-950 text-xs flex items-center gap-1.5">
-                  <Sparkles className="h-4 w-4 text-purple-600" /> {currentStep === 6 ? 'Ready to create tenant?' : 'What happens next?'}
-                </p>
-                <p className="text-[11px] text-purple-900 font-medium">
-                  {currentStep === 6
-                    ? 'Once you create the tenant, the administrator will receive an email with workspace access details.'
-                    : 'After creating the tenant, you will be able to:'}
-                </p>
-                <ul className="space-y-1.5 text-[11px] text-purple-900 font-medium">
-                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Tenant workspace will be provisioned</li>
-                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> Administrator will be notified via email</li>
-                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> You can start onboarding users</li>
-                  <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> You can manage settings anytime</li>
-                </ul>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 font-bold border border-emerald-100">
+                    <Globe className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-extrabold text-[#0D1F3D]">Industry</p>
+                    <p className="text-[11px] text-slate-500 font-medium">{formState.industryId || 'ind_pharma'}</p>
+                  </div>
+                </div>
+                <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => updateStepInUrl(2)} />
               </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-blue-50 text-blue-600 font-bold border border-blue-100">
+                    <User className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-extrabold text-[#0D1F3D]">Administrator</p>
+                    <p className="text-[11px] text-slate-500 font-medium">{formState.adminFullName || '—'}</p>
+                  </div>
+                </div>
+                <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => updateStepInUrl(3)} />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-amber-50 text-amber-600 font-bold border border-amber-100">
+                    <CreditCard className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-extrabold text-[#0D1F3D]">Plan</p>
+                    <p className="text-[11px] text-slate-500 font-medium">{formState.planId}</p>
+                  </div>
+                </div>
+                <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => updateStepInUrl(4)} />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-50 text-purple-600 font-bold border border-purple-100">
+                    <Layers className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-extrabold text-[#0D1F3D]">Selected Modules</p>
+                    <p className="text-[11px] text-slate-500 font-medium">{formState.selectedModuleCodes.length} modules selected</p>
+                  </div>
+                </div>
+                <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => updateStepInUrl(5)} />
+              </div>
+            </div>
+
+            <div className="rounded-sm bg-[#F4F0FF] p-4 border border-purple-100 space-y-2">
+              <p className="font-extrabold text-purple-950 text-xs flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-purple-600" /> Canonical Fixtures Guard
+              </p>
+              <p className="text-[11px] text-purple-900 font-medium leading-relaxed">
+                All values originate from canonical PLATFORM_PLANS, PLATFORM_INDUSTRIES, and PLATFORM_MODULES.
+              </p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Unsaved Changes Warning Modal */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="w-full max-w-sm rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 font-sans text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-[#0D1F3D]">Unsaved Changes</h3>
+              <p className="text-xs text-slate-500 font-medium mt-1">
+                You have unsaved changes in the wizard. Are you sure you want to discard them and leave?
+              </p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCancelConfirm(false)}
+                className="flex-1 font-bold justify-center"
+              >
+                Keep Editing
+              </Button>
+              <Button
+                variant="accent"
+                size="sm"
+                onClick={() => {
+                  setShowCancelConfirm(false);
+                  resetForm();
+                  navigate('/platform/tenants');
+                }}
+                className="flex-1 font-bold bg-rose-600 hover:bg-rose-700 text-white justify-center"
+              >
+                Discard Changes
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

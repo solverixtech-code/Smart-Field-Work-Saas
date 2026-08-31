@@ -71,6 +71,9 @@ export function TenantModulesPage() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [modules, setModules] = useState<ModuleItem[]>([]);
 
+  const [draftModuleCodes, setDraftModuleCodes] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+
   const setTab = (tab: string) => {
     setSearchParams({ tab });
   };
@@ -80,6 +83,7 @@ export function TenantModulesPage() {
       tenantService.getTenantById(tenantId).then((t) => {
         if (t) {
           setTenant(t);
+          setDraftModuleCodes(t.enabledModuleCodes || []);
           const mappedModules: ModuleItem[] = PLATFORM_MODULES.map((pm) => {
             const iconMeta = MODULE_ICONS[pm.code] || { icon: Layers, iconBg: "bg-slate-100", iconColor: "text-slate-600" };
             const category: "core" | "advanced" | "integrations" =
@@ -102,29 +106,62 @@ export function TenantModulesPage() {
     }
   }, [tenantId]);
 
-  const toggleModule = async (id: string) => {
-    if (!tenant) return;
+  const toggleModule = (id: string) => {
     const targetModule = modules.find((m) => m.id === id);
     if (!targetModule) return;
 
     const newEnabled = !targetModule.enabled;
     const updatedCodes = newEnabled
-      ? [...tenant.enabledModuleCodes, targetModule.code]
-      : tenant.enabledModuleCodes.filter((c) => c !== targetModule.code);
+      ? Array.from(new Set([...draftModuleCodes, targetModule.code]))
+      : draftModuleCodes.filter((c) => c !== targetModule.code);
 
+    setDraftModuleCodes(updatedCodes);
+    setModules((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, enabled: newEnabled } : m))
+    );
+  };
+
+  const handleSaveChanges = async () => {
+    if (!tenant) return;
+    setSaving(true);
     try {
-      const updatedTenant = await tenantService.updateTenant(tenant.id, {
-        enabledModuleCodes: updatedCodes,
-      });
+      const updatedTenant = await tenantService.updateTenantModules(tenant.id, draftModuleCodes);
       setTenant(updatedTenant);
-      setModules((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, enabled: newEnabled } : m))
-      );
-      toast.success(`Module '${targetModule.name}' ${newEnabled ? 'enabled' : 'disabled'}`);
+      toast.success("Tenant module entitlements saved successfully!");
     } catch {
-      toast.error("Failed to update module entitlement");
+      toast.error("Failed to save tenant modules");
+    } finally {
+      setSaving(false);
     }
   };
+
+  const isDirty = tenant
+    ? JSON.stringify([...draftModuleCodes].sort()) !== JSON.stringify([...tenant.enabledModuleCodes].sort())
+    : false;
+
+  if (!tenant) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center font-sans space-y-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+          <Info className="h-7 w-7" />
+        </div>
+        <div>
+          <h2 className="text-xl font-extrabold text-[#0D1F3D]">Tenant Not Found</h2>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            This tenant could not be found or may no longer be available.
+          </p>
+        </div>
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={() => navigate("/platform/tenants")}
+          className="font-bold px-6 shadow-xs"
+        >
+          Back to All Tenants
+        </Button>
+      </div>
+    );
+  }
 
   const filteredModules = modules.filter(
     (m) =>
@@ -237,10 +274,11 @@ export function TenantModulesPage() {
           <Button
             variant="accent"
             size="sm"
-            onClick={() => toast.success("Module changes saved successfully")}
-            className="gap-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
+            onClick={handleSaveChanges}
+            disabled={!isDirty || saving}
+            className="gap-2 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save className="h-4 w-4" /> Save Changes
+            <Save className="h-4 w-4" /> {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
