@@ -43,6 +43,7 @@ import {
 } from '../../features/platform/catalog/plans/utils/plan-validation.utils';
 import { planService } from '../../features/platform/catalog/plans/services/plan.service';
 import { Button } from '../../components/ui/Button';
+import { Checkbox } from '../../components/ui/Checkbox';
 
 const STEP_NUM_MAP: Record<number, string> = {
   1: 'basic',
@@ -742,39 +743,25 @@ function WizardContent() {
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-3">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="chk_monthly"
-                      checked={formState.pricing.allowMonthlyBilling}
-                      onChange={(e) =>
-                        updateFormState({
-                          pricing: { ...formState.pricing, allowMonthlyBilling: e.target.checked },
-                        })
-                      }
-                      className="h-4 w-4 rounded-xs border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <label htmlFor="chk_monthly" className="text-xs font-extrabold text-[#0D1F3D] cursor-pointer">
-                      Allow Monthly Billing Cycle
-                    </label>
-                  </div>
+                  <Checkbox
+                    checked={formState.pricing.allowMonthlyBilling}
+                    onChange={(checked) =>
+                      updateFormState({
+                        pricing: { ...formState.pricing, allowMonthlyBilling: checked },
+                      })
+                    }
+                    label={<span className="text-xs font-extrabold text-[#0D1F3D]">Allow Monthly Billing Cycle</span>}
+                  />
 
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="chk_annual"
-                      checked={formState.pricing.allowAnnualBilling}
-                      onChange={(e) =>
-                        updateFormState({
-                          pricing: { ...formState.pricing, allowAnnualBilling: e.target.checked },
-                        })
-                      }
-                      className="h-4 w-4 rounded-xs border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <label htmlFor="chk_annual" className="text-xs font-extrabold text-[#0D1F3D] cursor-pointer">
-                      Allow Annual Billing Cycle
-                    </label>
-                  </div>
+                  <Checkbox
+                    checked={formState.pricing.allowAnnualBilling}
+                    onChange={(checked) =>
+                      updateFormState({
+                        pricing: { ...formState.pricing, allowAnnualBilling: checked },
+                      })
+                    }
+                    label={<span className="text-xs font-extrabold text-[#0D1F3D]">Allow Annual Billing Cycle</span>}
+                  />
                 </div>
               </div>
             )}
@@ -996,21 +983,20 @@ function WizardContent() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 pt-2">
-                    <input
-                      type="checkbox"
-                      id="chk_fullexport"
+                  <div className="pt-2">
+                    <Checkbox
                       checked={formState.limits.fullDataExport ?? true}
-                      onChange={(e) =>
+                      onChange={(checked) =>
                         updateFormState({
-                          limits: { ...formState.limits, fullDataExport: e.target.checked },
+                          limits: { ...formState.limits, fullDataExport: checked },
                         })
                       }
-                      className="h-4 w-4 rounded-xs border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                      label={
+                        <span className="text-xs font-extrabold text-[#0D1F3D]">
+                          Allow Full Data Backup Export (CSV & Database Dump)
+                        </span>
+                      }
                     />
-                    <label htmlFor="chk_fullexport" className="text-xs font-extrabold text-[#0D1F3D] cursor-pointer">
-                      Allow Full Data Backup Export (CSV & Database Dump)
-                    </label>
                   </div>
                 </div>
               </div>
@@ -1107,12 +1093,11 @@ function WizardContent() {
                             </div>
                           </div>
 
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={isSelected}
                             disabled={isRequired}
                             onChange={() => {}}
-                            className="h-4 w-4 rounded-xs border-slate-300 text-indigo-600 focus:ring-indigo-500 mt-1 shrink-0 cursor-pointer"
+                            className="mt-1 shrink-0"
                           />
                         </div>
                       );
@@ -1136,22 +1121,19 @@ function WizardContent() {
                     Section A — Trial Settings
                   </h3>
 
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      id="chk_trial_enabled"
-                      checked={formState.commercialRules.trialEnabled}
-                      onChange={(e) =>
-                        updateFormState({
-                          commercialRules: { ...formState.commercialRules, trialEnabled: e.target.checked },
-                        })
-                      }
-                      className="h-4 w-4 rounded-xs border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <label htmlFor="chk_trial_enabled" className="text-xs font-extrabold text-[#0D1F3D] cursor-pointer">
-                      Enable Free Trial for New Tenants on This Plan
-                    </label>
-                  </div>
+                  <Checkbox
+                    checked={formState.commercialRules.trialEnabled}
+                    onChange={(checked) =>
+                      updateFormState({
+                        commercialRules: { ...formState.commercialRules, trialEnabled: checked },
+                      })
+                    }
+                    label={
+                      <span className="text-xs font-extrabold text-[#0D1F3D]">
+                        Enable Free Trial for New Tenants on This Plan
+                      </span>
+                    }
+                  />
 
                   {formState.commercialRules.trialEnabled && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
@@ -1283,39 +1265,33 @@ function WizardContent() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        id="chk_auto_renew"
-                        checked={formState.commercialRules.autoRenew}
-                        onChange={(e) =>
-                          updateFormState({
-                            commercialRules: { ...formState.commercialRules, autoRenew: e.target.checked },
-                          })
-                        }
-                        className="h-4 w-4 rounded-xs border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <label htmlFor="chk_auto_renew" className="text-xs font-extrabold text-[#0D1F3D] cursor-pointer">
-                        Auto-Renew Subscriptions by Default
-                      </label>
-                    </div>
+                    <Checkbox
+                      checked={formState.commercialRules.autoRenew}
+                      onChange={(checked) =>
+                        updateFormState({
+                          commercialRules: { ...formState.commercialRules, autoRenew: checked },
+                        })
+                      }
+                      label={
+                        <span className="text-xs font-extrabold text-[#0D1F3D]">
+                          Auto-Renew Subscriptions by Default
+                        </span>
+                      }
+                    />
 
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="checkbox"
-                        id="chk_allow_upgrade"
-                        checked={formState.commercialRules.allowUpgrade}
-                        onChange={(e) =>
-                          updateFormState({
-                            commercialRules: { ...formState.commercialRules, allowUpgrade: e.target.checked },
-                          })
-                        }
-                        className="h-4 w-4 rounded-xs border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <label htmlFor="chk_allow_upgrade" className="text-xs font-extrabold text-[#0D1F3D] cursor-pointer">
-                        Allow Self-Serve Upgrades
-                      </label>
-                    </div>
+                    <Checkbox
+                      checked={formState.commercialRules.allowUpgrade}
+                      onChange={(checked) =>
+                        updateFormState({
+                          commercialRules: { ...formState.commercialRules, allowUpgrade: checked },
+                        })
+                      }
+                      label={
+                        <span className="text-xs font-extrabold text-[#0D1F3D]">
+                          Allow Self-Serve Upgrades
+                        </span>
+                      }
+                    />
                   </div>
                 </div>
               </div>
