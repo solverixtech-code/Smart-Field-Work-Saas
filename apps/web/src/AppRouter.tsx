@@ -31,6 +31,7 @@ import { TenantModulesPage } from './screens/platform/TenantModulesPage';
 import { TenantUsersPage } from './screens/platform/TenantUsersPage';
 import { WorkspaceSettingsPage } from './screens/admin/settings/WorkspaceSettingsPage';
 import { PlansPricingPage } from './screens/platform/PlansPricingPage';
+import { CreatePlanWizardPage } from './screens/platform/CreatePlanWizardPage';
 import { AuditLogsPage } from './screens/platform/AuditLogsPage';
 import { TenantCreationProvider } from './features/platform/tenants/context/TenantCreationContext';
 import { PlatformAccessGuard } from './features/platform/auth/guards/PlatformAccessGuard';
@@ -773,6 +774,9 @@ export default function AppRouter() {
               </Route>
               <Route element={<PlatformAccessGuard requiredPermission="platform.plans.view" />}>
                 <Route path="/platform/plans" element={<PlansPricingPage />} />
+              </Route>
+              <Route element={<PlatformAccessGuard requiredPermission="platform.plans.create" />}>
+                <Route path="/platform/plans/create" element={<CreatePlanWizardPage />} />
               </Route>
               <Route path="/platform/modules" element={<PlatformPlaceholderPage title="Platform Modules Catalog" />} />
               <Route path="/platform/industries" element={<PlatformPlaceholderPage title="Industry Verticals" />} />

@@ -28,63 +28,28 @@ export const PLATFORM_INDUSTRIES: IndustryConfig[] = [
   { id: 'ind_saas', code: 'SOFTWARE_SAAS', label: 'Software & Cloud SaaS Services', category: 'Technology', description: 'Enterprise B2B account executives, client onboarding & renewals', defaultModules: ['core_crm', 'demo_scheduler', 'subscription_mgmt'] }
 ];
 
-export const PLATFORM_MODULES: PlatformModule[] = [
-  { id: 'mod_crm', code: 'core_crm', name: 'Core CRM & Lead Management', description: 'Lead capture, pipeline stages, lead assignment & auto-routing', category: 'Core', isAddon: false, monthlyPrice: 0 },
-  { id: 'mod_visits', code: 'field_visits', name: 'GPS Field Visit Tracking', description: 'Geofenced check-ins, route map playback, visit proof attachments', category: 'Field Ops', isAddon: false, monthlyPrice: 0 },
-  { id: 'mod_demos', code: 'demo_scheduler', name: 'Demo & Presentation Suite', description: 'Product demo scheduling, collateral playback, client sign-off', category: 'Sales', isAddon: true, monthlyPrice: 499 },
-  { id: 'mod_orders', code: 'order_management', name: 'Field Order Booking & Invoicing', description: 'Product catalog, primary/secondary order booking, tax invoice PDF', category: 'Sales', isAddon: true, monthlyPrice: 799 },
-  { id: 'mod_attendance', code: 'attendance_plus', name: 'Face AI & Geofence Attendance', description: 'Selfie biometric check-in, late arrival penalty rules, muster roll', category: 'Field Ops', isAddon: true, monthlyPrice: 399 },
-  { id: 'mod_payroll', code: 'payroll_engine', name: 'Field Executive Payroll & Payslips', description: 'Salary calculations, TA/DA allowances, incentive payouts, PDF payslip', category: 'Enterprise', isAddon: true, monthlyPrice: 999 },
-  { id: 'mod_whatsapp', code: 'whatsapp_automation', name: 'WhatsApp & Meta Lead Sync', description: 'Official WhatsApp Business API integration, auto-reply bots', category: 'Automation', isAddon: true, monthlyPrice: 1299 },
-  { id: 'mod_ai', code: 'ai_copilot', name: 'AI Sales Copilot & Target Coach', description: 'AI recommended next best action, churn prediction, automated summary', category: 'Automation', isAddon: true, monthlyPrice: 1499 },
-];
+import { CANONICAL_PLATFORM_MODULES } from '../../catalog/modules/fixtures/module.fixtures';
+import { CANONICAL_PLATFORM_PLANS } from '../../catalog/plans/fixtures/plan.fixtures';
 
-export const PLATFORM_PLANS: PlatformPlan[] = [
-  {
-    id: 'plan_starter',
-    code: 'STARTER',
-    name: 'Starter Field CRM',
-    tier: 'Starter',
-    monthlyPricePerUser: 499,
-    annualPricePerUser: 399,
-    minUsers: 5,
-    includedModules: ['core_crm', 'field_visits'],
-    features: ['Up to 15 Field Executives', 'GPS Geofenced Check-in', 'Standard Lead Pipeline', 'Basic Reports & Exports', 'Email Support']
-  },
-  {
-    id: 'plan_growth',
-    code: 'GROWTH',
-    name: 'Growth Field Automation',
-    tier: 'Growth',
-    monthlyPricePerUser: 899,
-    annualPricePerUser: 749,
-    minUsers: 10,
-    includedModules: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance_plus'],
-    features: ['Up to 50 Field Executives', 'Order Booking & Invoicing', 'Demo & Presentation Suite', 'Biometric Selfie Attendance', 'WhatsApp Lead Integration', 'Priority 24/7 Support']
-  },
-  {
-    id: 'plan_professional',
-    code: 'PROFESSIONAL',
-    name: 'Professional Field Suite',
-    tier: 'Professional',
-    monthlyPricePerUser: 1199,
-    annualPricePerUser: 999,
-    minUsers: 15,
-    includedModules: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance_plus', 'whatsapp_automation'],
-    features: ['Up to 150 Field Executives', 'Advanced CRM & Order Management', 'Demo & Presentation Suite', 'Biometric Selfie Attendance', 'WhatsApp Business Integration', 'Advanced Analytics & Reports']
-  },
-  {
-    id: 'plan_enterprise',
-    code: 'ENTERPRISE',
-    name: 'Enterprise Field Suite',
-    tier: 'Enterprise',
-    monthlyPricePerUser: 1499,
-    annualPricePerUser: 1199,
-    minUsers: 25,
-    includedModules: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance_plus', 'payroll_engine', 'whatsapp_automation', 'ai_copilot'],
-    features: ['Unlimited Field Executives', 'Custom Industry Workflows', 'Full Payroll & Incentive Engine', 'AI Copilot & Target Coaching', 'Dedicated Account Manager', 'Custom Domain & SSO']
-  }
-];
+export const PLATFORM_MODULES: PlatformModule[] = CANONICAL_PLATFORM_MODULES as PlatformModule[];
+
+export const PLATFORM_PLANS: PlatformPlan[] = CANONICAL_PLATFORM_PLANS.map((p) => ({
+  id: p.id,
+  code: p.code,
+  name: p.name,
+  tier: (p.tier as any) || 'Growth',
+  monthlyPricePerUser: p.pricing.monthlyPerUser || p.pricing.monthlyFlatPrice || 0,
+  annualPricePerUser: p.pricing.annualPerUser || p.pricing.annualFlatPrice || 0,
+  minUsers: p.limits.minimumSeats,
+  includedModules: [...p.includedModuleCodes],
+  features: [
+    `Min ${p.limits.minimumSeats} User Seats`,
+    `${p.limits.storageGb} GB Storage Included`,
+    `${p.includedModuleCodes.length} Modules Included`,
+    `${p.commercialRules.trialEnabled ? `${p.commercialRules.trialDurationDays}-Day Free Trial` : 'Direct Provisioning'}`,
+    `${p.pricing.allowAnnualBilling ? 'Annual Discount Available' : 'Monthly Billing'}`,
+  ],
+}));
 
 export const MOCK_TENANTS: Tenant[] = [
   {
