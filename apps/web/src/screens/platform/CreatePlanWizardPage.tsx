@@ -44,6 +44,7 @@ import {
 import { planService } from '../../features/platform/catalog/plans/services/plan.service';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
+import { ModuleSelectionGrid } from '../../components/platform/ModuleSelectionGrid';
 
 const STEP_NUM_MAP: Record<number, string> = {
   1: 'basic',
@@ -90,8 +91,6 @@ function WizardContent() {
 
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [allModules, setAllModules] = useState<PlatformModule[]>([]);
-  const [moduleSearch, setModuleSearch] = useState('');
-  const [moduleCategoryFilter, setModuleCategoryFilter] = useState<string>('All');
 
   // Sync step from URL
   useEffect(() => {
@@ -1004,106 +1003,12 @@ function WizardContent() {
 
             {/* STEP 4: MODULES */}
             {currentStep === 4 && (
-              <div className="space-y-5">
-                <div className="border-b border-slate-100 pb-3">
-                  <h2 className="text-base font-extrabold text-[#0D1F3D]">Step 4: Included Modules</h2>
-                  <p className="text-xs text-slate-500 font-medium">
-                    Select the commercial modules included with this plan. Subscribed tenants automatically inherit all selected modules.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="relative flex-1 min-w-[200px]">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Search modules..."
-                      value={moduleSearch}
-                      onChange={(e) => setModuleSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 h-10 text-xs font-semibold rounded-sm border border-slate-200 bg-[#F8FAFC] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0D1F3D]"
-                    />
-                  </div>
-
-                  <div className="w-44">
-                    <select
-                      value={moduleCategoryFilter}
-                      onChange={(e) => setModuleCategoryFilter(e.target.value)}
-                      className="w-full h-10 px-3 text-xs font-semibold rounded-sm border border-slate-200 bg-[#F8FAFC] text-slate-700 focus:outline-none focus:border-[#0D1F3D]"
-                    >
-                      <option value="All">All Categories</option>
-                      <option value="Core">Core</option>
-                      <option value="Sales">Sales</option>
-                      <option value="Field Ops">Field Ops</option>
-                      <option value="Automation">Automation</option>
-                      <option value="Enterprise">Enterprise</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  {allModules
-                    .filter((mod) => {
-                      const matchesSearch =
-                        mod.name.toLowerCase().includes(moduleSearch.toLowerCase()) ||
-                        mod.code.toLowerCase().includes(moduleSearch.toLowerCase());
-                      const matchesCat =
-                        moduleCategoryFilter === 'All' ? true : mod.category === moduleCategoryFilter;
-                      return matchesSearch && matchesCat;
-                    })
-                    .map((mod) => {
-                      const isSelected = formState.includedModuleCodes.includes(mod.code);
-                      const isRequired = mod.requiredBySystem;
-
-                      return (
-                        <div
-                          key={mod.id}
-                          onClick={() => {
-                            if (isRequired) return;
-                            const updated = isSelected
-                              ? formState.includedModuleCodes.filter((c) => c !== mod.code)
-                              : [...formState.includedModuleCodes, mod.code];
-                            updateFormState({ includedModuleCodes: updated });
-                          }}
-                          className={`p-3.5 rounded-sm border flex items-start justify-between gap-3 transition-all cursor-pointer ${
-                            isRequired
-                              ? 'bg-slate-50 border-slate-200 opacity-90'
-                              : isSelected
-                              ? 'bg-indigo-50/50 border-indigo-600 ring-1 ring-indigo-600 shadow-2xs'
-                              : 'bg-white border-slate-200 hover:bg-slate-50'
-                          }`}
-                        >
-                          <div className="space-y-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-extrabold text-xs text-[#0D1F3D]">{mod.name}</span>
-                              {isRequired ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-extrabold text-slate-700">
-                                  <Lock className="h-2.5 w-2.5" /> Required Core
-                                </span>
-                              ) : (
-                                <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-600">
-                                  {mod.category}
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-[11px] text-slate-500 font-medium leading-relaxed">
-                              {mod.description}
-                            </div>
-                            <div className="font-mono text-[10px] text-slate-400 font-bold">
-                              Code: {mod.code}
-                            </div>
-                          </div>
-
-                          <Checkbox
-                            checked={isSelected}
-                            disabled={isRequired}
-                            onChange={() => {}}
-                            className="mt-1 shrink-0"
-                          />
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
+              <ModuleSelectionGrid
+                modules={allModules}
+                selectedCodes={formState.includedModuleCodes}
+                infoBannerText="Selected commercial modules will be inherited by all tenants subscribing to this plan."
+                onChange={(updatedCodes) => updateFormState({ includedModuleCodes: updatedCodes })}
+              />
             )}
 
             {/* STEP 5: TRIAL & RULES */}

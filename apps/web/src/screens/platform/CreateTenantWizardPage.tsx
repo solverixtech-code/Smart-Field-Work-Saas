@@ -41,6 +41,7 @@ import { PLATFORM_INDUSTRIES, PLATFORM_PLANS, PLATFORM_MODULES } from '../../fea
 import { tenantService } from '../../features/platform/tenants/services/tenant.service';
 import { Tenant, ProvisioningType, PaymentCollectionMethod } from '../../features/platform/tenants/types/platform.types';
 import { calculatePlanPrice } from '../../features/platform/tenants/utils/cost-calculation.utils';
+import { ModuleSelectionGrid } from '../../components/platform/ModuleSelectionGrid';
 
 const STEP_PARAM_MAP: Record<string, number> = {
   company: 1,
@@ -751,96 +752,15 @@ function Step5Modules() {
   const selectedPlan = PLATFORM_PLANS.find((p) => p.id === formState.planId) || PLATFORM_PLANS[0];
   const mandatoryCodes = selectedPlan.includedModules || [];
 
-  const toggleModuleCode = (code: string) => {
-    // Cannot toggle plan mandatory modules
-    if (mandatoryCodes.includes(code)) {
-      toast.info(`Module '${code}' is mandatory for the selected plan (${selectedPlan.name})`);
-      return;
-    }
-
-    const currentSelected = formState.selectedModuleCodes;
-    const isSelected = currentSelected.includes(code);
-    const updatedCodes = isSelected
-      ? currentSelected.filter((c) => c !== code)
-      : [...currentSelected, code];
-
-    updateFormState({ selectedModuleCodes: updatedCodes });
-  };
-
   return (
-    <div className="space-y-6 font-sans">
-      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h3 className="text-base font-extrabold text-[#0D1F3D]">Enable Modules & Features</h3>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Select from canonical PLATFORM_MODULES catalog. Plan-mandatory modules are locked.</p>
-          </div>
-          <div className="rounded-sm bg-[#F4F0FF] px-3.5 py-1.5 text-xs text-purple-900 font-semibold border border-purple-100 flex items-center gap-1.5">
-            <Info className="h-4 w-4 text-purple-600" /> Selected Plan: <strong className="font-extrabold">{selectedPlan.name}</strong>
-          </div>
-        </div>
-
-        <div>
-          <h4 className="text-xs font-extrabold text-[#0D1F3D] tracking-wide mb-3">Canonical Platform Modules</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-            {PLATFORM_MODULES.map((mod) => {
-              const isChecked = formState.selectedModuleCodes.includes(mod.code);
-              const isMandatory = mandatoryCodes.includes(mod.code);
-
-              return (
-                <div
-                  key={mod.id}
-                  onClick={() => toggleModuleCode(mod.code)}
-                  className={`rounded-sm border p-4 space-y-3 flex flex-col justify-between transition-all cursor-pointer ${
-                    isChecked
-                      ? 'border-[#0D1F3D] bg-slate-50/70 shadow-2xs'
-                      : 'border-slate-200 bg-white hover:border-slate-300'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-white border border-slate-200 shadow-2xs font-bold text-indigo-600">
-                        <Layers className="h-4 w-4" />
-                      </div>
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <Checkbox
-                          checked={isChecked}
-                          onChange={() => toggleModuleCode(mod.code)}
-                          disabled={isMandatory}
-                        />
-                      </div>
-                    </div>
-                    <p className="text-xs font-extrabold text-[#0D1F3D] mb-1">{mod.name}</p>
-                    <p className="text-[11px] text-slate-500 font-medium leading-snug">{mod.description}</p>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-2">
-                    <span className={`inline-flex rounded-sm px-2 py-0.5 text-[10px] font-bold border ${
-                      isMandatory
-                        ? 'bg-purple-50 text-purple-700 border-purple-200'
-                        : 'bg-blue-50 text-blue-700 border-blue-200'
-                    }`}>
-                      {isMandatory ? 'Plan Mandatory' : mod.category}
-                    </span>
-                    <span className="text-[11px] font-extrabold text-slate-700">
-                      {mod.monthlyPrice === 0 ? 'Included' : `₹${mod.monthlyPrice} / mo`}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-4">
-          <span className="text-xs font-bold text-slate-600">
-            Selected Plan Mandatory Modules: <strong className="text-[#0D1F3D]">{mandatoryCodes.length}</strong>
-          </span>
-          <span className="rounded-sm bg-purple-100 px-3 py-1 text-xs font-extrabold text-purple-700 border border-purple-200">
-            Total Selected Modules: {formState.selectedModuleCodes.length} / {PLATFORM_MODULES.length}
-          </span>
-        </div>
-      </div>
-    </div>
+    <ModuleSelectionGrid
+      modules={PLATFORM_MODULES}
+      selectedCodes={formState.selectedModuleCodes}
+      mandatoryCodes={mandatoryCodes}
+      selectedPlanName={selectedPlan.name}
+      infoBannerText={`Plan '${selectedPlan.name}' mandatory modules are locked and pre-enabled for this tenant workspace.`}
+      onChange={(updatedCodes) => updateFormState({ selectedModuleCodes: updatedCodes })}
+    />
   );
 }
 
