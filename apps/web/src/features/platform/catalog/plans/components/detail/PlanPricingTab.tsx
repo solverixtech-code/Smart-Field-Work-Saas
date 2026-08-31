@@ -16,7 +16,14 @@ import {
 } from 'lucide-react';
 import { Plan } from '../../types/plan.types';
 import { PlanDetailMetrics } from '../../hooks/usePlanDetails';
-import { formatCurrency } from '../../utils/plan-pricing.utils';
+import {
+  formatCurrency,
+  formatPlanMonthlyPrice,
+  formatPlanAnnualPrice,
+  calculateMonthlyPlanCost,
+  calculateAnnualPlanCost,
+  getAnnualSavingsPercent,
+} from '../../utils/plan-pricing.utils';
 import { Button } from '../../../../../../components/ui/Button';
 
 export interface PlanPricingTabProps {
@@ -27,11 +34,15 @@ export interface PlanPricingTabProps {
 export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
   const navigate = useNavigate();
 
-  const monthlyRate = plan.pricing.monthlyPerUser || 1999;
-  const annualRate = plan.pricing.annualPerUser || 19990;
+  const pricing = plan.pricing;
+  const rules = plan.commercialRules;
+  const limits = plan.limits;
 
   // Seat tiers for Cost Examples table
   const seatExamples = [20, 50, 100, 250];
+
+  const savingsPercent = getAnnualSavingsPercent(pricing);
+  const arrProjection = metrics.totalMrr * 12;
 
   return (
     <div className="space-y-6 font-sans">
@@ -81,7 +92,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Pricing Model</span>
-                  <span className="font-extrabold text-[#0D1F3D] text-sm">{plan.pricing.model}</span>
+                  <span className="font-extrabold text-[#0D1F3D] text-sm">{pricing.model}</span>
                 </div>
               </div>
 
@@ -92,7 +103,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Monthly Price</span>
-                  <span className="font-extrabold text-[#0D1F3D] text-sm">{formatCurrency(monthlyRate)} <span className="text-[10px] font-medium text-slate-500">/ user / month</span></span>
+                  <span className="font-extrabold text-[#0D1F3D] text-sm">{formatPlanMonthlyPrice(pricing)}</span>
                 </div>
               </div>
 
@@ -103,7 +114,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Annual Price</span>
-                  <span className="font-extrabold text-[#0D1F3D] text-sm">{formatCurrency(annualRate)} <span className="text-[10px] font-medium text-slate-500">/ user / year</span></span>
+                  <span className="font-extrabold text-[#0D1F3D] text-sm">{formatPlanAnnualPrice(pricing)}</span>
                 </div>
               </div>
 
@@ -114,7 +125,9 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Annual Discount</span>
-                  <span className="font-extrabold text-emerald-700 text-sm">17%</span>
+                  <span className="font-extrabold text-emerald-700 text-sm">
+                    {savingsPercent !== null ? `${savingsPercent}%` : 'None'}
+                  </span>
                 </div>
               </div>
 
@@ -125,7 +138,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Minimum Seats</span>
-                  <span className="font-extrabold text-[#0D1F3D] text-sm">{plan.limits.minimumSeats || 20}</span>
+                  <span className="font-extrabold text-[#0D1F3D] text-sm">{limits.minimumSeats}</span>
                 </div>
               </div>
 
@@ -136,7 +149,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Currency</span>
-                  <span className="font-extrabold text-[#0D1F3D] text-sm">INR (₹)</span>
+                  <span className="font-extrabold text-[#0D1F3D] text-sm">{pricing.currency}</span>
                 </div>
               </div>
 
@@ -147,7 +160,9 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Setup Fee</span>
-                  <span className="font-extrabold text-[#0D1F3D] text-sm">₹0</span>
+                  <span className="font-extrabold text-[#0D1F3D] text-sm">
+                    {pricing.setupFee ? formatCurrency(pricing.setupFee, pricing.currency) : '₹0'}
+                  </span>
                 </div>
               </div>
 
@@ -158,7 +173,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Tax Handling</span>
-                  <span className="font-extrabold text-[#0D1F3D] text-sm">Exclusive</span>
+                  <span className="font-extrabold text-[#0D1F3D] text-sm">{pricing.taxMode || 'Exclusive'}</span>
                 </div>
               </div>
 
@@ -169,7 +184,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Proration</span>
-                  <span className="font-extrabold text-[#0D1F3D] text-sm">No Proration</span>
+                  <span className="font-extrabold text-[#0D1F3D] text-sm">{pricing.prorationPolicy || 'Prorate Immediately'}</span>
                 </div>
               </div>
             </div>
@@ -181,13 +196,21 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
             <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-extrabold text-[#0D1F3D]">Monthly Billing</h4>
-                <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700 border border-emerald-200">
-                  Available
+                <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-extrabold border ${
+                  pricing.allowMonthlyBilling ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'
+                }`}>
+                  {pricing.allowMonthlyBilling ? 'Available' : 'Disabled'}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-extrabold text-[#0D1F3D]">{formatCurrency(monthlyRate)} <span className="text-xs text-slate-600 font-medium">/ user / month</span></span>
-                <span className="text-[11px] font-semibold text-slate-500">Default Off</span>
+                <span className="text-xl font-extrabold text-[#0D1F3D]">
+                  {formatPlanMonthlyPrice(pricing)}
+                </span>
+                <span className={`text-[11px] font-semibold ${
+                  pricing.defaultBillingCycle === 'Monthly' ? 'text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded-full' : 'text-slate-500'
+                }`}>
+                  {pricing.defaultBillingCycle === 'Monthly' ? 'Default On' : 'Default Off'}
+                </span>
               </div>
               <p className="text-xs text-slate-600 font-medium leading-relaxed pt-2 border-t border-slate-100">
                 Billed monthly. Ideal for short-term and flexible engagements.
@@ -199,20 +222,30 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-extrabold text-[#0D1F3D]">Annual Billing</h4>
                 <div className="flex items-center gap-1.5">
-                  <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700 border border-emerald-200">
-                    Save 17%
-                  </span>
-                  <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700 border border-emerald-200">
-                    Available
+                  {savingsPercent !== null && (
+                    <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700 border border-emerald-200">
+                      Save {savingsPercent}%
+                    </span>
+                  )}
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-extrabold border ${
+                    pricing.allowAnnualBilling ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'
+                  }`}>
+                    {pricing.allowAnnualBilling ? 'Available' : 'Disabled'}
                   </span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-extrabold text-[#0D1F3D]">{formatCurrency(annualRate)} <span className="text-xs text-slate-600 font-medium">/ user / year</span></span>
-                <span className="text-[11px] font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">Default On</span>
+                <span className="text-xl font-extrabold text-[#0D1F3D]">
+                  {formatPlanAnnualPrice(pricing)}
+                </span>
+                <span className={`text-[11px] font-semibold ${
+                  pricing.defaultBillingCycle === 'Annual' ? 'text-blue-600 font-bold bg-blue-100 px-2 py-0.5 rounded-full' : 'text-slate-500'
+                }`}>
+                  {pricing.defaultBillingCycle === 'Annual' ? 'Default On' : 'Default Off'}
+                </span>
               </div>
               <p className="text-xs text-slate-600 font-medium leading-relaxed pt-2 border-t border-indigo-100">
-                Billed annually. Best value with 17% savings compared to monthly.
+                Billed annually. {savingsPercent !== null ? `Best value with ${savingsPercent}% savings compared to monthly.` : 'Longer-term commitment plan.'}
               </p>
             </div>
           </div>
@@ -230,7 +263,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Default Billing Cycle</span>
-                  <span className="font-extrabold text-[#0D1F3D]">Annual</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{pricing.defaultBillingCycle}</span>
                 </div>
               </div>
 
@@ -240,7 +273,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Minimum Commitment</span>
-                  <span className="font-extrabold text-[#0D1F3D]">1 Month</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{rules.minimumCommitment || 'None'}</span>
                 </div>
               </div>
 
@@ -250,7 +283,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Auto Renewal</span>
-                  <span className="font-extrabold text-[#0D1F3D]">Enabled</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{rules.autoRenew ? 'Enabled' : 'Disabled'}</span>
                 </div>
               </div>
 
@@ -260,7 +293,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Upgrade Policy</span>
-                  <span className="font-extrabold text-[#0D1F3D]">Allowed</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{rules.allowUpgrade ? 'Allowed' : 'Not Allowed'}</span>
                 </div>
               </div>
 
@@ -270,7 +303,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Downgrade Policy</span>
-                  <span className="font-extrabold text-[#0D1F3D]">Manual Approval</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{rules.allowDowngrade ? 'Allowed' : 'Manual Approval'}</span>
                 </div>
               </div>
 
@@ -280,7 +313,7 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
                 </div>
                 <div>
                   <span className="text-[11px] font-semibold text-slate-500 block">Change Effective Timing</span>
-                  <span className="font-extrabold text-[#0D1F3D]">Next Billing Cycle</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{rules.changeEffectiveTiming || 'Immediately'}</span>
                 </div>
               </div>
             </div>
@@ -292,31 +325,41 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
               <h4 className="text-sm font-extrabold text-[#0D1F3D]">Cost Examples</h4>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs whitespace-nowrap border-collapse">
-                <thead>
-                  <tr className="border-b border-slate-200 text-xs font-bold text-[#0D1F3D] bg-slate-50/60">
-                    <th className="py-2.5 px-3">Users</th>
-                    <th className="py-2.5 px-3">Monthly Cost</th>
-                    <th className="py-2.5 px-3">Annual Cost</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                  {seatExamples.map((users) => {
-                    const monthlyCost = users * monthlyRate;
-                    const annualCost = users * (annualRate / 12) * 12;
+            {pricing.model === 'Custom Contract' ? (
+              <p className="text-xs text-slate-600 font-medium py-3">
+                Custom Contract pricing is negotiated per agreement based on total seats, enterprise SLA, and custom modules. Contact sales for custom pricing.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs whitespace-nowrap border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-xs font-bold text-[#0D1F3D] bg-slate-50/60">
+                      <th className="py-2.5 px-3">Users</th>
+                      <th className="py-2.5 px-3">Monthly Cost</th>
+                      <th className="py-2.5 px-3">Annual Cost</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                    {seatExamples.map((users) => {
+                      const monthlyCost = calculateMonthlyPlanCost(pricing, users);
+                      const annualCost = calculateAnnualPlanCost(pricing, users);
 
-                    return (
-                      <tr key={users} className="hover:bg-slate-50/60 transition">
-                        <td className="py-3 px-3 font-bold text-[#0D1F3D]">{users}</td>
-                        <td className="py-3 px-3 font-extrabold text-[#0D1F3D]">{formatCurrency(monthlyCost)}</td>
-                        <td className="py-3 px-3 font-extrabold text-[#0D1F3D]">{formatCurrency(annualCost)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                      return (
+                        <tr key={users} className="hover:bg-slate-50/60 transition">
+                          <td className="py-3 px-3 font-bold text-[#0D1F3D]">{users} seats</td>
+                          <td className="py-3 px-3 font-extrabold text-[#0D1F3D]">
+                            {monthlyCost !== null ? formatCurrency(monthlyCost, pricing.currency) : '—'}
+                          </td>
+                          <td className="py-3 px-3 font-extrabold text-[#0D1F3D]">
+                            {annualCost !== null ? formatCurrency(annualCost, pricing.currency) : '—'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 
@@ -328,21 +371,23 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 rounded-sm bg-emerald-50/50 border border-emerald-100">
                 <span className="text-[11px] font-semibold text-slate-500 block">Active Tenants</span>
-                <span className="text-lg font-extrabold text-[#0D1F3D]">48</span>
+                <span className="text-lg font-extrabold text-[#0D1F3D]">{metrics.activeTenants}</span>
               </div>
               <div className="p-3 rounded-sm bg-amber-50/50 border border-amber-100">
                 <span className="text-[11px] font-semibold text-slate-500 block">Trial Tenants</span>
-                <span className="text-lg font-extrabold text-[#0D1F3D]">14</span>
+                <span className="text-lg font-extrabold text-[#0D1F3D]">{metrics.trialTenants}</span>
               </div>
               <div className="p-3 rounded-sm bg-purple-50/50 border border-purple-100">
                 <span className="text-[11px] font-semibold text-slate-500 block">MRR Contribution</span>
-                <span className="text-sm font-extrabold text-[#0D1F3D]">₹9,42,000</span>
-                <span className="text-[10px] font-bold text-purple-700 block">14.6% of total MRR</span>
+                <span className="text-sm font-extrabold text-[#0D1F3D]">
+                  {formatCurrency(metrics.totalMrr, pricing.currency)}
+                </span>
               </div>
               <div className="p-3 rounded-sm bg-blue-50/50 border border-blue-100">
                 <span className="text-[11px] font-semibold text-slate-500 block">ARR Projection</span>
-                <span className="text-sm font-extrabold text-[#0D1F3D]">₹1,13,04,000</span>
-                <span className="text-[10px] font-bold text-blue-700 block">15.2% of total ARR</span>
+                <span className="text-sm font-extrabold text-[#0D1F3D]">
+                  {formatCurrency(arrProjection, pricing.currency)}
+                </span>
               </div>
             </div>
 
@@ -363,23 +408,21 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
             <ul className="space-y-2 text-xs text-slate-600 font-medium leading-relaxed">
               <li className="flex items-start gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
-                Monthly and annual billing are enabled
+                Model: {pricing.model} ({pricing.currency})
+              </li>
+              {pricing.allowAnnualBilling && (
+                <li className="flex items-start gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
+                  Annual billing discount: {savingsPercent !== null ? `${savingsPercent}%` : 'N/A'}
+                </li>
+              )}
+              <li className="flex items-start gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
+                Minimum {limits.minimumSeats}-seat commitment
               </li>
               <li className="flex items-start gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
-                Annual billing receives 17% discount
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
-                Minimum 20-seat commitment
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
-                Taxes are applied separately
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
-                Price revision requires new version after backend phase
+                Tax Mode: {pricing.taxMode || 'Exclusive'}
               </li>
             </ul>
           </div>
@@ -391,19 +434,13 @@ export function PlanPricingTab({ plan, metrics }: PlanPricingTabProps) {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500">Public Visibility</span>
                 <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
-                  Public
+                  {plan.visibility}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Recommended Plan Status</span>
+                <span className="text-xs font-semibold text-slate-500">Status</span>
                 <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
-                  Recommended
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500">Adoption Confidence</span>
-                <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
-                  High
+                  {plan.status}
                 </span>
               </div>
             </div>

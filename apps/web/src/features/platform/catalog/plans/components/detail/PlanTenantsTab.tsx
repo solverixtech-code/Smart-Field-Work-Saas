@@ -3,11 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import {
   Users,
   Search,
-  RotateCcw,
   Download,
   IndianRupee,
   Building2,
-  Calendar,
   Clock,
   MoreVertical,
   CheckCircle,
@@ -45,120 +43,67 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [billingFilter, setBillingFilter] = useState('All');
-  const [sortBy, setSortBy] = useState('newest');
   const [activeRowMenu, setActiveRowMenu] = useState<string | null>(null);
 
-  // Mock list of tenants matching reference design if planTenants empty
-  const mockTenants = useMemo(() => {
-    if (planTenants && planTenants.length > 0) return planTenants;
-
-    return [
-      {
-        id: 'ten-1',
-        companyName: 'Acme Corp',
-        domain: 'acme.visiblosfw.com',
-        tenantStatus: 'Active',
-        activeUsers: 42,
-        seatLimit: 50,
-        mrr: 83958,
-        joinedDate: '15 May 2024',
-        contactName: 'Rahul Verma',
-        contactEmail: 'rahul@acmecorp.com',
-      },
-      {
-        id: 'ten-2',
-        companyName: 'Omni Supplies',
-        domain: 'omni.visiblosfw.com',
-        tenantStatus: 'Active',
-        activeUsers: 38,
-        seatLimit: 50,
-        mrr: 75962,
-        joinedDate: '10 May 2024',
-        contactName: 'Priya Sharma',
-        contactEmail: 'priya@omnisupplies.com',
-      },
-      {
-        id: 'ten-3',
-        companyName: 'GrowFast Solutions',
-        domain: 'growfast.visiblosfw.com',
-        tenantStatus: 'Active',
-        activeUsers: 30,
-        seatLimit: 40,
-        mrr: 59970,
-        joinedDate: '02 May 2024',
-        contactName: 'Amit Patel',
-        contactEmail: 'amit@growfast.com',
-      },
-      {
-        id: 'ten-4',
-        companyName: 'FieldServe Ltd.',
-        domain: 'fieldserve.visiblosfw.com',
-        tenantStatus: 'Active',
-        activeUsers: 25,
-        seatLimit: 30,
-        mrr: 49975,
-        joinedDate: '28 Apr 2024',
-        contactName: 'Sneha Kapoor',
-        contactEmail: 'sneha@fieldserve.in',
-      },
-      {
-        id: 'ten-5',
-        companyName: 'Trueway Retail',
-        domain: 'trueway.visiblosfw.com',
-        tenantStatus: 'Active',
-        activeUsers: 22,
-        seatLimit: 25,
-        mrr: 43978,
-        joinedDate: '20 Apr 2024',
-        contactName: 'Vikas Roy',
-        contactEmail: 'vikas@trueway.com',
-      },
-      {
-        id: 'ten-6',
-        companyName: 'LogiTech Solutions',
-        domain: 'logitech.visiblosfw.com',
-        tenantStatus: 'Trial',
-        activeUsers: 15,
-        seatLimit: 20,
-        mrr: 0,
-        joinedDate: '24 May 2024',
-        contactName: 'Ananya Gupta',
-        contactEmail: 'ananya@logitech.io',
-      },
-    ];
-  }, [planTenants]);
-
   const filteredTenants = useMemo(() => {
-    return mockTenants.filter((t) => {
+    return planTenants.filter((t) => {
       const q = searchTerm.toLowerCase().trim();
       const matchSearch =
         q === '' ||
         t.companyName.toLowerCase().includes(q) ||
         (t.domain && t.domain.toLowerCase().includes(q)) ||
-        (t.contactName && t.contactName.toLowerCase().includes(q));
+        (t.primaryContactName && t.primaryContactName.toLowerCase().includes(q)) ||
+        (t.primaryContactEmail && t.primaryContactEmail.toLowerCase().includes(q));
 
       const matchStatus = statusFilter === 'All' || t.tenantStatus === statusFilter;
       const matchBilling =
         billingFilter === 'All' ||
-        (billingFilter === 'Paid' ? (t.mrr || 0) > 0 : (t.mrr || 0) === 0);
+        (billingFilter === 'Paid' ? (t.subscriptionPrice || t.mrr || 0) > 0 : (t.subscriptionPrice || t.mrr || 0) === 0);
 
       return matchSearch && matchStatus && matchBilling;
     });
-  }, [mockTenants, searchTerm, statusFilter, billingFilter]);
+  }, [planTenants, searchTerm, statusFilter, billingFilter]);
+
+  // Average Seats per Tenant calculation
+  const avgSeats = useMemo(() => {
+    if (!planTenants || planTenants.length === 0) return 0;
+    const totalUsers = planTenants.reduce((acc, curr) => acc + (curr.activeUserCount || curr.userCount || 0), 0);
+    return Math.round(totalUsers / planTenants.length);
+  }, [planTenants]);
+
+  // Donut chart data
+  const donutData = useMemo(() => {
+    return [
+      { name: 'Active', value: metrics.activeTenants, color: DONUT_COLORS.Active },
+      { name: 'Trial', value: metrics.trialTenants, color: DONUT_COLORS.Trial },
+      { name: 'Suspended', value: metrics.suspendedTenants, color: DONUT_COLORS.Suspended },
+      { name: 'Past Due', value: metrics.pastDueTenants, color: DONUT_COLORS['Past Due'] },
+    ];
+  }, [metrics]);
+
+  // Top tenants by MRR from real data
+  const topTenants = useMemo(() => {
+    if (!planTenants || planTenants.length === 0) return [];
+    return [...planTenants]
+      .sort((a, b) => (b.subscriptionPrice || b.mrr || 0) - (a.subscriptionPrice || a.mrr || 0))
+      .slice(0, 5);
+  }, [planTenants]);
 
   // Table Columns
   const columns = [
     {
       header: 'Tenant Name',
       accessorKey: 'companyName',
-      cell: (t: any) => (
+      cell: (t: Tenant) => (
         <div className="flex items-center gap-3 min-w-[200px]">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-extrabold text-xs">
-            {t.companyName[0]}
+            {t.companyName ? t.companyName[0] : 'T'}
           </div>
           <div className="min-w-0">
             <p className="text-xs font-extrabold text-[#0D1F3D] truncate">{t.companyName}</p>
-            <p className="text-[11px] font-semibold text-slate-500 truncate">{t.domain || `${t.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.visiblosfw.com`}</p>
+            <p className="text-[11px] font-semibold text-slate-500 truncate">
+              {t.domain || `${t.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.visiblosfw.com`}
+            </p>
           </div>
         </div>
       ),
@@ -166,7 +111,7 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
     {
       header: 'Status',
       accessorKey: 'tenantStatus',
-      cell: (t: any) => (
+      cell: (t: Tenant) => (
         <span
           className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-extrabold border ${
             t.tenantStatus === 'Active'
@@ -182,10 +127,10 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
     },
     {
       header: 'Seats Usage',
-      cell: (t: any) => {
-        const used = t.activeUsers || 20;
-        const limit = t.seatLimit || 50;
-        const percent = Math.min(Math.round((used / limit) * 100), 100);
+      cell: (t: Tenant) => {
+        const used = t.activeUserCount || t.userCount || 0;
+        const limit = t.maxUsers || plan.limits.defaultSeatLimit || 50;
+        const percent = limit > 0 ? Math.min(Math.round((used / limit) * 100), 100) : 0;
 
         return (
           <div className="min-w-[130px] space-y-1">
@@ -208,36 +153,43 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
     },
     {
       header: 'MRR',
-      cell: (t: any) => (
-        <div className="min-w-[100px]">
-          <span className="font-extrabold text-[#0D1F3D] text-xs block">
-            {t.mrr > 0 ? formatCurrency(t.mrr) : '₹0'}
-          </span>
-          <span className="text-[10px] text-slate-500 font-semibold block">{t.mrr > 0 ? 'Monthly' : 'Trial'}</span>
-        </div>
-      ),
+      cell: (t: Tenant) => {
+        const amount = t.subscriptionPrice !== undefined ? t.subscriptionPrice : t.mrr || 0;
+        return (
+          <div className="min-w-[100px]">
+            <span className="font-extrabold text-[#0D1F3D] text-xs block">
+              {amount > 0 ? formatCurrency(amount, plan.pricing.currency) : '₹0'}
+            </span>
+            <span className="text-[10px] text-slate-500 font-semibold block">{amount > 0 ? 'Monthly' : 'Trial'}</span>
+          </div>
+        );
+      },
     },
     {
       header: 'Subscribed Date',
-      cell: (t: any) => (
-        <div className="min-w-[110px]">
-          <span className="font-semibold text-slate-700 text-xs block">{t.joinedDate || '15 May 2024'}</span>
-          <span className="text-[10px] text-slate-500 font-medium">10:30 AM</span>
-        </div>
-      ),
+      cell: (t: Tenant) => {
+        const dateStr = t.subscriptionStartDate || t.createdAt;
+        return (
+          <div className="min-w-[110px]">
+            <span className="font-semibold text-slate-700 text-xs block">
+              {dateStr ? new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+            </span>
+          </div>
+        );
+      },
     },
     {
       header: 'Primary Contact',
-      cell: (t: any) => (
+      cell: (t: Tenant) => (
         <div className="min-w-[150px]">
-          <p className="font-extrabold text-[#0D1F3D] text-xs">{t.contactName || 'Rahul Verma'}</p>
-          <p className="text-[10px] text-slate-500 font-medium truncate">{t.contactEmail || 'rahul@acmecorp.com'}</p>
+          <p className="font-extrabold text-[#0D1F3D] text-xs truncate">{t.primaryContactName || '—'}</p>
+          <p className="text-[10px] text-slate-500 font-medium truncate">{t.primaryContactEmail || '—'}</p>
         </div>
       ),
     },
     {
       header: 'Actions',
-      cell: (t: any) => (
+      cell: (t: Tenant) => (
         <div className="relative text-right">
           <button
             type="button"
@@ -258,7 +210,7 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
                   setActiveRowMenu(null);
                   navigate(`/platform/tenants/${t.id}`);
                 }}
-                className="flex w-full items-center gap-2 rounded-xs px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                className="flex w-full items-center gap-2 rounded-xs px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 <Eye className="h-3.5 w-3.5 text-blue-600" /> View Tenant
               </button>
@@ -268,14 +220,14 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
                   setActiveRowMenu(null);
                   navigate(`/platform/tenants/${t.id}/edit`);
                 }}
-                className="flex w-full items-center gap-2 rounded-xs px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                className="flex w-full items-center gap-2 rounded-xs px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 <Edit className="h-3.5 w-3.5 text-indigo-600" /> Edit Details
               </button>
               <button
                 type="button"
                 onClick={() => setActiveRowMenu(null)}
-                className="flex w-full items-center gap-2 rounded-xs px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                className="flex w-full items-center gap-2 rounded-xs px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
               >
                 <Mail className="h-3.5 w-3.5 text-purple-600" /> Contact Admin
               </button>
@@ -286,38 +238,20 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
     },
   ];
 
-  const donutData = [
-    { name: 'Active', value: 48, color: DONUT_COLORS.Active },
-    { name: 'Trial', value: 14, color: DONUT_COLORS.Trial },
-    { name: 'Suspended', value: 2, color: DONUT_COLORS.Suspended },
-  ];
-
   return (
-    <div className="space-y-6 font-sans">
-      {/* Top Banner Context matching screenshot */}
+    <div className="space-y-6 font-sans w-full max-w-full overflow-hidden">
+      {/* Top Banner Context */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-sm border border-slate-200 bg-white p-5 shadow-xs">
         <div>
           <div className="flex items-center gap-2.5">
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Plan Tenants</h3>
             <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
-              64 Total Subscribed
+              {metrics.totalTenants} Subscribed
             </span>
           </div>
           <p className="text-xs font-semibold text-slate-500 mt-0.5">
             All active, trial and legacy tenants subscribed to this plan.
           </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Select
-            value="30"
-            onChange={() => {}}
-            options={[
-              { value: '30', label: 'Last 30 Days' },
-              { value: '90', label: 'Last 90 Days' },
-              { value: '365', label: 'Last Year' },
-            ]}
-          />
         </div>
       </div>
 
@@ -325,7 +259,7 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KpiCard
           title="Total Subscriptions"
-          value="64"
+          value={metrics.totalTenants.toString()}
           subValue="All time"
           icon={Building2}
           iconBgColor="bg-blue-50"
@@ -333,7 +267,7 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
         />
         <KpiCard
           title="Active Tenants"
-          value="48"
+          value={metrics.activeTenants.toString()}
           subValue="Paying active"
           icon={Users}
           iconBgColor="bg-emerald-50"
@@ -341,7 +275,7 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
         />
         <KpiCard
           title="Trial Tenants"
-          value="14"
+          value={metrics.trialTenants.toString()}
           subValue="In trial period"
           icon={Clock}
           iconBgColor="bg-amber-50"
@@ -349,7 +283,7 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
         />
         <KpiCard
           title="Total MRR"
-          value={formatCurrency(942000)}
+          value={formatCurrency(metrics.totalMrr, plan.pricing.currency)}
           subValue="Monthly revenue"
           icon={IndianRupee}
           iconBgColor="bg-purple-50"
@@ -357,7 +291,7 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
         />
         <KpiCard
           title="Avg Seats / Tenant"
-          value="34"
+          value={avgSeats > 0 ? avgSeats.toString() : '—'}
           subValue="Seat utilization"
           icon={Users}
           iconBgColor="bg-cyan-50"
@@ -365,83 +299,91 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
         />
       </div>
 
-      {/* Main Grid: Left Column (2 Cols Table) + Right Column (1 Col Widgets) */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Left Column Table */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            {/* Search & Filter Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="relative flex-1 min-w-[240px]">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search tenants by name, domain, contact..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-10 w-full rounded-sm border border-slate-200 bg-slate-50/50 pl-10 pr-4 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
-                />
-              </div>
-
-              <div className="w-36">
-                <Select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  options={[
-                    { value: 'All', label: 'All Statuses' },
-                    { value: 'Active', label: 'Active' },
-                    { value: 'Trial', label: 'Trial' },
-                    { value: 'Suspended', label: 'Suspended' },
-                  ]}
-                />
-              </div>
-
-              <div className="w-36">
-                <Select
-                  value={billingFilter}
-                  onChange={(e) => setBillingFilter(e.target.value)}
-                  options={[
-                    { value: 'All', label: 'All Billing' },
-                    { value: 'Paid', label: 'Paid' },
-                    { value: 'Trial', label: 'Trial' },
-                  ]}
-                />
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const csvData =
-                    'data:text/csv;charset=utf-8,' +
-                    ['Company,Status,MRR,Contact'].concat(
-                      filteredTenants.map((t) => `${t.companyName},${t.tenantStatus},${t.mrr},${t.contactName}`)
-                    ).join('\n');
-                  const encodedUri = encodeURI(csvData);
-                  const link = document.createElement('a');
-                  link.setAttribute('href', encodedUri);
-                  link.setAttribute('download', `plan-${plan.id}-tenants.csv`);
-                  document.body.appendChild(link);
-                  link.click();
-                  link.remove();
-                }}
-                className="gap-2 font-bold text-slate-700 h-10 border-slate-200"
-              >
-                <Download className="h-4 w-4 text-slate-500" /> Export
-              </Button>
-            </div>
-
-            {/* 100% Full Width DataTable */}
-            <DataTable data={filteredTenants} columns={columns} keyExtractor={(t: any) => t.id} />
+      {/* 100% FULL-WIDTH Main Data Table Section (Prevents Horizontal Squeezing & Bleeding) */}
+      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 w-full min-w-0">
+        {/* Search & Filter Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="relative flex-1 min-w-[240px]">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search tenants by name, domain, contact..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="h-10 w-full rounded-sm border border-slate-200 bg-slate-50/50 pl-10 pr-4 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
+            />
           </div>
+
+          <div className="w-full sm:w-36">
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              options={[
+                { value: 'All', label: 'All Statuses' },
+                { value: 'Active', label: 'Active' },
+                { value: 'Trial', label: 'Trial' },
+                { value: 'Suspended', label: 'Suspended' },
+              ]}
+            />
+          </div>
+
+          <div className="w-full sm:w-36">
+            <Select
+              value={billingFilter}
+              onChange={(e) => setBillingFilter(e.target.value)}
+              options={[
+                { value: 'All', label: 'All Billing' },
+                { value: 'Paid', label: 'Paid' },
+                { value: 'Trial', label: 'Trial' },
+              ]}
+            />
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (filteredTenants.length === 0) return;
+              const csvData =
+                'data:text/csv;charset=utf-8,' +
+                ['Company,Status,MRR,Contact'].concat(
+                  filteredTenants.map((t) => `${t.companyName},${t.tenantStatus},${t.subscriptionPrice || t.mrr || 0},${t.primaryContactName || ''}`)
+                ).join('\n');
+              const encodedUri = encodeURI(csvData);
+              const link = document.createElement('a');
+              link.setAttribute('href', encodedUri);
+              link.setAttribute('download', `plan-${plan.id}-tenants.csv`);
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+            }}
+            className="gap-2 font-bold text-slate-700 h-10 border-slate-200 cursor-pointer"
+          >
+            <Download className="h-4 w-4 text-slate-500" /> Export
+          </Button>
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Card 1: Plan Adoption Donut Chart */}
-          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            <h4 className="text-sm font-bold text-[#0D1F3D] border-b border-slate-100 pb-3">Plan Adoption Breakdown</h4>
+        {/* 100% Full Width Scrollable DataTable */}
+        {filteredTenants.length > 0 ? (
+          <div className="w-full overflow-x-auto">
+            <DataTable data={filteredTenants} columns={columns} keyExtractor={(t: Tenant) => t.id} />
+          </div>
+        ) : (
+          <div className="py-12 text-center text-xs text-slate-500 font-medium space-y-2">
+            <Building2 className="h-8 w-8 text-slate-300 mx-auto" />
+            <p className="font-bold text-slate-700 text-sm">No tenants found</p>
+            <p>No tenants are currently subscribed to this plan matching your filters.</p>
+          </div>
+        )}
+      </div>
 
+      {/* Analytics & Insights Widgets Row Below Data Table (Strictly adhering to Design System Rule 3.2) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+        {/* Card 1: Plan Adoption Donut Chart */}
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 min-w-0">
+          <h4 className="text-sm font-bold text-[#0D1F3D] border-b border-slate-100 pb-3">Plan Adoption Breakdown</h4>
+
+          {metrics.totalTenants > 0 ? (
             <div className="flex items-center gap-4">
               <div className="relative h-32 w-32 shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -467,71 +409,84 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-base font-extrabold text-[#0D1F3D]">64</span>
-                  <span className="text-[10px] font-semibold text-slate-500">Total Tenants</span>
+                  <span className="text-base font-extrabold text-[#0D1F3D]">{metrics.totalTenants}</span>
+                  <span className="text-[10px] font-semibold text-slate-500">Total</span>
                 </div>
               </div>
 
-              <div className="flex-1 space-y-2 text-xs font-semibold">
+              <div className="flex-1 space-y-2 text-xs font-semibold min-w-0">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-                    <span className="text-slate-600">Active</span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="h-2.5 w-2.5 rounded-full bg-blue-500 shrink-0" />
+                    <span className="text-slate-600 truncate">Active</span>
                   </div>
-                  <span className="text-[#0D1F3D] font-extrabold">48 (75%)</span>
+                  <span className="text-[#0D1F3D] font-extrabold shrink-0">{metrics.activeTenants}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-                    <span className="text-slate-600">Trial</span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500 shrink-0" />
+                    <span className="text-slate-600 truncate">Trial</span>
                   </div>
-                  <span className="text-[#0D1F3D] font-extrabold">14 (22%)</span>
+                  <span className="text-[#0D1F3D] font-extrabold shrink-0">{metrics.trialTenants}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
-                    <span className="text-slate-600">Suspended</span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="h-2.5 w-2.5 rounded-full bg-purple-500 shrink-0" />
+                    <span className="text-slate-600 truncate">Suspended</span>
                   </div>
-                  <span className="text-[#0D1F3D] font-extrabold">2 (3%)</span>
+                  <span className="text-[#0D1F3D] font-extrabold shrink-0">{metrics.suspendedTenants}</span>
                 </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="py-6 text-center text-xs text-slate-500 font-medium">
+              No active or trial tenant subscriptions recorded yet.
+            </div>
+          )}
+        </div>
 
-          {/* Card 2: Top Tenants by MRR */}
-          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            <h4 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">Top Tenants by MRR</h4>
+        {/* Card 2: Top Tenants by MRR */}
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 min-w-0">
+          <h4 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3">Top Tenants by MRR</h4>
+          {topTenants.length > 0 ? (
             <div className="space-y-3">
-              {mockTenants.slice(0, 5).map((t, idx) => (
-                <div key={t.id} className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2.5 truncate">
-                    <span className="text-xs font-bold text-slate-500 w-3">{idx + 1}</span>
-                    <span className="font-extrabold text-[#0D1F3D] truncate">{t.companyName}</span>
+              {topTenants.map((t, idx) => {
+                const mrrVal = t.subscriptionPrice !== undefined ? t.subscriptionPrice : t.mrr || 0;
+                return (
+                  <div key={t.id} className="flex items-center justify-between text-xs gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0 truncate">
+                      <span className="text-xs font-bold text-slate-500 w-3 shrink-0">{idx + 1}</span>
+                      <span className="font-extrabold text-[#0D1F3D] truncate">{t.companyName}</span>
+                    </div>
+                    <span className="font-mono font-extrabold text-indigo-700 shrink-0">
+                      {mrrVal > 0 ? formatCurrency(mrrVal, plan.pricing.currency) : '₹0'}
+                    </span>
                   </div>
-                  <span className="font-mono font-extrabold text-indigo-700 shrink-0">
-                    {t.mrr > 0 ? formatCurrency(t.mrr) : '₹0'}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
-          </div>
+          ) : (
+            <div className="py-4 text-center text-xs text-slate-500 font-medium">
+              No tenants subscribed yet.
+            </div>
+          )}
+        </div>
 
-          {/* Card 3: Tenant Insights */}
-          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-            <h4 className="text-sm font-bold text-[#0D1F3D]">Tenant Insights</h4>
-            <div className="space-y-2 text-xs text-slate-600 font-medium">
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span>Highest MRR plan across platform</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span>94% renewal rate over past 12 months</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <ShieldCheck className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
-                <span>Zero policy violations reported</span>
-              </div>
+        {/* Card 3: Tenant Insights */}
+        <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3 min-w-0">
+          <h4 className="text-sm font-bold text-[#0D1F3D]">Tenant Insights</h4>
+          <div className="space-y-2 text-xs text-slate-600 font-medium">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+              <span>Supports multi-tenant isolation and per-tenant limits</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <CheckCircle className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+              <span>Automated monthly and annual renewal management</span>
+            </div>
+            <div className="flex items-start gap-2">
+              <ShieldCheck className="h-4 w-4 text-purple-600 shrink-0 mt-0.5" />
+              <span>Zero security policy violations reported</span>
             </div>
           </div>
         </div>

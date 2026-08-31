@@ -20,7 +20,7 @@ export function formatPlanMonthlyPrice(pricing: PlanPricing): string {
     return 'Contact Sales';
   }
   if (pricing.model === 'Per User') {
-    return pricing.monthlyPerUser ? `${formatCurrency(pricing.monthlyPerUser, pricing.currency)} / user` : '—';
+    return pricing.monthlyPerUser !== undefined ? `${formatCurrency(pricing.monthlyPerUser, pricing.currency)} / user` : '—';
   }
   if (pricing.model === 'Base + Per User') {
     const base = formatCurrency(pricing.monthlyBaseFee, pricing.currency);
@@ -28,7 +28,7 @@ export function formatPlanMonthlyPrice(pricing: PlanPricing): string {
     return `${base} + ${perUser}/user`;
   }
   if (pricing.model === 'Flat Monthly') {
-    return pricing.monthlyFlatPrice ? `${formatCurrency(pricing.monthlyFlatPrice, pricing.currency)}` : '—';
+    return pricing.monthlyFlatPrice !== undefined ? `${formatCurrency(pricing.monthlyFlatPrice, pricing.currency)}` : '—';
   }
   return '—';
 }
@@ -41,7 +41,7 @@ export function formatPlanAnnualPrice(pricing: PlanPricing): string {
     return 'Not Available';
   }
   if (pricing.model === 'Per User') {
-    return pricing.annualPerUser ? `${formatCurrency(pricing.annualPerUser, pricing.currency)} / user` : '—';
+    return pricing.annualPerUser !== undefined ? `${formatCurrency(pricing.annualPerUser, pricing.currency)} / user` : '—';
   }
   if (pricing.model === 'Base + Per User') {
     const base = formatCurrency(pricing.annualBaseFee, pricing.currency);
@@ -49,9 +49,59 @@ export function formatPlanAnnualPrice(pricing: PlanPricing): string {
     return `${base} + ${perUser}/user`;
   }
   if (pricing.model === 'Flat Monthly') {
-    return pricing.annualFlatPrice ? `${formatCurrency(pricing.annualFlatPrice, pricing.currency)}` : '—';
+    return pricing.annualFlatPrice !== undefined ? `${formatCurrency(pricing.annualFlatPrice, pricing.currency)}` : '—';
   }
   return '—';
+}
+
+export function calculateMonthlyPlanCost(pricing: PlanPricing, seats: number): number | null {
+  if (pricing.model === 'Custom Contract') return null;
+
+  if (pricing.model === 'Per User') {
+    if (pricing.monthlyPerUser === undefined) return null;
+    return pricing.monthlyPerUser * seats;
+  }
+  if (pricing.model === 'Base + Per User') {
+    const base = pricing.monthlyBaseFee || 0;
+    const perUser = pricing.monthlyPerUser || 0;
+    return base + perUser * seats;
+  }
+  if (pricing.model === 'Flat Monthly') {
+    return pricing.monthlyFlatPrice !== undefined ? pricing.monthlyFlatPrice : null;
+  }
+  return null;
+}
+
+export function calculateAnnualPlanCost(pricing: PlanPricing, seats: number): number | null {
+  if (pricing.model === 'Custom Contract' || !pricing.allowAnnualBilling) return null;
+
+  if (pricing.model === 'Per User') {
+    if (pricing.annualPerUser === undefined) return null;
+    return pricing.annualPerUser * seats;
+  }
+  if (pricing.model === 'Base + Per User') {
+    const base = pricing.annualBaseFee || 0;
+    const perUser = pricing.annualPerUser || 0;
+    return base + perUser * seats;
+  }
+  if (pricing.model === 'Flat Monthly') {
+    return pricing.annualFlatPrice !== undefined ? pricing.annualFlatPrice : null;
+  }
+  return null;
+}
+
+export function getAnnualSavingsPercent(pricing: PlanPricing): number | null {
+  if (pricing.annualDiscountPercent !== undefined && pricing.annualDiscountPercent > 0) {
+    return pricing.annualDiscountPercent;
+  }
+  if (pricing.model === 'Per User' && pricing.monthlyPerUser && pricing.annualPerUser) {
+    const monthlyAnnualized = pricing.monthlyPerUser * 12;
+    const annualTotal = pricing.annualPerUser * 12;
+    if (monthlyAnnualized > annualTotal) {
+      return Math.round(((monthlyAnnualized - annualTotal) / monthlyAnnualized) * 100);
+    }
+  }
+  return null;
 }
 
 export function getPlanStatusBadge(status: PlanStatus) {
@@ -84,4 +134,14 @@ export function formatLimit(val: number | undefined | null, suffix = ''): string
     return 'Unlimited';
   }
   return `${val.toLocaleString('en-IN')}${suffix ? ` ${suffix}` : ''}`;
+}
+
+export function formatDays(days: number | undefined | null): string {
+  if (days === undefined || days === null) return '—';
+  if (days === 365) return '1 Year';
+  if (days === 730) return '2 Years';
+  if (days === 30) return '30 Days';
+  if (days === 90) return '90 Days';
+  if (days === 180) return '180 Days';
+  return `${days} Days`;
 }

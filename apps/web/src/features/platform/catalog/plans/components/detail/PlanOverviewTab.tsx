@@ -29,6 +29,7 @@ import {
   formatPlanMonthlyPrice,
   formatPlanAnnualPrice,
   formatLimit,
+  formatDays,
 } from '../../utils/plan-pricing.utils';
 
 export interface PlanOverviewTabProps {
@@ -53,27 +54,35 @@ export function PlanOverviewTab({
 }: PlanOverviewTabProps) {
   const navigate = useNavigate();
 
-  // Donut chart data derived from actual tenants or fallback to plan proportions
+  // Donut chart data derived from actual metrics
   const donutData = React.useMemo(() => {
     return [
-      { name: 'Active', value: metrics.activeTenants || 48, color: DONUT_COLORS.Active },
-      { name: 'Trial', value: metrics.trialTenants || 14, color: DONUT_COLORS.Trial },
-      { name: 'Suspended', value: metrics.suspendedTenants || 6, color: DONUT_COLORS.Suspended },
-      { name: 'Past Due', value: metrics.pastDueTenants || 2, color: DONUT_COLORS['Past Due'] },
+      { name: 'Active', value: metrics.activeTenants, color: DONUT_COLORS.Active },
+      { name: 'Trial', value: metrics.trialTenants, color: DONUT_COLORS.Trial },
+      { name: 'Suspended', value: metrics.suspendedTenants, color: DONUT_COLORS.Suspended },
+      { name: 'Past Due', value: metrics.pastDueTenants, color: DONUT_COLORS['Past Due'] },
     ];
   }, [metrics]);
 
-  // Recent 3 tenants
+  // Recent 3 tenants derived ONLY from planTenants (no fake company names)
   const recentTenants = React.useMemo(() => {
-    if (planTenants.length >= 3) {
-      return [...planTenants].reverse().slice(0, 3);
-    }
-    return [
-      { id: 't1', companyName: 'MediLife Pharma Pvt. Ltd.', createdAt: '28 May 2024', tenantStatus: 'Active' },
-      { id: 't2', companyName: 'SunGrow Energy Solutions', createdAt: '26 May 2024', tenantStatus: 'Active' },
-      { id: 't3', companyName: 'HealthCare Plus', createdAt: '24 May 2024', tenantStatus: 'Trial' },
-    ];
+    if (!planTenants || planTenants.length === 0) return [];
+    return [...planTenants]
+      .sort(
+        (a, b) =>
+          new Date(b.subscriptionStartDate || b.createdAt || 0).getTime() -
+          new Date(a.subscriptionStartDate || a.createdAt || 0).getTime()
+      )
+      .slice(0, 3);
   }, [planTenants]);
+
+  const billingModesText = React.useMemo(() => {
+    const { allowMonthlyBilling, allowAnnualBilling } = plan.pricing;
+    if (allowMonthlyBilling && allowAnnualBilling) return 'Monthly & Annual';
+    if (allowAnnualBilling) return 'Annual Only';
+    if (allowMonthlyBilling) return 'Monthly Only';
+    return 'Custom Contract';
+  }, [plan.pricing]);
 
   return (
     <div className="space-y-6 font-sans">
@@ -81,32 +90,32 @@ export function PlanOverviewTab({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Active Tenants"
-          value={(metrics.activeTenants || 48).toString()}
-          subValue="↑ 12% vs last 30 days"
+          value={metrics.activeTenants.toString()}
+          subValue="Current active paying tenants"
           icon={Users}
           iconBgColor="bg-blue-50"
           iconTextColor="text-blue-600"
         />
         <KpiCard
           title="Monthly Recurring Revenue"
-          value={formatCurrency(metrics.totalMrr || 942000)}
-          subValue="↑ 8.4% vs last 30 days"
+          value={formatCurrency(metrics.totalMrr, plan.pricing.currency)}
+          subValue="Total current MRR"
           icon={IndianRupee}
           iconBgColor="bg-emerald-50"
           iconTextColor="text-emerald-600"
         />
         <KpiCard
           title="Total Subscriptions"
-          value={(metrics.totalTenants || 62).toString()}
-          subValue="Active subscriptions"
+          value={metrics.totalTenants.toString()}
+          subValue="All active subscriptions"
           icon={Building2}
           iconBgColor="bg-amber-50"
           iconTextColor="text-amber-600"
         />
         <KpiCard
           title="Trial Tenants"
-          value={(metrics.trialTenants || 14).toString()}
-          subValue="In trial period"
+          value={metrics.trialTenants.toString()}
+          subValue="In active trial period"
           icon={Clock}
           iconBgColor="bg-purple-50"
           iconTextColor="text-purple-600"
@@ -142,7 +151,7 @@ export function PlanOverviewTab({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-500">Plan Tier</span>
                   <span className="inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-extrabold text-indigo-700">
-                    {plan.tier}
+                    {plan.tier || 'Standard'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -153,11 +162,11 @@ export function PlanOverviewTab({
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-500">Recommended For</span>
-                  <span className="font-medium text-slate-700">{plan.recommendedFor || 'Mid to Large Businesses'}</span>
+                  <span className="font-medium text-slate-700">{plan.recommendedFor || '—'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-500">Display Order</span>
-                  <span className="font-medium text-slate-700">{plan.displayOrder || 3}</span>
+                  <span className="font-medium text-slate-700">{plan.displayOrder}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-500">Status</span>
@@ -170,30 +179,27 @@ export function PlanOverviewTab({
                   <span className="font-mono font-bold text-slate-800">v{plan.version || 1}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500">Created By</span>
-                  <span className="font-medium text-slate-700 flex items-center gap-1.5">
-                    <span className="h-4 w-4 rounded-full bg-indigo-700 text-white text-[9px] font-bold flex items-center justify-center">S</span>
-                    Sahibjit Singh
+                  <span className="text-xs font-semibold text-slate-500">Created On</span>
+                  <span className="font-medium text-slate-600">
+                    {plan.createdAt ? new Date(plan.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-slate-500">Created On</span>
-                  <span className="font-medium text-slate-600">{plan.createdAt?.split('T')[0] || '10 Jan 2024, 11:30 AM'}</span>
-                </div>
-                <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-500">Last Updated</span>
-                  <span className="font-medium text-slate-600">{plan.updatedAt?.split('T')[0] || '28 May 2024, 04:20 PM'}</span>
+                  <span className="font-medium text-slate-600">
+                    {plan.updatedAt ? new Date(plan.updatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-500">Allow New Tenants</span>
-                  <span className="flex items-center gap-1 text-emerald-600 font-bold">
-                    <CheckCircle className="h-4 w-4 fill-emerald-100 stroke-emerald-600" />
+                  <span className={`flex items-center gap-1 font-bold ${plan.commercialRules.availableForNewTenants ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {plan.commercialRules.availableForNewTenants ? <CheckCircle className="h-4 w-4 fill-emerald-100 stroke-emerald-600" /> : 'No'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-500">Allow Existing Tenants</span>
-                  <span className="flex items-center gap-1 text-emerald-600 font-bold">
-                    <CheckCircle className="h-4 w-4 fill-emerald-100 stroke-emerald-600" />
+                  <span className={`flex items-center gap-1 font-bold ${plan.commercialRules.availableForExistingTenants ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    {plan.commercialRules.availableForExistingTenants ? <CheckCircle className="h-4 w-4 fill-emerald-100 stroke-emerald-600" /> : 'No'}
                   </span>
                 </div>
               </div>
@@ -216,7 +222,7 @@ export function PlanOverviewTab({
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-500">Default Billing</span>
-                    <span className="font-bold text-indigo-700">Monthly & Annual</span>
+                    <span className="font-bold text-indigo-700">{billingModesText}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-500">Monthly Price</span>
@@ -226,28 +232,38 @@ export function PlanOverviewTab({
                     <span className="text-xs font-semibold text-slate-500">Annual Price</span>
                     <div className="flex items-center gap-1.5">
                       <span className="font-extrabold text-emerald-700">{formatPlanAnnualPrice(plan.pricing)}</span>
-                      <span className="inline-flex rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-700 border border-emerald-200">
-                        Save 17%
-                      </span>
+                      {plan.pricing.annualDiscountPercent && plan.pricing.annualDiscountPercent > 0 ? (
+                        <span className="inline-flex rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-700 border border-emerald-200">
+                          Save {plan.pricing.annualDiscountPercent}%
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-500">Minimum Seats</span>
-                    <span className="font-mono font-bold text-slate-800">{plan.limits.minimumSeats} users</span>
+                    <span className="font-mono font-bold text-slate-800">{plan.limits.minimumSeats} seats</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-500">Trial Duration</span>
-                    <span className="font-medium text-slate-700">14 Days</span>
+                    <span className="font-medium text-slate-700">
+                      {plan.commercialRules.trialEnabled ? `${plan.commercialRules.trialDurationDays || 14} Days` : 'Disabled'}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-500">Auto Renewal</span>
-                    <span className="flex items-center gap-1 text-emerald-700 font-bold">
-                      <CheckCircle className="h-4 w-4 fill-emerald-100 stroke-emerald-600" /> Enabled
+                    <span className={`flex items-center gap-1 font-bold ${plan.commercialRules.autoRenew ? 'text-emerald-700' : 'text-slate-500'}`}>
+                      {plan.commercialRules.autoRenew ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 fill-emerald-100 stroke-emerald-600" /> Enabled
+                        </>
+                      ) : (
+                        'Disabled'
+                      )}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-slate-500">Change Effective</span>
-                    <span className="font-medium text-slate-700">Next Billing Cycle</span>
+                    <span className="font-medium text-slate-700">{plan.commercialRules.changeEffectiveTiming || 'Immediately'}</span>
                   </div>
                 </div>
               </div>
@@ -256,7 +272,7 @@ export function PlanOverviewTab({
                 <button
                   type="button"
                   onClick={() => navigate(`/platform/plans/${plan.id}/pricing`)}
-                  className="w-full text-center text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline py-1.5 flex items-center justify-center gap-1"
+                  className="w-full text-center text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline py-1.5 flex items-center justify-center gap-1 cursor-pointer"
                 >
                   View Pricing Details →
                 </button>
@@ -270,7 +286,9 @@ export function PlanOverviewTab({
             <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <h3 className="text-sm font-extrabold text-[#0D1F3D]">Included Modules ({includedModules.length || 6})</h3>
+                  <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+                    Included Modules ({includedModules.length})
+                  </h3>
                   <button
                     type="button"
                     onClick={() => navigate(`/platform/plans/${plan.id}/modules`)}
@@ -280,27 +298,33 @@ export function PlanOverviewTab({
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {includedModules.slice(0, 6).map((mod) => (
-                    <div
-                      key={mod.id}
-                      className="p-2.5 rounded-sm border border-slate-200 bg-slate-50/60 flex items-center gap-2.5"
-                    >
-                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600">
-                        <Layers className="h-3.5 w-3.5" />
+                {includedModules.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {includedModules.slice(0, 6).map((mod) => (
+                      <div
+                        key={mod.id}
+                        className="p-2.5 rounded-sm border border-slate-200 bg-slate-50/60 flex items-center gap-2.5"
+                      >
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600">
+                          <Layers className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-[#0D1F3D] truncate">{mod.name}</p>
+                          <p className="text-[10px] text-slate-500 font-medium">{mod.category || 'Standard'}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-[#0D1F3D] truncate">{mod.name}</p>
-                        <p className="text-[10px] text-slate-500 font-medium">Core</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 italic py-4 text-center">
+                    No modules included in this plan.
+                  </p>
+                )}
               </div>
 
               <div className="p-2.5 rounded-sm bg-emerald-50/60 border border-emerald-100 flex items-center gap-2 text-xs text-emerald-700 font-bold">
                 <Check className="h-4 w-4 text-emerald-600" />
-                <span>{includedModules.length || 6} modules included in this plan</span>
+                <span>{includedModules.length} modules included in this plan</span>
               </div>
             </div>
 
@@ -322,7 +346,7 @@ export function PlanOverviewTab({
                   <Users className="h-4 w-4 text-blue-500 shrink-0" />
                   <div>
                     <span className="text-slate-500 text-[10px] font-semibold block">Maximum Users</span>
-                    <span className="font-extrabold text-[#0D1F3D]">{formatLimit(plan.limits.maximumSeats || 150)}</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{formatLimit(plan.limits.maximumSeats)}</span>
                   </div>
                 </div>
 
@@ -330,7 +354,7 @@ export function PlanOverviewTab({
                   <FileText className="h-4 w-4 text-blue-500 shrink-0" />
                   <div>
                     <span className="text-slate-500 text-[10px] font-semibold block">Custom Forms</span>
-                    <span className="font-extrabold text-[#0D1F3D]">{formatLimit(plan.limits.customForms || 100)}</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{formatLimit(plan.limits.customForms)}</span>
                   </div>
                 </div>
 
@@ -338,7 +362,9 @@ export function PlanOverviewTab({
                   <HardDrive className="h-4 w-4 text-blue-500 shrink-0" />
                   <div>
                     <span className="text-slate-500 text-[10px] font-semibold block">Storage</span>
-                    <span className="font-extrabold text-[#0D1F3D]">{plan.limits.storageGb || 200} GB</span>
+                    <span className="font-extrabold text-[#0D1F3D]">
+                      {plan.limits.storageGb !== undefined ? `${plan.limits.storageGb} GB` : '—'}
+                    </span>
                   </div>
                 </div>
 
@@ -346,7 +372,13 @@ export function PlanOverviewTab({
                   <Sparkles className="h-4 w-4 text-blue-500 shrink-0" />
                   <div>
                     <span className="text-slate-500 text-[10px] font-semibold block">AI Credits / Month</span>
-                    <span className="font-extrabold text-[#0D1F3D]">{formatLimit(plan.limits.aiCreditsPerMonth || 5000)}</span>
+                    <span className="font-extrabold text-[#0D1F3D]">
+                      {plan.limits.aiCreditsPerMonth !== undefined
+                        ? plan.limits.aiCreditsPerMonth === 0
+                          ? '0'
+                          : formatLimit(plan.limits.aiCreditsPerMonth)
+                        : '—'}
+                    </span>
                   </div>
                 </div>
 
@@ -354,7 +386,7 @@ export function PlanOverviewTab({
                   <Cpu className="h-4 w-4 text-blue-500 shrink-0" />
                   <div>
                     <span className="text-slate-500 text-[10px] font-semibold block">API Requests / Month</span>
-                    <span className="font-extrabold text-[#0D1F3D]">{formatLimit(plan.limits.apiRequestsPerMonth || 100000)}</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{formatLimit(plan.limits.apiRequestsPerMonth)}</span>
                   </div>
                 </div>
 
@@ -362,7 +394,7 @@ export function PlanOverviewTab({
                   <FileText className="h-4 w-4 text-blue-500 shrink-0" />
                   <div>
                     <span className="text-slate-500 text-[10px] font-semibold block">Report Exports / Month</span>
-                    <span className="font-extrabold text-[#0D1F3D]">{formatLimit(plan.limits.reportExportsPerMonth || 500)}</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{formatLimit(plan.limits.reportExportsPerMonth)}</span>
                   </div>
                 </div>
 
@@ -370,7 +402,7 @@ export function PlanOverviewTab({
                   <Layers className="h-4 w-4 text-blue-500 shrink-0" />
                   <div>
                     <span className="text-slate-500 text-[10px] font-semibold block">Active Workflows</span>
-                    <span className="font-extrabold text-[#0D1F3D]">{plan.limits.activeWorkflows || 25}</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{formatLimit(plan.limits.activeWorkflows)}</span>
                   </div>
                 </div>
 
@@ -378,7 +410,7 @@ export function PlanOverviewTab({
                   <Clock className="h-4 w-4 text-blue-500 shrink-0" />
                   <div>
                     <span className="text-slate-500 text-[10px] font-semibold block">Data Retention</span>
-                    <span className="font-extrabold text-[#0D1F3D]">1 Year</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{formatDays(plan.limits.dataRetentionDays)}</span>
                   </div>
                 </div>
               </div>
@@ -388,77 +420,80 @@ export function PlanOverviewTab({
 
         {/* Right Rail Container */}
         <div className="space-y-6">
-          {/* Card 1: Plan Performance (Last 30 Days) Donut Chart */}
+          {/* Card 1: Plan Performance Donut Chart */}
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-bold text-[#0D1F3D]">Plan Performance <span className="text-xs font-normal text-slate-500">(Last 30 Days)</span></h3>
-              <select className="text-xs border border-slate-200 rounded-sm px-2 py-1 bg-slate-50 font-medium text-slate-700">
-                <option>Last 30 Days</option>
-              </select>
+              <h3 className="text-sm font-bold text-[#0D1F3D]">Plan Performance Breakdown</h3>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="relative h-32 w-32 shrink-0">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={donutData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={36}
-                      outerRadius={52}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {donutData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      wrapperStyle={{ zIndex: 100 }}
-                      contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none', color: '#fff' }}
-                      itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '11px' }}
-                      formatter={(val: any) => [`${val} Tenants`, 'Status']}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-base font-extrabold text-[#0D1F3D]">48</span>
-                  <span className="text-[10px] font-semibold text-slate-500">Active Tenants</span>
+            {metrics.totalTenants > 0 ? (
+              <div className="flex items-center gap-4">
+                <div className="relative h-32 w-32 shrink-0">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={donutData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={36}
+                        outerRadius={52}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {donutData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        wrapperStyle={{ zIndex: 100 }}
+                        contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none', color: '#fff' }}
+                        itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '11px' }}
+                        formatter={(val: any) => [`${val} Tenants`, 'Status']}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-base font-extrabold text-[#0D1F3D]">{metrics.activeTenants}</span>
+                    <span className="text-[10px] font-semibold text-slate-500">Active</span>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex-1 space-y-2 text-xs font-semibold">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-                    <span className="text-slate-600">Active</span>
+                <div className="flex-1 space-y-2 text-xs font-semibold">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                      <span className="text-slate-600">Active</span>
+                    </div>
+                    <span className="text-[#0D1F3D] font-extrabold">{metrics.activeTenants}</span>
                   </div>
-                  <span className="text-[#0D1F3D] font-extrabold">48 (68%)</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
-                    <span className="text-slate-600">Trial</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                      <span className="text-slate-600">Trial</span>
+                    </div>
+                    <span className="text-[#0D1F3D] font-extrabold">{metrics.trialTenants}</span>
                   </div>
-                  <span className="text-[#0D1F3D] font-extrabold">14 (20%)</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
-                    <span className="text-slate-600">Suspended</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
+                      <span className="text-slate-600">Suspended</span>
+                    </div>
+                    <span className="text-[#0D1F3D] font-extrabold">{metrics.suspendedTenants}</span>
                   </div>
-                  <span className="text-[#0D1F3D] font-extrabold">6 (8%)</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
-                    <span className="text-slate-600">Past Due</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+                      <span className="text-slate-600">Past Due</span>
+                    </div>
+                    <span className="text-[#0D1F3D] font-extrabold">{metrics.pastDueTenants}</span>
                   </div>
-                  <span className="text-[#0D1F3D] font-extrabold">2 (4%)</span>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="py-6 text-center text-xs text-slate-500 font-medium">
+                No active or trial tenant subscriptions recorded yet.
+              </div>
+            )}
 
             <div className="pt-2 border-t border-slate-100 text-center">
               <button
@@ -478,7 +513,7 @@ export function PlanOverviewTab({
               <button
                 type="button"
                 onClick={() => navigate(`/platform/plans/create?planId=${plan.id}&step=basic`)}
-                className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 text-left transition group"
+                className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 text-left transition group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
                   <Edit className="h-4 w-4 text-blue-600 shrink-0" />
@@ -493,7 +528,7 @@ export function PlanOverviewTab({
               <button
                 type="button"
                 onClick={() => navigate(`/platform/plans/create?planId=${plan.id}&step=basic`)}
-                className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 text-left transition group"
+                className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 text-left transition group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
                   <Copy className="h-4 w-4 text-blue-600 shrink-0" />
@@ -508,7 +543,7 @@ export function PlanOverviewTab({
               <button
                 type="button"
                 onClick={() => navigate(`/platform/plans/${plan.id}/tenants`)}
-                className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 text-left transition group"
+                className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 text-left transition group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
                   <Users className="h-4 w-4 text-blue-600 shrink-0" />
@@ -523,7 +558,7 @@ export function PlanOverviewTab({
               <button
                 type="button"
                 onClick={() => navigate(`/platform/plans/${plan.id}/versions`)}
-                className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 text-left transition group"
+                className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 text-left transition group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
                   <History className="h-4 w-4 text-blue-600 shrink-0" />
@@ -546,13 +581,13 @@ export function PlanOverviewTab({
                   downloadAnchor.click();
                   downloadAnchor.remove();
                 }}
-                className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 text-left transition group"
+                className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 text-left transition group cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
                   <Download className="h-4 w-4 text-blue-600 shrink-0" />
                   <div>
                     <p className="text-xs font-bold text-[#0D1F3D] group-hover:text-indigo-600">Export Plan Summary</p>
-                    <p className="text-[10px] text-slate-500 font-medium">Download plan details as PDF / JSON</p>
+                    <p className="text-[10px] text-slate-500 font-medium">Download plan details as JSON</p>
                   </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-indigo-600" />
@@ -563,7 +598,7 @@ export function PlanOverviewTab({
           {/* Card 3: Recent Tenants Added */}
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Recent Tenants Added</h3>
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Recent Tenants Subscribed</h3>
               <button
                 type="button"
                 onClick={() => navigate(`/platform/plans/${plan.id}/tenants`)}
@@ -573,38 +608,42 @@ export function PlanOverviewTab({
               </button>
             </div>
 
-            <div className="space-y-3">
-              {recentTenants.map((t) => (
-                <div
-                  key={t.id}
-                  onClick={() => navigate(`/platform/tenants/${t.id}`)}
-                  className="flex items-center justify-between p-2.5 rounded-sm border border-slate-100 bg-slate-50/50 hover:bg-slate-100/80 transition cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold text-xs">
-                      {t.companyName[0]}
-                    </div>
-                    <div className="truncate">
-                      <p className="text-xs font-bold text-[#0D1F3D] truncate">{t.companyName}</p>
-                      <p className="text-[10px] text-slate-500 truncate font-medium">{t.createdAt}</p>
-                    </div>
-                  </div>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
-                      t.tenantStatus === 'Active'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                    }`}
+            {recentTenants.length > 0 ? (
+              <div className="space-y-3">
+                {recentTenants.map((t) => (
+                  <div
+                    key={t.id}
+                    onClick={() => navigate(`/platform/tenants/${t.id}`)}
+                    className="flex items-center justify-between p-2.5 rounded-sm border border-slate-100 bg-slate-50/50 hover:bg-slate-100/80 transition cursor-pointer"
                   >
-                    {t.tenantStatus}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <p className="text-[11px] text-slate-500 font-semibold text-center pt-1">
-              +45 more tenants using this plan
-            </p>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold text-xs">
+                        {t.companyName[0]}
+                      </div>
+                      <div className="truncate">
+                        <p className="text-xs font-bold text-[#0D1F3D] truncate">{t.companyName}</p>
+                        <p className="text-[10px] text-slate-500 truncate font-medium">
+                          {t.subscriptionStartDate || t.createdAt || '—'}
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${
+                        t.tenantStatus === 'Active'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-amber-50 text-amber-700 border-amber-200'
+                      }`}
+                    >
+                      {t.tenantStatus}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-6 text-center text-xs text-slate-500 font-medium">
+                No tenants are currently subscribed to this plan.
+              </div>
+            )}
           </div>
         </div>
       </div>
