@@ -29,7 +29,7 @@ export interface PlanDetailHeaderProps {
 
 export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeaderProps) {
   const navigate = useNavigate();
-  const { hasPlatformPermission } = usePlatformPermissions();
+  const { canCreatePlan, canUpdatePlan, canArchivePlan } = usePlatformPermissions();
 
   const [archiving, setArchiving] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
@@ -37,10 +37,6 @@ export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeade
   const [copiedCode, setCopiedCode] = useState(false);
 
   const statusBadge = getPlanStatusBadge(plan.status);
-
-  // Permission checks
-  const canUpdate = hasPlatformPermission('platform.plans.update');
-  const canArchive = hasPlatformPermission('platform.plans.archive');
 
   const editConfig = React.useMemo(() => {
     switch (activeTab) {
@@ -63,7 +59,7 @@ export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeade
   };
 
   const handleDuplicate = async () => {
-    if (!canUpdate) return;
+    if (!canCreatePlan) return;
     setDuplicating(true);
     try {
       const duplicated = await planService.duplicatePlan(plan.id);
@@ -77,7 +73,7 @@ export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeade
   };
 
   const handleConfirmArchive = async () => {
-    if (!canArchive) return;
+    if (!canArchivePlan) return;
     setArchiving(true);
     try {
       await planService.archivePlan(plan.id);
@@ -167,7 +163,7 @@ export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeade
 
         {/* Right Side: Header Action Buttons */}
         <div className="flex items-center gap-2.5 shrink-0">
-          {canUpdate && (
+          {canCreatePlan && (
             <Button
               variant="outline"
               size="sm"
@@ -180,7 +176,7 @@ export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeade
             </Button>
           )}
 
-          {canArchive && plan.status !== 'Archived' && (
+          {canArchivePlan && plan.status !== 'Archived' && (
             <Button
               variant="outline"
               size="sm"
@@ -192,7 +188,7 @@ export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeade
             </Button>
           )}
 
-          {canUpdate && (
+          {canUpdatePlan && (
             <Button
               variant="accent"
               size="sm"
