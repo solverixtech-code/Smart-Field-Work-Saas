@@ -13,7 +13,10 @@ import { ApiThrottlerGuard } from './common/guards/api-throttler.guard';
 import { RedisThrottlerStorage } from './common/throttling/redis-throttler.storage';
 import { ThrottlingModule } from './common/throttling/throttling.module';
 
+import { AppController } from './app.controller';
+
 @Module({
+  controllers: [AppController],
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
