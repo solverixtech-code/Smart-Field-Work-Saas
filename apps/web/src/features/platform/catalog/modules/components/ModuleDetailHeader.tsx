@@ -235,7 +235,7 @@ export function ModuleDetailHeader({ module, onRefresh }: ModuleDetailHeaderProp
               variant="accent"
               size="sm"
               onClick={() => navigate(`/platform/modules/${module.id}/edit`)}
-              className="gap-2 font-bold shadow-xs bg-[#1D4ED8] hover:bg-blue-700 text-white border-none h-9"
+              className="gap-2 font-bold shadow-xs bg-[#E20613] hover:bg-red-700 text-white border-none h-9"
             >
               <Edit className="h-4 w-4" />
               Edit Module

@@ -1,18 +1,28 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Package,
-  Code,
-  GitBranch,
-  CheckCircle2,
-  Edit,
-  Shield,
+  Info,
   Layers,
+  GitBranch,
+  History,
+  Shield,
+  ChevronRight,
+  ArrowRight,
+  CheckCircle2,
+  Package,
+  Building2,
+  BarChart3,
+  Route,
+  UserCheck,
+  Calendar,
+  Clock,
+  Briefcase,
+  Bot,
+  Zap,
 } from 'lucide-react';
-import { PlatformModule, PlatformModuleCategory } from '../../types/module.types';
+import { PlatformModule } from '../../types/module.types';
 import { ModuleCategoryBadge } from '../ModuleCategoryBadge';
 import { ModuleStatusBadge } from '../ModuleStatusBadge';
-import { Button } from '../../../../../../components/ui/Button';
 
 export interface ModuleOverviewTabProps {
   module: PlatformModule;
@@ -24,157 +34,292 @@ export function ModuleOverviewTab({ module }: ModuleOverviewTabProps) {
   const formattedCreated = module.createdAt ? new Date(module.createdAt).toLocaleDateString() : '—';
   const formattedUpdated = module.updatedAt ? new Date(module.updatedAt).toLocaleDateString() : '—';
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 font-sans">
-      {/* Card 1: Module Information */}
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between space-y-4">
-        <div className="space-y-3">
-          <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3 flex items-center gap-2">
-            <Package className="h-4 w-4 text-indigo-600 shrink-0" /> Module Specifications
-          </h3>
+  const features = module.features || [];
+  const parents = module.dependencyCodes || [];
+  const dependents = module.dependentCodes || [];
 
-          <div className="space-y-3 text-xs">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <span className="text-[11px] text-slate-500 font-semibold block">Module Name</span>
-                <span className="font-extrabold text-[#0D1F3D] text-sm">{module.name}</span>
+  // Helper for feature icons
+  const getFeatureIcon = (index: number) => {
+    const icons = [Building2, Briefcase, BarChart3, Route, UserCheck, Zap, Bot, Package];
+    const IconComp = icons[index % icons.length];
+    return <IconComp className="h-4 w-4 text-indigo-600 shrink-0" />;
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 font-sans text-slate-800">
+      {/* LEFT COLUMN (8 cols) */}
+      <div className="lg:col-span-8 space-y-6">
+        {/* 1. Module Information Card */}
+        <section className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <Info className="h-4 w-4 text-indigo-600 shrink-0" />
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Module Information</h3>
+          </div>
+
+          <div className="space-y-4 text-xs font-semibold">
+            {/* Row 1 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between sm:justify-start sm:gap-8">
+                <span className="text-slate-500 w-32 font-semibold">Module Name</span>
+                <span className="font-extrabold text-[#0D1F3D]">{module.name}</span>
               </div>
-              <div>
-                <span className="text-[11px] text-slate-500 font-semibold block">Identifier Code</span>
-                <span className="font-mono font-bold text-indigo-700 text-xs bg-indigo-50 px-2.5 py-0.5 rounded-sm border border-indigo-200 inline-block mt-0.5">
+              <div className="flex items-center justify-between sm:justify-start sm:gap-8">
+                <span className="text-slate-500 w-32 font-semibold">Module Code</span>
+                <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-sm border border-indigo-200">
                   {module.code}
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <span className="text-[11px] text-slate-500 font-semibold block">Category</span>
-                <div className="mt-0.5">
-                  <ModuleCategoryBadge category={module.category} />
-                </div>
+            {/* Row 2 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between sm:justify-start sm:gap-8">
+                <span className="text-slate-500 w-32 font-semibold">Category</span>
+                <ModuleCategoryBadge category={module.category} />
               </div>
-              <div>
-                <span className="text-[11px] text-slate-500 font-semibold block">Lifecycle Status</span>
-                <div className="mt-0.5">
-                  <ModuleStatusBadge status={module.status} />
-                </div>
+              <div className="flex items-center justify-between sm:justify-start sm:gap-8">
+                <span className="text-slate-500 w-32 font-semibold">Lifecycle Status</span>
+                <ModuleStatusBadge status={module.status} />
               </div>
             </div>
 
-            <div>
-              <span className="text-[11px] text-slate-500 font-semibold block">System Protection</span>
-              <span className="font-semibold text-slate-800 text-xs mt-0.5 block">
-                {module.requiredBySystem ? 'Protected System Module (True)' : 'Optional Addon Capability (False)'}
-              </span>
+            {/* Row 3 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between sm:justify-start sm:gap-8">
+                <span className="text-slate-500 w-32 font-semibold">Display Order</span>
+                <span className="font-bold text-slate-800">{module.displayOrder ?? 1}</span>
+              </div>
             </div>
 
-            <div>
-              <span className="text-[11px] text-slate-500 font-semibold block mb-1">Capability Description</span>
-              <div className="text-xs font-medium text-slate-700 bg-slate-50 p-3 rounded-sm border border-slate-200 leading-relaxed">
+            {/* Row 4: Capability Scope */}
+            <div className="pt-2 border-t border-slate-100 space-y-1.5">
+              <span className="text-slate-500 font-semibold block">Capability Scope / Description</span>
+              <p className="text-xs font-medium text-slate-700 bg-slate-50/70 p-3.5 rounded-sm border border-slate-200/80 leading-relaxed">
                 {module.description}
-              </div>
+              </p>
             </div>
           </div>
-        </div>
+        </section>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(`/platform/modules/${module.id}/edit`)}
-          className="w-full text-xs font-bold text-indigo-600 border-indigo-200 bg-indigo-50/40 hover:bg-indigo-100/40 h-8"
-        >
-          <Edit className="h-3.5 w-3.5 mr-1" /> Edit Specifications
-        </Button>
-      </div>
-
-      {/* Card 2: Technical Architecture */}
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between space-y-4">
-        <div className="space-y-3">
-          <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-3 flex items-center gap-2">
-            <Code className="h-4 w-4 text-indigo-600 shrink-0" /> Technical Architecture
-          </h3>
-
-          <div className="space-y-3 text-xs font-semibold">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-500 font-semibold">API Prefix</span>
-              <span className="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded-sm border border-slate-200 text-[11px]">
-                /platform/modules/{module.code}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-500 font-semibold">Database Schema</span>
-              <span className="font-mono text-slate-700 text-[11px]">PlatformModule</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-500 font-semibold">System Protection</span>
-              <span className="font-bold text-slate-800">
-                {module.requiredBySystem ? 'Protected' : 'Optional'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-500 font-semibold">Created Date</span>
-              <span className="font-bold text-slate-700">{formattedCreated}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-500 font-semibold">Last Modified</span>
-              <span className="font-bold text-slate-700">{formattedUpdated}</span>
-            </div>
-          </div>
-        </div>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(`/platform/modules/${module.id}/features`)}
-          className="w-full text-xs font-bold text-indigo-600 border-indigo-200 bg-indigo-50/40 hover:bg-indigo-100/40 h-8"
-        >
-          <Layers className="h-3.5 w-3.5 mr-1" /> Inspect Code Features
-        </Button>
-      </div>
-
-      {/* Card 3: Dependency Graph & Impact */}
-      <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs flex flex-col justify-between space-y-4">
-        <div className="space-y-3">
+        {/* 2. Capability Summary Card */}
+        <section className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D] flex items-center gap-2">
-              <GitBranch className="h-4 w-4 text-indigo-600 shrink-0" /> Dependency Graph
-            </h3>
-            <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-              Guarded
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-indigo-600 shrink-0" />
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Capability Summary</h3>
+            </div>
+            <span className="text-[11px] font-bold text-slate-500">
+              {features.length} Features Registered
             </span>
           </div>
 
-          <div className="space-y-3 text-xs font-semibold">
-            <div className="flex justify-between items-center">
-              <span className="text-slate-500 font-semibold">Prerequisite Parents</span>
-              <span className="font-mono font-extrabold text-indigo-700">
-                {module.dependencyCodes?.length || 0} Modules
-              </span>
+          {features.length > 0 ? (
+            <div className="divide-y divide-slate-100 text-xs">
+              {features.slice(0, 5).map((feat, idx) => (
+                <div key={feat.id || feat.code || idx} className="py-3 flex items-start gap-3.5">
+                  <div className="p-2 rounded-sm bg-indigo-50/80 border border-indigo-100 shrink-0 mt-0.5">
+                    {getFeatureIcon(idx)}
+                  </div>
+                  <div className="space-y-0.5 flex-1 min-w-0">
+                    <span className="font-extrabold text-xs text-[#0D1F3D] block truncate">
+                      {feat.name}
+                    </span>
+                    <p className="text-[11px] font-medium text-slate-500 leading-snug">
+                      {feat.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-slate-500 font-semibold">Downstream Dependents</span>
-              <span className="font-mono font-extrabold text-purple-700">
-                {module.dependentCodes?.length || 0} Modules
-              </span>
+          ) : (
+            <div className="p-4 rounded-sm bg-slate-50 text-center text-xs font-medium text-slate-400">
+              No coded features registered under this module catalog entry.
             </div>
-            <div className="flex justify-between items-center pt-2 border-t border-slate-100">
-              <span className="text-slate-500 font-semibold flex items-center gap-1.5">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> Cycle Protection
-              </span>
-              <span className="font-extrabold text-emerald-700">DFS Active</span>
+          )}
+
+          {features.length > 0 && (
+            <div className="pt-2 border-t border-slate-100 text-center">
+              <button
+                type="button"
+                onClick={() => navigate(`/platform/modules/${module.id}/features`)}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+              >
+                <span>View All {features.length} Features</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* 3. Dependency Summary Card */}
+        <section className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <GitBranch className="h-4 w-4 text-indigo-600 shrink-0" />
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Dependency Summary</h3>
             </div>
           </div>
-        </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/platform/modules/dependencies')}
-          className="w-full text-xs font-bold text-indigo-600 border-indigo-200 bg-indigo-50/40 hover:bg-indigo-100/40 h-8"
-        >
-          <GitBranch className="h-3.5 w-3.5 mr-1" /> Explore Dependency Map
-        </Button>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+            {/* Prerequisites */}
+            <div className="space-y-2.5">
+              <span className="text-slate-500 font-semibold block">Prerequisites</span>
+              {parents.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {parents.map((pCode) => (
+                    <span
+                      key={pCode}
+                      className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-sm border border-indigo-200"
+                    >
+                      {pCode}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-emerald-700 font-bold bg-emerald-50/80 px-3 py-2 rounded-sm border border-emerald-200/80">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                  <span>No Prerequisites</span>
+                </div>
+              )}
+            </div>
+
+            {/* Used By / Dependents */}
+            <div className="space-y-2.5">
+              <span className="text-slate-500 font-semibold block">Used By ({dependents.length})</span>
+              {dependents.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {dependents.map((dCode) => (
+                    <span
+                      key={dCode}
+                      className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-sm border border-slate-200"
+                    >
+                      <Package className="h-3.5 w-3.5 text-slate-500" />
+                      {dCode}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-2 rounded-sm border border-slate-100">
+                  No downstream modules dependent on this capability.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100 text-center">
+            <button
+              type="button"
+              onClick={() => navigate(`/platform/modules/${module.id}/dependencies`)}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer"
+            >
+              <span>Manage Dependencies</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </section>
+      </div>
+
+      {/* RIGHT COLUMN (4 cols) */}
+      <div className="lg:col-span-4 space-y-6">
+        {/* 1. Lifecycle Card */}
+        <section className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <History className="h-4 w-4 text-indigo-600 shrink-0" />
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Lifecycle</h3>
+          </div>
+
+          <div className="space-y-3.5 text-xs font-semibold">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Status</span>
+              <ModuleStatusBadge status={module.status} />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">System Requirement</span>
+              <span
+                className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-sm border ${
+                  module.requiredBySystem
+                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                }`}
+              >
+                {module.requiredBySystem ? 'Required' : 'Optional'}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+              <span className="text-slate-500">Created</span>
+              <span className="font-bold text-slate-700">{formattedCreated}</span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Last Updated</span>
+              <span className="font-bold text-slate-700">{formattedUpdated}</span>
+            </div>
+          </div>
+        </section>
+
+        {/* 2. Platform Relationships Card */}
+        <section className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <GitBranch className="h-4 w-4 text-indigo-600 shrink-0" />
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Platform Relationships</h3>
+          </div>
+
+          <div className="space-y-1 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => navigate(`/platform/modules/${module.id}/features`)}
+              className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 transition-colors text-slate-700 cursor-pointer"
+            >
+              <span className="text-slate-600 font-semibold">Registered Features</span>
+              <span className="flex items-center gap-1.5 font-bold text-indigo-700">
+                {features.length}
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate(`/platform/modules/${module.id}/dependencies`)}
+              className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 transition-colors text-slate-700 cursor-pointer"
+            >
+              <span className="text-slate-600 font-semibold">Dependencies</span>
+              <span className="flex items-center gap-1.5 font-bold text-indigo-700">
+                {parents.length}
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/platform/modules/dependencies')}
+              className="w-full flex items-center justify-between p-2.5 rounded-sm hover:bg-slate-50 transition-colors text-slate-700 cursor-pointer"
+            >
+              <span className="text-slate-600 font-semibold">Dependent Modules</span>
+              <span className="flex items-center gap-1.5 font-bold text-indigo-700">
+                {dependents.length}
+                <ChevronRight className="h-4 w-4 text-slate-400" />
+              </span>
+            </button>
+          </div>
+        </section>
+
+        {/* 3. System Required Card */}
+        {module.requiredBySystem && (
+          <section className="rounded-sm border border-amber-200/90 bg-amber-50/60 p-5 shadow-xs space-y-2">
+            <div className="flex items-center gap-2 text-amber-900">
+              <Shield className="h-4 w-4 text-amber-600 shrink-0" />
+              <h3 className="text-sm font-extrabold">System Required</h3>
+            </div>
+            <p className="text-xs font-semibold text-amber-900/90 leading-snug">
+              This module is required by the platform and cannot be archived or disabled.
+            </p>
+            <p className="text-[11px] font-medium text-amber-800/80 leading-relaxed">
+              It underpins critical operations and dependencies across other modules.
+            </p>
+          </section>
+        )}
       </div>
     </div>
   );
