@@ -1,6 +1,6 @@
 # Phase 0 architecture decisions
 
-Status of all decisions: **Proposed for Phase 0 implementation**, based on repository audit at commit `62ba1b4`. They become accepted when the team approves this blueprint and Phase 0 implementation begins.
+Status of all decisions: **Proposed for Phase 0 implementation**, based on repository audit at commit `d6edbce`. They become accepted when the team approves this blueprint and Phase 0 implementation begins.
 
 ## Decision log
 

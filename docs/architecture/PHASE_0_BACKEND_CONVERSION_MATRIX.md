@@ -6,8 +6,9 @@
 | ------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | Repository                | `solverixtech-code/Smart-Field-Work-Saas`                                                                       |
 | Branch                    | `main`                                                                                                          |
-| Local commit              | `62ba1b4da0e5ea31ef37a47efc150c84d19a910f`                                                                      |
+| Local commit              | `d6edbce4dd56e5d10b841d550d1755c9af87da91`                                                                      |
 | Remote comparison         | `origin/main` fetched on 2026-09-03; local and remote are identical (`0` ahead, `0` behind)                     |
+| Mid-audit update          | Repository advanced from `62ba1b4` to `d6edbce`; the new Swagger DTO and JWT-guard commits were re-audited      |
 | Working tree before audit | Clean; no uncommitted files were discarded                                                                      |
 | Architecture style        | npm workspace modular monolith: React/Vite web, NestJS API, Prisma/PostgreSQL, optional Redis, S3 upload helper |
 | Audit boundary            | Documentation only. No domain API, Prisma model, or frontend data connection was implemented.                   |
@@ -23,7 +24,7 @@
 
 The frontend is broad and visually mature, but most business behavior is fixture-backed. The API contains real authentication, module catalog, shift, attendance, and payroll code. Only authentication and Platform Modules & Features are connected from web to API. There is no Tenant, TenantMembership, Plan, PlanVersion, Subscription, IndustryTemplate, tenant role, tenant request context, tenant-scoped repository primitive, or runtime configuration resolver.
 
-The current database is therefore a single-workspace schema, not a production multi-tenant SaaS schema. Every operational model currently present (`Team`, `Shift`, `UserShift`, `Attendance`, `PunchLog`, `SalaryStructure`, `PayrollPeriod`, `Payslip`, and `MasterRecord`) lacks `tenantId`. The shift, attendance, and payroll controllers are also unguarded. Attendance accepts `userId` from the request body, making cross-user access possible even before tenant isolation is considered.
+The current database is therefore a single-workspace schema, not a production multi-tenant SaaS schema. Every operational model currently present (`Team`, `Shift`, `UserShift`, `Attendance`, `PunchLog`, `SalaryStructure`, `PayrollPeriod`, `Payslip`, and `MasterRecord`) lacks `tenantId`. The shift, attendance, and payroll controllers now require a valid JWT, but they have no role/domain-permission or tenant enforcement. Attendance still accepts `userId` from the request body, making cross-user access possible even before tenant isolation is considered.
 
 ## Phase 0 systems 0A-0O
 
@@ -52,9 +53,9 @@ The current database is therefore a single-workspace schema, not a production mu
 | App             | `GET /`                                                                  | No domain persistence                                                               | Global throttler only                                | N/A                                        | Health/root shell                                                                          |
 | Auth            | `/auth/login`, OTP, refresh, logout, password, profile, avatar, sessions | `AuthService`; User, session, OTP, audit; Redis and S3                              | JWT only on authenticated profile/session operations | No                                         | Real single-workspace identity; lacks tenant principal and persisted effective permissions |
 | PlatformModules | `/platform/modules`, features, dependencies, history, archive/restore    | `PlatformModulesService`; PlatformModule, ModuleFeature, ModuleDependency, AuditLog | JWT + `PermissionsGuard`                             | Platform global                            | Best-developed module; partial production due to ownership/sync/maturity issues            |
-| Shift           | `GET/POST/PUT /shifts`, assign                                           | `ShiftService`; Shift, UserShift, User                                              | None                                                 | No                                         | Real CRUD code but unsafe and disconnected from static web page                            |
-| Attendance      | punch in/out, admin today/monthly                                        | `AttendanceService`; Attendance, PunchLog, UserShift                                | None                                                 | No; trusts body `userId`                   | Real persistence code, not production-safe; web page remains static                        |
-| Payroll         | salary structure, generate payroll, payslips, mark paid                  | `PayrollService`; SalaryStructure, PayrollPeriod, Payslip, Attendance               | None                                                 | No                                         | Partial calculation API, unguarded and disconnected from static web page                   |
+| Shift           | `GET/POST/PUT /shifts`, assign                                           | `ShiftService`; Shift, UserShift, User                                              | JWT only                                             | No                                         | Authenticated CRUD, but no domain permission/tenancy and web remains static                |
+| Attendance      | punch in/out, admin today/monthly                                        | `AttendanceService`; Attendance, PunchLog, UserShift                                | JWT only                                             | No; trusts body `userId`                   | Authenticated persistence, but cross-user/tenant unsafe and web remains static             |
+| Payroll         | salary structure, generate payroll, payslips, mark paid                  | `PayrollService`; SalaryStructure, PayrollPeriod, Payslip, Attendance               | JWT only                                             | No                                         | Authenticated calculation API, but no domain permission/tenancy and web remains static     |
 | Persistence     | None                                                                     | Global `PrismaService`                                                              | N/A                                                  | No scoped facade                           | Infrastructure only                                                                        |
 | Redis           | None                                                                     | Redis with in-memory fallback                                                       | N/A                                                  | Keys are not tenant-namespaced by contract | Infrastructure only                                                                        |
 | Throttling      | None                                                                     | Redis-backed throttling adapter                                                     | Global `ApiThrottlerGuard`                           | N/A                                        | Reusable infrastructure                                                                    |
@@ -225,7 +226,7 @@ The current `seed.ts` mixes registry seed with 12 named users and a shared passw
 
 ## Concrete security findings
 
-1. `ShiftController`, `AttendanceController`, and `PayrollController` have no authentication, authorization, or permission guards.
+1. `ShiftController`, `AttendanceController`, and `PayrollController` now have `JwtAuthGuard`, but no role/domain-permission checks or tenant context. Any authenticated user can reach their admin/mutation routes.
 2. Punch endpoints trust a body `userId`; an attacker can punch for another user. The actor must come from the membership principal.
 3. No operational query has tenant filtering because neither request context nor tenant columns exist.
 4. The JWT payload has only user ID, email, and one global role. It cannot identify a tenant membership.
@@ -235,6 +236,7 @@ The current `seed.ts` mixes registry seed with 12 named users and a shared passw
 8. Audit rows have no tenant/scope/request ID and audit writes deliberately fail open without a durable retry path.
 9. S3 uploads lack tenant ownership, validated object metadata, private access policy, malware scanning, and deletion lifecycle.
 10. The production seed candidate contains named accounts, a shared default password, and prints that password.
+11. The Shift/Attendance/Payroll `*SwaggerDto` classes contain Swagger decorators but no `class-validator` decorators, so the global `ValidationPipe` does not validate their values or ranges as their names may imply.
 
 ## Authoritative product rules confirmed
 

@@ -233,7 +233,7 @@ Core CRM implementation cannot start until all boxes are true:
 - [ ] RequestPrincipal and membership-derived tenant context exist.
 - [ ] Tenant-scoped repository/query guarantee is enforced.
 - [ ] Cross-tenant tests pass for all existing operational APIs.
-- [ ] Current Shift/Attendance/Payroll controllers are no longer anonymous or body-user-authorized.
+- [ ] Current Shift/Attendance/Payroll controllers enforce tenant/domain permissions and no longer authorize a target from a body `userId`.
 - [ ] Plan backend and immutable PlanVersion publish exist.
 - [ ] TenantSubscription pins a PlanVersion and has tested lifecycle transitions.
 - [ ] Effective Module resolution works without editable tenant Module authority.
