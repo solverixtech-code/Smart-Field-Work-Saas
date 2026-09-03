@@ -43,7 +43,7 @@ export function FeatureRegistryPage() {
   const fetchCatalog = async () => {
     setError(null);
     try {
-      const data = await moduleService.getModules();
+      const data = await moduleService.getModules({ limit: 100 });
       setModules(data);
     } catch {
       setError('Unable to load feature registry. Service unreachable.');
