@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard,
+  LayoutGrid,
   Layers,
   GitBranch,
   History,
@@ -21,7 +21,7 @@ export function ModuleDetailTabs({ moduleId, featureCount, dependencyCount }: Mo
       id: 'overview',
       label: 'Overview',
       to: `/platform/modules/${moduleId}`,
-      icon: LayoutDashboard,
+      icon: LayoutGrid,
       exact: true,
     },
     {
@@ -47,8 +47,8 @@ export function ModuleDetailTabs({ moduleId, featureCount, dependencyCount }: Mo
   ];
 
   return (
-    <div className="border-b border-slate-200 bg-white shadow-2xs font-sans">
-      <nav className="-mb-px flex space-x-8 px-2 overflow-x-auto custom-scrollbar" aria-label="Module Tabs">
+    <div className="rounded-sm border border-slate-200 bg-white px-6 shadow-xs font-sans">
+      <nav className="-mb-px flex space-x-8 overflow-x-auto custom-scrollbar" aria-label="Module Tabs">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = tab.exact
@@ -59,7 +59,7 @@ export function ModuleDetailTabs({ moduleId, featureCount, dependencyCount }: Mo
             <NavLink
               key={tab.id}
               to={tab.to}
-              className={`flex items-center gap-2 border-b-2 py-3.5 px-1 text-xs font-bold transition-colors whitespace-nowrap ${
+              className={`flex items-center gap-2 border-b-2 py-3.5 px-1 text-xs font-extrabold transition-colors whitespace-nowrap ${
                 isActive
                   ? 'border-indigo-600 text-indigo-600'
                   : 'border-transparent text-slate-600 hover:border-slate-300 hover:text-slate-900'
@@ -69,7 +69,7 @@ export function ModuleDetailTabs({ moduleId, featureCount, dependencyCount }: Mo
               <span>{tab.label}</span>
               {typeof tab.count === 'number' && (
                 <span
-                  className={`ml-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
+                  className={`ml-1.5 rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
                     isActive
                       ? 'bg-indigo-100 text-indigo-700'
                       : 'bg-slate-100 text-slate-700'
