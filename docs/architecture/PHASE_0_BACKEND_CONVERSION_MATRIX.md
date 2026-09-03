@@ -1,0 +1,212 @@
+# Phase 0 backend conversion matrix
+
+## Audit identity
+
+| Item | Finding |
+|---|---|
+| Repository | `solverixtech-code/Smart-Field-Work-Saas` |
+| Branch | `main` |
+| Local commit | `62ba1b4da0e5ea31ef37a47efc150c84d19a910f` |
+| Remote comparison | `origin/main` fetched on 2026-09-03; local and remote are identical (`0` ahead, `0` behind) |
+| Working tree before audit | Clean; no uncommitted files were discarded |
+| Architecture style | npm workspace modular monolith: React/Vite web, NestJS API, Prisma/PostgreSQL, optional Redis, S3 upload helper |
+| Audit boundary | Documentation only. No domain API, Prisma model, or frontend data connection was implemented. |
+
+## Governing documents read
+
+- `.agents/rules/VISIBLO_DESIGN_SYSTEM.md` was read completely. It remains the UI authority for future data-plumbing work.
+- `package.json`, `apps/api/package.json`, `apps/web/package.json`, the complete current Prisma schema and migrations, seed, API modules, platform frontend services/types/fixtures, `AppRouter.tsx`, and the Master registry were inspected.
+- `VisibloProducts.md` is not present.
+- No `README*`, `docs/`, `architecture/`, `requirements/`, or `handover/` documentation existed before this audit.
+
+## Executive baseline
+
+The frontend is broad and visually mature, but most business behavior is fixture-backed. The API contains real authentication, module catalog, shift, attendance, and payroll code. Only authentication and Platform Modules & Features are connected from web to API. There is no Tenant, TenantMembership, Plan, PlanVersion, Subscription, IndustryTemplate, tenant role, tenant request context, tenant-scoped repository primitive, or runtime configuration resolver.
+
+The current database is therefore a single-workspace schema, not a production multi-tenant SaaS schema. Every operational model currently present (`Team`, `Shift`, `UserShift`, `Attendance`, `PunchLog`, `SalaryStructure`, `PayrollPeriod`, `Payslip`, and `MasterRecord`) lacks `tenantId`. The shift, attendance, and payroll controllers are also unguarded. Attendance accepts `userId` from the request body, making cross-user access possible even before tenant isolation is considered.
+
+## Phase 0 systems 0A-0O
+
+| Order | System | Current authority and exact evidence | Maturity | Target authority | Priority | Complexity |
+|---|---|---|---|---|---|---|
+| 0A | Platform Modules & Features | `feature-registry.ts` declares 8 Modules and 35 Features; Prisma persists registry metadata; NestJS API and React service are real. `syncCatalog()` is not exposed or bootstrapped, health/mismatch values are hard-coded, and create-module remnants remain. | Partial production | Developer-owned code registry, idempotently synchronized to read/admin-metadata tables | P0 FOUNDATION | M - cleanup, sync contract, tests |
+| 0B | Plans & Pricing | Four fixtures; `FixturePlanService`; browser key `sfw_plans_catalog_v1`; version history fixture. No API or Prisma models. | Prototype | Platform-global `Plan` plus immutable `PlanVersion` and normalized pricing/modules/rules | P0 BLOCKER | L - lifecycle and migrations |
+| 0C | Industry Templates | 25 `PLATFORM_INDUSTRIES` fixtures; `/platform/industries` is a placeholder. `defaultModules` includes obsolete code `attendance_plus`. | Fixture only | Versioned platform Industry Templates; configuration recommendations, never entitlements | P0 FOUNDATION | L |
+| 0D | Tenant Management | Five `MOCK_TENANTS`; `FixtureTenantService` holds an in-memory array. | Fixture only | Persistent Tenant aggregate and lifecycle service | P0 BLOCKER | L |
+| 0E | Tenant Membership / Users | `FixtureTenantMembershipService` holds members/access requests in memory. `User` assumes one role/team. | Fixture only | One identity plus many memberships and tenant roles | P0 BLOCKER | XL - identity migration |
+| 0F | Authentication & Session Context | Real login/OTP/refresh/profile/session API and Prisma records. JWT contains only `sub`, `email`, `role`; no membership/tenant context. | Real but single-workspace | Request principal with platform scope and selected tenant membership | P0 BLOCKER | L |
+| 0G | Platform Roles & Permissions | Role enum and DB permissions exist. Module API uses permission guard. Frontend also invents mock principals and can map tenant `ADMIN`, `SUPER_ADMIN`, or a matching email to Platform Super Admin. | Inconsistent | DB-backed platform role assignments and `platform.*` permissions only | P0 BLOCKER | M |
+| 0H | Tenant Roles & Permissions | No TenantRole, TenantRolePermission, or membership role relation. Current role enum mixes tenant and platform meanings. | Missing | Tenant-defined/built-in roles using domain permissions such as `crm.leads.view` | P0 BLOCKER | L |
+| 0I | System / Tenant Masters | Prisma `MasterRecord` exists but no API/service/seed consumer. UI owns 44 categories and their records in React state. | Schema stub plus fixture UI | `MasterDefinition`, inherited `MasterValue`, and explicit override/suppression records | P0 BLOCKER | XL - 44-category migration/classification |
+| 0J | Subscription & Provisioning | Status and lifecycle calculation live in tenant fixtures; subscription pages are placeholders. | Fixture only | `TenantSubscription` pinned to `PlanVersion`, provisioning workflow/events | P0 BLOCKER | XL |
+| 0K | Tenant Runtime Configuration Resolver | None. Tenant fixture directly stores `enabledModuleCodes`. | Missing | `TenantRuntimeConfigService` and versioned bootstrap DTO | P0 BLOCKER | L |
+| 0L | Audit Logging | `AuditLog` records auth and module mutations. No tenant scope, correlation ID, general API, retention, or tamper policy; Platform audit page is mock. | Partial | Central append-only audit writer with scope, actor, request, safe diffs, retention | P0 FOUNDATION | M |
+| 0M | File / Media Ownership | `StorageService` uploads avatars to S3 paths and returns a public-looking URL; there is no MediaAsset record, tenant key prefix, ownership, scan, size, or deletion policy. | Partial helper | Tenant-aware private object keys plus `MediaAsset` metadata and signed access | P0 FOUNDATION | M |
+| 0N | Background Jobs / Queues | Redis cache/throttle wrapper exists; no queue library, job table, scheduler, worker, or idempotency contract. | Missing | In-process producer plus durable PostgreSQL outbox/job table for V1; add a Redis queue only when needed | P0 FOUNDATION | M |
+| 0O | API tenancy enforcement | No tenant guard/context; no `tenantId` columns; no repository scoping. | Missing | Authenticated membership-derived context and mandatory scoped service/repository access | P0 BLOCKER | XL |
+
+## Current NestJS module inventory
+
+| Module | Controller / routes | Service and Prisma dependency | Guards | Tenant scoped | Production maturity |
+|---|---|---|---|---|---|
+| App | `GET /` | No domain persistence | Global throttler only | N/A | Health/root shell |
+| Auth | `/auth/login`, OTP, refresh, logout, password, profile, avatar, sessions | `AuthService`; User, session, OTP, audit; Redis and S3 | JWT only on authenticated profile/session operations | No | Real single-workspace identity; lacks tenant principal and persisted effective permissions |
+| PlatformModules | `/platform/modules`, features, dependencies, history, archive/restore | `PlatformModulesService`; PlatformModule, ModuleFeature, ModuleDependency, AuditLog | JWT + `PermissionsGuard` | Platform global | Best-developed module; partial production due to ownership/sync/maturity issues |
+| Shift | `GET/POST/PUT /shifts`, assign | `ShiftService`; Shift, UserShift, User | None | No | Real CRUD code but unsafe and disconnected from static web page |
+| Attendance | punch in/out, admin today/monthly | `AttendanceService`; Attendance, PunchLog, UserShift | None | No; trusts body `userId` | Real persistence code, not production-safe; web page remains static |
+| Payroll | salary structure, generate payroll, payslips, mark paid | `PayrollService`; SalaryStructure, PayrollPeriod, Payslip, Attendance | None | No | Partial calculation API, unguarded and disconnected from static web page |
+| Persistence | None | Global `PrismaService` | N/A | No scoped facade | Infrastructure only |
+| Redis | None | Redis with in-memory fallback | N/A | Keys are not tenant-namespaced by contract | Infrastructure only |
+| Throttling | None | Redis-backed throttling adapter | Global `ApiThrottlerGuard` | N/A | Reusable infrastructure |
+| Common | No module boundary | guards, pipes, exception filter, S3 helper | Mixed | No tenant guard | Utilities only |
+
+Only `platform-modules.service.spec.ts` exists. There are no API integration, tenant isolation, auth guard, shift, attendance, payroll, provisioning, or runtime resolver tests.
+
+## Current Prisma inventory
+
+| Model | Classification | Current scope | Tenant gap / action |
+|---|---|---|---|
+| `User` | IDENTITY | Global identity, but contains role/team/data scope from a single tenant | Keep global credentials; migrate tenant employment fields to Membership/profile relations |
+| `Team` | WORKFORCE | Global | Add `tenantId`; unique `(tenantId, code)` |
+| `Permission` | IDENTITY | Global definition | Keep global; add explicit scope/domain metadata |
+| `RolePermission` | IDENTITY | Global enum role mapping | Split/replace with platform-role and tenant-role grants |
+| `UserModulePermission` | IDENTITY | Global per-user module CRUD flags | Deprecate; permissions are not commercial modules and tenant scope is missing |
+| `RoleTwoFactorSetting` | IDENTITY | Global by enum role | Separate platform policy from tenant security policy |
+| `UserSession` | IDENTITY | Global user session | Keep identity-scoped; record selected membership/tenant only as session context if needed |
+| `OtpChallenge` | IDENTITY | Global user challenge | Keep global and short-lived |
+| `AuditLog` | AUDIT | Global | Add nullable `tenantId`, scope, requestId/correlationId; platform events remain tenant-null |
+| `Shift` | WORKFORCE | Global | Add `tenantId`; unique `(tenantId, code)` |
+| `UserShift` | WORKFORCE | Global | Add `tenantId` or guarantee through membership relation; explicit tenant column preferred for enforcement/indexing |
+| `Attendance` | WORKFORCE | Global | Add `tenantId`; unique `(tenantId, membershipId, date)` |
+| `PunchLog` | WORKFORCE/FIELD | Global | Add `tenantId`; link to membership and tenant-owned MediaAsset |
+| `SalaryStructure` | PAYROLL | Global | Add `tenantId`; key by membership/employment, use decimal money |
+| `PayrollPeriod` | PAYROLL | Global | Add `tenantId`; unique `(tenantId, year, month)` |
+| `Payslip` | PAYROLL | Global | Add `tenantId`; tenant-aware uniqueness and private file relation |
+| `MasterRecord` | TENANT FOUNDATION | Global category/code | Replace through a forward migration with definition/value/override model; do not overload further |
+| `PlatformModule` | PLATFORM | Global | Correct scope; code-owned identity |
+| `ModuleFeature` | PLATFORM | Global | Correct scope; implementation key/code/platform flags are developer-owned |
+| `ModuleDependency` | PLATFORM | Global | Correct scope; dependency edges are developer-owned |
+
+No existing model is a CRM Lead, Account, Contact, Visit, Demo, FollowUp, Order, Collection, Territory, Industry, Tenant, Plan, Subscription, Invoice, Transaction, Role assignment, file asset, job, or runtime configuration model.
+
+## Platform screen data-source inventory
+
+| Screen / route | Current source | Classification | Target service |
+|---|---|---|---|
+| `PlatformDashboardPage` `/platform/dashboard` | Inline arrays and numbers | Demo data | Platform metrics read model |
+| `AllTenantsPage` `/platform/tenants` | `FixtureTenantService` in-memory array | Demo fixture | `TenantAdminService` API |
+| `CreateTenantWizardPage` `/platform/tenants/create` | Tenant service plus plan/industry/module fixtures | Prototype mutation | Transactional provisioning command |
+| `TenantDetailsPage` `/platform/tenants/:id` | Tenant, membership, workspace-setting services plus fixtures | Prototype | Tenant aggregate DTO APIs |
+| `TenantModulesPage` `/platform/tenants/:id/modules` | Tenant fixture plus `PLATFORM_MODULES`, currently derived from an empty module fixture | Broken fixture path | Read-only effective module resolution API |
+| `TenantUsersPage` `/platform/tenants/:id/users` | In-memory membership/access fixtures | Demo fixture | Membership and support-access APIs |
+| `WorkspaceSettingsPage` `/admin/settings/workspace` | `Map`-backed fixture settings | Demo fixture | Tenant settings API |
+| `PlansPricingPage` `/platform/plans` | localStorage plan service plus in-memory tenants | Browser prototype | Plan catalog API plus subscription metrics |
+| `CreatePlanWizardPage` `/platform/plans/create` | localStorage plan service and real Module API | Mixed | Plan draft/version publish APIs |
+| `PlanDetailsPage` and six tab routes | localStorage Plan, fixture versions/tenants, real Module API | Mixed | Plan/version APIs plus tenant subscription query |
+| `ModulesFeaturesPage` `/platform/modules` | Real Module API | Real | Preserve; restrict to code-owned records and editable metadata |
+| `ModuleDetailPage` and tabs | Real Module API and AuditLog history | Real | Preserve |
+| `EditModulePage` | Real Module API | Real but overly editable | Limit developer-owned fields; keep safe admin metadata only |
+| `FeatureRegistryPage` | Real Module API | Real catalog, misleading implementation flags | Serve verified maturity metadata |
+| `DependencyMapPage` | Real Module API | Real | Preserve |
+| `AuditLogsPage` `/platform/audit` | `MOCK_AUDIT_LOGS` | Demo fixture | Paginated scoped audit API |
+| Industries, Platform Users, Roles, Subscriptions, Invoices, Transactions, Platform Reports | `PlatformPlaceholderPage` | Placeholder | Respective platform bounded-context APIs |
+
+## Current domain screen inventory
+
+The following are route-backed visual workspaces. Unless noted, each uses colocated static arrays or inline component data; a screen name is a query/view, not automatically an entity.
+
+| Bounded context | Current screens/files | Current source | Target domain and notes | Priority |
+|---|---|---|---|---|
+| Identity | Login, OTP, reset/forgot/change password, profile, active sessions | Real Auth API except some presentation metadata | Identity and session DTOs; add membership selection/context | P0 FOUNDATION |
+| Workforce users | All/Add/Edit/Suspend/Details Executive and seven detail tabs | Inline/fixture data | User identity + TenantMembership + EmployeeProfile; tabs are composed views | P1 CORE |
+| Teams | SalesTeams, CreateTeam, TeamDetails, AssignTeamLeader, TeamMembers, TeamPerformance, TeamTargets | Inline/static | Tenant-scoped Team entity; performance/targets are queries | P1 CORE |
+| Shifts | ShiftManagement | `initialShifts`, `mockAssignments` | Existing Shift/UserShift API after tenancy/security hardening | P0/P1 |
+| Attendance | AttendanceMonitoring | `todayPunches` | Existing Attendance/PunchLog API after tenancy/security hardening | P0/P1 |
+| Payroll | PayrollManagement, PayrollSettings | `mockPayrollRecords`, local form state | Existing payroll models plus policy entities; not generic Masters | P1 |
+| Leads | AllLeads view modes, Add/Edit/Details, BulkAssign, Import/Export, eight detail tabs | `leadsData.ts` | Lead/Account/Contact/Activity/FollowUp DTO composition. Hot, unassigned, converted, lost, duplicate are filters. | P1 CORE |
+| Pipeline | SalesPipeline, SalesStageView | `salesPipelineData.ts` | PipelineDefinition/Stage plus filtered Lead/Opportunity views | P1 CORE |
+| Businesses/accounts | All/Add/Details/layout, Contacts, Google Profile, Sales History, Visit History, Subscription | `businessesData.ts` | Account/Contact plus composed histories. Business Subscription is tenant business pricing, not SaaS subscription. | P1 CORE |
+| Follow-ups | All/Today/Upcoming/Overdue/Completed/Details and modals | `followupsData.ts` | FollowUp/Task; time-bucket screens are filters | P1 CORE |
+| Visits | All view modes, Schedule, Details, GPS Exceptions/Details | `visitsData.ts` | Visit, CheckIn, RoutePoint, GPSException, proof assets; status screens are filters | P1 CORE |
+| Maps | Live field, executive locations, prospects, visit/sales heatmaps, territories, route playback | `mapsData.ts` | Read models over users/accounts/visits/territories; no `LiveMap` table | P2 EXTENSION |
+| Territories | list/create/edit/details/assign/businesses/performance/map | `territoriesData.ts` | Tenant-scoped Territory and assignments; performance/map are queries | P1 CORE |
+| Demos | all/today/scheduled/completed/details/conversion report and modals | `demosData.ts` | Demo entity; time/status/report pages are filters/read models | P2 EXTENSION |
+| Lead sources/integrations | sources CRUD, integrations, automation, Meta/Google/WhatsApp wizards, activity | `leadSourcesData.ts` and inline data | Master Lead Source plus separate IntegrationConnection/AutomationRule; provider work deferred | P2 EXTENSION |
+| Categories | list/add/details/performance | `categoriesData.ts` | Tenant product/business taxonomy; performance is a query | P2 EXTENSION |
+| Customers | converted, details, subscription, renewal | `customersData.ts` | Account/customer state plus tenant product subscription; not Platform Plan | P2 EXTENSION |
+| Targets/incentives | dashboard, team/executive targets, incentive rules/management | `targetsData.ts` | Target, TargetAssignment, IncentivePolicy/Calculation/Payout | P2 EXTENSION |
+| Performance | sales, executive/team/territory/category rankings, funnel, productivity | Inline data | Reporting projections over authoritative domains | P3 LATER |
+| Reports | dashboard plus 10 report exports | Inline data in `ReportsPages.tsx` | Reporting/read-model context; no report-per-table modeling | P3 LATER |
+| Notifications | center/create/push/executive alerts/templates | Representative local data in `NotificationsPages.tsx` | NotificationTemplate/Delivery/Preference; provider delivery deferred | P2 EXTENSION |
+| Masters | MasterManagement | 44 categories in `systemMastersData.ts`, React state only | MasterDefinition/Value/Override after classification | P0 FOUNDATION |
+| Public legal | Privacy, Terms, deletion instructions | Static content | Content, not operational backend data | P3 LATER |
+
+## Static dataset disposition
+
+| Dataset | Disposition | Rationale |
+|---|---|---|
+| Module and Feature registries | Production seed/sync input | Developer-owned capability declarations; idempotent upsert |
+| Canonical Plans | Reviewed production bootstrap data only | Persist through Plan publishing; do not remain runtime fixtures |
+| Plan version history | Demo/test fixture; remove from runtime | Invented local history cannot become commercial record |
+| 25 Industry rows | Candidate production bootstrap after code cleanup/review | Industry defaults are versioned configuration, not entitlements |
+| 44 Master categories | Candidate MasterDefinition production seed after classification | Definitions are system-owned; values need source/scope decisions |
+| Current Master records | Split into system defaults, industry defaults, policy seeds, or demo removal | Never bulk-copy policy/business entities into MasterValue |
+| Five tenants, members, audit logs, workspace settings | Development/demo seed only | Fake customer and actor data must never populate production |
+| Leads/businesses/visits/demos/etc. | Test factories or opt-in demo seed only | Transactional fake data is not production seed |
+
+Required environment separation:
+
+- `seed:production`: registries, permission definitions, approved plan bootstrap, approved Master definitions/system defaults, Industry Templates.
+- `seed:development`: production seed plus fake tenants and representative domain data.
+- Test factories: isolated builders for tenant-isolation, RBAC, lifecycle, and repository tests.
+
+The current `seed.ts` mixes registry seed with 12 named users and a shared password and logs that password. It must be split before production use.
+
+## API and DTO conventions
+
+- Preserve the current unprefixed domain convention behind the deployment proxy (`/auth`, `/platform/...`, `/shifts`, etc.) rather than randomly mixing `/api` into controller paths.
+- Platform administration remains under `/platform/*`; tenant runtime APIs should use domain routes resolved through authenticated tenant context. Do not place tenant administration under platform routes.
+- `Prisma model != API DTO != frontend view model`. Controllers return explicit DTOs; Prisma rows never become the public contract accidentally.
+- List endpoints use `{ data, meta: { page, limit, total, totalPages } }` consistently and enforce bounded page sizes.
+- Commands use class-validator/Zod DTOs, whitelist unknown fields, use stable error codes, and return correct `400/401/403/404/409/422` semantics.
+- Clients never authorize a request by sending `tenantId`. A platform operator must use an explicit, audited support-access workflow rather than impersonating an arbitrary tenant header.
+
+## Phase 0A cleanup tasks
+
+| File | Problem | Risk | Recommended action | Priority |
+|---|---|---|---|---|
+| `apps/api/prisma/seed.ts` | Unused `legacyCanonicalModules` contains old `isAddon`, `monthlyPrice`, `attendance_plus`, `payroll_engine` | Conflicting catalog authority and accidental reintroduction of pricing | Delete after snapshot tests confirm `MODULE_REGISTRY` coverage | P0 BLOCKER |
+| `create-platform-module.dto.ts`, controller and service | Create Module API remains although capabilities must be developer-defined | Database-only modules can claim nonexistent code | Remove create route/service/DTO; registry sync creates capabilities | P0 BLOCKER |
+| `module.types.ts`, `module.service.ts` | `CreateModuleInput` and `createModule()` remain | Frontend contract advertises forbidden behavior | Remove after API cleanup | P0 BLOCKER |
+| `usePlatformPermissions.ts`, platform types/auth | `platform.modules.create` and `canCreateModule` remain | RBAC preserves an invalid action | Remove; define metadata/lifecycle permissions explicitly | P0 FOUNDATION |
+| `ModulesFeaturesPage.tsx` | Consumes `canCreateModule` despite create route redirect | Confusing/dead UI behavior | Remove creation affordance and copy | P0 FOUNDATION |
+| `platform-modules.service.ts` | `syncCatalog()` is never called/exposed; does not reconcile dependencies or removed entries; summary always says `HEALTHY`; `registryMismatch` is always false | Registry and DB silently drift | Add explicit startup/admin sync policy, hash/version, reconciliation report, and tests | P0 BLOCKER |
+| Module edit DTO/page | Name, description, category, status and system-required flag can diverge from code registry | Admin can mutate developer-owned definition | Limit admin edits to approved metadata such as internal notes and safe lifecycle controls | P0 FOUNDATION |
+| `module.fixtures.ts` | Empty `CANONICAL_PLATFORM_MODULES` is imported by tenant fixtures | Tenant Module UI can render no module catalog | Replace tenant consumers with Module API/runtime config; then delete fixture bridge | P0 BLOCKER |
+| Plan/tenant/industry fixtures | Use obsolete module codes `attendance_plus` and `payroll_engine` | Broken inclusion counts and false entitlements | Map to `attendance` and `payroll` during controlled fixture-to-DB migration | P0 BLOCKER |
+| Feature registry flags | All 35 entries claim API support; many claim mobile/offline without repository evidence | Catalog overstates production readiness | Separate intended platform support from verified implementation maturity | P0 BLOCKER |
+| `create-module-feature.dto.ts` | DTO exists but no controller path uses it; Features should be code-owned | Dead/ambiguous capability creation contract | Delete after confirming no external consumer | P0 FOUNDATION |
+
+## Concrete security findings
+
+1. `ShiftController`, `AttendanceController`, and `PayrollController` have no authentication, authorization, or permission guards.
+2. Punch endpoints trust a body `userId`; an attacker can punch for another user. The actor must come from the membership principal.
+3. No operational query has tenant filtering because neither request context nor tenant columns exist.
+4. The JWT payload has only user ID, email, and one global role. It cannot identify a tenant membership.
+5. Frontend `platform-auth.service.ts` grants Platform Super Admin behavior to `SUPER_ADMIN`, `ADMIN`, matching email domains, or strings containing `visiblo`; this is not an authorization boundary and disagrees with the backend.
+6. Permission namespace and role enum mix platform and tenant meanings. `UserModulePermission` also confuses CRUD authorization with product Module availability.
+7. The CORS callback currently returns success even for origins outside its calculated allow-list.
+8. Audit rows have no tenant/scope/request ID and audit writes deliberately fail open without a durable retry path.
+9. S3 uploads lack tenant ownership, validated object metadata, private access policy, malware scanning, and deletion lifecycle.
+10. The production seed candidate contains named accounts, a shared default password, and prints that password.
+
+## Authoritative product rules confirmed
+
+- Developers define Modules and Features.
+- A Module is a developer-defined capability package.
+- A Feature is a developer-defined coded capability.
+- A Plan is the commercial selection of Modules.
+- A Tenant receives Modules only through its active Subscription's pinned Plan Version.
+- Feature-level commercial entitlement is deliberately out of scope. Features describe implementation capability, not billing grants.
+- Industry Templates may recommend/configure Modules but cannot grant a Module excluded by the Plan Version.
+- `tenant.enabledModuleCodes` cannot be an independently editable authority. If retained temporarily, it is a derived cache with a source version.
