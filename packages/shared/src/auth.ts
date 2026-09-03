@@ -98,7 +98,7 @@ export const LoginSchema = z
   .object({
     email: z.string().trim().email().optional(),
     employeeCode: z.string().trim().min(1).optional(),
-    password: z.string().min(1),
+    password: z.string().min(1, 'Password is required'),
   })
   .refine((v) => Boolean(v.email || v.employeeCode), {
     message: 'Email or employee code is required',

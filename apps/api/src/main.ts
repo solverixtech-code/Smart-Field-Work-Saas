@@ -5,6 +5,7 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
+import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
 
 async function bootstrap() {
   const logger = new Logger('EntryPoint');
@@ -12,6 +13,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.use(cookieParser());
+  app.useGlobalFilters(new ZodExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

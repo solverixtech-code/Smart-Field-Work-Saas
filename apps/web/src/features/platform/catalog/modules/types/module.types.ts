@@ -1,89 +1,10 @@
 export type PlatformModuleCategory = 'CORE' | 'SALES' | 'FIELD_OPS' | 'AUTOMATION' | 'ENTERPRISE';
 export type ModuleCategory = PlatformModuleCategory | 'Core' | 'Sales' | 'Field Ops' | 'Automation' | 'Enterprise';
-
 export type PlatformModuleStatus = 'DRAFT' | 'ACTIVE' | 'BETA' | 'DEPRECATED' | 'ARCHIVED';
 export type ModuleFeatureStatus = 'ACTIVE' | 'BETA' | 'DEPRECATED';
-
-export interface ModuleFeature {
-  id?: string;
-  code: string;
-  name: string;
-  description: string;
-  status: ModuleFeatureStatus;
-  platformSupport?: boolean;
-  displayOrder?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface PlatformModule {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  category: ModuleCategory;
-  status?: PlatformModuleStatus;
-  isAddon: boolean;
-  monthlyPrice: number;
-  requiredBySystem?: boolean;
-  displayOrder?: number;
-  dependencyCodes?: string[];
-  dependentCodes?: string[];
-  dependsOnModuleCode?: string; // Legacy fallback helper
-  features?: ModuleFeature[];
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface ModuleQueryFilter {
-  search?: string;
-  category?: ModuleCategory;
-  status?: PlatformModuleStatus;
-  type?: 'addon' | 'standard';
-  page?: number;
-  limit?: number;
-  sortBy?: string;
-  sortDirection?: 'asc' | 'desc';
-}
-
-export interface CreateModuleInput {
-  code: string;
-  name: string;
-  description: string;
-  category: ModuleCategory;
-  status?: PlatformModuleStatus;
-  isAddon?: boolean;
-  monthlyPrice?: number;
-  requiredBySystem?: boolean;
-  displayOrder?: number;
-  dependencyCodes?: string[];
-}
-
-export interface UpdateModuleInput {
-  name?: string;
-  description?: string;
-  category?: ModuleCategory;
-  status?: PlatformModuleStatus;
-  isAddon?: boolean;
-  monthlyPrice?: number;
-  requiredBySystem?: boolean;
-  displayOrder?: number;
-  dependencyCodes?: string[];
-}
-
-export interface CreateFeatureInput {
-  code: string;
-  name: string;
-  description: string;
-  status?: ModuleFeatureStatus;
-  platformSupport?: boolean;
-  displayOrder?: number;
-}
-
-export interface UpdateFeatureInput {
-  name?: string;
-  description?: string;
-  status?: ModuleFeatureStatus;
-  platformSupport?: boolean;
-  displayOrder?: number;
-}
+export interface ModuleFeature { id?: string; code: string; implementationKey?: string; name: string; description: string; status: ModuleFeatureStatus; supportsWeb?: boolean; supportsMobile?: boolean; supportsApi?: boolean; supportsOffline?: boolean; displayOrder?: number; internalNotes?: string | null; createdAt?: string; updatedAt?: string; module?: Pick<PlatformModule, 'id' | 'code' | 'name'>; registryMismatch?: boolean; }
+export interface PlatformModule { id: string; code: string; name: string; description: string; category: PlatformModuleCategory; status: PlatformModuleStatus; requiredBySystem: boolean; displayOrder: number; internalNotes?: string | null; dependencyCodes: string[]; dependentCodes: string[]; features: ModuleFeature[]; createdAt: string; updatedAt: string; }
+export interface ModuleQueryFilter { search?: string; category?: ModuleCategory; status?: PlatformModuleStatus; page?: number; limit?: number; sortBy?: string; sortDirection?: 'asc' | 'desc'; }
+export interface CreateModuleInput { code: string; name: string; description: string; category: ModuleCategory; status?: Exclude<PlatformModuleStatus, 'ARCHIVED'>; requiredBySystem?: boolean; displayOrder?: number; internalNotes?: string; dependencyCodes?: string[]; }
+export interface UpdateModuleInput { name?: string; description?: string; category?: ModuleCategory; status?: Exclude<PlatformModuleStatus, 'ARCHIVED'>; requiredBySystem?: boolean; displayOrder?: number; internalNotes?: string; dependencyCodes?: string[]; }
+export interface UpdateFeatureInput { name?: string; description?: string; status?: ModuleFeatureStatus; displayOrder?: number; internalNotes?: string; }

@@ -16,10 +16,6 @@ export class ModuleQueryDto {
   status?: PlatformModuleStatus;
 
   @IsOptional()
-  @IsString()
-  type?: 'addon' | 'standard';
-
-  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)

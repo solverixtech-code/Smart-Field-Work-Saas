@@ -4,7 +4,6 @@ import {
   Post,
   Patch,
   Put,
-  Delete,
   Param,
   Body,
   Query,
@@ -15,12 +14,12 @@ import { PlatformModulesService } from './platform-modules.service';
 import { ModuleQueryDto } from './dto/module-query.dto';
 import { CreatePlatformModuleDto } from './dto/create-platform-module.dto';
 import { UpdatePlatformModuleDto } from './dto/update-platform-module.dto';
-import { CreateModuleFeatureDto } from './dto/create-module-feature.dto';
 import { UpdateModuleFeatureDto } from './dto/update-module-feature.dto';
 import { UpdateModuleDependenciesDto } from './dto/update-module-dependencies.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermissions } from '../../common/decorators/require-permissions.decorator';
+import { ModuleFeatureStatus } from '@prisma/client';
 
 @Controller('platform/modules')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -33,10 +32,46 @@ export class PlatformModulesController {
     return this.modulesService.findAll(query);
   }
 
+  @Get('summary')
+  @RequirePermissions('platform.modules.view')
+  async summary() {
+    return this.modulesService.summary();
+  }
+
+  @Get('dependency-graph')
+  @RequirePermissions('platform.modules.view')
+  async dependencyGraph() {
+    return this.modulesService.dependencyGraph();
+  }
+
+  @Get('features')
+  @RequirePermissions('platform.modules.view')
+  async findFeatures(@Query() query: { search?: string; moduleCode?: string; moduleId?: string; status?: ModuleFeatureStatus; platform?: 'web' | 'mobile' | 'api' | 'offline'; page?: number; limit?: number }) {
+    return this.modulesService.findFeatures(query);
+  }
+
+  @Get('features/:featureId')
+  @RequirePermissions('platform.modules.view')
+  async findFeature(@Param('featureId') featureId: string) {
+    return this.modulesService.findFeature(featureId);
+  }
+
+  @Patch('features/:featureId')
+  @RequirePermissions('platform.modules.update')
+  async updateFeature(@Param('featureId') featureId: string, @Body() dto: UpdateModuleFeatureDto, @Req() req: any) {
+    return this.modulesService.updateFeature(featureId, dto, req.user?.id || req.user?.sub, { ip: req.ip, userAgent: req.headers?.['user-agent'] });
+  }
+
   @Get(':id')
   @RequirePermissions('platform.modules.view')
   async findOne(@Param('id') id: string) {
     return this.modulesService.findOne(id);
+  }
+
+  @Get(':id/history')
+  @RequirePermissions('platform.modules.view')
+  async history(@Param('id') id: string) {
+    return this.modulesService.history(id);
   }
 
   @Post()
@@ -44,7 +79,7 @@ export class PlatformModulesController {
   async create(@Body() dto: CreatePlatformModuleDto, @Req() req: any) {
     const userId = req.user?.id || req.user?.sub;
     const meta = { ip: req.ip, userAgent: req.headers?.['user-agent'] };
-    return this.modulesService.create(dto, userId, meta);
+    return this.modulesService.create(dto, userId, meta, req.user?.role);
   }
 
   @Patch(':id')
@@ -56,7 +91,7 @@ export class PlatformModulesController {
   ) {
     const userId = req.user?.id || req.user?.sub;
     const meta = { ip: req.ip, userAgent: req.headers?.['user-agent'] };
-    return this.modulesService.update(id, dto, userId, meta);
+    return this.modulesService.update(id, dto, userId, meta, req.user?.role);
   }
 
   @Post(':id/archive')
@@ -73,49 +108,6 @@ export class PlatformModulesController {
     const userId = req.user?.id || req.user?.sub;
     const meta = { ip: req.ip, userAgent: req.headers?.['user-agent'] };
     return this.modulesService.restore(id, userId, meta);
-  }
-
-  @Post(':id/features')
-  @RequirePermissions('platform.modules.update')
-  async createFeature(
-    @Param('id') moduleId: string,
-    @Body() dto: CreateModuleFeatureDto,
-    @Req() req: any,
-  ) {
-    const userId = req.user?.id || req.user?.sub;
-    const meta = { ip: req.ip, userAgent: req.headers?.['user-agent'] };
-    return this.modulesService.createFeature(moduleId, dto, userId, meta);
-  }
-
-  @Patch(':id/features/:featureId')
-  @RequirePermissions('platform.modules.update')
-  async updateFeature(
-    @Param('id') moduleId: string,
-    @Param('featureId') featureId: string,
-    @Body() dto: UpdateModuleFeatureDto,
-    @Req() req: any,
-  ) {
-    const userId = req.user?.id || req.user?.sub;
-    const meta = { ip: req.ip, userAgent: req.headers?.['user-agent'] };
-    return this.modulesService.updateFeature(
-      moduleId,
-      featureId,
-      dto,
-      userId,
-      meta,
-    );
-  }
-
-  @Delete(':id/features/:featureId')
-  @RequirePermissions('platform.modules.update')
-  async deleteFeature(
-    @Param('id') moduleId: string,
-    @Param('featureId') featureId: string,
-    @Req() req: any,
-  ) {
-    const userId = req.user?.id || req.user?.sub;
-    const meta = { ip: req.ip, userAgent: req.headers?.['user-agent'] };
-    return this.modulesService.deleteFeature(moduleId, featureId, userId, meta);
   }
 
   @Put(':id/dependencies')

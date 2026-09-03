@@ -432,10 +432,9 @@ model PlatformModule {
   category         PlatformModuleCategory @default(CORE)
   status           PlatformModuleStatus   @default(ACTIVE)
 
-  isAddon          Boolean                @default(false)
-  monthlyPrice     Float                  @default(0)
   requiredBySystem Boolean                @default(false)
   displayOrder     Int                    @default(0)
+  internalNotes    String?
 
   features         ModuleFeature[]
   
@@ -458,8 +457,13 @@ model ModuleFeature {
   name            String
   description     String
   status          ModuleFeatureStatus @default(ACTIVE)
-  platformSupport Boolean             @default(true)
+  implementationKey String            @unique
+  supportsWeb      Boolean             @default(false)
+  supportsMobile   Boolean             @default(false)
+  supportsApi      Boolean             @default(false)
+  supportsOffline  Boolean             @default(false)
   displayOrder    Int                 @default(0)
+  internalNotes   String?
 
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
@@ -482,5 +486,4 @@ model ModuleDependency {
   @@index([moduleId])
   @@index([dependsOnModuleId])
 }
-
 

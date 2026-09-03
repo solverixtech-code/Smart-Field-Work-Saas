@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsBoolean, IsInt } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsInt } from 'class-validator';
 import { ModuleFeatureStatus } from '@prisma/client';
 
 export class UpdateModuleFeatureDto {
@@ -15,10 +15,10 @@ export class UpdateModuleFeatureDto {
   status?: ModuleFeatureStatus;
 
   @IsOptional()
-  @IsBoolean()
-  platformSupport?: boolean;
-
-  @IsOptional()
   @IsInt()
   displayOrder?: number;
+
+  @IsOptional()
+  @IsString()
+  internalNotes?: string;
 }

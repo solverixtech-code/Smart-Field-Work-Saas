@@ -37,20 +37,15 @@ export class CreatePlatformModuleDto {
 
   @IsOptional()
   @IsBoolean()
-  isAddon?: boolean = false;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  monthlyPrice?: number = 0;
-
-  @IsOptional()
-  @IsBoolean()
   requiredBySystem?: boolean = false;
 
   @IsOptional()
   @IsInt()
   displayOrder?: number = 0;
+
+  @IsOptional()
+  @IsString()
+  internalNotes?: string;
 
   @IsOptional()
   @IsArray()

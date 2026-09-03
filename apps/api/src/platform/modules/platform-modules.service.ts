@@ -5,15 +5,15 @@ import {
   BadRequestException,
   UnprocessableEntityException,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../persistence/prisma.service';
 import { ModuleQueryDto } from './dto/module-query.dto';
 import { CreatePlatformModuleDto } from './dto/create-platform-module.dto';
 import { UpdatePlatformModuleDto } from './dto/update-platform-module.dto';
-import { CreateModuleFeatureDto } from './dto/create-module-feature.dto';
 import { UpdateModuleFeatureDto } from './dto/update-module-feature.dto';
 import { UpdateModuleDependenciesDto } from './dto/update-module-dependencies.dto';
-import { PlatformModuleStatus, ModuleFeatureStatus, Prisma } from '@prisma/client';
+import { PlatformModuleStatus, ModuleFeatureStatus, Prisma, Role } from '@prisma/client';
 
 @Injectable()
 export class PlatformModulesService {
@@ -28,7 +28,6 @@ export class PlatformModulesService {
       search,
       category,
       status,
-      type,
       page = 1,
       limit = 50,
       sortBy = 'displayOrder',
@@ -57,17 +56,12 @@ export class PlatformModulesService {
       where.status = { not: PlatformModuleStatus.ARCHIVED };
     }
 
-    if (type === 'addon') {
-      where.isAddon = true;
-    } else if (type === 'standard') {
-      where.isAddon = false;
-    }
-
     const total = await this.prisma.platformModule.count({ where });
     const skip = (page - 1) * limit;
 
+    const allowedSortFields = new Set(['name', 'code', 'category', 'status', 'displayOrder', 'updatedAt', 'createdAt']);
     const orderBy: Prisma.PlatformModuleOrderByWithRelationInput = {
-      [sortBy]: sortDirection,
+      [allowedSortFields.has(sortBy) ? sortBy : 'displayOrder']: sortDirection,
     };
 
     const modules = await this.prisma.platformModule.findMany({
@@ -142,9 +136,36 @@ export class PlatformModulesService {
     return this.formatModuleResponse(module);
   }
 
+  async summary() {
+    const [totalModules, activeModules, registeredFeatures, dependencyLinks] = await Promise.all([
+      this.prisma.platformModule.count(),
+      this.prisma.platformModule.count({ where: { status: PlatformModuleStatus.ACTIVE } }),
+      this.prisma.moduleFeature.count(),
+      this.prisma.moduleDependency.count(),
+    ]);
+    return { totalModules, activeModules, registeredFeatures, dependencyLinks };
+  }
+
+  async dependencyGraph() {
+    return this.prisma.platformModule.findMany({
+      select: { id: true, code: true, name: true, status: true, dependencies: { select: { dependsOnModule: { select: { id: true, code: true, name: true, status: true } } } } },
+      orderBy: { displayOrder: 'asc' },
+    });
+  }
+
+  async history(moduleId: string) {
+    await this.findOne(moduleId);
+    return this.prisma.auditLog.findMany({
+      where: { OR: [{ entityType: 'MODULE', entityId: moduleId }, { entityType: 'MODULE_FEATURE', afterJson: { path: ['moduleId'], equals: moduleId } }] },
+      include: { actorUser: { select: { id: true, fullName: true, email: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   // ─── Module CRUD ────────────────────────────────────────────────────────────
 
-  async create(dto: CreatePlatformModuleDto, actorUserId?: string, meta?: { ip?: string; userAgent?: string }) {
+  async create(dto: CreatePlatformModuleDto, actorUserId?: string, meta?: { ip?: string; userAgent?: string }, actorRole?: Role) {
+    this.assertSystemRequiredAccess(dto.requiredBySystem, actorRole);
     // 1. Check unique code
     const existing = await this.prisma.platformModule.findUnique({
       where: { code: dto.code },
@@ -156,6 +177,9 @@ export class PlatformModulesService {
 
     // 2. Validate dependencies if specified
     const dependencyCodes = dto.dependencyCodes || [];
+    if (new Set(dependencyCodes).size !== dependencyCodes.length) {
+      throw new BadRequestException('Duplicate dependency codes are not allowed');
+    }
     if (dependencyCodes.includes(dto.code)) {
       throw new BadRequestException('A module cannot depend on itself');
     }
@@ -186,10 +210,9 @@ export class PlatformModulesService {
           description: dto.description,
           category: dto.category,
           status: dto.status || PlatformModuleStatus.ACTIVE,
-          isAddon: dto.isAddon ?? false,
-          monthlyPrice: dto.monthlyPrice ?? 0,
           requiredBySystem: dto.requiredBySystem ?? false,
           displayOrder: dto.displayOrder ?? 0,
+          internalNotes: dto.internalNotes,
         },
       });
 
@@ -219,7 +242,7 @@ export class PlatformModulesService {
     return fullModule;
   }
 
-  async update(id: string, dto: UpdatePlatformModuleDto, actorUserId?: string, meta?: { ip?: string; userAgent?: string }) {
+  async update(id: string, dto: UpdatePlatformModuleDto, actorUserId?: string, meta?: { ip?: string; userAgent?: string }, actorRole?: Role) {
     const existing = await this.prisma.platformModule.findUnique({ where: { id } });
 
     if (!existing) {
@@ -231,6 +254,10 @@ export class PlatformModulesService {
     }
 
     // If dependencyCodes were passed in update, validate them
+    this.assertSystemRequiredAccess(dto.requiredBySystem, actorRole);
+    if (dto.status === PlatformModuleStatus.ARCHIVED) {
+      throw new BadRequestException('Archive modules through the explicit archive action.');
+    }
     if (dto.dependencyCodes) {
       await this.validateAndApplyDependencies(id, existing.code, dto.dependencyCodes);
     }
@@ -242,10 +269,9 @@ export class PlatformModulesService {
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.category !== undefined && { category: dto.category }),
         ...(dto.status !== undefined && { status: dto.status }),
-        ...(dto.isAddon !== undefined && { isAddon: dto.isAddon }),
-        ...(dto.monthlyPrice !== undefined && { monthlyPrice: dto.monthlyPrice }),
         ...(dto.requiredBySystem !== undefined && { requiredBySystem: dto.requiredBySystem }),
         ...(dto.displayOrder !== undefined && { displayOrder: dto.displayOrder }),
+        ...(dto.internalNotes !== undefined && { internalNotes: dto.internalNotes }),
       },
     });
 
@@ -275,6 +301,12 @@ export class PlatformModulesService {
       throw new BadRequestException(`System-required module '${existing.name}' (${existing.code}) cannot be archived.`);
     }
 
+    const activeDependents = await this.prisma.moduleDependency.count({
+      where: { dependsOnModuleId: id, module: { status: { not: PlatformModuleStatus.ARCHIVED } } },
+    });
+    if (activeDependents > 0) {
+      throw new ConflictException(`Module '${existing.name}' has active dependent modules and cannot be archived.`);
+    }
     const updated = await this.prisma.platformModule.update({
       where: { id },
       data: { status: PlatformModuleStatus.ARCHIVED },
@@ -324,53 +356,38 @@ export class PlatformModulesService {
 
   // ─── Feature Management ─────────────────────────────────────────────────────
 
-  async createFeature(moduleId: string, dto: CreateModuleFeatureDto, actorUserId?: string, meta?: { ip?: string; userAgent?: string }) {
-    const module = await this.prisma.platformModule.findUnique({ where: { id: moduleId } });
-    if (!module) {
-      throw new NotFoundException(`Platform module with ID '${moduleId}' not found`);
-    }
-
-    const existingFeat = await this.prisma.moduleFeature.findUnique({
-      where: {
-        moduleId_code: { moduleId, code: dto.code },
-      },
-    });
-
-    if (existingFeat) {
-      throw new ConflictException(`Feature code '${dto.code}' already exists in module '${module.code}'`);
-    }
-
-    const created = await this.prisma.moduleFeature.create({
-      data: {
-        moduleId,
-        code: dto.code,
-        name: dto.name,
-        description: dto.description,
-        status: dto.status || ModuleFeatureStatus.ACTIVE,
-        platformSupport: dto.platformSupport ?? true,
-        displayOrder: dto.displayOrder ?? 0,
-      },
-    });
-
-    await this.recordAudit({
-      action: 'MODULE_FEATURE_CREATED',
-      actorUserId,
-      entityType: 'MODULE_FEATURE',
-      entityId: created.id,
-      afterJson: created,
-      ...meta,
-    });
-
-    return created;
+  async findFeatures(query: { search?: string; moduleCode?: string; moduleId?: string; status?: ModuleFeatureStatus; platform?: 'web' | 'mobile' | 'api' | 'offline'; page?: number; limit?: number }) {
+    const { search, moduleCode, moduleId, status, platform, page = 1, limit = 50 } = query;
+    const where: Prisma.ModuleFeatureWhereInput = {
+      ...(status ? { status } : {}),
+      ...(moduleId ? { moduleId } : {}),
+      ...(moduleCode ? { module: { code: moduleCode } } : {}),
+      ...(search?.trim() ? { OR: [{ name: { contains: search.trim(), mode: 'insensitive' } }, { code: { contains: search.trim(), mode: 'insensitive' } }, { implementationKey: { contains: search.trim(), mode: 'insensitive' } }, { description: { contains: search.trim(), mode: 'insensitive' } }] } : {}),
+      ...(platform === 'web' ? { supportsWeb: true } : {}),
+      ...(platform === 'mobile' ? { supportsMobile: true } : {}),
+      ...(platform === 'api' ? { supportsApi: true } : {}),
+      ...(platform === 'offline' ? { supportsOffline: true } : {}),
+    };
+    const [total, data] = await Promise.all([
+      this.prisma.moduleFeature.count({ where }),
+      this.prisma.moduleFeature.findMany({ where, skip: (page - 1) * limit, take: limit, orderBy: [{ module: { displayOrder: 'asc' } }, { displayOrder: 'asc' }], include: { module: { select: { id: true, code: true, name: true } } } }),
+    ]);
+    return { data: data.map((feature) => ({ ...feature, registryMismatch: false })), meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
-  async updateFeature(moduleId: string, featureId: string, dto: UpdateModuleFeatureDto, actorUserId?: string, meta?: { ip?: string; userAgent?: string }) {
+  async findFeature(featureId: string) {
+    const feature = await this.prisma.moduleFeature.findUnique({ where: { id: featureId }, include: { module: { select: { id: true, code: true, name: true } } } });
+    if (!feature) throw new NotFoundException(`Feature '${featureId}' not found`);
+    return { ...feature, registryMismatch: false };
+  }
+
+  async updateFeature(featureId: string, dto: UpdateModuleFeatureDto, actorUserId?: string, meta?: { ip?: string; userAgent?: string }) {
     const feature = await this.prisma.moduleFeature.findFirst({
-      where: { id: featureId, moduleId },
+      where: { id: featureId },
     });
 
     if (!feature) {
-      throw new NotFoundException(`Feature '${featureId}' not found in module '${moduleId}'`);
+      throw new NotFoundException(`Feature '${featureId}' not found`);
     }
 
     const updated = await this.prisma.moduleFeature.update({
@@ -379,13 +396,13 @@ export class PlatformModulesService {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.status !== undefined && { status: dto.status }),
-        ...(dto.platformSupport !== undefined && { platformSupport: dto.platformSupport }),
         ...(dto.displayOrder !== undefined && { displayOrder: dto.displayOrder }),
+        ...(dto.internalNotes !== undefined && { internalNotes: dto.internalNotes }),
       },
     });
 
     await this.recordAudit({
-      action: 'MODULE_FEATURE_UPDATED',
+      action: dto.status === ModuleFeatureStatus.DEPRECATED ? 'FEATURE_DEPRECATED' : 'FEATURE_METADATA_UPDATED',
       actorUserId,
       entityType: 'MODULE_FEATURE',
       entityId: featureId,
@@ -397,13 +414,13 @@ export class PlatformModulesService {
     return updated;
   }
 
-  async deleteFeature(moduleId: string, featureId: string, actorUserId?: string, meta?: { ip?: string; userAgent?: string }) {
+  async deprecateFeature(featureId: string, actorUserId?: string, meta?: { ip?: string; userAgent?: string }) {
     const feature = await this.prisma.moduleFeature.findFirst({
-      where: { id: featureId, moduleId },
+      where: { id: featureId },
     });
 
     if (!feature) {
-      throw new NotFoundException(`Feature '${featureId}' not found in module '${moduleId}'`);
+      throw new NotFoundException(`Feature '${featureId}' not found`);
     }
 
     // Per Requirement #3: Soft deprecate feature status instead of physical delete
@@ -413,7 +430,7 @@ export class PlatformModulesService {
     });
 
     await this.recordAudit({
-      action: 'MODULE_FEATURE_DELETED',
+      action: 'FEATURE_DEPRECATED',
       actorUserId,
       entityType: 'MODULE_FEATURE',
       entityId: featureId,
@@ -452,8 +469,10 @@ export class PlatformModulesService {
   // ─── Private Helpers & Graph Cycle Prevention ───────────────────────────────
 
   private async validateAndApplyDependencies(targetModuleId: string, targetModuleCode: string, dependencyCodes: string[]) {
-    // 1. Remove duplicates
-    const uniqueDepCodes = Array.from(new Set(dependencyCodes));
+    if (new Set(dependencyCodes).size !== dependencyCodes.length) {
+      throw new BadRequestException('Duplicate dependency codes are not allowed.');
+    }
+    const uniqueDepCodes = dependencyCodes;
 
     // 2. Prevent self-dependency
     if (uniqueDepCodes.includes(targetModuleCode)) {
@@ -544,18 +563,22 @@ export class PlatformModulesService {
       description: m.description,
       category: m.category,
       status: m.status,
-      isAddon: m.isAddon,
-      monthlyPrice: m.monthlyPrice,
       requiredBySystem: m.requiredBySystem,
       displayOrder: m.displayOrder,
+      internalNotes: m.internalNotes,
       features: (m.features || []).map((f: any) => ({
         id: f.id,
         code: f.code,
         name: f.name,
         description: f.description,
         status: f.status,
-        platformSupport: f.platformSupport,
+        implementationKey: f.implementationKey,
+        supportsWeb: f.supportsWeb,
+        supportsMobile: f.supportsMobile,
+        supportsApi: f.supportsApi,
+        supportsOffline: f.supportsOffline,
         displayOrder: f.displayOrder,
+        internalNotes: f.internalNotes,
         createdAt: f.createdAt,
         updatedAt: f.updatedAt,
       })),
@@ -564,6 +587,12 @@ export class PlatformModulesService {
       createdAt: m.createdAt,
       updatedAt: m.updatedAt,
     };
+  }
+
+  private assertSystemRequiredAccess(requiredBySystem: boolean | undefined, actorRole: Role | undefined) {
+    if (requiredBySystem !== undefined && actorRole !== Role.PLATFORM_SUPER_ADMIN && actorRole !== Role.SUPER_ADMIN) {
+      throw new ForbiddenException('Only Platform Super Admin can change the system-required module flag.');
+    }
   }
 
   private async recordAudit(input: {

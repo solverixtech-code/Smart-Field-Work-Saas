@@ -33,8 +33,6 @@ export interface ModuleItem {
   name: string;
   description: string;
   category: string;
-  isAddon?: boolean;
-  monthlyPrice?: number;
   requiredBySystem?: boolean;
 }
 
@@ -203,7 +201,7 @@ export function ModuleSelectionGrid({
             )}
           </div>
           <p className="text-xs font-medium text-slate-500">
-            Select the modules and features you want to enable for this tenant.
+            These modules are included by the selected plan and are shown read-only for this tenant.
           </p>
 
           {/* Search Input Bar */}
@@ -334,15 +332,7 @@ export function ModuleSelectionGrid({
 
                     {/* Bottom Status Pill Badge */}
                     <div className="mt-3 pt-2 w-full border-t border-slate-100 flex justify-center">
-                      {isMandatory || !mod.isAddon || mod.monthlyPrice === 0 ? (
-                        <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700 border border-emerald-200/80">
-                          Included
-                        </span>
-                      ) : (
-                        <span className="inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-extrabold text-blue-700 border border-blue-200/80">
-                          Add-on {mod.monthlyPrice ? `(₹${mod.monthlyPrice}/mo)` : ''}
-                        </span>
-                      )}
+                      <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700 border border-emerald-200/80">Included by plan</span>
                     </div>
                   </div>
                 );

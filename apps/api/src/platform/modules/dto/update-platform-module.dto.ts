@@ -29,20 +29,15 @@ export class UpdatePlatformModuleDto {
 
   @IsOptional()
   @IsBoolean()
-  isAddon?: boolean;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  monthlyPrice?: number;
-
-  @IsOptional()
-  @IsBoolean()
   requiredBySystem?: boolean;
 
   @IsOptional()
   @IsInt()
   displayOrder?: number;
+
+  @IsOptional()
+  @IsString()
+  internalNotes?: string;
 
   @IsOptional()
   @IsArray()

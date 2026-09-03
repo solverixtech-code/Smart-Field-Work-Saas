@@ -12,12 +12,35 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
+import { z } from 'zod';
+import {
+  LoginSchema,
+  LoginInput,
+  OtpVerifySchema,
+  OtpVerifyInput,
+  OtpResendSchema,
+  OtpResendInput,
+  ForgotPasswordSchema,
+  ForgotPasswordInput,
+  ResetPasswordSchema,
+  ResetPasswordInput,
+  ChangePasswordSchema,
+  ChangePasswordInput,
+  UpdateProfileSchema,
+  UpdateProfileInput,
+} from '@visiblo/shared';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+
+const RefreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required'),
+});
 
 @Controller('auth')
 export class AuthController {
@@ -26,7 +49,10 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { ttl: 600000, limit: 5 } })
-  async login(@Body() body: any, @Req() req: Request) {
+  async login(
+    @Body(new ZodValidationPipe(LoginSchema)) body: LoginInput,
+    @Req() req: Request,
+  ) {
     return this.authService.login(body, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -36,7 +62,10 @@ export class AuthController {
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { ttl: 600000, limit: 10 } })
-  async verifyOtp(@Body() body: any, @Req() req: Request) {
+  async verifyOtp(
+    @Body(new ZodValidationPipe(OtpVerifySchema)) body: OtpVerifyInput,
+    @Req() req: Request,
+  ) {
     return this.authService.verifyOtp(body, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -46,7 +75,10 @@ export class AuthController {
   @Post('resend-otp')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { ttl: 600000, limit: 5 } })
-  async resendOtp(@Body() body: any, @Req() req: Request) {
+  async resendOtp(
+    @Body(new ZodValidationPipe(OtpResendSchema)) body: OtpResendInput,
+    @Req() req: Request,
+  ) {
     return this.authService.resendOtp(body.challengeToken, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -56,7 +88,10 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { ttl: 300000, limit: 10 } })
-  async refresh(@Body() body: any, @Req() req: Request) {
+  async refresh(
+    @Body(new ZodValidationPipe(RefreshTokenSchema)) body: { refreshToken: string },
+    @Req() req: Request,
+  ) {
     return this.authService.refreshTokens(body.refreshToken, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -65,7 +100,10 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Body() body: any, @Req() req: Request) {
+  async logout(
+    @Body(new ZodValidationPipe(RefreshTokenSchema)) body: { refreshToken: string },
+    @Req() req: Request,
+  ) {
     await this.authService.logout(body.refreshToken, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -76,7 +114,10 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { ttl: 600000, limit: 3 } })
-  async forgotPassword(@Body() body: any, @Req() req: Request) {
+  async forgotPassword(
+    @Body(new ZodValidationPipe(ForgotPasswordSchema)) body: ForgotPasswordInput,
+    @Req() req: Request,
+  ) {
     return this.authService.forgotPassword(body, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -86,7 +127,10 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { ttl: 600000, limit: 5 } })
-  async resetPassword(@Body() body: any, @Req() req: Request) {
+  async resetPassword(
+    @Body(new ZodValidationPipe(ResetPasswordSchema)) body: ResetPasswordInput,
+    @Req() req: Request,
+  ) {
     return this.authService.resetPassword(body, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -103,7 +147,10 @@ export class AuthController {
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)
-  async updateProfile(@Req() req: Request, @Body() body: any) {
+  async updateProfile(
+    @Req() req: Request,
+    @Body(new ZodValidationPipe(UpdateProfileSchema)) body: UpdateProfileInput,
+  ) {
     return this.authService.updateProfile(req['user'].sub, body, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -117,6 +164,9 @@ export class AuthController {
     @Req() req: Request,
     @UploadedFile() file: Express.Multer.File,
   ) {
+    if (!file) {
+      throw new BadRequestException('Avatar image file is required');
+    }
     return this.authService.uploadAvatar(req['user'].sub, file, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
@@ -126,11 +176,14 @@ export class AuthController {
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async changePassword(@Req() req: Request, @Body() body: any) {
+  async changePassword(
+    @Req() req: Request,
+    @Body(new ZodValidationPipe(ChangePasswordSchema)) body: ChangePasswordInput,
+  ) {
     return this.authService.changePassword(
       req['user'].sub,
       body,
-      null, // TODO: derive session ID from refresh token
+      null,
       {
         ip: req.ip,
         userAgent: req.headers['user-agent'],

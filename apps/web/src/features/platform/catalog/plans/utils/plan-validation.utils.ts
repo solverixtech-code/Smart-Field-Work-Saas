@@ -139,9 +139,11 @@ export function resolveModuleDependencies(
     addedNew = false;
     for (const code of Array.from(resolved)) {
       const mod = allModules.find((m) => m.code === code);
-      if (mod?.dependsOnModuleCode && !resolved.has(mod.dependsOnModuleCode)) {
-        resolved.add(mod.dependsOnModuleCode);
-        addedNew = true;
+      for (const dependencyCode of mod?.dependencyCodes ?? []) {
+        if (!resolved.has(dependencyCode)) {
+          resolved.add(dependencyCode);
+          addedNew = true;
+        }
       }
     }
   }
@@ -170,11 +172,11 @@ export function validateModules(
 
       for (const code of selectedModuleCodes) {
         const mod = allModules.find((m) => m.code === code);
-        if (mod?.dependsOnModuleCode) {
-          const parentMod = allModules.find((m) => m.code === mod.dependsOnModuleCode);
-          if (!selectedModuleCodes.includes(mod.dependsOnModuleCode)) {
+        for (const dependencyCode of mod?.dependencyCodes ?? []) {
+          const parentMod = allModules.find((m) => m.code === dependencyCode);
+          if (!selectedModuleCodes.includes(dependencyCode)) {
             dependencyErrors.push(
-              `'${mod.name}' requires parent module '${parentMod?.name || mod.dependsOnModuleCode}'`
+              `'${mod?.name || code}' requires parent module '${parentMod?.name || dependencyCode}'`
             );
           }
         }

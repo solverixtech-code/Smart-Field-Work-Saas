@@ -1,5 +1,6 @@
 import { PrismaClient, Role, PlatformModuleCategory, PlatformModuleStatus, ModuleFeatureStatus } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { FEATURE_REGISTRY, MODULE_REGISTRY } from '../src/platform/modules/feature-registry';
 
 const prisma = new PrismaClient();
 
@@ -191,7 +192,7 @@ async function main() {
   }
 
   // ─── Seed Canonical Platform Modules & Features ───────────────────────────
-  const canonicalModules = [
+  const legacyCanonicalModules = [
     {
       code: 'core_crm',
       name: 'Core CRM & Lead Management',
@@ -327,6 +328,12 @@ async function main() {
     },
   ];
 
+  const canonicalModules = MODULE_REGISTRY.map((module) => ({
+    ...module,
+    dependsOnCodes: module.dependencyCodes,
+    features: FEATURE_REGISTRY.filter((feature) => feature.moduleCode === module.code),
+  }));
+
   const codeToIdMap = new Map<string, string>();
 
   // Upsert modules and child features
@@ -340,8 +347,6 @@ async function main() {
         description: mFields.description,
         category: mFields.category,
         status: mFields.status,
-        isAddon: mFields.isAddon,
-        monthlyPrice: mFields.monthlyPrice,
         requiredBySystem: mFields.requiredBySystem,
         displayOrder: mFields.displayOrder,
       },
@@ -360,14 +365,23 @@ async function main() {
             name: feat.name,
             description: feat.description,
             status: feat.status,
+            supportsWeb: feat.supportsWeb,
+            supportsMobile: feat.supportsMobile,
+            supportsApi: feat.supportsApi,
+            supportsOffline: feat.supportsOffline,
             displayOrder: feat.displayOrder,
           },
           create: {
             moduleId: mod.id,
             code: feat.code,
+            implementationKey: feat.implementationKey,
             name: feat.name,
             description: feat.description,
             status: feat.status,
+            supportsWeb: feat.supportsWeb,
+            supportsMobile: feat.supportsMobile,
+            supportsApi: feat.supportsApi,
+            supportsOffline: feat.supportsOffline,
             displayOrder: feat.displayOrder,
           },
         });

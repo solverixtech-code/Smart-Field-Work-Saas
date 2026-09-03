@@ -31,7 +31,7 @@ export const PLATFORM_INDUSTRIES: IndustryConfig[] = [
 import { CANONICAL_PLATFORM_MODULES } from '../../catalog/modules/fixtures/module.fixtures';
 import { CANONICAL_PLATFORM_PLANS } from '../../catalog/plans/fixtures/plan.fixtures';
 
-export const PLATFORM_MODULES: PlatformModule[] = CANONICAL_PLATFORM_MODULES as PlatformModule[];
+export const PLATFORM_MODULES: PlatformModule[] = CANONICAL_PLATFORM_MODULES as unknown as PlatformModule[];
 
 export const PLATFORM_PLANS: PlatformPlan[] = CANONICAL_PLATFORM_PLANS.map((p) => ({
   id: p.id,
