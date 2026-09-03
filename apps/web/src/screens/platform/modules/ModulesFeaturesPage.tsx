@@ -52,7 +52,7 @@ const categoryBadgeColor: Record<PlatformModuleCategory, string> = {
 
 export function ModulesFeaturesPage() {
   const navigate = useNavigate();
-  const { canCreateModule, canUpdateModule, canArchiveModule } =
+  const { canUpdateModule, canArchiveModule } =
     usePlatformPermissions();
 
   const [result, setResult] = useState<PaginatedModulesResponse>({
