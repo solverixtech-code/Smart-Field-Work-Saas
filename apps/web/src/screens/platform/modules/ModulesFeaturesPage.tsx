@@ -252,7 +252,7 @@ export function ModulesFeaturesPage() {
             },
             {
               label: 'Manage Dependencies',
-              onClick: () => navigate('/platform/modules/dependencies'),
+              onClick: () => navigate(`/platform/modules/${module.id}/dependencies`),
             },
             ...(canArchiveModule
               ? [
