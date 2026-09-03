@@ -42,6 +42,8 @@ import { ModulesFeaturesPage } from './screens/platform/modules/ModulesFeaturesP
 import { CreateModulePage } from './screens/platform/modules/CreateModulePage';
 import { ModuleDetailPage } from './screens/platform/modules/ModuleDetailPage';
 import { EditModulePage } from './screens/platform/modules/EditModulePage';
+import { FeatureRegistryPage } from './screens/platform/modules/FeatureRegistryPage';
+import { DependencyMapPage } from './screens/platform/modules/DependencyMapPage';
 
 import ShiftManagementPage from './screens/shifts/ShiftManagementPage';
 import AttendanceMonitoringPage from './screens/attendance/AttendanceMonitoringPage';
@@ -791,7 +793,12 @@ export default function AppRouter() {
               </Route>
               <Route element={<PlatformAccessGuard requiredPermission="platform.modules.view" />}>
                 <Route path="/platform/modules" element={<ModulesFeaturesPage />} />
+                <Route path="/platform/modules/features" element={<FeatureRegistryPage />} />
+                <Route path="/platform/modules/dependencies" element={<DependencyMapPage />} />
                 <Route path="/platform/modules/:moduleId" element={<ModuleDetailPage />} />
+                <Route path="/platform/modules/:moduleId/features" element={<ModuleDetailPage />} />
+                <Route path="/platform/modules/:moduleId/dependencies" element={<ModuleDetailPage />} />
+                <Route path="/platform/modules/:moduleId/history" element={<ModuleDetailPage />} />
               </Route>
               <Route element={<PlatformAccessGuard requiredPermission="platform.modules.create" />}>
                 <Route path="/platform/modules/create" element={<CreateModulePage />} />

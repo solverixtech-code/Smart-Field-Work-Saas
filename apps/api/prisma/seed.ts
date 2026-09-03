@@ -338,7 +338,7 @@ async function main() {
 
   // Upsert modules and child features
   for (const mData of canonicalModules) {
-    const { features, dependsOnCodes, ...mFields } = mData;
+    const { features, dependsOnCodes, dependencyCodes, ...mFields } = mData;
 
     const mod = await prisma.platformModule.upsert({
       where: { code: mFields.code },

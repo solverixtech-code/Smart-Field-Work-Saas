@@ -275,6 +275,41 @@ export default function PlatformShell() {
         { label: "Commercial Plan Details", to: p },
       ];
     }
+    if (p === "/platform/modules") {
+      return [
+        { label: "Platform Management", to: "/platform/modules" },
+        { label: "Modules & Features", to: "/platform/modules" },
+        { label: "Modules", to: "/platform/modules" },
+      ];
+    }
+    if (p === "/platform/modules/create") {
+      return [
+        { label: "Platform Management", to: "/platform/modules" },
+        { label: "Modules & Features", to: "/platform/modules" },
+        { label: "Create Module", to: "/platform/modules/create" },
+      ];
+    }
+    if (p === "/platform/modules/features") {
+      return [
+        { label: "Platform Management", to: "/platform/modules" },
+        { label: "Modules & Features", to: "/platform/modules" },
+        { label: "Feature Registry", to: "/platform/modules/features" },
+      ];
+    }
+    if (p === "/platform/modules/dependencies") {
+      return [
+        { label: "Platform Management", to: "/platform/modules" },
+        { label: "Modules & Features", to: "/platform/modules" },
+        { label: "Dependency Map", to: "/platform/modules/dependencies" },
+      ];
+    }
+    if (p.startsWith("/platform/modules/")) {
+      return [
+        { label: "Platform Management", to: "/platform/modules" },
+        { label: "Modules & Features", to: "/platform/modules" },
+        { label: "Module Details", to: p },
+      ];
+    }
     if (p === "/platform/audit") {
       return [
         { label: "Platform Management", to: "/platform/audit" },
