@@ -206,8 +206,9 @@ async function main() {
       features: [
         { code: 'lead_pipeline', name: 'Lead Pipeline Stages', description: 'Customizable lead status workflow & deal stages', status: ModuleFeatureStatus.ACTIVE, displayOrder: 1 },
         { code: 'auto_routing', name: 'Auto-Routing & Territory Lead Assignment', description: 'Rule-based lead assignment to field reps', status: ModuleFeatureStatus.ACTIVE, displayOrder: 2 },
-        { code: 'contact_manager', name: 'Account & Contact Management', description: 'Unified customer account profiles & contacts', status: ModuleFeatureStatus.ACTIVE, displayOrder: 3 },
-        { code: 'activity_timeline', name: 'Activity Log & Notes', description: 'Chronological timeline of calls, emails & field meetings', status: ModuleFeatureStatus.ACTIVE, displayOrder: 4 },
+        { code: 'territory_management', name: 'Territory Hierarchy & Boundary Mapping', description: 'Define sales territories, pincodes, geofence boundaries & executive mapping', status: ModuleFeatureStatus.ACTIVE, displayOrder: 3 },
+        { code: 'contact_manager', name: 'Account & Contact Management', description: 'Unified customer account profiles & contacts', status: ModuleFeatureStatus.ACTIVE, displayOrder: 4 },
+        { code: 'activity_timeline', name: 'Activity Log & Notes', description: 'Chronological timeline of calls, emails & field meetings', status: ModuleFeatureStatus.ACTIVE, displayOrder: 5 },
       ],
     },
     {
