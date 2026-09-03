@@ -59,7 +59,10 @@ export function CreateModulePage() {
   useEffect(() => {
     void moduleService
       .getModules({ limit: 100 })
-      .then(setCatalog)
+      .then((data) => {
+        setCatalog(data);
+        setDisplayOrder(data.length + 1);
+      })
       .catch(() => toast.error('Unable to load existing module dependencies.'));
   }, []);
 
@@ -208,7 +211,7 @@ export function CreateModulePage() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               <Select
                 label="Category *"
                 value={category}
@@ -223,13 +226,6 @@ export function CreateModulePage() {
                   setStatus(e.target.value as Exclude<PlatformModuleStatus, 'ARCHIVED'>)
                 }
                 options={statusOptions}
-              />
-
-              <Input
-                label="Display Order"
-                type="number"
-                value={displayOrder}
-                onChange={(e) => setDisplayOrder(Number(e.target.value))}
               />
             </div>
           </section>
@@ -407,11 +403,6 @@ export function CreateModulePage() {
                 <div>
                   <span className="text-[10px] font-semibold text-slate-400 block">Status</span>
                   <span className="font-extrabold text-emerald-700 text-[11px]">{status}</span>
-                </div>
-
-                <div>
-                  <span className="text-[10px] font-semibold text-slate-400 block">Display Order</span>
-                  <span className="font-extrabold text-slate-800 text-[11px]">{displayOrder}</span>
                 </div>
 
                 <div>

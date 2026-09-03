@@ -214,7 +214,7 @@ export function EditModulePage() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               <Select
                 label="Category *"
                 value={category}
@@ -229,13 +229,6 @@ export function EditModulePage() {
                   setStatus(e.target.value as Exclude<PlatformModuleStatus, 'ARCHIVED'>)
                 }
                 options={statusOptions}
-              />
-
-              <Input
-                label="Display Order"
-                type="number"
-                value={displayOrder}
-                onChange={(e) => setDisplayOrder(Number(e.target.value))}
               />
             </div>
           </section>
