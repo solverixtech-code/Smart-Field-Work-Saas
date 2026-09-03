@@ -9,6 +9,8 @@ import {
   AlertTriangle,
   ArrowRight,
   ShieldCheck,
+  LayoutGrid,
+  Table,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -16,8 +18,24 @@ import { Select } from '../../../components/ui/Select';
 import { KpiCard } from '../../../components/dashboard/KpiCard';
 import { ModuleSectionNavigation } from '../../../components/platform/ModuleSectionNavigation';
 import { moduleService } from '../../../features/platform/catalog/modules/services/module.service';
-import { PlatformModule } from '../../../features/platform/catalog/modules/types/module.types';
+import { PlatformModule, PlatformModuleCategory } from '../../../features/platform/catalog/modules/types/module.types';
 import { toast } from 'react-hot-toast';
+
+const categoryLabel: Record<PlatformModuleCategory, string> = {
+  CORE: 'Core Infrastructure',
+  SALES: 'Sales Engine',
+  FIELD_OPS: 'Field Operations',
+  AUTOMATION: 'Automation & AI',
+  ENTERPRISE: 'Enterprise Suite',
+};
+
+const categoryBadgeStyle: Record<PlatformModuleCategory, string> = {
+  CORE: 'bg-blue-50 text-blue-800 border-blue-200',
+  SALES: 'bg-indigo-50 text-indigo-800 border-indigo-200',
+  FIELD_OPS: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  AUTOMATION: 'bg-amber-50 text-amber-900 border-amber-200',
+  ENTERPRISE: 'bg-purple-50 text-purple-800 border-purple-200',
+};
 
 export function DependencyMapPage() {
   const [modules, setModules] = useState<PlatformModule[]>([]);
@@ -27,11 +45,12 @@ export function DependencyMapPage() {
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [viewMode, setViewMode] = useState<'grid' | 'matrix'>('grid');
 
   const fetchCatalog = async () => {
     setError(null);
     try {
-      const data = await moduleService.getModules();
+      const data = await moduleService.getModules({ limit: 100 });
       setModules(data);
     } catch {
       setError('Unable to load dependency graph. Service unreachable.');
@@ -120,10 +139,10 @@ export function DependencyMapPage() {
       {/* Section Navigation */}
       <ModuleSectionNavigation />
 
-      {/* Filter Toolbar */}
+      {/* Filter Toolbar & View Mode Switcher */}
       <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
         <div className="grid grid-cols-12 gap-3 items-center">
-          <div className="col-span-12 sm:col-span-6 relative">
+          <div className="col-span-12 sm:col-span-5 relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <Input
               type="text"
@@ -140,16 +159,43 @@ export function DependencyMapPage() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               options={[
                 { value: 'ALL', label: 'All Categories' },
-                { value: 'CORE', label: 'CORE — Base Infrastructure' },
-                { value: 'SALES', label: 'SALES — Sales Engine' },
-                { value: 'FIELD_OPS', label: 'FIELD_OPS — Field Operations' },
-                { value: 'AUTOMATION', label: 'AUTOMATION — Automation & AI' },
-                { value: 'ENTERPRISE', label: 'ENTERPRISE — Enterprise Suite' },
+                { value: 'CORE', label: 'Core Infrastructure' },
+                { value: 'SALES', label: 'Sales Engine' },
+                { value: 'FIELD_OPS', label: 'Field Operations' },
+                { value: 'AUTOMATION', label: 'Automation & AI' },
+                { value: 'ENTERPRISE', label: 'Enterprise Suite' },
               ]}
             />
           </div>
 
-          <div className="col-span-12 sm:col-span-2 flex justify-end">
+          <div className="col-span-12 sm:col-span-3 flex items-center justify-end gap-2">
+            <div className="flex items-center rounded-sm border border-slate-200 bg-slate-50 p-0.5">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-xs transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-white text-[#0D1F3D] shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Cards
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('matrix')}
+                className={`flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-xs transition-colors ${
+                  viewMode === 'matrix'
+                    ? 'bg-white text-[#0D1F3D] shadow-xs'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <Table className="h-3.5 w-3.5" />
+                Matrix
+              </button>
+            </div>
+
             <Button
               variant="outline"
               size="sm"
@@ -157,15 +203,15 @@ export function DependencyMapPage() {
                 setSearch('');
                 setSelectedCategory('ALL');
               }}
-              className="w-full font-bold text-slate-600 justify-center"
+              className="font-bold text-slate-600 justify-center"
             >
-              Reset Filters
+              Reset
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Dependency Graph Grid Cards */}
+      {/* Dependency Graph View */}
       {error ? (
         <div className="rounded-sm border border-rose-200 bg-white p-8 text-center space-y-3 max-w-md mx-auto shadow-xs">
           <AlertTriangle className="h-8 w-8 text-rose-600 mx-auto" />
@@ -175,7 +221,7 @@ export function DependencyMapPage() {
             Retry Loading
           </Button>
         </div>
-      ) : (
+      ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filteredModules.map((mod) => {
             const parents = mod.dependencyCodes || [];
@@ -194,52 +240,68 @@ export function DependencyMapPage() {
                       </div>
                       <div>
                         <h4 className="font-extrabold text-sm text-[#0D1F3D]">{mod.name}</h4>
-                        <span className="font-mono text-xs font-bold text-indigo-600">{mod.code}</span>
+                        <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50/80 px-2 py-0.5 rounded-sm border border-indigo-200 inline-block mt-0.5">
+                          {mod.code}
+                        </span>
                       </div>
                     </div>
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-sm bg-slate-100 text-slate-700 border border-slate-200">
-                      {mod.category}
+                    <span
+                      className={`text-xs font-bold px-2.5 py-1 rounded-sm border ${
+                        categoryBadgeStyle[mod.category] || 'bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      {categoryLabel[mod.category] || mod.category}
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 pt-4 text-xs">
                     {/* Prerequisite Parent Requirements */}
                     <div className="space-y-2">
-                      <span className="text-xs font-bold text-slate-700 block">Required Parents ({parents.length}):</span>
+                      <span className="text-xs font-extrabold text-[#0D1F3D] flex items-center gap-1.5">
+                        <ArrowRight className="h-3.5 w-3.5 text-indigo-600" />
+                        Required Parents ({parents.length}):
+                      </span>
                       {parents.length > 0 ? (
                         <div className="space-y-1">
                           {parents.map((pCode) => (
                             <div
                               key={pCode}
-                              className="px-2.5 py-1 rounded-sm bg-indigo-50/60 border border-indigo-100 text-[11px] font-mono font-bold text-indigo-700 flex items-center justify-between"
+                              className="px-2.5 py-1.5 rounded-sm bg-indigo-50/70 border border-indigo-200 text-xs font-mono font-bold text-indigo-800 flex items-center justify-between shadow-2xs"
                             >
                               <span>{pCode}</span>
-                              <ArrowRight className="h-3 w-3 text-indigo-500" />
+                              <ArrowRight className="h-3 w-3 text-indigo-600" />
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-[11px] text-slate-400 font-medium italic">Root Module (No Prerequisite Parents)</p>
+                        <p className="text-xs text-slate-400 font-semibold italic bg-slate-50 p-2 rounded-sm border border-slate-100">
+                          Root Module (No Prerequisite Parents)
+                        </p>
                       )}
                     </div>
 
                     {/* Downstream Dependents */}
                     <div className="space-y-2">
-                      <span className="text-xs font-bold text-slate-700 block">Downstream Dependents ({dependents.length}):</span>
+                      <span className="text-xs font-extrabold text-[#0D1F3D] flex items-center gap-1.5">
+                        <CheckCircle className="h-3.5 w-3.5 text-purple-600" />
+                        Downstream Dependents ({dependents.length}):
+                      </span>
                       {dependents.length > 0 ? (
                         <div className="space-y-1">
                           {dependents.map((dCode) => (
                             <div
                               key={dCode}
-                              className="px-2.5 py-1 rounded-sm bg-purple-50/60 border border-purple-100 text-[11px] font-mono font-bold text-purple-700 flex items-center justify-between"
+                              className="px-2.5 py-1.5 rounded-sm bg-purple-50/70 border border-purple-200 text-xs font-mono font-bold text-purple-800 flex items-center justify-between shadow-2xs"
                             >
                               <span>{dCode}</span>
-                              <CheckCircle className="h-3 w-3 text-purple-500" />
+                              <CheckCircle className="h-3 w-3 text-purple-600" />
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-[11px] text-slate-400 font-medium italic">No Downstream Dependents</p>
+                        <p className="text-xs text-slate-400 font-semibold italic bg-slate-50 p-2 rounded-sm border border-slate-100">
+                          No Downstream Dependents
+                        </p>
                       )}
                     </div>
                   </div>
@@ -247,6 +309,80 @@ export function DependencyMapPage() {
               </div>
             );
           })}
+        </div>
+      ) : (
+        /* Matrix View Table */
+        <div className="rounded-sm border border-slate-200 bg-white overflow-hidden shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-xs font-extrabold text-[#0D1F3D] uppercase tracking-normal">
+                  <th className="p-3.5">Module Name & Code</th>
+                  <th className="p-3.5">Category</th>
+                  <th className="p-3.5">Prerequisite Parents</th>
+                  <th className="p-3.5">Downstream Dependents</th>
+                  <th className="p-3.5 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
+                {filteredModules.map((mod) => {
+                  const parents = mod.dependencyCodes || [];
+                  const dependents = mod.dependentCodes || [];
+
+                  return (
+                    <tr key={mod.code} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="p-3.5">
+                        <p className="font-extrabold text-[#0D1F3D]">{mod.name}</p>
+                        <span className="font-mono text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-sm border border-indigo-200 inline-block mt-0.5">
+                          {mod.code}
+                        </span>
+                      </td>
+                      <td className="p-3.5">
+                        <span
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded-sm border ${
+                            categoryBadgeStyle[mod.category] || 'bg-slate-100 text-slate-700 border-slate-200'
+                          }`}
+                        >
+                          {categoryLabel[mod.category] || mod.category}
+                        </span>
+                      </td>
+                      <td className="p-3.5">
+                        {parents.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {parents.map((pCode) => (
+                              <span key={pCode} className="font-mono text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-sm border border-indigo-200">
+                                {pCode}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 font-semibold italic text-[11px]">None (Root)</span>
+                        )}
+                      </td>
+                      <td className="p-3.5">
+                        {dependents.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {dependents.map((dCode) => (
+                              <span key={dCode} className="font-mono text-[11px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-sm border border-purple-200">
+                                {dCode}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400 font-semibold italic text-[11px]">None</span>
+                        )}
+                      </td>
+                      <td className="p-3.5 text-center">
+                        <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          Active
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -284,3 +420,4 @@ export function DependencyMapPage() {
     </div>
   );
 }
+
