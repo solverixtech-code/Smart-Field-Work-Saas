@@ -114,7 +114,7 @@ export const CANONICAL_PLATFORM_PLANS: Plan[] = [
       fullDataExport: true,
       auditRetentionDays: 90,
     },
-    includedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance_plus'],
+    includedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance'],
     commercialRules: {
       trialEnabled: true,
       trialDurationDays: 14,
@@ -181,7 +181,7 @@ export const CANONICAL_PLATFORM_PLANS: Plan[] = [
       fullDataExport: true,
       auditRetentionDays: 180,
     },
-    includedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance_plus', 'whatsapp_automation'],
+    includedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance', 'whatsapp_automation'],
     commercialRules: {
       trialEnabled: true,
       trialDurationDays: 14,
@@ -253,8 +253,8 @@ export const CANONICAL_PLATFORM_PLANS: Plan[] = [
       'field_visits',
       'demo_scheduler',
       'order_management',
-      'attendance_plus',
-      'payroll_engine',
+      'attendance',
+      'payroll',
       'whatsapp_automation',
       'ai_copilot',
     ],

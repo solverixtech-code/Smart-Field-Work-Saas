@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Patch,
-  Put,
   Param,
   Body,
   Query,
@@ -21,10 +20,8 @@ import {
 } from '@nestjs/swagger';
 import { PlatformModulesService } from './platform-modules.service';
 import { ModuleQueryDto } from './dto/module-query.dto';
-import { CreatePlatformModuleDto } from './dto/create-platform-module.dto';
 import { UpdatePlatformModuleDto } from './dto/update-platform-module.dto';
 import { UpdateModuleFeatureDto } from './dto/update-module-feature.dto';
-import { UpdateModuleDependenciesDto } from './dto/update-module-dependencies.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermissions } from '../../common/decorators/require-permissions.decorator';
@@ -134,20 +131,6 @@ export class PlatformModulesController {
     return this.modulesService.history(id);
   }
 
-  @Post()
-  @RequirePermissions('platform.modules.create')
-  @ApiOperation({
-    summary: 'Developer Sync / Register Module',
-    description: 'Upsert developer-owned platform module into catalog.',
-  })
-  @ApiBody({ type: CreatePlatformModuleDto })
-  @ApiResponse({ status: 201, description: 'Module registered successfully' })
-  async create(@Body() dto: CreatePlatformModuleDto, @Req() req: any) {
-    const userId = req.user?.id || req.user?.sub;
-    const meta = { ip: req.ip, userAgent: req.headers?.['user-agent'] };
-    return this.modulesService.create(dto, userId, meta, req.user?.role);
-  }
-
   @Patch(':id')
   @RequirePermissions('platform.modules.update')
   @ApiOperation({
@@ -164,7 +147,7 @@ export class PlatformModulesController {
   ) {
     const userId = req.user?.id || req.user?.sub;
     const meta = { ip: req.ip, userAgent: req.headers?.['user-agent'] };
-    return this.modulesService.update(id, dto, userId, meta, req.user?.role);
+    return this.modulesService.update(id, dto, userId, meta);
   }
 
   @Post(':id/archive')
@@ -193,29 +176,5 @@ export class PlatformModulesController {
     const userId = req.user?.id || req.user?.sub;
     const meta = { ip: req.ip, userAgent: req.headers?.['user-agent'] };
     return this.modulesService.restore(id, userId, meta);
-  }
-
-  @Put(':id/dependencies')
-  @RequirePermissions('platform.modules.update')
-  @ApiOperation({
-    summary: 'Update Module Prerequisite Dependencies',
-    description: 'Reconfigure prerequisite module dependencies for this module.',
-  })
-  @ApiParam({ name: 'id', description: 'Module UUID' })
-  @ApiBody({ type: UpdateModuleDependenciesDto })
-  @ApiResponse({ status: 200, description: 'Module dependencies updated successfully' })
-  async updateDependencies(
-    @Param('id') moduleId: string,
-    @Body() dto: UpdateModuleDependenciesDto,
-    @Req() req: any,
-  ) {
-    const userId = req.user?.id || req.user?.sub;
-    const meta = { ip: req.ip, userAgent: req.headers?.['user-agent'] };
-    return this.modulesService.updateDependencies(
-      moduleId,
-      dto,
-      userId,
-      meta,
-    );
   }
 }

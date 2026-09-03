@@ -224,10 +224,6 @@ export function ModulesFeaturesPage() {
               onClick: () => navigate(`/platform/modules/${module.id}/edit`),
             },
             {
-              label: 'Manage Dependencies',
-              onClick: () => navigate(`/platform/modules/${module.id}/dependencies`),
-            },
-            {
               label: 'View Audit History',
               onClick: () => navigate(`/platform/modules/${module.id}/history`),
             },

@@ -58,7 +58,7 @@ const INITIAL_STATE: TenantCreateFormState = {
   storageLimit: '200 GB',
   subscriptionStartDate: '2026-05-24',
 
-  inheritedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance_plus'],
+  inheritedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance'],
 
   isDraft: false,
 };

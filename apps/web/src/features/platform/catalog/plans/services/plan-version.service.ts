@@ -41,7 +41,7 @@ const SEEDED_VERSION_HISTORY: Record<string, PlanVersionRecord[]> = {
           reportExportsPerMonth: 500,
           dataRetentionDays: 365,
         },
-        includedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance_plus'],
+        includedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance'],
         commercialRules: {
           trialEnabled: true,
           trialDurationDays: 14,

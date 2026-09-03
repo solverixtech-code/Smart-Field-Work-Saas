@@ -11,7 +11,9 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
-    "test:e2e": "jest --config ./test/jest-e2e.json --runInBand"
+    "test:e2e": "jest --config ./test/jest-e2e.json --runInBand",
+    "db:seed:production": "ts-node prisma/seed.ts",
+    "db:seed:dev": "ts-node prisma/seed-dev.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

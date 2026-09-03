@@ -52,7 +52,7 @@ const MODULE_STYLING: Record<
 > = {
   core_crm: { icon: Briefcase, iconBgClass: 'bg-purple-50 border-purple-100', iconColorClass: 'text-purple-600' },
   field_visits: { icon: Users, iconBgClass: 'bg-blue-50 border-blue-100', iconColorClass: 'text-blue-600' },
-  attendance_plus: { icon: Clock, iconBgClass: 'bg-amber-50 border-amber-100', iconColorClass: 'text-amber-600' },
+  attendance: { icon: Clock, iconBgClass: 'bg-amber-50 border-amber-100', iconColorClass: 'text-amber-600' },
   custom_forms: { icon: FileText, iconBgClass: 'bg-emerald-50 border-emerald-100', iconColorClass: 'text-emerald-600' },
   photos_docs: { icon: Camera, iconBgClass: 'bg-pink-50 border-pink-100', iconColorClass: 'text-pink-600' },
   reports_analytics: { icon: BarChart3, iconBgClass: 'bg-teal-50 border-teal-100', iconColorClass: 'text-teal-600' },
@@ -62,7 +62,7 @@ const MODULE_STYLING: Record<
   chat_messaging: { icon: MessageSquare, iconBgClass: 'bg-blue-50 border-blue-100', iconColorClass: 'text-blue-600' },
   knowledge_base: { icon: BookOpen, iconBgClass: 'bg-teal-50 border-teal-100', iconColorClass: 'text-teal-600' },
   gps_tracking: { icon: MapPin, iconBgClass: 'bg-emerald-50 border-emerald-100', iconColorClass: 'text-emerald-600' },
-  payroll_engine: { icon: CreditCard, iconBgClass: 'bg-purple-50 border-purple-100', iconColorClass: 'text-purple-600' },
+  payroll: { icon: CreditCard, iconBgClass: 'bg-purple-50 border-purple-100', iconColorClass: 'text-purple-600' },
   whatsapp_automation: { icon: MessageSquare, iconBgClass: 'bg-emerald-50 border-emerald-100', iconColorClass: 'text-emerald-600' },
   ai_copilot: { icon: Sparkles, iconBgClass: 'bg-indigo-50 border-indigo-100', iconColorClass: 'text-indigo-600' },
   api_access: { icon: Code, iconBgClass: 'bg-blue-50 border-blue-100', iconColorClass: 'text-blue-600' },

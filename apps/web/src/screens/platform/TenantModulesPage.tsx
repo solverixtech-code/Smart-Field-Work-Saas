@@ -54,8 +54,8 @@ const MODULE_ICONS: Record<string, { icon: React.ElementType; iconBg: string; ic
   field_visits: { icon: MapPin, iconBg: "bg-emerald-100", iconColor: "text-emerald-600" },
   demo_scheduler: { icon: BarChart3, iconBg: "bg-purple-100", iconColor: "text-purple-600" },
   order_management: { icon: FileText, iconBg: "bg-blue-100", iconColor: "text-blue-600" },
-  attendance_plus: { icon: Clock, iconBg: "bg-teal-100", iconColor: "text-teal-600" },
-  payroll_engine: { icon: CreditCard, iconBg: "bg-amber-100", iconColor: "text-amber-600" },
+  attendance: { icon: Clock, iconBg: "bg-teal-100", iconColor: "text-teal-600" },
+  payroll: { icon: CreditCard, iconBg: "bg-amber-100", iconColor: "text-amber-600" },
   whatsapp_automation: { icon: MessageSquare, iconBg: "bg-emerald-100", iconColor: "text-emerald-600" },
   ai_copilot: { icon: Zap, iconBg: "bg-pink-100", iconColor: "text-pink-600" },
 };
