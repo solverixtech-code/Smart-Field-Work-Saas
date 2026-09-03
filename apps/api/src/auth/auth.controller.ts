@@ -70,20 +70,53 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { ttl: 600000, limit: 5 } })
   @ApiOperation({
-    summary: 'Authenticate User (Login)',
+    summary: 'Authenticate User (Login / OAuth2 Token Endpoint)',
     description:
-      'Log in with email address or employee code and password. Returns access token, refresh token, user profile, or challengeToken if 2FA OTP is required.',
+      'Log in with email address, employee code, or username and password. Supports JSON & application/x-www-form-urlencoded format for Swagger OAuth2 password flow.',
   })
+  @ApiConsumes('application/json', 'application/x-www-form-urlencoded')
   @ApiBody({ type: LoginSwaggerDto })
   @ApiResponse({ status: 200, description: 'Authentication successful or 2FA challenge issued' })
   async login(
-    @Body(new ZodValidationPipe(LoginSchema)) body: LoginInput,
+    @Body() body: any,
     @Req() req: Request,
   ) {
-    return this.authService.login(body, {
+    const rawIdentifier = (
+      body?.username ||
+      body?.emailOrCode ||
+      body?.email ||
+      body?.employeeCode ||
+      ''
+    ).toString().trim();
+
+    const normalizedBody: any = {
+      password: body?.password || '',
+    };
+
+    if (rawIdentifier) {
+      if (rawIdentifier.includes('@')) {
+        normalizedBody.email = rawIdentifier;
+      } else {
+        normalizedBody.employeeCode = rawIdentifier;
+      }
+    }
+
+    const parsedBody = LoginSchema.parse(normalizedBody);
+
+    const result = await this.authService.login(parsedBody, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
     });
+
+    if (result && (result as any).accessToken) {
+      return {
+        access_token: (result as any).accessToken,
+        token_type: 'bearer',
+        ...result,
+      };
+    }
+
+    return result;
   }
 
   @Post('verify-otp')
@@ -204,6 +237,7 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('OAuth2PasswordBearer')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get Current Authenticated User Profile',
@@ -216,6 +250,7 @@ export class AuthController {
 
   @Patch('me')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('OAuth2PasswordBearer')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update Profile Details',
@@ -235,6 +270,7 @@ export class AuthController {
 
   @Post('me/avatar')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('OAuth2PasswordBearer')
   @ApiBearerAuth('JWT-auth')
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({
@@ -259,6 +295,7 @@ export class AuthController {
 
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('OAuth2PasswordBearer')
   @ApiBearerAuth('JWT-auth')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -284,6 +321,7 @@ export class AuthController {
 
   @Get('sessions')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('OAuth2PasswordBearer')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get Active User Sessions',
@@ -296,6 +334,7 @@ export class AuthController {
 
   @Delete('sessions/:id')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('OAuth2PasswordBearer')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Revoke Active User Session',

@@ -16,8 +16,7 @@ async function bootstrap() {
   app.useGlobalFilters(new ZodExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
+      whitelist: false,
       transform: true,
     }),
   );
@@ -54,9 +53,21 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Visiblo Smart Field Work SaaS API')
     .setDescription(
-      'Production REST API for Visiblo Smart Field Work platform. Authorized users can execute endpoints directly via Swagger UI.',
+      'Production REST API for Visiblo Smart Field Work platform. Authorized users can authenticate via OAuth2 Password flow (username & password) or JWT Bearer token.',
     )
     .setVersion('1.0')
+    .addOAuth2(
+      {
+        type: 'oauth2',
+        flows: {
+          password: {
+            tokenUrl: '/auth/login',
+            scopes: {},
+          },
+        },
+      },
+      'OAuth2PasswordBearer',
+    )
     .addBearerAuth(
       {
         type: 'http',

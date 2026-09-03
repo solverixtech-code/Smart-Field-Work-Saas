@@ -1,11 +1,29 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class LoginSwaggerDto {
-  @ApiProperty({
-    description: 'User email address or employee code',
+  @ApiPropertyOptional({
+    description: 'Username or email address (used by Swagger OAuth2 & standard login)',
     example: 'amit.sharma@visibloai.com',
   })
-  emailOrCode: string;
+  username?: string;
+
+  @ApiPropertyOptional({
+    description: 'Email address or employee code',
+    example: 'amit.sharma@visibloai.com',
+  })
+  emailOrCode?: string;
+
+  @ApiPropertyOptional({
+    description: 'Email address',
+    example: 'amit.sharma@visibloai.com',
+  })
+  email?: string;
+
+  @ApiPropertyOptional({
+    description: 'Employee code',
+    example: 'VIS-SA-001',
+  })
+  employeeCode?: string;
 
   @ApiProperty({
     description: 'User account password',
