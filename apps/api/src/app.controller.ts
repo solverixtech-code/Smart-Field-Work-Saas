@@ -21,9 +21,9 @@ export class AppController {
         },
         anuraagRandive: {
           name: 'Anuraag Randive',
-          role: 'Co-Architect & Technical Vanguard',
+          role: 'Master Flutter Developer & Mobile Lead',
           coolnessLevel: 'Maximum Overdrive 🚀',
-          bio: 'The engineering powerhouse building bulletproof backend services, high-throughput data pipelines, and seamless developer experiences for mobile and web apps.',
+          bio: 'The Flutter Maestro crafting butter-smooth 60fps cross-platform mobile apps (iOS & Android). Building high-performance Dart architectures, background GPS tracking, offline syncing, and pixel-perfect mobile UX.',
         },
       },
       legendaryNote:
