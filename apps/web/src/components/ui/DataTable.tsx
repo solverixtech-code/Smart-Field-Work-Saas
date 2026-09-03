@@ -31,6 +31,7 @@ export interface DataTableProps<T> {
   emptyMessage?: string;
   isLoading?: boolean;
   density?: 'compact' | 'normal' | 'relaxed';
+  onRowClick?: (item: T, index: number) => void;
   className?: string;
 }
 
@@ -46,6 +47,7 @@ export function DataTable<T>({
   emptyMessage = 'No records found',
   isLoading = false,
   density = 'normal',
+  onRowClick,
   className = '',
 }: DataTableProps<T>) {
   const allSelected = selectable && data.length > 0 && selectedIds.length === data.length;
@@ -121,7 +123,15 @@ export function DataTable<T>({
                 return (
                   <tr
                     key={key}
+                    onClick={(e) => {
+                      if (!onRowClick) return;
+                      const target = e.target as HTMLElement;
+                      if (target.closest('button, a, input, select, label, svg')) return;
+                      onRowClick(row, index);
+                    }}
                     className={`hover:bg-slate-50/80 transition-colors ${
+                      onRowClick ? 'cursor-pointer' : ''
+                    } ${
                       isSelected ? 'bg-blue-50/40' : ''
                     }`}
                   >

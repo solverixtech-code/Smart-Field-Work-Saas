@@ -101,12 +101,17 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
       header: 'Tenant Name',
       accessorKey: 'companyName',
       cell: (t: Tenant) => (
-        <div className="flex items-center gap-3 min-w-[200px]">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-extrabold text-xs">
+        <div
+          onClick={() => navigate(`/platform/tenants/${t.id}`)}
+          className="flex items-center gap-3 min-w-[200px] cursor-pointer group select-none"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-extrabold text-xs transition-colors group-hover:bg-[#E20613]">
             {t.companyName ? t.companyName[0] : 'T'}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-extrabold text-[#0D1F3D] truncate">{t.companyName}</p>
+            <p className="text-xs font-extrabold text-[#0D1F3D] group-hover:text-[#E20613] group-hover:underline truncate transition-colors">
+              {t.companyName}
+            </p>
             <p className="text-[11px] font-semibold text-slate-500 truncate">
               {t.domain || `${t.companyName.toLowerCase().replace(/[^a-z0-9]/g, '')}.visiblosfw.com`}
             </p>
@@ -372,7 +377,12 @@ export function PlanTenantsTab({ plan, planTenants, metrics }: PlanTenantsTabPro
         {/* 100% Full Width Scrollable DataTable */}
         {filteredTenants.length > 0 ? (
           <div className="w-full overflow-x-auto">
-            <DataTable data={filteredTenants} columns={columns} keyExtractor={(t: Tenant) => t.id} />
+            <DataTable
+              data={filteredTenants}
+              columns={columns}
+              keyExtractor={(t: Tenant) => t.id}
+              onRowClick={(t: Tenant) => navigate(`/platform/tenants/${t.id}`)}
+            />
           </div>
         ) : (
           <div className="py-12 text-center text-xs text-slate-500 font-medium space-y-2">
