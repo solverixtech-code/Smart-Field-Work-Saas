@@ -229,7 +229,7 @@ export class PlatformCatalogSyncService {
     const staleFeatures: string[] = [];
     const mismatchedRecords: CatalogMismatchedRecord[] = [];
 
-    // Check Module presence and drift
+    // Check Module presence, field drift, and dependency edge set drift
     let matchedModules = 0;
     for (const regMod of MODULE_REGISTRY) {
       const dbMod = dbModuleMap.get(regMod.code);
@@ -237,6 +237,24 @@ export class PlatformCatalogSyncService {
         missingModules.push(regMod.code);
       } else {
         matchedModules++;
+        if (dbMod.name !== regMod.name) {
+          mismatchedRecords.push({
+            entity: 'MODULE',
+            code: regMod.code,
+            field: 'name',
+            expected: regMod.name,
+            actual: dbMod.name,
+          });
+        }
+        if (dbMod.description !== regMod.description) {
+          mismatchedRecords.push({
+            entity: 'MODULE',
+            code: regMod.code,
+            field: 'description',
+            expected: regMod.description,
+            actual: dbMod.description,
+          });
+        }
         if (dbMod.category !== regMod.category) {
           mismatchedRecords.push({
             entity: 'MODULE',
@@ -255,6 +273,31 @@ export class PlatformCatalogSyncService {
             actual: dbMod.requiredBySystem,
           });
         }
+        if (dbMod.displayOrder !== regMod.displayOrder) {
+          mismatchedRecords.push({
+            entity: 'MODULE',
+            code: regMod.code,
+            field: 'displayOrder',
+            expected: regMod.displayOrder,
+            actual: dbMod.displayOrder,
+          });
+        }
+
+        // Compare actual dependency edge sets
+        const expectedDeps = (regMod.dependencyCodes || []).slice().sort();
+        const actualDeps = (dbMod.dependencies || [])
+          .map((d: any) => d.dependsOnModule.code)
+          .sort();
+
+        if (JSON.stringify(expectedDeps) !== JSON.stringify(actualDeps)) {
+          mismatchedRecords.push({
+            entity: 'DEPENDENCY',
+            code: regMod.code,
+            field: 'dependencyCodes',
+            expected: expectedDeps,
+            actual: actualDeps,
+          });
+        }
       }
     }
 
@@ -264,7 +307,7 @@ export class PlatformCatalogSyncService {
       }
     }
 
-    // Check Feature presence and drift
+    // Check Feature presence and code-owned field drift
     let matchedFeatures = 0;
     for (const regFeat of FEATURE_REGISTRY) {
       const dbFeat = dbFeatureMap.get(regFeat.implementationKey);
@@ -272,6 +315,33 @@ export class PlatformCatalogSyncService {
         missingFeatures.push(regFeat.implementationKey);
       } else {
         matchedFeatures++;
+        if (dbFeat.code !== regFeat.code) {
+          mismatchedRecords.push({
+            entity: 'FEATURE',
+            code: regFeat.implementationKey,
+            field: 'code',
+            expected: regFeat.code,
+            actual: dbFeat.code,
+          });
+        }
+        if (dbFeat.name !== regFeat.name) {
+          mismatchedRecords.push({
+            entity: 'FEATURE',
+            code: regFeat.implementationKey,
+            field: 'name',
+            expected: regFeat.name,
+            actual: dbFeat.name,
+          });
+        }
+        if (dbFeat.description !== regFeat.description) {
+          mismatchedRecords.push({
+            entity: 'FEATURE',
+            code: regFeat.implementationKey,
+            field: 'description',
+            expected: regFeat.description,
+            actual: dbFeat.description,
+          });
+        }
         if (dbFeat.supportsWeb !== regFeat.supportsWeb) {
           mismatchedRecords.push({
             entity: 'FEATURE',
@@ -306,6 +376,15 @@ export class PlatformCatalogSyncService {
             field: 'supportsOffline',
             expected: regFeat.supportsOffline,
             actual: dbFeat.supportsOffline,
+          });
+        }
+        if (dbFeat.displayOrder !== regFeat.displayOrder) {
+          mismatchedRecords.push({
+            entity: 'FEATURE',
+            code: regFeat.implementationKey,
+            field: 'displayOrder',
+            expected: regFeat.displayOrder,
+            actual: dbFeat.displayOrder,
           });
         }
       }

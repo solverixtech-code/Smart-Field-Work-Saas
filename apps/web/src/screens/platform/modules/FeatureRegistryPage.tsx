@@ -1,16 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Boxes,
   Search,
-  Filter,
   RefreshCw,
   Code,
   Smartphone,
   Globe,
-  WifiOff,
-  CheckCircle,
   AlertTriangle,
-  Info,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -21,16 +17,13 @@ import { moduleService } from '../../../features/platform/catalog/modules/servic
 import {
   PlatformModule,
   ModuleFeature,
+  FeatureImplementationMaturity,
 } from '../../../features/platform/catalog/modules/types/module.types';
 import { toast } from 'react-hot-toast';
 
-interface FlatFeatureItem extends ModuleFeature {
-  moduleName: string;
-  moduleCode: string;
-}
-
 export function FeatureRegistryPage() {
   const [modules, setModules] = useState<PlatformModule[]>([]);
+  const [features, setFeatures] = useState<ModuleFeature[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,11 +33,20 @@ export function FeatureRegistryPage() {
   const [selectedModule, setSelectedModule] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
 
-  const fetchCatalog = async () => {
+  const fetchFeatures = useCallback(async () => {
     setError(null);
     try {
-      const data = await moduleService.getModules({ limit: 100 });
-      setModules(data);
+      const [featRes, modRes] = await Promise.all([
+        moduleService.getFeatures({
+          search: search.trim() || undefined,
+          moduleCode: selectedModule !== 'ALL' ? selectedModule : undefined,
+          status: selectedStatus !== 'ALL' ? selectedStatus : undefined,
+          limit: 100,
+        }),
+        moduleService.getModules({ limit: 100 }),
+      ]);
+      setFeatures(featRes.data);
+      setModules(modRes);
     } catch {
       setError('Unable to load feature registry. Service unreachable.');
       toast.error('Failed to fetch feature registry from platform service.');
@@ -52,51 +54,19 @@ export function FeatureRegistryPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [search, selectedModule, selectedStatus]);
 
   useEffect(() => {
-    fetchCatalog();
-  }, []);
+    const timeout = window.setTimeout(() => {
+      void fetchFeatures();
+    }, 300);
+    return () => window.clearTimeout(timeout);
+  }, [fetchFeatures]);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchCatalog();
+    void fetchFeatures();
   };
-
-  const allFeatures: FlatFeatureItem[] = useMemo(() => {
-    const list: FlatFeatureItem[] = [];
-    for (const mod of modules) {
-      if (mod.features) {
-        for (const feat of mod.features) {
-          list.push({
-            ...feat,
-            moduleName: mod.name,
-            moduleCode: mod.code,
-          });
-        }
-      }
-    }
-    return list;
-  }, [modules]);
-
-  const filteredFeatures = useMemo(() => {
-    return allFeatures.filter((f) => {
-      const matchesSearch =
-        !search.trim() ||
-        f.name.toLowerCase().includes(search.toLowerCase().trim()) ||
-        f.code.toLowerCase().includes(search.toLowerCase().trim()) ||
-        f.description.toLowerCase().includes(search.toLowerCase().trim()) ||
-        f.moduleName.toLowerCase().includes(search.toLowerCase().trim());
-
-      const matchesModule =
-        selectedModule === 'ALL' || f.moduleCode === selectedModule;
-
-      const matchesStatus =
-        selectedStatus === 'ALL' || f.status === selectedStatus;
-
-      return matchesSearch && matchesModule && matchesStatus;
-    });
-  }, [allFeatures, search, selectedModule, selectedStatus]);
 
   const moduleOptions = useMemo(() => {
     const opts = [{ value: 'ALL', label: 'All Parent Modules' }];
@@ -215,10 +185,10 @@ export function FeatureRegistryPage() {
           </Button>
         </div>
       ) : (
-        <DataTable<FlatFeatureItem>
-          data={filteredFeatures}
+        <DataTable<ModuleFeature>
+          data={features}
           isLoading={loading}
-          keyExtractor={(item) => `${item.moduleCode}_${item.code}`}
+          keyExtractor={(item) => item.id || `${item.code}`}
           emptyMessage={
             search || selectedModule !== 'ALL' || selectedStatus !== 'ALL'
               ? 'No registered features match your selected search or filters.'
@@ -246,7 +216,7 @@ export function FeatureRegistryPage() {
               header: 'Implementation Key',
               cell: (item) => (
                 <span className="font-mono text-xs font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-sm border border-indigo-200">
-                  {item.implementationKey || `${item.moduleCode}.${item.code}`}
+                  {item.implementationKey || item.code}
                 </span>
               ),
             },
@@ -254,16 +224,16 @@ export function FeatureRegistryPage() {
               header: 'Parent Module',
               cell: (item) => (
                 <div>
-                  <span className="font-extrabold text-xs text-[#0D1F3D] block">{item.moduleName}</span>
-                  <span className="font-mono text-[10px] font-bold text-slate-500">{item.moduleCode}</span>
+                  <span className="font-extrabold text-xs text-[#0D1F3D] block">{item.module?.name || '—'}</span>
+                  <span className="font-mono text-[10px] font-bold text-slate-500">{item.module?.code || ''}</span>
                 </div>
               ),
             },
             {
               header: 'Implementation Maturity',
               cell: (item) => {
-                const mat = (item as any).maturity || 'UI_READY';
-                const colorMap: Record<string, string> = {
+                const mat: FeatureImplementationMaturity = item.maturity || 'DECLARED';
+                const colorMap: Record<FeatureImplementationMaturity, string> = {
                   FULL_STACK_READY: 'bg-emerald-50 text-emerald-700 border-emerald-200',
                   BACKEND_READY: 'bg-teal-50 text-teal-700 border-teal-200',
                   BACKEND_PARTIAL: 'bg-amber-50 text-amber-700 border-amber-200',
@@ -271,7 +241,7 @@ export function FeatureRegistryPage() {
                   DECLARED: 'bg-slate-100 text-slate-600 border-slate-200',
                 };
                 return (
-                  <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-sm border ${colorMap[mat] || colorMap.UI_READY}`}>
+                  <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-sm border ${colorMap[mat] || colorMap.DECLARED}`}>
                     {mat.replace('_', ' ')}
                   </span>
                 );

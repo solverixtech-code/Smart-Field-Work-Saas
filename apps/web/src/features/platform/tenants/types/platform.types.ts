@@ -21,7 +21,6 @@ export type PlatformPermission =
   | 'platform.plans.publish'
   | 'platform.plans.archive'
   | 'platform.modules.view'
-  | 'platform.modules.create'
   | 'platform.modules.update'
   | 'platform.modules.archive'
   | 'platform.industries.view'

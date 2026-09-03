@@ -17,7 +17,6 @@ const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
     'platform.plans.publish',
     'platform.plans.archive',
     'platform.modules.view',
-    'platform.modules.create',
     'platform.modules.update',
     'platform.modules.archive',
     'platform.industries.view',
@@ -44,7 +43,6 @@ const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
     'platform.plans.publish',
     'platform.plans.archive',
     'platform.modules.view',
-    'platform.modules.create',
     'platform.modules.update',
     'platform.modules.archive',
     'platform.industries.view',
@@ -107,7 +105,6 @@ export function usePlatformPermissions(currentRole: PlatformRole = 'PLATFORM_SUP
   const canPublishPlan = hasPlatformPermission('platform.plans.publish');
 
   const canViewModules = hasPlatformPermission('platform.modules.view');
-  const canCreateModule = hasPlatformPermission('platform.modules.create');
   const canUpdateModule = hasPlatformPermission('platform.modules.update');
   const canArchiveModule = hasPlatformPermission('platform.modules.archive');
 
@@ -125,7 +122,6 @@ export function usePlatformPermissions(currentRole: PlatformRole = 'PLATFORM_SUP
     canArchivePlan,
     canPublishPlan,
     canViewModules,
-    canCreateModule,
     canUpdateModule,
     canArchiveModule
   };

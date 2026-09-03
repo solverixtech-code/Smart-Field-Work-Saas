@@ -2,6 +2,7 @@ import { PrismaClient, Role } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { PlatformCatalogSyncService } from '../src/platform/modules/platform-catalog-sync.service';
 import { PrismaService } from '../src/persistence/prisma.service';
+import { seedPermissions } from './seed';
 
 const prisma = new PrismaClient();
 const prismaService = new PrismaService();
@@ -14,7 +15,11 @@ async function main() {
   const health = await catalogSyncService.syncCatalog();
   console.log(`✅ Catalog synchronized. Hash: ${health.registryHash}`);
 
-  // 2. Seed development demo users
+  // 2. Seed system permissions
+  await seedPermissions(prisma);
+  console.log('✅ System permissions seeded.');
+
+  // 3. Seed development demo users
   const defaultPassword = await argon2.hash('Visiblo@2025');
 
   const users = [

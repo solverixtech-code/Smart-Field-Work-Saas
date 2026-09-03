@@ -4,22 +4,6 @@ import { PlatformModuleStatus } from '@prisma/client';
 
 export class UpdatePlatformModuleDto {
   @ApiPropertyOptional({
-    description: 'Presentation display name override',
-    example: 'Core CRM & Lead Management',
-  })
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @ApiPropertyOptional({
-    description: 'Presentation description override',
-    example: 'Lead capture, pipeline stages, lead assignment & account management.',
-  })
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @ApiPropertyOptional({
     enum: PlatformModuleStatus,
     description: 'Operational lifecycle status (ACTIVE, BETA, DEPRECATED)',
     example: PlatformModuleStatus.ACTIVE,

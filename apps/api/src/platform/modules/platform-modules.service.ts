@@ -138,9 +138,13 @@ export class PlatformModulesService {
 
   async summary() {
     const health = await this.catalogSyncService.getCatalogHealth();
+    const activeModules = await this.prisma.platformModule.count({
+      where: { status: PlatformModuleStatus.ACTIVE },
+    });
+
     return {
       totalModules: health.databaseModules,
-      activeModules: health.matchedModules,
+      activeModules,
       registeredFeatures: health.databaseFeatures,
       dependencyLinks: health.dependencyLinksDatabase,
       catalogHealth: health,
@@ -206,8 +210,6 @@ export class PlatformModulesService {
     const updated = await this.prisma.platformModule.update({
       where: { id },
       data: {
-        ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.status !== undefined && { status: dto.status }),
         ...(dto.internalNotes !== undefined && { internalNotes: dto.internalNotes }),
       },
@@ -319,7 +321,6 @@ export class PlatformModulesService {
     const items = data.map((feature) => ({
       ...feature,
       maturity: featureMaturityMap.get(feature.implementationKey) || FeatureImplementationMaturity.DECLARED,
-      registryMismatch: false,
     }));
 
     return {
@@ -345,7 +346,6 @@ export class PlatformModulesService {
     return {
       ...feature,
       maturity: regFeat?.maturity || FeatureImplementationMaturity.DECLARED,
-      registryMismatch: false,
     };
   }
 
@@ -361,10 +361,7 @@ export class PlatformModulesService {
     const updated = await this.prisma.moduleFeature.update({
       where: { id: featureId },
       data: {
-        ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.description !== undefined && { description: dto.description }),
         ...(dto.status !== undefined && { status: dto.status }),
-        ...(dto.displayOrder !== undefined && { displayOrder: dto.displayOrder }),
         ...(dto.internalNotes !== undefined && { internalNotes: dto.internalNotes }),
       },
     });
