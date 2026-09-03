@@ -1,4 +1,5 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'accent' | 'outline' | 'ghost';
@@ -22,7 +23,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) => {
     const baseStyles =
-      'inline-flex items-center justify-center font-semibold rounded-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99]';
+      'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.99] shrink-0 select-none';
 
     const variants = {
       // Primary Moodboard Solid Color: #0D1F3D (Deep Navy)
@@ -36,9 +37,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const sizes = {
-      sm: 'px-3 py-2 text-xs',
-      md: 'px-4 py-3 text-xs',
-      lg: 'px-5 py-3.5 text-sm',
+      sm: 'h-9 min-h-[36px] px-3 text-xs',
+      md: 'h-10 min-h-[40px] px-4 text-xs',
+      lg: 'h-11 min-h-[44px] px-5 text-sm',
     };
 
     const widthStyle = fullWidth ? 'w-full' : '';
@@ -51,7 +52,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
       >
         {isLoading ? (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+          <span className="inline-flex items-center justify-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin text-current shrink-0" />
+            <span>{typeof children === 'string' ? children : 'Please wait...'}</span>
+          </span>
         ) : (
           children
         )}

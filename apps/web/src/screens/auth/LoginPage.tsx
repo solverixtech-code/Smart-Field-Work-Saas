@@ -10,19 +10,21 @@ import { AuthTokensSchema, OtpRequiredResponseSchema } from '@visiblo/shared';
 import AuthLayout from '../../layouts/AuthLayout';
 import { Button } from '../../components/ui/Button';
 
+import { Checkbox } from '../../components/ui/Checkbox';
+
 export default function LoginPage() {
   const [email, setEmail] = useState('admin@visibloai.com');
   const [password, setPassword] = useState('Visiblo@2025');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [hasError, setHasError] = useState(false);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setHasError(false);
     setLoading(true);
 
     try {
@@ -50,7 +52,7 @@ export default function LoginPage() {
       navigate('/admin/dashboard');
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Login failed. Please check credentials.';
-      setError(errorMsg);
+      setHasError(true);
       toast.error(errorMsg);
     } finally {
       setLoading(false);
@@ -76,13 +78,6 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-600 text-center animate-in fade-in">
-            {error}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email Input */}
           <div>
@@ -90,14 +85,21 @@ export default function LoginPage() {
               Email Address
             </label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+              <Mail className={`absolute left-3.5 top-3 h-4 w-4 ${hasError ? 'text-rose-400' : 'text-slate-400'}`} />
               <input
                 type="email"
                 autoFocus
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (hasError) setHasError(false);
+                }}
                 placeholder="Enter your email address"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-4 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:ring-2 focus:ring-red-100 focus:outline-none transition-all"
+                className={`w-full rounded-xl border pl-10 pr-4 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:outline-none transition-all ${
+                  hasError
+                    ? 'border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-100'
+                    : 'border-slate-200 bg-slate-50/50 focus:border-[#E20613] focus:bg-white focus:ring-2 focus:ring-red-100'
+                }`}
                 required
               />
             </div>
@@ -109,13 +111,20 @@ export default function LoginPage() {
               Password
             </label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+              <Lock className={`absolute left-3.5 top-3 h-4 w-4 ${hasError ? 'text-rose-400' : 'text-slate-400'}`} />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (hasError) setHasError(false);
+                }}
                 placeholder="Enter your password"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-10 pr-10 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none transition-all"
+                className={`w-full rounded-xl border pl-10 pr-10 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:outline-none transition-all ${
+                  hasError
+                    ? 'border-rose-400 bg-rose-50/20 focus:border-rose-500 focus:ring-2 focus:ring-rose-100'
+                    : 'border-slate-200 bg-slate-50/50 focus:border-[#E20613] focus:bg-white focus:ring-2 focus:ring-red-100'
+                }`}
                 required
               />
               <button
@@ -130,15 +139,11 @@ export default function LoginPage() {
 
           {/* Remember Me & Forgot Password */}
           <div className="flex items-center justify-between pt-1 text-xs">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
-              />
-              <span className="font-semibold text-slate-700">Remember Me</span>
-            </label>
+            <Checkbox
+              checked={remember}
+              onChange={setRemember}
+              label={<span className="font-semibold text-slate-700">Remember Me</span>}
+            />
             <Link
               to="/admin/forgot-password"
               className="font-bold text-[#E20613] hover:underline"
