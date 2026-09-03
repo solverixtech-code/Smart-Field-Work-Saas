@@ -123,6 +123,32 @@ export function validateLimits(limits: PlanLimits): ValidationResult {
   };
 }
 
+/**
+ * Automatically resolves and returns all required parent module dependencies
+ * for a set of selected module codes.
+ * E.g., if 'order_management' is selected and depends on 'core_crm', 'core_crm' is auto-added.
+ */
+export function resolveModuleDependencies(
+  selectedModuleCodes: string[],
+  allModules: PlatformModule[]
+): string[] {
+  const resolved = new Set<string>(selectedModuleCodes);
+  let addedNew = true;
+
+  while (addedNew) {
+    addedNew = false;
+    for (const code of Array.from(resolved)) {
+      const mod = allModules.find((m) => m.code === code);
+      if (mod?.dependsOnModuleCode && !resolved.has(mod.dependsOnModuleCode)) {
+        resolved.add(mod.dependsOnModuleCode);
+        addedNew = true;
+      }
+    }
+  }
+
+  return Array.from(resolved);
+}
+
 export function validateModules(
   selectedModuleCodes: string[],
   allModules: PlatformModule[]
@@ -132,12 +158,31 @@ export function validateModules(
   if (!selectedModuleCodes || selectedModuleCodes.length === 0) {
     fieldErrors.selectedModuleCodes = 'Please select at least one module for this plan.';
   } else {
-    // Check if required system modules are present
+    // 1. Check if required system modules are present
     const requiredModules = allModules.filter((m) => m.requiredBySystem);
     const missingRequired = requiredModules.filter((m) => !selectedModuleCodes.includes(m.code));
 
     if (missingRequired.length > 0) {
       fieldErrors.selectedModuleCodes = `Plan must include system-required modules: ${missingRequired.map((m) => m.name).join(', ')}`;
+    } else {
+      // 2. Validate dependsOnModuleCode for selected modules
+      const dependencyErrors: string[] = [];
+
+      for (const code of selectedModuleCodes) {
+        const mod = allModules.find((m) => m.code === code);
+        if (mod?.dependsOnModuleCode) {
+          const parentMod = allModules.find((m) => m.code === mod.dependsOnModuleCode);
+          if (!selectedModuleCodes.includes(mod.dependsOnModuleCode)) {
+            dependencyErrors.push(
+              `'${mod.name}' requires parent module '${parentMod?.name || mod.dependsOnModuleCode}'`
+            );
+          }
+        }
+      }
+
+      if (dependencyErrors.length > 0) {
+        fieldErrors.selectedModuleCodes = `Module Dependency Error: ${dependencyErrors.join('; ')}`;
+      }
     }
   }
 
@@ -145,7 +190,7 @@ export function validateModules(
   return {
     valid,
     fieldErrors,
-    message: valid ? undefined : 'Please select valid modules for this plan.',
+    message: valid ? undefined : (fieldErrors.selectedModuleCodes || 'Please select valid modules for this plan.'),
   };
 }
 

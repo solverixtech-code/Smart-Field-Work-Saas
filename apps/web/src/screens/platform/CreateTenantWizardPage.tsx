@@ -48,8 +48,7 @@ const STEP_PARAM_MAP: Record<string, number> = {
   industry: 2,
   administrator: 3,
   subscription: 4,
-  modules: 5,
-  review: 6,
+  review: 5,
 };
 
 const STEP_NUM_MAP: Record<number, string> = {
@@ -57,8 +56,7 @@ const STEP_NUM_MAP: Record<number, string> = {
   2: 'industry',
   3: 'administrator',
   4: 'subscription',
-  5: 'modules',
-  6: 'review',
+  5: 'review',
 };
 
 function CountryFlag({ code, flagUrl }: { code: string; flagUrl?: string }) {
@@ -582,16 +580,10 @@ function Step4PlanSubscription() {
 
   const handlePlanSelect = (planId: string) => {
     const selectedPlan = PLATFORM_PLANS.find((p) => p.id === planId);
-    let updatedModules = [...formState.selectedModuleCodes];
-
-    if (selectedPlan) {
-      // Ensure plan mandatory included modules are always present
-      updatedModules = Array.from(new Set([...updatedModules, ...selectedPlan.includedModules]));
-    }
 
     updateFormState({
       planId,
-      selectedModuleCodes: updatedModules,
+      selectedModuleCodes: selectedPlan ? [...selectedPlan.includedModules] : [],
     });
   };
 
@@ -1112,22 +1104,7 @@ function CreateTenantWizardInner() {
       }
     }
 
-    if (currentStep === 5) {
-      if (formState.selectedModuleCodes.length === 0) {
-        toast.error('Please select at least one module for this tenant');
-        return;
-      }
-      const selectedPlan = PLATFORM_PLANS.find((p) => p.id === formState.planId);
-      const missingMandatory = (selectedPlan?.includedModules || []).filter(
-        (code) => !formState.selectedModuleCodes.includes(code)
-      );
-      if (missingMandatory.length > 0) {
-        toast.error(`Plan '${selectedPlan?.name}' requires modules: ${missingMandatory.join(', ')}`);
-        return;
-      }
-    }
-
-    updateStepInUrl(Math.min(6, currentStep + 1));
+    updateStepInUrl(Math.min(5, currentStep + 1));
   };
 
   const handleFinish = async () => {
@@ -1197,8 +1174,7 @@ function CreateTenantWizardInner() {
     { num: 2, label: 'Industry & Profile', desc: 'Canonical registry' },
     { num: 3, label: 'Administrator', desc: 'Primary contact' },
     { num: 4, label: 'Plan & Subscription', desc: 'PLATFORM_PLANS' },
-    { num: 5, label: 'Modules', desc: 'Module selection' },
-    { num: 6, label: 'Review & Confirm', desc: 'Review & submit' },
+    { num: 5, label: 'Review & Confirm', desc: 'Review & submit' },
   ];
 
   return (
@@ -1239,9 +1215,9 @@ function CreateTenantWizardInner() {
         </div>
       </div>
 
-      {/* 6 Step Stepper Bar */}
+      {/* 5 Step Stepper Bar */}
       <div className="rounded-sm border border-slate-200 bg-white p-3.5 shadow-xs">
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 items-center">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 items-center">
           {stepsList.map((step) => {
             const isActive = currentStep === step.num;
             const isDone = currentStep > step.num;
@@ -1296,8 +1272,7 @@ function CreateTenantWizardInner() {
           {currentStep === 2 && <Step2IndustryProfile />}
           {currentStep === 3 && <Step3Administrator />}
           {currentStep === 4 && <Step4PlanSubscription />}
-          {currentStep === 5 && <Step5Modules />}
-          {currentStep === 6 && <Step6ReviewConfirm onNavigateStep={(step) => updateStepInUrl(step)} />}
+          {currentStep === 5 && <Step6ReviewConfirm onNavigateStep={(step) => updateStepInUrl(step)} />}
 
           {/* Navigation Actions Footer */}
           <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
@@ -1316,7 +1291,7 @@ function CreateTenantWizardInner() {
                 <ChevronLeft className="h-4 w-4" /> Previous
               </Button>
 
-              {currentStep < 6 ? (
+              {currentStep < 5 ? (
                 <Button variant="accent" size="sm" onClick={handleNext} className="gap-2 font-extrabold shadow-xs px-6">
                   Next <ArrowRight className="h-4 w-4" />
                 </Button>

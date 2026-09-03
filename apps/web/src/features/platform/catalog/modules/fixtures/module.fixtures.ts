@@ -10,6 +10,12 @@ export const CANONICAL_PLATFORM_MODULES: PlatformModule[] = [
     isAddon: false,
     monthlyPrice: 0,
     requiredBySystem: true,
+    features: [
+      { code: 'lead_pipeline', name: 'Lead Pipeline Stages', description: 'Customizable lead status workflow & deal stages', status: 'ACTIVE' },
+      { code: 'auto_routing', name: 'Auto-Routing & Territory Lead Assignment', description: 'Rule-based lead assignment to field reps', status: 'ACTIVE' },
+      { code: 'contact_manager', name: 'Account & Contact Management', description: 'Unified customer account profiles & contacts', status: 'ACTIVE' },
+      { code: 'activity_timeline', name: 'Activity Log & Notes', description: 'Chronological timeline of calls, emails & field meetings', status: 'ACTIVE' },
+    ],
   },
   {
     id: 'mod_visits',
@@ -19,6 +25,13 @@ export const CANONICAL_PLATFORM_MODULES: PlatformModule[] = [
     category: 'Field Ops',
     isAddon: false,
     monthlyPrice: 0,
+    features: [
+      { code: 'geofence_checkin', name: 'Geofenced Check-In & Check-Out', description: 'Location-verified GPS check-ins at client site', status: 'ACTIVE' },
+      { code: 'route_playback', name: 'GPS Route Map Playback', description: 'Real-time breadcrumb route tracking & distance log', status: 'ACTIVE' },
+      { code: 'visit_proof', name: 'Photo & Document Proof', description: 'Mandatory photo capture & client signature attachment', status: 'ACTIVE' },
+      { code: 'beat_planner', name: 'Beat & PJP Route Planner', description: 'Permanent Journey Plan (PJP) & daily beat schedule', status: 'ACTIVE' },
+      { code: 'site_surveys', name: 'Custom Field Forms & Audits', description: 'Dynamic audit checklists, site survey & store audit forms', status: 'ACTIVE' },
+    ],
   },
   {
     id: 'mod_demos',
@@ -28,6 +41,11 @@ export const CANONICAL_PLATFORM_MODULES: PlatformModule[] = [
     category: 'Sales',
     isAddon: true,
     monthlyPrice: 499,
+    features: [
+      { code: 'demo_calendar', name: 'Demo Appointment Calendar', description: 'Interactive demo booking & automated client SMS reminders', status: 'ACTIVE' },
+      { code: 'collateral_vault', name: 'Product Presentation Vault', description: 'Offline-capable brochure, video & PDF collateral viewer', status: 'ACTIVE' },
+      { code: 'client_signoff', name: 'Digital Client Sign-off', description: 'On-screen client rating & digital agreement signature', status: 'ACTIVE' },
+    ],
   },
   {
     id: 'mod_orders',
@@ -38,6 +56,12 @@ export const CANONICAL_PLATFORM_MODULES: PlatformModule[] = [
     isAddon: true,
     monthlyPrice: 799,
     dependsOnModuleCode: 'core_crm',
+    features: [
+      { code: 'primary_secondary_booking', name: 'Primary & Secondary Order Booking', description: 'Distributor & retailer purchase order creation', status: 'ACTIVE' },
+      { code: 'product_catalog', name: 'SKU Price Books & Discounts', description: 'Tiered price lists, schemes & promotional discounts', status: 'ACTIVE' },
+      { code: 'tax_invoice', name: 'GST Tax Invoice PDF', description: 'Instant PDF invoice generation & WhatsApp sharing', status: 'ACTIVE' },
+      { code: 'dealer_ledger', name: 'Dealer Credit & Payment Collection', description: 'Outstanding ledger balances & payment receipt entry', status: 'ACTIVE' },
+    ],
   },
   {
     id: 'mod_attendance',
@@ -47,6 +71,11 @@ export const CANONICAL_PLATFORM_MODULES: PlatformModule[] = [
     category: 'Field Ops',
     isAddon: true,
     monthlyPrice: 399,
+    features: [
+      { code: 'face_biometric', name: 'AI Selfie & Face Verification', description: 'Liveness detection selfie clock-in to eliminate buddy punching', status: 'ACTIVE' },
+      { code: 'shift_rules', name: 'Shift & Grace Period Rules', description: 'Configurable shift timings, half-day thresholds & late penalties', status: 'ACTIVE' },
+      { code: 'muster_roll', name: 'Automated Muster Roll Reports', description: 'Monthly attendance summary exportable for HR processing', status: 'ACTIVE' },
+    ],
   },
   {
     id: 'mod_payroll',
@@ -56,6 +85,11 @@ export const CANONICAL_PLATFORM_MODULES: PlatformModule[] = [
     category: 'Enterprise',
     isAddon: true,
     monthlyPrice: 999,
+    features: [
+      { code: 'allowance_tada', name: 'TA/DA Travel Allowance Engine', description: 'Per-km travel reimbursement & daily food allowance calculation', status: 'ACTIVE' },
+      { code: 'incentive_slabs', name: 'Sales Target & Incentive Slabs', description: 'Automated commission & target achievement bonus calculations', status: 'ACTIVE' },
+      { code: 'payslip_generator', name: 'PDF Payslip Generator', description: 'One-click salary processing & employee portal PDF distribution', status: 'ACTIVE' },
+    ],
   },
   {
     id: 'mod_whatsapp',
@@ -65,6 +99,11 @@ export const CANONICAL_PLATFORM_MODULES: PlatformModule[] = [
     category: 'Automation',
     isAddon: true,
     monthlyPrice: 1299,
+    features: [
+      { code: 'meta_lead_sync', name: 'Facebook & Instagram Lead Sync', description: 'Instant auto-import of leads from Meta Lead Gen Ads', status: 'ACTIVE' },
+      { code: 'whatsapp_bot', name: 'WhatsApp Cloud API Auto-Responder', description: 'Official WhatsApp Business API interactive chatbot', status: 'ACTIVE' },
+      { code: 'template_broadcast', name: 'Approved Template Broadcasts', description: 'Bulk marketing campaigns & template message tracking', status: 'ACTIVE' },
+    ],
   },
   {
     id: 'mod_ai',
@@ -74,5 +113,10 @@ export const CANONICAL_PLATFORM_MODULES: PlatformModule[] = [
     category: 'Automation',
     isAddon: true,
     monthlyPrice: 1499,
+    features: [
+      { code: 'next_best_action', name: 'AI Recommended Next Best Action', description: 'Intelligent daily visit prioritization for maximum conversion', status: 'BETA' },
+      { code: 'visit_summary_ai', name: 'Voice & Call Notes Summarizer', description: 'AI transcription & automated key takeaway extraction', status: 'BETA' },
+      { code: 'target_coaching', name: 'Sales Target & Churn Predictor', description: 'Predictive analytics on deal closure probability & churn risk', status: 'BETA' },
+    ],
   },
 ];
