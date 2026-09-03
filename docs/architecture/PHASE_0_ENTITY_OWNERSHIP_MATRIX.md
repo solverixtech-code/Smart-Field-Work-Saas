@@ -12,63 +12,63 @@
 
 ## Foundation entity matrix
 
-| Entity | Purpose | Scope | Immutable identity | Versioned/mutable data | Relations and audit requirements |
-|---|---|---|---|---|---|
-| `User` | Global sign-in identity | Platform global | `id`; normalized login identities once verified | name, avatar, security state | Has Sessions, platform role assignments, many TenantMemberships. Audit credential/security changes. |
-| `PlatformRole` | Platform console role definition | Platform global | `code` for built-ins | name, description, active state | Many permissions and assignments. Audit grants/revokes. |
-| `PlatformRolePermission` | Grants `platform.*` actions | Platform global | role + permission | none except archival | Audit every change. |
-| `PlatformUserRoleAssignment` | Assigns platform access to a User | Platform global | user + role | status, validity | No tenant implication. Audit grant/revoke and actor. |
-| `Tenant` | Customer/workspace identity and lifecycle | Platform-managed, tenant root | `id`, canonical `slug` after activation | display/legal/contact/lifecycle fields | Owns memberships, settings, branding, subscriptions, usage, data. All lifecycle changes audited. |
-| `TenantMembership` | Connects one User to one Tenant | Tenant | `id`, tenantId, userId | roleId, status, isPrimary, invited/joined/activated/deactivated timestamps | Unique active `(tenantId,userId)`; supports one User in many Tenants. Audit invitation, role, status. |
-| `TenantRole` | Built-in or tenant-defined authorization role | Tenant, with optional system template | `id`, tenantId, code | name, description, active state | Many membership assignments and permission grants. Audit edits. |
-| `TenantRolePermission` | Grants domain actions | Tenant | tenantRoleId + permissionId | none except archival | Permission definition is global; grant is tenant-owned. |
-| `PermissionDefinition` | Stable action vocabulary | Platform global/developer-owned | `code`, `scope`, domain/action | description, status from code | Codes: `platform.*` or domain actions such as `crm.leads.view`; never commercial Modules. |
-| `Plan` | Stable commercial product identity | Platform global | `id`, `code` | name, visibility, lifecycle, currentVersionId | Owns immutable versions. Audit create/archive/visibility. |
-| `PlanVersion` | Published commercial snapshot | Platform global | `id`, planId, monotonically increasing integer version | Draft editable until publish; immutable after `publishedAt` | Owns pricing, limits, modules, rules. Subscriptions pin to it. Audit draft/publish; never update published rows. |
-| `PlanPricing` | Billing-cycle prices in a version | Platform global/version child | planVersionId + billingCycle/currency | Immutable after publish | Decimal base/seat/flat/setup/minimum; tax/proration semantics. |
-| `PlanLimit` | Typed limits in a version | Platform global/version child | planVersionId + limitCode | Immutable after publish | Prefer typed code/value/unit rows for extensibility; validate known codes. |
-| `PlanModule` | Commercial Module inclusion | Platform global/version child | planVersionId + moduleId | Immutable after publish | Module-level only. Validate dependency closure and Module lifecycle at publish. |
-| `PlanCommercialRule` | Trial/change/cancellation policy | Platform global/version child | planVersionId | Immutable JSON/value object after publish | JSON is acceptable because it is version-snapshotted and schema-validated, not independently queried heavily. |
-| `TenantSubscription` | Tenant's commercial lifecycle | Tenant | `id`, tenantId | pinned planVersionId, status, billing cycle, seats, trial/period/cancel/grace timestamps | One current subscription enforced transactionally; audit every state/version change. |
-| `SubscriptionChange` | Scheduled/applied upgrade/downgrade trail | Tenant | `id`, subscriptionId | from/to versions, effective timing, status | Idempotent command key; audit request/apply/failure. |
-| `IndustryTemplate` | Stable industry identity | Platform global | `id`, `code` | name, category, lifecycle, currentVersionId | Owns immutable versions. Industry is configuration, not a code fork. |
-| `IndustryTemplateVersion` | Published industry configuration snapshot | Platform global | template + integer version | Draft until publish, then immutable | Terminology, default Masters, recommendations, dashboards/workflows/forms as schema-validated children/JSON. |
-| `IndustryModuleRecommendation` | Suggests useful Modules | Platform global/version child | version + moduleId | priority/reason before publish | Does not grant commercial access. |
-| `TenantIndustryAssignment` | Pins tenant to an industry version | Tenant | tenantId | industryTemplateVersionId, effective dates | Explicitly migrate to new template versions. Audit. |
-| `TenantSettings` | Operational/localization/security overrides | Tenant | tenantId | structured validated settings and `configVersion` | Split sensitive security policy where access differs. Audit before/after safe fields. |
-| `TenantBranding` | Logo/theme/login branding | Tenant | tenantId | approved token values and MediaAsset relations | Never store arbitrary executable CSS. Audit. |
-| `TenantUsageSnapshot` | Periodic metering/observability snapshot | Tenant | tenantId + capturedAt/period | counters only through collector | Append-only; never commercial authority by itself. |
-| `TenantProvisioningEvent` | Provisioning workflow state/history | Tenant | event ID/idempotency key | step, status, safe payload, error code, retry count | Append-only timeline; no secrets. |
-| `MasterDefinition` | Defines a configurable value set and policy | Platform global/developer/system-owned | `code` | name, moduleCode, data type, allowed tenant operations, lifecycle | Audit definition changes; tenant admins cannot edit definitions. |
-| `MasterValue` | System, industry, or tenant value | Scope determined by source | definitionId + source owner + code | name, description, color, sort, metadata, active state | Exactly one source owner: SYSTEM, IndustryTemplateVersion, or Tenant. Audit edits. |
-| `MasterValueOverride` | Tenant/industry rename, reorder, hide of inherited value | Industry or tenant | scope owner + inherited value | display name/color/sort/hidden | Does not change stable code or source row. Audit. |
-| `PlatformModule` | Capability package synchronized from code | Platform global/developer-owned | `code` | Registry owns name/description/category/dependencies/required flag; DB may hold notes | No pricing. PlanVersion includes Modules. Audit metadata/lifecycle controls. |
-| `ModuleFeature` | Coded capability within Module | Platform global/developer-owned | module + code + implementationKey | Registry owns support flags; admin notes may be mutable | No independent commercial entitlement. |
-| `ModuleDependency` | Module prerequisite graph | Platform global/developer-owned | module + prerequisite | code registry only | Validate acyclic closure. |
-| `RuntimeConfigVersion` | Monotonic invalidation/version marker | Tenant | tenantId | integer/hash and cause | Increment transactionally after subscription, industry, settings, role, or Master change. |
-| `AuditEvent` | Append-only security/business evidence | Platform or tenant | id, timestamp | none; retention/archival only | Fields below. |
-| `MediaAsset` | Object-store metadata and ownership | Platform or tenant | id, objectKey, owner scope | scan/status/retention metadata | Private by default. Audit access-sensitive mutations and deletion. |
-| `OutboxEvent` | Durable async work request | Platform or tenant | id/eventId | state, attempts, availableAt, processedAt | Written in same DB transaction as source mutation. |
-| `BackgroundJob` | Durable execution/retry record when needed | Platform or tenant | id/idempotency key | status, attempt count, safe result/error | Prefer simple DB-backed worker first; Redis queue only when throughput warrants it. |
+| Entity                         | Purpose                                                  | Scope                                  | Immutable identity                                     | Versioned/mutable data                                                                   | Relations and audit requirements                                                                                 |
+| ------------------------------ | -------------------------------------------------------- | -------------------------------------- | ------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `User`                         | Global sign-in identity                                  | Platform global                        | `id`; normalized login identities once verified        | name, avatar, security state                                                             | Has Sessions, platform role assignments, many TenantMemberships. Audit credential/security changes.              |
+| `PlatformRole`                 | Platform console role definition                         | Platform global                        | `code` for built-ins                                   | name, description, active state                                                          | Many permissions and assignments. Audit grants/revokes.                                                          |
+| `PlatformRolePermission`       | Grants `platform.*` actions                              | Platform global                        | role + permission                                      | none except archival                                                                     | Audit every change.                                                                                              |
+| `PlatformUserRoleAssignment`   | Assigns platform access to a User                        | Platform global                        | user + role                                            | status, validity                                                                         | No tenant implication. Audit grant/revoke and actor.                                                             |
+| `Tenant`                       | Customer/workspace identity and lifecycle                | Platform-managed, tenant root          | `id`, canonical `slug` after activation                | display/legal/contact/lifecycle fields                                                   | Owns memberships, settings, branding, subscriptions, usage, data. All lifecycle changes audited.                 |
+| `TenantMembership`             | Connects one User to one Tenant                          | Tenant                                 | `id`, tenantId, userId                                 | roleId, status, isPrimary, invited/joined/activated/deactivated timestamps               | Unique active `(tenantId,userId)`; supports one User in many Tenants. Audit invitation, role, status.            |
+| `TenantRole`                   | Built-in or tenant-defined authorization role            | Tenant, with optional system template  | `id`, tenantId, code                                   | name, description, active state                                                          | Many membership assignments and permission grants. Audit edits.                                                  |
+| `TenantRolePermission`         | Grants domain actions                                    | Tenant                                 | tenantRoleId + permissionId                            | none except archival                                                                     | Permission definition is global; grant is tenant-owned.                                                          |
+| `PermissionDefinition`         | Stable action vocabulary                                 | Platform global/developer-owned        | `code`, `scope`, domain/action                         | description, status from code                                                            | Codes: `platform.*` or domain actions such as `crm.leads.view`; never commercial Modules.                        |
+| `Plan`                         | Stable commercial product identity                       | Platform global                        | `id`, `code`                                           | name, visibility, lifecycle, currentVersionId                                            | Owns immutable versions. Audit create/archive/visibility.                                                        |
+| `PlanVersion`                  | Published commercial snapshot                            | Platform global                        | `id`, planId, monotonically increasing integer version | Draft editable until publish; immutable after `publishedAt`                              | Owns pricing, limits, modules, rules. Subscriptions pin to it. Audit draft/publish; never update published rows. |
+| `PlanPricing`                  | Billing-cycle prices in a version                        | Platform global/version child          | planVersionId + billingCycle/currency                  | Immutable after publish                                                                  | Decimal base/seat/flat/setup/minimum; tax/proration semantics.                                                   |
+| `PlanLimit`                    | Typed limits in a version                                | Platform global/version child          | planVersionId + limitCode                              | Immutable after publish                                                                  | Prefer typed code/value/unit rows for extensibility; validate known codes.                                       |
+| `PlanModule`                   | Commercial Module inclusion                              | Platform global/version child          | planVersionId + moduleId                               | Immutable after publish                                                                  | Module-level only. Validate dependency closure and Module lifecycle at publish.                                  |
+| `PlanCommercialRule`           | Trial/change/cancellation policy                         | Platform global/version child          | planVersionId                                          | Immutable JSON/value object after publish                                                | JSON is acceptable because it is version-snapshotted and schema-validated, not independently queried heavily.    |
+| `TenantSubscription`           | Tenant's commercial lifecycle                            | Tenant                                 | `id`, tenantId                                         | pinned planVersionId, status, billing cycle, seats, trial/period/cancel/grace timestamps | One current subscription enforced transactionally; audit every state/version change.                             |
+| `SubscriptionChange`           | Scheduled/applied upgrade/downgrade trail                | Tenant                                 | `id`, subscriptionId                                   | from/to versions, effective timing, status                                               | Idempotent command key; audit request/apply/failure.                                                             |
+| `IndustryTemplate`             | Stable industry identity                                 | Platform global                        | `id`, `code`                                           | name, category, lifecycle, currentVersionId                                              | Owns immutable versions. Industry is configuration, not a code fork.                                             |
+| `IndustryTemplateVersion`      | Published industry configuration snapshot                | Platform global                        | template + integer version                             | Draft until publish, then immutable                                                      | Terminology, default Masters, recommendations, dashboards/workflows/forms as schema-validated children/JSON.     |
+| `IndustryModuleRecommendation` | Suggests useful Modules                                  | Platform global/version child          | version + moduleId                                     | priority/reason before publish                                                           | Does not grant commercial access.                                                                                |
+| `TenantIndustryAssignment`     | Pins tenant to an industry version                       | Tenant                                 | tenantId                                               | industryTemplateVersionId, effective dates                                               | Explicitly migrate to new template versions. Audit.                                                              |
+| `TenantSettings`               | Operational/localization/security overrides              | Tenant                                 | tenantId                                               | structured validated settings and `configVersion`                                        | Split sensitive security policy where access differs. Audit before/after safe fields.                            |
+| `TenantBranding`               | Logo/theme/login branding                                | Tenant                                 | tenantId                                               | approved token values and MediaAsset relations                                           | Never store arbitrary executable CSS. Audit.                                                                     |
+| `TenantUsageSnapshot`          | Periodic metering/observability snapshot                 | Tenant                                 | tenantId + capturedAt/period                           | counters only through collector                                                          | Append-only; never commercial authority by itself.                                                               |
+| `TenantProvisioningEvent`      | Provisioning workflow state/history                      | Tenant                                 | event ID/idempotency key                               | step, status, safe payload, error code, retry count                                      | Append-only timeline; no secrets.                                                                                |
+| `MasterDefinition`             | Defines a configurable value set and policy              | Platform global/developer/system-owned | `code`                                                 | name, moduleCode, data type, allowed tenant operations, lifecycle                        | Audit definition changes; tenant admins cannot edit definitions.                                                 |
+| `MasterValue`                  | System, industry, or tenant value                        | Scope determined by source             | definitionId + source owner + code                     | name, description, color, sort, metadata, active state                                   | Exactly one source owner: SYSTEM, IndustryTemplateVersion, or Tenant. Audit edits.                               |
+| `MasterValueOverride`          | Tenant/industry rename, reorder, hide of inherited value | Industry or tenant                     | scope owner + inherited value                          | display name/color/sort/hidden                                                           | Does not change stable code or source row. Audit.                                                                |
+| `PlatformModule`               | Capability package synchronized from code                | Platform global/developer-owned        | `code`                                                 | Registry owns name/description/category/dependencies/required flag; DB may hold notes    | No pricing. PlanVersion includes Modules. Audit metadata/lifecycle controls.                                     |
+| `ModuleFeature`                | Coded capability within Module                           | Platform global/developer-owned        | module + code + implementationKey                      | Registry owns support flags; admin notes may be mutable                                  | No independent commercial entitlement.                                                                           |
+| `ModuleDependency`             | Module prerequisite graph                                | Platform global/developer-owned        | module + prerequisite                                  | code registry only                                                                       | Validate acyclic closure.                                                                                        |
+| `RuntimeConfigVersion`         | Monotonic invalidation/version marker                    | Tenant                                 | tenantId                                               | integer/hash and cause                                                                   | Increment transactionally after subscription, industry, settings, role, or Master change.                        |
+| `AuditEvent`                   | Append-only security/business evidence                   | Platform or tenant                     | id, timestamp                                          | none; retention/archival only                                                            | Fields below.                                                                                                    |
+| `MediaAsset`                   | Object-store metadata and ownership                      | Platform or tenant                     | id, objectKey, owner scope                             | scan/status/retention metadata                                                           | Private by default. Audit access-sensitive mutations and deletion.                                               |
+| `OutboxEvent`                  | Durable async work request                               | Platform or tenant                     | id/eventId                                             | state, attempts, availableAt, processedAt                                                | Written in same DB transaction as source mutation.                                                               |
+| `BackgroundJob`                | Durable execution/retry record when needed               | Platform or tenant                     | id/idempotency key                                     | status, attempt count, safe result/error                                                 | Prefer simple DB-backed worker first; Redis queue only when throughput warrants it.                              |
 
 ## Tenant field inventory and normalized destination
 
 The inventory combines `Tenant`, `TenantCreateFormState`, tenant detail editing, and workspace settings. Secrets such as `adminPassword` are command inputs only and are never Tenant columns.
 
-| Category | Current visual/input fields | Proposed owner |
-|---|---|---|
-| IDENTITY | id, draftTenantId, slug, companyName, domain, website, companySize, description, status | Tenant; draft state is Tenant lifecycle, not a second ID |
-| LEGAL | legalEntityName, taxId/GST, PAN, yearsInBusiness, businessModel | Tenant legal profile or TenantSettings financial section |
-| ADDRESS | addressLine1, addressLine2, city, state, pincode, country, operatingCountries, branchCount | TenantAddress plus tenant profile metadata |
-| INDUSTRY | industryId/code/label | TenantIndustryAssignment; labels are joined DTO fields, not duplicated authority |
-| LOCALE | timezone, currency, preferredLanguage, dateFormat, timeFormat, weekStartDay, financialYearStart, numberFormat | TenantSettings.localization/financial, validated codes |
-| SUBSCRIPTION | planId/name, provisioningType, billingCycle, seats/license count, storageLimit, subscriptionStart, trial duration/policy/dates, billing contact, payment collection, invoice dates/method | TenantSubscription and billing contact/profile; joined names are DTO fields |
-| PROVISIONING | isDraft, tenantStatus, subscriptionStatus, provisioning type, invitation choice, provisioning events | Tenant lifecycle, TenantSubscription lifecycle, TenantProvisioningEvent |
-| ADMIN USER | name, email, phone, designation, department, language, timezone, communication email, username, password, send invite | ProvisionTenant command creates/links User + owner Membership. Password is hashed immediately and not logged. |
-| USAGE | usersUsed, storageUsedGb, apiRequestsUsed, MRR | UsageSnapshot; MRR is billing/reporting projection, not freely editable Tenant state |
-| CONFIGURATION | inherited/enabled modules, landing page, notifications, map/table preferences, session/security rules | Effective Modules derived from Subscription; other values in TenantSettings and role policies |
-| BRANDING | logoUrl, primary/secondary color, theme, logoInLogin, shortName | TenantBranding and MediaAsset |
-| AUDIT | createdAt/updatedAt, createdBy, workspaceId/configVersion, account notes | Entity timestamps, AuditEvent, RuntimeConfigVersion; notes in explicit support-note entity if needed |
+| Category      | Current visual/input fields                                                                                                                                                               | Proposed owner                                                                                                |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| IDENTITY      | id, draftTenantId, slug, companyName, domain, website, companySize, description, status                                                                                                   | Tenant; draft state is Tenant lifecycle, not a second ID                                                      |
+| LEGAL         | legalEntityName, taxId/GST, PAN, yearsInBusiness, businessModel                                                                                                                           | Tenant legal profile or TenantSettings financial section                                                      |
+| ADDRESS       | addressLine1, addressLine2, city, state, pincode, country, operatingCountries, branchCount                                                                                                | TenantAddress plus tenant profile metadata                                                                    |
+| INDUSTRY      | industryId/code/label                                                                                                                                                                     | TenantIndustryAssignment; labels are joined DTO fields, not duplicated authority                              |
+| LOCALE        | timezone, currency, preferredLanguage, dateFormat, timeFormat, weekStartDay, financialYearStart, numberFormat                                                                             | TenantSettings.localization/financial, validated codes                                                        |
+| SUBSCRIPTION  | planId/name, provisioningType, billingCycle, seats/license count, storageLimit, subscriptionStart, trial duration/policy/dates, billing contact, payment collection, invoice dates/method | TenantSubscription and billing contact/profile; joined names are DTO fields                                   |
+| PROVISIONING  | isDraft, tenantStatus, subscriptionStatus, provisioning type, invitation choice, provisioning events                                                                                      | Tenant lifecycle, TenantSubscription lifecycle, TenantProvisioningEvent                                       |
+| ADMIN USER    | name, email, phone, designation, department, language, timezone, communication email, username, password, send invite                                                                     | ProvisionTenant command creates/links User + owner Membership. Password is hashed immediately and not logged. |
+| USAGE         | usersUsed, storageUsedGb, apiRequestsUsed, MRR                                                                                                                                            | UsageSnapshot; MRR is billing/reporting projection, not freely editable Tenant state                          |
+| CONFIGURATION | inherited/enabled modules, landing page, notifications, map/table preferences, session/security rules                                                                                     | Effective Modules derived from Subscription; other values in TenantSettings and role policies                 |
+| BRANDING      | logoUrl, primary/secondary color, theme, logoInLogin, shortName                                                                                                                           | TenantBranding and MediaAsset                                                                                 |
+| AUDIT         | createdAt/updatedAt, createdBy, workspaceId/configVersion, account notes                                                                                                                  | Entity timestamps, AuditEvent, RuntimeConfigVersion; notes in explicit support-note entity if needed          |
 
 ## Tenant model boundaries
 
@@ -94,17 +94,17 @@ Membership status is independent per Tenant. Deactivating Membership A cannot di
 
 ## Plan versioning contract
 
-| Event | Required behavior |
-|---|---|
-| Save draft | Mutate only an unpublished PlanVersion draft. |
-| Publish | Validate pricing, limit types, Module dependency closure, lifecycle, and unique next integer version; publish atomically and make immutable. |
-| New tenant | Subscribe to the current eligible published PlanVersion. |
-| Existing tenant when plan changes | Remains pinned to its original PlanVersion. No silent price, Module, or limit change. |
-| Upgrade/downgrade | Create SubscriptionChange to an explicit target PlanVersion and apply immediately or next cycle per validated policy. |
-| Price change | Requires a new PlanVersion. Existing tenant migration is explicit and auditable. |
-| Module change | Requires a new PlanVersion. Resolver recomputes only after a subscription version change. |
-| Archive Plan | Blocks new subscriptions; does not invalidate existing pinned subscriptions. |
-| Correct published mistake | Publish a corrected version; never edit the historical version. |
+| Event                             | Required behavior                                                                                                                            |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Save draft                        | Mutate only an unpublished PlanVersion draft.                                                                                                |
+| Publish                           | Validate pricing, limit types, Module dependency closure, lifecycle, and unique next integer version; publish atomically and make immutable. |
+| New tenant                        | Subscribe to the current eligible published PlanVersion.                                                                                     |
+| Existing tenant when plan changes | Remains pinned to its original PlanVersion. No silent price, Module, or limit change.                                                        |
+| Upgrade/downgrade                 | Create SubscriptionChange to an explicit target PlanVersion and apply immediately or next cycle per validated policy.                        |
+| Price change                      | Requires a new PlanVersion. Existing tenant migration is explicit and auditable.                                                             |
+| Module change                     | Requires a new PlanVersion. Resolver recomputes only after a subscription version change.                                                    |
+| Archive Plan                      | Blocks new subscriptions; does not invalidate existing pinned subscriptions.                                                                 |
+| Correct published mistake         | Publish a corrected version; never edit the historical version.                                                                              |
 
 ## Subscription state model
 
@@ -144,13 +144,30 @@ interface TenantRuntimeBootstrapDto {
   generatedAt: string;
   tenant: { id: string; slug: string; displayName: string; status: string };
   membership: { id: string; roleCode: string; status: string };
-  locale: { timezone: string; currency: string; language: string; dateFormat: string };
-  branding: { logoUrl?: string; primaryColor?: string; secondaryColor?: string };
-  subscription: { status: string; planCode: string; planVersion: number; graceEndsAt?: string };
+  locale: {
+    timezone: string;
+    currency: string;
+    language: string;
+    dateFormat: string;
+  };
+  branding: {
+    logoUrl?: string;
+    primaryColor?: string;
+    secondaryColor?: string;
+  };
+  subscription: {
+    status: string;
+    planCode: string;
+    planVersion: number;
+    graceEndsAt?: string;
+  };
   modules: Array<{ code: string; status: string }>;
   permissions: string[];
   terminology: Record<string, string>;
-  masters: Record<string, Array<{ code: string; name: string; color?: string }>>;
+  masters: Record<
+    string,
+    Array<{ code: string; name: string; color?: string }>
+  >;
   featureConfiguration: Record<string, unknown>;
 }
 ```
@@ -179,12 +196,12 @@ interface RequestPrincipal {
 }
 ```
 
-| Route type | Principal rule |
-|---|---|
-| `/platform/*` | Requires an active platform role assignment and `platform.*` permission. No tenant is implied. |
-| Tenant web route | Requires an active membership selected from server-verified membership claims/session context. Repository receives required tenant scope. |
-| Mobile route | Same membership and tenancy rule; installation/device metadata is additional context, not tenant authority. |
-| Platform support access to tenant | Requires explicit time-bounded grant/reason, elevated permission, visible banner, and audit events. Never inferred from email domain. |
+| Route type                        | Principal rule                                                                                                                            |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `/platform/*`                     | Requires an active platform role assignment and `platform.*` permission. No tenant is implied.                                            |
+| Tenant web route                  | Requires an active membership selected from server-verified membership claims/session context. Repository receives required tenant scope. |
+| Mobile route                      | Same membership and tenancy rule; installation/device metadata is additional context, not tenant authority.                               |
+| Platform support access to tenant | Requires explicit time-bounded grant/reason, elevated permission, visible banner, and audit events. Never inferred from email domain.     |
 
 The access token should use short-lived claims (`sub`, session ID, selected membership ID, token version). The backend reloads/validates membership and roles for sensitive operations; it does not trust a large stale permission array indefinitely.
 
