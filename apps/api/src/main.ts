@@ -52,14 +52,30 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('VisibloAI Field CRM API')
-    .setDescription('API Docs for VisibloAI Field Sales CRM')
+    .setTitle('Visiblo Smart Field Work SaaS API')
+    .setDescription(
+      'Production REST API for Visiblo Smart Field Work platform. Authorized users can execute endpoints directly via Swagger UI.',
+    )
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Enter JWT Bearer token obtained from POST /auth/login or /auth/verify-otp.',
+        in: 'header',
+      },
+      'JWT-auth',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
 
   const PORT = configService.get<number>('PORT') ?? 5002;
   await app.listen(PORT);
