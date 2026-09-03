@@ -410,7 +410,7 @@ function Step2IndustryProfile() {
 
   const handleIndustryChange = (selectedId: string) => {
     const selectedInd = PLATFORM_INDUSTRIES.find((i) => i.id === selectedId);
-    let updatedModules = [...formState.selectedModuleCodes];
+    let updatedModules = [...formState.inheritedModuleCodes];
 
     if (selectedInd && selectedInd.defaultModules) {
       // Merge industry default modules into current selection
@@ -419,7 +419,7 @@ function Step2IndustryProfile() {
 
     updateFormState({
       industryId: selectedId,
-      selectedModuleCodes: updatedModules,
+      inheritedModuleCodes: updatedModules,
     });
   };
 
@@ -583,7 +583,7 @@ function Step4PlanSubscription() {
 
     updateFormState({
       planId,
-      selectedModuleCodes: selectedPlan ? [...selectedPlan.includedModules] : [],
+      inheritedModuleCodes: selectedPlan ? [...selectedPlan.includedModules] : [],
     });
   };
 
@@ -747,11 +747,11 @@ function Step5Modules() {
   return (
     <ModuleSelectionGrid
       modules={PLATFORM_MODULES}
-      selectedCodes={formState.selectedModuleCodes}
+      selectedCodes={formState.inheritedModuleCodes}
       mandatoryCodes={mandatoryCodes}
       selectedPlanName={selectedPlan.name}
       infoBannerText={`Plan '${selectedPlan.name}' mandatory modules are locked and pre-enabled for this tenant workspace.`}
-      onChange={(updatedCodes) => updateFormState({ selectedModuleCodes: updatedCodes })}
+      onChange={(updatedCodes) => updateFormState({ inheritedModuleCodes: updatedCodes })}
     />
   );
 }
@@ -769,7 +769,7 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
     userLicensesCount: formState.userLicensesCount,
   });
 
-  const selectedModuleNames = PLATFORM_MODULES.filter((m) => formState.selectedModuleCodes.includes(m.code)).map(
+  const selectedModuleNames = PLATFORM_MODULES.filter((m) => formState.inheritedModuleCodes.includes(m.code)).map(
     (m) => m.name
   );
 
@@ -928,7 +928,7 @@ function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number)
       <div className="rounded-sm border border-slate-200 bg-white p-5 space-y-3 shadow-xs">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <h4 className="text-sm font-extrabold text-[#0D1F3D]">
-            Selected Modules ({formState.selectedModuleCodes.length})
+            Selected Modules ({formState.inheritedModuleCodes.length})
           </h4>
           <button
             type="button"
@@ -1376,7 +1376,7 @@ function CreateTenantWizardInner() {
                   </span>
                   <div>
                     <p className="font-extrabold text-[#0D1F3D]">Selected Modules</p>
-                    <p className="text-[11px] text-slate-500 font-medium">{formState.selectedModuleCodes.length} modules selected</p>
+                    <p className="text-[11px] text-slate-500 font-medium">{formState.inheritedModuleCodes.length} modules selected</p>
                   </div>
                 </div>
                 <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => updateStepInUrl(5)} />

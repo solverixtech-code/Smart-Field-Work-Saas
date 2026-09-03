@@ -253,7 +253,7 @@ export function ModuleSelectionGrid({
           <div key={group.title} className="space-y-3">
             {/* Section Header with Select All Toggle on First Section */}
             <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
-              <h4 className="text-xs font-extrabold text-[#0D1F3D] uppercase tracking-wider">
+              <h4 className="text-xs font-extrabold text-[#0D1F3D]">
                 {group.title} ({group.items.length})
               </h4>
 
@@ -355,7 +355,7 @@ export function ModuleSelectionGrid({
       {/* Bottom Modules Summary Bar (Identical to User Image Mockup) */}
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-xs flex flex-wrap items-center justify-between gap-4 font-sans">
         <div className="space-y-1">
-          <span className="text-xs font-extrabold text-[#0D1F3D] block uppercase tracking-wider">
+          <span className="text-xs font-extrabold text-[#0D1F3D] block">
             Modules Summary
           </span>
           <div className="flex flex-wrap items-center gap-6 text-xs font-medium">
@@ -378,7 +378,7 @@ export function ModuleSelectionGrid({
             <Layers className="h-5 w-5" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase block">Total Enabled</span>
+            <span className="text-[10px] font-extrabold text-[#0D1F3D] block">Total Enabled</span>
             <span className="text-base font-extrabold text-indigo-700 leading-none">
               {totalEnabled} Modules
             </span>

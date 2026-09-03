@@ -101,7 +101,7 @@ class FixtureTenantService implements ITenantService {
       planName: selectedPlan.name,
       provisioningType: input.provisioningType,
       userLicensesCount: input.userLicensesCount,
-      enabledModuleCodes: input.selectedModuleCodes,
+      enabledModuleCodes: input.inheritedModuleCodes,
       
       trialStartDate: input.provisioningType === 'Free Trial' ? new Date().toISOString().split('T')[0] : undefined,
       trialEndDate: input.provisioningType === 'Free Trial' ? new Date(Date.now() + (input.trialDurationDays || 14) * 86400000).toISOString().split('T')[0] : undefined,

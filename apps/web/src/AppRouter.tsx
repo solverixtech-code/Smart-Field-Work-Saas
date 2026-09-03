@@ -38,6 +38,10 @@ import { TenantCreationProvider } from './features/platform/tenants/context/Tena
 import { PlatformAccessGuard } from './features/platform/auth/guards/PlatformAccessGuard';
 import { WorkspaceSettingsGuard } from './layouts/WorkspaceSettingsGuard';
 import { PlatformPlaceholderPage } from './screens/platform/PlatformPlaceholderPage';
+import { ModulesFeaturesPage } from './screens/platform/modules/ModulesFeaturesPage';
+import { CreateModulePage } from './screens/platform/modules/CreateModulePage';
+import { ModuleDetailPage } from './screens/platform/modules/ModuleDetailPage';
+import { EditModulePage } from './screens/platform/modules/EditModulePage';
 
 import ShiftManagementPage from './screens/shifts/ShiftManagementPage';
 import AttendanceMonitoringPage from './screens/attendance/AttendanceMonitoringPage';
@@ -785,7 +789,16 @@ export default function AppRouter() {
                 <Route path="/platform/plans/:planId/tenants" element={<PlanDetailsPage />} />
                 <Route path="/platform/plans/:planId/versions" element={<PlanDetailsPage />} />
               </Route>
-              <Route path="/platform/modules" element={<PlatformPlaceholderPage title="Platform Modules Catalog" />} />
+              <Route element={<PlatformAccessGuard requiredPermission="platform.modules.view" />}>
+                <Route path="/platform/modules" element={<ModulesFeaturesPage />} />
+                <Route path="/platform/modules/:moduleId" element={<ModuleDetailPage />} />
+              </Route>
+              <Route element={<PlatformAccessGuard requiredPermission="platform.modules.create" />}>
+                <Route path="/platform/modules/create" element={<CreateModulePage />} />
+              </Route>
+              <Route element={<PlatformAccessGuard requiredPermission="platform.modules.update" />}>
+                <Route path="/platform/modules/:moduleId/edit" element={<EditModulePage />} />
+              </Route>
               <Route path="/platform/industries" element={<PlatformPlaceholderPage title="Industry Verticals" />} />
               <Route path="/platform/users" element={<PlatformPlaceholderPage title="Platform Operators" />} />
               <Route path="/platform/roles" element={<PlatformPlaceholderPage title="Platform RBAC & Roles" />} />

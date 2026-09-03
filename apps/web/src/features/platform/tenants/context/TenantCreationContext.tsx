@@ -58,7 +58,7 @@ const INITIAL_STATE: TenantCreateFormState = {
   storageLimit: '200 GB',
   subscriptionStartDate: '2026-05-24',
 
-  selectedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance_plus'],
+  inheritedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance_plus'],
 
   isDraft: false,
 };
@@ -158,7 +158,7 @@ export const TenantCreationProvider: React.FC<{ children: ReactNode }> = ({ chil
       storageLimit: tenant.storageLimit || '200 GB',
       subscriptionStartDate: tenant.subscriptionStartDate || tenant.trialStartDate || tenant.createdAt?.split(' ·')[0] || '',
 
-      selectedModuleCodes: tenant.enabledModuleCodes || ['core_crm', 'field_visits'],
+      inheritedModuleCodes: tenant.enabledModuleCodes || ['core_crm', 'field_visits'],
       isDraft: tenant.tenantStatus === 'Draft',
     });
     setIsDirty(false);
@@ -179,7 +179,7 @@ export const TenantCreationProvider: React.FC<{ children: ReactNode }> = ({ chil
         legalEntityName: draftState.legalEntityName,
         industryId: draftState.industryId,
         planId: draftState.planId,
-        enabledModuleCodes: draftState.selectedModuleCodes,
+        enabledModuleCodes: draftState.inheritedModuleCodes,
         userLicensesCount: draftState.userLicensesCount,
         provisioningType: draftState.provisioningType,
         paymentCollectionMethod: draftState.paymentCollectionMethod,
@@ -211,7 +211,7 @@ export const TenantCreationProvider: React.FC<{ children: ReactNode }> = ({ chil
         provisioningType: finalState.provisioningType,
         paymentCollectionMethod: finalState.paymentCollectionMethod,
         userLicensesCount: finalState.userLicensesCount,
-        enabledModuleCodes: finalState.selectedModuleCodes,
+        enabledModuleCodes: finalState.inheritedModuleCodes,
         adminUser: {
           fullName: finalState.adminFullName,
           email: finalState.adminEmail,

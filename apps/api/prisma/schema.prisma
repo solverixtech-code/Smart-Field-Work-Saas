@@ -400,3 +400,87 @@ model MasterRecord {
   @@index([category, isActive])
 }
 
+// ─── Platform Modules & Features System ───────────────────────────────────────
+
+enum PlatformModuleCategory {
+  CORE
+  SALES
+  FIELD_OPS
+  AUTOMATION
+  ENTERPRISE
+}
+
+enum PlatformModuleStatus {
+  DRAFT
+  ACTIVE
+  BETA
+  DEPRECATED
+  ARCHIVED
+}
+
+enum ModuleFeatureStatus {
+  ACTIVE
+  BETA
+  DEPRECATED
+}
+
+model PlatformModule {
+  id               String                 @id @default(uuid())
+  code             String                 @unique
+  name             String
+  description      String
+  category         PlatformModuleCategory @default(CORE)
+  status           PlatformModuleStatus   @default(ACTIVE)
+
+  isAddon          Boolean                @default(false)
+  monthlyPrice     Float                  @default(0)
+  requiredBySystem Boolean                @default(false)
+  displayOrder     Int                    @default(0)
+
+  features         ModuleFeature[]
+  
+  dependencies     ModuleDependency[]     @relation("ModuleDependencies")
+  dependents       ModuleDependency[]     @relation("ModuleDependents")
+
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([displayOrder])
+}
+
+model ModuleFeature {
+  id              String              @id @default(uuid())
+  moduleId        String
+  module          PlatformModule      @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  code            String
+  name            String
+  description     String
+  status          ModuleFeatureStatus @default(ACTIVE)
+  platformSupport Boolean             @default(true)
+  displayOrder    Int                 @default(0)
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@unique([moduleId, code])
+  @@index([moduleId])
+  @@index([status])
+}
+
+model ModuleDependency {
+  id                String         @id @default(uuid())
+  moduleId          String
+  module            PlatformModule @relation("ModuleDependencies", fields: [moduleId], references: [id], onDelete: Cascade)
+  dependsOnModuleId String
+  dependsOnModule   PlatformModule @relation("ModuleDependents", fields: [dependsOnModuleId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime       @default(now())
+
+  @@unique([moduleId, dependsOnModuleId])
+  @@index([moduleId])
+  @@index([dependsOnModuleId])
+}
+
+

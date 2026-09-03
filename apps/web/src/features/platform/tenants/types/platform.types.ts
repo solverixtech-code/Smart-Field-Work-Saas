@@ -21,6 +21,9 @@ export type PlatformPermission =
   | 'platform.plans.publish'
   | 'platform.plans.archive'
   | 'platform.modules.view'
+  | 'platform.modules.create'
+  | 'platform.modules.update'
+  | 'platform.modules.archive'
   | 'platform.industries.view'
   | 'platform.users.view'
   | 'platform.roles.view'
@@ -236,8 +239,8 @@ export interface TenantCreateFormState {
   storageLimit: string;
   subscriptionStartDate: string;
 
-  // Step 5: Modules
-  selectedModuleCodes: string[];
+  // Step 4: Plan & Subscription Module Inheritance
+  inheritedModuleCodes: string[];
 
   // General Status & Edit/Draft tracking
   isDraft: boolean;

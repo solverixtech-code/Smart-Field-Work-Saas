@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { ShiftModule } from './shift/shift.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { PayrollModule } from './payroll/payroll.module';
+import { PlatformModulesModule } from './platform/modules/platform-modules.module';
 import { ApiThrottlerGuard } from './common/guards/api-throttler.guard';
 import { RedisThrottlerStorage } from './common/throttling/redis-throttler.storage';
 import { ThrottlingModule } from './common/throttling/throttling.module';
@@ -46,6 +47,7 @@ import { AppController } from './app.controller';
     ShiftModule,
     AttendanceModule,
     PayrollModule,
+    PlatformModulesModule,
   ],
   providers: [
     {

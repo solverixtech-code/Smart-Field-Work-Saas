@@ -158,7 +158,7 @@ export function PlansPricingPage() {
         width: '48px',
         align: 'center',
         cell: (_, index) => (
-          <span className="text-slate-400 font-semibold">
+          <span className="text-slate-500 font-semibold">
             {(currentPage - 1) * pageSize + index + 1}
           </span>
         ),
@@ -185,7 +185,7 @@ export function PlansPricingPage() {
                   </span>
                 )}
               </p>
-              <p className="text-[11px] font-medium text-slate-400 truncate max-w-[220px]">
+              <p className="text-[11px] font-medium text-slate-600 truncate max-w-[220px]">
                 {plan.description}
               </p>
             </div>
@@ -533,7 +533,7 @@ export function PlansPricingPage() {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                 <span className="text-base font-extrabold text-[#0D1F3D]">{metrics.activeSubscriptions}</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase">Total</span>
+                <span className="text-[9px] font-bold text-slate-600">Total</span>
               </div>
             </div>
             <div className="flex-1 space-y-1">

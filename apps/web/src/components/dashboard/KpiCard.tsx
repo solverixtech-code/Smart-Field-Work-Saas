@@ -35,7 +35,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
       <div className="flex flex-1 flex-col justify-between min-w-0 overflow-hidden">
         {/* Title + 3 dots */}
         <div className="flex items-center justify-between gap-1">
-          <span className="text-[11px] font-extrabold text-slate-500 truncate" title={title}>
+          <span className="text-xs font-extrabold text-[#0D1F3D] truncate" title={title}>
             {title}
           </span>
           <button
@@ -68,7 +68,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
                 ↑ {change}
               </span>
             )}
-            {timeframe && <span className="text-slate-400 font-medium truncate">{timeframe}</span>}
+            {timeframe && <span className="text-slate-500 font-medium truncate">{timeframe}</span>}
             {subValue && <span className="text-slate-600 font-bold truncate">{subValue}</span>}
           </div>
         )}
