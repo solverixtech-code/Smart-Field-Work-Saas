@@ -279,7 +279,6 @@ export default function PlatformShell() {
       return [
         { label: "Platform Management", to: "/platform/modules" },
         { label: "Modules & Features", to: "/platform/modules" },
-        { label: "Modules", to: "/platform/modules" },
       ];
     }
     if (p === "/platform/modules/create") {
@@ -304,11 +303,28 @@ export default function PlatformShell() {
       ];
     }
     if (p.startsWith("/platform/modules/")) {
-      return [
+      const subPath = p.replace("/platform/modules/", "");
+      const parts = subPath.split("/");
+      const baseModuleId = parts[0];
+      const subTab = parts[1];
+
+      const baseBreadcrumbs = [
         { label: "Platform Management", to: "/platform/modules" },
         { label: "Modules & Features", to: "/platform/modules" },
-        { label: "Module Details", to: p },
+        { label: "Module Details", to: `/platform/modules/${baseModuleId}` },
       ];
+
+      if (subTab === "features") {
+        baseBreadcrumbs.push({ label: "Features", to: p });
+      } else if (subTab === "dependencies") {
+        baseBreadcrumbs.push({ label: "Dependencies", to: p });
+      } else if (subTab === "history") {
+        baseBreadcrumbs.push({ label: "Audit History", to: p });
+      } else if (subTab === "edit") {
+        baseBreadcrumbs.push({ label: "Edit Module", to: p });
+      }
+
+      return baseBreadcrumbs;
     }
     if (p === "/platform/audit") {
       return [

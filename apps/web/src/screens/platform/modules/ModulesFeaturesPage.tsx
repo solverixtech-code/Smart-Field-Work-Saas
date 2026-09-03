@@ -30,6 +30,8 @@ import {
   PlatformModuleCategory,
   PlatformModuleStatus,
 } from '../../../features/platform/catalog/modules/types/module.types';
+import { ModuleCategoryBadge } from '../../../features/platform/catalog/modules/components/ModuleCategoryBadge';
+import { ModuleStatusBadge } from '../../../features/platform/catalog/modules/components/ModuleStatusBadge';
 import { usePlatformPermissions } from '../../../features/platform/tenants/hooks/usePlatformPermissions';
 
 const categoryLabel: Record<PlatformModuleCategory, string> = {
@@ -162,14 +164,7 @@ export function ModulesFeaturesPage() {
     {
       header: 'Category',
       cell: (module: PlatformModule) => (
-        <span
-          className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-sm border ${
-            categoryBadgeColor[module.category] ||
-            'bg-slate-100 text-slate-700 border-slate-200'
-          }`}
-        >
-          {categoryLabel[module.category] || module.category}
-        </span>
+        <ModuleCategoryBadge category={module.category} />
       ),
     },
     {
@@ -204,21 +199,7 @@ export function ModulesFeaturesPage() {
     {
       header: 'Status',
       cell: (module: PlatformModule) => (
-        <span
-          className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-sm border ${
-            module.status === 'ARCHIVED'
-              ? 'bg-slate-100 text-slate-600 border-slate-300'
-              : module.status === 'DEPRECATED'
-              ? 'bg-rose-50 text-rose-700 border-rose-200'
-              : module.status === 'BETA'
-              ? 'bg-amber-50 text-amber-700 border-amber-200'
-              : module.status === 'DRAFT'
-              ? 'bg-blue-50 text-blue-700 border-blue-200'
-              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-          }`}
-        >
-          {module.status}
-        </span>
+        <ModuleStatusBadge status={module.status} />
       ),
     },
     {

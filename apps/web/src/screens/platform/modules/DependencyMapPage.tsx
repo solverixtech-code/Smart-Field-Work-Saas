@@ -29,13 +29,7 @@ const categoryLabel: Record<PlatformModuleCategory, string> = {
   ENTERPRISE: 'Enterprise Suite',
 };
 
-const categoryBadgeStyle: Record<PlatformModuleCategory, string> = {
-  CORE: 'bg-blue-50 text-blue-800 border-blue-200',
-  SALES: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-  FIELD_OPS: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  AUTOMATION: 'bg-amber-50 text-amber-900 border-amber-200',
-  ENTERPRISE: 'bg-purple-50 text-purple-800 border-purple-200',
-};
+import { ModuleCategoryBadge } from '../../../features/platform/catalog/modules/components/ModuleCategoryBadge';
 
 export function DependencyMapPage() {
   const [modules, setModules] = useState<PlatformModule[]>([]);
@@ -245,13 +239,7 @@ export function DependencyMapPage() {
                         </span>
                       </div>
                     </div>
-                    <span
-                      className={`text-xs font-bold px-2.5 py-1 rounded-sm border ${
-                        categoryBadgeStyle[mod.category] || 'bg-slate-100 text-slate-700 border-slate-200'
-                      }`}
-                    >
-                      {categoryLabel[mod.category] || mod.category}
-                    </span>
+                    <ModuleCategoryBadge category={mod.category} />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 pt-4 text-xs">
@@ -338,13 +326,7 @@ export function DependencyMapPage() {
                         </span>
                       </td>
                       <td className="p-3.5">
-                        <span
-                          className={`text-[11px] font-bold px-2 py-0.5 rounded-sm border ${
-                            categoryBadgeStyle[mod.category] || 'bg-slate-100 text-slate-700 border-slate-200'
-                          }`}
-                        >
-                          {categoryLabel[mod.category] || mod.category}
-                        </span>
+                        <ModuleCategoryBadge category={mod.category} />
                       </td>
                       <td className="p-3.5">
                         {parents.length > 0 ? (
