@@ -5,6 +5,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CreateShiftSwaggerDto, AssignShiftSwaggerDto } from './dto/shift.dto';
 
 @ApiTags('Shift Management')
+@ApiBearerAuth('OAuth2PasswordBearer')
 @ApiBearerAuth('JWT-auth')
 @Controller('shifts')
 @UseGuards(JwtAuthGuard)

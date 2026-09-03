@@ -31,6 +31,7 @@ import { RequirePermissions } from '../../common/decorators/require-permissions.
 import { ModuleFeatureStatus } from '@prisma/client';
 
 @ApiTags('Platform Capability Catalog')
+@ApiBearerAuth('OAuth2PasswordBearer')
 @ApiBearerAuth('JWT-auth')
 @Controller('platform/modules')
 @UseGuards(JwtAuthGuard, PermissionsGuard)

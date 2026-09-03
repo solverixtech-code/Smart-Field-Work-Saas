@@ -5,6 +5,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { MobilePunchSwaggerDto } from './dto/attendance.dto';
 
 @ApiTags('Attendance & Punch Logs')
+@ApiBearerAuth('OAuth2PasswordBearer')
 @ApiBearerAuth('JWT-auth')
 @Controller('attendance')
 @UseGuards(JwtAuthGuard)

@@ -9,6 +9,7 @@ import {
 } from './dto/payroll.dto';
 
 @ApiTags('Payroll & Incentives')
+@ApiBearerAuth('OAuth2PasswordBearer')
 @ApiBearerAuth('JWT-auth')
 @Controller('payroll')
 @UseGuards(JwtAuthGuard)
