@@ -347,7 +347,6 @@ async function main() {
         name: mFields.name,
         description: mFields.description,
         category: mFields.category,
-        status: mFields.status,
         requiredBySystem: mFields.requiredBySystem,
         displayOrder: mFields.displayOrder,
       },
@@ -365,7 +364,6 @@ async function main() {
           update: {
             name: feat.name,
             description: feat.description,
-            status: feat.status,
             supportsWeb: feat.supportsWeb,
             supportsMobile: feat.supportsMobile,
             supportsApi: feat.supportsApi,

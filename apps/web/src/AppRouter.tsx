@@ -39,7 +39,6 @@ import { PlatformAccessGuard } from './features/platform/auth/guards/PlatformAcc
 import { WorkspaceSettingsGuard } from './layouts/WorkspaceSettingsGuard';
 import { PlatformPlaceholderPage } from './screens/platform/PlatformPlaceholderPage';
 import { ModulesFeaturesPage } from './screens/platform/modules/ModulesFeaturesPage';
-import { CreateModulePage } from './screens/platform/modules/CreateModulePage';
 import { ModuleDetailPage } from './screens/platform/modules/ModuleDetailPage';
 import { EditModulePage } from './screens/platform/modules/EditModulePage';
 import { FeatureRegistryPage } from './screens/platform/modules/FeatureRegistryPage';
@@ -800,9 +799,7 @@ export default function AppRouter() {
                 <Route path="/platform/modules/:moduleId/dependencies" element={<ModuleDetailPage />} />
                 <Route path="/platform/modules/:moduleId/history" element={<ModuleDetailPage />} />
               </Route>
-              <Route element={<PlatformAccessGuard requiredPermission="platform.modules.create" />}>
-                <Route path="/platform/modules/create" element={<CreateModulePage />} />
-              </Route>
+              <Route path="/platform/modules/create" element={<Navigate to="/platform/modules" replace />} />
               <Route element={<PlatformAccessGuard requiredPermission="platform.modules.update" />}>
                 <Route path="/platform/modules/:moduleId/edit" element={<EditModulePage />} />
               </Route>

@@ -8,6 +8,7 @@ import {
   ShieldAlert,
   Sparkles,
   Save,
+  Info,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -147,13 +148,13 @@ export function EditModulePage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Edit Module: {module.name}</h1>
+            <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Edit Module Metadata: {module.name}</h1>
             <span className="font-mono text-xs font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-sm border border-indigo-200">
               {module.code}
             </span>
           </div>
           <p className="text-xs font-medium text-slate-500 mt-0.5">
-            Module Code is a stable platform identifier and cannot be changed after creation.
+            Module identity and coded capabilities are managed by Smart Field Work product engineering.
           </p>
         </div>
 
@@ -171,6 +172,14 @@ export function EditModulePage() {
         </div>
       </div>
 
+      {/* Registry Info Notice Banner */}
+      <div className="rounded-sm border border-blue-200/80 bg-blue-50/60 p-3.5 text-xs font-medium text-slate-700 flex items-center gap-2.5 shadow-2xs">
+        <Info className="h-4 w-4 text-blue-600 shrink-0" />
+        <span>
+          Module identity is managed by the Smart Field Work product registry. Only lifecycle and catalog metadata can be changed here.
+        </span>
+      </div>
+
       {/* 8/4 Composition Layout Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 items-start">
         {/* LEFT COLUMN — 8 Columns */}
@@ -178,23 +187,23 @@ export function EditModulePage() {
           {/* Card 1: Module Identification */}
           <section className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
             <div className="border-b border-slate-100 pb-3">
-              <h2 className="text-base font-extrabold text-[#0D1F3D]">Module Identification</h2>
+              <h2 className="text-base font-extrabold text-[#0D1F3D]">Module Metadata</h2>
               <p className="text-xs font-medium text-slate-500">
-                Update module display name, description, category and display order.
+                Update presentation display name, description, lifecycle status, and display order.
               </p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
               <Input
-                label="Module Name *"
+                label="Module Presentation Name *"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
 
               <div className="space-y-1">
-                <Input label="Module Code (Read-Only)" value={module.code} disabled />
+                <Input label="Module Code (Developer-Owned)" value={module.code} disabled />
                 <p className="text-[10px] font-medium text-slate-400">
-                  Stable identifier locked at creation.
+                  Developer-defined stable identifier locked at implementation.
                 </p>
               </div>
             </div>
@@ -215,12 +224,12 @@ export function EditModulePage() {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Select
-                label="Category *"
-                value={category}
-                onChange={(e) => setCategory(e.target.value as PlatformModuleCategory)}
-                options={categoryOptions}
-              />
+              <div className="space-y-1">
+                <Input label="Category (Developer-Owned)" value={category} disabled />
+                <p className="text-[10px] font-medium text-slate-400">
+                  Platform module classification defined in registry.
+                </p>
+              </div>
 
               <Select
                 label="Lifecycle Status *"

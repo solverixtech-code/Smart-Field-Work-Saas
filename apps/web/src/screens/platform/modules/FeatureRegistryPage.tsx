@@ -112,13 +112,13 @@ export function FeatureRegistryPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Modules & Features</h1>
+            <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Feature Registry</h1>
             <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
               <Boxes className="h-4 w-4" />
             </span>
           </div>
           <p className="text-xs font-medium text-slate-500 mt-0.5">
-            Registry of developer-coded software capabilities bound to platform modules.
+            Code-backed software capabilities registered across Smart Field Work.
           </p>
         </div>
 

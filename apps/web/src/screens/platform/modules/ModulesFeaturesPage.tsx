@@ -219,34 +219,18 @@ export function ModulesFeaturesPage() {
               label: 'View Details',
               onClick: () => navigate(`/platform/modules/${module.id}`),
             },
-            ...(canUpdateModule && module.status !== 'ARCHIVED'
-              ? [
-                  {
-                    label: 'Edit Module',
-                    onClick: () => navigate(`/platform/modules/${module.id}/edit`),
-                  },
-                ]
-              : []),
             {
-              label: 'View Features',
-              onClick: () => navigate('/platform/modules/features'),
+              label: 'Edit Metadata',
+              onClick: () => navigate(`/platform/modules/${module.id}/edit`),
             },
             {
               label: 'Manage Dependencies',
               onClick: () => navigate(`/platform/modules/${module.id}/dependencies`),
             },
-            ...(canArchiveModule
-              ? [
-                  {
-                    label:
-                      module.status === 'ARCHIVED'
-                        ? 'Restore Module'
-                        : 'Archive Module',
-                    danger: module.status !== 'ARCHIVED',
-                    onClick: () => void changeStatus(module, module.status !== 'ARCHIVED'),
-                  },
-                ]
-              : []),
+            {
+              label: 'View Audit History',
+              onClick: () => navigate(`/platform/modules/${module.id}/history`),
+            },
           ]}
         />
       ),
@@ -265,7 +249,7 @@ export function ModulesFeaturesPage() {
             </span>
           </div>
           <p className="text-xs font-medium text-slate-500 mt-0.5">
-            Manage platform capability packages, prerequisite dependencies, and software features.
+            Browse predefined Smart Field Work platform capability modules and registered software features.
           </p>
         </div>
 
@@ -280,18 +264,6 @@ export function ModulesFeaturesPage() {
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin text-indigo-600' : ''}`} />
             Refresh
           </Button>
-
-          {canCreateModule && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => navigate('/platform/modules/create')}
-              className="gap-2 font-bold bg-[#0D1F3D] text-white hover:bg-[#162e57]"
-            >
-              <Plus className="h-4 w-4" />
-              Create Module
-            </Button>
-          )}
         </div>
       </div>
 
@@ -392,7 +364,7 @@ export function ModulesFeaturesPage() {
             emptyMessage={
               search || category || status
                 ? 'No modules match your selected filters. Try clearing or adjusting search parameters.'
-                : 'No capability modules found in the catalog yet.'
+                : 'Module Catalog Is Empty — The predefined Smart Field Work capability catalog has not been synchronized.'
             }
             pagination={{
               currentPage: result.meta.page,

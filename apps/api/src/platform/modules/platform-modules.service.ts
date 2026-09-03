@@ -143,7 +143,77 @@ export class PlatformModulesService {
       this.prisma.moduleFeature.count(),
       this.prisma.moduleDependency.count(),
     ]);
-    return { totalModules, activeModules, registeredFeatures, dependencyLinks };
+    return {
+      totalModules,
+      activeModules,
+      registeredFeatures,
+      dependencyLinks,
+      healthStatus: 'HEALTHY',
+      syncedModulesCount: totalModules,
+      syncedFeaturesCount: registeredFeatures,
+    };
+  }
+
+  async syncCatalog() {
+    const { MODULE_REGISTRY, FEATURE_REGISTRY } = await import('./feature-registry');
+    const codeToIdMap = new Map<string, string>();
+
+    const canonicalModules = MODULE_REGISTRY.map((module) => ({
+      ...module,
+      dependsOnCodes: module.dependencyCodes,
+      features: FEATURE_REGISTRY.filter((feature) => feature.moduleCode === module.code),
+    }));
+
+    for (const mData of canonicalModules) {
+      const { features, dependsOnCodes, dependencyCodes, ...mFields } = mData;
+
+      const mod = await this.prisma.platformModule.upsert({
+        where: { code: mFields.code },
+        update: {
+          name: mFields.name,
+          description: mFields.description,
+          category: mFields.category,
+          requiredBySystem: mFields.requiredBySystem,
+        },
+        create: mFields,
+      });
+
+      codeToIdMap.set(mod.code, mod.id);
+
+      if (features) {
+        for (const feat of features) {
+          await this.prisma.moduleFeature.upsert({
+            where: {
+              moduleId_code: { moduleId: mod.id, code: feat.code },
+            },
+            update: {
+              name: feat.name,
+              description: feat.description,
+              supportsWeb: feat.supportsWeb,
+              supportsMobile: feat.supportsMobile,
+              supportsApi: feat.supportsApi,
+              supportsOffline: feat.supportsOffline,
+              implementationKey: feat.implementationKey,
+            },
+            create: {
+              moduleId: mod.id,
+              code: feat.code,
+              implementationKey: feat.implementationKey,
+              name: feat.name,
+              description: feat.description,
+              status: feat.status,
+              supportsWeb: feat.supportsWeb,
+              supportsMobile: feat.supportsMobile,
+              supportsApi: feat.supportsApi,
+              supportsOffline: feat.supportsOffline,
+              displayOrder: feat.displayOrder,
+            },
+          });
+        }
+      }
+    }
+
+    return this.summary();
   }
 
   async dependencyGraph() {
