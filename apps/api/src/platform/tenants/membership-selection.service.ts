@@ -17,9 +17,7 @@ export class MembershipSelectionService {
         userId,
         status: TenantMembershipStatus.ACTIVE,
         tenant: {
-          status: {
-            in: [TenantStatus.ACTIVE, TenantStatus.DRAFT],
-          },
+          status: TenantStatus.ACTIVE,
         },
       },
       include: {

@@ -1,9 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { PayrollRepository, SalaryStructureInputDto } from '../repositories/payroll.repository';
+import { TenantScope } from '../common/tenancy/tenant-scope';
 import { PrismaService } from '../persistence/prisma.service';
-import { PaymentStatus, PayrollStatus, AttendanceStatus } from '@prisma/client';
+import { TenantMembershipStatus } from '@prisma/client';
 
 export interface CreateSalaryStructureDto {
-  userId: string;
+  membershipId?: string;
+  userId?: string;
   baseSalary: number;
   hra?: number;
   conveyance?: number;
@@ -11,176 +14,52 @@ export interface CreateSalaryStructureDto {
   pfDeduction?: number;
   esiDeduction?: number;
   tds?: number;
+  currency?: string;
 }
 
 @Injectable()
 export class PayrollService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly payrollRepository: PayrollRepository,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  async createSalaryStructure(dto: CreateSalaryStructureDto) {
-    const user = await this.prisma.user.findUnique({ where: { id: dto.userId } });
-    if (!user) throw new NotFoundException(`User ${dto.userId} not found`);
+  async createSalaryStructure(scope: TenantScope, dto: CreateSalaryStructureDto) {
+    let targetMembershipId = dto.membershipId;
 
-    const hra = dto.hra ?? dto.baseSalary * 0.4;
-    const conveyance = dto.conveyance ?? 2000;
-    const allowances = dto.allowances ?? 5000;
-    const pfDeduction = dto.pfDeduction ?? dto.baseSalary * 0.12;
-    const esiDeduction = dto.esiDeduction ?? 0;
-    const tds = dto.tds ?? 0;
-
-    const gross = dto.baseSalary + hra + conveyance + allowances;
-    const deductions = pfDeduction + esiDeduction + tds;
-    const netSalary = Math.max(0, gross - deductions);
-
-    return this.prisma.salaryStructure.upsert({
-      where: { userId: dto.userId },
-      create: {
-        userId: dto.userId,
-        baseSalary: dto.baseSalary,
-        hra,
-        conveyance,
-        allowances,
-        pfDeduction,
-        esiDeduction,
-        tds,
-        netSalary,
-      },
-      update: {
-        baseSalary: dto.baseSalary,
-        hra,
-        conveyance,
-        allowances,
-        pfDeduction,
-        esiDeduction,
-        tds,
-        netSalary,
-      },
-    });
-  }
-
-  async getSalaryStructure(userId: string) {
-    return this.prisma.salaryStructure.findUnique({ where: { userId } });
-  }
-
-  async generateMonthlyPayroll(month: number, year: number) {
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
-    const totalDaysInMonth = endDate.getDate();
-
-    let period = await this.prisma.payrollPeriod.findUnique({
-      where: { month_year: { month, year } },
-    });
-
-    if (!period) {
-      period = await this.prisma.payrollPeriod.create({
-        data: {
-          month,
-          year,
-          status: PayrollStatus.PROCESSED,
-          processedAt: new Date(),
+    if (!targetMembershipId && dto.userId) {
+      const mem = await this.prisma.tenantMembership.findFirst({
+        where: {
+          userId: dto.userId,
+          tenantId: scope.tenantId,
+          status: TenantMembershipStatus.ACTIVE,
         },
       });
+      if (mem) {
+        targetMembershipId = mem.id;
+      }
     }
 
-    const usersWithSalary = await this.prisma.salaryStructure.findMany({
-      include: {
-        user: { select: { id: true, fullName: true, employeeCode: true } },
-      },
-    });
-
-    const payslips: any[] = [];
-
-    for (const struct of usersWithSalary) {
-      const attendances = await this.prisma.attendance.findMany({
-        where: {
-          userId: struct.userId,
-          date: { gte: startDate, lte: endDate },
-        },
-      });
-
-      const presentCount = attendances.filter(
-        (a) => a.status === AttendanceStatus.PRESENT || a.status === AttendanceStatus.LATE,
-      ).length;
-
-      const lateCount = attendances.filter((a) => a.status === AttendanceStatus.LATE).length;
-      const absentCount = attendances.filter((a) => a.status === AttendanceStatus.ABSENT).length;
-      const totalWorkMins = attendances.reduce((acc, a) => acc + a.totalWorkMinutes, 0);
-      const totalOvertimeMins = attendances.reduce((acc, a) => acc + a.overtimeMinutes, 0);
-
-      const perDaySalary = struct.baseSalary / totalDaysInMonth;
-      const absenceDeduction = absentCount * perDaySalary;
-      const totalDeductions = struct.pfDeduction + struct.esiDeduction + struct.tds + absenceDeduction;
-      const totalAllowances = struct.hra + struct.conveyance + struct.allowances;
-      const netPay = Math.max(0, struct.baseSalary + totalAllowances - totalDeductions);
-
-      const payslip = await this.prisma.payslip.upsert({
-        where: {
-          userId_payrollPeriodId: {
-            userId: struct.userId,
-            payrollPeriodId: period.id,
-          },
-        },
-        create: {
-          userId: struct.userId,
-          payrollPeriodId: period.id,
-          baseSalary: struct.baseSalary,
-          totalAllowances,
-          totalDeductions,
-          netPay,
-          presentDays: presentCount,
-          absentDays: absentCount,
-          lateDays: lateCount,
-          overtimeHours: parseFloat((totalOvertimeMins / 60).toFixed(1)),
-          paymentStatus: PaymentStatus.PENDING,
-        },
-        update: {
-          baseSalary: struct.baseSalary,
-          totalAllowances,
-          totalDeductions,
-          netPay,
-          presentDays: presentCount,
-          absentDays: absentCount,
-          lateDays: lateCount,
-          overtimeHours: parseFloat((totalOvertimeMins / 60).toFixed(1)),
-        },
-      });
-
-      payslips.push(payslip);
+    if (!targetMembershipId) {
+      throw new BadRequestException('Target membershipId or valid user in tenant is required.');
     }
 
-    return {
-      period,
-      count: payslips.length,
-      payslips,
-    };
+    return this.payrollRepository.upsertSalaryStructure(scope, targetMembershipId, dto);
   }
 
-  async getPayslips(month: number, year: number) {
-    const period = await this.prisma.payrollPeriod.findUnique({
-      where: { month_year: { month, year } },
-    });
-
-    if (!period) return [];
-
-    return this.prisma.payslip.findMany({
-      where: { payrollPeriodId: period.id },
-      include: {
-        user: { select: { id: true, fullName: true, employeeCode: true, email: true } },
-      },
-    });
+  async getSalaryStructure(scope: TenantScope, targetMembershipIdOrUserId: string) {
+    return this.payrollRepository.getSalaryStructure(scope, targetMembershipIdOrUserId);
   }
 
-  async markPayslipPaid(payslipId: string, transactionRef?: string) {
-    const payslip = await this.prisma.payslip.findUnique({ where: { id: payslipId } });
-    if (!payslip) throw new NotFoundException(`Payslip ${payslipId} not found`);
+  async generateMonthlyPayroll(scope: TenantScope, month: number, year: number) {
+    return this.payrollRepository.generateMonthlyPayroll(scope, month, year);
+  }
 
-    return this.prisma.payslip.update({
-      where: { id: payslipId },
-      data: {
-        paymentStatus: PaymentStatus.PAID,
-        paymentDate: new Date(),
-        transactionRef: transactionRef ?? `TXN-${Date.now()}`,
-      },
-    });
+  async getPayslips(scope: TenantScope, _month?: number, _year?: number) {
+    return this.payrollRepository.getPayslips(scope);
+  }
+
+  async markPayslipPaid(scope: TenantScope, payslipId: string, transactionRef?: string) {
+    return this.payrollRepository.payPayslip(scope, payslipId, transactionRef);
   }
 }

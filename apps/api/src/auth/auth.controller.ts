@@ -44,6 +44,9 @@ import {
 } from '@visiblo/shared';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { RequestPrincipalGuard } from '../common/guards/request-principal.guard';
+import { CurrentPrincipal } from '../common/decorators/current-principal.decorator';
+import { RequestPrincipal } from '../common/security/request-principal.interface';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
   LoginSwaggerDto,
@@ -364,5 +367,34 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Membership selection state returned.' })
   async getMemberships(@Req() req: Request) {
     return this.membershipSelectionService.evaluateMembershipSelection(req['user'].sub);
+  }
+
+  @Post('memberships/select')
+  @UseGuards(JwtAuthGuard, RequestPrincipalGuard)
+  @ApiBearerAuth('OAuth2PasswordBearer')
+  @ApiBearerAuth('JWT-auth')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Select Active Tenant Membership Workspace',
+    description: 'Switch active workspace session to a specific active membership ID.',
+  })
+  @ApiResponse({ status: 200, description: 'Membership selected successfully; returns rotated session tokens.' })
+  async selectMembership(
+    @CurrentPrincipal() principal: RequestPrincipal,
+    @Body() body: { membershipId: string },
+    @Req() req: Request,
+  ) {
+    if (!body?.membershipId) {
+      throw new BadRequestException('membershipId is required');
+    }
+    return this.authService.selectMembership(
+      principal.userId,
+      principal.sessionId,
+      body.membershipId,
+      {
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      },
+    );
   }
 }

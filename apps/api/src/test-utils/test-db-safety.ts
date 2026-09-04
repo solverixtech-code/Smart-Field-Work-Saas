@@ -4,15 +4,24 @@
  * NEITHER NODE_ENV=test ALONE NOR AN UNCHECKED DATABASE_URL IS PERMITTED TO AUTHORIZE DESTRUCTIVE OPERATIONS.
  */
 export function verifyTestDatabaseSafety(): void {
-  const dbUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL || '';
+  if (process.env.TEST_DATABASE_URL && process.env.TEST_DATABASE_URL.trim()) {
+    process.env.DATABASE_URL = process.env.TEST_DATABASE_URL.trim();
+  }
+
+  const dbUrl = process.env.DATABASE_URL || '';
   const lowerUrl = dbUrl.toLowerCase();
+
+  // Extract database name from URL (after last slash before parameters)
+  const dbNameMatch = lowerUrl.match(/\/([a-z0-9_-]+)(?:\?|$)/);
+  const dbName = dbNameMatch ? dbNameMatch[1] : '';
 
   const isExplicitlySafeUrl =
     lowerUrl.includes('test') ||
-    lowerUrl.includes('localhost') ||
-    lowerUrl.includes('127.0.0.1') ||
     lowerUrl.includes('_test') ||
-    lowerUrl.includes('-test');
+    lowerUrl.includes('-test') ||
+    dbName.includes('test') ||
+    lowerUrl.includes('localhost') ||
+    lowerUrl.includes('127.0.0.1');
 
   if (!isExplicitlySafeUrl) {
     throw new Error(

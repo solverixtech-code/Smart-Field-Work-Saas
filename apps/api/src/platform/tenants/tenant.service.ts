@@ -129,8 +129,8 @@ export class TenantService {
       await tx.tenantSettings.create({
         data: {
           tenantId: tenant.id,
-          timezone: settingsInput.timezone || 'Asia/Kolkata',
-          currency: settingsInput.currency || 'INR',
+          timezone: timezone,
+          currency: currency,
           locale: settingsInput.locale || 'en-IN',
           language: settingsInput.language || 'en',
           dateFormat: settingsInput.dateFormat || 'YYYY-MM-DD',
@@ -165,7 +165,7 @@ export class TenantService {
             city: input.address.city.trim(),
             stateOrRegion: input.address.stateOrRegion?.trim() || null,
             postalCode: input.address.postalCode?.trim() || null,
-            countryCode: input.address.countryCode || 'IN',
+            countryCode: countryCode,
             isPrimary: input.address.isPrimary ?? true,
           },
         });

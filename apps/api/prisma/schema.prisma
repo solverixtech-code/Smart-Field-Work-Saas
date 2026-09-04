@@ -94,10 +94,14 @@ model Team {
   code              String             @unique
   description       String?
   isActive          Boolean            @default(true)
+  tenantId          String?
+  tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   members           User[]
   tenantMemberships TenantMembership[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+
+  @@index([tenantId])
 }
 
 // ─── RBAC ───────────────────────────────────────────────────────────────────────
@@ -158,21 +162,26 @@ model RoleTwoFactorSetting {
 // ─── Sessions / Devices ─────────────────────────────────────────────────────────
 
 model UserSession {
-  id               String   @id @default(uuid())
-  userId           String
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  refreshTokenHash String
-  platform         String?
-  ip               String?
-  userAgent        String?
-  location         String?
-  status           String   @default("ACTIVE") // ACTIVE, REVOKED
-  lastSeenAt       DateTime @default(now())
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                   String            @id @default(uuid())
+  userId               String
+  user                 User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshTokenHash     String
+  platform             String?
+  ip                   String?
+  userAgent            String?
+  location             String?
+  status               String            @default("ACTIVE") // ACTIVE, REVOKED
+  selectedMembershipId String?
+  selectedMembership   TenantMembership? @relation(fields: [selectedMembershipId], references: [id], onDelete: SetNull)
+  contextVersion       Int               @default(1)
+  selectedMembershipAt DateTime?
+  lastSeenAt           DateTime          @default(now())
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
 
   @@index([userId, status])
   @@index([userId, refreshTokenHash])
+  @@index([selectedMembershipId])
 }
 
 // ─── OTP Challenges ─────────────────────────────────────────────────────────────
@@ -200,20 +209,26 @@ model OtpChallenge {
 // ─── Audit Logs ─────────────────────────────────────────────────────────────────
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  actorUserId String?
-  actorUser   User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
-  action      String
-  entityType  String?
-  entityId    String?
-  beforeJson  Json?
-  afterJson   Json?
-  ip          String?
-  userAgent   String?
-  sessionId   String?
-  createdAt   DateTime @default(now())
+  id                 String            @id @default(uuid())
+  actorUserId        String?
+  actorUser          User?             @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  tenantId           String?
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenantMembershipId String?
+  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: SetNull)
+  action             String
+  entityType         String?
+  entityId           String?
+  beforeJson         Json?
+  afterJson          Json?
+  ip                 String?
+  userAgent          String?
+  sessionId          String?
+  createdAt          DateTime          @default(now())
 
   @@index([actorUserId])
+  @@index([tenantId])
+  @@index([tenantMembershipId])
   @@index([action])
   @@index([entityType, entityId])
   @@index([createdAt])
@@ -223,6 +238,8 @@ model AuditLog {
 
 model Shift {
   id                    String       @id @default(uuid())
+  tenantId              String?
+  tenant                Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   name                  String // e.g. General Shift, Morning Shift, Night Shift
   code                  String       @unique
   startTime             String // "09:00"
@@ -235,19 +252,28 @@ model Shift {
   attendances           Attendance[]
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, isActive])
 }
 
 model UserShift {
-  id        String    @id @default(uuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shiftId   String
-  shift     Shift     @relation(fields: [shiftId], references: [id], onDelete: Cascade)
-  startDate DateTime
-  endDate   DateTime?
-  createdAt DateTime  @default(now())
+  id                 String            @id @default(uuid())
+  tenantId           String?
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantMembershipId String?
+  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shiftId            String
+  shift              Shift             @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  startDate          DateTime
+  endDate            DateTime?
+  createdAt          DateTime          @default(now())
 
   @@index([userId])
+  @@index([tenantId])
+  @@index([tenantMembershipId])
   @@index([shiftId])
 }
 
@@ -269,46 +295,58 @@ enum PunchType {
 }
 
 model Attendance {
-  id               String           @id @default(uuid())
-  userId           String
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date             DateTime         @db.Date
-  shiftId          String?
-  shift            Shift?           @relation(fields: [shiftId], references: [id], onDelete: SetNull)
-  status           AttendanceStatus @default(PRESENT)
-  punchInTime      DateTime?
-  punchOutTime     DateTime?
-  totalWorkMinutes Int              @default(0)
-  overtimeMinutes  Int              @default(0)
-  lateMinutes      Int              @default(0)
-  remarks          String?
-  punchLogs        PunchLog[]
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  id                 String            @id @default(uuid())
+  tenantId           String?
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantMembershipId String?
+  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date               DateTime          @db.Date
+  shiftId            String?
+  shift              Shift?            @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  status             AttendanceStatus  @default(PRESENT)
+  punchInTime        DateTime?
+  punchOutTime       DateTime?
+  totalWorkMinutes   Int               @default(0)
+  overtimeMinutes    Int               @default(0)
+  lateMinutes        Int               @default(0)
+  remarks            String?
+  punchLogs          PunchLog[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   @@unique([userId, date])
   @@index([userId])
+  @@index([tenantId])
+  @@index([tenantMembershipId])
   @@index([date])
   @@index([status])
 }
 
 model PunchLog {
-  id           String      @id @default(uuid())
-  userId       String
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  attendanceId String?
-  attendance   Attendance? @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
-  type         PunchType
-  timestamp    DateTime    @default(now())
-  latitude     Float
-  longitude    Float
-  locationName String?
-  photoUrl     String?
-  deviceId     String?
-  deviceModel  String?
-  ipAddress    String?
+  id                 String            @id @default(uuid())
+  tenantId           String?
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantMembershipId String?
+  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attendanceId       String?
+  attendance         Attendance?       @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
+  type               PunchType
+  timestamp          DateTime          @default(now())
+  latitude           Float
+  longitude          Float
+  locationName       String?
+  photoUrl           String?
+  deviceId           String?
+  deviceModel        String?
+  ipAddress          String?
 
   @@index([userId])
+  @@index([tenantId])
+  @@index([tenantMembershipId])
   @@index([attendanceId])
   @@index([timestamp])
 }
@@ -330,24 +368,33 @@ enum PaymentStatus {
 }
 
 model SalaryStructure {
-  id           String   @id @default(uuid())
-  userId       String   @unique
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  baseSalary   Float
-  hra          Float    @default(0)
-  conveyance   Float    @default(0)
-  allowances   Float    @default(0)
-  pfDeduction  Float    @default(0)
-  esiDeduction Float    @default(0)
-  tds          Float    @default(0)
-  netSalary    Float
-  currency     String   @default("INR")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                 String            @id @default(uuid())
+  tenantId           String?
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantMembershipId String?
+  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: Cascade)
+  userId             String            @unique
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  baseSalary         Float
+  hra                Float             @default(0)
+  conveyance         Float             @default(0)
+  allowances         Float             @default(0)
+  pfDeduction        Float             @default(0)
+  esiDeduction       Float             @default(0)
+  tds                Float             @default(0)
+  netSalary          Float
+  currency           String            @default("INR")
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantMembershipId])
 }
 
 model PayrollPeriod {
   id          String        @id @default(uuid())
+  tenantId    String?
+  tenant      Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   month       Int // 1 - 12
   year        Int // e.g. 2025
   status      PayrollStatus @default(DRAFT)
@@ -358,31 +405,38 @@ model PayrollPeriod {
   updatedAt   DateTime      @updatedAt
 
   @@unique([month, year])
+  @@index([tenantId])
 }
 
 model Payslip {
-  id              String        @id @default(uuid())
-  userId          String
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payrollPeriodId String
-  payrollPeriod   PayrollPeriod @relation(fields: [payrollPeriodId], references: [id], onDelete: Cascade)
-  baseSalary      Float
-  totalAllowances Float         @default(0)
-  totalDeductions Float         @default(0)
-  netPay          Float
-  presentDays     Int           @default(0)
-  absentDays      Int           @default(0)
-  lateDays        Int           @default(0)
-  overtimeHours   Float         @default(0)
-  paymentStatus   PaymentStatus @default(PENDING)
-  paymentDate     DateTime?
-  transactionRef  String?
-  downloadUrl     String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                 String            @id @default(uuid())
+  tenantId           String?
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantMembershipId String?
+  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payrollPeriodId    String
+  payrollPeriod      PayrollPeriod     @relation(fields: [payrollPeriodId], references: [id], onDelete: Cascade)
+  baseSalary         Float
+  totalAllowances    Float             @default(0)
+  totalDeductions    Float             @default(0)
+  netPay             Float
+  presentDays        Int               @default(0)
+  absentDays         Int               @default(0)
+  lateDays           Int               @default(0)
+  overtimeHours      Float             @default(0)
+  paymentStatus      PaymentStatus     @default(PENDING)
+  paymentDate        DateTime?
+  transactionRef     String?
+  downloadUrl        String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
   @@unique([userId, payrollPeriodId])
   @@index([userId])
+  @@index([tenantId])
+  @@index([tenantMembershipId])
   @@index([payrollPeriodId])
   @@index([paymentStatus])
 }
@@ -539,11 +593,20 @@ model Tenant {
   cancelledAt DateTime?
   archivedAt  DateTime?
 
-  addresses   TenantAddress[]
-  settings    TenantSettings?
-  branding    TenantBranding?
-  memberships TenantMembership[]
-  roles       TenantRole[]
+  addresses        TenantAddress[]
+  settings         TenantSettings?
+  branding         TenantBranding?
+  memberships      TenantMembership[]
+  roles            TenantRole[]
+  teams            Team[]
+  shifts           Shift[]
+  userShifts       UserShift[]
+  attendances      Attendance[]
+  punchLogs        PunchLog[]
+  salaryStructures SalaryStructure[]
+  payrollPeriods   PayrollPeriod[]
+  payslips         Payslip[]
+  auditLogs        AuditLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -632,6 +695,14 @@ model TenantMembership {
   joinedAt      DateTime?
   activatedAt   DateTime?
   deactivatedAt DateTime?
+
+  selectedSessions UserSession[]
+  userShifts       UserShift[]
+  attendances      Attendance[]
+  punchLogs        PunchLog[]
+  salaryStructures SalaryStructure[]
+  payslips         Payslip[]
+  auditLogs        AuditLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

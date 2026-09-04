@@ -28,6 +28,7 @@ import { RedisService } from '../redis/redis.service';
 import { EmailService } from './email.service';
 import { SmsService } from './sms.service';
 import { StorageService } from '../common/services/storage.service';
+import { MembershipSelectionService } from '../platform/tenants/membership-selection.service';
 
 const OTP_TTL_SECONDS = 5 * 60;
 const OTP_RESEND_SECONDS = 30;
@@ -46,6 +47,7 @@ export class AuthService {
     private readonly emailService: EmailService,
     private readonly smsService: SmsService,
     private readonly storageService: StorageService,
+    private readonly membershipSelectionService: MembershipSelectionService,
   ) {}
 
   // ─── Login ──────────────────────────────────────────────────────────────────
@@ -253,27 +255,42 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const sessions = await this.prisma.userSession.findMany({
-      where: {
-        userId: payload.sub,
-        status: 'ACTIVE',
-      },
-      include: { user: true },
-    });
+    let matchedSession: any = null;
 
-    let matchedSession: (typeof sessions)[0] | null = null;
-    for (const session of sessions) {
-      try {
-        const isValid = await argon2.verify(
-          session.refreshTokenHash,
-          refreshToken,
-        );
-        if (isValid) {
-          matchedSession = session;
-          break;
-        }
-      } catch {
-        /* skip */
+    if (payload.sid) {
+      const session = await this.prisma.userSession.findUnique({
+        where: { id: payload.sid },
+        include: { user: true },
+      });
+      if (session && session.status === 'ACTIVE' && session.userId === payload.sub) {
+        try {
+          if (await argon2.verify(session.refreshTokenHash, refreshToken)) {
+            matchedSession = session;
+          }
+        } catch {}
+      }
+    }
+
+    if (!matchedSession) {
+      const sessions = await this.prisma.userSession.findMany({
+        where: {
+          userId: payload.sub,
+          status: 'ACTIVE',
+        },
+        include: { user: true },
+      });
+
+      for (const session of sessions) {
+        try {
+          const isValid = await argon2.verify(
+            session.refreshTokenHash,
+            refreshToken,
+          );
+          if (isValid) {
+            matchedSession = session;
+            break;
+          }
+        } catch {}
       }
     }
 
@@ -285,8 +302,35 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
+    let selectedMembershipId = matchedSession.selectedMembershipId;
+    let contextVersion = matchedSession.contextVersion;
+
+    if (selectedMembershipId) {
+      const mem = await this.prisma.tenantMembership.findUnique({
+        where: { id: selectedMembershipId },
+        include: { tenant: true },
+      });
+      if (!mem || mem.status !== 'ACTIVE' || !mem.tenant || mem.tenant.status !== 'ACTIVE') {
+        const selectionEval = await this.membershipSelectionService.evaluateMembershipSelection(matchedSession.userId);
+        selectedMembershipId = selectionEval.autoSelectableMembershipId;
+        contextVersion += 1;
+        await this.prisma.userSession.update({
+          where: { id: matchedSession.id },
+          data: {
+            selectedMembershipId,
+            contextVersion,
+            selectedMembershipAt: selectedMembershipId ? new Date() : null,
+          },
+        });
+      }
+    }
+
     // Rotate refresh token
-    const tokens = await this.generateTokens(matchedSession.user);
+    const tokens = await this.generateTokens(matchedSession.user, {
+      sessionId: matchedSession.id,
+      selectedMembershipId,
+      contextVersion,
+    });
     const newRefreshTokenHash = await argon2.hash(tokens.refreshToken);
 
     await this.prisma.userSession.update({
@@ -300,6 +344,98 @@ export class AuthService {
     });
 
     return tokens;
+  }
+
+  // ─── Membership Selection ───────────────────────────────────────────────
+
+  async selectMembership(
+    userId: string,
+    sessionId: string | null,
+    membershipId: string,
+    meta: { ip?: string; userAgent?: string },
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.status !== 'ACTIVE') {
+      throw new UnauthorizedException('User account inactive');
+    }
+
+    const membership = await this.prisma.tenantMembership.findUnique({
+      where: { id: membershipId },
+      include: { tenant: true, tenantRole: true },
+    });
+
+    if (
+      !membership ||
+      membership.userId !== userId ||
+      membership.status !== 'ACTIVE' ||
+      !membership.tenant ||
+      membership.tenant.status !== 'ACTIVE'
+    ) {
+      throw new BadRequestException('Selected membership is invalid, suspended, or inactive.');
+    }
+
+    let session: any = null;
+    if (sessionId) {
+      session = await this.prisma.userSession.findFirst({
+        where: { id: sessionId, userId, status: 'ACTIVE' },
+      });
+    }
+
+    if (!session) {
+      session = await this.prisma.userSession.findFirst({
+        where: { userId, status: 'ACTIVE' },
+        orderBy: { lastSeenAt: 'desc' },
+      });
+    }
+
+    if (!session) {
+      throw new UnauthorizedException('Active session not found');
+    }
+
+    const newContextVersion = session.contextVersion + 1;
+    const selectedMembershipAt = new Date();
+
+    const tokens = await this.generateTokens(user, {
+      sessionId: session.id,
+      selectedMembershipId: membership.id,
+      contextVersion: newContextVersion,
+    });
+
+    const refreshTokenHash = await argon2.hash(tokens.refreshToken);
+
+    await this.prisma.userSession.update({
+      where: { id: session.id },
+      data: {
+        selectedMembershipId: membership.id,
+        contextVersion: newContextVersion,
+        selectedMembershipAt,
+        refreshTokenHash,
+        lastSeenAt: new Date(),
+      },
+    });
+
+    await this.audit({
+      action: 'MEMBERSHIP_SELECTED',
+      actorUserId: userId,
+      entityType: 'TENANT_MEMBERSHIP',
+      entityId: membership.id,
+      metadata: { tenantId: membership.tenantId, contextVersion: newContextVersion },
+      ...meta,
+    });
+
+    return {
+      selectedMembershipId: membership.id,
+      selectionRequired: false,
+      membership: {
+        id: membership.id,
+        tenantId: membership.tenantId,
+        tenantDisplayName: membership.tenant.displayName,
+        tenantSlug: membership.tenant.slug,
+        tenantRoleCode: membership.tenantRole?.code ?? null,
+      },
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   }
 
   // ─── Logout ─────────────────────────────────────────────────────────────────
@@ -372,7 +508,6 @@ export class AuthService {
       return genericResponse;
     }
 
-    // Generate reset token
     const resetToken = randomUUID();
     const resetTokenHash = await argon2.hash(resetToken);
 
@@ -414,7 +549,6 @@ export class AuthService {
   ): Promise<{ success: boolean }> {
     const input = ResetPasswordSchema.parse(dto);
 
-    // Find user with valid reset token
     const users = await this.prisma.user.findMany({
       where: {
         passwordResetTokenHash: { not: null },
@@ -449,7 +583,6 @@ export class AuthService {
           lastPasswordChangeAt: new Date(),
         },
       }),
-      // Invalidate all sessions
       this.prisma.userSession.updateMany({
         where: { userId: matchedUser.id, status: 'ACTIVE' },
         data: { status: 'REVOKED' },
@@ -750,6 +883,109 @@ export class AuthService {
 
   // ─── Private Helpers ────────────────────────────────────────────────────────
 
+  private async createSessionAndTokens(
+    user: User,
+    meta: { ip?: string; userAgent?: string },
+  ): Promise<AuthTokens> {
+    const selectionEval = await this.membershipSelectionService.evaluateMembershipSelection(user.id);
+    const selectedMembershipId = selectionEval.autoSelectableMembershipId;
+    const sessionId = randomUUID();
+    const contextVersion = 1;
+
+    const tokens = await this.generateTokens(user, {
+      sessionId,
+      selectedMembershipId,
+      contextVersion,
+    });
+    const refreshTokenHash = await argon2.hash(tokens.refreshToken);
+
+    // Parse user-agent for platform detection
+    const platform = this.detectPlatform(meta.userAgent);
+
+    await this.prisma.userSession.create({
+      data: {
+        id: sessionId,
+        userId: user.id,
+        selectedMembershipId,
+        contextVersion,
+        selectedMembershipAt: selectedMembershipId ? new Date() : null,
+        refreshTokenHash,
+        platform,
+        ip: meta.ip ?? null,
+        userAgent: meta.userAgent ?? null,
+        status: 'ACTIVE',
+      },
+    });
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    await this.audit({
+      action: 'LOGIN_SUCCESS',
+      actorUserId: user.id,
+      entityType: 'USER',
+      entityId: user.id,
+      metadata: { stage: 'SESSION_CREATED', selectedMembershipId, contextVersion },
+      ...meta,
+    });
+
+    return tokens;
+  }
+
+  private async generateTokens(
+    user: User,
+    sessionContext?: {
+      sessionId: string;
+      selectedMembershipId: string | null;
+      contextVersion: number;
+    },
+  ): Promise<AuthTokens> {
+    const payload = {
+      sub: user.id,
+      sid: sessionContext?.sessionId,
+      mid: sessionContext?.selectedMembershipId ?? null,
+      ctxv: sessionContext?.contextVersion ?? 1,
+      email: user.email,
+      role: user.role,
+    };
+    const refreshPayload = {
+      sub: user.id,
+      sid: sessionContext?.sessionId,
+      mid: sessionContext?.selectedMembershipId ?? null,
+      ctxv: sessionContext?.contextVersion ?? 1,
+      tokenUse: 'refresh',
+      jti: randomUUID(),
+      email: user.email,
+      role: user.role,
+    };
+
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
+      expiresIn: '24h',
+    });
+
+    const refreshToken = await this.jwtService.signAsync(refreshPayload, {
+      secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
+      expiresIn: '30d',
+    });
+
+    return {
+      accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role as any,
+        fullName: user.fullName,
+        employeeCode: user.employeeCode,
+        image: user.avatarUrl,
+        permissions: [],
+      },
+    };
+  }
+
   private async isTwoFactorRequired(user: User): Promise<boolean> {
     if (user.twoFactorEnabled) return true;
 
@@ -781,7 +1017,6 @@ export class AuthService {
       },
     });
 
-    // Send OTP via email (primary channel)
     await this.emailService.sendOtp({ to: user.email, otp });
 
     await this.audit({
@@ -799,77 +1034,6 @@ export class AuthService {
       deliveryTarget: this.maskEmail(user.email),
       expiresInSeconds: OTP_TTL_SECONDS,
       resendAfterSeconds: OTP_RESEND_SECONDS,
-    };
-  }
-
-  private async createSessionAndTokens(
-    user: User,
-    meta: { ip?: string; userAgent?: string },
-  ): Promise<AuthTokens> {
-    const tokens = await this.generateTokens(user);
-    const refreshTokenHash = await argon2.hash(tokens.refreshToken);
-
-    // Parse user-agent for platform detection
-    const platform = this.detectPlatform(meta.userAgent);
-
-    await this.prisma.userSession.create({
-      data: {
-        userId: user.id,
-        refreshTokenHash,
-        platform,
-        ip: meta.ip ?? null,
-        userAgent: meta.userAgent ?? null,
-        status: 'ACTIVE',
-      },
-    });
-
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
-    });
-
-    await this.audit({
-      action: 'LOGIN_SUCCESS',
-      actorUserId: user.id,
-      entityType: 'USER',
-      entityId: user.id,
-      metadata: { stage: 'SESSION_CREATED' },
-      ...meta,
-    });
-
-    return tokens;
-  }
-
-  private async generateTokens(user: User): Promise<AuthTokens> {
-    const payload = { sub: user.id, email: user.email, role: user.role };
-    const refreshPayload = {
-      ...payload,
-      tokenUse: 'refresh',
-      jti: randomUUID(),
-    };
-
-    const accessToken = await this.jwtService.signAsync(payload, {
-      secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
-      expiresIn: '24h',
-    });
-
-    const refreshToken = await this.jwtService.signAsync(refreshPayload, {
-      secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
-      expiresIn: '30d',
-    });
-
-    return {
-      accessToken,
-      refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role as any,
-        fullName: user.fullName,
-        employeeCode: user.employeeCode,
-        image: user.avatarUrl,
-        permissions: [],
-      },
     };
   }
 

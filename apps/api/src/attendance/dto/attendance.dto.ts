@@ -2,19 +2,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class MobilePunchSwaggerDto {
   @ApiProperty({
-    description: 'User ID for attendance punch',
-    example: 'usr_123abc',
-  })
-  userId: string;
-
-  @ApiProperty({
-    description: 'GPS latitude coordinate',
+    description: 'GPS latitude coordinate (-90 to 90)',
     example: 19.076,
   })
   latitude: number;
 
   @ApiProperty({
-    description: 'GPS longitude coordinate',
+    description: 'GPS longitude coordinate (-180 to 180)',
     example: 72.8777,
   })
   longitude: number;

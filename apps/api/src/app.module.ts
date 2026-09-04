@@ -16,6 +16,7 @@ import { ApiThrottlerGuard } from './common/guards/api-throttler.guard';
 import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
 import { RedisThrottlerStorage } from './common/throttling/redis-throttler.storage';
 import { ThrottlingModule } from './common/throttling/throttling.module';
+import { RepositoriesModule } from './repositories/repositories.module';
 
 import { AppController } from './app.controller';
 
@@ -47,6 +48,7 @@ import { AppController } from './app.controller';
     ThrottlingModule,
     AuthSecurityModule,
     PersistenceModule,
+    RepositoriesModule,
     AuthModule,
     ShiftModule,
     AttendanceModule,

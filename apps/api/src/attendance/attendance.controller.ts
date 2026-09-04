@@ -1,14 +1,17 @@
-import { Controller, Post, Get, Body, Query, Headers, BadRequestException, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Headers } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiHeader } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
-import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { TenantAuthenticated } from '../common/decorators/tenant-authenticated.decorator';
+import { CurrentPrincipal } from '../common/decorators/current-principal.decorator';
+import { RequestPrincipal } from '../common/security/request-principal.interface';
+import { TenantScopeFactory } from '../common/tenancy/tenant-scope';
 import { MobilePunchSwaggerDto } from './dto/attendance.dto';
 
 @ApiTags('Attendance & Punch Logs')
 @ApiBearerAuth('OAuth2PasswordBearer')
 @ApiBearerAuth('JWT-auth')
 @Controller('attendance')
-@UseGuards(JwtAuthGuard)
+@TenantAuthenticated()
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
@@ -21,14 +24,13 @@ export class AttendanceController {
   @ApiBody({ type: MobilePunchSwaggerDto })
   @ApiResponse({ status: 201, description: 'Punched in successfully' })
   async punchIn(
+    @CurrentPrincipal() principal: RequestPrincipal,
     @Body() dto: MobilePunchSwaggerDto,
     @Headers('x-device-id') headerDeviceId?: string,
   ) {
-    if (!dto.userId) {
-      throw new BadRequestException('userId is required for punch-in');
-    }
+    const scope = TenantScopeFactory.fromPrincipal(principal);
     const deviceId = dto.deviceId ?? headerDeviceId;
-    return this.attendanceService.punchIn(dto.userId, { ...dto, deviceId });
+    return this.attendanceService.punchIn(scope, { ...dto, deviceId });
   }
 
   @Post('punch-out')
@@ -40,40 +42,42 @@ export class AttendanceController {
   @ApiBody({ type: MobilePunchSwaggerDto })
   @ApiResponse({ status: 201, description: 'Punched out successfully' })
   async punchOut(
+    @CurrentPrincipal() principal: RequestPrincipal,
     @Body() dto: MobilePunchSwaggerDto,
     @Headers('x-device-id') headerDeviceId?: string,
   ) {
-    if (!dto.userId) {
-      throw new BadRequestException('userId is required for punch-out');
-    }
+    const scope = TenantScopeFactory.fromPrincipal(principal);
     const deviceId = dto.deviceId ?? headerDeviceId;
-    return this.attendanceService.punchOut(dto.userId, { ...dto, deviceId });
+    return this.attendanceService.punchOut(scope, { ...dto, deviceId });
   }
 
   @Get('admin/today')
   @ApiOperation({
     summary: 'Get Today Attendance Log (Admin)',
-    description: 'Fetch real-time punch logs and attendance status for all employees today.',
+    description: 'Fetch real-time punch logs and attendance status for employees in current tenant.',
   })
   @ApiResponse({ status: 200, description: 'Today attendance logs returned' })
-  async getTodayAttendanceAdmin() {
-    return this.attendanceService.getTodayAttendanceAdmin();
+  async getTodayAttendanceAdmin(@CurrentPrincipal() principal: RequestPrincipal) {
+    const scope = TenantScopeFactory.fromPrincipal(principal);
+    return this.attendanceService.getTodayAttendanceAdmin(scope);
   }
 
   @Get('admin/monthly')
   @ApiOperation({
     summary: 'Get Monthly Attendance Muster Roll (Admin)',
-    description: 'Fetch monthly attendance records for HR muster roll calculation.',
+    description: 'Fetch monthly attendance records for current tenant.',
   })
   @ApiQuery({ name: 'month', required: false, description: 'Month number (1-12)', example: 9 })
   @ApiQuery({ name: 'year', required: false, description: 'Year', example: 2026 })
   @ApiResponse({ status: 200, description: 'Monthly attendance array returned' })
   async getMonthlyAttendanceAdmin(
+    @CurrentPrincipal() principal: RequestPrincipal,
     @Query('month') monthStr?: string,
     @Query('year') yearStr?: string,
   ) {
+    const scope = TenantScopeFactory.fromPrincipal(principal);
     const month = monthStr ? parseInt(monthStr, 10) : new Date().getMonth() + 1;
     const year = yearStr ? parseInt(yearStr, 10) : new Date().getFullYear();
-    return this.attendanceService.getMonthlyAttendanceAdmin(month, year);
+    return this.attendanceService.getMonthlyAttendanceAdmin(scope, month, year);
   }
 }
