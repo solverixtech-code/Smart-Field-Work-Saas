@@ -25,7 +25,7 @@ describe('IdentityCompatibilityService (Phase 0.2 Foundation)', () => {
     managerId: 'usr-mgr-999',
     status: 'ACTIVE',
     avatarUrl: null,
-    phoneNumber: null,
+    mobile: null,
     isSuperAdmin: false,
     mustChangePassword: false,
     lastLoginAt: null,
