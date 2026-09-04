@@ -6,19 +6,11 @@ import { PrismaService } from '../../persistence/prisma.service';
 import { seedTenantRoleTemplates } from '../../../prisma/seeds/tenant-role-templates';
 import { TenantStatus } from '@prisma/client';
 
+import { verifyTestDatabaseSafety } from '../../test-utils/test-db-safety';
+
 describe('TenantService (Phase 0.2 Foundation)', () => {
   let tenantService: TenantService;
   let prisma: PrismaService;
-
-  function verifyTestDatabaseSafety() {
-    const dbUrl = process.env.DATABASE_URL || '';
-    const nodeEnv = process.env.NODE_ENV;
-    if (nodeEnv !== 'test' && !dbUrl.includes('test') && !dbUrl.includes('localhost') && !dbUrl.includes('127.0.0.1')) {
-      throw new Error(
-        `[SAFETY SHIELD] Refusing to run destructive cleanup tests against potential production/staging database. DATABASE_URL must contain 'test' or 'localhost', or NODE_ENV must be 'test'.`,
-      );
-    }
-  }
 
   beforeEach(async () => {
     verifyTestDatabaseSafety();
@@ -118,5 +110,37 @@ describe('TenantService (Phase 0.2 Foundation)', () => {
     const updated = await tenantService.updateTenantStatus(t.id, TenantStatus.ACTIVE);
     expect(updated.status).toBe(TenantStatus.ACTIVE);
     expect(updated.activatedAt).toBeDefined();
+  });
+
+  it('should reject invalid timezone or currency with BadRequestException at domain boundary', async () => {
+    await expect(
+      tenantService.createTenantFoundation({
+        slug: 'invalid-tz',
+        displayName: 'Invalid TZ Corp',
+        settings: { timezone: 'Mars/Phobos' },
+      }),
+    ).rejects.toThrow();
+
+    await expect(
+      tenantService.createTenantFoundation({
+        slug: 'invalid-curr',
+        displayName: 'Invalid Currency Corp',
+        settings: { currency: 'INVALID_CURRENCY' },
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('should fail foundation creation and rollback transaction if tenant role templates are unseeded', async () => {
+    await prisma.tenantRoleTemplate.deleteMany();
+
+    await expect(
+      tenantService.createTenantFoundation({
+        slug: 'unseeded-roles-t5',
+        displayName: 'No Roles Tenant',
+      }),
+    ).rejects.toThrow('Tenant role templates unavailable');
+
+    const t = await prisma.tenant.findUnique({ where: { slug: 'unseeded-roles-t5' } });
+    expect(t).toBeNull();
   });
 });

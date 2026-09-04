@@ -10,7 +10,6 @@ export interface ResolvedIdentityContext {
   dataScope: DataScope;
   employeeCode: string | null;
   teamId: string | null;
-  managerId: string | null;
   managerMembershipId: string | null;
   legacyManagerUserId: string | null;
   isLegacyFallback: boolean;
@@ -42,7 +41,6 @@ export class IdentityCompatibilityService {
         dataScope: membership.dataScope || user.dataScope,
         employeeCode: membership.employeeCode || user.employeeCode || null,
         teamId: membership.teamId || user.teamId || null,
-        managerId: membership.managerMembershipId || user.managerId || null,
         managerMembershipId: membership.managerMembershipId || null,
         legacyManagerUserId: null,
         isLegacyFallback: false,
@@ -58,7 +56,6 @@ export class IdentityCompatibilityService {
       dataScope: user.dataScope,
       employeeCode: user.employeeCode || null,
       teamId: user.teamId || null,
-      managerId: user.managerId || null,
       managerMembershipId: null,
       legacyManagerUserId: user.managerId || null,
       isLegacyFallback: true,

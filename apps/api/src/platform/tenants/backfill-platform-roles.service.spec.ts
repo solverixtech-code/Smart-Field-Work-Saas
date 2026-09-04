@@ -5,11 +5,14 @@ import { PrismaService } from '../../persistence/prisma.service';
 import { seedPlatformRoles } from '../../../prisma/seeds/platform-roles';
 import { Role, PlatformAssignmentStatus } from '@prisma/client';
 
+import { verifyTestDatabaseSafety } from '../../test-utils/test-db-safety';
+
 describe('BackfillPlatformRolesService (Phase 0.2 Foundation)', () => {
   let backfillService: BackfillPlatformRolesService;
   let prisma: PrismaService;
 
   beforeEach(async () => {
+    verifyTestDatabaseSafety();
     const module: TestingModule = await Test.createTestingModule({
       providers: [BackfillPlatformRolesService, PlatformRoleService, PrismaService],
     }).compile();

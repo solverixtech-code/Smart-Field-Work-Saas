@@ -29,9 +29,14 @@ export class TenantService {
    * Transactionally creates a foundation Tenant with normalized settings, branding, address, and built-in roles.
    */
   async createTenantFoundation(input: CreateTenantFoundationDto): Promise<TenantDetailDto> {
+    // 1. Validate displayName invariant
+    if (!input.displayName || !input.displayName.trim()) {
+      throw new BadRequestException('displayName is required and cannot be empty.');
+    }
+
     const slug = input.slug.trim().toLowerCase();
 
-    // Canonical slug format invariant: lowercase alphanumeric with single hyphens
+    // 2. Canonical slug format invariant: lowercase alphanumeric with single hyphens
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
       throw new BadRequestException(
         `Invalid slug format '${slug}'. Slug must be lowercase URL-safe kebab-case (e.g. 'abc-pharma').`,
@@ -44,7 +49,7 @@ export class TenantService {
       throw new ConflictException(`Tenant with slug '${slug}' already exists.`);
     }
 
-    // Normalize and check primaryDomain uniqueness if provided
+    // 3. Normalize and validate primaryDomain hostname format & uniqueness if provided
     let primaryDomain: string | undefined = undefined;
     if (input.primaryDomain && input.primaryDomain.trim()) {
       primaryDomain = input.primaryDomain
@@ -52,6 +57,11 @@ export class TenantService {
         .toLowerCase()
         .replace(/^https?:\/\//, '')
         .replace(/\/.*$/, '');
+
+      const domainRegex = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/i;
+      if (!domainRegex.test(primaryDomain)) {
+        throw new BadRequestException(`Invalid primaryDomain hostname format '${primaryDomain}'.`);
+      }
 
       const existingDomain = await this.prisma.tenant.findUnique({
         where: { primaryDomain },
@@ -61,7 +71,36 @@ export class TenantService {
       }
     }
 
-    // Validate branding colors if supplied
+    // 4. Validate settings invariants (timezone, currency, financialYearStartMonth)
+    const timezone = input.settings?.timezone || 'Asia/Kolkata';
+    try {
+      Intl.DateTimeFormat(undefined, { timeZone: timezone });
+    } catch {
+      throw new BadRequestException(`Invalid IANA timezone '${timezone}'.`);
+    }
+
+    const currency = (input.settings?.currency || 'INR').trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(currency)) {
+      throw new BadRequestException(`Invalid ISO-4217 currency code '${currency}'.`);
+    }
+
+    if (input.settings?.financialYearStartMonth !== undefined) {
+      const m = input.settings.financialYearStartMonth;
+      if (!Number.isInteger(m) || m < 1 || m > 12) {
+        throw new BadRequestException(`financialYearStartMonth must be an integer between 1 and 12.`);
+      }
+    }
+
+    // 5. Validate countryCode invariant if address provided
+    let countryCode = 'IN';
+    if (input.address?.countryCode) {
+      countryCode = input.address.countryCode.trim().toUpperCase();
+      if (!/^[A-Z]{2}$/.test(countryCode)) {
+        throw new BadRequestException(`Invalid ISO-3166-1 alpha-2 country code '${countryCode}'.`);
+      }
+    }
+
+    // 6. Validate branding colors if supplied
     if (input.branding?.primaryColor && !/^#[0-9A-Fa-f]{6}$/.test(input.branding.primaryColor)) {
       throw new BadRequestException(`Invalid primaryColor hex code '${input.branding.primaryColor}'.`);
     }

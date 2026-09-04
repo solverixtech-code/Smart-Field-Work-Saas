@@ -39,8 +39,8 @@ This implementation transitions the platform from a legacy single-workspace mode
 - `Tenant`: Primary workspace aggregate (`id`, `slug`, `displayName`, `legalName`, `primaryDomain`, `status`, `companySizeCode`, `description`, lifecycle timestamps).
 - `TenantAddress`, `TenantSettings`, `TenantBranding`: Normalized child entities for address details, regional configuration (timezone, currency, locale), and visual branding.
 - `TenantMembership`: Composite join model `(tenantId, userId)` representing a user's scoped presence in a tenant. Captures tenant-local `employeeCode`, `designation`, `department`, `dataScope`, `teamId`, and `managerMembershipId`.
-- `TenantRoleTemplate` & `TenantRole`: Templates (`super_admin`, `admin`, `sales_manager`, `team_leader`, `field_executive`, `back_office_executive`) instantiated per tenant.
-- `PlatformRole` & `PlatformUserRoleAssignment`: Platform-wide administrative role grants (`super_admin`, `support_engineer`, `billing_admin`, `auditor`).
+- `TenantRoleTemplate` & `TenantRole`: Built-in templates (`tenant_admin`, `sales_manager`, `team_leader`, `field_executive`, `finance_ops`, `support`) instantiated per tenant.
+- `PlatformRole` & `PlatformUserRoleAssignment`: Platform-wide administrative role definitions (`PLATFORM_SUPER_ADMIN`, `PLATFORM_OPERATIONS_ADMIN`, `PLATFORM_ONBOARDING`, `PLATFORM_SUPPORT`, `PLATFORM_BILLING`, `PLATFORM_AUDITOR`).
 
 ### 2.2 Security Wiring & Modules (`AuthSecurityModule`)
 - Extracted global `@Global()` `AuthSecurityModule` exporting `JwtModule` and `JwtAuthGuard`.

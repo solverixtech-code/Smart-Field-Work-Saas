@@ -47,7 +47,6 @@ describe('IdentityCompatibilityService (Phase 0.2 Foundation)', () => {
     expect(res.membershipId).toBeNull();
     expect(res.roleCode).toBe('SALES_MANAGER');
     expect(res.tenantRoleCode).toBeNull();
-    expect(res.managerId).toBe('usr-mgr-999');
     expect(res.legacyManagerUserId).toBe('usr-mgr-999');
     expect(res.managerMembershipId).toBeNull();
   });
@@ -89,7 +88,6 @@ describe('IdentityCompatibilityService (Phase 0.2 Foundation)', () => {
     expect(res.roleCode).toBe('sales_manager'); // Resolves string code, NOT UUID!
     expect(res.tenantRoleCode).toBe('sales_manager');
     expect(res.employeeCode).toBe('PH-101');
-    expect(res.managerId).toBe('mem-mgr-555');
     expect(res.managerMembershipId).toBe('mem-mgr-555');
     expect(res.legacyManagerUserId).toBeNull();
   });

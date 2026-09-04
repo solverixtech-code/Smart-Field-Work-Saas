@@ -13,7 +13,8 @@
     "test": "jest",
     "test:e2e": "jest --config ./test/jest-e2e.json --runInBand",
     "db:seed:production": "ts-node prisma/seed.ts",
-    "db:seed:dev": "ts-node prisma/seed-dev.ts"
+    "db:seed:dev": "ts-node prisma/seed-dev.ts",
+    "db:backfill:platform-roles": "ts-node prisma/backfills/backfill-platform-roles.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

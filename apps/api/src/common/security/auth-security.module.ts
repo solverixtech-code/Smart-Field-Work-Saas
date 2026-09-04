@@ -10,10 +10,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        secret:
-          configService.get<string>('JWT_ACCESS_SECRET') ||
-          process.env.JWT_ACCESS_SECRET ||
-          'visiblo_jwt_secret_key_2025',
+        secret: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         signOptions: { expiresIn: '24h' },
       }),
     }),

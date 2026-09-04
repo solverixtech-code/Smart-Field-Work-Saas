@@ -4,19 +4,11 @@ import { PlatformRoleService } from './platform-role.service';
 import { PrismaService } from '../../persistence/prisma.service';
 import { PlatformAssignmentStatus, Role } from '@prisma/client';
 
+import { verifyTestDatabaseSafety } from '../../test-utils/test-db-safety';
+
 describe('PlatformRoleService (Phase 0.2 Foundation)', () => {
   let service: PlatformRoleService;
   let prisma: PrismaService;
-
-  function verifyTestDatabaseSafety() {
-    const dbUrl = process.env.DATABASE_URL || '';
-    const nodeEnv = process.env.NODE_ENV;
-    if (nodeEnv !== 'test' && !dbUrl.includes('test') && !dbUrl.includes('localhost') && !dbUrl.includes('127.0.0.1')) {
-      throw new Error(
-        `[SAFETY SHIELD] Refusing to run destructive cleanup tests against potential production/staging database.`,
-      );
-    }
-  }
 
   beforeEach(async () => {
     verifyTestDatabaseSafety();
