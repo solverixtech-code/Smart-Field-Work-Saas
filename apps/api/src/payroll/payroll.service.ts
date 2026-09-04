@@ -5,8 +5,7 @@ import { PrismaService } from '../persistence/prisma.service';
 import { TenantMembershipStatus } from '@prisma/client';
 
 export interface CreateSalaryStructureDto {
-  membershipId?: string;
-  userId?: string;
+  membershipId: string;
   baseSalary: number;
   hra?: number;
   conveyance?: number;
@@ -25,26 +24,11 @@ export class PayrollService {
   ) {}
 
   async createSalaryStructure(scope: TenantScope, dto: CreateSalaryStructureDto) {
-    let targetMembershipId = dto.membershipId;
-
-    if (!targetMembershipId && dto.userId) {
-      const mem = await this.prisma.tenantMembership.findFirst({
-        where: {
-          userId: dto.userId,
-          tenantId: scope.tenantId,
-          status: TenantMembershipStatus.ACTIVE,
-        },
-      });
-      if (mem) {
-        targetMembershipId = mem.id;
-      }
+    if (!dto.membershipId) {
+      throw new BadRequestException('Target membershipId is required.');
     }
 
-    if (!targetMembershipId) {
-      throw new BadRequestException('Target membershipId or valid user in tenant is required.');
-    }
-
-    return this.payrollRepository.upsertSalaryStructure(scope, targetMembershipId, dto);
+    return this.payrollRepository.upsertSalaryStructure(scope, dto.membershipId, dto);
   }
 
   async getSalaryStructure(scope: TenantScope, targetMembershipIdOrUserId: string) {

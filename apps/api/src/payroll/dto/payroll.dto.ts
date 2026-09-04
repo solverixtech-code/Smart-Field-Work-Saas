@@ -1,22 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, Min, Max } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, Max } from 'class-validator';
 
 export class CreateSalaryStructureSwaggerDto {
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Target Membership ID of employee',
     example: 'mem_123abc',
   })
-  @IsOptional()
   @IsString()
-  membershipId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Legacy User ID of employee (if membershipId not specified)',
-    example: 'usr_123abc',
-  })
-  @IsOptional()
-  @IsString()
-  userId?: string;
+  @IsNotEmpty()
+  membershipId: string;
 
   @ApiProperty({
     description: 'Monthly base salary amount in INR',

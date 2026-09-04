@@ -21,6 +21,7 @@ export interface EnvironmentVariables {
   SMTP_USER?: string;
   SMTP_PASS?: string;
   SMTP_FROM?: string;
+  ALLOW_DEV_OTP_BYPASS?: string;
   SMS_PROVIDER_URL?: string;
   SMS_USERNAME?: string;
   SMS_API_KEY?: string;
@@ -30,6 +31,7 @@ export interface EnvironmentVariables {
 
 export const validationSchemaForEnv = Joi.object<EnvironmentVariables, true>({
   NODE_ENV: Joi.string().default('development'),
+  ALLOW_DEV_OTP_BYPASS: Joi.string().valid('true', 'false').default('false'),
   DATABASE_URL: Joi.string().required(),
   JWT_ACCESS_SECRET: Joi.string().min(32).required(),
   JWT_REFRESH_SECRET: Joi.string().min(32).required(),

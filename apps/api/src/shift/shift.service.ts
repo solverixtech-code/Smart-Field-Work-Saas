@@ -4,6 +4,8 @@ import { TenantScope } from '../common/tenancy/tenant-scope';
 import { PrismaService } from '../persistence/prisma.service';
 import { TenantMembershipStatus } from '@prisma/client';
 
+import { UpdateShiftSwaggerDto } from './dto/shift.dto';
+
 export interface CreateShiftDto {
   name: string;
   code: string;
@@ -15,8 +17,7 @@ export interface CreateShiftDto {
 }
 
 export interface AssignShiftDto {
-  membershipId?: string;
-  userId?: string;
+  membershipId: string;
   shiftId: string;
   startDate: string;
   endDate?: string;
@@ -41,9 +42,10 @@ export class ShiftService {
       },
       include: {
         userShifts: {
+          where: { tenantId: scope.tenantId },
           include: {
             user: {
-              select: { id: true, fullName: true, employeeCode: true, email: true },
+              select: { id: true, fullName: true, employeeCode: true, email: true, avatarUrl: true },
             },
             tenantMembership: true,
           },
@@ -80,34 +82,28 @@ export class ShiftService {
     });
   }
 
-  async update(scope: TenantScope, id: string, dto: Partial<CreateShiftDto>) {
-    return this.shiftRepository.updateShift(scope, id, dto);
+  async update(scope: TenantScope, id: string, dto: UpdateShiftSwaggerDto) {
+    const updatePayload: any = {};
+    if (dto.name !== undefined) updatePayload.name = dto.name;
+    if (dto.code !== undefined) updatePayload.code = dto.code;
+    if (dto.startTime !== undefined) updatePayload.startTime = dto.startTime;
+    if (dto.endTime !== undefined) updatePayload.endTime = dto.endTime;
+    if (dto.gracePeriodMinutes !== undefined) updatePayload.gracePeriodMinutes = dto.gracePeriodMinutes;
+    if (dto.halfDayThresholdHours !== undefined) updatePayload.halfDayThresholdHours = dto.halfDayThresholdHours;
+    if (dto.breakDurationMinutes !== undefined) updatePayload.breakDurationMinutes = dto.breakDurationMinutes;
+
+    return this.shiftRepository.updateShift(scope, id, updatePayload);
   }
 
   async assignShift(scope: TenantScope, dto: AssignShiftDto) {
-    let targetMembershipId = dto.membershipId;
-
-    if (!targetMembershipId && dto.userId) {
-      const mem = await this.prisma.tenantMembership.findFirst({
-        where: {
-          userId: dto.userId,
-          tenantId: scope.tenantId,
-          status: TenantMembershipStatus.ACTIVE,
-        },
-      });
-      if (mem) {
-        targetMembershipId = mem.id;
-      }
-    }
-
-    if (!targetMembershipId) {
-      throw new BadRequestException('Target membershipId or valid user within tenant is required');
+    if (!dto.membershipId) {
+      throw new BadRequestException('Target membershipId is required');
     }
 
     return this.shiftRepository.assignShift(
       scope,
       dto.shiftId,
-      targetMembershipId,
+      dto.membershipId,
       new Date(dto.startDate),
       dto.endDate ? new Date(dto.endDate) : undefined,
     );

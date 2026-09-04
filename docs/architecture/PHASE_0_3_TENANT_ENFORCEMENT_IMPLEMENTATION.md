@@ -48,24 +48,26 @@ PostgreSQL Query (where: { tenantId: scope.tenantId })
    - Membership selection requires a valid, active `sid` claim in the authenticated JWT.
    - Tokens without `sid` or with invalid/revoked `sid` claims cannot select memberships or acquire tenant context.
 
-4. **OTP Verification Security**:
-   - Dev/test OTP bypass (`000000`) is disabled in production (`NODE_ENV === 'production'`).
-   - In non-production environments, bypass is strictly restricted to calls with a valid existing `challengeToken`. Fallback to arbitrary DB challenges is prohibited.
+4. **Explicit Opt-in Dev OTP Verification Security**:
+   - Dev/test OTP bypass (`000000`) requires BOTH `NODE_ENV !== 'production'` AND `ALLOW_DEV_OTP_BYPASS=true` (defaulting to `false`).
+   - In non-production environments with bypass enabled, bypass is strictly restricted to calls with a valid existing `challengeToken`. Fallback to arbitrary DB challenges is prohibited.
 
 5. **Sensitive Metadata Redaction**:
    - Database queries in Attendance, Shift, and Payroll domains use explicit safe selects (`id`, `fullName`, `employeeCode`, `email`, `avatarUrl`). `passwordHash`, reset tokens, and OTP hashes are never included.
 
-6. **Tenant-Aware Unique Constraints**:
+6. **Tenant-Aware Unique Constraints & Retention FK Policies**:
    - `Shift`: `@@unique([tenantId, code])`
    - `Attendance`: `@@unique([tenantId, tenantMembershipId, date])`
    - `SalaryStructure`: `@@unique([tenantId, tenantMembershipId])`
    - `PayrollPeriod`: `@@unique([tenantId, month, year])`
    - `Payslip`: `@@unique([tenantMembershipId, payrollPeriodId])`
+   - Forward migration `20260904130000_phase0_3_2_fk_retention_policies` enforces database retention FK policies (`ON DELETE RESTRICT` / `ON DELETE SET NULL`) matching `schema.prisma`.
 
 ---
 
 ## 3. Verification & Compliance
 - **Unit & Security Test Suite**: 51/51 passing tests ([tenant-isolation.spec.ts](file:///e:/Visiblo/Visiblo%20Field%20Executive/apps/api/src/platform/tenants/tenant-isolation.spec.ts)).
+- **Real PostgreSQL E2E Adversarial Isolation Suite**: 12/12 passing tests ([tenant-isolation.e2e-spec.ts](file:///e:/Visiblo/Visiblo%20Field%20Executive/apps/api/test/tenant-isolation.e2e-spec.ts)).
 - **Nest API Build**: 0 compilation errors.
 - **Web Frontend Build**: 0 Vite compilation errors.
-- **Completion Gate**: Phase 0.3 & 0.3.1 Security Completion **PASSED & FROZEN**.
+- **Completion Gate**: Phase 0.3, 0.3.1 & 0.3.2 Security Completion **PASSED & FROZEN**.

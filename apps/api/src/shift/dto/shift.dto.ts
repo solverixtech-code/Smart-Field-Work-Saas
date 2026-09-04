@@ -103,21 +103,13 @@ export class UpdateShiftSwaggerDto {
 }
 
 export class AssignShiftSwaggerDto {
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: 'Target Membership ID of employee',
     example: 'mem_123abc',
   })
-  @IsOptional()
   @IsString()
-  membershipId?: string;
-
-  @ApiPropertyOptional({
-    description: 'Legacy User ID of employee (if membershipId not specified)',
-    example: 'usr_123abc',
-  })
-  @IsOptional()
-  @IsString()
-  userId?: string;
+  @IsNotEmpty()
+  membershipId: string;
 
   @ApiProperty({
     description: 'Shift ID to assign',

@@ -105,7 +105,11 @@ export class AuthService {
     meta: { ip?: string; userAgent?: string },
   ): Promise<AuthTokens> {
     const input = OtpVerifySchema.parse(dto);
-    const isDevBypass = process.env.NODE_ENV !== 'production' && input.otp === '000000';
+    const allowBypass = this.configService.get<string>('ALLOW_DEV_OTP_BYPASS') === 'true';
+    const isDevBypass =
+      process.env.NODE_ENV !== 'production' &&
+      allowBypass &&
+      input.otp === '000000';
 
     const challenge = await this.prisma.otpChallenge.findUnique({
       where: { challengeToken: input.challengeToken },

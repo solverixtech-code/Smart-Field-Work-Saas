@@ -5,7 +5,7 @@ import { TenantAuthenticated } from '../common/decorators/tenant-authenticated.d
 import { CurrentPrincipal } from '../common/decorators/current-principal.decorator';
 import { RequestPrincipal } from '../common/security/request-principal.interface';
 import { TenantScopeFactory } from '../common/tenancy/tenant-scope';
-import { CreateShiftSwaggerDto, AssignShiftSwaggerDto } from './dto/shift.dto';
+import { CreateShiftSwaggerDto, UpdateShiftSwaggerDto, AssignShiftSwaggerDto } from './dto/shift.dto';
 
 @ApiTags('Shift Management')
 @ApiBearerAuth('OAuth2PasswordBearer')
@@ -62,12 +62,12 @@ export class ShiftController {
     description: 'Update shift timing rules by shift ID in current tenant.',
   })
   @ApiParam({ name: 'id', description: 'Shift UUID' })
-  @ApiBody({ type: CreateShiftSwaggerDto })
+  @ApiBody({ type: UpdateShiftSwaggerDto })
   @ApiResponse({ status: 200, description: 'Shift updated successfully' })
   async updateShift(
     @CurrentPrincipal() principal: RequestPrincipal,
     @Param('id') id: string,
-    @Body() dto: Partial<CreateShiftSwaggerDto>,
+    @Body() dto: UpdateShiftSwaggerDto,
   ) {
     const scope = TenantScopeFactory.fromPrincipal(principal);
     return this.shiftService.update(scope, id, dto);
