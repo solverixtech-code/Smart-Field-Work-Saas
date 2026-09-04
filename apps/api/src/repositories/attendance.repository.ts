@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../persistence/prisma.service';
 import { TenantScope } from '../common/tenancy/tenant-scope';
 import { Attendance, PunchLog, AttendanceStatus, PunchType } from '@prisma/client';
@@ -12,6 +12,14 @@ export interface PunchInputDto {
   deviceModel?: string;
   remarks?: string;
 }
+
+export const SAFE_USER_SELECT = {
+  id: true,
+  fullName: true,
+  employeeCode: true,
+  email: true,
+  avatarUrl: true,
+};
 
 @Injectable()
 export class AttendanceRepository {
@@ -42,6 +50,37 @@ export class AttendanceRepository {
         },
       });
 
+      if (attendance && attendance.punchInTime) {
+        throw new BadRequestException('You have already Punched In for today');
+      }
+
+      // Check user's assigned shift to calculate late status & grace period
+      const userShift = await tx.userShift.findFirst({
+        where: {
+          tenantId: scope.tenantId,
+          tenantMembershipId: scope.membershipId,
+        },
+        include: { shift: true },
+        orderBy: { startDate: 'desc' },
+      });
+
+      let isLate = false;
+      let lateMinutes = 0;
+
+      if (userShift?.shift) {
+        const [startHour, startMin] = userShift.shift.startTime.split(':').map(Number);
+        const shiftStartTime = new Date(todayDate);
+        shiftStartTime.setHours(startHour, startMin, 0, 0);
+        const graceTime = new Date(shiftStartTime.getTime() + userShift.shift.gracePeriodMinutes * 60000);
+
+        if (now > graceTime) {
+          isLate = true;
+          lateMinutes = Math.floor((now.getTime() - shiftStartTime.getTime()) / 60000);
+        }
+      }
+
+      const status: AttendanceStatus = isLate ? AttendanceStatus.LATE : AttendanceStatus.PRESENT;
+
       if (!attendance) {
         attendance = await tx.attendance.create({
           data: {
@@ -49,17 +88,21 @@ export class AttendanceRepository {
             tenantMembership: { connect: { id: scope.membershipId } },
             user: { connect: { id: scope.userId } },
             date: todayDate,
-            status: AttendanceStatus.PRESENT,
+            shiftId: userShift?.shiftId ?? null,
+            status,
             punchInTime: now,
+            lateMinutes,
             remarks: dto.remarks ?? null,
           },
         });
-      } else if (!attendance.punchInTime) {
+      } else {
         attendance = await tx.attendance.update({
           where: { id: attendance.id },
           data: {
             punchInTime: now,
-            status: AttendanceStatus.PRESENT,
+            status,
+            lateMinutes,
+            remarks: dto.remarks ?? attendance.remarks,
           },
         });
       }
@@ -93,7 +136,7 @@ export class AttendanceRepository {
     const todayDate = new Date(todayStr);
 
     return this.prisma.$transaction(async (tx) => {
-      let attendance = await tx.attendance.findFirst({
+      const attendance = await tx.attendance.findFirst({
         where: {
           tenantId: scope.tenantId,
           tenantMembershipId: scope.membershipId,
@@ -101,30 +144,34 @@ export class AttendanceRepository {
         },
       });
 
-      if (!attendance) {
-        attendance = await tx.attendance.create({
-          data: {
-            tenant: { connect: { id: scope.tenantId } },
-            tenantMembership: { connect: { id: scope.membershipId } },
-            user: { connect: { id: scope.userId } },
-            date: todayDate,
-            status: AttendanceStatus.PRESENT,
-            punchOutTime: now,
-            remarks: dto.remarks ?? null,
-          },
-        });
-      } else {
-        const punchIn = attendance.punchInTime ?? now;
-        const workMinutes = Math.max(0, Math.floor((now.getTime() - punchIn.getTime()) / 60000));
-
-        attendance = await tx.attendance.update({
-          where: { id: attendance.id },
-          data: {
-            punchOutTime: now,
-            totalWorkMinutes: workMinutes,
-          },
-        });
+      if (!attendance || !attendance.punchInTime) {
+        throw new BadRequestException('You must Punch In first before Punching Out');
       }
+
+      if (attendance.punchOutTime) {
+        throw new BadRequestException('You have already Punched Out for today');
+      }
+
+      const workMs = now.getTime() - new Date(attendance.punchInTime).getTime();
+      const totalWorkMinutes = Math.floor(workMs / 60000);
+      const standardWorkMinutes = 8 * 60; // 8 hours
+      const overtimeMinutes = Math.max(0, totalWorkMinutes - standardWorkMinutes);
+
+      let updatedStatus = attendance.status;
+      if (totalWorkMinutes < 4 * 60) {
+        updatedStatus = AttendanceStatus.HALF_DAY;
+      }
+
+      const updatedAttendance = await tx.attendance.update({
+        where: { id: attendance.id },
+        data: {
+          punchOutTime: now,
+          totalWorkMinutes,
+          overtimeMinutes,
+          status: updatedStatus,
+          remarks: dto.remarks ?? attendance.remarks,
+        },
+      });
 
       const punchLog = await tx.punchLog.create({
         data: {
@@ -143,7 +190,7 @@ export class AttendanceRepository {
         },
       });
 
-      return { attendance, punchLog };
+      return { attendance: updatedAttendance, punchLog };
     });
   }
 
@@ -157,9 +204,11 @@ export class AttendanceRepository {
         date: todayDate,
       },
       include: {
-        user: true,
+        user: { select: SAFE_USER_SELECT },
         tenantMembership: true,
-        punchLogs: true,
+        punchLogs: {
+          orderBy: { timestamp: 'asc' },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -185,7 +234,7 @@ export class AttendanceRepository {
         },
       },
       include: {
-        user: true,
+        user: { select: SAFE_USER_SELECT },
         tenantMembership: true,
         punchLogs: true,
       },

@@ -16,7 +16,8 @@ async function bootstrap() {
   app.useGlobalFilters(new ZodExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: false,
+      whitelist: true,
+      forbidNonWhitelisted: true,
       transform: true,
     }),
   );

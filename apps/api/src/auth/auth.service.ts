@@ -105,19 +105,12 @@ export class AuthService {
     meta: { ip?: string; userAgent?: string },
   ): Promise<AuthTokens> {
     const input = OtpVerifySchema.parse(dto);
-    const isDevBypass = input.otp === '000000';
+    const isDevBypass = process.env.NODE_ENV !== 'production' && input.otp === '000000';
 
-    let challenge = await this.prisma.otpChallenge.findUnique({
+    const challenge = await this.prisma.otpChallenge.findUnique({
       where: { challengeToken: input.challengeToken },
       include: { user: true },
     });
-
-    if (!challenge && isDevBypass) {
-      challenge = (await this.prisma.otpChallenge.findFirst({
-        orderBy: { createdAt: 'desc' },
-        include: { user: true },
-      })) ?? null;
-    }
 
     if (!challenge) {
       await this.audit({
@@ -354,6 +347,10 @@ export class AuthService {
     membershipId: string,
     meta: { ip?: string; userAgent?: string },
   ) {
+    if (!sessionId) {
+      throw new UnauthorizedException('Valid session binding (sid) is required for membership selection.');
+    }
+
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.status !== 'ACTIVE') {
       throw new UnauthorizedException('User account inactive');
@@ -374,22 +371,12 @@ export class AuthService {
       throw new BadRequestException('Selected membership is invalid, suspended, or inactive.');
     }
 
-    let session: any = null;
-    if (sessionId) {
-      session = await this.prisma.userSession.findFirst({
-        where: { id: sessionId, userId, status: 'ACTIVE' },
-      });
-    }
+    const session = await this.prisma.userSession.findFirst({
+      where: { id: sessionId, userId, status: 'ACTIVE' },
+    });
 
     if (!session) {
-      session = await this.prisma.userSession.findFirst({
-        where: { userId, status: 'ACTIVE' },
-        orderBy: { lastSeenAt: 'desc' },
-      });
-    }
-
-    if (!session) {
-      throw new UnauthorizedException('Active session not found');
+      throw new UnauthorizedException('Active session not found or revoked');
     }
 
     const newContextVersion = session.contextVersion + 1;

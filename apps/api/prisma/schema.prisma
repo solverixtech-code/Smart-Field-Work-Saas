@@ -67,11 +67,11 @@ model User {
   permissionUpdates           UserModulePermission[] @relation("UserModulePermissionUpdater")
   twoFactorRoleSettingUpdates RoleTwoFactorSetting[] @relation("RoleTwoFactorSettingUpdater")
 
-  userShifts      UserShift[]
-  attendances     Attendance[]
-  punchLogs       PunchLog[]
-  salaryStructure SalaryStructure?
-  payslips        Payslip[]
+  userShifts       UserShift[]
+  attendances      Attendance[]
+  punchLogs        PunchLog[]
+  salaryStructures SalaryStructure[]
+  payslips         Payslip[]
 
   tenantMemberships        TenantMembership[]
   membershipInvitesCreated TenantMembership[]           @relation("MembershipInvitedBy")
@@ -239,9 +239,9 @@ model AuditLog {
 model Shift {
   id                    String       @id @default(uuid())
   tenantId              String?
-  tenant                Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant                Tenant?      @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   name                  String // e.g. General Shift, Morning Shift, Night Shift
-  code                  String       @unique
+  code                  String
   startTime             String // "09:00"
   endTime               String // "18:00"
   gracePeriodMinutes    Int          @default(15)
@@ -253,6 +253,7 @@ model Shift {
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
 
+  @@unique([tenantId, code])
   @@index([tenantId])
   @@index([tenantId, isActive])
 }
@@ -260,9 +261,9 @@ model Shift {
 model UserShift {
   id                 String            @id @default(uuid())
   tenantId           String?
-  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMembershipId String?
-  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: Cascade)
+  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: SetNull)
   userId             String
   user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   shiftId            String
@@ -297,9 +298,9 @@ enum PunchType {
 model Attendance {
   id                 String            @id @default(uuid())
   tenantId           String?
-  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMembershipId String?
-  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: Cascade)
+  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: SetNull)
   userId             String
   user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   date               DateTime          @db.Date
@@ -316,7 +317,7 @@ model Attendance {
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 
-  @@unique([userId, date])
+  @@unique([tenantId, tenantMembershipId, date])
   @@index([userId])
   @@index([tenantId])
   @@index([tenantMembershipId])
@@ -327,9 +328,9 @@ model Attendance {
 model PunchLog {
   id                 String            @id @default(uuid())
   tenantId           String?
-  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMembershipId String?
-  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: Cascade)
+  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: SetNull)
   userId             String
   user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   attendanceId       String?
@@ -370,10 +371,10 @@ enum PaymentStatus {
 model SalaryStructure {
   id                 String            @id @default(uuid())
   tenantId           String?
-  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMembershipId String?
-  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: Cascade)
-  userId             String            @unique
+  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: SetNull)
+  userId             String
   user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   baseSalary         Float
   hra                Float             @default(0)
@@ -387,6 +388,7 @@ model SalaryStructure {
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 
+  @@unique([tenantId, tenantMembershipId])
   @@index([tenantId])
   @@index([tenantMembershipId])
 }
@@ -394,7 +396,7 @@ model SalaryStructure {
 model PayrollPeriod {
   id          String        @id @default(uuid())
   tenantId    String?
-  tenant      Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant      Tenant?       @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   month       Int // 1 - 12
   year        Int // e.g. 2025
   status      PayrollStatus @default(DRAFT)
@@ -404,16 +406,16 @@ model PayrollPeriod {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
-  @@unique([month, year])
+  @@unique([tenantId, month, year])
   @@index([tenantId])
 }
 
 model Payslip {
   id                 String            @id @default(uuid())
   tenantId           String?
-  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   tenantMembershipId String?
-  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: Cascade)
+  tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: SetNull)
   userId             String
   user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   payrollPeriodId    String
@@ -433,7 +435,7 @@ model Payslip {
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
 
-  @@unique([userId, payrollPeriodId])
+  @@unique([tenantMembershipId, payrollPeriodId])
   @@index([userId])
   @@index([tenantId])
   @@index([tenantMembershipId])

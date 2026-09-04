@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../persistence/prisma.service';
 import { TenantScope } from '../common/tenancy/tenant-scope';
+import { SAFE_USER_SELECT } from './attendance.repository';
 import {
   SalaryStructure,
   PayrollPeriod,
@@ -8,6 +9,7 @@ import {
   PayrollStatus,
   PaymentStatus,
   TenantMembershipStatus,
+  AttendanceStatus,
 } from '@prisma/client';
 
 export interface SalaryStructureInputDto {
@@ -30,7 +32,6 @@ export class PayrollRepository {
     targetMembershipId: string,
     dto: SalaryStructureInputDto,
   ): Promise<SalaryStructure> {
-    // 1. Verify target membership belongs to current Tenant and is ACTIVE
     const membership = await this.prisma.tenantMembership.findFirst({
       where: {
         id: targetMembershipId,
@@ -45,14 +46,16 @@ export class PayrollRepository {
       );
     }
 
-    const hra = dto.hra ?? 0;
-    const conveyance = dto.conveyance ?? 0;
-    const allowances = dto.allowances ?? 0;
-    const pfDeduction = dto.pfDeduction ?? 0;
+    const hra = dto.hra ?? dto.baseSalary * 0.4;
+    const conveyance = dto.conveyance ?? 2000;
+    const allowances = dto.allowances ?? 5000;
+    const pfDeduction = dto.pfDeduction ?? dto.baseSalary * 0.12;
     const esiDeduction = dto.esiDeduction ?? 0;
     const tds = dto.tds ?? 0;
-    const netSalary =
-      dto.baseSalary + hra + conveyance + allowances - pfDeduction - esiDeduction - tds;
+    const netSalary = Math.max(
+      0,
+      dto.baseSalary + hra + conveyance + allowances - pfDeduction - esiDeduction - tds,
+    );
 
     const existing = await this.prisma.salaryStructure.findFirst({
       where: {
@@ -131,7 +134,10 @@ export class PayrollRepository {
       throw new BadRequestException('Year must be a valid four-digit year');
     }
 
-    // 1. Get or create PayrollPeriod for current tenant
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    const totalDaysInMonth = endDate.getDate();
+
     let period = await this.prisma.payrollPeriod.findFirst({
       where: {
         tenantId: scope.tenantId,
@@ -151,7 +157,6 @@ export class PayrollRepository {
       });
     }
 
-    // 2. Fetch salary structures for current tenant only
     const structures = await this.prisma.salaryStructure.findMany({
       where: { tenantId: scope.tenantId },
       include: { tenantMembership: true },
@@ -161,6 +166,28 @@ export class PayrollRepository {
 
     for (const struct of structures) {
       if (!struct.tenantMembershipId) continue;
+
+      // Query employee's attendance logs for absence deduction calculation
+      const attendances = await this.prisma.attendance.findMany({
+        where: {
+          tenantId: scope.tenantId,
+          tenantMembershipId: struct.tenantMembershipId,
+          date: { gte: startDate, lte: endDate },
+        },
+      });
+
+      const presentCount = attendances.filter(
+        (a) => a.status === AttendanceStatus.PRESENT || a.status === AttendanceStatus.LATE,
+      ).length;
+      const lateCount = attendances.filter((a) => a.status === AttendanceStatus.LATE).length;
+      const absentCount = attendances.filter((a) => a.status === AttendanceStatus.ABSENT).length;
+      const totalOvertimeMins = attendances.reduce((acc, a) => acc + a.overtimeMinutes, 0);
+
+      const perDaySalary = struct.baseSalary / totalDaysInMonth;
+      const absenceDeduction = absentCount * perDaySalary;
+      const totalAllowances = struct.hra + struct.conveyance + struct.allowances;
+      const totalDeductions = struct.pfDeduction + struct.esiDeduction + struct.tds + absenceDeduction;
+      const netPay = Math.max(0, struct.baseSalary + totalAllowances - totalDeductions);
 
       const existingPayslip = await this.prisma.payslip.findFirst({
         where: {
@@ -178,10 +205,29 @@ export class PayrollRepository {
             user: { connect: { id: struct.userId } },
             payrollPeriod: { connect: { id: period.id } },
             baseSalary: struct.baseSalary,
-            totalAllowances: struct.hra + struct.conveyance + struct.allowances,
-            totalDeductions: struct.pfDeduction + struct.esiDeduction + struct.tds,
-            netPay: struct.netSalary,
+            totalAllowances,
+            totalDeductions,
+            netPay,
+            presentDays: presentCount,
+            absentDays: absentCount,
+            lateDays: lateCount,
+            overtimeHours: parseFloat((totalOvertimeMins / 60).toFixed(1)),
             paymentStatus: PaymentStatus.PENDING,
+          },
+        });
+        payslipsCount++;
+      } else {
+        await this.prisma.payslip.update({
+          where: { id: existingPayslip.id },
+          data: {
+            baseSalary: struct.baseSalary,
+            totalAllowances,
+            totalDeductions,
+            netPay,
+            presentDays: presentCount,
+            absentDays: absentCount,
+            lateDays: lateCount,
+            overtimeHours: parseFloat((totalOvertimeMins / 60).toFixed(1)),
           },
         });
         payslipsCount++;
@@ -199,12 +245,20 @@ export class PayrollRepository {
     return { period: updatedPeriod, payslipsCount };
   }
 
-  async getPayslips(scope: TenantScope): Promise<Payslip[]> {
+  async getPayslips(scope: TenantScope, month?: number, year?: number): Promise<Payslip[]> {
+    const whereCondition: any = { tenantId: scope.tenantId };
+    if (month && year) {
+      whereCondition.payrollPeriod = {
+        month,
+        year,
+      };
+    }
+
     return this.prisma.payslip.findMany({
-      where: { tenantId: scope.tenantId },
+      where: whereCondition,
       include: {
         payrollPeriod: true,
-        user: true,
+        user: { select: SAFE_USER_SELECT },
         tenantMembership: true,
       },
       orderBy: { createdAt: 'desc' },
