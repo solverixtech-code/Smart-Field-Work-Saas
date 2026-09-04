@@ -58,7 +58,7 @@ async function main() {
     { Model: 'PunchLogs', Total: punchLogsCount, TenantScoped: scopedPunchLogs, Unscoped: punchLogsCount - scopedPunchLogs },
     { Model: 'SalaryStructures', Total: salaryStructuresCount, TenantScoped: scopedSalaryStructures, Unscoped: salaryStructuresCount - scopedSalaryStructures },
     { Model: 'PayrollPeriods', Total: payrollPeriodsCount, TenantScoped: scopedPayrollPeriods, Unscoped: payrollPeriodsCount - scopedPayrollPeriods },
-    { Model: 'Payslips', Total: payslipsCount, TenantScoped: scopedPayslips, Unscoped: scopedPayslips, Unscoped: payslipsCount - scopedPayslips },
+    { Model: 'Payslips', Total: payslipsCount, TenantScoped: scopedPayslips, Unscoped: payslipsCount - scopedPayslips },
   ];
 
   console.table(report);
