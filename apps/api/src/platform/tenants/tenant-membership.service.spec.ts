@@ -15,6 +15,8 @@ describe('TenantMembershipService & Membership Selection (Phase 0.2 Foundation)'
   let selectionService: MembershipSelectionService;
   let prisma: PrismaService;
 
+  const getUniqueCode = (prefix: string) => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -58,24 +60,25 @@ describe('TenantMembershipService & Membership Selection (Phase 0.2 Foundation)'
 
   // ─── MANDATORY TEST 1: ONE USER TWO TENANTS ──────────────────────────────────
   it('MANDATORY TEST 1: One User can belong to Tenant A and Tenant B simultaneously without leakage', async () => {
+    const empCode = getUniqueCode('GLOB1');
     const user = await prisma.user.create({
       data: {
-        employeeCode: 'GLOB-100-M1',
+        employeeCode: empCode,
         fullName: 'Rajesh Sharma',
-        email: 'rajesh.m1@example.com',
+        email: `${empCode}@example.com`,
         passwordHash: 'hashed_pw',
         role: Role.SALES_MANAGER,
       },
     });
 
     const tenantA = await tenantService.createTenantFoundation({
-      slug: 'pharma-corp-m1',
+      slug: getUniqueCode('pharma'),
       displayName: 'Pharma Corp',
       status: TenantStatus.ACTIVE,
     });
 
     const tenantB = await tenantService.createTenantFoundation({
-      slug: 'solar-inc-m1',
+      slug: getUniqueCode('solar'),
       displayName: 'Solar Inc',
       status: TenantStatus.ACTIVE,
     });
@@ -128,11 +131,14 @@ describe('TenantMembershipService & Membership Selection (Phase 0.2 Foundation)'
 
   // ─── MANDATORY TEST 2: SAME EMPLOYEE CODE DIFFERENT TENANTS ────────────────
   it('MANDATORY TEST 2: Same employee code can exist in Tenant A and Tenant B for different memberships', async () => {
+    const empCode1 = getUniqueCode('GLOB2A');
+    const empCode2 = getUniqueCode('GLOB2B');
+
     const user1 = await prisma.user.create({
       data: {
-        employeeCode: 'GLOB-101-M2',
+        employeeCode: empCode1,
         fullName: 'User One',
-        email: 'user1.m2@example.com',
+        email: `${empCode1}@example.com`,
         passwordHash: 'hash',
         role: Role.ADMIN,
       },
@@ -140,16 +146,16 @@ describe('TenantMembershipService & Membership Selection (Phase 0.2 Foundation)'
 
     const user2 = await prisma.user.create({
       data: {
-        employeeCode: 'GLOB-102-M2',
+        employeeCode: empCode2,
         fullName: 'User Two',
-        email: 'user2.m2@example.com',
+        email: `${empCode2}@example.com`,
         passwordHash: 'hash',
         role: Role.ADMIN,
       },
     });
 
-    const tenantA = await tenantService.createTenantFoundation({ slug: 'alpha-corp-m2', displayName: 'Alpha' });
-    const tenantB = await tenantService.createTenantFoundation({ slug: 'beta-corp-m2', displayName: 'Beta' });
+    const tenantA = await tenantService.createTenantFoundation({ slug: getUniqueCode('alpha'), displayName: 'Alpha' });
+    const tenantB = await tenantService.createTenantFoundation({ slug: getUniqueCode('beta'), displayName: 'Beta' });
 
     const mem1 = await membershipService.createMembership({
       tenantId: tenantA.id,
@@ -178,15 +184,18 @@ describe('TenantMembershipService & Membership Selection (Phase 0.2 Foundation)'
 
   // ─── MANDATORY TEST 3: CROSS-TENANT MANAGER ASSIGNMENT REJECTED ────────────
   it('MANDATORY TEST 3: Cross-tenant manager assignment is rejected with BadRequestException', async () => {
+    const empCode1 = getUniqueCode('MGR3');
+    const empCode2 = getUniqueCode('SUB3');
+
     const user1 = await prisma.user.create({
-      data: { employeeCode: 'G-1-M3', fullName: 'Mgr User', email: 'mgr.m3@example.com', passwordHash: 'pw', role: Role.ADMIN },
+      data: { employeeCode: empCode1, fullName: 'Mgr User', email: `${empCode1}@example.com`, passwordHash: 'pw', role: Role.ADMIN },
     });
     const user2 = await prisma.user.create({
-      data: { employeeCode: 'G-2-M3', fullName: 'Sub User', email: 'sub.m3@example.com', passwordHash: 'pw', role: Role.ADMIN },
+      data: { employeeCode: empCode2, fullName: 'Sub User', email: `${empCode2}@example.com`, passwordHash: 'pw', role: Role.ADMIN },
     });
 
-    const tenantA = await tenantService.createTenantFoundation({ slug: 'tenant-a-m3', displayName: 'Tenant A' });
-    const tenantB = await tenantService.createTenantFoundation({ slug: 'tenant-b-m3', displayName: 'Tenant B' });
+    const tenantA = await tenantService.createTenantFoundation({ slug: getUniqueCode('t-a3'), displayName: 'Tenant A' });
+    const tenantB = await tenantService.createTenantFoundation({ slug: getUniqueCode('t-b3'), displayName: 'Tenant B' });
 
     const mgrMemB = await membershipService.createMembership({
       tenantId: tenantB.id,
@@ -204,12 +213,13 @@ describe('TenantMembershipService & Membership Selection (Phase 0.2 Foundation)'
 
   // ─── MANDATORY TEST 4: CROSS-TENANT ROLE ASSIGNMENT REJECTED ───────────────
   it('MANDATORY TEST 4: Cross-tenant role assignment is rejected with BadRequestException', async () => {
+    const empCode = getUniqueCode('USER4');
     const user = await prisma.user.create({
-      data: { employeeCode: 'G-3-M4', fullName: 'Test User', email: 'test.m4@example.com', passwordHash: 'pw', role: Role.ADMIN },
+      data: { employeeCode: empCode, fullName: 'Test User', email: `${empCode}@example.com`, passwordHash: 'pw', role: Role.ADMIN },
     });
 
-    const tenantA = await tenantService.createTenantFoundation({ slug: 'tenant-a2-m4', displayName: 'Tenant A2' });
-    const tenantB = await tenantService.createTenantFoundation({ slug: 'tenant-b2-m4', displayName: 'Tenant B2' });
+    const tenantA = await tenantService.createTenantFoundation({ slug: getUniqueCode('t-a4'), displayName: 'Tenant A2' });
+    const tenantB = await tenantService.createTenantFoundation({ slug: getUniqueCode('t-b4'), displayName: 'Tenant B2' });
 
     const rolesB = await tenantRoleService.getRolesByTenantId(tenantB.id);
     expect(rolesB.length).toBeGreaterThan(0);
@@ -226,8 +236,9 @@ describe('TenantMembershipService & Membership Selection (Phase 0.2 Foundation)'
 
   // ─── MANDATORY TEST 5: MEMBERSHIP SELECTION RULES ──────────────────────────
   it('MANDATORY TEST 5: Membership Selection rules evaluate 0, 1, and >1 active memberships correctly', async () => {
+    const empCode = getUniqueCode('USER5');
     const user = await prisma.user.create({
-      data: { employeeCode: 'G-4-M5', fullName: 'Selector User', email: 'selector.m5@example.com', passwordHash: 'pw', role: Role.ADMIN },
+      data: { employeeCode: empCode, fullName: 'Selector User', email: `${empCode}@example.com`, passwordHash: 'pw', role: Role.ADMIN },
     });
 
     const sel0 = await selectionService.evaluateMembershipSelection(user.id);
@@ -235,7 +246,7 @@ describe('TenantMembershipService & Membership Selection (Phase 0.2 Foundation)'
     expect(sel0.selectionRequired).toBe(false);
     expect(sel0.autoSelectableMembershipId).toBeNull();
 
-    const tenantA = await tenantService.createTenantFoundation({ slug: 't-sel-a-m5', displayName: 'Sel A', status: TenantStatus.ACTIVE });
+    const tenantA = await tenantService.createTenantFoundation({ slug: getUniqueCode('t-sel-a5'), displayName: 'Sel A', status: TenantStatus.ACTIVE });
     const memA = await membershipService.createMembership({
       tenantId: tenantA.id,
       userId: user.id,
@@ -247,7 +258,7 @@ describe('TenantMembershipService & Membership Selection (Phase 0.2 Foundation)'
     expect(sel1.selectionRequired).toBe(false);
     expect(sel1.autoSelectableMembershipId).toBe(memA.id);
 
-    const tenantB = await tenantService.createTenantFoundation({ slug: 't-sel-b-m5', displayName: 'Sel B', status: TenantStatus.ACTIVE });
+    const tenantB = await tenantService.createTenantFoundation({ slug: getUniqueCode('t-sel-b5'), displayName: 'Sel B', status: TenantStatus.ACTIVE });
     await membershipService.createMembership({
       tenantId: tenantB.id,
       userId: user.id,
@@ -263,19 +274,20 @@ describe('TenantMembershipService & Membership Selection (Phase 0.2 Foundation)'
 
   // ─── MANDATORY TEST 6: USER STATUS VS MEMBERSHIP STATUS ─────────────────────
   it('MANDATORY TEST 6: Suspended membership in Tenant A revokes Tenant A access while Tenant B remains accessible', async () => {
+    const empCode = getUniqueCode('USER6');
     const user = await prisma.user.create({
       data: {
-        employeeCode: 'G-5-M6',
+        employeeCode: empCode,
         fullName: 'Dual User',
-        email: 'dual.m6@example.com',
+        email: `${empCode}@example.com`,
         passwordHash: 'pw',
         role: Role.ADMIN,
         status: 'ACTIVE',
       },
     });
 
-    const tenantA = await tenantService.createTenantFoundation({ slug: 't-sus-a-m6', displayName: 'Sus A', status: TenantStatus.ACTIVE });
-    const tenantB = await tenantService.createTenantFoundation({ slug: 't-sus-b-m6', displayName: 'Sus B', status: TenantStatus.ACTIVE });
+    const tenantA = await tenantService.createTenantFoundation({ slug: getUniqueCode('t-sus-a6'), displayName: 'Sus A', status: TenantStatus.ACTIVE });
+    const tenantB = await tenantService.createTenantFoundation({ slug: getUniqueCode('t-sus-b6'), displayName: 'Sus B', status: TenantStatus.ACTIVE });
 
     await membershipService.createMembership({
       tenantId: tenantA.id,

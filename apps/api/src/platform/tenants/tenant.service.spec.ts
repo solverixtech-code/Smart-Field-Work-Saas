@@ -3,6 +3,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { TenantService } from './tenant.service';
 import { TenantRoleService } from './tenant-role.service';
 import { PrismaService } from '../../persistence/prisma.service';
+import { seedTenantRoleTemplates } from '../../../prisma/seeds/tenant-role-templates';
 import { TenantStatus } from '@prisma/client';
 
 describe('TenantService (Phase 0.2 Foundation)', () => {
@@ -16,6 +17,17 @@ describe('TenantService (Phase 0.2 Foundation)', () => {
 
     tenantService = module.get<TenantService>(TenantService);
     prisma = module.get<PrismaService>(PrismaService);
+
+    // Clean test data and seed role templates
+    await prisma.tenantMembership.deleteMany();
+    await prisma.tenantRolePermission.deleteMany();
+    await prisma.tenantRole.deleteMany();
+    await prisma.tenantAddress.deleteMany();
+    await prisma.tenantSettings.deleteMany();
+    await prisma.tenantBranding.deleteMany();
+    await prisma.tenant.deleteMany();
+
+    await seedTenantRoleTemplates(prisma);
   });
 
   afterEach(async () => {
@@ -31,11 +43,11 @@ describe('TenantService (Phase 0.2 Foundation)', () => {
 
   it('should create a foundation tenant with normalized child settings, branding, address and built-in roles', async () => {
     const res = await tenantService.createTenantFoundation({
-      slug: 'acme-labs',
+      slug: 'acme-labs-t1',
       displayName: 'ACME Labs Inc',
       legalName: 'ACME Laboratories Private Limited',
-      primaryDomain: 'acme.com',
-      websiteUrl: 'https://acme.com',
+      primaryDomain: 'acme-t1.com',
+      websiteUrl: 'https://acme-t1.com',
       companySizeCode: '50-200',
       address: {
         line1: '123 Tech Park',
@@ -55,9 +67,9 @@ describe('TenantService (Phase 0.2 Foundation)', () => {
     });
 
     expect(res.id).toBeDefined();
-    expect(res.slug).toBe('acme-labs');
+    expect(res.slug).toBe('acme-labs-t1');
     expect(res.displayName).toBe('ACME Labs Inc');
-    expect(res.primaryDomain).toBe('acme.com');
+    expect(res.primaryDomain).toBe('acme-t1.com');
     expect(res.addresses.length).toBe(1);
     expect(res.addresses[0].city).toBe('Bengaluru');
     expect(res.settings?.timezone).toBe('Asia/Kolkata');
@@ -69,26 +81,26 @@ describe('TenantService (Phase 0.2 Foundation)', () => {
   });
 
   it('should reject duplicate tenant slug with ConflictException', async () => {
-    await tenantService.createTenantFoundation({ slug: 'dup-slug', displayName: 'First' });
+    await tenantService.createTenantFoundation({ slug: 'dup-slug-t2', displayName: 'First' });
     await expect(
-      tenantService.createTenantFoundation({ slug: 'dup-slug', displayName: 'Second' }),
+      tenantService.createTenantFoundation({ slug: 'dup-slug-t2', displayName: 'Second' }),
     ).rejects.toThrow(ConflictException);
   });
 
   it('should list tenants with pagination and search', async () => {
-    await tenantService.createTenantFoundation({ slug: 'search-one', displayName: 'Alpha Pharma' });
-    await tenantService.createTenantFoundation({ slug: 'search-two', displayName: 'Beta Solar' });
+    await tenantService.createTenantFoundation({ slug: 'search-one-t3', displayName: 'Alpha Pharma' });
+    await tenantService.createTenantFoundation({ slug: 'search-two-t3', displayName: 'Beta Solar' });
 
     const listAll = await tenantService.getTenants({ page: 1, limit: 10 });
     expect(listAll.data.length).toBe(2);
 
     const searchRes = await tenantService.getTenants({ search: 'Alpha' });
     expect(searchRes.data.length).toBe(1);
-    expect(searchRes.data[0].slug).toBe('search-one');
+    expect(searchRes.data[0].slug).toBe('search-one-t3');
   });
 
   it('should update tenant lifecycle status', async () => {
-    const t = await tenantService.createTenantFoundation({ slug: 'lifecycle-t', displayName: 'Lifecycle' });
+    const t = await tenantService.createTenantFoundation({ slug: 'lifecycle-t4', displayName: 'Lifecycle' });
     expect(t.status).toBe(TenantStatus.DRAFT);
 
     const updated = await tenantService.updateTenantStatus(t.id, TenantStatus.ACTIVE);
