@@ -387,6 +387,15 @@ export class PlatformCatalogSyncService {
             actual: dbFeat.displayOrder,
           });
         }
+        if (dbFeat.module?.code && dbFeat.module.code !== regFeat.moduleCode) {
+          mismatchedRecords.push({
+            entity: 'FEATURE',
+            code: regFeat.implementationKey,
+            field: 'moduleCode',
+            expected: regFeat.moduleCode,
+            actual: dbFeat.module.code,
+          });
+        }
       }
     }
 

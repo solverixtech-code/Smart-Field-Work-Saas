@@ -19,7 +19,8 @@ const statusOptions = [
 ];
 
 export function EditModulePage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ moduleId?: string; id?: string }>();
+  const moduleId = params.moduleId || params.id;
   const navigate = useNavigate();
 
   const [module, setModule] = useState<PlatformModule | null>(null);
@@ -28,9 +29,9 @@ export function EditModulePage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!moduleId) return;
     moduleService
-      .getModuleById(id)
+      .getModuleById(moduleId)
       .then((data) => {
         if (data) {
           setModule(data);
@@ -45,7 +46,7 @@ export function EditModulePage() {
         toast.error('Failed to load module.');
         navigate('/platform/modules');
       });
-  }, [id, navigate]);
+  }, [moduleId, navigate]);
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();

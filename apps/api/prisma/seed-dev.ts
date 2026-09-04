@@ -2,7 +2,7 @@ import { PrismaClient, Role } from '@prisma/client';
 import * as argon2 from 'argon2';
 import { PlatformCatalogSyncService } from '../src/platform/modules/platform-catalog-sync.service';
 import { PrismaService } from '../src/persistence/prisma.service';
-import { seedPermissions } from './seed';
+import { seedPermissions } from './seeds/system-permissions';
 
 const prisma = new PrismaClient();
 const prismaService = new PrismaService();

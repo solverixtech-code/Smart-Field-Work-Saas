@@ -87,7 +87,11 @@ export function TenantModulesPage() {
           const mappedModules: ModuleItem[] = PLATFORM_MODULES.map((pm) => {
             const iconMeta = MODULE_ICONS[pm.code] || { icon: Layers, iconBg: "bg-slate-100", iconColor: "text-slate-600" };
             const category: "core" | "advanced" | "integrations" =
-              pm.category === "Core" ? "core" : pm.category === "Automation" ? "integrations" : "advanced";
+              pm.category === "CORE" || (pm.category as string) === "Core"
+                ? "core"
+                : pm.category === "AUTOMATION" || (pm.category as string) === "Automation"
+                ? "integrations"
+                : "advanced";
             return {
               id: pm.id,
               name: pm.name,

@@ -69,15 +69,7 @@ export interface IndustryConfig {
   defaultModules: string[];
 }
 
-export interface PlatformModule {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  category: 'Core' | 'Sales' | 'Field Ops' | 'Automation' | 'Enterprise';
-  isAddon: boolean;
-  monthlyPrice: number;
-}
+export type { PlatformModule } from '../../catalog/modules/types/module.types';
 
 export interface PlatformPlan {
   id: string;
