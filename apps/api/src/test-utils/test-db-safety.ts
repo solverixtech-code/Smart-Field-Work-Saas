@@ -4,30 +4,34 @@
  * NEITHER NODE_ENV=test ALONE NOR AN UNCHECKED DATABASE_URL IS PERMITTED TO AUTHORIZE DESTRUCTIVE OPERATIONS.
  */
 export function verifyTestDatabaseSafety(): void {
-  if (process.env.TEST_DATABASE_URL && process.env.TEST_DATABASE_URL.trim()) {
-    process.env.DATABASE_URL = process.env.TEST_DATABASE_URL.trim();
+  const testDbUrl = (process.env.TEST_DATABASE_URL || '').trim();
+
+  if (!testDbUrl) {
+    throw new Error(
+      `[SAFETY SHIELD REJECTION] TEST_DATABASE_URL environment variable must exist and be configured to run tests! ` +
+        `Refusing to initialize test suite against default DATABASE_URL.`,
+    );
   }
 
-  const dbUrl = process.env.DATABASE_URL || '';
-  const lowerUrl = dbUrl.toLowerCase();
+  process.env.DATABASE_URL = testDbUrl;
+  const lowerUrl = testDbUrl.toLowerCase();
 
   // Extract database name from URL (after last slash before parameters)
   const dbNameMatch = lowerUrl.match(/\/([a-z0-9_-]+)(?:\?|$)/);
   const dbName = dbNameMatch ? dbNameMatch[1] : '';
 
-  const isExplicitlySafeUrl =
-    lowerUrl.includes('test') ||
-    lowerUrl.includes('_test') ||
-    lowerUrl.includes('-test') ||
+  const hasApprovedTestMarker =
     dbName.includes('test') ||
-    lowerUrl.includes('localhost') ||
-    lowerUrl.includes('127.0.0.1');
+    dbName.includes('_test') ||
+    dbName.includes('-test') ||
+    dbName.includes('smart_field_work_test') ||
+    dbName.includes('sfw_test');
 
-  if (!isExplicitlySafeUrl) {
+  if (!hasApprovedTestMarker) {
     throw new Error(
-      `[SAFETY SHIELD REJECTION] Refusing to run destructive DB test cleanup against potential production/staging database! ` +
-        `DATABASE_URL / TEST_DATABASE_URL must explicitly identify a test/local environment (containing 'test', 'localhost', or '127.0.0.1'). ` +
-        `Current URL: '${dbUrl}'`,
+      `[SAFETY SHIELD REJECTION] Refusing to run tests against database '${dbName || 'NONE'}'! ` +
+        `TEST_DATABASE_URL database name MUST contain an explicit approved test marker ('_test', '-test', 'smart_field_work_test', or 'sfw_test'). ` +
+        `Current URL: '${testDbUrl}'`,
     );
   }
 }

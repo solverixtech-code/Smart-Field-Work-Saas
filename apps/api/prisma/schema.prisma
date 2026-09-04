@@ -95,7 +95,7 @@ model Team {
   description       String?
   isActive          Boolean            @default(true)
   tenantId          String?
-  tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   members           User[]
   tenantMemberships TenantMembership[]
   createdAt         DateTime           @default(now())
@@ -239,7 +239,7 @@ model AuditLog {
 model Shift {
   id                    String       @id @default(uuid())
   tenantId              String?
-  tenant                Tenant?      @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenant                Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   name                  String // e.g. General Shift, Morning Shift, Night Shift
   code                  String
   startTime             String // "09:00"
@@ -261,7 +261,7 @@ model Shift {
 model UserShift {
   id                 String            @id @default(uuid())
   tenantId           String?
-  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   tenantMembershipId String?
   tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: SetNull)
   userId             String
@@ -298,7 +298,7 @@ enum PunchType {
 model Attendance {
   id                 String            @id @default(uuid())
   tenantId           String?
-  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   tenantMembershipId String?
   tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: SetNull)
   userId             String
@@ -328,7 +328,7 @@ model Attendance {
 model PunchLog {
   id                 String            @id @default(uuid())
   tenantId           String?
-  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   tenantMembershipId String?
   tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: SetNull)
   userId             String
@@ -371,7 +371,7 @@ enum PaymentStatus {
 model SalaryStructure {
   id                 String            @id @default(uuid())
   tenantId           String?
-  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   tenantMembershipId String?
   tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: SetNull)
   userId             String
@@ -396,7 +396,7 @@ model SalaryStructure {
 model PayrollPeriod {
   id          String        @id @default(uuid())
   tenantId    String?
-  tenant      Tenant?       @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenant      Tenant?       @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   month       Int // 1 - 12
   year        Int // e.g. 2025
   status      PayrollStatus @default(DRAFT)
@@ -413,7 +413,7 @@ model PayrollPeriod {
 model Payslip {
   id                 String            @id @default(uuid())
   tenantId           String?
-  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenant             Tenant?           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   tenantMembershipId String?
   tenantMembership   TenantMembership? @relation(fields: [tenantMembershipId], references: [id], onDelete: SetNull)
   userId             String
