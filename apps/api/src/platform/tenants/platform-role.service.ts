@@ -2,6 +2,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  BadRequestException,
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../persistence/prisma.service';
@@ -30,6 +31,20 @@ export class PlatformRoleService {
     const role = await this.prisma.platformRole.findUnique({ where: { code: input.roleCode } });
     if (!role) {
       throw new NotFoundException(`PlatformRole with code '${input.roleCode}' not found.`);
+    }
+    if (!role.isActive) {
+      throw new BadRequestException(`PlatformRole '${input.roleCode}' is inactive and cannot be assigned.`);
+    }
+
+    if (input.validFrom && input.validUntil && input.validUntil <= input.validFrom) {
+      throw new BadRequestException('validUntil must be greater than validFrom.');
+    }
+
+    if (input.assignedByUserId) {
+      const assigner = await this.prisma.user.findUnique({ where: { id: input.assignedByUserId } });
+      if (!assigner) {
+        throw new NotFoundException(`Assigned-by User with ID '${input.assignedByUserId}' not found.`);
+      }
     }
 
     const existing = await this.prisma.platformUserRoleAssignment.findUnique({
@@ -83,7 +98,7 @@ export class PlatformRoleService {
   }
 
   async getUserPlatformRoles(userId: string) {
-    return this.prisma.platformUserRoleAssignment.findMany({
+    const assignments = await this.prisma.platformUserRoleAssignment.findMany({
       where: {
         userId,
         status: PlatformAssignmentStatus.ACTIVE,
@@ -91,6 +106,20 @@ export class PlatformRoleService {
       include: {
         platformRole: true,
       },
+    });
+
+    const now = new Date();
+    return assignments.filter((a) => {
+      if (!a.platformRole || !a.platformRole.isActive) {
+        return false;
+      }
+      if (a.validFrom && a.validFrom > now) {
+        return false;
+      }
+      if (a.validUntil && a.validUntil < now) {
+        return false;
+      }
+      return true;
     });
   }
 }

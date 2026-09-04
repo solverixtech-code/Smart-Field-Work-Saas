@@ -6,10 +6,13 @@ export interface ResolvedIdentityContext {
   tenantId: string | null;
   membershipId: string | null;
   roleCode: string;
+  tenantRoleCode: string | null;
   dataScope: DataScope;
-  employeeCode: string;
+  employeeCode: string | null;
   teamId: string | null;
   managerId: string | null;
+  managerMembershipId: string | null;
+  legacyManagerUserId: string | null;
   isLegacyFallback: boolean;
 }
 
@@ -21,18 +24,27 @@ export class IdentityCompatibilityService {
    */
   resolveIdentityContext(
     user: User,
-    membership?: TenantMembership | null,
+    membership?: (TenantMembership & { tenantRole?: { code: string } | null }) | null,
+    overrideTenantRoleCode?: string | null,
   ): ResolvedIdentityContext {
     if (membership) {
+      const resolvedRoleCode =
+        membership.tenantRole?.code ||
+        overrideTenantRoleCode ||
+        user.role.toString();
+
       return {
         userId: user.id,
         tenantId: membership.tenantId,
         membershipId: membership.id,
-        roleCode: membership.tenantRoleId || user.role.toString(),
+        roleCode: resolvedRoleCode,
+        tenantRoleCode: membership.tenantRole?.code || overrideTenantRoleCode || null,
         dataScope: membership.dataScope || user.dataScope,
-        employeeCode: membership.employeeCode || user.employeeCode,
-        teamId: membership.teamId || user.teamId,
-        managerId: membership.managerMembershipId || user.managerId,
+        employeeCode: membership.employeeCode || user.employeeCode || null,
+        teamId: membership.teamId || user.teamId || null,
+        managerId: membership.managerMembershipId || user.managerId || null,
+        managerMembershipId: membership.managerMembershipId || null,
+        legacyManagerUserId: null,
         isLegacyFallback: false,
       };
     }
@@ -42,10 +54,13 @@ export class IdentityCompatibilityService {
       tenantId: null,
       membershipId: null,
       roleCode: user.role.toString(),
+      tenantRoleCode: null,
       dataScope: user.dataScope,
-      employeeCode: user.employeeCode,
-      teamId: user.teamId,
-      managerId: user.managerId,
+      employeeCode: user.employeeCode || null,
+      teamId: user.teamId || null,
+      managerId: user.managerId || null,
+      managerMembershipId: null,
+      legacyManagerUserId: user.managerId || null,
       isLegacyFallback: true,
     };
   }

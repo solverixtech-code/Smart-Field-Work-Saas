@@ -6,9 +6,16 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../persistence/prisma.service';
-import { CreateMembershipDto } from './dto/create-membership.dto';
+import { CreateMembershipDto, UpdateMembershipProfileDto } from './dto/create-membership.dto';
 import { TenantMembershipSummaryDto } from './dto/membership-response.dto';
 import { TenantMembershipStatus } from '@prisma/client';
+
+const ALLOWED_MEMBERSHIP_TRANSITIONS: Record<TenantMembershipStatus, TenantMembershipStatus[]> = {
+  [TenantMembershipStatus.INVITED]: [TenantMembershipStatus.ACTIVE, TenantMembershipStatus.DEACTIVATED],
+  [TenantMembershipStatus.ACTIVE]: [TenantMembershipStatus.SUSPENDED, TenantMembershipStatus.DEACTIVATED],
+  [TenantMembershipStatus.SUSPENDED]: [TenantMembershipStatus.ACTIVE, TenantMembershipStatus.DEACTIVATED],
+  [TenantMembershipStatus.DEACTIVATED]: [TenantMembershipStatus.ACTIVE],
+};
 
 @Injectable()
 export class TenantMembershipService {
@@ -97,34 +104,13 @@ export class TenantMembershipService {
       },
     });
 
-    const now = new Date();
-
     if (existingMembership) {
-      // Reactivate or update existing membership record
-      const updated = await this.prisma.tenantMembership.update({
-        where: { id: existingMembership.id },
-        data: {
-          tenantRoleId: input.tenantRoleId ?? existingMembership.tenantRoleId,
-          status: input.status || TenantMembershipStatus.ACTIVE,
-          isPrimary: input.isPrimary ?? existingMembership.isPrimary,
-          employeeCode: input.employeeCode?.trim() || existingMembership.employeeCode,
-          designation: input.designation?.trim() || existingMembership.designation,
-          department: input.department?.trim() || existingMembership.department,
-          dataScope: input.dataScope ?? existingMembership.dataScope,
-          teamId: input.teamId ?? existingMembership.teamId,
-          managerMembershipId: input.managerMembershipId ?? existingMembership.managerMembershipId,
-          activatedAt: existingMembership.status !== TenantMembershipStatus.ACTIVE ? now : existingMembership.activatedAt,
-          deactivatedAt: input.status === TenantMembershipStatus.DEACTIVATED ? now : null,
-        },
-        include: {
-          user: true,
-          tenant: true,
-          tenantRole: true,
-        },
-      });
-
-      return this.mapToSummaryDto(updated);
+      throw new ConflictException(
+        `User '${input.userId}' already has a membership in tenant '${input.tenantId}'. Use update, status transition, or reactivation methods.`,
+      );
     }
+
+    const now = new Date();
 
     // Create new membership record
     const created = await this.prisma.tenantMembership.create({
@@ -152,6 +138,159 @@ export class TenantMembershipService {
     });
 
     return this.mapToSummaryDto(created);
+  }
+
+  async updateMembershipProfile(
+    id: string,
+    input: UpdateMembershipProfileDto,
+  ): Promise<TenantMembershipSummaryDto> {
+    const existing = await this.prisma.tenantMembership.findUnique({
+      where: { id },
+    });
+    if (!existing) {
+      throw new NotFoundException(`TenantMembership with ID '${id}' not found.`);
+    }
+
+    if (input.managerMembershipId) {
+      const mgr = await this.prisma.tenantMembership.findUnique({
+        where: { id: input.managerMembershipId },
+      });
+      if (!mgr) {
+        throw new NotFoundException(`Manager membership with ID '${input.managerMembershipId}' not found.`);
+      }
+      if (mgr.tenantId !== existing.tenantId) {
+        throw new BadRequestException(
+          `Manager membership '${mgr.id}' belongs to tenant '${mgr.tenantId}', not target tenant '${existing.tenantId}'.`,
+        );
+      }
+    }
+
+    if (input.employeeCode && input.employeeCode.trim()) {
+      const empCode = input.employeeCode.trim();
+      const existingEmpCode = await this.prisma.tenantMembership.findFirst({
+        where: {
+          tenantId: existing.tenantId,
+          employeeCode: empCode,
+          id: { not: existing.id },
+        },
+      });
+      if (existingEmpCode) {
+        throw new ConflictException(
+          `Employee code '${empCode}' is already assigned to another membership in tenant '${existing.tenantId}'.`,
+        );
+      }
+    }
+
+    const updated = await this.prisma.tenantMembership.update({
+      where: { id },
+      data: {
+        employeeCode: input.employeeCode !== undefined ? input.employeeCode.trim() : existing.employeeCode,
+        designation: input.designation !== undefined ? input.designation.trim() : existing.designation,
+        department: input.department !== undefined ? input.department.trim() : existing.department,
+        dataScope: input.dataScope ?? existing.dataScope,
+        teamId: input.teamId !== undefined ? input.teamId : existing.teamId,
+        managerMembershipId: input.managerMembershipId !== undefined ? input.managerMembershipId : existing.managerMembershipId,
+        isPrimary: input.isPrimary ?? existing.isPrimary,
+      },
+      include: {
+        user: true,
+        tenant: true,
+        tenantRole: true,
+      },
+    });
+
+    return this.mapToSummaryDto(updated);
+  }
+
+  async changeMembershipRole(
+    id: string,
+    tenantRoleId: string,
+  ): Promise<TenantMembershipSummaryDto> {
+    const existing = await this.prisma.tenantMembership.findUnique({
+      where: { id },
+    });
+    if (!existing) {
+      throw new NotFoundException(`TenantMembership with ID '${id}' not found.`);
+    }
+
+    const role = await this.prisma.tenantRole.findUnique({
+      where: { id: tenantRoleId },
+    });
+    if (!role) {
+      throw new NotFoundException(`TenantRole with ID '${tenantRoleId}' not found.`);
+    }
+    if (role.tenantId !== existing.tenantId) {
+      throw new BadRequestException(
+        `TenantRole '${role.id}' belongs to tenant '${role.tenantId}', not target tenant '${existing.tenantId}'.`,
+      );
+    }
+
+    const updated = await this.prisma.tenantMembership.update({
+      where: { id },
+      data: { tenantRoleId },
+      include: {
+        user: true,
+        tenant: true,
+        tenantRole: true,
+      },
+    });
+
+    return this.mapToSummaryDto(updated);
+  }
+
+  async transitionMembershipStatus(
+    id: string,
+    newStatus: TenantMembershipStatus,
+  ): Promise<TenantMembershipSummaryDto> {
+    const existing = await this.prisma.tenantMembership.findUnique({
+      where: { id },
+    });
+    if (!existing) {
+      throw new NotFoundException(`TenantMembership with ID '${id}' not found.`);
+    }
+
+    if (existing.status === newStatus) {
+      const full = await this.prisma.tenantMembership.findUnique({
+        where: { id },
+        include: { user: true, tenant: true, tenantRole: true },
+      });
+      return this.mapToSummaryDto(full!);
+    }
+
+    const allowed = ALLOWED_MEMBERSHIP_TRANSITIONS[existing.status] || [];
+    if (!allowed.includes(newStatus)) {
+      throw new BadRequestException(
+        `Invalid status transition from '${existing.status}' to '${newStatus}'.`,
+      );
+    }
+
+    const now = new Date();
+    const updateData: any = { status: newStatus };
+
+    if (newStatus === TenantMembershipStatus.ACTIVE) {
+      if (!existing.activatedAt) {
+        updateData.activatedAt = now;
+      }
+      updateData.deactivatedAt = null;
+    } else if (newStatus === TenantMembershipStatus.DEACTIVATED) {
+      updateData.deactivatedAt = now;
+    }
+
+    const updated = await this.prisma.tenantMembership.update({
+      where: { id },
+      data: updateData,
+      include: {
+        user: true,
+        tenant: true,
+        tenantRole: true,
+      },
+    });
+
+    return this.mapToSummaryDto(updated);
+  }
+
+  async reactivateMembership(id: string): Promise<TenantMembershipSummaryDto> {
+    return this.transitionMembershipStatus(id, TenantMembershipStatus.ACTIVE);
   }
 
   async getMembershipsByTenantId(tenantId: string): Promise<TenantMembershipSummaryDto[]> {
@@ -184,33 +323,7 @@ export class TenantMembershipService {
     id: string,
     newStatus: TenantMembershipStatus,
   ): Promise<TenantMembershipSummaryDto> {
-    const existing = await this.prisma.tenantMembership.findUnique({
-      where: { id },
-    });
-    if (!existing) {
-      throw new NotFoundException(`TenantMembership with ID '${id}' not found.`);
-    }
-
-    const now = new Date();
-    const updateData: any = { status: newStatus };
-
-    if (newStatus === TenantMembershipStatus.ACTIVE && !existing.activatedAt) {
-      updateData.activatedAt = now;
-    } else if (newStatus === TenantMembershipStatus.DEACTIVATED) {
-      updateData.deactivatedAt = now;
-    }
-
-    const updated = await this.prisma.tenantMembership.update({
-      where: { id },
-      data: updateData,
-      include: {
-        user: true,
-        tenant: true,
-        tenantRole: true,
-      },
-    });
-
-    return this.mapToSummaryDto(updated);
+    return this.transitionMembershipStatus(id, newStatus);
   }
 
   private mapToSummaryDto(m: any): TenantMembershipSummaryDto {

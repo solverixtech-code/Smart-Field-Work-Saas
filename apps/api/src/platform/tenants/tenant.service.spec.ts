@@ -10,7 +10,19 @@ describe('TenantService (Phase 0.2 Foundation)', () => {
   let tenantService: TenantService;
   let prisma: PrismaService;
 
+  function verifyTestDatabaseSafety() {
+    const dbUrl = process.env.DATABASE_URL || '';
+    const nodeEnv = process.env.NODE_ENV;
+    if (nodeEnv !== 'test' && !dbUrl.includes('test') && !dbUrl.includes('localhost') && !dbUrl.includes('127.0.0.1')) {
+      throw new Error(
+        `[SAFETY SHIELD] Refusing to run destructive cleanup tests against potential production/staging database. DATABASE_URL must contain 'test' or 'localhost', or NODE_ENV must be 'test'.`,
+      );
+    }
+  }
+
   beforeEach(async () => {
+    verifyTestDatabaseSafety();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [TenantService, TenantRoleService, PrismaService],
     }).compile();

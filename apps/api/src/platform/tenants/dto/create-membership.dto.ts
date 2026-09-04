@@ -62,3 +62,33 @@ export class UpdateMembershipStatusDto {
   @IsNotEmpty()
   status: TenantMembershipStatus;
 }
+
+export class UpdateMembershipProfileDto {
+  @IsString()
+  @IsOptional()
+  employeeCode?: string;
+
+  @IsString()
+  @IsOptional()
+  designation?: string;
+
+  @IsString()
+  @IsOptional()
+  department?: string;
+
+  @IsEnum(DataScope)
+  @IsOptional()
+  dataScope?: DataScope;
+
+  @IsString()
+  @IsOptional()
+  teamId?: string;
+
+  @IsString()
+  @IsOptional()
+  managerMembershipId?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isPrimary?: boolean;
+}

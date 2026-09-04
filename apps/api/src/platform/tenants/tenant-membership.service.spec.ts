@@ -15,9 +15,21 @@ describe('TenantMembershipService & Membership Selection (Phase 0.2 Foundation)'
   let selectionService: MembershipSelectionService;
   let prisma: PrismaService;
 
-  const getUniqueCode = (prefix: string) => `${prefix}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+  function verifyTestDatabaseSafety() {
+    const dbUrl = process.env.DATABASE_URL || '';
+    const nodeEnv = process.env.NODE_ENV;
+    if (nodeEnv !== 'test' && !dbUrl.includes('test') && !dbUrl.includes('localhost') && !dbUrl.includes('127.0.0.1')) {
+      throw new Error(
+        `[SAFETY SHIELD] Refusing to run destructive cleanup tests against potential production/staging database. DATABASE_URL must contain 'test' or 'localhost', or NODE_ENV must be 'test'.`,
+      );
+    }
+  }
+
+  const getUniqueCode = (prefix: string) => `${prefix.toLowerCase().replace(/_/g, '-')}-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 
   beforeEach(async () => {
+    verifyTestDatabaseSafety();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TenantMembershipService,
