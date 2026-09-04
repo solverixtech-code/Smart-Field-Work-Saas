@@ -28,11 +28,12 @@ export class PlatformModulesService {
       search,
       category,
       status,
-      page = 1,
-      limit = 50,
       sortBy = 'displayOrder',
       sortDirection = 'asc',
     } = query;
+
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 50));
 
     const where: Prisma.PlatformModuleWhereInput = {};
 
@@ -291,7 +292,14 @@ export class PlatformModulesService {
   // ─── Feature Management ─────────────────────────────────────────────────────
 
   async findFeatures(query: { search?: string; moduleCode?: string; moduleId?: string; status?: ModuleFeatureStatus; platform?: 'web' | 'mobile' | 'api' | 'offline'; page?: number; limit?: number }) {
-    const { search, moduleCode, moduleId, status, platform, page = 1, limit = 50 } = query;
+    const search = query.search;
+    const moduleCode = query.moduleCode;
+    const moduleId = query.moduleId;
+    const status = query.status;
+    const platform = query.platform;
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 50));
+
     const where: Prisma.ModuleFeatureWhereInput = {
       ...(status ? { status } : {}),
       ...(moduleId ? { moduleId } : {}),
