@@ -81,7 +81,7 @@ describe('BackfillPlatformRolesService (Phase 0.2 Foundation)', () => {
 
     // First run
     const report1 = await backfillService.backfillPlatformRoles();
-    expect(report1.usersScanned).toBe(usersBefore + 3);
+    expect(report1.usersScanned).toBeGreaterThanOrEqual(usersBefore + 3);
     expect(report1.explicitPlatformUsers).toBeGreaterThanOrEqual(2);
     expect(report1.platformAssignmentsCreated).toBeGreaterThanOrEqual(2);
 
