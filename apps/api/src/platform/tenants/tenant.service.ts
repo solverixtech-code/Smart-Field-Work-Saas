@@ -31,6 +31,13 @@ export class TenantService {
   async createTenantFoundation(input: CreateTenantFoundationDto): Promise<TenantDetailDto> {
     const slug = input.slug.trim().toLowerCase();
 
+    // Canonical slug format invariant: lowercase alphanumeric with single hyphens
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+      throw new BadRequestException(
+        `Invalid slug format '${slug}'. Slug must be lowercase URL-safe kebab-case (e.g. 'abc-pharma').`,
+      );
+    }
+
     // Check slug uniqueness
     const existingSlug = await this.prisma.tenant.findUnique({ where: { slug } });
     if (existingSlug) {
@@ -54,6 +61,15 @@ export class TenantService {
       }
     }
 
+    // Validate branding colors if supplied
+    if (input.branding?.primaryColor && !/^#[0-9A-Fa-f]{6}$/.test(input.branding.primaryColor)) {
+      throw new BadRequestException(`Invalid primaryColor hex code '${input.branding.primaryColor}'.`);
+    }
+    if (input.branding?.secondaryColor && !/^#[0-9A-Fa-f]{6}$/.test(input.branding.secondaryColor)) {
+      throw new BadRequestException(`Invalid secondaryColor hex code '${input.branding.secondaryColor}'.`);
+    }
+
+    // Single atomic transaction creating Tenant + Settings + Branding + Address + Built-in Roles
     const createdTenant = await this.prisma.$transaction(async (tx) => {
       const tenant = await tx.tenant.create({
         data: {
@@ -116,11 +132,11 @@ export class TenantService {
         });
       }
 
+      // Ensure built-in roles are instantiated WITHIN the transaction
+      await this.tenantRoleService.ensureBuiltInTenantRoles(tenant.id, tx);
+
       return tenant;
     });
-
-    // Ensure built-in roles instantiated for tenant
-    await this.tenantRoleService.ensureBuiltInTenantRoles(createdTenant.id);
 
     return this.getTenantById(createdTenant.id);
   }
@@ -146,12 +162,15 @@ export class TenantService {
       ];
     }
 
+    const sortField = query.sortBy || 'createdAt';
+    const sortDirection = query.sortDirection || 'desc';
+
     const [items, total] = await Promise.all([
       this.prisma.tenant.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { [query.sortBy || 'createdAt']: query.sortDirection || 'desc' },
+        orderBy: { [sortField]: sortDirection },
         include: {
           _count: {
             select: { memberships: true },
@@ -262,6 +281,9 @@ export class TenantService {
       throw new NotFoundException(`Tenant with ID '${id}' not found.`);
     }
 
+    // Enforce Tenant Lifecycle Transition Policy
+    this.validateTenantStatusTransition(tenant.status, newStatus);
+
     const now = new Date();
     const updateData: Prisma.TenantUpdateInput = { status: newStatus };
 
@@ -282,4 +304,24 @@ export class TenantService {
 
     return this.getTenantById(id);
   }
+
+  private validateTenantStatusTransition(current: TenantStatus, target: TenantStatus): void {
+    if (current === target) return;
+
+    const allowedTransitions: Record<TenantStatus, TenantStatus[]> = {
+      [TenantStatus.DRAFT]: [TenantStatus.ACTIVE, TenantStatus.CANCELLED, TenantStatus.ARCHIVED],
+      [TenantStatus.ACTIVE]: [TenantStatus.SUSPENDED, TenantStatus.CANCELLED, TenantStatus.ARCHIVED],
+      [TenantStatus.SUSPENDED]: [TenantStatus.ACTIVE, TenantStatus.CANCELLED, TenantStatus.ARCHIVED],
+      [TenantStatus.CANCELLED]: [TenantStatus.ARCHIVED],
+      [TenantStatus.ARCHIVED]: [], // Terminal
+    };
+
+    const allowed = allowedTransitions[current] || [];
+    if (!allowed.includes(target)) {
+      throw new BadRequestException(
+        `Invalid tenant status transition from '${current}' to '${target}'.`,
+      );
+    }
+  }
+}
 }

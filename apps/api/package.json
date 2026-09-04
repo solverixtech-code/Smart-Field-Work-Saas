@@ -80,6 +80,10 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "moduleNameMapper": {
+      "^@visiblo/shared$": "<rootDir>/../../../packages/shared/src/index.ts",
+      "^(\\.\\.?/.*)\\.js$": "$1"
+    },
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

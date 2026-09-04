@@ -5,6 +5,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { validationSchemaForEnv } from './config/environment-variables';
 import { PersistenceModule } from './persistence/persistence.module';
 import { RedisModule } from './redis/redis.module';
+import { AuthSecurityModule } from './common/security/auth-security.module';
 import { AuthModule } from './auth/auth.module';
 import { ShiftModule } from './shift/shift.module';
 import { AttendanceModule } from './attendance/attendance.module';
@@ -44,6 +45,7 @@ import { AppController } from './app.controller';
     }),
     RedisModule,
     ThrottlingModule,
+    AuthSecurityModule,
     PersistenceModule,
     AuthModule,
     ShiftModule,

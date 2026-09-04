@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../persistence/prisma.service';
-import { TenantRole } from '@prisma/client';
+import { TenantRole, Prisma, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class TenantRoleService {
@@ -10,16 +10,21 @@ export class TenantRoleService {
 
   /**
    * Instantiates or ensures built-in tenant-local TenantRole records for a given tenant.
+   * Supports execution within a Prisma transaction.
    */
-  async ensureBuiltInTenantRoles(tenantId: string): Promise<TenantRole[]> {
-    const templates = await this.prisma.tenantRoleTemplate.findMany({
+  async ensureBuiltInTenantRoles(
+    tenantId: string,
+    tx?: Prisma.TransactionClient | PrismaClient,
+  ): Promise<TenantRole[]> {
+    const db = tx || this.prisma;
+    const templates = await db.tenantRoleTemplate.findMany({
       where: { isActive: true },
     });
 
     const tenantRoles: TenantRole[] = [];
 
     for (const tpl of templates) {
-      const role = await this.prisma.tenantRole.upsert({
+      const role = await db.tenantRole.upsert({
         where: {
           tenantId_code: {
             tenantId,
