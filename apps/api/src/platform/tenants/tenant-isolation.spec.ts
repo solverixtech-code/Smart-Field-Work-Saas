@@ -42,6 +42,7 @@ describe('Phase 0.3 — Scoped RequestPrincipal & Tenant Isolation Security Suit
       },
       userShift: {
         create: jest.fn(),
+        findFirst: jest.fn(),
       },
       attendance: {
         findFirst: jest.fn(),

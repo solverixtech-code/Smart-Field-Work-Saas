@@ -88,7 +88,7 @@ export class AttendanceRepository {
             tenantMembership: { connect: { id: scope.membershipId } },
             user: { connect: { id: scope.userId } },
             date: todayDate,
-            shiftId: userShift?.shiftId ?? null,
+            shift: userShift?.shiftId ? { connect: { id: userShift.shiftId } } : undefined,
             status,
             punchInTime: now,
             lateMinutes,

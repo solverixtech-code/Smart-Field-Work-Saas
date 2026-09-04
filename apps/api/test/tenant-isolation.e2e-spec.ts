@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/persistence/prisma.service';
 
@@ -53,12 +53,11 @@ describe('Phase 0.3.1 — Tenant Isolation & Hardened DTO E2E Suite', () => {
   });
 
   describe('Global ValidationPipe & DTO Whitelisting Enforcement', () => {
-    it('POST /auth/login with unwhitelisted extra parameter should return 400 Bad Request', async () => {
+    it('POST /auth/otp/send with unwhitelisted extra parameter should return 400 Bad Request', async () => {
       await request(app.getHttpServer())
-        .post('/auth/login')
+        .post('/auth/otp/send')
         .send({
           email: 'test@example.com',
-          password: 'password123',
           unwhitelistedExtraField: 'malicious-payload',
         })
         .expect(400);
