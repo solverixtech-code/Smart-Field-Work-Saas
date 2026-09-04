@@ -53,9 +53,9 @@ describe('Phase 0.3.1 — Tenant Isolation & Hardened DTO E2E Suite', () => {
   });
 
   describe('Global ValidationPipe & DTO Whitelisting Enforcement', () => {
-    it('POST /auth/otp/send with unwhitelisted extra parameter should return 400 Bad Request', async () => {
+    it('POST /auth/forgot-password with unwhitelisted extra parameter should return 400 Bad Request', async () => {
       await request(app.getHttpServer())
-        .post('/auth/otp/send')
+        .post('/auth/forgot-password')
         .send({
           email: 'test@example.com',
           unwhitelistedExtraField: 'malicious-payload',
