@@ -25,8 +25,6 @@ describe('IdentityCompatibilityService (Phase 0.2 Foundation)', () => {
     managerId: 'usr-mgr-999',
     status: 'ACTIVE',
     avatarUrl: null,
-    designation: 'Sales Mgr',
-    department: 'Sales',
     phoneNumber: null,
     isSuperAdmin: false,
     mustChangePassword: false,
@@ -88,7 +86,7 @@ describe('IdentityCompatibilityService (Phase 0.2 Foundation)', () => {
     expect(res.tenantRoleCode).toBe('sales_manager');
     expect(res.employeeCode).toBe('PH-101');
     expect(res.managerId).toBe('mem-mgr-555');
-    expect(res.managerMembershipId).toBe('mem-222' ? 'mem-mgr-555' : null);
+    expect(res.managerMembershipId).toBe('mem-mgr-555');
     expect(res.legacyManagerUserId).toBeNull();
   });
 });
