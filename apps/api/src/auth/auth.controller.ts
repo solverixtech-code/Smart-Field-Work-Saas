@@ -57,6 +57,8 @@ import {
   AvatarUploadSwaggerDto,
 } from './dto/auth.dto';
 
+import { MembershipSelectionService } from '../platform/tenants/membership-selection.service';
+
 const RefreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token is required'),
 });
@@ -64,7 +66,10 @@ const RefreshTokenSchema = z.object({
 @ApiTags('Authentication & Profile')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly membershipSelectionService: MembershipSelectionService,
+  ) {}
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -346,5 +351,18 @@ export class AuthController {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
     });
+  }
+
+  @Get('memberships')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('OAuth2PasswordBearer')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get User Tenant Memberships & Selection State',
+    description: 'Retrieves all active tenant memberships and selection metadata for the logged-in user.',
+  })
+  @ApiResponse({ status: 200, description: 'Membership selection state returned.' })
+  async getMemberships(@Req() req: Request) {
+    return this.membershipSelectionService.evaluateMembershipSelection(req['user'].sub);
   }
 }

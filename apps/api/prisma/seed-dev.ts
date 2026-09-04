@@ -3,6 +3,8 @@ import * as argon2 from 'argon2';
 import { PlatformCatalogSyncService } from '../src/platform/modules/platform-catalog-sync.service';
 import { PrismaService } from '../src/persistence/prisma.service';
 import { seedPermissions } from './seeds/system-permissions';
+import { seedPlatformRoles } from './seeds/platform-roles';
+import { seedTenantRoleTemplates } from './seeds/tenant-role-templates';
 
 const prisma = new PrismaClient();
 const prismaService = new PrismaService();
@@ -15,9 +17,11 @@ async function main() {
   const health = await catalogSyncService.syncCatalog();
   console.log(`✅ Catalog synchronized. Hash: ${health.registryHash}`);
 
-  // 2. Seed system permissions
+  // 2. Seed system permissions, platform roles & tenant role templates
   await seedPermissions(prisma);
-  console.log('✅ System permissions seeded.');
+  await seedPlatformRoles(prisma);
+  await seedTenantRoleTemplates(prisma);
+  console.log('✅ System permissions, platform roles & tenant role templates seeded.');
 
   // 3. Seed development demo users
   const defaultPassword = await argon2.hash('Visiblo@2025');

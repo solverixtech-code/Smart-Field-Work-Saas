@@ -73,6 +73,11 @@ model User {
   salaryStructure SalaryStructure?
   payslips        Payslip[]
 
+  tenantMemberships        TenantMembership[]
+  membershipInvitesCreated TenantMembership[]           @relation("MembershipInvitedBy")
+  platformRoleAssignments  PlatformUserRoleAssignment[] @relation("UserPlatformRoleAssignments")
+  platformRolesAssigned    PlatformUserRoleAssignment[] @relation("PlatformRoleAssignedBy")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -84,14 +89,15 @@ model User {
 // ─── Teams ──────────────────────────────────────────────────────────────────────
 
 model Team {
-  id          String   @id @default(uuid())
-  name        String
-  code        String   @unique
-  description String?
-  isActive    Boolean  @default(true)
-  members     User[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String             @id @default(uuid())
+  name              String
+  code              String             @unique
+  description       String?
+  isActive          Boolean            @default(true)
+  members           User[]
+  tenantMemberships TenantMembership[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 }
 
 // ─── RBAC ───────────────────────────────────────────────────────────────────────
@@ -102,8 +108,9 @@ model Permission {
   action      String // view, create, update, delete
   description String?
 
-  rolePermissions RolePermission[]
-  createdAt       DateTime         @default(now())
+  rolePermissions       RolePermission[]
+  tenantRolePermissions TenantRolePermission[]
+  createdAt             DateTime               @default(now())
 
   @@unique([moduleKey, action])
   @@index([moduleKey])
@@ -485,4 +492,238 @@ model ModuleDependency {
   @@unique([moduleId, dependsOnModuleId])
   @@index([moduleId])
   @@index([dependsOnModuleId])
+}
+
+// ─── Phase 0.2 — Tenant & Membership Models ────────────────────────────────────
+
+enum TenantStatus {
+  DRAFT
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  ARCHIVED
+}
+
+enum TenantAddressType {
+  REGISTERED
+  BILLING
+  OFFICE
+}
+
+enum TenantMembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum PlatformAssignmentStatus {
+  ACTIVE
+  REVOKED
+  SUSPENDED
+}
+
+model Tenant {
+  id              String       @id @default(uuid())
+  slug            String       @unique
+  displayName     String
+  legalName       String?
+  primaryDomain   String?      @unique
+  websiteUrl      String?
+  status          TenantStatus @default(DRAFT)
+  companySizeCode String?
+  description     String?
+
+  activatedAt DateTime?
+  suspendedAt DateTime?
+  cancelledAt DateTime?
+  archivedAt  DateTime?
+
+  addresses   TenantAddress[]
+  settings    TenantSettings?
+  branding    TenantBranding?
+  memberships TenantMembership[]
+  roles       TenantRole[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model TenantAddress {
+  id            String            @id @default(uuid())
+  tenantId      String
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  type          TenantAddressType @default(REGISTERED)
+  label         String?
+  line1         String
+  line2         String?
+  city          String
+  stateOrRegion String?
+  postalCode    String?
+  countryCode   String            @default("IN")
+  isPrimary     Boolean           @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+model TenantSettings {
+  id                      String @id @default(uuid())
+  tenantId                String @unique
+  tenant                  Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  timezone                String @default("Asia/Kolkata")
+  currency                String @default("INR")
+  locale                  String @default("en-IN")
+  language                String @default("en")
+  dateFormat              String @default("YYYY-MM-DD")
+  weekStartDay            String @default("MONDAY")
+  financialYearStartMonth Int    @default(4)
+  configVersion           Int    @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TenantBranding {
+  id              String  @id @default(uuid())
+  tenantId        String  @unique
+  tenant          Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  shortName       String?
+  primaryColor    String? @default("#0D1F3D")
+  secondaryColor  String?
+  logoUrl         String?
+  showLogoOnLogin Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TenantMembership {
+  id           String                 @id @default(uuid())
+  tenantId     String
+  tenant       Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantRoleId String?
+  tenantRole   TenantRole?            @relation(fields: [tenantRoleId], references: [id], onDelete: SetNull)
+  status       TenantMembershipStatus @default(ACTIVE)
+  isPrimary    Boolean                @default(false)
+
+  employeeCode String?
+  designation  String?
+  department   String?
+  dataScope    DataScope? @default(ALL)
+
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
+
+  managerMembershipId    String?
+  managerMembership      TenantMembership?  @relation("MembershipManager", fields: [managerMembershipId], references: [id], onDelete: SetNull)
+  subordinateMemberships TenantMembership[] @relation("MembershipManager")
+
+  invitedByUserId String?
+  invitedByUser   User?   @relation("MembershipInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+
+  invitedAt     DateTime?
+  joinedAt      DateTime?
+  activatedAt   DateTime?
+  deactivatedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, userId])
+  @@unique([tenantId, employeeCode])
+  @@index([tenantId, status])
+  @@index([userId, status])
+  @@index([tenantRoleId])
+  @@index([managerMembershipId])
+}
+
+model TenantRoleTemplate {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  name        String
+  description String?
+  isSystem    Boolean @default(true)
+  isActive    Boolean @default(true)
+
+  roles TenantRole[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TenantRole {
+  id                 String              @id @default(uuid())
+  tenantId           String
+  tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  templateId         String?
+  template           TenantRoleTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  code               String
+  name               String
+  description        String?
+  isSystem           Boolean             @default(true)
+  isActive           Boolean             @default(true)
+  permissionsVersion Int                 @default(1)
+
+  memberships TenantMembership[]
+  permissions TenantRolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, isActive])
+}
+
+model TenantRolePermission {
+  id           String     @id @default(uuid())
+  tenantRoleId String
+  tenantRole   TenantRole @relation(fields: [tenantRoleId], references: [id], onDelete: Cascade)
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([tenantRoleId, permissionId])
+  @@index([tenantRoleId])
+}
+
+model PlatformRole {
+  id          String  @id @default(uuid())
+  code        String  @unique
+  name        String
+  description String?
+  isSystem    Boolean @default(true)
+  isActive    Boolean @default(true)
+
+  assignments PlatformUserRoleAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PlatformUserRoleAssignment {
+  id               String                   @id @default(uuid())
+  userId           String
+  user             User                     @relation("UserPlatformRoleAssignments", fields: [userId], references: [id], onDelete: Cascade)
+  platformRoleId   String
+  platformRole     PlatformRole             @relation(fields: [platformRoleId], references: [id], onDelete: Cascade)
+  status           PlatformAssignmentStatus @default(ACTIVE)
+  validFrom        DateTime?
+  validUntil       DateTime?
+  assignedByUserId String?
+  assignedByUser   User?                    @relation("PlatformRoleAssignedBy", fields: [assignedByUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, platformRoleId])
+  @@index([userId, status])
+  @@index([platformRoleId])
 }

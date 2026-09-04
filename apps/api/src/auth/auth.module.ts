@@ -7,9 +7,11 @@ import { EmailService } from './email.service';
 import { SmsService } from './sms.service';
 import { StorageService } from '../common/services/storage.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+import { PlatformTenantsModule } from '../platform/tenants/platform-tenants.module';
 
 @Module({
   imports: [
+    PlatformTenantsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

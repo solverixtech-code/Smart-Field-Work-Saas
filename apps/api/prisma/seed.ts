@@ -2,6 +2,8 @@ import { PrismaClient } from '@prisma/client';
 import { PlatformCatalogSyncService } from '../src/platform/modules/platform-catalog-sync.service';
 import { PrismaService } from '../src/persistence/prisma.service';
 import { seedPermissions } from './seeds/system-permissions';
+import { seedPlatformRoles } from './seeds/platform-roles';
+import { seedTenantRoleTemplates } from './seeds/tenant-role-templates';
 
 const prisma = new PrismaClient();
 const prismaService = new PrismaService();
@@ -19,6 +21,12 @@ async function main() {
   console.log('🔒 Verifying system permissions...');
   await seedPermissions(prisma);
   console.log('✅ System permissions seeded deterministically.');
+
+  // 3. Seed Platform Roles & Tenant Role Templates
+  console.log('🛡️ Seeding platform roles & tenant role templates...');
+  await seedPlatformRoles(prisma);
+  await seedTenantRoleTemplates(prisma);
+  console.log('✅ Platform roles & tenant role templates seeded.');
 
   console.log('🚀 Production seed completed successfully.');
 }
