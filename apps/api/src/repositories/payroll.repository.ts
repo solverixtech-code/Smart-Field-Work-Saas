@@ -101,21 +101,18 @@ export class PayrollRepository {
 
   async getSalaryStructure(
     scope: TenantScope,
-    targetMembershipIdOrUserId: string,
+    targetMembershipId: string,
   ): Promise<SalaryStructure> {
     const structure = await this.prisma.salaryStructure.findFirst({
       where: {
         tenantId: scope.tenantId,
-        OR: [
-          { tenantMembershipId: targetMembershipIdOrUserId },
-          { userId: targetMembershipIdOrUserId },
-        ],
+        tenantMembershipId: targetMembershipId,
       },
     });
 
     if (!structure) {
       throw new NotFoundException(
-        `Salary structure for ${targetMembershipIdOrUserId} not found in current tenant.`,
+        `Salary structure for membership ${targetMembershipId} not found in current tenant.`,
       );
     }
 

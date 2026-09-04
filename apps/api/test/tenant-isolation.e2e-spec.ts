@@ -6,8 +6,9 @@ import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/persistence/prisma.service';
 import { TenantMembershipStatus, TenantStatus, Role } from '@prisma/client';
+import { verifyTestDatabaseSafety } from '../src/test-utils/test-db-safety';
 
-describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () => {
+describe('Phase 0.3.3 — Real PostgreSQL 2-Tenant Adversarial E2E Suite & Gate Certification', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let jwtService: JwtService;
@@ -21,17 +22,22 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
 
   let userA: any;
   let userB: any;
+  let userSuspended: any;
+  let userCross: any;
 
   let membershipA1: any;
   let membershipB1: any;
   let membershipSuspended: any;
   let membershipTenantSuspended: any;
+  let membershipCrossA: any;
+  let membershipCrossB: any;
 
   let sessionA: any;
   let sessionB: any;
   let sessionRevoked: any;
   let sessionSuspendedMember: any;
   let sessionSuspendedTenant: any;
+  let sessionCross: any;
 
   let shiftA: any;
   let shiftB: any;
@@ -46,10 +52,13 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
   let revokedSessionToken: string;
   let suspendedMemberToken: string;
   let suspendedTenantToken: string;
+  let oldTokenCrossA: string;
 
   const timestamp = Date.now();
 
   beforeAll(async () => {
+    verifyTestDatabaseSafety();
+
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -70,7 +79,7 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
 
     await app.init();
 
-    // ─── 1. Clean & Provision Real Test Database Entities ─────────────────────
+    // ─── 1. Provision Real Test Database Entities ────────────────────────────
 
     // Tenant A (Active)
     tenantA = await prisma.tenant.create({
@@ -121,12 +130,23 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // User Suspended (Belongs to Tenant A but membership suspended)
-    const userSuspended = await prisma.user.create({
+    // User Suspended
+    userSuspended = await prisma.user.create({
       data: {
         employeeCode: `EMP-SUSP-${timestamp}`,
         fullName: 'User Suspended',
         email: `user.susp.${timestamp}@example.com`,
+        passwordHash: 'dummy_hash',
+        role: Role.SALES_MANAGER,
+      },
+    });
+
+    // User Cross (Belongs to both Tenant A and Tenant B)
+    userCross = await prisma.user.create({
+      data: {
+        employeeCode: `EMP-CROSS-${timestamp}`,
+        fullName: 'User Cross Multi-Tenant',
+        email: `user.cross.${timestamp}@example.com`,
         passwordHash: 'dummy_hash',
         role: Role.SALES_MANAGER,
       },
@@ -152,7 +172,7 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // Membership Suspended (User Suspended in Tenant A)
+    // Membership Suspended
     membershipSuspended = await prisma.tenantMembership.create({
       data: {
         tenantId: tenantA.id,
@@ -172,7 +192,26 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // Session A (Active for User A, Membership A1, ctxv 1)
+    // Multi-tenant Cross Memberships
+    membershipCrossA = await prisma.tenantMembership.create({
+      data: {
+        tenantId: tenantA.id,
+        userId: userCross.id,
+        employeeCode: `MEM-CROSS-A-${timestamp}`,
+        status: TenantMembershipStatus.ACTIVE,
+      },
+    });
+
+    membershipCrossB = await prisma.tenantMembership.create({
+      data: {
+        tenantId: tenantB.id,
+        userId: userCross.id,
+        employeeCode: `MEM-CROSS-B-${timestamp}`,
+        status: TenantMembershipStatus.ACTIVE,
+      },
+    });
+
+    // Sessions
     sessionA = await prisma.userSession.create({
       data: {
         userId: userA.id,
@@ -183,7 +222,6 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // Session B (Active for User B, Membership B1, ctxv 1)
     sessionB = await prisma.userSession.create({
       data: {
         userId: userB.id,
@@ -194,7 +232,6 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // Session Revoked
     sessionRevoked = await prisma.userSession.create({
       data: {
         userId: userA.id,
@@ -205,7 +242,6 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // Session Suspended Member
     sessionSuspendedMember = await prisma.userSession.create({
       data: {
         userId: userSuspended.id,
@@ -216,7 +252,6 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // Session Suspended Tenant
     sessionSuspendedTenant = await prisma.userSession.create({
       data: {
         userId: userB.id,
@@ -227,7 +262,17 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // Shift A in Tenant A
+    sessionCross = await prisma.userSession.create({
+      data: {
+        userId: userCross.id,
+        refreshTokenHash: 'dummy_refresh_hash',
+        status: 'ACTIVE',
+        contextVersion: 1,
+        selectedMembershipId: membershipCrossA.id,
+      },
+    });
+
+    // Shifts
     shiftA = await prisma.shift.create({
       data: {
         tenantId: tenantA.id,
@@ -238,7 +283,6 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // Shift B in Tenant B
     shiftB = await prisma.shift.create({
       data: {
         tenantId: tenantB.id,
@@ -249,7 +293,7 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // Attendance records
+    // Attendance
     await prisma.attendance.create({
       data: {
         tenantId: tenantA.id,
@@ -272,7 +316,7 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // Salary Structure & Payslips
+    // Salary & Payslips
     const periodA = await prisma.payrollPeriod.create({
       data: {
         tenantId: tenantA.id,
@@ -313,7 +357,7 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       },
     });
 
-    // ─── 2. Issue Signed JWT Tokens ──────────────────────────────────────────
+    // ─── 2. Signed JWT Tokens ────────────────────────────────────────────────
 
     tokenTenantA = jwtService.sign(
       { sub: userA.id, sid: sessionA.id, mid: membershipA1.id, ctxv: 1, tokenUse: 'access' },
@@ -336,7 +380,7 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
     );
 
     suspendedMemberToken = jwtService.sign(
-      { sub: sessionSuspendedMember.userId, sid: sessionSuspendedMember.id, mid: membershipSuspended.id, ctxv: 1, tokenUse: 'access' },
+      { sub: userSuspended.id, sid: sessionSuspendedMember.id, mid: membershipSuspended.id, ctxv: 1, tokenUse: 'access' },
       { secret: jwtSecret, expiresIn: '1h' },
     );
 
@@ -344,19 +388,26 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
       { sub: userB.id, sid: sessionSuspendedTenant.id, mid: membershipTenantSuspended.id, ctxv: 1, tokenUse: 'access' },
       { secret: jwtSecret, expiresIn: '1h' },
     );
+
+    oldTokenCrossA = jwtService.sign(
+      { sub: userCross.id, sid: sessionCross.id, mid: membershipCrossA.id, ctxv: 1, tokenUse: 'access' },
+      { secret: jwtSecret, expiresIn: '1h' },
+    );
   });
 
   afterAll(async () => {
-    // Cleanup seeded entities
     if (tenantA) {
-      await prisma.payslip.deleteMany({ where: { tenantId: { in: [tenantA.id, tenantB.id, tenantSuspended.id] } } });
-      await prisma.payrollPeriod.deleteMany({ where: { tenantId: { in: [tenantA.id, tenantB.id, tenantSuspended.id] } } });
-      await prisma.attendance.deleteMany({ where: { tenantId: { in: [tenantA.id, tenantB.id, tenantSuspended.id] } } });
-      await prisma.shift.deleteMany({ where: { tenantId: { in: [tenantA.id, tenantB.id, tenantSuspended.id] } } });
-      await prisma.userSession.deleteMany({ where: { userId: { in: [userA.id, userB.id] } } });
-      await prisma.tenantMembership.deleteMany({ where: { tenantId: { in: [tenantA.id, tenantB.id, tenantSuspended.id] } } });
-      await prisma.user.deleteMany({ where: { id: { in: [userA.id, userB.id] } } });
-      await prisma.tenant.deleteMany({ where: { id: { in: [tenantA.id, tenantB.id, tenantSuspended.id] } } });
+      const userIds = [userA?.id, userB?.id, userSuspended?.id, userCross?.id].filter(Boolean);
+      const tenantIds = [tenantA?.id, tenantB?.id, tenantSuspended?.id].filter(Boolean);
+
+      await prisma.payslip.deleteMany({ where: { tenantId: { in: tenantIds } } });
+      await prisma.payrollPeriod.deleteMany({ where: { tenantId: { in: tenantIds } } });
+      await prisma.attendance.deleteMany({ where: { tenantId: { in: tenantIds } } });
+      await prisma.shift.deleteMany({ where: { tenantId: { in: tenantIds } } });
+      await prisma.userSession.deleteMany({ where: { userId: { in: userIds } } });
+      await prisma.tenantMembership.deleteMany({ where: { tenantId: { in: tenantIds } } });
+      await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+      await prisma.tenant.deleteMany({ where: { id: { in: tenantIds } } });
     }
     await app.close();
   });
@@ -464,6 +515,56 @@ describe('Phase 0.3.2 — Real PostgreSQL 2-Tenant Adversarial E2E Suite', () =>
         .get('/shifts')
         .set('Authorization', `Bearer ${suspendedTenantToken}`)
         .expect(403);
+    });
+
+    it('ATTACK 9: Actual membership switch (Tenant A -> Tenant B) increments contextVersion and invalidates oldTokenA', async () => {
+      const selectRes = await request(app.getHttpServer())
+        .post('/auth/memberships/select')
+        .set('Authorization', `Bearer ${oldTokenCrossA}`)
+        .send({ membershipId: membershipCrossB.id })
+        .expect(200);
+
+      const newTokenCrossB = selectRes.body.accessToken;
+      expect(newTokenCrossB).toBeDefined();
+
+      // 1. Old token with ctxv=1 should now fail with 401 Unauthorized
+      await request(app.getHttpServer())
+        .get('/shifts')
+        .set('Authorization', `Bearer ${oldTokenCrossA}`)
+        .expect(401);
+
+      // 2. New token with ctxv=2 should succeed and query Tenant B shifts
+      const resShifts = await request(app.getHttpServer())
+        .get('/shifts')
+        .set('Authorization', `Bearer ${newTokenCrossB}`)
+        .expect(200);
+
+      expect(Array.isArray(resShifts.body)).toBe(true);
+      const tenantAShifts = resShifts.body.filter((s: any) => s.id === shiftA.id);
+      expect(tenantAShifts.length).toBe(0);
+    });
+
+    it('ATTACK 10: Nested IDOR — Token A assigning Shift A to foreign Membership B1 should be rejected', async () => {
+      await request(app.getHttpServer())
+        .post('/shifts/assign')
+        .set('Authorization', `Bearer ${tokenTenantA}`)
+        .send({
+          shiftId: shiftA.id,
+          membershipId: membershipB1.id,
+          startDate: '2026-09-01',
+        })
+        .expect(400);
+    });
+
+    it('ATTACK 11: Nested IDOR — Token A configuring salary structure for foreign Membership B1 should be rejected', async () => {
+      await request(app.getHttpServer())
+        .post('/payroll/salary-structure')
+        .set('Authorization', `Bearer ${tokenTenantA}`)
+        .send({
+          membershipId: membershipB1.id,
+          baseSalary: 55000,
+        })
+        .expect(400);
     });
   });
 });

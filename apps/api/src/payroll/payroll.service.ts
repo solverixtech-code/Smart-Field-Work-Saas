@@ -1,8 +1,6 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { PayrollRepository, SalaryStructureInputDto } from '../repositories/payroll.repository';
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { PayrollRepository } from '../repositories/payroll.repository';
 import { TenantScope } from '../common/tenancy/tenant-scope';
-import { PrismaService } from '../persistence/prisma.service';
-import { TenantMembershipStatus } from '@prisma/client';
 
 export interface CreateSalaryStructureDto {
   membershipId: string;
@@ -18,10 +16,7 @@ export interface CreateSalaryStructureDto {
 
 @Injectable()
 export class PayrollService {
-  constructor(
-    private readonly payrollRepository: PayrollRepository,
-    private readonly prisma: PrismaService,
-  ) {}
+  constructor(private readonly payrollRepository: PayrollRepository) {}
 
   async createSalaryStructure(scope: TenantScope, dto: CreateSalaryStructureDto) {
     if (!dto.membershipId) {
@@ -31,16 +26,16 @@ export class PayrollService {
     return this.payrollRepository.upsertSalaryStructure(scope, dto.membershipId, dto);
   }
 
-  async getSalaryStructure(scope: TenantScope, targetMembershipIdOrUserId: string) {
-    return this.payrollRepository.getSalaryStructure(scope, targetMembershipIdOrUserId);
+  async getSalaryStructure(scope: TenantScope, membershipId: string) {
+    return this.payrollRepository.getSalaryStructure(scope, membershipId);
   }
 
   async generateMonthlyPayroll(scope: TenantScope, month: number, year: number) {
     return this.payrollRepository.generateMonthlyPayroll(scope, month, year);
   }
 
-  async getPayslips(scope: TenantScope, _month?: number, _year?: number) {
-    return this.payrollRepository.getPayslips(scope);
+  async getPayslips(scope: TenantScope, month?: number, year?: number) {
+    return this.payrollRepository.getPayslips(scope, month, year);
   }
 
   async markPayslipPaid(scope: TenantScope, payslipId: string, transactionRef?: string) {

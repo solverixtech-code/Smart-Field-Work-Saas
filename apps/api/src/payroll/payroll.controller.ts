@@ -34,19 +34,19 @@ export class PayrollController {
     return this.payrollService.createSalaryStructure(scope, dto);
   }
 
-  @Get('salary-structure/:userId')
+  @Get('salary-structure/:membershipId')
   @ApiOperation({
     summary: 'Get Employee Salary Structure',
-    description: 'Fetch salary structure and gross/net pay breakdown for employee in current tenant.',
+    description: 'Fetch salary structure and gross/net pay breakdown for employee membership in current tenant.',
   })
-  @ApiParam({ name: 'userId', description: 'User or Membership UUID' })
+  @ApiParam({ name: 'membershipId', description: 'TenantMembership UUID' })
   @ApiResponse({ status: 200, description: 'Salary structure returned' })
   async getSalaryStructure(
     @CurrentPrincipal() principal: RequestPrincipal,
-    @Param('userId') userId: string,
+    @Param('membershipId') membershipId: string,
   ) {
     const scope = TenantScopeFactory.fromPrincipal(principal);
-    return this.payrollService.getSalaryStructure(scope, userId);
+    return this.payrollService.getSalaryStructure(scope, membershipId);
   }
 
   @Post('generate')

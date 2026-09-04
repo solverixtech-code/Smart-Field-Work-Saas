@@ -2,7 +2,6 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { ShiftRepository } from '../repositories/shift.repository';
 import { TenantScope } from '../common/tenancy/tenant-scope';
 import { PrismaService } from '../persistence/prisma.service';
-import { TenantMembershipStatus } from '@prisma/client';
 
 import { UpdateShiftSwaggerDto } from './dto/shift.dto';
 
