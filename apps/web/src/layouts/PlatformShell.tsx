@@ -41,7 +41,7 @@ import {
 import { useAppDispatch, useAppSelector } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
 import { clearAuthorization, fetchAuthorizationBootstrap } from "../store/slices/authorizationSlice";
-import { clearStoredRefreshToken } from "../common/authSession";
+import { clearStoredRefreshToken, getStoredRefreshToken } from "../common/authSession";
 import { api } from "../common/api";
 import { Button } from "../components/ui/Button";
 
@@ -209,7 +209,10 @@ export default function PlatformShell() {
 
   const handleLogout = async () => {
     try {
-      await api.post("/auth/logout", {});
+      const refreshToken = getStoredRefreshToken();
+      if (refreshToken) {
+        await api.post("/auth/logout", { refreshToken });
+      }
     } catch {
       /* swallow */
     }

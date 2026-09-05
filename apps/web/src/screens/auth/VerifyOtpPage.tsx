@@ -10,6 +10,9 @@ import { AuthTokensSchema } from '@visiblo/shared';
 import AuthLayout from '../../layouts/AuthLayout';
 import { Button } from '../../components/ui/Button';
 
+import { clearAuthorization, fetchAuthorizationBootstrap } from '../../store/slices/authorizationSlice';
+import { resolvePostAuthDestination } from '../../common/authNavigation';
+
 export default function VerifyOtpPage() {
   const [digits, setDigits] = useState<string[]>(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(48);
@@ -22,9 +25,15 @@ export default function VerifyOtpPage() {
   const location = useLocation();
 
   const challengeToken = location.state?.challengeToken;
-  const deliveryTarget = location.state?.deliveryTarget || 'admin@example.com';
+  const deliveryTarget = location.state?.deliveryTarget || 'your registered email/phone';
 
   useEffect(() => {
+    if (!challengeToken) {
+      toast.error('Verification session invalid or expired. Please sign in again.');
+      navigate('/admin/login', { replace: true });
+      return;
+    }
+
     const interval = setInterval(() => {
       setTimer((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
@@ -37,7 +46,19 @@ export default function VerifyOtpPage() {
       clearInterval(interval);
       clearTimeout(timerId);
     };
-  }, []);
+  }, [challengeToken, navigate]);
+
+  const handleResendOtp = async () => {
+    if (!challengeToken) return;
+    try {
+      await api.post('/auth/resend-otp', { challengeToken });
+      setTimer(48);
+      toast.success('A new verification code has been sent.');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || 'Failed to resend verification code.';
+      toast.error(msg);
+    }
+  };
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -68,6 +89,12 @@ export default function VerifyOtpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!challengeToken) {
+      toast.error('Verification session invalid or expired. Please sign in again.');
+      navigate('/admin/login', { replace: true });
+      return;
+    }
+
     const otp = digits.join('');
     if (otp.length < 6) {
       const errText = 'Please enter complete 6-digit OTP passcode.';
@@ -80,22 +107,17 @@ export default function VerifyOtpPage() {
     setLoading(true);
 
     try {
-      if (challengeToken) {
-        const res = await api.post('/auth/verify-otp', { challengeToken, otp });
-        const tokens = AuthTokensSchema.parse(res.data);
-        saveRefreshToken(tokens.refreshToken, true);
-        dispatch(setCredentials({ accessToken: tokens.accessToken, user: tokens.user }));
-        
-        toast.success('Passcode verified! Logged in successfully.');
-        if (tokens.user.role && String(tokens.user.role).startsWith('PLATFORM_')) {
-          navigate('/platform/dashboard');
-        } else {
-          navigate('/admin/dashboard');
-        }
-      } else {
-        toast.success('Passcode verified! Logged in successfully.');
-        navigate('/admin/dashboard');
-      }
+      const res = await api.post('/auth/verify-otp', { challengeToken, otp });
+      const tokens = AuthTokensSchema.parse(res.data);
+      saveRefreshToken(tokens.refreshToken, true);
+      dispatch(setCredentials({ accessToken: tokens.accessToken, user: tokens.user }));
+      dispatch(clearAuthorization());
+
+      const authData = await dispatch(fetchAuthorizationBootstrap()).unwrap();
+      const destination = resolvePostAuthDestination(authData);
+
+      toast.success('Passcode verified! Logged in successfully.');
+      navigate(destination);
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Invalid or expired OTP passcode.';
       setError(errorMsg);
@@ -169,7 +191,7 @@ export default function VerifyOtpPage() {
             ) : (
               <button
                 type="button"
-                onClick={() => setTimer(48)}
+                onClick={handleResendOtp}
                 className="text-[#E20613] font-bold hover:underline cursor-pointer"
               >
                 Resend OTP Now

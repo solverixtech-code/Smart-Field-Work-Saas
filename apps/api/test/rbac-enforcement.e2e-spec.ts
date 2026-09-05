@@ -601,7 +601,7 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
     });
 
     it('rejects granting PLATFORM-scoped permission to a TenantRole', async () => {
-      const tenantRole = await prisma.tenantRole.findFirst();
+      const tenantRole = await prisma.tenantRole.findFirst({ where: { tenantId: tenantA.id } });
       await expect(
         rolePermissionService.grantTenantPermission(tenantA.id, tenantRole!.id, 'platform.tenants.view'),
       ).rejects.toThrow('Only TENANT scoped permissions are allowed');
@@ -644,6 +644,74 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
 
       expect(res.body.tenant.permissions).not.toContain('attendance.self.punch');
       expect(res.body.tenant.permissionVersion).toContain(':v2');
+    });
+  });
+
+  describe('7. Server-Side Logout Revocation & Landing Authority Isolation', () => {
+    it('revokes server UserSession when POST /auth/logout receives refreshToken', async () => {
+      // 1. Create temporary session & tokens
+      const tempUser = await prisma.user.create({
+        data: {
+          employeeCode: `EMP-LOGOUT-${timestamp}`,
+          fullName: 'Logout Test User',
+          email: `logout-${timestamp}@example.com`,
+          passwordHash: 'dummy',
+          role: Role.SUPPORT,
+          status: 'ACTIVE',
+        },
+      });
+
+      const session = await prisma.userSession.create({
+        data: { userId: tempUser.id, refreshTokenHash: 'dummy', status: 'ACTIVE', contextVersion: 1 },
+      });
+
+      // Sign real refresh token
+      const refreshToken = jwtService.sign({ sub: tempUser.id, sid: session.id }, { secret: configService.getOrThrow<string>('JWT_REFRESH_SECRET') });
+      const hashedRefresh = await require('argon2').hash(refreshToken);
+      await prisma.userSession.update({ where: { id: session.id }, data: { refreshTokenHash: hashedRefresh } });
+
+      const accessToken = jwtService.sign({ sub: tempUser.id, sid: session.id, ctxv: 1 }, { secret: jwtSecret });
+
+      // Verify active session works
+      await request(app.getHttpServer())
+        .get('/auth/authorization')
+        .set('Authorization', `Bearer ${accessToken}`)
+        .expect(200);
+
+      // Perform logout with body { refreshToken }
+      await request(app.getHttpServer())
+        .post('/auth/logout')
+        .send({ refreshToken })
+        .expect(200);
+
+      // Verify UserSession is now REVOKED in database
+      const dbSession = await prisma.userSession.findUnique({ where: { id: session.id } });
+      expect(dbSession?.status).toBe('REVOKED');
+
+      // Cleanup temp user
+      await prisma.userSession.deleteMany({ where: { userId: tempUser.id } });
+      await prisma.user.delete({ where: { id: tempUser.id } });
+    });
+
+    it('returns empty platform permissions for legacy SUPER_ADMIN without PlatformUserRoleAssignment', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/auth/authorization')
+        .set('Authorization', `Bearer ${tokenLegacySuperAdmin}`)
+        .expect(200);
+
+      expect(res.body.platform.roleCodes).toEqual([]);
+      expect(res.body.platform.permissions).toEqual([]);
+      expect(res.body.platform.permissions).not.toContain('platform.dashboard.view');
+    });
+
+    it('returns platform.dashboard.view permission for Platform Super Admin assignment', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/auth/authorization')
+        .set('Authorization', `Bearer ${tokenPlatformSuperAdmin}`)
+        .expect(200);
+
+      expect(res.body.platform.roleCodes).toContain('PLATFORM_SUPER_ADMIN');
+      expect(res.body.platform.permissions).toContain('platform.dashboard.view');
     });
   });
 });

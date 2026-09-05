@@ -116,7 +116,7 @@ async function main() {
   ];
 
   for (const u of users) {
-    await prisma.user.upsert({
+    const user = await prisma.user.upsert({
       where: { email: u.email },
       update: {
         fullName: u.fullName,
@@ -132,6 +132,28 @@ async function main() {
         mobile: u.mobile,
       },
     });
+
+    if (String(u.role).startsWith('PLATFORM_')) {
+      const platformRole = await prisma.platformRole.findUnique({
+        where: { code: u.role },
+      });
+      if (platformRole) {
+        await prisma.platformUserRoleAssignment.upsert({
+          where: {
+            userId_platformRoleId: {
+              userId: user.id,
+              platformRoleId: platformRole.id,
+            },
+          },
+          update: { status: 'ACTIVE' },
+          create: {
+            userId: user.id,
+            platformRoleId: platformRole.id,
+            status: 'ACTIVE',
+          },
+        });
+      }
+    }
   }
 
   console.log('✅ Development seed complete with demo users.');

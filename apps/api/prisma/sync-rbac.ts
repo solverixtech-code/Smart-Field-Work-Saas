@@ -144,32 +144,40 @@ export async function syncRbac(client?: PrismaClient) {
       },
     });
 
-    const missingPermIds: string[] = [];
+    const desiredPermIds = new Set<string>();
     for (const pCode of grantCodes) {
       const perm = permMapByCode.get(pCode);
-      if (!perm || perm.scope !== 'PLATFORM') continue;
-
-      const existingGrant = await prisma.platformRolePermission.findUnique({
-        where: {
-          platformRoleId_permissionId: {
-            platformRoleId: platformRole.id,
-            permissionId: perm.id,
-          },
-        },
-      });
-
-      if (!existingGrant) {
-        missingPermIds.push(perm.id);
+      if (perm && perm.scope === 'PLATFORM') {
+        desiredPermIds.add(perm.id);
       }
     }
 
-    if (missingPermIds.length > 0) {
+    const existingGrants = await prisma.platformRolePermission.findMany({
+      where: { platformRoleId: platformRole.id },
+      select: { permissionId: true },
+    });
+    const existingPermIds = new Set(existingGrants.map((g) => g.permissionId));
+
+    const missingPermIds = Array.from(desiredPermIds).filter((id) => !existingPermIds.has(id));
+    const obsoletePermIds = Array.from(existingPermIds).filter((id) => !desiredPermIds.has(id));
+
+    if (missingPermIds.length > 0 || obsoletePermIds.length > 0) {
       await prisma.$transaction(async (tx) => {
-        for (const permissionId of missingPermIds) {
-          await tx.platformRolePermission.create({
-            data: {
+        if (missingPermIds.length > 0) {
+          for (const permissionId of missingPermIds) {
+            await tx.platformRolePermission.create({
+              data: {
+                platformRoleId: platformRole.id,
+                permissionId,
+              },
+            });
+          }
+        }
+        if (obsoletePermIds.length > 0) {
+          await tx.platformRolePermission.deleteMany({
+            where: {
               platformRoleId: platformRole.id,
-              permissionId,
+              permissionId: { in: obsoletePermIds },
             },
           });
         }

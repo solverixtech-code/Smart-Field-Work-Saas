@@ -12,9 +12,12 @@ import { Button } from '../../components/ui/Button';
 
 import { Checkbox } from '../../components/ui/Checkbox';
 
+import { clearAuthorization, fetchAuthorizationBootstrap } from '../../store/slices/authorizationSlice';
+import { resolvePostAuthDestination } from '../../common/authNavigation';
+
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@visibloai.com');
-  const [password, setPassword] = useState('Visiblo@2025');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -48,12 +51,13 @@ export default function LoginPage() {
       const tokens = AuthTokensSchema.parse(res.data);
       saveRefreshToken(tokens.refreshToken, remember);
       dispatch(setCredentials({ accessToken: tokens.accessToken, user: tokens.user }));
+      dispatch(clearAuthorization());
+
+      const authData = await dispatch(fetchAuthorizationBootstrap()).unwrap();
+      const destination = resolvePostAuthDestination(authData);
+
       toast.success('Welcome back! Login successful.');
-      if (tokens.user.role && (String(tokens.user.role).startsWith('PLATFORM_') || tokens.user.role === 'SUPER_ADMIN')) {
-        navigate('/platform/dashboard');
-      } else {
-        navigate('/admin/dashboard');
-      }
+      navigate(destination);
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Login failed. Please check credentials.';
       setHasError(true);
