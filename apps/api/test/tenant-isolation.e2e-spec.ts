@@ -7,6 +7,7 @@ import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/persistence/prisma.service';
 import { TenantMembershipStatus, TenantStatus, Role } from '@prisma/client';
 import { verifyTestDatabaseSafety } from '../src/test-utils/test-db-safety';
+import { syncRbac } from '../prisma/sync-rbac';
 
 describe('Phase 0.3.3 — Real PostgreSQL 2-Tenant Adversarial E2E Suite & Gate Certification', () => {
   let app: INestApplication;
@@ -108,6 +109,19 @@ describe('Phase 0.3.3 — Real PostgreSQL 2-Tenant Adversarial E2E Suite & Gate 
       },
     });
 
+    // Seed RBAC and built-in tenant roles
+    await syncRbac(prisma);
+
+    const tenantAdminRoleA = await prisma.tenantRole.findUnique({
+      where: { tenantId_code: { tenantId: tenantA.id, code: 'tenant_admin' } },
+    });
+    const tenantAdminRoleB = await prisma.tenantRole.findUnique({
+      where: { tenantId_code: { tenantId: tenantB.id, code: 'tenant_admin' } },
+    });
+    const tenantAdminRoleSusp = await prisma.tenantRole.findUnique({
+      where: { tenantId_code: { tenantId: tenantSuspended.id, code: 'tenant_admin' } },
+    });
+
     // User A (Belongs to Tenant A)
     userA = await prisma.user.create({
       data: {
@@ -157,6 +171,7 @@ describe('Phase 0.3.3 — Real PostgreSQL 2-Tenant Adversarial E2E Suite & Gate 
       data: {
         tenantId: tenantA.id,
         userId: userA.id,
+        tenantRoleId: tenantAdminRoleA!.id,
         employeeCode: `MEM-A1-${timestamp}`,
         status: TenantMembershipStatus.ACTIVE,
       },
@@ -167,6 +182,7 @@ describe('Phase 0.3.3 — Real PostgreSQL 2-Tenant Adversarial E2E Suite & Gate 
       data: {
         tenantId: tenantB.id,
         userId: userB.id,
+        tenantRoleId: tenantAdminRoleB!.id,
         employeeCode: `MEM-B1-${timestamp}`,
         status: TenantMembershipStatus.ACTIVE,
       },
@@ -177,6 +193,7 @@ describe('Phase 0.3.3 — Real PostgreSQL 2-Tenant Adversarial E2E Suite & Gate 
       data: {
         tenantId: tenantA.id,
         userId: userSuspended.id,
+        tenantRoleId: tenantAdminRoleA!.id,
         employeeCode: `MEM-SUSP-${timestamp}`,
         status: TenantMembershipStatus.SUSPENDED,
       },
@@ -187,6 +204,7 @@ describe('Phase 0.3.3 — Real PostgreSQL 2-Tenant Adversarial E2E Suite & Gate 
       data: {
         tenantId: tenantSuspended.id,
         userId: userB.id,
+        tenantRoleId: tenantAdminRoleSusp!.id,
         employeeCode: `MEM-TSUSP-${timestamp}`,
         status: TenantMembershipStatus.ACTIVE,
       },
@@ -197,6 +215,7 @@ describe('Phase 0.3.3 — Real PostgreSQL 2-Tenant Adversarial E2E Suite & Gate 
       data: {
         tenantId: tenantA.id,
         userId: userCross.id,
+        tenantRoleId: tenantAdminRoleA!.id,
         employeeCode: `MEM-CROSS-A-${timestamp}`,
         status: TenantMembershipStatus.ACTIVE,
       },
@@ -206,6 +225,7 @@ describe('Phase 0.3.3 — Real PostgreSQL 2-Tenant Adversarial E2E Suite & Gate 
       data: {
         tenantId: tenantB.id,
         userId: userCross.id,
+        tenantRoleId: tenantAdminRoleB!.id,
         employeeCode: `MEM-CROSS-B-${timestamp}`,
         status: TenantMembershipStatus.ACTIVE,
       },

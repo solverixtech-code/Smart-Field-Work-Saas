@@ -280,7 +280,7 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
         fullName: 'Visiblo Domain User',
         email: `employee-${timestamp}@smartfieldwork.com`,
         passwordHash: 'dummy',
-        role: Role.FIELD_EXECUTIVE,
+        role: Role.SUPPORT,
         status: 'ACTIVE',
       },
     });
@@ -419,7 +419,10 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
   afterAll(async () => {
     const tenantIds = [tenantA?.id, tenantB?.id].filter(Boolean);
     if (tenantIds.length > 0) {
+      await prisma.punchLog.deleteMany({ where: { tenantId: { in: tenantIds } } });
+      await prisma.attendance.deleteMany({ where: { tenantId: { in: tenantIds } } });
       await prisma.tenantMembership.deleteMany({ where: { tenantId: { in: tenantIds } } });
+      await prisma.tenantRolePermission.deleteMany({ where: { tenantRole: { tenantId: { in: tenantIds } } } });
       await prisma.tenantRole.deleteMany({ where: { tenantId: { in: tenantIds } } });
       await prisma.tenant.deleteMany({ where: { id: { in: tenantIds } } });
     }
@@ -498,7 +501,7 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
       await request(app.getHttpServer())
         .patch('/platform/modules/mod_test_123')
         .set('Authorization', `Bearer ${tokenPlatformSuperAdmin}`)
-        .send({ name: 'Updated Module' })
+        .send({ internalNotes: 'Updated Module Notes' })
         .expect(404);
     });
   });
@@ -538,7 +541,6 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
         .post('/attendance/punch-in')
         .set('Authorization', `Bearer ${tokenFieldExec}`)
         .send({
-          type: 'PUNCH_IN',
           latitude: 12.9716,
           longitude: 77.5946,
         })
