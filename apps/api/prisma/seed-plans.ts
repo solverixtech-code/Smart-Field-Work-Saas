@@ -243,7 +243,7 @@ async function seedPlans() {
   const publishApproved = process.env.PUBLISH_SEED_PLANS === 'true';
 
   for (const planData of plansData) {
-    const existing = await prisma.plan.findUnique({ where: { code: planData.code } });
+    const existing = await (prisma as any).plan.findUnique({ where: { code: planData.code } });
     if (existing) {
       console.log(`Plan '${planData.code}' already exists. Skipping seed.`);
       continue;
@@ -262,7 +262,7 @@ async function seedPlans() {
 
     const now = new Date();
 
-    const plan = await prisma.$transaction(async (tx) => {
+    const plan = await (prisma as any).$transaction(async (tx: any) => {
       const createdPlan = await tx.plan.create({
         data: {
           code: planData.code,
