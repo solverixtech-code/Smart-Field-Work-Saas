@@ -23,6 +23,12 @@ describe('TenantService (Phase 0.2 Foundation)', () => {
     prisma = module.get<PrismaService>(PrismaService);
 
     // Clean test data and seed role templates
+    await prisma.punchLog.deleteMany();
+    await prisma.attendance.deleteMany();
+    await prisma.userShift.deleteMany();
+    await prisma.shift.deleteMany();
+    await prisma.payslip.deleteMany();
+    await prisma.payrollPeriod.deleteMany();
     await prisma.tenantMembership.deleteMany();
     await prisma.tenantRolePermission.deleteMany();
     await prisma.tenantRole.deleteMany();
@@ -35,6 +41,12 @@ describe('TenantService (Phase 0.2 Foundation)', () => {
   });
 
   afterEach(async () => {
+    await prisma.punchLog.deleteMany();
+    await prisma.attendance.deleteMany();
+    await prisma.userShift.deleteMany();
+    await prisma.shift.deleteMany();
+    await prisma.payslip.deleteMany();
+    await prisma.payrollPeriod.deleteMany();
     await prisma.tenantMembership.deleteMany();
     await prisma.tenantRolePermission.deleteMany();
     await prisma.tenantRole.deleteMany();

@@ -33,7 +33,7 @@ Tenant domain controllers (`ShiftController`, `AttendanceController`, `PayrollCo
 JwtAuthGuard
     ↓ (Authenticates JWT token)
 RequestPrincipalGuard
-    ↓ (Resolves RequestPrincipal from DB & Redis cache)
+    ↓ (Resolves RequestPrincipal from DB & in-memory PermissionCacheService)
 MembershipContextGuard
     ↓ (Validates active tenantId & membershipId context)
 PermissionsGuard
@@ -48,7 +48,7 @@ Platform console controllers (`PlatformTenantsController`, `PlatformModulesContr
 JwtAuthGuard
     ↓ (Authenticates JWT token)
 RequestPrincipalGuard
-    ↓ (Resolves RequestPrincipal from DB & Redis cache)
+    ↓ (Resolves RequestPrincipal from DB & in-memory PermissionCacheService)
 PlatformAccessGuard / PermissionsGuard
     ↓ (Checks request.principal.platformPermissions)
 Controller Action Execution
@@ -59,7 +59,7 @@ Controller Action Execution
 ## 3. Dynamic Cache Invalidation & Versioning
 
 1. **Cache Structure**:
-   - User permissions are cached in Redis with versioned keys:
+   - User permissions are cached in-memory (`PermissionCacheService` Map) with versioned keys:
      - Platform permissions: `user:perm:platform:<userId>:v<version>`
      - Tenant permissions: `user:perm:tenant:<tenantId>:<membershipId>:v<version>`
    - Cache TTL: 5 minutes with immediate transactional invalidation on grant/revoke.

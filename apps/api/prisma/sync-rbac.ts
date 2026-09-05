@@ -65,6 +65,7 @@ export async function syncRbac(client?: PrismaClient) {
   }
 
   // 1b. Mark permissions missing from developer registry as isActive = false
+  // AND transactionally bump permissionsVersion for all affected PlatformRoles and TenantRoles
   const registryCodes = new Set(PERMISSION_REGISTRY.map((p) => p.code));
   const activeDbPermissions = await prisma.permission.findMany({
     where: { isActive: true },
@@ -72,10 +73,43 @@ export async function syncRbac(client?: PrismaClient) {
 
   for (const p of activeDbPermissions) {
     if (p.code && !registryCodes.has(p.code)) {
-      await prisma.permission.update({
-        where: { id: p.id },
-        data: { isActive: false },
+      const affectedPlatformGrants = await prisma.platformRolePermission.findMany({
+        where: { permissionId: p.id },
+        select: { platformRoleId: true },
       });
+      const affectedPlatformRoleIds = Array.from(
+        new Set(affectedPlatformGrants.map((g) => g.platformRoleId)),
+      );
+
+      const affectedTenantGrants = await prisma.tenantRolePermission.findMany({
+        where: { permissionId: p.id },
+        select: { tenantRoleId: true },
+      });
+      const affectedTenantRoleIds = Array.from(
+        new Set(affectedTenantGrants.map((g) => g.tenantRoleId)),
+      );
+
+      await prisma.$transaction(async (tx) => {
+        await tx.permission.update({
+          where: { id: p.id },
+          data: { isActive: false },
+        });
+
+        if (affectedPlatformRoleIds.length > 0) {
+          await tx.platformRole.updateMany({
+            where: { id: { in: affectedPlatformRoleIds } },
+            data: { permissionsVersion: { increment: 1 } },
+          });
+        }
+
+        if (affectedTenantRoleIds.length > 0) {
+          await tx.tenantRole.updateMany({
+            where: { id: { in: affectedTenantRoleIds } },
+            data: { permissionsVersion: { increment: 1 } },
+          });
+        }
+      });
+
       permissionsInactivated++;
     }
   }
@@ -110,7 +144,7 @@ export async function syncRbac(client?: PrismaClient) {
       },
     });
 
-    let roleGrantsCreated = 0;
+    const missingPermIds: string[] = [];
     for (const pCode of grantCodes) {
       const perm = permMapByCode.get(pCode);
       if (!perm || perm.scope !== 'PLATFORM') continue;
@@ -125,22 +159,26 @@ export async function syncRbac(client?: PrismaClient) {
       });
 
       if (!existingGrant) {
-        await prisma.platformRolePermission.create({
-          data: {
-            platformRoleId: platformRole.id,
-            permissionId: perm.id,
-          },
-        });
-        roleGrantsCreated++;
-        platformGrantsCreated++;
+        missingPermIds.push(perm.id);
       }
     }
 
-    if (roleGrantsCreated > 0) {
-      await prisma.platformRole.update({
-        where: { id: platformRole.id },
-        data: { permissionsVersion: { increment: 1 } },
+    if (missingPermIds.length > 0) {
+      await prisma.$transaction(async (tx) => {
+        for (const permissionId of missingPermIds) {
+          await tx.platformRolePermission.create({
+            data: {
+              platformRoleId: platformRole.id,
+              permissionId,
+            },
+          });
+        }
+        await tx.platformRole.update({
+          where: { id: platformRole.id },
+          data: { permissionsVersion: { increment: 1 } },
+        });
       });
+      platformGrantsCreated += missingPermIds.length;
     }
   }
 
@@ -182,12 +220,14 @@ export async function syncRbac(client?: PrismaClient) {
         isNewRole = true;
       }
 
+      const activeRole = tenantRole;
+
       // Safe guard: Do NOT rewrite grants if customized (permissionsVersion > 1) and not brand new
-      if (!isNewRole && tenantRole.permissionsVersion > 1) {
+      if (!isNewRole && activeRole.permissionsVersion > 1) {
         continue;
       }
 
-      let roleGrantsCreated = 0;
+      const missingPermIds: string[] = [];
       for (const pCode of grantCodes) {
         const perm = permMapByCode.get(pCode);
         if (!perm || perm.scope !== 'TENANT') continue;
@@ -195,29 +235,34 @@ export async function syncRbac(client?: PrismaClient) {
         const existingGrant = await prisma.tenantRolePermission.findUnique({
           where: {
             tenantRoleId_permissionId: {
-              tenantRoleId: tenantRole.id,
+              tenantRoleId: activeRole.id,
               permissionId: perm.id,
             },
           },
         });
 
         if (!existingGrant) {
-          await prisma.tenantRolePermission.create({
-            data: {
-              tenantRoleId: tenantRole.id,
-              permissionId: perm.id,
-            },
-          });
-          roleGrantsCreated++;
-          tenantGrantsCreated++;
+          missingPermIds.push(perm.id);
         }
       }
 
-      if (roleGrantsCreated > 0) {
-        await prisma.tenantRole.update({
-          where: { id: tenantRole.id },
-          data: { permissionsVersion: { increment: 1 } },
+      if (missingPermIds.length > 0) {
+        const roleId = activeRole.id;
+        await prisma.$transaction(async (tx) => {
+          for (const permissionId of missingPermIds) {
+            await tx.tenantRolePermission.create({
+              data: {
+                tenantRoleId: roleId,
+                permissionId,
+              },
+            });
+          }
+          await tx.tenantRole.update({
+            where: { id: roleId },
+            data: { permissionsVersion: { increment: 1 } },
+          });
         });
+        tenantGrantsCreated += missingPermIds.length;
       }
     }
   }

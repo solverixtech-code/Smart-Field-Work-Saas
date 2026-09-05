@@ -156,7 +156,7 @@ export class RolePermissionService {
     }
 
     if (role.tenantId !== tenantId) {
-      throw new ForbiddenException('Cross-tenant role mutation prohibited');
+      throw new NotFoundException(`Tenant role '${tenantRoleId}' not found.`);
     }
 
     const permission = await this.prisma.permission.findFirst({
@@ -228,7 +228,7 @@ export class RolePermissionService {
     }
 
     if (role.tenantId !== tenantId) {
-      throw new ForbiddenException('Cross-tenant role mutation prohibited');
+      throw new NotFoundException(`Tenant role '${tenantRoleId}' not found.`);
     }
 
     const permission = await this.prisma.permission.findFirst({

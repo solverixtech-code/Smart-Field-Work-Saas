@@ -285,6 +285,8 @@ export default function AppRouter() {
             {/* Workforce, Attendance, and Payroll Routes */}
             <Route element={<PermissionRoute permission="workforce.shifts.view" />}>
               <Route path="/admin/shifts" element={<ShiftManagementPage />} />
+            </Route>
+            <Route element={<PermissionRoute permission="attendance.monitoring.view" />}>
               <Route path="/admin/attendance" element={<AttendanceMonitoringPage />} />
             </Route>
 
@@ -381,6 +383,8 @@ export default function AppRouter() {
 
             <Route element={<PermissionRoute permission="payroll.payslips.view" />}>
               <Route path="/admin/payroll" element={<PayrollManagementPage />} />
+            </Route>
+            <Route element={<PermissionRoute permission="payroll.salary_structure.manage" />}>
               <Route path="/admin/payroll/settings" element={<PayrollSettingsPage />} />
             </Route>
 
@@ -521,7 +525,7 @@ export default function AppRouter() {
               </Route>
               <Route path="/platform/tenants/onboarding" element={<Navigate to="/platform/tenants" replace />} />
               <Route path="/platform/tenants/requests" element={<Navigate to="/platform/tenants" replace />} />
-              <Route element={<PlatformAccessGuard requiredPermission="platform.tenants.modules.manage" />}>
+              <Route element={<PlatformAccessGuard requiredPermission="platform.tenants.view" />}>
                 <Route path="/platform/tenants/:tenantId/modules" element={<TenantModulesPage />} />
               </Route>
               <Route element={<PlatformAccessGuard requiredPermission="platform.tenants.members.manage" />}>

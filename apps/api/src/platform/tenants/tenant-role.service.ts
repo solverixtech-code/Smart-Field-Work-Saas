@@ -19,7 +19,13 @@ export class TenantRoleService {
     tenantId: string,
     tx?: Prisma.TransactionClient | PrismaClient,
   ): Promise<TenantRole[]> {
-    const db = tx || this.prisma;
+    if (!tx) {
+      return this.prisma.$transaction(async (innerTx) => {
+        return this.ensureBuiltInTenantRoles(tenantId, innerTx);
+      });
+    }
+
+    const db = tx;
     const templates = await db.tenantRoleTemplate.findMany({
       where: { isActive: true },
     });
@@ -62,7 +68,6 @@ export class TenantRoleService {
           },
         });
       }
-      tenantRoles.push(tenantRole);
 
       // Bootstrap default RBAC grants if un-customized (permissionsVersion <= 1)
       if (tenantRole.permissionsVersion <= 1) {
@@ -92,7 +97,16 @@ export class TenantRoleService {
             newGrantsCreated++;
           }
         }
+
+        if (newGrantsCreated > 0) {
+          tenantRole = await db.tenantRole.update({
+            where: { id: tenantRole.id },
+            data: { permissionsVersion: { increment: 1 } },
+          });
+        }
       }
+
+      tenantRoles.push(tenantRole);
     }
 
     return tenantRoles;

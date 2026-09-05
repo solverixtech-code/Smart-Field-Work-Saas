@@ -14,7 +14,6 @@ export type PlatformPermission =
   | 'platform.tenants.provision'
   | 'platform.tenants.suspend'
   | 'platform.tenants.members.manage'
-  | 'platform.tenants.modules.manage'
   | 'platform.plans.view'
   | 'platform.plans.create'
   | 'platform.plans.update'
