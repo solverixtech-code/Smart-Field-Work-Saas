@@ -1,214 +1,99 @@
 import { PlanVersionRecord } from '../types/plan-version.types';
-import { CANONICAL_PLATFORM_PLANS } from '../fixtures/plan.fixtures';
+import { api } from '../../../../../common/api';
 
-// Seeding realistic historical versions for canonical plans
-const SEEDED_VERSION_HISTORY: Record<string, PlanVersionRecord[]> = {
-  plan_professional: [
-    {
-      id: 'ver_prof_v1_0',
-      planId: 'plan_professional',
-      version: 1.0,
-      status: 'Current',
-      publishedAt: '2026-05-28',
-      effectiveFrom: '2026-05-28',
-      actorName: 'Sahibjit Singh (Platform Admin)',
-      changeSummary: [
-        'Active production version for Professional Field Suite (PROFESSIONAL)',
-        'Configured with Per User model (₹1,199/mo, ₹999/yr) and 100 GB storage allowance',
-      ],
-      snapshot: {
-        pricing: {
-          model: 'Per User',
-          monthlyPerUser: 1199,
-          annualPerUser: 999,
-          allowMonthlyBilling: true,
-          allowAnnualBilling: true,
-          defaultBillingCycle: 'Annual',
-          currency: 'INR',
-          taxMode: 'Exclusive',
-          prorationPolicy: 'Prorate Immediately',
-        },
-        limits: {
-          minimumSeats: 5,
-          defaultSeatLimit: 50,
-          maximumSeats: 250,
-          seatIncrement: 5,
-          storageGb: 100,
-          apiRequestsPerMonth: 100000,
-          activeWorkflows: 25,
-          customForms: 50,
-          aiCreditsPerMonth: 5000,
-          reportExportsPerMonth: 500,
-          dataRetentionDays: 365,
-        },
-        includedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance'],
-        commercialRules: {
-          trialEnabled: true,
-          trialDurationDays: 14,
-          trialModulePolicy: 'Use Plan Modules',
-          autoConvertAfterTrial: false,
-          autoRenew: true,
-          allowUpgrade: true,
-          allowDowngrade: false,
-          changeEffectiveTiming: 'Immediately',
-          minimumCommitment: '1 Month',
-          availableForNewTenants: true,
-          availableForExistingTenants: true,
-          cancellationAllowed: true,
-          gracePeriodDays: 7,
-          accessAfterExpiry: 'Read Only',
-        },
-      },
-    },
-    {
-      id: 'ver_prof_v0_9',
-      planId: 'plan_professional',
-      version: 0.9,
-      status: 'Replaced',
-      publishedAt: '2026-03-15',
-      effectiveFrom: '2026-03-15',
-      effectiveTo: '2026-05-27',
-      actorName: 'Sahibjit Singh (Platform Admin)',
-      changeSummary: [
-        'Added Attendance & Leave Tracking module and increased storage allowance to 80 GB',
-      ],
-      snapshot: {
-        pricing: {
-          model: 'Per User',
-          monthlyPerUser: 1099,
-          annualPerUser: 899,
-          allowMonthlyBilling: true,
-          allowAnnualBilling: true,
-          defaultBillingCycle: 'Annual',
-          currency: 'INR',
-          taxMode: 'Exclusive',
-          prorationPolicy: 'Prorate Immediately',
-        },
-        limits: {
-          minimumSeats: 5,
-          defaultSeatLimit: 50,
-          maximumSeats: 200,
-          seatIncrement: 5,
-          storageGb: 80,
-          apiRequestsPerMonth: 75000,
-          activeWorkflows: 20,
-          customForms: 30,
-          aiCreditsPerMonth: 3000,
-          reportExportsPerMonth: 300,
-          dataRetentionDays: 180,
-        },
-        includedModuleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management'],
-        commercialRules: {
-          trialEnabled: true,
-          trialDurationDays: 14,
-          trialModulePolicy: 'Use Plan Modules',
-          autoConvertAfterTrial: false,
-          autoRenew: true,
-          allowUpgrade: true,
-          allowDowngrade: false,
-          changeEffectiveTiming: 'Immediately',
-          minimumCommitment: '1 Month',
-          availableForNewTenants: true,
-          availableForExistingTenants: true,
-          cancellationAllowed: true,
-          gracePeriodDays: 7,
-          accessAfterExpiry: 'Read Only',
-        },
-      },
-    },
-    {
-      id: 'ver_prof_v0_8',
-      planId: 'plan_professional',
-      version: 0.8,
-      status: 'Archived',
-      publishedAt: '2026-01-10',
-      effectiveFrom: '2026-01-10',
-      effectiveTo: '2026-03-14',
-      actorName: 'Ananya Sharma (Product Manager)',
-      changeSummary: [
-        'Initial beta release configuration for Professional Field Suite',
-      ],
-      snapshot: {
-        pricing: {
-          model: 'Per User',
-          monthlyPerUser: 999,
-          annualPerUser: 799,
-          allowMonthlyBilling: true,
-          allowAnnualBilling: true,
-          defaultBillingCycle: 'Monthly',
-          currency: 'INR',
-          taxMode: 'Exclusive',
-          prorationPolicy: 'No Proration',
-        },
-        limits: {
-          minimumSeats: 5,
-          defaultSeatLimit: 25,
-          maximumSeats: 100,
-          seatIncrement: 5,
-          storageGb: 50,
-          apiRequestsPerMonth: 50000,
-          activeWorkflows: 15,
-          customForms: 20,
-          aiCreditsPerMonth: 2500,
-          reportExportsPerMonth: 200,
-          dataRetentionDays: 90,
-        },
-        includedModuleCodes: ['core_crm', 'field_visits', 'order_management'],
-        commercialRules: {
-          trialEnabled: true,
-          trialDurationDays: 14,
-          trialModulePolicy: 'Use Plan Modules',
-          autoConvertAfterTrial: false,
-          autoRenew: true,
-          allowUpgrade: true,
-          allowDowngrade: true,
-          changeEffectiveTiming: 'Next Billing Cycle',
-          minimumCommitment: '1 Month',
-          availableForNewTenants: true,
-          availableForExistingTenants: true,
-          cancellationAllowed: true,
-          gracePeriodDays: 7,
-          accessAfterExpiry: 'Read Only',
-        },
-      },
-    },
-  ],
-};
-
-class PlanVersionService {
+class ApiPlanVersionService {
   async getVersions(planId: string): Promise<PlanVersionRecord[]> {
-    if (SEEDED_VERSION_HISTORY[planId]) {
-      return SEEDED_VERSION_HISTORY[planId];
+    try {
+      const response = await api.get(`/platform/plans/${planId}/versions`);
+      const backendVersions: any[] = response.data;
+
+      return backendVersions.map((v) => {
+        const pricingList: any[] = v.pricing || [];
+        const limitsList: any[] = v.limits || [];
+        const rules = v.commercialRule || {};
+
+        const monthly = pricingList.find((p) => p.billingCycle === 'MONTHLY');
+        const annual = pricingList.find((p) => p.billingCycle === 'ANNUAL');
+        const firstPrice = monthly || annual || {};
+
+        const modelMap: Record<string, any> = {
+          PER_USER: 'Per User',
+          BASE_PLUS_PER_USER: 'Base + Per User',
+          FLAT: 'Flat Monthly',
+          CUSTOM_CONTRACT: 'Custom Contract',
+        };
+
+        const limitsMap: Record<string, any> = {};
+        for (const l of limitsList) {
+          limitsMap[l.limitCode] = l;
+        }
+
+        const displayStatusMap: Record<string, 'Current' | 'Replaced' | 'Draft' | 'Archived'> = {
+          CURRENT: 'Current',
+          REPLACED: 'Replaced',
+          DRAFT: 'Draft',
+        };
+
+        return {
+          id: v.id,
+          planId: v.planId,
+          version: v.version,
+          status: displayStatusMap[v.displayStatus] || 'Draft',
+          publishedAt: v.publishedAt || undefined,
+          effectiveFrom: v.publishedAt || undefined,
+          actorName: v.publishedByUserId ? 'Platform Admin' : 'System',
+          changeSummary: [
+            `Version ${v.version} commercial snapshot (${v.displayStatus})`,
+          ],
+          snapshot: {
+            pricing: {
+              model: modelMap[firstPrice.model] || 'Per User',
+              monthlyPerUser: monthly?.perSeatFee ? Number(monthly.perSeatFee) : undefined,
+              annualPerUser: annual?.perSeatFee ? Number(annual.perSeatFee) : undefined,
+              allowMonthlyBilling: Boolean(monthly),
+              allowAnnualBilling: Boolean(annual),
+              defaultBillingCycle: annual && !monthly ? 'Annual' : 'Monthly',
+              currency: firstPrice.currency || 'INR',
+              taxMode: firstPrice.taxMode === 'INCLUSIVE' ? 'Inclusive' : 'Exclusive',
+              prorationPolicy: firstPrice.prorationPolicy === 'NEXT_BILLING_CYCLE' ? 'Next Billing Cycle' : firstPrice.prorationPolicy === 'IMMEDIATE' ? 'Prorate Immediately' : 'No Proration',
+            },
+            limits: {
+              minimumSeats: limitsMap.minimum_seats?.integerValue ?? 1,
+              defaultSeatLimit: limitsMap.default_seat_limit?.integerValue ?? 5,
+              maximumSeats: limitsMap.maximum_seats?.integerValue ?? 25,
+              seatIncrement: limitsMap.seat_increment?.integerValue ?? 1,
+              storageGb: limitsMap.storage_gb?.decimalValue ? Number(limitsMap.storage_gb.decimalValue) : 10,
+              dataRetentionDays: limitsMap.data_retention_days?.integerValue ?? 90,
+            },
+            includedModuleCodes: v.includedModuleCodes || [],
+            commercialRules: {
+              trialEnabled: Boolean(rules.trialEnabled),
+              trialDurationDays: rules.trialDurationDays ?? 14,
+              trialModulePolicy: rules.trialModulePolicy === 'RESTRICTED' ? 'Restricted' : 'Use Plan Modules',
+              autoConvertAfterTrial: Boolean(rules.autoConvertAfterTrial),
+              autoRenew: rules.autoRenew !== false,
+              allowUpgrade: rules.allowUpgrade !== false,
+              allowDowngrade: Boolean(rules.allowDowngrade),
+              changeEffectiveTiming: rules.changeEffectiveTiming === 'NEXT_BILLING_CYCLE' ? 'Next Billing Cycle' : 'Immediately',
+              minimumCommitment: rules.minimumCommitmentMonths === '12' ? '12 Months' : rules.minimumCommitmentMonths === '6' ? '6 Months' : rules.minimumCommitmentMonths === '3' ? '3 Months' : rules.minimumCommitmentMonths === '1' ? '1 Month' : 'None',
+              availableForNewTenants: rules.availableForNewTenants !== false,
+              availableForExistingTenants: rules.availableForExistingTenants !== false,
+              cancellationAllowed: rules.cancellationAllowed !== false,
+              gracePeriodDays: rules.gracePeriodDays ?? 7,
+              accessAfterExpiry: rules.accessAfterExpiry === 'BLOCKED' ? 'Blocked' : 'Read Only',
+            },
+          },
+        };
+      });
+    } catch {
+      return [];
     }
-
-    // Default current version generator for any plan
-    const canonical = CANONICAL_PLATFORM_PLANS.find((p) => p.id === planId);
-    if (!canonical) return [];
-
-    return [
-      {
-        id: `ver_${planId}_current`,
-        planId: canonical.id,
-        version: canonical.version || 1.0,
-        status: 'Current',
-        publishedAt: '2026-06-01',
-        effectiveFrom: '2026-06-01',
-        actorName: 'Platform Operations Admin',
-        changeSummary: ['Current published commercial configuration.'],
-        snapshot: {
-          pricing: canonical.pricing,
-          limits: canonical.limits,
-          includedModuleCodes: canonical.includedModuleCodes,
-          commercialRules: canonical.commercialRules,
-        },
-      },
-    ];
   }
 
-  async getVersion(planId: string, version: number): Promise<PlanVersionRecord | null> {
+  async getVersion(planId: string, versionNumber: number): Promise<PlanVersionRecord | null> {
     const list = await this.getVersions(planId);
-    return list.find((v) => v.version === version) || null;
+    return list.find((v) => v.version === versionNumber) || null;
   }
 }
 
-export const planVersionService = new PlanVersionService();
+export const planVersionService = new ApiPlanVersionService();

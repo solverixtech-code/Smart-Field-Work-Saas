@@ -160,6 +160,31 @@ export class PlatformModulesService {
     return this.catalogSyncService.syncCatalog(actorUserId);
   }
 
+  async getCanonicalCatalog() {
+    const modules = await this.prisma.platformModule.findMany({
+      include: {
+        dependencies: {
+          include: {
+            dependsOnModule: {
+              select: { id: true, code: true, name: true, status: true },
+            },
+          },
+        },
+      },
+    });
+
+    return modules.map((m) => ({
+      id: m.id,
+      code: m.code,
+      name: m.name,
+      status: m.status,
+      requiredBySystem: m.requiredBySystem,
+      dependencies: (m.dependencies || []).map((d) => ({
+        dependsOnModuleCode: d.dependsOnModule.code,
+      })),
+    }));
+  }
+
   async dependencyGraph() {
     return this.prisma.platformModule.findMany({
       select: {

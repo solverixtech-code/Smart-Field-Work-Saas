@@ -77,6 +77,7 @@ model User {
   membershipInvitesCreated TenantMembership[]           @relation("MembershipInvitedBy")
   platformRoleAssignments  PlatformUserRoleAssignment[] @relation("UserPlatformRoleAssignments")
   platformRolesAssigned    PlatformUserRoleAssignment[] @relation("PlatformRoleAssignedBy")
+  publishedPlanVersions    PlanVersion[]                @relation("PlanVersionPublishedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -516,6 +517,7 @@ model PlatformModule {
 
   dependencies ModuleDependency[] @relation("ModuleDependencies")
   dependents   ModuleDependency[] @relation("ModuleDependents")
+  planModules  PlanModule[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -828,3 +830,180 @@ model PlatformUserRoleAssignment {
   @@index([userId, status])
   @@index([platformRoleId])
 }
+
+// ─── Phase 0.5 — Plan & PlanVersion Commercial Engine ──────────────────────────
+
+enum PlanStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum PlanVisibility {
+  PUBLIC
+  INTERNAL
+  INVITE_ONLY
+}
+
+enum PlanVersionStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum PricingModel {
+  PER_USER
+  BASE_PLUS_PER_USER
+  FLAT
+  CUSTOM_CONTRACT
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum TaxMode {
+  EXCLUSIVE
+  INCLUSIVE
+}
+
+enum ProrationPolicy {
+  NONE
+  IMMEDIATE
+  NEXT_BILLING_CYCLE
+}
+
+enum ExpiryAccess {
+  READ_ONLY
+  BLOCKED
+}
+
+enum ChangeEffectiveTiming {
+  IMMEDIATE
+  NEXT_BILLING_CYCLE
+}
+
+enum LimitValueType {
+  INTEGER
+  DECIMAL
+  BOOLEAN
+}
+
+model Plan {
+  id                        String         @id @default(uuid())
+  code                      String         @unique
+  name                      String
+  description               String
+  internalDescription      String?
+  status                    PlanStatus     @default(DRAFT)
+  visibility                PlanVisibility @default(PUBLIC)
+  tier                      String?
+  badge                     String?
+  recommendedFor            String?
+  displayOrder              Int            @default(0)
+  color                     String?
+  currentPublishedVersionId String?
+  currentPublishedVersion   PlanVersion?   @relation("CurrentPublishedPlanVersion", fields: [currentPublishedVersionId], references: [id], onDelete: SetNull)
+
+  versions PlanVersion[] @relation("PlanVersions")
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+
+  @@index([status])
+  @@index([visibility])
+  @@index([displayOrder])
+}
+
+model PlanVersion {
+  id                String            @id @default(uuid())
+  planId            String
+  plan              Plan              @relation("PlanVersions", fields: [planId], references: [id], onDelete: Restrict)
+  version           Int
+  status            PlanVersionStatus @default(DRAFT)
+  publishedAt       DateTime?
+  publishedByUserId String?
+  publishedByUser   User?             @relation("PlanVersionPublishedBy", fields: [publishedByUserId], references: [id], onDelete: SetNull)
+
+  currentPublishedForPlans Plan[] @relation("CurrentPublishedPlanVersion")
+
+  pricing        PlanPricing[]
+  limits         PlanLimit[]
+  modules        PlanModule[]
+  commercialRule PlanCommercialRule?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([planId, version])
+  @@index([planId, status])
+  @@index([status])
+}
+
+model PlanPricing {
+  id                      String          @id @default(uuid())
+  planVersionId           String
+  planVersion             PlanVersion     @relation(fields: [planVersionId], references: [id], onDelete: Restrict)
+  billingCycle            BillingCycle
+  currency                String          @default("INR")
+  baseFee                 Decimal?        @db.Decimal(18, 2)
+  perSeatFee              Decimal?        @db.Decimal(18, 2)
+  flatFee                 Decimal?        @db.Decimal(18, 2)
+  setupFee                Decimal?        @db.Decimal(18, 2)
+  minimumCommitmentAmount Decimal?        @db.Decimal(18, 2)
+  discountPercent         Decimal?        @db.Decimal(5, 2)
+  taxMode                 TaxMode         @default(EXCLUSIVE)
+  prorationPolicy         ProrationPolicy @default(NONE)
+
+  createdAt DateTime @default(now())
+
+  @@unique([planVersionId, billingCycle])
+  @@index([planVersionId])
+}
+
+model PlanLimit {
+  id            String         @id @default(uuid())
+  planVersionId String
+  planVersion   PlanVersion    @relation(fields: [planVersionId], references: [id], onDelete: Restrict)
+  limitCode     String
+  valueType     LimitValueType
+  integerValue  Int?
+  decimalValue  Decimal?       @db.Decimal(18, 2)
+  booleanValue  Boolean?
+  isUnlimited   Boolean        @default(false)
+  unit          String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([planVersionId, limitCode])
+  @@index([planVersionId])
+  @@index([limitCode])
+}
+
+model PlanModule {
+  id            String         @id @default(uuid())
+  planVersionId String
+  planVersion   PlanVersion    @relation(fields: [planVersionId], references: [id], onDelete: Restrict)
+  moduleId      String
+  module        PlatformModule @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now())
+
+  @@unique([planVersionId, moduleId])
+  @@index([planVersionId])
+  @@index([moduleId])
+}
+
+model PlanCommercialRule {
+  id            String      @id @default(uuid())
+  planVersionId String      @unique
+  planVersion   PlanVersion @relation(fields: [planVersionId], references: [id], onDelete: Restrict)
+  schemaVersion Int         @default(1)
+  rules         Json
+
+  createdAt DateTime @default(now())
+
+  @@index([planVersionId])
+}
+

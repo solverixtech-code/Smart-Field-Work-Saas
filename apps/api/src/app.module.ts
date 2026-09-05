@@ -12,6 +12,7 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { PayrollModule } from './payroll/payroll.module';
 import { PlatformModulesModule } from './platform/modules/platform-modules.module';
 import { PlatformTenantsModule } from './platform/tenants/platform-tenants.module';
+import { PlatformPlansModule } from './platform/plans/platform-plans.module';
 import { ApiThrottlerGuard } from './common/guards/api-throttler.guard';
 import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
 import { RedisThrottlerStorage } from './common/throttling/redis-throttler.storage';
@@ -55,6 +56,7 @@ import { AppController } from './app.controller';
     PayrollModule,
     PlatformModulesModule,
     PlatformTenantsModule,
+    PlatformPlansModule,
   ],
   providers: [
     {

@@ -1,6 +1,6 @@
 import { PlanPricing, PlanLimits, PlanCommercialRules } from './plan.types';
 
-export type PlanVersionStatus = 'Current' | 'Replaced' | 'Archived';
+export type PlanVersionStatus = 'Current' | 'Replaced' | 'Archived' | 'Draft';
 
 export interface PlanVersionRecord {
   id: string;
