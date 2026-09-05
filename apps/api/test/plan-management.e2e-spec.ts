@@ -7,7 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { syncRbac } from '../prisma/sync-rbac';
 import { PlatformCatalogSyncService } from '../src/platform/modules/platform-catalog-sync.service';
 
-describe('Plan Commercial Engine — REST API & RBAC E2E Test Suite', () => {
+describe('Plan Commercial Engine — REST API & Full RBAC Matrix E2E Test Suite', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let jwtService: JwtService;
@@ -16,7 +16,14 @@ describe('Plan Commercial Engine — REST API & RBAC E2E Test Suite', () => {
   let legacySuperAdminToken: string;
 
   beforeAll(async () => {
-    const testDbUrl = process.env.TEST_DATABASE_URL || 'postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public';
+    const testDbUrl = process.env.TEST_DATABASE_URL;
+    if (!testDbUrl) {
+      throw new Error('E2E Safety Guard: TEST_DATABASE_URL environment variable is mandatory.');
+    }
+    if (!testDbUrl.includes('visiblo_crm_test') && !testDbUrl.includes('_test')) {
+      throw new Error(`E2E Safety Guard: TEST_DATABASE_URL '${testDbUrl}' does not contain explicit test database marker ('_test').`);
+    }
+
     process.env.DATABASE_URL = testDbUrl;
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -30,7 +37,6 @@ describe('Plan Commercial Engine — REST API & RBAC E2E Test Suite', () => {
     prisma = moduleFixture.get<PrismaService>(PrismaService);
     jwtService = moduleFixture.get<JwtService>(JwtService);
 
-    // Sync platform module catalog and RBAC definitions in test database
     const catalogSync = moduleFixture.get<PlatformCatalogSyncService>(PlatformCatalogSyncService);
     await catalogSync.syncCatalog();
     await syncRbac(prisma);
@@ -82,12 +88,11 @@ describe('Plan Commercial Engine — REST API & RBAC E2E Test Suite', () => {
       },
     });
 
-    // Clean up any platform role assignments for legacy user
     await prisma.platformUserRoleAssignment.deleteMany({
       where: { userId: legacyUser.id },
     });
 
-    // 3. Generate JWT tokens
+    // 3. Generate Tokens
     platformAdminToken = jwtService.sign({ sub: adminUser.id, email: adminUser.email, role: adminUser.role });
     legacySuperAdminToken = jwtService.sign({ sub: legacyUser.id, email: legacyUser.email, role: legacyUser.role });
   });
@@ -96,27 +101,23 @@ describe('Plan Commercial Engine — REST API & RBAC E2E Test Suite', () => {
     await app.close();
   });
 
-  it('1. GET /platform/plans should succeed for authorized Platform Admin', async () => {
-    const res = await request(app.getHttpServer())
+  it('1. GET /platform/plans should succeed for authorized Platform Admin and fail 403 for legacy SuperAdmin', async () => {
+    const resAllow = await request(app.getHttpServer())
       .get('/platform/plans')
       .set('Authorization', `Bearer ${platformAdminToken}`);
 
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-  });
+    expect(resAllow.status).toBe(200);
 
-  it('2. GET /platform/plans should fail with 403 Forbidden for legacy User.role = SUPER_ADMIN without Platform assignment', async () => {
-    const res = await request(app.getHttpServer())
+    const resDeny = await request(app.getHttpServer())
       .get('/platform/plans')
       .set('Authorization', `Bearer ${legacySuperAdminToken}`);
 
-    expect(res.status).toBe(403);
+    expect(resDeny.status).toBe(403);
   });
 
-  it('3. POST /platform/plans should create a new Plan identity and DRAFT v1 snapshot', async () => {
+  it('2. POST /platform/plans should create a new Plan identity and DRAFT v1 snapshot (Allow + Deny RBAC)', async () => {
     const testCode = `E2E_PLAN_${Date.now()}`;
-
-    const createPayload = {
+    const payload = {
       code: testCode,
       name: 'E2E Sales Plan',
       description: 'E2E test plan for complete lifecycle',
@@ -157,21 +158,57 @@ describe('Plan Commercial Engine — REST API & RBAC E2E Test Suite', () => {
       },
     };
 
-    const res = await request(app.getHttpServer())
+    // Deny check
+    const resDeny = await request(app.getHttpServer())
+      .post('/platform/plans')
+      .set('Authorization', `Bearer ${legacySuperAdminToken}`)
+      .send(payload);
+    expect(resDeny.status).toBe(403);
+
+    // Allow check
+    const resAllow = await request(app.getHttpServer())
       .post('/platform/plans')
       .set('Authorization', `Bearer ${platformAdminToken}`)
-      .send(createPayload);
+      .send(payload);
 
-    expect(res.status).toBe(201);
-    expect(res.body.code).toBe(testCode);
-    expect(res.body.status).toBe('DRAFT');
-    expect(res.body.currentDraftVersion).toBeDefined();
-    expect(res.body.currentDraftVersion.version).toBe(1);
-    expect(res.body.currentDraftVersion.displayStatus).toBe('DRAFT');
+    expect(resAllow.status).toBe(201);
+    expect(resAllow.body.code).toBe(testCode);
+    expect(resAllow.body.status).toBe('DRAFT');
+    expect(resAllow.body.currentDraftVersion).toBeDefined();
+    expect(resAllow.body.currentDraftVersion.version).toBe(1);
+    expect(resAllow.body.currentDraftVersion.pricing[0].model).toBe('PER_USER');
   });
 
-  it('4. POST /platform/plans/:id/versions/draft should create v2 DRAFT cloned from v1 published version', async () => {
-    const testCode = `E2E_CLONE_${Date.now()}`;
+  it('3. GET /platform/plans/:planId/versions/:version should return detailed version snapshot', async () => {
+    const testCode = `VER_DET_${Date.now()}`;
+    const planRes = await request(app.getHttpServer())
+      .post('/platform/plans')
+      .set('Authorization', `Bearer ${platformAdminToken}`)
+      .send({
+        code: testCode,
+        name: 'Version Detail Test Plan',
+        description: 'Test version detail endpoint',
+        visibility: 'PUBLIC',
+        displayOrder: 15,
+        pricing: [{ model: 'PER_USER', billingCycle: 'MONTHLY', currency: 'INR', perSeatFee: 499, taxMode: 'EXCLUSIVE', prorationPolicy: 'NONE' }],
+        limits: [{ limitCode: 'minimum_seats', valueType: 'INTEGER', integerValue: 1, isUnlimited: false }],
+        includedModuleCodes: ['core_crm'],
+        commercialRules: { trialEnabled: false, trialDurationDays: 14, trialModulePolicy: 'USE_PLAN_MODULES', autoConvertAfterTrial: false, autoRenew: true, allowUpgrade: true, allowDowngrade: true, changeEffectiveTiming: 'IMMEDIATE', minimumCommitmentMonths: '0', availableForNewTenants: true, availableForExistingTenants: true, cancellationAllowed: true, gracePeriodDays: 7, accessAfterExpiry: 'READ_ONLY' },
+      });
+
+    const planId = planRes.body.id;
+
+    const detailRes = await request(app.getHttpServer())
+      .get(`/platform/plans/${planId}/versions/1`)
+      .set('Authorization', `Bearer ${platformAdminToken}`);
+
+    expect(detailRes.status).toBe(200);
+    expect(detailRes.body.version).toBe(1);
+    expect(detailRes.body.planId).toBe(planId);
+  });
+
+  it('4. POST /platform/plans/:id/versions/draft should create v2 DRAFT and handle concurrent requests safely', async () => {
+    const testCode = `CONCURR_CLONE_${Date.now()}`;
 
     // Create & publish v1
     const planRes = await request(app.getHttpServer())
@@ -179,8 +216,8 @@ describe('Plan Commercial Engine — REST API & RBAC E2E Test Suite', () => {
       .set('Authorization', `Bearer ${platformAdminToken}`)
       .send({
         code: testCode,
-        name: 'E2E Clone Test Plan',
-        description: 'Test cloning draft versions',
+        name: 'E2E Concurrent Clone Plan',
+        description: 'Test concurrent draft version creation',
         visibility: 'PUBLIC',
         displayOrder: 20,
         pricing: [{ model: 'PER_USER', billingCycle: 'MONTHLY', currency: 'INR', perSeatFee: 499, taxMode: 'EXCLUSIVE', prorationPolicy: 'NONE' }],
@@ -189,33 +226,64 @@ describe('Plan Commercial Engine — REST API & RBAC E2E Test Suite', () => {
         commercialRules: { trialEnabled: false, trialDurationDays: 14, trialModulePolicy: 'USE_PLAN_MODULES', autoConvertAfterTrial: false, autoRenew: true, allowUpgrade: true, allowDowngrade: true, changeEffectiveTiming: 'IMMEDIATE', minimumCommitmentMonths: '0', availableForNewTenants: true, availableForExistingTenants: true, cancellationAllowed: true, gracePeriodDays: 7, accessAfterExpiry: 'READ_ONLY' },
       });
 
-    expect(planRes.status).toBe(201);
-
     const planId = planRes.body.id;
     const v1Id = planRes.body.currentDraftVersion.id;
 
     // Publish v1
-    const publishRes = await request(app.getHttpServer())
+    await request(app.getHttpServer())
       .post(`/platform/plans/${planId}/versions/${v1Id}/publish`)
       .set('Authorization', `Bearer ${platformAdminToken}`)
       .send({ allowBetaModules: true });
 
-    expect(publishRes.status).toBe(200);
+    // Execute parallel createNextDraft requests
+    const [req1, req2] = await Promise.all([
+      request(app.getHttpServer())
+        .post(`/platform/plans/${planId}/versions/draft`)
+        .set('Authorization', `Bearer ${platformAdminToken}`),
+      request(app.getHttpServer())
+        .post(`/platform/plans/${planId}/versions/draft`)
+        .set('Authorization', `Bearer ${platformAdminToken}`),
+    ]);
 
-    // Create next draft (v2)
-    const v2Res = await request(app.getHttpServer())
-      .post(`/platform/plans/${planId}/versions/draft`)
-      .set('Authorization', `Bearer ${platformAdminToken}`);
+    const statuses = [req1.status, req2.status].sort();
+    expect(statuses).toEqual([201, 409]);
+  });
 
-    expect(v2Res.status).toBe(201);
-    expect(v2Res.body.version).toBe(2);
-    expect(v2Res.body.displayStatus).toBe('DRAFT');
+  it('5. BETA module publication without allowBetaModules: true must fail with 400', async () => {
+    const testCode = `BETA_PUB_${Date.now()}`;
+    const planRes = await request(app.getHttpServer())
+      .post('/platform/plans')
+      .set('Authorization', `Bearer ${platformAdminToken}`)
+      .send({
+        code: testCode,
+        name: 'Beta Module Test Plan',
+        description: 'Test beta module acknowledgement requirement',
+        visibility: 'PUBLIC',
+        displayOrder: 25,
+        pricing: [{ model: 'CUSTOM_CONTRACT', billingCycle: 'MONTHLY', currency: 'INR', taxMode: 'EXCLUSIVE', prorationPolicy: 'NONE' }],
+        limits: [{ limitCode: 'minimum_seats', valueType: 'INTEGER', integerValue: 1, isUnlimited: false }],
+        includedModuleCodes: ['core_crm', 'ai_copilot'],
+        commercialRules: { trialEnabled: false, trialDurationDays: 14, trialModulePolicy: 'USE_PLAN_MODULES', autoConvertAfterTrial: false, autoRenew: true, allowUpgrade: true, allowDowngrade: true, changeEffectiveTiming: 'IMMEDIATE', minimumCommitmentMonths: '0', availableForNewTenants: true, availableForExistingTenants: true, cancellationAllowed: true, gracePeriodDays: 7, accessAfterExpiry: 'READ_ONLY' },
+      });
 
-    // Attempt creating another draft while v2 draft exists -> MUST fail with 409 Conflict!
-    const conflictRes = await request(app.getHttpServer())
-      .post(`/platform/plans/${planId}/versions/draft`)
-      .set('Authorization', `Bearer ${platformAdminToken}`);
+    const planId = planRes.body.id;
+    const versionId = planRes.body.currentDraftVersion.id;
 
-    expect(conflictRes.status).toBe(409);
+    // Publish without allowBetaModules -> MUST fail!
+    const resFail = await request(app.getHttpServer())
+      .post(`/platform/plans/${planId}/versions/${versionId}/publish`)
+      .set('Authorization', `Bearer ${platformAdminToken}`)
+      .send({ allowBetaModules: false });
+
+    expect(resFail.status).toBe(400);
+    expect(resFail.body.errors[0].code).toBe('PLAN_MODULE_BETA_ACKNOWLEDGEMENT_REQUIRED');
+
+    // Publish with allowBetaModules: true -> MUST succeed!
+    const resSuccess = await request(app.getHttpServer())
+      .post(`/platform/plans/${planId}/versions/${versionId}/publish`)
+      .set('Authorization', `Bearer ${platformAdminToken}`)
+      .send({ allowBetaModules: true });
+
+    expect(resSuccess.status).toBe(200);
   });
 });

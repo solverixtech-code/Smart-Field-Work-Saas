@@ -82,7 +82,7 @@ interface PlanCreationContextType {
   planNotFound: boolean;
   loadPlanForEdit: (planId: string) => Promise<void>;
   saveDraft: () => Promise<Plan>;
-  publishPlan: () => Promise<Plan>;
+  publishPlan: (allowBetaModules?: boolean) => Promise<Plan>;
   resetForm: () => void;
 }
 
@@ -173,7 +173,7 @@ export function PlanCreationProvider({ children }: { children: ReactNode }) {
     }
   }, [formState, isEditMode, editingPlanId]);
 
-  const publishPlan = useCallback(async (): Promise<Plan> => {
+  const publishPlan = useCallback(async (allowBetaModules = false): Promise<Plan> => {
     setIsPublishing(true);
     try {
       const allPlans = await planService.getPlans();
@@ -187,10 +187,10 @@ export function PlanCreationProvider({ children }: { children: ReactNode }) {
       let saved: Plan;
       if (isEditMode && editingPlanId) {
         await planService.updateDraft(editingPlanId, formState);
-        saved = await planService.publishPlan(editingPlanId);
+        saved = await planService.publishPlan(editingPlanId, allowBetaModules);
       } else {
         const draft = await planService.createDraft({ ...formState, status: 'Draft' });
-        saved = await planService.publishPlan(draft.id);
+        saved = await planService.publishPlan(draft.id, allowBetaModules);
         setIsEditMode(true);
         setEditingPlanId(saved.id);
       }

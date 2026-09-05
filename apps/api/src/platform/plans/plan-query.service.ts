@@ -78,7 +78,7 @@ export class PlanQueryService {
     return pricing.map((p) => ({
       id: p.id,
       planVersionId: p.planVersionId,
-      model: (p as any).model || 'PER_USER',
+      model: p.model,
       billingCycle: p.billingCycle,
       currency: p.currency,
       baseFee: this.formatDecimal(p.baseFee),

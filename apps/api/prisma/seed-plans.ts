@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, PlatformModuleStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -22,7 +22,7 @@ async function seedPlans() {
           model: 'PER_USER' as const,
           billingCycle: 'MONTHLY' as const,
           currency: 'INR',
-          perSeatFee: 599,
+          perSeatFee: 499,
           discountPercent: undefined as number | undefined,
           taxMode: 'EXCLUSIVE' as const,
           prorationPolicy: 'IMMEDIATE' as const,
@@ -31,21 +31,21 @@ async function seedPlans() {
           model: 'PER_USER' as const,
           billingCycle: 'ANNUAL' as const,
           currency: 'INR',
-          perSeatFee: 499,
-          discountPercent: 16.69,
+          perSeatFee: 399,
+          discountPercent: 20.04,
           taxMode: 'EXCLUSIVE' as const,
           prorationPolicy: 'IMMEDIATE' as const,
         },
       ],
       limits: [
-        { limitCode: 'minimum_seats', valueType: 'INTEGER' as const, integerValue: 1, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'default_seat_limit', valueType: 'INTEGER' as const, integerValue: 5, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'maximum_seats', valueType: 'INTEGER' as const, integerValue: 25, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'minimum_seats', valueType: 'INTEGER' as const, integerValue: 5, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'default_seat_limit', valueType: 'INTEGER' as const, integerValue: 15, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'maximum_seats', valueType: 'INTEGER' as const, integerValue: 20, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
         { limitCode: 'seat_increment', valueType: 'INTEGER' as const, integerValue: 1, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
         { limitCode: 'storage_gb', valueType: 'DECIMAL' as const, integerValue: undefined as number | undefined, decimalValue: 10, isUnlimited: false, unit: 'GB' },
         { limitCode: 'data_retention_days', valueType: 'INTEGER' as const, integerValue: 90, decimalValue: undefined as number | undefined, isUnlimited: false, unit: 'days' },
       ],
-      moduleCodes: ['core_crm', 'attendance'],
+      moduleCodes: ['core_crm', 'field_visits'],
       commercialRules: {
         trialEnabled: true,
         trialDurationDays: 14,
@@ -240,20 +240,29 @@ async function seedPlans() {
     },
   ];
 
+  const publishApproved = process.env.PUBLISH_SEED_PLANS === 'true';
+
   for (const planData of plansData) {
-    const existing = await (prisma as any).plan.findUnique({ where: { code: planData.code } });
+    const existing = await prisma.plan.findUnique({ where: { code: planData.code } });
     if (existing) {
       console.log(`Plan '${planData.code}' already exists. Skipping seed.`);
       continue;
     }
 
+    // Verify EVERY requested module code exists in canonical catalog before seeding
     const modules = await prisma.platformModule.findMany({
       where: { code: { in: planData.moduleCodes } },
     });
 
+    if (modules.length !== planData.moduleCodes.length) {
+      const foundCodes = modules.map((m) => m.code);
+      const missing = planData.moduleCodes.filter((c) => !foundCodes.includes(c));
+      throw new Error(`Seed failed: Module codes missing from database catalog: ${missing.join(', ')}`);
+    }
+
     const now = new Date();
 
-    const plan = await (prisma as any).$transaction(async (tx: any) => {
+    const plan = await prisma.$transaction(async (tx) => {
       const createdPlan = await tx.plan.create({
         data: {
           code: planData.code,
@@ -266,11 +275,11 @@ async function seedPlans() {
           recommendedFor: planData.recommendedFor,
           displayOrder: planData.displayOrder,
           color: planData.color,
-          status: 'ACTIVE',
+          status: publishApproved ? 'ACTIVE' : 'DRAFT',
         },
       });
 
-      // 1. Create DRAFT version first
+      // 1. Create version (DRAFT)
       const version = await tx.planVersion.create({
         data: {
           planId: createdPlan.id,
@@ -279,11 +288,12 @@ async function seedPlans() {
         },
       });
 
-      // 2. Insert child records while version is DRAFT
+      // 2. Insert child records (pricing, limits, modules, commercialRule)
       for (const p of planData.pricing) {
         await tx.planPricing.create({
           data: {
             planVersionId: version.id,
+            model: p.model,
             billingCycle: p.billingCycle,
             currency: p.currency,
             perSeatFee: p.perSeatFee ?? null,
@@ -325,25 +335,26 @@ async function seedPlans() {
         },
       });
 
-      // 3. Publish version (DRAFT -> PUBLISHED transition)
-      await tx.planVersion.update({
-        where: { id: version.id },
-        data: {
-          status: 'PUBLISHED',
-          publishedAt: now,
-        },
-      });
+      // 3. Optional publication only if explicit approval env var set
+      if (publishApproved) {
+        await tx.planVersion.update({
+          where: { id: version.id },
+          data: {
+            status: 'PUBLISHED',
+            publishedAt: now,
+          },
+        });
 
-      // 4. Update currentPublishedVersionId pointer on Plan
-      await tx.plan.update({
-        where: { id: createdPlan.id },
-        data: { currentPublishedVersionId: version.id },
-      });
+        await tx.plan.update({
+          where: { id: createdPlan.id },
+          data: { currentPublishedVersionId: version.id },
+        });
+      }
 
       return createdPlan;
     });
 
-    console.log(`✅ Seeded Plan '${plan.code}' with published Version 1 (ID: ${plan.id})`);
+    console.log(`✅ Seeded Plan '${plan.code}' (Version 1, status: ${publishApproved ? 'PUBLISHED' : 'DRAFT'})`);
   }
 }
 

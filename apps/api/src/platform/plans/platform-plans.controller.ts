@@ -32,8 +32,12 @@ export class PlatformPlansController {
     @Query('status') status?: PlanStatus,
     @Query('visibility') visibility?: string,
     @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    return this.plansService.getAllPlans(status, visibility, search);
+    const pageNum = page ? parseInt(page, 10) : undefined;
+    const limitNum = limit ? parseInt(limit, 10) : undefined;
+    return this.plansService.getAllPlans(status, visibility, search, pageNum, limitNum);
   }
 
   @Get(':planId')
@@ -66,6 +70,15 @@ export class PlatformPlansController {
   @RequirePermissions('platform.plans.view')
   async getVersionHistory(@Param('planId') planId: string) {
     return this.plansService.getVersionHistory(planId);
+  }
+
+  @Get(':planId/versions/:version')
+  @RequirePermissions('platform.plans.view')
+  async getVersionDetail(
+    @Param('planId') planId: string,
+    @Param('version') version: string,
+  ) {
+    return this.plansService.getVersionDetail(planId, version);
   }
 
   @Post(':planId/versions/draft')

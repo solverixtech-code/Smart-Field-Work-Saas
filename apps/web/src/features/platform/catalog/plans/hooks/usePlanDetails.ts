@@ -3,7 +3,6 @@ import { Plan } from '../types/plan.types';
 import { planService } from '../services/plan.service';
 import { moduleService } from '../../modules/services/module.service';
 import { PlatformModule } from '../../modules/types/module.types';
-import { tenantService } from '../../../tenants/services/tenant.service';
 import { Tenant } from '../../../tenants/types/platform.types';
 
 export interface PlanDetailMetrics {
@@ -19,7 +18,7 @@ export interface PlanDetailMetrics {
 export function usePlanDetails(planId: string | undefined) {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [allModules, setAllModules] = useState<PlatformModule[]>([]);
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [tenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,10 +31,9 @@ export function usePlanDetails(planId: string | undefined) {
     setError(null);
 
     try {
-      const [fetchedPlan, fetchedModules, fetchedTenants] = await Promise.all([
+      const [fetchedPlan, fetchedModules] = await Promise.all([
         planService.getPlanById(planId),
         moduleService.getModules(),
-        tenantService.getTenants(),
       ]);
 
       if (!fetchedPlan) {
@@ -45,7 +43,6 @@ export function usePlanDetails(planId: string | undefined) {
         setPlan(fetchedPlan);
       }
       setAllModules(fetchedModules);
-      setTenants(fetchedTenants);
     } catch (err: any) {
       setError(err?.message || 'Failed to load plan details');
     } finally {
@@ -63,32 +60,20 @@ export function usePlanDetails(planId: string | undefined) {
     return allModules.filter((m) => plan.includedModuleCodes.includes(m.code));
   }, [plan, allModules]);
 
-  // Derived plan tenants (strictly matching planId)
-  const planTenants = useMemo(() => {
-    if (!plan) return [];
-    return tenants.filter((t) => t.planId === plan.id);
-  }, [plan, tenants]);
+  const planTenants = useMemo<Tenant[]>(() => [], []);
 
-  // Derived live metrics
+  // Derived metrics (Tenant Subscription metrics deferred to Phase 0.6)
   const metrics = useMemo<PlanDetailMetrics>(() => {
-    const totalTenants = planTenants.length;
-    const activeTenants = planTenants.filter((t) => t.tenantStatus === 'Active').length;
-    const trialTenants = planTenants.filter((t) => t.tenantStatus === 'Trial').length;
-    const pastDueTenants = planTenants.filter((t) => t.tenantStatus === 'Past Due').length;
-    const suspendedTenants = planTenants.filter((t) => t.tenantStatus === 'Suspended').length;
-    const totalMrr = planTenants.reduce((sum, t) => sum + (t.mrr || 0), 0);
-    const arrProjection = totalMrr * 12;
-
     return {
-      totalTenants,
-      activeTenants,
-      trialTenants,
-      pastDueTenants,
-      suspendedTenants,
-      totalMrr,
-      arrProjection,
+      totalTenants: 0,
+      activeTenants: 0,
+      trialTenants: 0,
+      pastDueTenants: 0,
+      suspendedTenants: 0,
+      totalMrr: 0,
+      arrProjection: 0,
     };
-  }, [planTenants]);
+  }, []);
 
   return {
     plan,

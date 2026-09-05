@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plan } from '../types/plan.types';
 import { planService } from '../services/plan.service';
-import { tenantService } from '../../../tenants/services/tenant.service';
 
 export interface PlanMetrics {
   totalPlans: number;
@@ -36,15 +35,10 @@ export function usePlans() {
     setError(null);
     try {
       const allPlans = await planService.getPlans();
-      const allTenants = await tenantService.getTenants();
 
       const activePlans = allPlans.filter((p) => p.status === 'Active').length;
       const draftPlans = allPlans.filter((p) => p.status === 'Draft').length;
       const archivedPlans = allPlans.filter((p) => p.status === 'Archived').length;
-
-      const activeSubs = allTenants.filter((t) => t.tenantStatus === 'Active').length;
-      const trialTenants = allTenants.filter((t) => t.tenantStatus === 'Trial').length;
-      const totalMrr = allTenants.reduce((acc, t) => acc + (t.mrr || 0), 0);
 
       const tenantsByPlan: Record<string, number> = {};
       const mrrByPlan: Record<string, number> = {};
@@ -54,22 +48,15 @@ export function usePlans() {
         mrrByPlan[p.id] = 0;
       });
 
-      allTenants.forEach((t) => {
-        if (t.planId) {
-          tenantsByPlan[t.planId] = (tenantsByPlan[t.planId] || 0) + 1;
-          mrrByPlan[t.planId] = (mrrByPlan[t.planId] || 0) + (t.mrr || 0);
-        }
-      });
-
       setPlans(allPlans);
       setMetrics({
         totalPlans: allPlans.length,
         activePlans,
         draftPlans,
         archivedPlans,
-        activeSubscriptions: activeSubs,
-        trialTenants,
-        totalMrr,
+        activeSubscriptions: 0, // Subscription & MRR authority deferred to Phase 0.6
+        trialTenants: 0,
+        totalMrr: 0,
         tenantsByPlan,
         mrrByPlan,
       });

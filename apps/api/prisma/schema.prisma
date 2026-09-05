@@ -945,6 +945,7 @@ model PlanPricing {
   id                      String          @id @default(uuid())
   planVersionId           String
   planVersion             PlanVersion     @relation(fields: [planVersionId], references: [id], onDelete: Restrict)
+  model                   PricingModel    @default(PER_USER)
   billingCycle            BillingCycle
   currency                String          @default("INR")
   baseFee                 Decimal?        @db.Decimal(18, 2)

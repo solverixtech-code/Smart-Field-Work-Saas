@@ -8,10 +8,10 @@ This document provides a commercial audit and validation analysis of the four ca
 
 | Candidate Plan Code | Candidate Name | Pricing Model | Monthly Rate | Annual Rate (mo eq) | Min Seats | Default Seats | Max Seats | Storage Allowance | Modules Included | Status / Approval Gate |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`STARTER`** | Starter Sales Suite | `PER_USER` | ₹599 / mo | ₹499 / mo | 1 | 5 | 25 | 10 GB | `core_crm`, `attendance` | **APPROVED** |
-| **`GROWTH`** | Growth Field Suite | `PER_USER` | ₹899 / mo | ₹749 / mo | 3 | 25 | 100 | 50 GB | `core_crm`, `field_visits`, `attendance` | **APPROVED** |
-| **`PROFESSIONAL`** | Professional Field Suite | `PER_USER` | ₹1,199 / mo | ₹999 / mo | 5 | 50 | 250 | 100 GB | `core_crm`, `field_visits`, `demo_scheduler`, `order_management`, `attendance` | **APPROVED** |
-| **`ENTERPRISE`** | Enterprise Custom Suite | `CUSTOM_CONTRACT` | Custom | Custom | 10 | 100 | Unlimited | 500 GB | All 8 Modules (`core_crm`, `field_visits`, `attendance`, `payroll`, `demo_scheduler`, `order_management`, `whatsapp_automation`, `ai_copilot`) | **APPROVED (Requires BETA Flag for `ai_copilot`)** |
+| **`STARTER`** | Starter Sales Suite | `PER_USER` | ₹499 / mo | ₹399 / mo | 5 | 15 | 20 | 10 GB | `core_crm`, `field_visits` | **PENDING COMMERCIAL APPROVAL** |
+| **`GROWTH`** | Growth Field Suite | `PER_USER` | ₹899 / mo | ₹749 / mo | 3 | 25 | 100 | 50 GB | `core_crm`, `field_visits`, `attendance` | **PENDING COMMERCIAL APPROVAL** |
+| **`PROFESSIONAL`** | Professional Field Suite | `PER_USER` | ₹1,199 / mo | ₹999 / mo | 5 | 50 | 250 | 100 GB | `core_crm`, `field_visits`, `demo_scheduler`, `order_management`, `attendance` | **PENDING COMMERCIAL APPROVAL** |
+| **`ENTERPRISE`** | Enterprise Custom Suite | `CUSTOM_CONTRACT` | Custom | Custom | 10 | 100 | Unlimited | 500 GB | All 8 Modules (`core_crm`, `field_visits`, `attendance`, `payroll`, `demo_scheduler`, `order_management`, `whatsapp_automation`, `ai_copilot`) | **PENDING COMMERCIAL APPROVAL** |
 
 ---
 
@@ -23,18 +23,18 @@ This document provides a commercial audit and validation analysis of the four ca
 - **Pricing**:
   - Currency: `INR`
   - Model: `PER_USER`
-  - Monthly: ₹599 / seat / month
-  - Annual: ₹499 / seat / month (Billed annually at ₹5,988 / seat / year)
+  - Monthly: ₹499 / seat / month
+  - Annual: ₹399 / seat / month (Billed annually at ₹4,788 / seat / year)
   - Tax Mode: `EXCLUSIVE` (18% GST applicable)
 - **Limits**:
-  - Minimum Seats: `1`
-  - Default Seat Limit: `5`
-  - Maximum Seats: `25`
+  - Minimum Seats: `5`
+  - Default Seat Limit: `15`
+  - Maximum Seats: `20`
   - Storage: `10 GB`
   - Data Retention: `90 days`
-- **Modules**: `core_crm`, `attendance`
+- **Modules**: `core_crm`, `field_visits`
 - **Dependency Closure Check**:
-  - `attendance` has no required prerequisites.
+  - `field_visits` → requires `core_crm` (Present ✅)
   - System-required `core_crm` is present.
   - **Result**: ✅ **CLOSED & VALID**
 
@@ -114,11 +114,11 @@ This document provides a commercial audit and validation analysis of the four ca
 
 ## 3. Commercial Import Mechanism
 
-Reviewed commercial plans are imported using the idempotent Nest/Prisma database seed utility:
+Candidate commercial plans remain `PENDING COMMERCIAL APPROVAL`.
+Import/seeding executes through publication policy validation:
 
 ```bash
 npx ts-node prisma/seed-plans.ts
 ```
 
-* **Version Allocation**: Imported plans are created as **Integer Version 1 (`v1`)**.
-* **Publication Timestamp**: Set dynamically to the actual `now()` timestamp at import time. Fake fractional historical dates (`v0.8`, `v0.9`, `v1.0`) from browser fixtures are strictly discarded.
+* **Version Allocation**: Imported candidate plans are created as **Integer Version 1 (`v1`)** in `DRAFT` status until explicitly approved and published through publication policy validation.

@@ -11,6 +11,14 @@ import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanMetadataDto, UpdatePlanDraftDto, PublishPlanDto } from './dto/update-plan.dto';
 import { PlanStatus, PlanVersionStatus } from '@prisma/client';
 
+export interface PaginatedPlansResult {
+  data: FormattedPlanDto[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 @Injectable()
 export class PlatformPlansService {
   constructor(
@@ -23,7 +31,9 @@ export class PlatformPlansService {
     status?: PlanStatus,
     visibility?: string,
     search?: string,
-  ): Promise<FormattedPlanDto[]> {
+    page?: number,
+    limit?: number,
+  ): Promise<FormattedPlanDto[] | PaginatedPlansResult> {
     const where: any = {};
     if (status) where.status = status;
     if (visibility) where.visibility = visibility;
@@ -35,30 +45,51 @@ export class PlatformPlansService {
       ];
     }
 
-    const plans = await this.prisma.plan.findMany({
-      where,
-      orderBy: { displayOrder: 'asc' },
-      include: {
-        currentPublishedVersion: {
-          include: {
-            pricing: true,
-            limits: true,
-            modules: { include: { module: true } },
-            commercialRule: true,
-          },
-        },
-        versions: {
-          include: {
-            pricing: true,
-            limits: true,
-            modules: { include: { module: true } },
-            commercialRule: true,
-          },
-        },
-      },
-    });
+    const isPaginated = page !== undefined || limit !== undefined;
+    const pageNum = Math.max(1, page || 1);
+    const limitNum = Math.min(100, Math.max(1, limit || 20));
+    const skip = (pageNum - 1) * limitNum;
 
-    return plans.map((p) => this.queryService.formatPlan(p as any));
+    const [plans, total] = await Promise.all([
+      this.prisma.plan.findMany({
+        where,
+        orderBy: { displayOrder: 'asc' },
+        ...(isPaginated ? { skip, take: limitNum } : {}),
+        include: {
+          currentPublishedVersion: {
+            include: {
+              pricing: true,
+              limits: true,
+              modules: { include: { module: true } },
+              commercialRule: true,
+            },
+          },
+          versions: {
+            include: {
+              pricing: true,
+              limits: true,
+              modules: { include: { module: true } },
+              commercialRule: true,
+            },
+          },
+        },
+      }),
+      this.prisma.plan.count({ where }),
+    ]);
+
+    const formattedData = plans.map((p) => this.queryService.formatPlan(p as any));
+
+    if (isPaginated) {
+      return {
+        data: formattedData,
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      };
+    }
+
+    return formattedData;
   }
 
   async getPlanById(planId: string): Promise<FormattedPlanDto> {
@@ -137,11 +168,12 @@ export class PlatformPlansService {
         },
       });
 
-      // Create pricing rows
+      // Create pricing rows with persisted PricingModel
       for (const p of dto.pricing) {
         await tx.planPricing.create({
           data: {
             planVersionId: version.id,
+            model: p.model as any,
             billingCycle: p.billingCycle,
             currency: p.currency,
             baseFee: p.baseFee ?? null,
@@ -260,128 +292,17 @@ export class PlatformPlansService {
     return versions.map((v) => this.queryService.formatVersion(v as any, plan.currentPublishedVersionId));
   }
 
-  async createNextDraft(planId: string, actorUserId?: string): Promise<FormattedPlanVersionDto> {
-    const plan = await this.prisma.plan.findUnique({
-      where: { id: planId },
-      include: {
-        versions: {
-          orderBy: { version: 'desc' },
-          include: {
-            pricing: true,
-            limits: true,
-            modules: { include: { module: true } },
-            commercialRule: true,
-          },
-        },
-        currentPublishedVersion: {
-          include: {
-            pricing: true,
-            limits: true,
-            modules: { include: { module: true } },
-            commercialRule: true,
-          },
-        },
-      },
-    });
-
+  async getVersionDetail(planId: string, versionParam: string): Promise<FormattedPlanVersionDto> {
+    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
     if (!plan) throw new NotFoundException(`Plan '${planId}' not found`);
-    if (plan.status === PlanStatus.ARCHIVED) {
-      throw new ConflictException(`Cannot create draft for archived Plan '${plan.code}'`);
-    }
 
-    // Check if an active DRAFT already exists
-    const existingDraft = plan.versions.find((v) => v.status === PlanVersionStatus.DRAFT);
-    if (existingDraft) {
-      throw new ConflictException(
-        `Plan '${plan.code}' already has an active DRAFT version (Version ${existingDraft.version}, ID: ${existingDraft.id})`
-      );
-    }
+    const isNumeric = /^\d+$/.test(versionParam);
+    const versionWhere = isNumeric
+      ? { planId: plan.id, version: parseInt(versionParam, 10) }
+      : { planId: plan.id, id: versionParam };
 
-    const nextVersionNumber = (plan.versions[0]?.version || 0) + 1;
-    const sourceVersion = plan.currentPublishedVersion || plan.versions[0];
-
-    const createdDraft = await this.prisma.$transaction(async (tx) => {
-      const newVersion = await tx.planVersion.create({
-        data: {
-          planId: plan.id,
-          version: nextVersionNumber,
-          status: PlanVersionStatus.DRAFT,
-        },
-      });
-
-      if (sourceVersion) {
-        // Clone pricing
-        for (const p of sourceVersion.pricing || []) {
-          await tx.planPricing.create({
-            data: {
-              planVersionId: newVersion.id,
-              billingCycle: p.billingCycle,
-              currency: p.currency,
-              baseFee: p.baseFee,
-              perSeatFee: p.perSeatFee,
-              flatFee: p.flatFee,
-              setupFee: p.setupFee,
-              minimumCommitmentAmount: p.minimumCommitmentAmount,
-              discountPercent: p.discountPercent,
-              taxMode: p.taxMode,
-              prorationPolicy: p.prorationPolicy,
-            },
-          });
-        }
-
-        // Clone limits
-        for (const l of sourceVersion.limits || []) {
-          await tx.planLimit.create({
-            data: {
-              planVersionId: newVersion.id,
-              limitCode: l.limitCode,
-              valueType: l.valueType,
-              integerValue: l.integerValue,
-              decimalValue: l.decimalValue,
-              booleanValue: l.booleanValue,
-              isUnlimited: l.isUnlimited,
-              unit: l.unit,
-            },
-          });
-        }
-
-        // Clone modules
-        for (const m of sourceVersion.modules || []) {
-          await tx.planModule.create({
-            data: {
-              planVersionId: newVersion.id,
-              moduleId: m.moduleId,
-            },
-          });
-        }
-
-        // Clone commercial rule
-        if (sourceVersion.commercialRule) {
-          await tx.planCommercialRule.create({
-            data: {
-              planVersionId: newVersion.id,
-              schemaVersion: sourceVersion.commercialRule.schemaVersion,
-              rules: sourceVersion.commercialRule.rules as any,
-            },
-          });
-        }
-      }
-
-      await tx.auditLog.create({
-        data: {
-          actorUserId,
-          action: 'PLAN_DRAFT_CREATED',
-          entityType: 'PlanVersion',
-          entityId: newVersion.id,
-          afterJson: { planId: plan.id, version: newVersion.version },
-        },
-      });
-
-      return newVersion;
-    });
-
-    const fullDraft = await this.prisma.planVersion.findUnique({
-      where: { id: createdDraft.id },
+    const version = await this.prisma.planVersion.findFirst({
+      where: versionWhere,
       include: {
         pricing: true,
         limits: true,
@@ -390,7 +311,185 @@ export class PlatformPlansService {
       },
     });
 
-    return this.queryService.formatVersion(fullDraft as any, plan.currentPublishedVersionId);
+    if (!version) {
+      throw new NotFoundException(`PlanVersion '${versionParam}' not found for Plan '${planId}'`);
+    }
+
+    return this.queryService.formatVersion(version as any, plan.currentPublishedVersionId);
+  }
+
+  async createNextDraft(planId: string, actorUserId?: string): Promise<FormattedPlanVersionDto> {
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        const createdDraft = await this.prisma.$transaction(
+          async (tx) => {
+            // Lock Plan row to prevent race conditions during version allocation
+            const lockedPlanRows: Array<{ id: string; status: PlanStatus; code: string; currentPublishedVersionId: string | null }> =
+              await tx.$queryRaw`SELECT "id", "status", "code", "currentPublishedVersionId" FROM "Plan" WHERE "id" = ${planId} FOR UPDATE`;
+
+            if (!lockedPlanRows || lockedPlanRows.length === 0) {
+              throw new NotFoundException(`Plan '${planId}' not found`);
+            }
+            const planRow = lockedPlanRows[0];
+            if (planRow.status === PlanStatus.ARCHIVED) {
+              throw new ConflictException(`Cannot create draft for archived Plan '${planRow.code}'`);
+            }
+
+            // Check if an active DRAFT version already exists
+            const existingDraft = await tx.planVersion.findFirst({
+              where: { planId: planRow.id, status: PlanVersionStatus.DRAFT },
+            });
+            if (existingDraft) {
+              throw new ConflictException(
+                `Plan '${planRow.code}' already has an active DRAFT version (Version ${existingDraft.version}, ID: ${existingDraft.id})`
+              );
+            }
+
+            // Fetch current highest version number
+            const latestVersions = await tx.planVersion.findMany({
+              where: { planId: planRow.id },
+              orderBy: { version: 'desc' },
+              take: 1,
+              include: {
+                pricing: true,
+                limits: true,
+                modules: { include: { module: true } },
+                commercialRule: true,
+              },
+            });
+
+            const nextVersionNumber = (latestVersions[0]?.version || 0) + 1;
+            let sourceVersion = latestVersions[0];
+
+            if (planRow.currentPublishedVersionId) {
+              const currentPub = await tx.planVersion.findUnique({
+                where: { id: planRow.currentPublishedVersionId },
+                include: {
+                  pricing: true,
+                  limits: true,
+                  modules: { include: { module: true } },
+                  commercialRule: true,
+                },
+              });
+              if (currentPub) sourceVersion = currentPub;
+            }
+
+            const newVersion = await tx.planVersion.create({
+              data: {
+                planId: planRow.id,
+                version: nextVersionNumber,
+                status: PlanVersionStatus.DRAFT,
+              },
+            });
+
+            if (sourceVersion) {
+              // Clone pricing with model
+              for (const p of sourceVersion.pricing || []) {
+                await tx.planPricing.create({
+                  data: {
+                    planVersionId: newVersion.id,
+                    model: p.model,
+                    billingCycle: p.billingCycle,
+                    currency: p.currency,
+                    baseFee: p.baseFee,
+                    perSeatFee: p.perSeatFee,
+                    flatFee: p.flatFee,
+                    setupFee: p.setupFee,
+                    minimumCommitmentAmount: p.minimumCommitmentAmount,
+                    discountPercent: p.discountPercent,
+                    taxMode: p.taxMode,
+                    prorationPolicy: p.prorationPolicy,
+                  },
+                });
+              }
+
+              // Clone limits
+              for (const l of sourceVersion.limits || []) {
+                await tx.planLimit.create({
+                  data: {
+                    planVersionId: newVersion.id,
+                    limitCode: l.limitCode,
+                    valueType: l.valueType,
+                    integerValue: l.integerValue,
+                    decimalValue: l.decimalValue,
+                    booleanValue: l.booleanValue,
+                    isUnlimited: l.isUnlimited,
+                    unit: l.unit,
+                  },
+                });
+              }
+
+              // Clone modules
+              for (const m of sourceVersion.modules || []) {
+                await tx.planModule.create({
+                  data: {
+                    planVersionId: newVersion.id,
+                    moduleId: m.moduleId,
+                  },
+                });
+              }
+
+              // Clone commercial rule
+              if (sourceVersion.commercialRule) {
+                await tx.planCommercialRule.create({
+                  data: {
+                    planVersionId: newVersion.id,
+                    schemaVersion: sourceVersion.commercialRule.schemaVersion,
+                    rules: sourceVersion.commercialRule.rules as any,
+                  },
+                });
+              }
+            }
+
+            await tx.auditLog.create({
+              data: {
+                actorUserId,
+                action: 'PLAN_DRAFT_CREATED',
+                entityType: 'PlanVersion',
+                entityId: newVersion.id,
+                afterJson: { planId: planRow.id, version: newVersion.version },
+              },
+            });
+
+            return newVersion;
+          },
+          { isolationLevel: 'Serializable' },
+        );
+
+        const fullDraft = await this.prisma.planVersion.findUnique({
+          where: { id: createdDraft.id },
+          include: {
+            pricing: true,
+            limits: true,
+            modules: { include: { module: true } },
+            commercialRule: true,
+            plan: true,
+          },
+        });
+
+        return this.queryService.formatVersion(fullDraft as any, fullDraft?.plan.currentPublishedVersionId || null);
+      } catch (err: any) {
+        if (
+          (err.code === 'P2034' || err.message?.includes('serialization') || err.message?.includes('deadlock')) &&
+          retries > 1
+        ) {
+          retries--;
+          await new Promise((res) => setTimeout(res, 50));
+          continue;
+        }
+        if (
+          err.code === 'P2002' ||
+          err.code === 'P2034' ||
+          err.message?.includes('unique constraint') ||
+          err.message?.includes('already has an active DRAFT')
+        ) {
+          throw new ConflictException(`Draft version allocation conflict for plan '${planId}'`);
+        }
+        throw err;
+      }
+    }
+    throw new ConflictException(`Version allocation conflict for plan '${planId}'`);
   }
 
   async updateDraft(
@@ -419,6 +518,7 @@ export class PlatformPlansService {
           await tx.planPricing.create({
             data: {
               planVersionId: version.id,
+              model: p.model as any,
               billingCycle: p.billingCycle,
               currency: p.currency,
               baseFee: p.baseFee ?? null,
@@ -539,17 +639,17 @@ export class PlatformPlansService {
       throw new ConflictException(`PlanVersion '${version.version}' is already PUBLISHED.`);
     }
 
-    // Run policy validation
+    // Pass formatted pricing DTOs while keeping Decimal string representation intact
     const pricingDtos = this.queryService.formatPricing(version.pricing).map((p) => ({
       model: p.model as any,
       billingCycle: p.billingCycle as any,
       currency: p.currency,
-      baseFee: p.baseFee ? Number(p.baseFee) : undefined,
-      perSeatFee: p.perSeatFee ? Number(p.perSeatFee) : undefined,
-      flatFee: p.flatFee ? Number(p.flatFee) : undefined,
-      setupFee: p.setupFee ? Number(p.setupFee) : undefined,
-      minimumCommitmentAmount: p.minimumCommitmentAmount ? Number(p.minimumCommitmentAmount) : undefined,
-      discountPercent: p.discountPercent ? Number(p.discountPercent) : undefined,
+      baseFee: p.baseFee ? (p.baseFee as any) : undefined,
+      perSeatFee: p.perSeatFee ? (p.perSeatFee as any) : undefined,
+      flatFee: p.flatFee ? (p.flatFee as any) : undefined,
+      setupFee: p.setupFee ? (p.setupFee as any) : undefined,
+      minimumCommitmentAmount: p.minimumCommitmentAmount ? (p.minimumCommitmentAmount as any) : undefined,
+      discountPercent: p.discountPercent ? (p.discountPercent as any) : undefined,
       taxMode: p.taxMode as any,
       prorationPolicy: p.prorationPolicy as any,
     }));
@@ -558,7 +658,7 @@ export class PlatformPlansService {
       limitCode: l.limitCode,
       valueType: l.valueType as any,
       integerValue: l.integerValue ?? undefined,
-      decimalValue: l.decimalValue ? Number(l.decimalValue) : undefined,
+      decimalValue: l.decimalValue ? (l.decimalValue as any) : undefined,
       booleanValue: l.booleanValue ?? undefined,
       isUnlimited: l.isUnlimited,
       unit: l.unit ?? undefined,
@@ -583,37 +683,49 @@ export class PlatformPlansService {
       });
     }
 
-    // Execute atomic publication transaction
-    await this.prisma.$transaction(async (tx) => {
-      const now = new Date();
+    // Atomic publication transaction with row lock
+    await this.prisma.$transaction(
+      async (tx) => {
+        // Row locks
+        await tx.$queryRaw`SELECT "id" FROM "Plan" WHERE "id" = ${plan.id} FOR UPDATE`;
+        const lockedVer = await tx.$queryRaw`SELECT "id", "status" FROM "PlanVersion" WHERE "id" = ${version.id} FOR UPDATE`;
+        const verStatus = (lockedVer as any)[0]?.status;
 
-      await tx.planVersion.update({
-        where: { id: version.id },
-        data: {
-          status: PlanVersionStatus.PUBLISHED,
-          publishedAt: now,
-          publishedByUserId: actorUserId || null,
-        },
-      });
+        if (verStatus === PlanVersionStatus.PUBLISHED) {
+          throw new ConflictException(`PlanVersion '${version.version}' is already PUBLISHED.`);
+        }
 
-      await tx.plan.update({
-        where: { id: plan.id },
-        data: {
-          status: PlanStatus.ACTIVE,
-          currentPublishedVersionId: version.id,
-        },
-      });
+        const now = new Date();
 
-      await tx.auditLog.create({
-        data: {
-          actorUserId,
-          action: 'PLAN_VERSION_PUBLISHED',
-          entityType: 'PlanVersion',
-          entityId: version.id,
-          afterJson: { planId: plan.id, version: version.version, publishedAt: now },
-        },
-      });
-    });
+        await tx.planVersion.update({
+          where: { id: version.id },
+          data: {
+            status: PlanVersionStatus.PUBLISHED,
+            publishedAt: now,
+            publishedByUserId: actorUserId || null,
+          },
+        });
+
+        await tx.plan.update({
+          where: { id: plan.id },
+          data: {
+            status: PlanStatus.ACTIVE,
+            currentPublishedVersionId: version.id,
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            actorUserId,
+            action: 'PLAN_VERSION_PUBLISHED',
+            entityType: 'PlanVersion',
+            entityId: version.id,
+            afterJson: { planId: plan.id, version: version.version, publishedAt: now },
+          },
+        });
+      },
+      { isolationLevel: 'Serializable' },
+    );
 
     return this.getPlanById(plan.id);
   }

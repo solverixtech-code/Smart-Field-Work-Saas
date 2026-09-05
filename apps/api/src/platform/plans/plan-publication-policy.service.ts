@@ -1,14 +1,13 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../persistence/prisma.service';
 import { PlatformModulesService } from '../modules/platform-modules.service';
 import {
-  CreatePlanDto,
   PlanPricingInputDto,
   PlanLimitInputDto,
   PlanCommercialRuleInputDto,
 } from './dto/create-plan.dto';
 import { PublishPlanDto } from './dto/update-plan.dto';
-import { PLAN_LIMIT_REGISTRY } from './constants/limit-registry';
+import { PLAN_LIMIT_REGISTRY, LimitValueTypeEnum } from './constants/limit-registry';
 import { PlatformModuleStatus } from '@prisma/client';
 
 export interface PublicationValidationResult {
@@ -34,7 +33,7 @@ export class PlanPublicationPolicyService {
     const errors: Array<{ code: string; message: string }> = [];
     const warnings: Array<{ code: string; message: string }> = [];
 
-    // 1. Pricing validation
+    // 1. Pricing validation (Decimal string precision preserved, no binary float conversion)
     if (!pricing || pricing.length === 0) {
       errors.push({
         code: 'PLAN_PRICING_INVALID',
@@ -95,13 +94,89 @@ export class PlanPublicationPolicyService {
       });
     }
 
-    // Validate limit codes against limit registry
+    // Validate limit codes & strict valueType matching against registry
     for (const l of limits) {
-      if (!PLAN_LIMIT_REGISTRY[l.limitCode]) {
+      const registryDef = PLAN_LIMIT_REGISTRY[l.limitCode];
+      if (!registryDef) {
         errors.push({
           code: 'PLAN_LIMIT_UNKNOWN',
           message: `Unknown limit code '${l.limitCode}' is not in limit registry`,
         });
+        continue;
+      }
+
+      // ValueType match check
+      if (l.valueType !== registryDef.valueType) {
+        errors.push({
+          code: 'PLAN_LIMIT_TYPE_MISMATCH',
+          message: `Limit '${l.limitCode}' has valueType '${l.valueType}' but registry expects '${registryDef.valueType}'`,
+        });
+      }
+
+      // Check specific value field match
+      if (registryDef.valueType === LimitValueTypeEnum.INTEGER) {
+        if (l.decimalValue !== undefined && l.decimalValue !== null) {
+          errors.push({
+            code: 'PLAN_LIMIT_VALUE_MISMATCH',
+            message: `Limit '${l.limitCode}' is INTEGER type but contains decimalValue`,
+          });
+        }
+        if (l.booleanValue !== undefined && l.booleanValue !== null) {
+          errors.push({
+            code: 'PLAN_LIMIT_VALUE_MISMATCH',
+            message: `Limit '${l.limitCode}' is INTEGER type but contains booleanValue`,
+          });
+        }
+        if (!l.isUnlimited && (l.integerValue === undefined || l.integerValue === null)) {
+          errors.push({
+            code: 'PLAN_LIMIT_VALUE_MISSING',
+            message: `Limit '${l.limitCode}' requires integerValue when isUnlimited is false`,
+          });
+        }
+      } else if (registryDef.valueType === LimitValueTypeEnum.DECIMAL) {
+        if (l.integerValue !== undefined && l.integerValue !== null) {
+          errors.push({
+            code: 'PLAN_LIMIT_VALUE_MISMATCH',
+            message: `Limit '${l.limitCode}' is DECIMAL type but contains integerValue`,
+          });
+        }
+        if (l.booleanValue !== undefined && l.booleanValue !== null) {
+          errors.push({
+            code: 'PLAN_LIMIT_VALUE_MISMATCH',
+            message: `Limit '${l.limitCode}' is DECIMAL type but contains booleanValue`,
+          });
+        }
+        if (!l.isUnlimited && (l.decimalValue === undefined || l.decimalValue === null)) {
+          errors.push({
+            code: 'PLAN_LIMIT_VALUE_MISSING',
+            message: `Limit '${l.limitCode}' requires decimalValue when isUnlimited is false`,
+          });
+        }
+      } else if (registryDef.valueType === LimitValueTypeEnum.BOOLEAN) {
+        if (l.isUnlimited) {
+          errors.push({
+            code: 'PLAN_LIMIT_UNLIMITED_INVALID',
+            message: `Boolean limit '${l.limitCode}' cannot be marked as isUnlimited`,
+          });
+        }
+        if (l.integerValue !== undefined && l.integerValue !== null) {
+          errors.push({
+            code: 'PLAN_LIMIT_VALUE_MISMATCH',
+            message: `Limit '${l.limitCode}' is BOOLEAN type but contains integerValue`,
+          });
+        }
+        if (l.decimalValue !== undefined && l.decimalValue !== null) {
+          errors.push({
+            code: 'PLAN_LIMIT_VALUE_MISMATCH',
+            message: `Limit '${l.limitCode}' is BOOLEAN type but contains decimalValue`,
+          });
+        }
+        if (l.booleanValue === undefined || l.booleanValue === null) {
+          errors.push({
+            code: 'PLAN_LIMIT_VALUE_MISSING',
+            message: `Limit '${l.limitCode}' requires booleanValue`,
+          });
+        }
       }
     }
 
@@ -121,7 +196,6 @@ export class PlanPublicationPolicyService {
 
     // Check module codes existence, lifecycle, and dependency closure
     for (const code of includedModuleCodes) {
-      // Obsolete alias check
       if (code === 'attendance_plus' || code === 'payroll_engine') {
         errors.push({
           code: 'PLAN_MODULE_ALIAS_PROHIBITED',
@@ -139,17 +213,26 @@ export class PlanPublicationPolicyService {
         continue;
       }
 
-      // Check status
-      if (registeredModule.status === PlatformModuleStatus.DEPRECATED || registeredModule.status === PlatformModuleStatus.ARCHIVED) {
+      // Check lifecycle status
+      if (
+        registeredModule.status === PlatformModuleStatus.DRAFT ||
+        registeredModule.status === PlatformModuleStatus.DEPRECATED ||
+        registeredModule.status === PlatformModuleStatus.ARCHIVED
+      ) {
         errors.push({
           code: 'PLAN_MODULE_LIFECYCLE_INVALID',
-          message: `Module '${code}' has lifecycle status '${registeredModule.status}' and cannot be published in new plans`,
+          message: `Module '${code}' has lifecycle status '${registeredModule.status}' and cannot be included in a published plan`,
         });
       } else if (registeredModule.status === PlatformModuleStatus.BETA) {
         if (!publishDto?.allowBetaModules) {
+          errors.push({
+            code: 'PLAN_MODULE_BETA_ACKNOWLEDGEMENT_REQUIRED',
+            message: `Module '${code}' is currently in BETA. Explicit acknowledgement (allowBetaModules: true) is required to publish this plan.`,
+          });
+        } else {
           warnings.push({
             code: 'PLAN_MODULE_BETA_INCLUDED',
-            message: `Module '${code}' is currently in BETA. Explicit acknowledgement is required.`,
+            message: `Module '${code}' is currently in BETA and was acknowledged.`,
           });
         }
       }
@@ -174,6 +257,20 @@ export class PlanPublicationPolicyService {
           code: 'PLAN_COMMERCIAL_RULE_INVALID',
           message: 'trialDurationDays must be at least 1 when trial is enabled',
         });
+      }
+      if (commercialRules.trialSeatLimit !== undefined && commercialRules.trialSeatLimit !== null) {
+        if (commercialRules.trialSeatLimit < 1) {
+          errors.push({
+            code: 'PLAN_COMMERCIAL_RULE_INVALID',
+            message: 'trialSeatLimit must be at least 1 seat',
+          });
+        }
+        if (maxSeats !== Infinity && commercialRules.trialSeatLimit > maxSeats) {
+          errors.push({
+            code: 'PLAN_COMMERCIAL_RULE_INVALID',
+            message: `trialSeatLimit (${commercialRules.trialSeatLimit}) cannot exceed maximum_seats (${maxSeats})`,
+          });
+        }
       }
     }
 

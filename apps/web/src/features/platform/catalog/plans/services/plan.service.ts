@@ -61,7 +61,7 @@ class ApiPlanService {
     return transformBackendPlanToUi(updatedRes.data);
   }
 
-  async publishPlan(planId: string): Promise<Plan> {
+  async publishPlan(planId: string, allowBetaModules = false): Promise<Plan> {
     const rawPlanRes = await api.get(`/platform/plans/${planId}`);
     const rawPlan = rawPlanRes.data;
 
@@ -71,7 +71,7 @@ class ApiPlanService {
     }
 
     const response = await api.post(`/platform/plans/${planId}/versions/${draftVersionId}/publish`, {
-      allowBetaModules: true,
+      allowBetaModules,
     });
     return transformBackendPlanToUi(response.data);
   }
