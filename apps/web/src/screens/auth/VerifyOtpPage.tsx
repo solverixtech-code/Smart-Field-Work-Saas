@@ -24,8 +24,11 @@ export default function VerifyOtpPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const challengeToken = location.state?.challengeToken;
+  const [challengeToken, setChallengeToken] = useState<string | undefined>(
+    location.state?.challengeToken,
+  );
   const deliveryTarget = location.state?.deliveryTarget || 'your registered email/phone';
+  const remember = location.state?.remember ?? true;
 
   useEffect(() => {
     if (!challengeToken) {
@@ -51,12 +54,22 @@ export default function VerifyOtpPage() {
   const handleResendOtp = async () => {
     if (!challengeToken) return;
     try {
-      await api.post('/auth/resend-otp', { challengeToken });
-      setTimer(48);
+      const res = await api.post('/auth/resend-otp', { challengeToken });
+      if (res.data?.challengeToken) {
+        setChallengeToken(res.data.challengeToken);
+      }
+      if (res.data?.resendAfterSeconds) {
+        setTimer(res.data.resendAfterSeconds);
+      } else {
+        setTimer(48);
+      }
       toast.success('A new verification code has been sent.');
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Failed to resend verification code.';
       toast.error(msg);
+      if (err.response?.status === 401 || err.response?.status === 404) {
+        navigate('/admin/login', { replace: true });
+      }
     }
   };
 
@@ -109,7 +122,7 @@ export default function VerifyOtpPage() {
     try {
       const res = await api.post('/auth/verify-otp', { challengeToken, otp });
       const tokens = AuthTokensSchema.parse(res.data);
-      saveRefreshToken(tokens.refreshToken, true);
+      saveRefreshToken(tokens.refreshToken, remember);
       dispatch(setCredentials({ accessToken: tokens.accessToken, user: tokens.user }));
       dispatch(clearAuthorization());
 

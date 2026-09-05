@@ -42,6 +42,7 @@ export default function LoginPage() {
             deliveryTarget: otpResult.data.deliveryTarget,
             expiresInSeconds: otpResult.data.expiresInSeconds,
             resendAfterSeconds: otpResult.data.resendAfterSeconds,
+            remember,
           },
         });
         return;

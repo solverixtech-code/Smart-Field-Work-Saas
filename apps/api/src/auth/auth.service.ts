@@ -190,21 +190,31 @@ export class AuthService {
   async resendOtp(
     challengeToken: string,
     meta: { ip?: string; userAgent?: string },
-  ): Promise<{ success: boolean; resendAfterSeconds: number }> {
+  ): Promise<{
+    success: boolean;
+    challengeToken: string;
+    expiresInSeconds: number;
+    resendAfterSeconds: number;
+  }> {
     const existing = await this.prisma.otpChallenge.findUnique({
       where: { challengeToken },
       include: { user: true },
     });
 
     if (!existing || existing.consumedAt || existing.expiresAt <= new Date()) {
-      return { success: true, resendAfterSeconds: OTP_RESEND_SECONDS };
+      throw new UnauthorizedException('Verification session invalid or expired. Please sign in again.');
     }
 
     // Check resend cooldown
     const secondsSinceCreation =
       (Date.now() - existing.createdAt.getTime()) / 1000;
     if (secondsSinceCreation < OTP_RESEND_SECONDS) {
-      return { success: true, resendAfterSeconds: OTP_RESEND_SECONDS };
+      return {
+        success: true,
+        challengeToken: existing.challengeToken,
+        expiresInSeconds: Math.max(0, Math.floor((existing.expiresAt.getTime() - Date.now()) / 1000)),
+        resendAfterSeconds: Math.max(0, Math.ceil(OTP_RESEND_SECONDS - secondsSinceCreation)),
+      };
     }
 
     // Invalidate old, create new
@@ -236,7 +246,12 @@ export class AuthService {
       await this.smsService.sendOtp({ mobile: existing.user.mobile, otp });
     }
 
-    return { success: true, resendAfterSeconds: OTP_RESEND_SECONDS };
+    return {
+      success: true,
+      challengeToken: newToken,
+      expiresInSeconds: OTP_TTL_SECONDS,
+      resendAfterSeconds: OTP_RESEND_SECONDS,
+    };
   }
 
   // ─── Refresh ────────────────────────────────────────────────────────────────
