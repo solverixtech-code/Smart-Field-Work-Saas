@@ -54,7 +54,7 @@ import {
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
-import { fetchAuthorizationBootstrap } from "../store/slices/authorizationSlice";
+import { clearAuthorization, fetchAuthorizationBootstrap } from "../store/slices/authorizationSlice";
 import { clearStoredRefreshToken } from "../common/authSession";
 import { api } from "../common/api";
 import { Button } from "../components/ui/Button";
@@ -875,6 +875,7 @@ export default function AppShell() {
     }
     clearStoredRefreshToken();
     dispatch(clearCredentials());
+    dispatch(clearAuthorization());
     navigate("/admin/login");
   };
 

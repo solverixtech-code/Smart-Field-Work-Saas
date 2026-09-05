@@ -170,7 +170,8 @@ import { CreateNotificationPage, ExecutiveAlertsPage, NotificationCenterPage, No
 
 import AppShell from './layouts/AppShell';
 import ProtectedRoute from './layouts/ProtectedRoute';
-import { Role, AuthTokensSchema } from '@visiblo/shared';
+import PermissionRoute from './components/auth/PermissionRoute';
+import { AuthTokensSchema } from '@visiblo/shared';
 import { useAppDispatch, useAppSelector } from './store';
 import { setCredentials, clearCredentials } from './store/slices/authSlice';
 import { getStoredRefreshToken, getRefreshPayload, saveRefreshToken, clearStoredRefreshToken } from './common/authSession';
@@ -238,77 +239,32 @@ export default function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
             {/* Executive Dashboard */}
-            <Route element={<ProtectedRoute allowedRoles={[Role.SUPER_ADMIN, Role.ADMIN]} />}>
+            <Route element={<PermissionRoute permission="crm.dashboard.view" />}>
               <Route path="/admin/dashboard" element={<ExecutiveDashboardPage />} />
             </Route>
 
             {/* Sales Dashboard */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.dashboard.view" />}>
               <Route path="/admin/dashboard/sales" element={<SalesDashboardPage />} />
             </Route>
 
             {/* Field Activity Dashboard */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.dashboard.view" />}>
               <Route path="/admin/dashboard/field" element={<FieldActivityDashboardPage />} />
             </Route>
 
             {/* Revenue Dashboard */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE_OPS]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="payroll.payslips.view" />}>
               <Route path="/admin/dashboard/revenue" element={<RevenueDashboardPage />} />
             </Route>
 
             {/* Conversion Dashboard */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.dashboard.view" />}>
               <Route path="/admin/dashboard/conversions" element={<ConversionDashboardPage />} />
             </Route>
 
             {/* Real-time Activity */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.dashboard.view" />}>
               <Route path="/admin/dashboard/live" element={<RealTimeActivityDashboardPage />} />
             </Route>
 
@@ -318,18 +274,7 @@ export default function AppRouter() {
             <Route path="/admin/profile/sessions" element={<ActiveSessionsPage />} />
 
             {/* Field Executives & Sales Manager Management Routes */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.executives.view" />}>
               <Route path="/admin/executives" element={<AllExecutivesPage />} />
               <Route path="/admin/executives/new" element={<AddExecutivePage />} />
               <Route path="/admin/executives/:id" element={<ExecutiveDetailsPage />} />
@@ -338,35 +283,13 @@ export default function AppRouter() {
             </Route>
 
             {/* Workforce, Attendance, and Payroll Routes */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="workforce.shifts.view" />}>
               <Route path="/admin/shifts" element={<ShiftManagementPage />} />
               <Route path="/admin/attendance" element={<AttendanceMonitoringPage />} />
             </Route>
 
             {/* Teams & Hierarchy Management Routes */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.teams.view" />}>
               <Route path="/admin/teams" element={<SalesTeamsPage />} />
               <Route path="/admin/teams/create" element={<CreateTeamPage />} />
               <Route path="/admin/teams/targets" element={<TeamTargetsPage />} />
@@ -378,18 +301,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Targets & Incentives Routes (Screens 128 to 136) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.targets.view" />}>
               <Route path="/admin/targets" element={<TargetDashboardPage />} />
               <Route path="/admin/targets/executives" element={<ExecutiveTargetsScreen />} />
               <Route path="/admin/targets/teams" element={<TeamTargetsScreen />} />
@@ -402,18 +314,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Sales Performance Routes (Screens 137 to 143) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.performance.view" />}>
               <Route path="/admin/performance" element={<SalesPerformancePage />} />
               <Route path="/admin/performance/executives" element={<ExecutiveRankingPage />} />
               <Route path="/admin/performance/teams" element={<TeamRankingPage />} />
@@ -424,18 +325,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Business Categories Routes (Screens 144 to 147) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.categories.view" />}>
               <Route path="/admin/categories" element={<AllCategoriesPage />} />
               <Route path="/admin/categories/create" element={<AddCategoryPage />} />
               <Route path="/admin/categories/:categoryId" element={<CategoryDetailsPage />} />
@@ -443,18 +333,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Lead Sources & Automation Routes (Screens 148 to 157) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.leads.view" />}>
               <Route path="/admin/leads/sources" element={<AllLeadSourcesPage />} />
               <Route path="/admin/leads/sources/create" element={<AddLeadSourcePage />} />
               <Route path="/admin/leads/sources/:sourceId" element={<LeadSourceDetailsPage />} />
@@ -468,18 +347,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Customer & Subscription Linkage Routes (Screens 151 to 155) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.customers.view" />}>
               <Route path="/admin/customers" element={<ConvertedCustomersPage />} />
               <Route path="/admin/customers/field-sales" element={<ConvertedCustomersPage />} />
               <Route path="/admin/customers/:customerId" element={<CustomerDetailsPage />} />
@@ -488,13 +356,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Notifications (Screens 163 to 167) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.notifications.view" />}>
               <Route path="/admin/notifications" element={<NotificationCenterPage />} />
               <Route path="/admin/notifications/create" element={<CreateNotificationPage />} />
               <Route path="/admin/notifications/push" element={<PushNotificationsPage />} />
@@ -503,13 +365,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Reports & Analytics (Screens 168 to 179) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[Role.SUPER_ADMIN, Role.ADMIN, Role.SALES_MANAGER, Role.TEAM_LEADER]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.reports.view" />}>
               <Route path="/admin/reports" element={<ReportsDashboardPage />} />
               <Route path="/admin/reports/daily-sales" element={<DailySalesReportPage />} />
               <Route path="/admin/reports/executives" element={<ExecutiveReportPage />} />
@@ -523,30 +379,13 @@ export default function AppRouter() {
               <Route path="/admin/reports/categories" element={<CategoryRoiReportPage />} />
             </Route>
 
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[Role.SUPER_ADMIN, Role.ADMIN, Role.FINANCE_OPS]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="payroll.payslips.view" />}>
               <Route path="/admin/payroll" element={<PayrollManagementPage />} />
               <Route path="/admin/payroll/settings" element={<PayrollSettingsPage />} />
             </Route>
 
             {/* Demo Management Routes (Screens 93 to 98) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.demos.view" />}>
               <Route path="/admin/demos" element={<AllDemosPage />} />
               <Route path="/admin/demos/today" element={<DemosTodayPage />} />
               <Route path="/admin/demos/scheduled" element={<ScheduledDemosPage />} />
@@ -556,18 +395,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Follow-up Management Routes (Screens 99 to 104) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.followups.view" />}>
               <Route path="/admin/follow-ups" element={<AllFollowUpsPage />} />
               <Route path="/admin/follow-ups/today" element={<TodayFollowUpsPage />} />
               <Route path="/admin/follow-ups/upcoming" element={<UpcomingFollowUpsPage />} />
@@ -577,18 +405,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Leads Management Routes (Screens 33 to 53) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.leads.view" />}>
               <Route path="/admin/leads" element={<AllLeadsPage viewMode="all" />} />
               <Route path="/admin/leads/create" element={<AddLeadPage />} />
               <Route path="/admin/leads/bulk-assign" element={<BulkAssignLeadsPage />} />
@@ -613,18 +430,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Sales Pipeline Routes (Screens 105 to 113) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.pipeline.view" />}>
               <Route path="/admin/sales/pipeline" element={<SalesPipelinePage />} />
               <Route path="/admin/sales/prospects" element={<SalesStageViewPage stageKeyOverride="prospects" />} />
               <Route path="/admin/sales/contacted" element={<SalesStageViewPage stageKeyOverride="contacted" />} />
@@ -637,18 +443,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Business Database Management Routes (Screens 54 to 60) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.businesses.view" />}>
               <Route path="/admin/businesses" element={<AllBusinessesPage />} />
               <Route path="/admin/businesses/create" element={<AddBusinessPage />} />
               <Route path="/admin/businesses/:businessId/edit" element={<AddBusinessPage isEdit />} />
@@ -663,18 +458,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Visit Management Routes (Screens 61 to 70) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.visits.view" />}>
               <Route path="/admin/visits" element={<AllVisitsPage viewMode="all" />} />
               <Route path="/admin/visits/schedule" element={<ScheduleVisitPage />} />
               <Route path="/admin/visits/today" element={<AllVisitsPage viewMode="today" />} />
@@ -689,18 +473,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Live Location & Maps Routes (Screens 71 to 77) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.map.view" />}>
               <Route path="/admin/map/live" element={<LiveFieldMapPage />} />
               <Route path="/admin/map/executives" element={<ExecutiveLocationsPage />} />
               <Route path="/admin/map/businesses" element={<BusinessProspectMapPage />} />
@@ -712,18 +485,7 @@ export default function AppRouter() {
             </Route>
 
             {/* Territory Management Routes (Module 9, Screens 78 to 85) */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="crm.territories.view" />}>
               <Route path="/admin/territories" element={<TerritoriesListPage />} />
               <Route path="/admin/territories/create" element={<CreateTerritoryPage />} />
               <Route path="/admin/territories/:territoryId" element={<TerritoryDetailsPage initialTab="Overview" />} />
@@ -735,20 +497,7 @@ export default function AppRouter() {
             </Route>
 
             {/* System Masters Management & Workspace Settings Route */}
-            <Route
-              element={
-                <ProtectedRoute
-                  allowedRoles={[
-                    Role.SUPER_ADMIN,
-                    Role.ADMIN,
-                    Role.SALES_MANAGER,
-                    Role.TEAM_LEADER,
-                    Role.FINANCE_OPS,
-                    Role.SUPPORT,
-                  ]}
-                />
-              }
-            >
+            <Route element={<PermissionRoute permission="system.masters.view" />}>
               <Route path="/admin/masters" element={<MasterManagementPage />} />
               <Route element={<WorkspaceSettingsGuard />}>
                 <Route path="/admin/settings/workspace" element={<WorkspaceSettingsPage />} />

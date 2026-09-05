@@ -17,7 +17,7 @@ export interface RequestPrincipal {
   contextVersion: number;
 
   permissionVersion: {
-    platform: string;
+    platform: string | null;
     tenant: string | null;
   };
 

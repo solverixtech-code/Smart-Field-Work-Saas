@@ -37,15 +37,13 @@ import {
 import { usePlatformPermissions } from "../features/platform/tenants/hooks/usePlatformPermissions";
 import {
   PlatformPermission,
-  PlatformRole,
 } from "../features/platform/tenants/types/platform.types";
 import { useAppDispatch, useAppSelector } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
-import { fetchAuthorizationBootstrap } from "../store/slices/authorizationSlice";
+import { clearAuthorization, fetchAuthorizationBootstrap } from "../store/slices/authorizationSlice";
 import { clearStoredRefreshToken } from "../common/authSession";
 import { api } from "../common/api";
 import { Button } from "../components/ui/Button";
-import { Select } from "../components/ui/Select";
 
 const bigLogo = "/assets/sfw-logo.png";
 const smallLogo = "/assets/sfw-icon.png";
@@ -177,11 +175,6 @@ export default function PlatformShell() {
   const [isHovered, setIsHovered] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
-  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
-  const [roleSearchQuery, setRoleSearchQuery] = useState("");
-  const [activeRole, setActiveRole] = useState<PlatformRole>(
-    "PLATFORM_SUPER_ADMIN"
-  );
 
   const { user } = useAppSelector((s) => s.auth);
   const { platform, loaded: authzLoaded, loading: authzLoading } = useAppSelector((s) => s.authorization);
@@ -195,11 +188,8 @@ export default function PlatformShell() {
     }
   }, [authzLoaded, authzLoading, dispatch]);
 
-  const { role, setRole } = usePlatformPermissions(activeRole);
-
   const sidebarRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
-  const roleRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -212,18 +202,10 @@ export default function PlatformShell() {
       if (headerRef.current && !headerRef.current.contains(e.target as Node)) {
         setHeaderMenuOpen(false);
       }
-      if (roleRef.current && !roleRef.current.contains(e.target as Node)) {
-        setRoleMenuOpen(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const handleRoleChange = (newRole: PlatformRole) => {
-    setActiveRole(newRole);
-    setRole(newRole);
-  };
 
   const handleLogout = async () => {
     try {
@@ -233,6 +215,7 @@ export default function PlatformShell() {
     }
     clearStoredRefreshToken();
     dispatch(clearCredentials());
+    dispatch(clearAuthorization());
     navigate("/admin/login");
   };
 
@@ -691,83 +674,13 @@ export default function PlatformShell() {
 
           {/* Right Header Controls */}
           <div className="flex items-center gap-4">
-            {/* Custom Role Selector Popover Pill (Matching User Mockup 100%) */}
-            <div className="relative" ref={roleRef}>
-              <button
-                type="button"
-                onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                className="flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-1.5 text-xs text-amber-900 shadow-xs hover:bg-amber-100/80 transition-all cursor-pointer font-semibold"
-              >
-                <ShieldAlert className="h-4 w-4 text-amber-600 shrink-0" />
-                <span className="font-bold text-amber-900">Role:</span>
-                <span className="font-bold text-amber-950">
-                  {activeRole === 'PLATFORM_SUPER_ADMIN'
-                    ? 'Super Admin (Full)'
-                    : activeRole === 'PLATFORM_OPERATIONS_ADMIN'
-                    ? 'Operations Admin'
-                    : activeRole === 'PLATFORM_ONBOARDING'
-                    ? 'Onboarding Admin'
-                    : activeRole === 'PLATFORM_SUPPORT'
-                    ? 'Support Agent'
-                    : activeRole === 'PLATFORM_BILLING'
-                    ? 'Billing Admin'
-                    : 'Auditor'}
-                </span>
-                <ChevronRight className={`h-3.5 w-3.5 text-amber-700 shrink-0 transition-transform ${roleMenuOpen ? 'rotate-90' : 'rotate-90'}`} />
-              </button>
-
-              {roleMenuOpen && (
-                <div className="absolute left-0 top-full mt-1.5 w-60 rounded-sm border border-slate-200 bg-white p-2 shadow-2xl z-50 animate-in fade-in zoom-in-95 space-y-1 text-left">
-                  <div className="px-2 py-1 border-b border-slate-100 mb-1 flex items-center justify-between">
-                    <p className="text-xs font-extrabold text-[#0D1F3D]">Select Active Role</p>
-                    <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-sm">Test Mode</span>
-                  </div>
-
-                  {/* Search Bar inside Role Dropdown */}
-                  <div className="relative mb-1">
-                    <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
-                    <input
-                      type="text"
-                      value={roleSearchQuery}
-                      onChange={(e) => setRoleSearchQuery(e.target.value)}
-                      placeholder="Search active role..."
-                      className="w-full rounded-sm border border-slate-200 bg-slate-50/80 pl-8 pr-3 py-1.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-
-                  <div className="max-h-48 overflow-y-auto space-y-0.5 custom-scrollbar">
-                    {[
-                      { value: 'PLATFORM_SUPER_ADMIN', label: 'Super Admin (Full)' },
-                      { value: 'PLATFORM_OPERATIONS_ADMIN', label: 'Operations Admin' },
-                      { value: 'PLATFORM_ONBOARDING', label: 'Onboarding Admin' },
-                      { value: 'PLATFORM_SUPPORT', label: 'Support Agent' },
-                      { value: 'PLATFORM_BILLING', label: 'Billing Admin' },
-                      { value: 'PLATFORM_AUDITOR', label: 'Auditor' },
-                    ]
-                      .filter((r) => r.label.toLowerCase().includes(roleSearchQuery.toLowerCase().trim()))
-                      .map((r) => (
-                        <button
-                          key={r.value}
-                          type="button"
-                          onClick={() => {
-                            handleRoleChange(r.value as PlatformRole);
-                            setRoleMenuOpen(false);
-                            setRoleSearchQuery('');
-                          }}
-                          className={`flex w-full items-center justify-between rounded-sm px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
-                            activeRole === r.value
-                              ? 'bg-[#0D1F3D] text-white font-extrabold shadow-xs'
-                              : 'text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]'
-                          }`}
-                        >
-                          <span>{r.label}</span>
-                          {activeRole === r.value && <Check className="h-3.5 w-3.5 text-white" />}
-                        </button>
-                      ))}
-                  </div>
-                </div>
-              )}
+            {/* Server-authorized Platform Role Indicator Badge */}
+            <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-100/90 px-3 py-1.5 text-xs shadow-xs font-semibold">
+              <Shield className="h-4 w-4 text-[#0D1F3D] shrink-0" />
+              <span className="font-bold text-slate-500">Platform Roles:</span>
+              <span className="font-extrabold text-[#0D1F3D]">
+                {platform?.roleCodes?.length ? platform.roleCodes.join(", ") : "Platform User"}
+              </span>
             </div>
 
             {/* Notification Bell Icon */}

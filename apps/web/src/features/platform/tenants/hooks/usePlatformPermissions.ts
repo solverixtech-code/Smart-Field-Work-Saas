@@ -1,96 +1,21 @@
-import { useMemo, useState } from 'react';
-import { PlatformRole, PlatformPermission } from '../types/platform.types';
+import { useMemo } from 'react';
+import { PlatformPermission } from '../types/platform.types';
+import { useAppSelector } from '../../../../store';
 
-const ROLE_PERMISSIONS: Record<PlatformRole, PlatformPermission[]> = {
-  PLATFORM_SUPER_ADMIN: [
-    'platform.dashboard.view',
-    'platform.tenants.view',
-    'platform.tenants.create',
-    'platform.tenants.update',
-    'platform.tenants.provision',
-    'platform.tenants.suspend',
-    'platform.tenants.members.manage',
-    'platform.tenants.modules.manage',
-    'platform.plans.view',
-    'platform.plans.create',
-    'platform.plans.update',
-    'platform.plans.publish',
-    'platform.plans.archive',
-    'platform.modules.view',
-    'platform.modules.update',
-    'platform.modules.archive',
-    'platform.industries.view',
-    'platform.users.view',
-    'platform.roles.view',
-    'platform.subscriptions.view',
-    'platform.subscriptions.manage',
-    'platform.billing.view',
-    'platform.users.manage',
-    'platform.audit.view'
-  ],
-  PLATFORM_OPERATIONS_ADMIN: [
-    'platform.dashboard.view',
-    'platform.tenants.view',
-    'platform.tenants.create',
-    'platform.tenants.update',
-    'platform.tenants.provision',
-    'platform.tenants.suspend',
-    'platform.tenants.members.manage',
-    'platform.tenants.modules.manage',
-    'platform.plans.view',
-    'platform.plans.create',
-    'platform.plans.update',
-    'platform.plans.publish',
-    'platform.plans.archive',
-    'platform.modules.view',
-    'platform.modules.update',
-    'platform.modules.archive',
-    'platform.industries.view',
-    'platform.users.view',
-    'platform.roles.view',
-    'platform.subscriptions.view',
-    'platform.subscriptions.manage',
-    'platform.audit.view'
-  ],
-  PLATFORM_ONBOARDING: [
-    'platform.dashboard.view',
-    'platform.tenants.view',
-    'platform.tenants.create',
-    'platform.tenants.update',
-    'platform.tenants.provision',
-    'platform.tenants.members.manage'
-  ],
-  PLATFORM_SUPPORT: [
-    'platform.dashboard.view',
-    'platform.tenants.view',
-    'platform.subscriptions.view',
-    'platform.modules.view',
-    'platform.audit.view'
-  ],
-  PLATFORM_BILLING: [
-    'platform.dashboard.view',
-    'platform.tenants.view',
-    'platform.subscriptions.view',
-    'platform.subscriptions.manage',
-    'platform.billing.view'
-  ],
-  PLATFORM_AUDITOR: [
-    'platform.dashboard.view',
-    'platform.tenants.view',
-    'platform.subscriptions.view',
-    'platform.modules.view',
-    'platform.audit.view'
-  ]
-};
-
-export function usePlatformPermissions(currentRole: PlatformRole = 'PLATFORM_SUPER_ADMIN') {
-  const [role, setRole] = useState<PlatformRole>(currentRole);
+export function usePlatformPermissions() {
+  const platformAuth = useAppSelector((state) => state.authorization.platform);
+  const loaded = useAppSelector((state) => state.authorization.loaded);
 
   const permissions = useMemo(() => {
-    return ROLE_PERMISSIONS[role] || [];
-  }, [role]);
+    return platformAuth?.permissions || [];
+  }, [platformAuth?.permissions]);
+
+  const roleCodes = useMemo(() => {
+    return platformAuth?.roleCodes || [];
+  }, [platformAuth?.roleCodes]);
 
   const hasPlatformPermission = (permission: PlatformPermission): boolean => {
+    if (!loaded) return false;
     return permissions.includes(permission);
   };
 
@@ -109,8 +34,7 @@ export function usePlatformPermissions(currentRole: PlatformRole = 'PLATFORM_SUP
   const canArchiveModule = hasPlatformPermission('platform.modules.archive');
 
   return {
-    role,
-    setRole,
+    roleCodes,
     permissions,
     hasPlatformPermission,
     canCreateTenant,
@@ -123,6 +47,6 @@ export function usePlatformPermissions(currentRole: PlatformRole = 'PLATFORM_SUP
     canPublishPlan,
     canViewModules,
     canUpdateModule,
-    canArchiveModule
+    canArchiveModule,
   };
 }

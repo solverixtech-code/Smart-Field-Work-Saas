@@ -4,6 +4,7 @@ import { PrismaService } from '../src/persistence/prisma.service';
 import { seedPermissions } from './seeds/system-permissions';
 import { seedPlatformRoles } from './seeds/platform-roles';
 import { seedTenantRoleTemplates } from './seeds/tenant-role-templates';
+import { syncRbac } from './sync-rbac';
 
 const prisma = new PrismaClient();
 const prismaService = new PrismaService();
@@ -17,16 +18,16 @@ async function main() {
   const health = await catalogSyncService.syncCatalog();
   console.log(`✅ Catalog synchronization complete. Status: ${health.status}, Registry Hash: ${health.registryHash}`);
 
-  // 2. Ensure deterministic system permissions are seeded
+  // 2. Ensure deterministic system permissions & tenant templates are seeded
   console.log('🔒 Verifying system permissions...');
   await seedPermissions(prisma);
-  console.log('✅ System permissions seeded deterministically.');
-
-  // 3. Seed Platform Roles & Tenant Role Templates
-  console.log('🛡️ Seeding platform roles & tenant role templates...');
   await seedPlatformRoles(prisma);
   await seedTenantRoleTemplates(prisma);
-  console.log('✅ Platform roles & tenant role templates seeded.');
+
+  // 3. Execute canonical RBAC Registry & Role Permission Synchronization
+  console.log('🛡️ Synchronizing canonical RBAC permission registry & built-in grants...');
+  await syncRbac(prisma);
+  console.log('✅ Canonical RBAC synchronized successfully.');
 
   console.log('🚀 Production seed completed successfully.');
 }

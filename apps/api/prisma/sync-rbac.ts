@@ -6,18 +6,20 @@ import {
   DEFAULT_TENANT_ROLE_GRANTS,
 } from '../src/common/security/permission-registry';
 
-const prisma = new PrismaClient();
+const defaultPrisma = new PrismaClient();
 
-async function main() {
+export async function syncRbac(client?: PrismaClient) {
+  const prisma = client || defaultPrisma;
   console.log(`[RBAC Sync] Starting synchronization (Registry Version: ${PERMISSION_REGISTRY_VERSION})...`);
 
   let permissionsAdded = 0;
   let permissionsUpdated = 0;
+  let permissionsInactivated = 0;
   let platformGrantsCreated = 0;
   let tenantRolesInitialized = 0;
   let tenantGrantsCreated = 0;
 
-  // 1. Sync Permission definitions
+  // 1. Sync Permission definitions from registry
   for (const def of PERMISSION_REGISTRY) {
     const existing = await prisma.permission.findFirst({
       where: {
@@ -62,9 +64,25 @@ async function main() {
     }
   }
 
-  // Load all synchronized permissions into a code map
-  const dbPermissions = await prisma.permission.findMany();
-  const permMapByCode = new Map(dbPermissions.map((p) => [p.code, p]));
+  // 1b. Mark permissions missing from developer registry as isActive = false
+  const registryCodes = new Set(PERMISSION_REGISTRY.map((p) => p.code));
+  const activeDbPermissions = await prisma.permission.findMany({
+    where: { isActive: true },
+  });
+
+  for (const p of activeDbPermissions) {
+    if (p.code && !registryCodes.has(p.code)) {
+      await prisma.permission.update({
+        where: { id: p.id },
+        data: { isActive: false },
+      });
+      permissionsInactivated++;
+    }
+  }
+
+  // Load all active synchronized permissions into a code map
+  const dbPermissions = await prisma.permission.findMany({ where: { isActive: true } });
+  const permMapByCode = new Map(dbPermissions.filter((p) => p.code !== null).map((p) => [p.code!, p]));
 
   // 2. Sync Built-in Platform Roles & PlatformRolePermissions
   const platformRoleNames: Record<string, string> = {
@@ -92,9 +110,10 @@ async function main() {
       },
     });
 
+    let roleGrantsCreated = 0;
     for (const pCode of grantCodes) {
       const perm = permMapByCode.get(pCode);
-      if (!perm) continue;
+      if (!perm || perm.scope !== 'PLATFORM') continue;
 
       const existingGrant = await prisma.platformRolePermission.findUnique({
         where: {
@@ -112,8 +131,16 @@ async function main() {
             permissionId: perm.id,
           },
         });
+        roleGrantsCreated++;
         platformGrantsCreated++;
       }
+    }
+
+    if (roleGrantsCreated > 0) {
+      await prisma.platformRole.update({
+        where: { id: platformRole.id },
+        data: { permissionsVersion: { increment: 1 } },
+      });
     }
   }
 
@@ -139,6 +166,7 @@ async function main() {
         },
       });
 
+      let isNewRole = false;
       if (!tenantRole) {
         tenantRole = await prisma.tenantRole.create({
           data: {
@@ -151,12 +179,18 @@ async function main() {
           },
         });
         tenantRolesInitialized++;
+        isNewRole = true;
       }
 
-      // Bootstrap grants if default un-customized state
+      // Safe guard: Do NOT rewrite grants if customized (permissionsVersion > 1) and not brand new
+      if (!isNewRole && tenantRole.permissionsVersion > 1) {
+        continue;
+      }
+
+      let roleGrantsCreated = 0;
       for (const pCode of grantCodes) {
         const perm = permMapByCode.get(pCode);
-        if (!perm) continue;
+        if (!perm || perm.scope !== 'TENANT') continue;
 
         const existingGrant = await prisma.tenantRolePermission.findUnique({
           where: {
@@ -174,8 +208,16 @@ async function main() {
               permissionId: perm.id,
             },
           });
+          roleGrantsCreated++;
           tenantGrantsCreated++;
         }
+      }
+
+      if (roleGrantsCreated > 0) {
+        await prisma.tenantRole.update({
+          where: { id: tenantRole.id },
+          data: { permissionsVersion: { increment: 1 } },
+        });
       }
     }
   }
@@ -183,17 +225,20 @@ async function main() {
   console.log(`[RBAC Sync] Completed successfully.`);
   console.log(`  - Permissions Created: ${permissionsAdded}`);
   console.log(`  - Permissions Updated: ${permissionsUpdated}`);
+  console.log(`  - Permissions Inactivated: ${permissionsInactivated}`);
   console.log(`  - Platform Grants Created: ${platformGrantsCreated}`);
   console.log(`  - Tenants Scanned: ${tenants.length}`);
   console.log(`  - Tenant Roles Initialized: ${tenantRolesInitialized}`);
   console.log(`  - Tenant Grants Created: ${tenantGrantsCreated}`);
 }
 
-main()
-  .catch((e) => {
-    console.error('[RBAC Sync Failed]:', e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+if (require.main === module) {
+  syncRbac()
+    .catch((e) => {
+      console.error('[RBAC Sync Failed]:', e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await defaultPrisma.$disconnect();
+    });
+}

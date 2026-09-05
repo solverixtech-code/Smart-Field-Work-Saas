@@ -1,20 +1,18 @@
 import { Controller, Post, Get, Body, Query, Headers, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiHeader } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
-import { TenantAuthenticated } from '../common/decorators/tenant-authenticated.decorator';
+import { TenantAuthorized } from '../common/decorators/tenant-authorized.decorator';
 import { CurrentPrincipal } from '../common/decorators/current-principal.decorator';
 import { RequestPrincipal } from '../common/security/request-principal.interface';
 import { TenantScopeFactory } from '../common/tenancy/tenant-scope';
 import { MobilePunchSwaggerDto } from './dto/attendance.dto';
-import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
 
 @ApiTags('Attendance & Punch Logs')
 @ApiBearerAuth('OAuth2PasswordBearer')
 @ApiBearerAuth('JWT-auth')
 @Controller('attendance')
-@TenantAuthenticated()
-@UseGuards(PermissionsGuard)
+@TenantAuthorized()
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 

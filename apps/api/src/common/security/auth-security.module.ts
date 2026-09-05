@@ -8,6 +8,7 @@ import { MembershipContextGuard } from '../guards/membership-context.guard';
 
 import { PermissionCacheService } from './permission-cache.service';
 import { EffectivePermissionService } from './effective-permission.service';
+import { RolePermissionService } from './role-permission.service';
 import { PermissionsGuard } from '../guards/permissions.guard';
 
 @Global()
@@ -26,6 +27,7 @@ import { PermissionsGuard } from '../guards/permissions.guard';
     JwtAuthGuard,
     PermissionCacheService,
     EffectivePermissionService,
+    RolePermissionService,
     RequestPrincipalService,
     RequestPrincipalGuard,
     MembershipContextGuard,
@@ -36,6 +38,7 @@ import { PermissionsGuard } from '../guards/permissions.guard';
     JwtAuthGuard,
     PermissionCacheService,
     EffectivePermissionService,
+    RolePermissionService,
     RequestPrincipalService,
     RequestPrincipalGuard,
     MembershipContextGuard,

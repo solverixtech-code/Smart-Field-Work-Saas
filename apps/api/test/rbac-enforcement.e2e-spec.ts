@@ -8,30 +8,44 @@ import { PrismaService } from '../src/persistence/prisma.service';
 import { TenantMembershipStatus, TenantStatus, Role, PlatformAssignmentStatus } from '@prisma/client';
 import { verifyTestDatabaseSafety } from '../src/test-utils/test-db-safety';
 import { PERMISSION_REGISTRY, DEFAULT_PLATFORM_ROLE_GRANTS, DEFAULT_TENANT_ROLE_GRANTS } from '../src/common/security/permission-registry';
+import { RolePermissionService } from '../src/common/security/role-permission.service';
 
 describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let jwtService: JwtService;
   let configService: ConfigService;
+  let rolePermissionService: RolePermissionService;
   let jwtSecret: string;
 
   // Test Fixture Entities
   let tenantA: any;
+  let tenantB: any;
   let platformAuditorUser: any;
   let platformSuperAdminUser: any;
   let tenantAdminUser: any;
   let fieldExecUser: any;
   let legacySuperAdminUser: any;
+  let legacyAdminUser: any;
+  let visibloDomainUser: any;
+  let expiredPlatformUser: any;
+  let multiTenantUser: any;
 
   let membershipAdmin: any;
   let membershipExec: any;
+  let membershipMultiA: any;
+  let membershipMultiB: any;
 
   let sessionAuditor: any;
   let sessionSuperAdmin: any;
   let sessionTenantAdmin: any;
   let sessionFieldExec: any;
   let sessionLegacySuperAdmin: any;
+  let sessionLegacyAdmin: any;
+  let sessionVisibloDomain: any;
+  let sessionExpiredPlatform: any;
+  let sessionMultiA: any;
+  let sessionMultiB: any;
 
   // Tokens
   let tokenPlatformAuditor: string;
@@ -39,6 +53,11 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
   let tokenTenantAdmin: string;
   let tokenFieldExec: string;
   let tokenLegacySuperAdmin: string;
+  let tokenLegacyAdmin: string;
+  let tokenVisibloDomain: string;
+  let tokenExpiredPlatform: string;
+  let tokenMultiA: string;
+  let tokenMultiB: string;
 
   const timestamp = Date.now();
 
@@ -62,6 +81,7 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
     prisma = app.get<PrismaService>(PrismaService);
     jwtService = app.get<JwtService>(JwtService);
     configService = app.get<ConfigService>(ConfigService);
+    rolePermissionService = app.get<RolePermissionService>(RolePermissionService);
     jwtSecret = configService.getOrThrow<string>('JWT_ACCESS_SECRET');
 
     // 1. Seed developer permissions in test database
@@ -125,7 +145,7 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
       }
     }
 
-    // 3. Create Tenant A & Built-in Tenant Roles
+    // 3. Create Tenant A & Tenant B with Built-in Tenant Roles
     tenantA = await prisma.tenant.create({
       data: {
         slug: `rbac-tenant-a-${timestamp}`,
@@ -134,35 +154,51 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
       },
     });
 
-    for (const [code, grantCodes] of Object.entries(DEFAULT_TENANT_ROLE_GRANTS)) {
-      const tRole = await prisma.tenantRole.create({
-        data: {
-          tenantId: tenantA.id,
-          code,
-          name: code,
-          isSystem: true,
-          isActive: true,
-          permissionsVersion: 1,
-        },
-      });
+    tenantB = await prisma.tenant.create({
+      data: {
+        slug: `rbac-tenant-b-${timestamp}`,
+        displayName: 'RBAC Tenant B',
+        status: TenantStatus.ACTIVE,
+      },
+    });
 
-      for (const pCode of grantCodes) {
-        const perm = permMap.get(pCode);
-        if (!perm) continue;
-        await prisma.tenantRolePermission.create({
+    for (const tenant of [tenantA, tenantB]) {
+      for (const [code, grantCodes] of Object.entries(DEFAULT_TENANT_ROLE_GRANTS)) {
+        const tRole = await prisma.tenantRole.create({
           data: {
-            tenantRoleId: tRole.id,
-            permissionId: perm.id,
+            tenantId: tenant.id,
+            code,
+            name: code,
+            isSystem: true,
+            isActive: true,
+            permissionsVersion: 1,
           },
         });
+
+        for (const pCode of grantCodes) {
+          const perm = permMap.get(pCode);
+          if (!perm) continue;
+          await prisma.tenantRolePermission.create({
+            data: {
+              tenantRoleId: tRole.id,
+              permissionId: perm.id,
+            },
+          });
+        }
       }
     }
 
-    const tenantAdminRole = await prisma.tenantRole.findUnique({
+    const tenantAdminRoleA = await prisma.tenantRole.findUnique({
       where: { tenantId_code: { tenantId: tenantA.id, code: 'tenant_admin' } },
     });
-    const fieldExecRole = await prisma.tenantRole.findUnique({
+    const salesManagerRoleA = await prisma.tenantRole.findUnique({
+      where: { tenantId_code: { tenantId: tenantA.id, code: 'sales_manager' } },
+    });
+    const fieldExecRoleA = await prisma.tenantRole.findUnique({
       where: { tenantId_code: { tenantId: tenantA.id, code: 'field_executive' } },
+    });
+    const fieldExecRoleB = await prisma.tenantRole.findUnique({
+      where: { tenantId_code: { tenantId: tenantB.id, code: 'field_executive' } },
     });
     const platformAuditorRole = await prisma.platformRole.findUnique({
       where: { code: 'PLATFORM_AUDITOR' },
@@ -227,6 +263,50 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
       },
     });
 
+    legacyAdminUser = await prisma.user.create({
+      data: {
+        employeeCode: `EMP-LEGADM-${timestamp}`,
+        fullName: 'Legacy Admin User',
+        email: `legacyadmin-${timestamp}@example.com`,
+        passwordHash: 'dummy',
+        role: Role.ADMIN,
+        status: 'ACTIVE',
+      },
+    });
+
+    visibloDomainUser = await prisma.user.create({
+      data: {
+        employeeCode: `EMP-DOM-${timestamp}`,
+        fullName: 'Visiblo Domain User',
+        email: `employee-${timestamp}@smartfieldwork.com`,
+        passwordHash: 'dummy',
+        role: Role.FIELD_EXECUTIVE,
+        status: 'ACTIVE',
+      },
+    });
+
+    expiredPlatformUser = await prisma.user.create({
+      data: {
+        employeeCode: `EMP-[#EXP]-${timestamp}`,
+        fullName: 'Expired Platform User',
+        email: `expired-${timestamp}@smartfieldwork.com`,
+        passwordHash: 'dummy',
+        role: Role.PLATFORM_OPERATIONS_ADMIN,
+        status: 'ACTIVE',
+      },
+    });
+
+    multiTenantUser = await prisma.user.create({
+      data: {
+        employeeCode: `EMP-MULTI-${timestamp}`,
+        fullName: 'Multi Tenant User',
+        email: `multitenant-${timestamp}@example.com`,
+        passwordHash: 'dummy',
+        role: Role.SALES_MANAGER,
+        status: 'ACTIVE',
+      },
+    });
+
     // 5. Create Platform User Role Assignments
     await prisma.platformUserRoleAssignment.create({
       data: {
@@ -244,12 +324,22 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
       },
     });
 
+    // Expired assignment
+    await prisma.platformUserRoleAssignment.create({
+      data: {
+        userId: expiredPlatformUser.id,
+        platformRoleId: platformAuditorRole!.id,
+        status: PlatformAssignmentStatus.ACTIVE,
+        validUntil: new Date(Date.now() - 3600000), // 1 hour ago
+      },
+    });
+
     // 6. Create Tenant Memberships
     membershipAdmin = await prisma.tenantMembership.create({
       data: {
         tenantId: tenantA.id,
         userId: tenantAdminUser.id,
-        tenantRoleId: tenantAdminRole!.id,
+        tenantRoleId: tenantAdminRoleA!.id,
         status: TenantMembershipStatus.ACTIVE,
       },
     });
@@ -258,7 +348,25 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
       data: {
         tenantId: tenantA.id,
         userId: fieldExecUser.id,
-        tenantRoleId: fieldExecRole!.id,
+        tenantRoleId: fieldExecRoleA!.id,
+        status: TenantMembershipStatus.ACTIVE,
+      },
+    });
+
+    membershipMultiA = await prisma.tenantMembership.create({
+      data: {
+        tenantId: tenantA.id,
+        userId: multiTenantUser.id,
+        tenantRoleId: salesManagerRoleA!.id,
+        status: TenantMembershipStatus.ACTIVE,
+      },
+    });
+
+    membershipMultiB = await prisma.tenantMembership.create({
+      data: {
+        tenantId: tenantB.id,
+        userId: multiTenantUser.id,
+        tenantRoleId: fieldExecRoleB!.id,
         status: TenantMembershipStatus.ACTIVE,
       },
     });
@@ -279,6 +387,21 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
     sessionLegacySuperAdmin = await prisma.userSession.create({
       data: { userId: legacySuperAdminUser.id, refreshTokenHash: 'dummy', status: 'ACTIVE', contextVersion: 1 },
     });
+    sessionLegacyAdmin = await prisma.userSession.create({
+      data: { userId: legacyAdminUser.id, refreshTokenHash: 'dummy', status: 'ACTIVE', contextVersion: 1 },
+    });
+    sessionVisibloDomain = await prisma.userSession.create({
+      data: { userId: visibloDomainUser.id, refreshTokenHash: 'dummy', status: 'ACTIVE', contextVersion: 1 },
+    });
+    sessionExpiredPlatform = await prisma.userSession.create({
+      data: { userId: expiredPlatformUser.id, refreshTokenHash: 'dummy', status: 'ACTIVE', contextVersion: 1 },
+    });
+    sessionMultiA = await prisma.userSession.create({
+      data: { userId: multiTenantUser.id, refreshTokenHash: 'dummy', selectedMembershipId: membershipMultiA.id, status: 'ACTIVE', contextVersion: 1 },
+    });
+    sessionMultiB = await prisma.userSession.create({
+      data: { userId: multiTenantUser.id, refreshTokenHash: 'dummy', selectedMembershipId: membershipMultiB.id, status: 'ACTIVE', contextVersion: 1 },
+    });
 
     // 8. Sign Access Tokens
     tokenPlatformAuditor = jwtService.sign({ sub: platformAuditorUser.id, sid: sessionAuditor.id, ctxv: 1 }, { secret: jwtSecret });
@@ -286,15 +409,32 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
     tokenTenantAdmin = jwtService.sign({ sub: tenantAdminUser.id, sid: sessionTenantAdmin.id, mid: membershipAdmin.id, ctxv: 1 }, { secret: jwtSecret });
     tokenFieldExec = jwtService.sign({ sub: fieldExecUser.id, sid: sessionFieldExec.id, mid: membershipExec.id, ctxv: 1 }, { secret: jwtSecret });
     tokenLegacySuperAdmin = jwtService.sign({ sub: legacySuperAdminUser.id, sid: sessionLegacySuperAdmin.id, ctxv: 1 }, { secret: jwtSecret });
+    tokenLegacyAdmin = jwtService.sign({ sub: legacyAdminUser.id, sid: sessionLegacyAdmin.id, ctxv: 1 }, { secret: jwtSecret });
+    tokenVisibloDomain = jwtService.sign({ sub: visibloDomainUser.id, sid: sessionVisibloDomain.id, ctxv: 1 }, { secret: jwtSecret });
+    tokenExpiredPlatform = jwtService.sign({ sub: expiredPlatformUser.id, sid: sessionExpiredPlatform.id, ctxv: 1 }, { secret: jwtSecret });
+    tokenMultiA = jwtService.sign({ sub: multiTenantUser.id, sid: sessionMultiA.id, mid: membershipMultiA.id, ctxv: 1 }, { secret: jwtSecret });
+    tokenMultiB = jwtService.sign({ sub: multiTenantUser.id, sid: sessionMultiB.id, mid: membershipMultiB.id, ctxv: 1 }, { secret: jwtSecret });
   });
 
   afterAll(async () => {
-    if (tenantA) {
-      await prisma.tenantMembership.deleteMany({ where: { tenantId: tenantA.id } });
-      await prisma.tenantRole.deleteMany({ where: { tenantId: tenantA.id } });
-      await prisma.tenant.delete({ where: { id: tenantA.id } });
+    const tenantIds = [tenantA?.id, tenantB?.id].filter(Boolean);
+    if (tenantIds.length > 0) {
+      await prisma.tenantMembership.deleteMany({ where: { tenantId: { in: tenantIds } } });
+      await prisma.tenantRole.deleteMany({ where: { tenantId: { in: tenantIds } } });
+      await prisma.tenant.deleteMany({ where: { id: { in: tenantIds } } });
     }
-    const userIds = [platformAuditorUser?.id, platformSuperAdminUser?.id, tenantAdminUser?.id, fieldExecUser?.id, legacySuperAdminUser?.id].filter(Boolean);
+    const userIds = [
+      platformAuditorUser?.id,
+      platformSuperAdminUser?.id,
+      tenantAdminUser?.id,
+      fieldExecUser?.id,
+      legacySuperAdminUser?.id,
+      legacyAdminUser?.id,
+      visibloDomainUser?.id,
+      expiredPlatformUser?.id,
+      multiTenantUser?.id,
+    ].filter(Boolean);
+
     if (userIds.length > 0) {
       await prisma.platformUserRoleAssignment.deleteMany({ where: { userId: { in: userIds } } });
       await prisma.userSession.deleteMany({ where: { userId: { in: userIds } } });
@@ -406,21 +546,42 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
     });
   });
 
-  describe('4. Elimination of Legacy SUPER_ADMIN Authorization Bypass', () => {
+  describe('4. Elimination of Legacy Role & Email Authority Bypasses', () => {
     it('rejects user with legacy User.role = SUPER_ADMIN when no Platform role is assigned', async () => {
       await request(app.getHttpServer())
         .get('/platform/tenants')
         .set('Authorization', `Bearer ${tokenLegacySuperAdmin}`)
         .expect(403);
     });
+
+    it('rejects user with legacy User.role = ADMIN when no Platform role is assigned', async () => {
+      await request(app.getHttpServer())
+        .get('/platform/tenants')
+        .set('Authorization', `Bearer ${tokenLegacyAdmin}`)
+        .expect(403);
+    });
+
+    it('rejects user with @smartfieldwork.com email when no Platform role is assigned', async () => {
+      await request(app.getHttpServer())
+        .get('/platform/tenants')
+        .set('Authorization', `Bearer ${tokenVisibloDomain}`)
+        .expect(403);
+    });
+
+    it('rejects user with expired Platform assignment', async () => {
+      await request(app.getHttpServer())
+        .get('/platform/tenants')
+        .set('Authorization', `Bearer ${tokenExpiredPlatform}`)
+        .expect(403);
+    });
   });
 
-  describe('5. Scope Isolation (Platform vs Tenant)', () => {
-    it('rejects Platform Super Admin from calling Tenant attendance endpoints without selected tenant membership', async () => {
+  describe('5. Scope Isolation & Mismatch Validation', () => {
+    it('rejects Platform Super Admin from calling Tenant attendance endpoints without selected tenant membership (HTTP 403)', async () => {
       await request(app.getHttpServer())
         .get('/attendance/admin/today')
         .set('Authorization', `Bearer ${tokenPlatformSuperAdmin}`)
-        .expect(401); // Denied by MembershipContextGuard
+        .expect(403); // Denied by MembershipContextGuard
     });
 
     it('rejects Tenant Admin from calling Platform console endpoints', async () => {
@@ -428,6 +589,59 @@ describe('Phase 0.4 — Scoped RBAC Enforcement Adversarial E2E Suite', () => {
         .get('/platform/tenants')
         .set('Authorization', `Bearer ${tokenTenantAdmin}`)
         .expect(403);
+    });
+
+    it('rejects granting TENANT-scoped permission to a PlatformRole', async () => {
+      const platformRole = await prisma.platformRole.findFirst();
+      await expect(
+        rolePermissionService.grantPlatformPermission(platformRole!.id, 'workforce.shifts.view'),
+      ).rejects.toThrow('Only PLATFORM scoped permissions are allowed');
+    });
+
+    it('rejects granting PLATFORM-scoped permission to a TenantRole', async () => {
+      const tenantRole = await prisma.tenantRole.findFirst();
+      await expect(
+        rolePermissionService.grantTenantPermission(tenantA.id, tenantRole!.id, 'platform.tenants.view'),
+      ).rejects.toThrow('Only TENANT scoped permissions are allowed');
+    });
+  });
+
+  describe('6. Multi-Tenant Membership Isolation & Live Invalidation', () => {
+    it('grants independent permissions for single user in Tenant A (sales_manager) vs Tenant B (field_executive)', async () => {
+      const resA = await request(app.getHttpServer())
+        .get('/auth/authorization')
+        .set('Authorization', `Bearer ${tokenMultiA}`)
+        .expect(200);
+
+      expect(resA.body.tenant.id).toBe(tenantA.id);
+      expect(resA.body.tenant.roleCode).toBe('sales_manager');
+      expect(resA.body.tenant.permissions).toContain('workforce.shifts.create');
+
+      const resB = await request(app.getHttpServer())
+        .get('/auth/authorization')
+        .set('Authorization', `Bearer ${tokenMultiB}`)
+        .expect(200);
+
+      expect(resB.body.tenant.id).toBe(tenantB.id);
+      expect(resB.body.tenant.roleCode).toBe('field_executive');
+      expect(resB.body.tenant.permissions).not.toContain('workforce.shifts.create');
+    });
+
+    it('invalidates cache and increments permissionsVersion on live grant revoke', async () => {
+      const fieldExecRoleA = await prisma.tenantRole.findUnique({
+        where: { tenantId_code: { tenantId: tenantA.id, code: 'field_executive' } },
+      });
+
+      // Revoke attendance.self.punch from field_executive in Tenant A
+      await rolePermissionService.revokeTenantPermission(tenantA.id, fieldExecRoleA!.id, 'attendance.self.punch');
+
+      const res = await request(app.getHttpServer())
+        .get('/auth/authorization')
+        .set('Authorization', `Bearer ${tokenFieldExec}`)
+        .expect(200);
+
+      expect(res.body.tenant.permissions).not.toContain('attendance.self.punch');
+      expect(res.body.tenant.permissionVersion).toContain(':v2');
     });
   });
 });

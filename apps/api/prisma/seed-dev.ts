@@ -5,6 +5,7 @@ import { PrismaService } from '../src/persistence/prisma.service';
 import { seedPermissions } from './seeds/system-permissions';
 import { seedPlatformRoles } from './seeds/platform-roles';
 import { seedTenantRoleTemplates } from './seeds/tenant-role-templates';
+import { syncRbac } from './sync-rbac';
 
 const prisma = new PrismaClient();
 const prismaService = new PrismaService();
@@ -21,7 +22,8 @@ async function main() {
   await seedPermissions(prisma);
   await seedPlatformRoles(prisma);
   await seedTenantRoleTemplates(prisma);
-  console.log('✅ System permissions, platform roles & tenant role templates seeded.');
+  await syncRbac(prisma);
+  console.log('✅ System permissions, platform roles, tenant templates & canonical RBAC seeded.');
 
   // 3. Seed development demo users
   const defaultPassword = await argon2.hash('Visiblo@2025');

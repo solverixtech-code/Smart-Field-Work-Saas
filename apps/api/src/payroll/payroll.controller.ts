@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Query, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { PayrollService } from './payroll.service';
-import { TenantAuthenticated } from '../common/decorators/tenant-authenticated.decorator';
+import { TenantAuthorized } from '../common/decorators/tenant-authorized.decorator';
 import { CurrentPrincipal } from '../common/decorators/current-principal.decorator';
 import { RequestPrincipal } from '../common/security/request-principal.interface';
 import { TenantScopeFactory } from '../common/tenancy/tenant-scope';
@@ -10,15 +10,13 @@ import {
   GeneratePayrollSwaggerDto,
   MarkPayslipPaidSwaggerDto,
 } from './dto/payroll.dto';
-import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
 
 @ApiTags('Payroll & Incentives')
 @ApiBearerAuth('OAuth2PasswordBearer')
 @ApiBearerAuth('JWT-auth')
 @Controller('payroll')
-@TenantAuthenticated()
-@UseGuards(PermissionsGuard)
+@TenantAuthorized()
 export class PayrollController {
   constructor(private readonly payrollService: PayrollService) {}
 

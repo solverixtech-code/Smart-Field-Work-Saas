@@ -91,6 +91,7 @@ export class RequestPrincipalService {
     let tenantId: string | null = null;
     let membershipId: string | null = null;
     let tenantRoleCode: string | null = null;
+    let tenantRoleVersion = 1;
     let dataScope: string | null = null;
 
     if (selectedMembershipId) {
@@ -112,6 +113,7 @@ export class RequestPrincipalService {
         tenantId = membership.tenantId;
         membershipId = membership.id;
         tenantRoleCode = membership.tenantRole?.code ?? null;
+        tenantRoleVersion = membership.tenantRole?.permissionsVersion ?? 1;
         dataScope = membership.dataScope ?? user.dataScope;
       }
     }
@@ -132,6 +134,14 @@ export class RequestPrincipalService {
 
     const isPlatformOnly = !tenantId && platformRoleCodes.length > 0;
 
+    const platformVersionTag =
+      platformAssignments.length > 0
+        ? `p_${platformAssignments
+            .map((pa) => `${pa.platformRole.code}:v${pa.platformRole.permissionsVersion}`)
+            .sort()
+            .join('_')}`
+        : null;
+
     return {
       userId: user.id,
       sessionId,
@@ -145,8 +155,8 @@ export class RequestPrincipalService {
       permissions,
       contextVersion: sessionContextVersion,
       permissionVersion: {
-        platform: `p_${platformRoleCodes.sort().join('_')}`,
-        tenant: tenantRoleCode ? `t_${tenantRoleCode}` : null,
+        platform: platformVersionTag,
+        tenant: membershipId && tenantRoleCode ? `t_${tenantRoleCode}:v${tenantRoleVersion}` : null,
       },
       isPlatformOnly,
     };

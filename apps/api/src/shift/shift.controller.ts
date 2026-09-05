@@ -1,20 +1,18 @@
 import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { ShiftService } from './shift.service';
-import { TenantAuthenticated } from '../common/decorators/tenant-authenticated.decorator';
+import { TenantAuthorized } from '../common/decorators/tenant-authorized.decorator';
 import { CurrentPrincipal } from '../common/decorators/current-principal.decorator';
 import { RequestPrincipal } from '../common/security/request-principal.interface';
 import { TenantScopeFactory } from '../common/tenancy/tenant-scope';
 import { CreateShiftSwaggerDto, UpdateShiftSwaggerDto, AssignShiftSwaggerDto } from './dto/shift.dto';
-import { PermissionsGuard } from '../common/guards/permissions.guard';
 import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
 
 @ApiTags('Shift Management')
 @ApiBearerAuth('OAuth2PasswordBearer')
 @ApiBearerAuth('JWT-auth')
 @Controller('shifts')
-@TenantAuthenticated()
-@UseGuards(PermissionsGuard)
+@TenantAuthorized()
 export class ShiftController {
   constructor(private readonly shiftService: ShiftService) {}
 
