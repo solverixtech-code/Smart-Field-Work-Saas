@@ -73,7 +73,12 @@ describe('Phase 0.3 — Scoped RequestPrincipal & Tenant Isolation Security Suit
       $transaction: jest.fn((cb) => cb(mockPrisma)),
     };
 
-    principalService = new RequestPrincipalService(mockPrisma);
+    const mockEffectivePermissions = {
+      resolvePlatformPermissions: jest.fn().mockResolvedValue([]),
+      resolveTenantPermissions: jest.fn().mockResolvedValue(['workforce.shifts.view', 'attendance.monitoring.view', 'payroll.payslips.view']),
+    } as any;
+
+    principalService = new RequestPrincipalService(mockPrisma, mockEffectivePermissions);
     membershipContextGuard = new MembershipContextGuard();
     shiftRepository = new ShiftRepository(mockPrisma);
     attendanceRepository = new AttendanceRepository(mockPrisma);

@@ -41,6 +41,7 @@ import {
 } from "../features/platform/tenants/types/platform.types";
 import { useAppDispatch, useAppSelector } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
+import { fetchAuthorizationBootstrap } from "../store/slices/authorizationSlice";
 import { clearStoredRefreshToken } from "../common/authSession";
 import { api } from "../common/api";
 import { Button } from "../components/ui/Button";
@@ -183,12 +184,18 @@ export default function PlatformShell() {
   );
 
   const { user } = useAppSelector((s) => s.auth);
+  const { platform, loaded: authzLoaded, loading: authzLoading } = useAppSelector((s) => s.authorization);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { role, setRole, hasPlatformPermission } =
-    usePlatformPermissions(activeRole);
+  useEffect(() => {
+    if (!authzLoaded && !authzLoading) {
+      dispatch(fetchAuthorizationBootstrap());
+    }
+  }, [authzLoaded, authzLoading, dispatch]);
+
+  const { role, setRole } = usePlatformPermissions(activeRole);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -426,7 +433,7 @@ export default function PlatformShell() {
                 </p>
               )}
               {cat.items.map((item) => {
-                const isAllowed = !item.permission || hasPlatformPermission(item.permission);
+                const isAllowed = !item.permission || (authzLoaded && Boolean(platform?.permissions?.includes(item.permission)));
                 const Icon = item.icon;
 
                 // Strict active matching (Exact same logic as AppShell.tsx)

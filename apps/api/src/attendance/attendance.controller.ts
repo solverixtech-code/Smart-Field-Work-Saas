@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Query, Headers } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, Headers, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiHeader } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { TenantAuthenticated } from '../common/decorators/tenant-authenticated.decorator';
@@ -6,16 +6,20 @@ import { CurrentPrincipal } from '../common/decorators/current-principal.decorat
 import { RequestPrincipal } from '../common/security/request-principal.interface';
 import { TenantScopeFactory } from '../common/tenancy/tenant-scope';
 import { MobilePunchSwaggerDto } from './dto/attendance.dto';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
 
 @ApiTags('Attendance & Punch Logs')
 @ApiBearerAuth('OAuth2PasswordBearer')
 @ApiBearerAuth('JWT-auth')
 @Controller('attendance')
 @TenantAuthenticated()
+@UseGuards(PermissionsGuard)
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
   @Post('punch-in')
+  @RequirePermissions('attendance.self.punch')
   @ApiOperation({
     summary: 'Mobile GPS Punch In',
     description: 'Clock in employee attendance with GPS location, selfie photo URL, and device ID.',
@@ -34,6 +38,7 @@ export class AttendanceController {
   }
 
   @Post('punch-out')
+  @RequirePermissions('attendance.self.punch')
   @ApiOperation({
     summary: 'Mobile GPS Punch Out',
     description: 'Clock out employee attendance with GPS location, calculate total work duration & overtime.',
@@ -52,6 +57,7 @@ export class AttendanceController {
   }
 
   @Get('admin/today')
+  @RequirePermissions('attendance.monitoring.view')
   @ApiOperation({
     summary: 'Get Today Attendance Log (Admin)',
     description: 'Fetch real-time punch logs and attendance status for employees in current tenant.',
@@ -63,6 +69,7 @@ export class AttendanceController {
   }
 
   @Get('admin/monthly')
+  @RequirePermissions('attendance.monitoring.view')
   @ApiOperation({
     summary: 'Get Monthly Attendance Muster Roll (Admin)',
     description: 'Fetch monthly attendance records for current tenant.',

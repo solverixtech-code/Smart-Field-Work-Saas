@@ -243,6 +243,19 @@ export class AuthController {
 
   // ─── Authenticated Routes ──────────────────────────────────────────────────
 
+  @Get('authorization')
+  @UseGuards(JwtAuthGuard, RequestPrincipalGuard)
+  @ApiBearerAuth('OAuth2PasswordBearer')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Get Server-Issued Authorization State Bootstrap',
+    description: 'Fetch live server authorization state including platform roles, tenant roles, and scope-separated permissions.',
+  })
+  @ApiResponse({ status: 200, description: 'Authorization bootstrap details returned' })
+  async getAuthorizationBootstrap(@CurrentPrincipal() principal: RequestPrincipal) {
+    return this.authService.getAuthorizationBootstrap(principal);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('OAuth2PasswordBearer')

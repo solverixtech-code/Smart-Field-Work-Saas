@@ -2,8 +2,10 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { RequestPrincipal } from '../common/security/request-principal.interface';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, User } from '@prisma/client';
@@ -468,6 +470,50 @@ export class AuthService {
         continue;
       }
     }
+  }
+
+  async getAuthorizationBootstrap(principal: RequestPrincipal) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: principal.userId },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        avatarUrl: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User profile not found');
+    }
+
+    return {
+      schemaVersion: 1,
+      user: {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+      },
+      session: {
+        id: principal.sessionId,
+      },
+      platform: {
+        roleCodes: principal.platformRoleCodes,
+        permissions: principal.platformPermissions,
+        permissionVersion: principal.permissionVersion.platform,
+      },
+      tenant: principal.tenantId
+        ? {
+            id: principal.tenantId,
+            membershipId: principal.membershipId,
+            roleCode: principal.tenantRoleCode,
+            dataScope: principal.dataScope,
+            permissions: principal.tenantPermissions,
+            permissionVersion: principal.permissionVersion.tenant,
+          }
+        : null,
+    };
   }
 
   // ─── Forgot Password ───────────────────────────────────────────────────────

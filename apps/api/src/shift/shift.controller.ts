@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { ShiftService } from './shift.service';
 import { TenantAuthenticated } from '../common/decorators/tenant-authenticated.decorator';
@@ -6,16 +6,20 @@ import { CurrentPrincipal } from '../common/decorators/current-principal.decorat
 import { RequestPrincipal } from '../common/security/request-principal.interface';
 import { TenantScopeFactory } from '../common/tenancy/tenant-scope';
 import { CreateShiftSwaggerDto, UpdateShiftSwaggerDto, AssignShiftSwaggerDto } from './dto/shift.dto';
+import { PermissionsGuard } from '../common/guards/permissions.guard';
+import { RequirePermissions } from '../common/decorators/require-permissions.decorator';
 
 @ApiTags('Shift Management')
 @ApiBearerAuth('OAuth2PasswordBearer')
 @ApiBearerAuth('JWT-auth')
 @Controller('shifts')
 @TenantAuthenticated()
+@UseGuards(PermissionsGuard)
 export class ShiftController {
   constructor(private readonly shiftService: ShiftService) {}
 
   @Get()
+  @RequirePermissions('workforce.shifts.view')
   @ApiOperation({
     summary: 'List All Shifts',
     description: 'Fetch list of configured shifts for the current tenant.',
@@ -27,6 +31,7 @@ export class ShiftController {
   }
 
   @Get(':id')
+  @RequirePermissions('workforce.shifts.view')
   @ApiOperation({
     summary: 'Get Shift Details',
     description: 'Fetch shift details and assigned employees by shift ID in current tenant.',
@@ -42,6 +47,7 @@ export class ShiftController {
   }
 
   @Post()
+  @RequirePermissions('workforce.shifts.create')
   @ApiOperation({
     summary: 'Create New Shift',
     description: 'Configure a new shift timing for current tenant.',
@@ -57,6 +63,7 @@ export class ShiftController {
   }
 
   @Put(':id')
+  @RequirePermissions('workforce.shifts.update')
   @ApiOperation({
     summary: 'Update Shift',
     description: 'Update shift timing rules by shift ID in current tenant.',
@@ -74,6 +81,7 @@ export class ShiftController {
   }
 
   @Post('assign')
+  @RequirePermissions('workforce.shifts.assign')
   @ApiOperation({
     summary: 'Assign Shift to Employee',
     description: 'Map a shift to an employee within current tenant.',

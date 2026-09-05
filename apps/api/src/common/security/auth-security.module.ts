@@ -6,6 +6,10 @@ import { RequestPrincipalService } from './request-principal.service';
 import { RequestPrincipalGuard } from '../guards/request-principal.guard';
 import { MembershipContextGuard } from '../guards/membership-context.guard';
 
+import { PermissionCacheService } from './permission-cache.service';
+import { EffectivePermissionService } from './effective-permission.service';
+import { PermissionsGuard } from '../guards/permissions.guard';
+
 @Global()
 @Module({
   imports: [
@@ -20,16 +24,22 @@ import { MembershipContextGuard } from '../guards/membership-context.guard';
   ],
   providers: [
     JwtAuthGuard,
+    PermissionCacheService,
+    EffectivePermissionService,
     RequestPrincipalService,
     RequestPrincipalGuard,
     MembershipContextGuard,
+    PermissionsGuard,
   ],
   exports: [
     JwtModule,
     JwtAuthGuard,
+    PermissionCacheService,
+    EffectivePermissionService,
     RequestPrincipalService,
     RequestPrincipalGuard,
     MembershipContextGuard,
+    PermissionsGuard,
   ],
 })
 export class AuthSecurityModule {}

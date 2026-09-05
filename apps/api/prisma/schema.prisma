@@ -104,20 +104,33 @@ model Team {
   @@index([tenantId])
 }
 
+enum PermissionScope {
+  PLATFORM
+  TENANT
+}
+
 // ─── RBAC ───────────────────────────────────────────────────────────────────────
 
 model Permission {
-  id          String  @id @default(uuid())
-  moduleKey   String
-  action      String // view, create, update, delete
-  description String?
+  id              String           @id @default(uuid())
+  code            String?          @unique
+  scope           PermissionScope?
+  domain          String?
+  resource        String?
+  moduleKey       String
+  action          String // view, create, update, delete
+  description     String?
+  isActive        Boolean          @default(true)
+  registryVersion String?
 
-  rolePermissions       RolePermission[]
-  tenantRolePermissions TenantRolePermission[]
-  createdAt             DateTime               @default(now())
+  rolePermissions         RolePermission[]
+  tenantRolePermissions   TenantRolePermission[]
+  platformRolePermissions PlatformRolePermission[]
+  createdAt               DateTime               @default(now())
 
   @@unique([moduleKey, action])
   @@index([moduleKey])
+  @@index([scope])
 }
 
 model RolePermission {
@@ -768,17 +781,32 @@ model TenantRolePermission {
 }
 
 model PlatformRole {
-  id          String  @id @default(uuid())
-  code        String  @unique
-  name        String
-  description String?
-  isSystem    Boolean @default(true)
-  isActive    Boolean @default(true)
+  id                 String  @id @default(uuid())
+  code               String  @unique
+  name               String
+  description        String?
+  isSystem           Boolean @default(true)
+  isActive           Boolean @default(true)
+  permissionsVersion Int     @default(1)
 
   assignments PlatformUserRoleAssignment[]
+  permissions PlatformRolePermission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model PlatformRolePermission {
+  id             String       @id @default(uuid())
+  platformRoleId String
+  platformRole   PlatformRole @relation(fields: [platformRoleId], references: [id], onDelete: Cascade)
+  permissionId   String
+  permission     Permission   @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([platformRoleId, permissionId])
+  @@index([platformRoleId])
 }
 
 model PlatformUserRoleAssignment {

@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
-import { platformAuthService } from '../services/platform-auth.service';
 import { PlatformPermission } from '../../tenants/types/platform.types';
 import { Button } from '../../../../components/ui/Button';
-import { useAppSelector } from '../../../../store';
-import { Role } from '@visiblo/shared';
+import { useAppDispatch, useAppSelector } from '../../../../store';
+import { fetchAuthorizationBootstrap } from '../../../../store/slices/authorizationSlice';
 
 interface PlatformAccessGuardProps {
   children?: React.ReactNode;
@@ -17,13 +16,28 @@ export function PlatformAccessGuard({
   requiredPermission = 'platform.dashboard.view',
 }: PlatformAccessGuardProps) {
   const navigate = useNavigate();
-  const user = useAppSelector((state) => state.auth.user);
+  const dispatch = useAppDispatch();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { platform, loaded, loading } = useAppSelector((state) => state.authorization);
 
-  // Strictly look up platform principal from user identity (tenant ADMIN != Platform Admin)
-  const principal = platformAuthService.getPlatformPrincipalForUser(user);
+  useEffect(() => {
+    if (isAuthenticated && !loaded && !loading) {
+      dispatch(fetchAuthorizationBootstrap());
+    }
+  }, [isAuthenticated, loaded, loading, dispatch]);
 
-  const hasAccess =
-    principal !== null && principal.permissions.includes(requiredPermission);
+  const hasAccess = loaded && platform?.permissions?.includes(requiredPermission);
+
+  if (loading || (!loaded && isAuthenticated)) {
+    return (
+      <div className="min-h-screen bg-[#F3F5F7] flex items-center justify-center p-6 font-sans">
+        <div className="text-center space-y-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0D1F3D] border-t-transparent mx-auto" />
+          <p className="text-xs font-semibold text-slate-500">Verifying platform permissions...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!hasAccess) {
     return (

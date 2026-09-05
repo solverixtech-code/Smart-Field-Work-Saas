@@ -1,10 +1,10 @@
 import {
   Injectable,
   UnauthorizedException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../persistence/prisma.service';
 import { RequestPrincipal } from './request-principal.interface';
+import { EffectivePermissionService } from './effective-permission.service';
 import { TenantMembershipStatus, TenantStatus, PlatformAssignmentStatus } from '@prisma/client';
 
 export interface JwtPayload {
@@ -20,7 +20,10 @@ export interface JwtPayload {
 
 @Injectable()
 export class RequestPrincipalService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly effectivePermissions: EffectivePermissionService,
+  ) {}
 
   async resolvePrincipal(payload: JwtPayload): Promise<RequestPrincipal> {
     if (!payload || !payload.sub) {
@@ -113,23 +116,19 @@ export class RequestPrincipalService {
       }
     }
 
-    // 5. Query persisted DB permissions if applicable
-    let permissions: string[] = [];
-    if (tenantId && membershipId) {
-      const dbPermissions = await this.prisma.tenantRolePermission.findMany({
-        where: {
-          tenantRole: {
-            memberships: {
-              some: { id: membershipId },
-            },
-          },
-        },
-        include: { permission: true },
-      });
-      permissions = Array.from(
-        new Set(dbPermissions.map((rp) => `${rp.permission.moduleKey}:${rp.permission.action}`)),
-      );
-    }
+    // 5. Resolve scope-separated effective permissions
+    const platformPermissions = await this.effectivePermissions.resolvePlatformPermissions(
+      user.id,
+    );
+
+    const tenantPermissions = await this.effectivePermissions.resolveTenantPermissions(
+      tenantId,
+      membershipId,
+    );
+
+    const permissions = Array.from(
+      new Set([...platformPermissions, ...tenantPermissions]),
+    ).sort();
 
     const isPlatformOnly = !tenantId && platformRoleCodes.length > 0;
 
@@ -137,12 +136,18 @@ export class RequestPrincipalService {
       userId: user.id,
       sessionId,
       platformRoleCodes,
+      platformPermissions,
       tenantId,
       membershipId,
       tenantRoleCode,
+      tenantPermissions,
       dataScope,
       permissions,
       contextVersion: sessionContextVersion,
+      permissionVersion: {
+        platform: `p_${platformRoleCodes.sort().join('_')}`,
+        tenant: tenantRoleCode ? `t_${tenantRoleCode}` : null,
+      },
       isPlatformOnly,
     };
   }

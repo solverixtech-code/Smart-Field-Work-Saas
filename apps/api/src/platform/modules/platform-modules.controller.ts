@@ -23,6 +23,7 @@ import { ModuleQueryDto } from './dto/module-query.dto';
 import { UpdatePlatformModuleDto } from './dto/update-platform-module.dto';
 import { UpdateModuleFeatureDto } from './dto/update-module-feature.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RequestPrincipalGuard } from '../../common/guards/request-principal.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermissions } from '../../common/decorators/require-permissions.decorator';
 import { ModuleFeatureStatus } from '@prisma/client';
@@ -31,7 +32,7 @@ import { ModuleFeatureStatus } from '@prisma/client';
 @ApiBearerAuth('OAuth2PasswordBearer')
 @ApiBearerAuth('JWT-auth')
 @Controller('platform/modules')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
+@UseGuards(JwtAuthGuard, RequestPrincipalGuard, PermissionsGuard)
 export class PlatformModulesController {
   constructor(private readonly modulesService: PlatformModulesService) {}
 

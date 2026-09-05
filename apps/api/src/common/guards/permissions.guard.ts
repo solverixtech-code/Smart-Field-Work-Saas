@@ -5,18 +5,14 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PrismaService } from '../../persistence/prisma.service';
-import { Role } from '@prisma/client';
 import { PERMISSIONS_KEY } from '../decorators/require-permissions.decorator';
+import { RequestPrincipal } from '../security/request-principal.interface';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(
-    private reflector: Reflector,
-    private prisma: PrismaService,
-  ) {}
+  constructor(private reflector: Reflector) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
@@ -27,38 +23,27 @@ export class PermissionsGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const user = request['user'];
+    const principal = (request['principal'] || request.principal) as RequestPrincipal | undefined;
 
-    if (!user || !user.role) {
-      throw new ForbiddenException('Unauthenticated or missing user role');
+    if (!principal) {
+      throw new ForbiddenException('Unauthenticated request context');
     }
 
-    // PLATFORM_SUPER_ADMIN & SUPER_ADMIN automatically bypass permission checks
-    if (
-      user.role === Role.PLATFORM_SUPER_ADMIN ||
-      user.role === Role.SUPER_ADMIN
-    ) {
-      return true;
-    }
-
-    // Query granted permissions for user's role
-    const grantedPermissions = await this.prisma.rolePermission.findMany({
-      where: { role: user.role },
-      include: { permission: true },
+    // Validate every required permission against appropriate scope
+    const hasAll = requiredPermissions.every((perm) => {
+      const isPlatformScope = perm.startsWith('platform.');
+      if (isPlatformScope) {
+        return principal.platformPermissions?.includes(perm);
+      } else {
+        return (
+          principal.tenantPermissions?.includes(perm) ||
+          principal.permissions?.includes(perm)
+        );
+      }
     });
 
-    const userPermKeys = grantedPermissions.map(
-      (rp) => `${rp.permission.moduleKey}.${rp.permission.action}`,
-    );
-
-    const hasAll = requiredPermissions.every((perm) =>
-      userPermKeys.includes(perm),
-    );
-
     if (!hasAll) {
-      throw new ForbiddenException(
-        `Insufficient permission. Required: ${requiredPermissions.join(', ')}`,
-      );
+      throw new ForbiddenException('You do not have permission to perform this action.');
     }
 
     return true;
