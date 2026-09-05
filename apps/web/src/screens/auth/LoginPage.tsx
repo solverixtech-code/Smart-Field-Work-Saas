@@ -49,7 +49,11 @@ export default function LoginPage() {
       saveRefreshToken(tokens.refreshToken, remember);
       dispatch(setCredentials({ accessToken: tokens.accessToken, user: tokens.user }));
       toast.success('Welcome back! Login successful.');
-      navigate('/admin/dashboard');
+      if (tokens.user.role && (String(tokens.user.role).startsWith('PLATFORM_') || tokens.user.role === 'SUPER_ADMIN')) {
+        navigate('/platform/dashboard');
+      } else {
+        navigate('/admin/dashboard');
+      }
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Login failed. Please check credentials.';
       setHasError(true);
