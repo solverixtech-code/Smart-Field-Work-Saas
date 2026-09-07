@@ -81,6 +81,9 @@ model User {
   subscriptionChanges     SubscriptionChange[]         @relation("SubscriptionChangeActor")
   provisionedTenants       TenantProvisioning[]         @relation("TenantProvisioningActor")
   provisioningAttempts    ProvisioningAttempt[]         @relation("ProvisioningAttemptActor")
+  publishedIndustryVersions IndustryTemplateVersion[] @relation("IndustryPublishedBy")
+  industryAssignments TenantIndustryTemplateAssignment[] @relation("IndustryAssignedBy")
+  industryAssignmentChanges TenantIndustryTemplateChange[] @relation("IndustryChangeActor")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -521,6 +524,7 @@ model PlatformModule {
   dependencies ModuleDependency[] @relation("ModuleDependencies")
   dependents   ModuleDependency[] @relation("ModuleDependents")
   planModules  PlanModule[]
+  industryRecommendations IndustryTemplateModuleRecommendation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -602,6 +606,8 @@ model Tenant {
   industry        IndustryClassification? @relation(fields: [industryCode], references: [code], onDelete: Restrict)
   subscription    TenantSubscription?
   provisioning    TenantProvisioning?
+  industryTemplateAssignment TenantIndustryTemplateAssignment?
+  industryTemplateChanges TenantIndustryTemplateChange[]
   id              String                  @id @default(uuid())
   slug            String                  @unique
   displayName     String
@@ -1021,7 +1027,106 @@ model PlanCommercialRule {
 }
 
 // Phase 0.6: classification only; never an entitlement or Industry template.
+enum IndustryTemplateStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum IndustryTemplateVersionStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model IndustryTemplate {
+  id String @id @default(uuid())
+  code String @unique
+  classification IndustryClassification @relation(fields: [code], references: [code], onDelete: Restrict)
+  name String
+  category String
+  description String
+  status IndustryTemplateStatus @default(DRAFT)
+  revision Int @default(1)
+  currentPublishedVersionId String? @unique
+  currentPublishedVersion IndustryTemplateVersion? @relation("CurrentIndustryVersion", fields: [currentPublishedVersionId], references: [id], onDelete: Restrict)
+  versions IndustryTemplateVersion[] @relation("IndustryVersions")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  archivedAt DateTime?
+}
+
+model IndustryTemplateVersion {
+  id String @id @default(uuid())
+  industryTemplateId String
+  industryTemplate IndustryTemplate @relation("IndustryVersions", fields: [industryTemplateId], references: [id], onDelete: Restrict)
+  currentFor IndustryTemplate? @relation("CurrentIndustryVersion")
+  version Int
+  revision Int @default(1)
+  status IndustryTemplateVersionStatus @default(DRAFT)
+  schemaVersion Int @default(1)
+  terminology Json
+  masterDefaults Json
+  sourceFixtureId String?
+  sourceHash String?
+  approvalReference String?
+  publishedAt DateTime?
+  publishedByUserId String?
+  publishedBy User? @relation("IndustryPublishedBy", fields: [publishedByUserId], references: [id], onDelete: Restrict)
+  recommendations IndustryTemplateModuleRecommendation[]
+  assignments TenantIndustryTemplateAssignment[]
+  changesFrom TenantIndustryTemplateChange[] @relation("IndustryChangeFrom")
+  changesTo TenantIndustryTemplateChange[] @relation("IndustryChangeTo")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([industryTemplateId, version])
+}
+
+model IndustryTemplateModuleRecommendation {
+  id String @id @default(uuid())
+  industryTemplateVersionId String
+  industryTemplateVersion IndustryTemplateVersion @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict)
+  moduleId String
+  module PlatformModule @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+  @@unique([industryTemplateVersionId, moduleId])
+  @@index([moduleId])
+}
+
+model TenantIndustryTemplateAssignment {
+  id String @id @default(uuid())
+  tenantId String @unique
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  industryTemplateVersionId String
+  industryTemplateVersion IndustryTemplateVersion @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict)
+  revision Int @default(1)
+  assignedAt DateTime @default(now())
+  assignedByUserId String
+  assignedBy User @relation("IndustryAssignedBy", fields: [assignedByUserId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([industryTemplateVersionId])
+}
+
+model TenantIndustryTemplateChange {
+  id String @id @default(uuid())
+  tenantId String
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  fromVersionId String?
+  fromVersion IndustryTemplateVersion? @relation("IndustryChangeFrom", fields: [fromVersionId], references: [id], onDelete: Restrict)
+  toVersionId String
+  toVersion IndustryTemplateVersion @relation("IndustryChangeTo", fields: [toVersionId], references: [id], onDelete: Restrict)
+  revision Int
+  reason String
+  actorUserId String
+  actor User @relation("IndustryChangeActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  requestId String?
+  createdAt DateTime @default(now())
+  @@unique([tenantId, revision])
+  @@index([fromVersionId])
+  @@index([toVersionId])
+}
+
 model IndustryClassification {
+  template IndustryTemplate?
   code     String   @id
   name     String
   isActive Boolean  @default(true)
