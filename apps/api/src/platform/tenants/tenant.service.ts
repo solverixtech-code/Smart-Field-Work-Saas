@@ -176,7 +176,11 @@ export class TenantService {
       await this.tenantRoleService.ensureBuiltInTenantRoles(tenant.id, tx);
 
       return tenant;
-    });
+    };
+
+    const createdTenant = transaction
+      ? await create(transaction)
+      : await this.prisma.$transaction(create);
 
     return this.getTenantById(createdTenant.id, transaction);
   }
