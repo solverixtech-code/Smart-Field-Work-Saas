@@ -28,7 +28,8 @@ export class TenantService {
   /**
    * Transactionally creates a foundation Tenant with normalized settings, branding, address, and built-in roles.
    */
-  async createTenantFoundation(input: CreateTenantFoundationDto): Promise<TenantDetailDto> {
+  async createTenantFoundation(input: CreateTenantFoundationDto, transaction?: Prisma.TransactionClient): Promise<TenantDetailDto> {
+    const db = transaction ?? this.prisma;
     // 1. Validate displayName invariant
     if (!input.displayName || !input.displayName.trim()) {
       throw new BadRequestException('displayName is required and cannot be empty.');
@@ -44,7 +45,7 @@ export class TenantService {
     }
 
     // Check slug uniqueness
-    const existingSlug = await this.prisma.tenant.findUnique({ where: { slug } });
+    const existingSlug = await db.tenant.findUnique({ where: { slug } });
     if (existingSlug) {
       throw new ConflictException(`Tenant with slug '${slug}' already exists.`);
     }
@@ -63,7 +64,7 @@ export class TenantService {
         throw new BadRequestException(`Invalid primaryDomain hostname format '${primaryDomain}'.`);
       }
 
-      const existingDomain = await this.prisma.tenant.findUnique({
+      const existingDomain = await db.tenant.findUnique({
         where: { primaryDomain },
       });
       if (existingDomain) {
@@ -109,7 +110,7 @@ export class TenantService {
     }
 
     // Single atomic transaction creating Tenant + Settings + Branding + Address + Built-in Roles
-    const createdTenant = await this.prisma.$transaction(async (tx) => {
+    const create = async (tx: Prisma.TransactionClient) => {
       const tenant = await tx.tenant.create({
         data: {
           slug,
@@ -177,7 +178,7 @@ export class TenantService {
       return tenant;
     });
 
-    return this.getTenantById(createdTenant.id);
+    return this.getTenantById(createdTenant.id, transaction);
   }
 
   async getTenants(query: TenantQueryDto): Promise<PaginatedTenantResponseDto> {
@@ -244,8 +245,8 @@ export class TenantService {
     };
   }
 
-  async getTenantById(id: string): Promise<TenantDetailDto> {
-    const t = await this.prisma.tenant.findUnique({
+  async getTenantById(id: string, transaction?: Prisma.TransactionClient): Promise<TenantDetailDto> {
+    const t = await (transaction ?? this.prisma).tenant.findUnique({
       where: { id },
       include: {
         addresses: true,

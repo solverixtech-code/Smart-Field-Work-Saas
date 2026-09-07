@@ -127,7 +127,7 @@ model Permission {
   rolePermissions         RolePermission[]
   tenantRolePermissions   TenantRolePermission[]
   platformRolePermissions PlatformRolePermission[]
-  createdAt               DateTime               @default(now())
+  createdAt               DateTime                 @default(now())
 
   @@unique([moduleKey, action])
   @@index([moduleKey])
@@ -595,13 +595,17 @@ enum PlatformAssignmentStatus {
 }
 
 model Tenant {
-  id              String       @id @default(uuid())
-  slug            String       @unique
+  industryCode    String?
+  industry        IndustryClassification? @relation(fields: [industryCode], references: [code], onDelete: Restrict)
+  subscription    TenantSubscription?
+  provisioning    TenantProvisioning?
+  id              String                  @id @default(uuid())
+  slug            String                  @unique
   displayName     String
   legalName       String?
-  primaryDomain   String?      @unique
+  primaryDomain   String?                 @unique
   websiteUrl      String?
-  status          TenantStatus @default(DRAFT)
+  status          TenantStatus            @default(DRAFT)
   companySizeCode String?
   description     String?
 
@@ -683,15 +687,16 @@ model TenantBranding {
 }
 
 model TenantMembership {
-  id           String                 @id @default(uuid())
-  tenantId     String
-  tenant       Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId       String
-  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenantRoleId String?
-  tenantRole   TenantRole?            @relation(fields: [tenantRoleId], references: [id], onDelete: SetNull)
-  status       TenantMembershipStatus @default(ACTIVE)
-  isPrimary    Boolean                @default(false)
+  provisioningOwnership TenantProvisioning[]
+  id                    String                 @id @default(uuid())
+  tenantId              String
+  tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId                String
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantRoleId          String?
+  tenantRole            TenantRole?            @relation(fields: [tenantRoleId], references: [id], onDelete: SetNull)
+  status                TenantMembershipStatus @default(ACTIVE)
+  isPrimary             Boolean                @default(false)
 
   employeeCode String?
   designation  String?
@@ -725,6 +730,7 @@ model TenantMembership {
   updatedAt DateTime @updatedAt
 
   @@unique([tenantId, userId])
+  @@unique([id, tenantId])
   @@unique([tenantId, employeeCode])
   @@index([tenantId, status])
   @@index([userId, status])
@@ -894,7 +900,7 @@ model Plan {
   code                      String         @unique
   name                      String
   description               String
-  internalDescription      String?
+  internalDescription       String?
   status                    PlanStatus     @default(DRAFT)
   visibility                PlanVisibility @default(PUBLIC)
   tier                      String?
@@ -917,14 +923,17 @@ model Plan {
 }
 
 model PlanVersion {
-  id                String            @id @default(uuid())
+  subscriptions     TenantSubscription[]
+  changesFrom       SubscriptionChange[] @relation("SubscriptionChangeFrom")
+  changesTo         SubscriptionChange[] @relation("SubscriptionChangeTo")
+  id                String               @id @default(uuid())
   planId            String
-  plan              Plan              @relation("PlanVersions", fields: [planId], references: [id], onDelete: Restrict)
+  plan              Plan                 @relation("PlanVersions", fields: [planId], references: [id], onDelete: Restrict)
   version           Int
-  status            PlanVersionStatus @default(DRAFT)
+  status            PlanVersionStatus    @default(DRAFT)
   publishedAt       DateTime?
   publishedByUserId String?
-  publishedByUser   User?             @relation("PlanVersionPublishedBy", fields: [publishedByUserId], references: [id], onDelete: SetNull)
+  publishedByUser   User?                @relation("PlanVersionPublishedBy", fields: [publishedByUserId], references: [id], onDelete: SetNull)
 
   currentPublishedForPlans Plan[] @relation("CurrentPublishedPlanVersion")
 
@@ -1008,3 +1017,138 @@ model PlanCommercialRule {
   @@index([planVersionId])
 }
 
+// Phase 0.6: classification only; never an entitlement or Industry template.
+model IndustryClassification {
+  code     String   @id
+  name     String
+  isActive Boolean  @default(true)
+  tenants  Tenant[]
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  GRACE
+  SUSPENDED
+  CANCELLED
+}
+
+enum SubscriptionChangeStatus {
+  SCHEDULED
+  APPLIED
+  CANCELLED
+}
+
+enum ProvisioningEventStatus {
+  PENDING
+  PROCESSING
+  FAILED
+  COMPLETED
+}
+
+model TenantSubscription {
+  id                 String               @id @default(uuid())
+  tenantId           String               @unique
+  tenant             Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  planVersionId      String
+  planVersion        PlanVersion          @relation(fields: [planVersionId], references: [id], onDelete: Restrict)
+  billingCycle       BillingCycle
+  seatQuantity       Int
+  status             SubscriptionStatus
+  revision           Int                  @default(1)
+  startedAt          DateTime
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  trialEndsAt        DateTime?
+  graceEndsAt        DateTime?
+  cancelledAt        DateTime?
+  changes            SubscriptionChange[]
+  provisioning       TenantProvisioning?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  @@unique([id, tenantId])
+}
+
+model SubscriptionChange {
+  id                String                   @id @default(uuid())
+  subscriptionId    String
+  tenantId          String
+  subscription      TenantSubscription       @relation(fields: [subscriptionId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  idempotencyKey    String
+  payloadHash       String
+  kind              String
+  reason            String
+  fromPlanVersionId String
+  fromPlanVersion   PlanVersion              @relation("SubscriptionChangeFrom", fields: [fromPlanVersionId], references: [id], onDelete: Restrict)
+  toPlanVersionId   String
+  toPlanVersion     PlanVersion              @relation("SubscriptionChangeTo", fields: [toPlanVersionId], references: [id], onDelete: Restrict)
+  fromStatus        SubscriptionStatus
+  toStatus          SubscriptionStatus
+  status            SubscriptionChangeStatus
+  requestedAt       DateTime                 @default(now())
+  effectiveAt       DateTime
+  appliedAt         DateTime?
+  actorUserId       String
+  requestId         String?
+  revision          Int
+
+  @@unique([subscriptionId, idempotencyKey])
+  @@index([subscriptionId, requestedAt])
+  @@index([status, effectiveAt])
+}
+
+model TenantProvisioning {
+  id                String              @id @default(uuid())
+  idempotencyKey    String              @unique
+  payloadHash       String
+  tenantId          String              @unique
+  tenant            Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  subscriptionId    String              @unique
+  subscription      TenantSubscription  @relation(fields: [subscriptionId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  ownerMembershipId String
+  ownerMembership   TenantMembership    @relation(fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  actorUserId       String
+  requestId         String?
+  acceptedAt        DateTime?
+  createdAt         DateTime            @default(now())
+  events            ProvisioningEvent[]
+
+  @@unique([subscriptionId, tenantId])
+}
+
+model ProvisioningEvent {
+  id             String                  @id @default(uuid())
+  provisioningId String
+  provisioning   TenantProvisioning      @relation(fields: [provisioningId], references: [id], onDelete: Restrict)
+  kind           String
+  schemaVersion  Int                     @default(1)
+  status         ProvisioningEventStatus @default(PENDING)
+  attemptCount   Int                     @default(0)
+  leaseToken     String?
+  leaseEndsAt    DateTime?
+  lastErrorCode  String?
+  completedAt    DateTime?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+  attempts       ProvisioningAttempt[]
+
+  @@unique([provisioningId, kind])
+  @@index([status, createdAt])
+}
+
+model ProvisioningAttempt {
+  id          String                  @id @default(uuid())
+  eventId     String
+  event       ProvisioningEvent       @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  attemptKey  String
+  leaseToken  String                  @unique
+  actorUserId String
+  status      ProvisioningEventStatus @default(PROCESSING)
+  errorCode   String?
+  startedAt   DateTime                @default(now())
+  finishedAt  DateTime?
+
+  @@unique([eventId, attemptKey])
+}

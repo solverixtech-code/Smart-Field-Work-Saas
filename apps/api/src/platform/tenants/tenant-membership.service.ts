@@ -23,9 +23,10 @@ export class TenantMembershipService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async createMembership(input: CreateMembershipDto): Promise<TenantMembershipSummaryDto> {
+  async createMembership(input: CreateMembershipDto, transaction?: import('@prisma/client').Prisma.TransactionClient): Promise<TenantMembershipSummaryDto> {
+    const db = transaction ?? this.prisma;
     // 1. Verify Tenant exists & status allows membership creation
-    const tenant = await this.prisma.tenant.findUnique({
+    const tenant = await db.tenant.findUnique({
       where: { id: input.tenantId },
     });
     if (!tenant) {
@@ -38,7 +39,7 @@ export class TenantMembershipService {
     }
 
     // 2. Verify User exists
-    const user = await this.prisma.user.findUnique({
+    const user = await db.user.findUnique({
       where: { id: input.userId },
     });
     if (!user) {
@@ -47,7 +48,7 @@ export class TenantMembershipService {
 
     // 3. Verify TenantRole if supplied belongs to the SAME tenant
     if (input.tenantRoleId) {
-      const role = await this.prisma.tenantRole.findUnique({
+      const role = await db.tenantRole.findUnique({
         where: { id: input.tenantRoleId },
       });
       if (!role) {
@@ -62,7 +63,7 @@ export class TenantMembershipService {
 
     // 4. Verify Manager Membership if supplied belongs to the SAME tenant
     if (input.managerMembershipId) {
-      const mgr = await this.prisma.tenantMembership.findUnique({
+      const mgr = await db.tenantMembership.findUnique({
         where: { id: input.managerMembershipId },
       });
       if (!mgr) {
@@ -80,7 +81,7 @@ export class TenantMembershipService {
     // 5. Verify Employee Code uniqueness within tenant if supplied
     if (input.employeeCode && input.employeeCode.trim()) {
       const empCode = input.employeeCode.trim();
-      const existingEmpCode = await this.prisma.tenantMembership.findFirst({
+      const existingEmpCode = await db.tenantMembership.findFirst({
         where: {
           tenantId: input.tenantId,
           employeeCode: empCode,
@@ -95,7 +96,7 @@ export class TenantMembershipService {
     }
 
     // 6. Check existing membership row (@@unique([tenantId, userId]))
-    const existingMembership = await this.prisma.tenantMembership.findUnique({
+    const existingMembership = await db.tenantMembership.findUnique({
       where: {
         tenantId_userId: {
           tenantId: input.tenantId,
@@ -113,7 +114,7 @@ export class TenantMembershipService {
     const now = new Date();
 
     // Create new membership record
-    const created = await this.prisma.tenantMembership.create({
+    const created = await db.tenantMembership.create({
       data: {
         tenantId: input.tenantId,
         userId: input.userId,

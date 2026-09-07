@@ -14,7 +14,9 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public
       TEST_DATABASE_URL: postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public
-      JWT_SECRET: super-secret-test-jwt-key
+      JWT_ACCESS_SECRET: ci-only-access-secret-at-least-32-characters
+      JWT_REFRESH_SECRET: ci-only-refresh-secret-at-least-32-characters
+      REDIS_ENABLED: 'false'
 
     services:
       postgres:
