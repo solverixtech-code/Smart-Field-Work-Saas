@@ -1,6 +1,6 @@
 # Phase 0.6 subscription and provisioning implementation
 
-Status: **IMPLEMENTED — final release verification in progress; not frozen.**
+Status: **FINAL HARDENING — implementation verified locally; final SHA release gates pending; not frozen.**
 
 ## Current implementation report — 2026-09-07
 
@@ -57,9 +57,9 @@ APPLY_DUE processes expired trials according to autoConvertAfterTrial, expired g
 
 Eligibility requires an ACTIVE Plan, exact PUBLISHED version, supported commercial rules, valid registered Module relations/dependencies, explicit available pricing cycle, audience availability, min/max/increment seats and trial limits. Industry classification never grants Modules. Read subscription metadata derives moduleCodes from the pinned version; Phase 0.9 runtime composition remains deferred.
 
-Because frozen Plans have no authoritative tier rank, direction uses comparable same-currency recurring Decimal pricing, seats, included Modules and limits. Mixed, equal-but-different, or incomparable capability changes require both allowUpgrade and allowDowngrade. Custom-contract pricing changes are rejected pending a separate approved comparison contract. Downgrades respect original minimum commitment and occupied memberships. This is conservative validation, not a new Plan tier hierarchy.
+Because frozen Plans have no authoritative tier rank, direction uses comparable same-currency recurring Decimal pricing, seats, included Modules and limits. Decimal limits use exact Prisma.Decimal comparisons; integer and Boolean limits use their typed values, with explicit unlimited ordering and rejection of missing finite values. Mixed, equal-but-different, or incomparable capability changes require both allowUpgrade and allowDowngrade. Custom-contract pricing changes are rejected pending a separate approved comparison contract. Downgrades respect original minimum commitment and occupied memberships. This is conservative validation, not a new Plan tier hierarchy.
 
-IMMEDIATE changes record and apply the exact target atomically and start its period at command time; no invoices/proration calculations are performed. NEXT_BILLING_CYCLE changes preserve the current pin until the stored boundary. Scheduling requires ACTIVE status; trial must first be explicitly activated. One scheduled intent is allowed. APPLY_DUE revalidates the target and capacity; unavailable target or insufficient seats leaves the intent intact for operator resolution. Cancellation terminates it. Suspension postpones application; resume does not erase it.
+IMMEDIATE changes record and apply the exact target atomically and start its period at command time; no invoices/proration calculations are performed. NEXT_BILLING_CYCLE changes preserve the current pin until explicitly applied. Their semantic effective time is the stored boundary: a late APPLY_DUE sets currentPeriodStart to pending.effectiveAt and derives currentPeriodEnd from that same boundary. Both the scheduled intent and applied transition record that effectiveAt, while appliedAt records the later processing time. A period already ended by processing time remains historically anchored; a subsequent explicit APPLY_DUE advances renewal instead of silently extending the period. Scheduling requires ACTIVE status; trial must first be explicitly activated. One scheduled intent is allowed. APPLY_DUE revalidates the target and capacity; unavailable target or insufficient seats leaves the intent intact for operator resolution. Cancellation terminates it. Suspension postpones application; resume does not erase it.
 
 ### API and authorization
 
@@ -87,17 +87,17 @@ Delivery is outside the transaction. The external consumer must use eventId for 
 
 ### Migrations and explicit legacy reconciliation
 
-Append-only migrations: M6 `20260907140000_m6_subscription_provisioning`; M6.1 `20260907160000_m6_1_subscription_command_integrity`; M6.2 `20260907180000_m6_2_seat_and_intent_integrity`; M6.3 `20260907190000_m6_3_history_transition_proof`. Earlier migrations are unchanged. M6.1 deliberately stops if old SubscriptionChange rows already exist without receipts: an operator must resolve that data instead of fabricating replay history.
+Append-only migrations: M6 `20260907140000_m6_subscription_provisioning`; M6.1 `20260907160000_m6_1_subscription_command_integrity`; M6.2 `20260907180000_m6_2_seat_and_intent_integrity`; M6.3 `20260907190000_m6_3_history_transition_proof`; M6.4 `20260907200000_m6_4_symmetric_capacity_lock`. Earlier migrations are unchanged. M6.4 makes subscription-capacity writes acquire the same subscription:<tenantId> advisory lock as membership-capacity writes, including direct SQL transactions. Direct writers can encounter a deadlock due to row/advisory lock order and must retry their complete transaction; neither side can commit over-capacity state. M6.1 deliberately stops if old SubscriptionChange rows already exist without receipts: an operator must resolve that data instead of fabricating replay history.
 
 From apps/api, run `npm run db:reconcile:subscriptions -- mapping.json actorUserId --dry-run`, review mappingHash/results, then `npm run db:reconcile:subscriptions -- mapping.json actorUserId --apply mappingHash`. Actor must be active and have platform.subscriptions.view for dry run or platform.subscriptions.manage for apply.
 
 The JSON array supplies tenantId, industryCode, exact planVersionId, billingCycle, seatQuantity, ISO startedAt and reason for each Tenant (maximum 100 per atomic batch). Mapping must describe an ACTIVE legacy Tenant. Duplicate/unknown/ineligible mappings, conflicting existing pins, insufficient seats or changed reviewed hashes abort. Equal repeated mappings report ALREADY_MAPPED. No Plan is automatically selected or published. This limited command does not infer historical suspended/cancelled state; those records require an approved state-aware mapping extension.
 
-No production mapping or production migration was applied in this implementation. The reconciliation path is verified against explicit test mappings. Operational rollout must inventory remaining legacy Tenants and supply approved mappings before retiring the compatibility boundary.
+No production mapping or production migration was applied in this implementation. The reconciliation path is verified against explicit test mappings. Operational rollout must inventory remaining legacy Tenants and supply approved mappings before retiring the compatibility boundary. Per the final review, production mappings are a deployment gate, not a code-freeze blocker.
 
 ### Validation and release gate
 
-Validation is being rerun on the final candidate. Initial runs passed all 69 unit tests and 67 E2E tests, API and Web TypeScript, API/Web builds, Prisma generation and the complete migration chain. Expanded integrity tests and exact-SHA GitHub CI are pending final verification. No existing tests are muted or skipped in the full suite.
+Final hardening adds delayed-boundary/history assertions, monthly and annual leap-date/replay cases, six direct seat-downgrade/membership races across both submission orders, and two exact persisted-decimal direction cases. Local validation passed all 69 unit tests (11 suites), 77 E2E tests (5 suites, including 28 Phase 0.6 tests), API/Web TypeScript and builds, Prisma validation/generation, RBAC sync and all 19 migrations. One overlapping local web-build/unit run timed out in existing membership tests; the sequential rerun passed without changing tests or timeouts. Exact-final-SHA GitHub CI remains pending. The previous candidate `051549e45b1ebc135b3fabc3e4dafa8bbc0309b3` passed [GitHub Actions run 34098025485](https://github.com/solverixtech-code/Smart-Field-Work-Saas/actions/runs/34098025485); that evidence does not certify the final patch. No existing tests are muted or skipped in the full suite.
 
 Release requires green final checks and GitHub Actions on the actual final SHA. This document does not certify production mapping, external email delivery or payment handling. Do not begin Phase 0.7.
 

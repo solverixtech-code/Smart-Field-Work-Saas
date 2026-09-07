@@ -62,6 +62,7 @@ export class SubscriptionService {
       let update: Prisma.TenantSubscriptionUncheckedUpdateInput = {};
       let scheduled = false;
       let effectiveAt = now;
+      let transitionEffectiveAt = now;
       const pending = await tx.subscriptionChange.findFirst({ where: { subscriptionId: sub.id, status: 'SCHEDULED' } });
       switch (input.action) {
         case 'CHANGE_PLAN': {
@@ -124,7 +125,8 @@ export class SubscriptionService {
             this.policy.change(sub, sub.planVersion, version, target, now);
             const occupied = await tx.tenantMembership.count({ where: { tenantId, status: { in: ['ACTIVE', 'INVITED', 'SUSPENDED'] } } });
             if (target.seatQuantity < occupied) throw new ConflictException('Scheduled seats are below occupied memberships');
-            update = { ...update, ...target, currentPeriodStart: now, currentPeriodEnd: periodEnd(now, target.billingCycle) };
+            transitionEffectiveAt = pending.effectiveAt;
+            update = { ...update, ...target, currentPeriodStart: pending.effectiveAt, currentPeriodEnd: periodEnd(pending.effectiveAt, target.billingCycle) };
             await tx.subscriptionChange.update({ where: { id: pending.id }, data: { status: 'APPLIED', appliedAt: now, revision: sub.revision + 1 } });
           } else if (Object.keys(update).length === 0) throw new BadRequestException('Scheduled change requires active subscription');
           break;
@@ -145,7 +147,7 @@ export class SubscriptionService {
       await tx.subscriptionChange.create({ data: {
         subscriptionId: sub.id, tenantId, idempotencyKey: input.idempotencyKey, payloadHash: hash, kind: input.action, reason: input.reason,
         fromPlanVersionId: sub.planVersionId, toPlanVersionId: updated.planVersionId, fromStatus: sub.status, toStatus: updated.status,
-        status: 'APPLIED', effectiveAt: now, appliedAt: now, actorUserId: actor.userId, requestId: input.requestId, revision: updated.revision,
+        status: 'APPLIED', effectiveAt: transitionEffectiveAt, appliedAt: now, actorUserId: actor.userId, requestId: input.requestId, revision: updated.revision,
         requestData: jsonValue(input), result,
       } });
       return result;
