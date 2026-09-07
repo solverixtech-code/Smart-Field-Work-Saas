@@ -116,7 +116,7 @@ Exit: repeated identical provision commands converge on one valid tenant and a c
 
 ### 0.7 Industry Templates
 
-Status: **IN PROGRESS / NOT FROZEN**. PRE-PHASE-0.7 baseline is `dfafcb928ad6c907d54508953b703bef504d4ddb`, with green [baseline CI](https://github.com/solverixtech-code/Smart-Field-Work-Saas/actions/runs/34105107769). Lifecycle, exact-version assignment, draft import and reconciliation backend are implemented; final validation and the nonempty terminology/Master-default contract remain release gates. See the [25-entry fixture review](PHASE_0_7_INDUSTRY_FIXTURE_REVIEW.md) and [implementation report](PHASE_0_7_INDUSTRY_TEMPLATES_IMPLEMENTATION.md). Phase 0.8 and 0.9 remain unauthorized.
+Status: **FINALIZATION / NOT FROZEN**. Implementation merged at `e3518df51b2181d0055afc7c821dfaf2d7919776` with green [exact-main CI](https://github.com/solverixtech-code/Smart-Field-Work-Saas/actions/runs/34111703313). The finalization pass explicitly adopts empty-only schemaVersion 1 and defers nonempty terminology/Master-default content and its nonempty-change exit proof to a separately approved product contract. Strengthened v1/v2 proof and finalization exact-main CI remain gates. See the [25-entry fixture review](PHASE_0_7_INDUSTRY_FIXTURE_REVIEW.md) and [implementation report](PHASE_0_7_INDUSTRY_TEMPLATES_IMPLEMENTATION.md). Phase 0.8 and 0.9 remain unauthorized.
 
 1. Add stable IndustryTemplate and immutable IndustryTemplateVersion.
 2. Model terminology, Master defaults and Module recommendations first; defer complex forms/workflows until real consumers exist.

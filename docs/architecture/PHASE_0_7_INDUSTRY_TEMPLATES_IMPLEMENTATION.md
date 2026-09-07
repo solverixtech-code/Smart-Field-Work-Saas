@@ -1,6 +1,6 @@
 # Phase 0.7 Industry Templates implementation
 
-Status: **BACKEND CANDIDATE VALIDATED LOCALLY / NOT FROZEN — product snapshot contract and reviewed release remain gates.**
+Status: **FINALIZATION — explicit empty-snapshot contract adopted; strengthened exit proof and exact-main CI pending. NOT FROZEN.**
 
 ## Baseline verification
 
@@ -37,11 +37,13 @@ The user authorized continuing the implementation after the prerequisite review.
 
 No frontend screens, final Master Engine, runtime resolver, entitlement engine, subscription changes, generic worker platform or domain features were added.
 
-### Snapshot boundary — still a release gate
+### Finalized snapshot contract and explicit deferral
 
-SchemaVersion 1 currently accepts **only** `terminology: {}` and `masterDefaults: []`. Unknown keys, nonempty defaults, other schema versions and commercial fields are rejected by strict API validation; PostgreSQL also enforces the empty snapshot boundary. This enables independent lifecycle/assignment verification without invented product values. It is **not** completion of the nonempty terminology/Master-default requirement or an assertion that the user waived its exit tests.
+Under the user's finalization instruction to define the contract **or explicitly defer it**, this pass selects explicit deferral of nonempty terminology and Master-default content. Phase 0.7 schemaVersion 1 accepts **only** `terminology: {}` and `masterDefaults: []`. Unknown keys, nonempty defaults, other schema versions and commercial fields remain rejected by strict API validation and PostgreSQL. There are no approved nonempty product keys or values, and none are invented here.
 
-Full freeze requires approved terminology keys and Master-default code/value definitions with reviewed v1/v2 examples, or an explicit scope decision deferring those exit criteria. Nonempty support needs a reviewed versioned validator and append-only M7 migration, never a rewrite of published snapshots. No production candidate has been published.
+This explicitly defers the original exit-test requirement to change nonempty terminology/default content; it does not claim that unsupported content was tested successfully. The final 0.7 proof instead publishes v1 and v2 with empty snapshots and different recommendations, verifies no silent Tenant upgrade or commercial grant, explicitly migrates the Tenant, and retains immutable/readable v1. Attempts to persist nonempty snapshots must fail before publication.
+
+Reopening the deferred content requires product approval of the terminology allowlist and Master-default code/value definitions, concrete reviewed v1/v2 examples, a versioned validator and append-only migration, and the previously deferred nonempty migration proof. It is a separate explicitly authorized follow-up, not automatic Phase 0.8 scope or a rewrite of published schemaVersion 1 snapshots. Master resolution remains Phase 0.8 and runtime composition Phase 0.9. No production candidate has been published.
 
 ### Reuse and frozen-file touch inventory
 
@@ -120,7 +122,7 @@ Candidate source retains reviewed fixture ID/hash provenance, verified against a
 | New PostgreSQL/API tests | 14/14 PASS, including real CLI invocation and actor denial |
 | Draft import | 25 drafts, 69 recommendation rows, zero published; equal replay no duplicates |
 | Version pin/migration | PASS; v2 recommendation publication leaves v1 pin until explicit migration |
-| Nonempty terminology/default migration | NOT IMPLEMENTED; approved definitions missing |
+| Nonempty terminology/default migration | EXPLICITLY DEFERRED by the finalization scope decision above; rejection remains enforced |
 | Direct database integrity | PASS: published parent/child edits, deletes, inserts, reparenting, forged/missing history and reclassification rejected |
 | Concurrency | PASS: 10 competing drafts, edit/publish, competing migrations, both direct child/publication lock orders |
 | Commercial isolation | PASS with real provisioned Tenant: subscription row, seats, Plan Modules, revision, history and RBAC grants unchanged |
@@ -130,8 +132,9 @@ Candidate source retains reviewed fixture ID/hash provenance, verified against a
 | All unit tests | 74/74 PASS across 12 suites |
 | All E2E tests | 91/91 PASS across 6 suites; all 77 incumbent cases retained |
 | Focused lint | No explicit any or unused-variable errors in new files; no repository ESLint config exists |
-| Candidate PR | [Draft PR #2](https://github.com/solverixtech-code/Smart-Field-Work-Saas/pull/2); candidate Actions verification in progress |
-| Merged-main CI | NOT APPLICABLE: unmerged draft; no M7 freeze certificate |
+| Initial implementation PR | [PR #2](https://github.com/solverixtech-code/Smart-Field-Work-Saas/pull/2), merged as e3518df51b2181d0055afc7c821dfaf2d7919776; tree matches tested cbfff77888906f0864f054842610ecf9719e31ff |
+| Initial merged-main CI | [34111703313](https://github.com/solverixtech-code/Smart-Field-Work-Saas/actions/runs/34111703313): PASS on exact e3518df51b2181d0055afc7c821dfaf2d7919776 |
+| Finalization proof / exact-main CI | Pending; freeze only after finalization merge and successful main gate |
 
 Tests deploy the entire migration history into uniquely named suite-owned schemas and remove only those schemas afterward. No production mapping, seed or publication was executed. Incumbent Phase 0.6 tests are unchanged.
 
@@ -141,11 +144,11 @@ Deploy via the full prisma migrate deploy chain, synchronize RBAC, and review/im
 
 Take a database backup before deployment. Before M7 adoption an application rollback may retain the additive tables. Once assignments/versions exist, use a forward-fix migration; never drop evidence, disable triggers or edit old migrations. A pre-M7 database restore would lose later history and needs an explicit recovery decision.
 
-Remaining P0 release gates: approved nonempty snapshot contract (or explicit deferral), complete validation, reviewed PR and exact merged-main GitHub Actions success. No production readiness or full completion is claimed.
+Remaining P0 release gates: strengthened finalized-contract proof and exact merged-main GitHub Actions success for this finalization pass. The nonempty product-content requirement is explicitly deferred, not silently considered implemented. Production adoption remains separately gated.
 
 **Phase 0.1–0.6: FROZEN. Phase 0.7: IN PROGRESS / NOT FROZEN. Phase 0.8: DO NOT START.**
 
-After the product decision: extend the versioned snapshot schema and add the required nonempty v1/v2 exit test, or record the explicit approved deferral. Then finish review and verify exact merged-main CI before any freeze. Database failures use a forward-fix migration; never delete historical pins or rewrite applied migrations.
+This finalization pass changes tests and tracking documentation only. It does not change services, APIs, Prisma schema, migrations, seed candidates, dependencies or frozen 0.1–0.6 behavior. Database failures use a forward-fix migration; never delete historical pins or rewrite applied migrations.
 
 ### CLI runtime regression and reuse
 
@@ -156,7 +159,7 @@ A real CLI invocation exposed an AppModule-wide dependency on the unrelated shar
 | Area | Result |
 | --- | --- |
 | IndustryTemplate / IndustryTemplateVersion / recommendations / Tenant assignment | COMPLETE for the documented lifecycle and pinning boundary |
-| Terminology / Master-default contract | INCOMPLETE: only empty fail-closed v1 is implemented |
+| Terminology / Master-default contract | COMPLETE for explicitly narrowed empty-only schemaVersion 1; nonempty content and its exit proof DEFERRED |
 | Published version update/delete and child insert/update/delete | PASS: PostgreSQL rejects all |
 | Version identity mutation | PASS: renumbering/reparenting rejected |
 | Publication aggregate validation / transaction / pointer / edit race / concurrent drafts | PASS for supported schema |
@@ -171,7 +174,7 @@ A real CLI invocation exposed an AppModule-wide dependency on the unrelated shar
 | Fixture entries found / reviewed / unique codes | 25 / 25 / 25 |
 | Current obsolete / unknown Module references | 0 / 0; known historical alias regressions covered |
 | Production-approved/published candidates | 0 / 0 |
-| Final main SHA | Unchanged baseline; this PR is not merged |
+| Finalization starting main SHA | e3518df51b2181d0055afc7c821dfaf2d7919776, exact-main CI PASS; finalization SHA pending |
 
 Frozen touch accounting: **0.1 YES** (PlatformModule inverse schema relation only); **0.2 YES** (User/Tenant inverse schema relations only); **0.3 NO** (principal, isolation and guards unchanged); **0.4 YES** (one Industry manage permission, narrow existing super-admin grant); **0.5 NO**; **0.6 YES** (IndustryClassification inverse schema relation only, transaction code reused unchanged). The shared AppModule only registers the new module. No incumbent runtime behavior or historical migration was rewritten.
 
@@ -185,7 +188,7 @@ Added files (relative to repository root):
 
 Modified files: apps/api/package.json, apps/api/prisma/schema.prisma, apps/api/src/app.module.ts, apps/api/src/common/security/permission-registry.ts, docs/architecture/PHASE_0_EXECUTION_PLAN.md.
 
-P0: missing nonempty product snapshot definitions or approved deferral; reviewed release and exact merged-main CI. P1: no additional Phase 0.7 code blocker identified in this verification; the dependency audit findings below remain separately untriaged. P2: existing web bundle warning. Deferred to 0.8: final Master Engine and effective defaults. Deferred to 0.9: runtime resolver/bootstrap. Deployment-only gates: product publication approvals, database backup/deploy, RBAC sync and exact production Tenant mappings. No production migration or mapping was applied.
+P0: finalization proof and exact merged-main CI pending. P1: no additional Phase 0.7 code blocker identified in this verification; dependency audit findings below remain separately untriaged. P2: existing web bundle warning. Explicitly deferred: nonempty terminology/Master-default content and its nonempty v1/v2 proof, pending a separate approved product contract. Deferred to 0.8: final Master Engine and effective defaults. Deferred to 0.9: runtime resolver/bootstrap. Deployment-only gates: product publication approvals, database backup/deploy, RBAC sync and exact production Tenant mappings. No production migration or mapping was applied.
 
 ## Non-gating environment findings
 
