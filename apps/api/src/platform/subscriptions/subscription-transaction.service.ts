@@ -12,7 +12,10 @@ export class SubscriptionTransactionService {
         return await this.prisma.$transaction(async tx => {
           // Transaction-scoped lock works across API processes, including absent rows.
           await this.lock(tx, key);
-          return work(tx);
+          const result = await work(tx);
+          // Surface deferred integrity failures before the driver's COMMIT path.
+          await tx.$executeRaw`SET CONSTRAINTS ALL IMMEDIATE`;
+          return result;
         }, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, maxWait: 30000, timeout: 30000 });
       } catch (error) {
         if (!(error instanceof Prisma.PrismaClientKnownRequestError)) throw error;

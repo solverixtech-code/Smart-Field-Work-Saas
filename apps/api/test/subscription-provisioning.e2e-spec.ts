@@ -359,6 +359,8 @@ describe('Phase 0.6 PostgreSQL, API, replay and concurrency proof', () => {
   });
 
   it('rejects fabricated applied history even through direct database writes', async () => {
+    const functions = await prisma.$queryRaw<Array<{ definition: string }>>`SELECT pg_get_functiondef(p.oid) AS definition FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE p.proname = 'sfw_subscription_history_guard' AND n.nspname = current_schema()`;
+    expect(functions[0]?.definition).toContain('c."fromStatus" = prior_status');
     const r = await create();
     const history = await prisma.subscriptionChange.findFirstOrThrow({ where: { tenantId: r.tenantId } });
     const { id: ignored, ...data } = history;
@@ -366,6 +368,7 @@ describe('Phase 0.6 PostgreSQL, API, replay and concurrency proof', () => {
     await expect(prisma.$transaction(async tx => {
       await tx.tenantSubscription.update({ where: { tenantId: r.tenantId }, data: { status: 'PAST_DUE', revision: { increment: 1 } } });
       await tx.subscriptionChange.create({ data: { ...data, requestData: jsonValue(data.requestData), result: jsonValue(data.result), idempotencyKey: randomUUID(), revision: 2, fromStatus: 'GRACE', toStatus: 'PAST_DUE' } });
+      await tx.$executeRaw`SET CONSTRAINTS ALL IMMEDIATE`;
     })).rejects.toThrow();
     expect((await subscriptions.get(r.tenantId)).revision).toBe(1);
   });
