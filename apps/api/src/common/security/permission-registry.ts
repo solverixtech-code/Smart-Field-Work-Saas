@@ -159,6 +159,15 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
     moduleKey: 'platform_industries',
   },
   {
+    code: 'platform.industries.manage',
+    scope: PermissionScope.PLATFORM,
+    domain: 'platform',
+    resource: 'industries',
+    action: 'manage',
+    description: 'Manage industry drafts, publication and explicit Tenant template assignments',
+    moduleKey: 'platform_industries',
+  },
+  {
     code: 'platform.users.view',
     scope: PermissionScope.PLATFORM,
     domain: 'platform',
