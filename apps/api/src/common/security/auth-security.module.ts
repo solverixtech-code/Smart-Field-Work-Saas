@@ -10,6 +10,7 @@ import { PermissionCacheService } from './permission-cache.service';
 import { EffectivePermissionService } from './effective-permission.service';
 import { RolePermissionService } from './role-permission.service';
 import { PermissionsGuard } from '../guards/permissions.guard';
+import { SubscriptionAccessGuard } from '../guards/subscription-access.guard';
 
 @Global()
 @Module({
@@ -24,6 +25,7 @@ import { PermissionsGuard } from '../guards/permissions.guard';
     }),
   ],
   providers: [
+    SubscriptionAccessGuard,
     JwtAuthGuard,
     PermissionCacheService,
     EffectivePermissionService,
@@ -34,6 +36,7 @@ import { PermissionsGuard } from '../guards/permissions.guard';
     PermissionsGuard,
   ],
   exports: [
+    SubscriptionAccessGuard,
     JwtModule,
     JwtAuthGuard,
     PermissionCacheService,

@@ -3,6 +3,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RequestPrincipalGuard } from '../guards/request-principal.guard';
 import { MembershipContextGuard } from '../guards/membership-context.guard';
 import { PermissionsGuard } from '../guards/permissions.guard';
+import { SubscriptionAccessGuard } from '../guards/subscription-access.guard';
 
 /**
  * Composite decorator enforcing explicit guard evaluation order for Tenant endpoints:
@@ -18,6 +19,7 @@ export function TenantAuthorized() {
       RequestPrincipalGuard,
       MembershipContextGuard,
       PermissionsGuard,
+      SubscriptionAccessGuard,
     ),
   );
 }

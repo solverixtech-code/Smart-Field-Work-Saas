@@ -19,6 +19,7 @@
     "db:backfill:platform-roles": "ts-node prisma/backfills/backfill-platform-roles.ts",
     "db:report:tenant-ownership": "ts-node prisma/backfills/reconcile-tenant-ownership.ts",
     "db:sync:rbac": "ts-node prisma/sync-rbac.ts"
+    ,"db:reconcile:subscriptions": "ts-node prisma/backfills/reconcile-subscriptions.ts"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

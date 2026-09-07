@@ -78,6 +78,9 @@ model User {
   platformRoleAssignments  PlatformUserRoleAssignment[] @relation("UserPlatformRoleAssignments")
   platformRolesAssigned    PlatformUserRoleAssignment[] @relation("PlatformRoleAssignedBy")
   publishedPlanVersions    PlanVersion[]                @relation("PlanVersionPublishedBy")
+  subscriptionChanges     SubscriptionChange[]         @relation("SubscriptionChangeActor")
+  provisionedTenants       TenantProvisioning[]         @relation("TenantProvisioningActor")
+  provisioningAttempts    ProvisioningAttempt[]         @relation("ProvisioningAttemptActor")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1063,6 +1066,7 @@ model TenantSubscription {
   trialEndsAt        DateTime?
   graceEndsAt        DateTime?
   cancelledAt        DateTime?
+  suspendedFromStatus SubscriptionStatus?
   changes            SubscriptionChange[]
   provisioning       TenantProvisioning?
   createdAt          DateTime             @default(now())
@@ -1091,8 +1095,11 @@ model SubscriptionChange {
   effectiveAt       DateTime
   appliedAt         DateTime?
   actorUserId       String
+  actor             User                     @relation("SubscriptionChangeActor", fields: [actorUserId], references: [id], onDelete: Restrict, map: "SubscriptionChange_actor_fkey")
   requestId         String?
   revision          Int
+  requestData       Json
+  result            Json
 
   @@unique([subscriptionId, idempotencyKey])
   @@index([subscriptionId, requestedAt])
@@ -1110,6 +1117,7 @@ model TenantProvisioning {
   ownerMembershipId String
   ownerMembership   TenantMembership    @relation(fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
   actorUserId       String
+  actor             User                @relation("TenantProvisioningActor", fields: [actorUserId], references: [id], onDelete: Restrict, map: "TenantProvisioning_actor_fkey")
   requestId         String?
   acceptedAt        DateTime?
   createdAt         DateTime            @default(now())
@@ -1145,6 +1153,7 @@ model ProvisioningAttempt {
   attemptKey  String
   leaseToken  String                  @unique
   actorUserId String
+  actor       User                    @relation("ProvisioningAttemptActor", fields: [actorUserId], references: [id], onDelete: Restrict, map: "ProvisioningAttempt_actor_fkey")
   status      ProvisioningEventStatus @default(PROCESSING)
   errorCode   String?
   startedAt   DateTime                @default(now())

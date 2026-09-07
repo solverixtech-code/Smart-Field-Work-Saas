@@ -128,7 +128,7 @@ export class TenantMembershipService {
         teamId: input.teamId || null,
         managerMembershipId: input.managerMembershipId || null,
         invitedByUserId: input.invitedByUserId || null,
-        joinedAt: now,
+        joinedAt: input.status === TenantMembershipStatus.INVITED ? null : now,
         activatedAt: input.status === TenantMembershipStatus.ACTIVE ? now : null,
       },
       include: {
