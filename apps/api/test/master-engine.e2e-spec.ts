@@ -999,7 +999,7 @@ describe("Phase 0.8 Master persistence, resolution and security", () => {
     ).rejects.toThrow("differently");
     await prisma.masterRecord.update({
       where: { id: legacy.id },
-      data: { name: "Changed after review" },
+      data: { updatedAt: new Date(row.updatedAt.getTime() + 1000) },
     });
     await expect(
       reconcile.run(command, actor, dry.reviewedHash),

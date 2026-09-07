@@ -66,6 +66,8 @@ Seed dry-run reports the 44-category classification, 24 approved definitions, 44
 
 The paginated legacy report emits original rows with a `legacyHash` and existing mapping status. A reviewed mapping body has `reason`, optional `requestId` and at most 100 `mappings`, each with `legacyRecordId`, `legacyHash`, explicit `targetValueId`, matching approved `definitionCode` and `scope` (`SYSTEM`, `TENANT` with `tenantId`, or `INDUSTRY` with draft `versionId`). Category changes, inferred ownership, invalid labels/colors/codes, changed source hashes, duplicate identities and conflicting existing targets fail closed. An exact existing target may be linked; otherwise the explicitly named target is created. Mapping uniqueness is database-backed, history is append-only, and an entire failed batch rolls back. The original rows are never deleted or marked implicitly migrated by their fixture flags.
 
+Final source review hardened legacy hashing by applying the existing JSON serializer before the existing canonical hash helper. This includes ISO timestamps in the review hash; the PostgreSQL regression now rejects a timestamp-only change. The frozen hash helper is unchanged. Earlier candidate CI evidence below predates this narrow follow-up; the latest PR head must independently pass its checks.
+
 Repository search found no incumbent runtime `MasterRecord` service/controller or production seed consumer. The existing Master screen uses frontend fixtures. **No production database rows have been audited or reconciled by this task.** Production inventory, semantic content review and explicit ownership mapping remain deployment gates; table retirement is deferred.
 
 ### Frontend boundary

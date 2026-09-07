@@ -106,7 +106,7 @@ export class MasterReconciliationService {
       limit,
       items: rows.map(({ reconciliation, ...row }) => ({
         ...row,
-        legacyHash: payloadHash(row),
+        legacyHash: payloadHash(jsonValue(row)),
         reconciliation,
       })),
     };
@@ -141,7 +141,7 @@ export class MasterReconciliationService {
           select: legacySelect,
         });
         if (!legacy) throw new NotFoundException("Legacy Master row not found");
-        if (payloadHash(legacy) !== mapping.legacyHash)
+        if (payloadHash(jsonValue(legacy)) !== mapping.legacyHash)
           throw new ConflictException("Legacy row changed since review");
         if (legacy.category !== mapping.definitionCode)
           throw new ConflictException(
