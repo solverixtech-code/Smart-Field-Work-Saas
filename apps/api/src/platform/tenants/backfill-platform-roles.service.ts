@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../persistence/prisma.service';
 import { PlatformRoleService } from './platform-role.service';
 import { Role } from '@prisma/client';
@@ -13,7 +13,6 @@ export interface BackfillReport {
 
 const EXPLICIT_PLATFORM_ROLES: Role[] = [
   Role.PLATFORM_SUPER_ADMIN,
-  Role.SUPER_ADMIN,
   Role.PLATFORM_OPERATIONS_ADMIN,
   Role.PLATFORM_ONBOARDING,
   Role.PLATFORM_SUPPORT,
@@ -22,22 +21,13 @@ const EXPLICIT_PLATFORM_ROLES: Role[] = [
 ];
 
 @Injectable()
-export class BackfillPlatformRolesService implements OnApplicationBootstrap {
+export class BackfillPlatformRolesService {
   private readonly logger = new Logger(BackfillPlatformRolesService.name);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly platformRoleService: PlatformRoleService,
   ) {}
-
-  async onApplicationBootstrap() {
-    try {
-      this.logger.log('Executing automated platform role assignment backfill on application bootstrap...');
-      await this.backfillPlatformRoles();
-    } catch (err: any) {
-      this.logger.error(`Automated platform role backfill failed during bootstrap: ${err.message}`, err.stack);
-    }
-  }
 
   /**
    * Deterministically backfills PlatformUserRoleAssignment records for explicit platform role users.
@@ -56,7 +46,7 @@ export class BackfillPlatformRolesService implements OnApplicationBootstrap {
 
       if (EXPLICIT_PLATFORM_ROLES.includes(user.role)) {
         explicitPlatformUsers++;
-        const roleCode = user.role === Role.SUPER_ADMIN ? 'PLATFORM_SUPER_ADMIN' : user.role.toString();
+        const roleCode = user.role.toString();
 
         const role = await this.prisma.platformRole.findUnique({
           where: { code: roleCode },

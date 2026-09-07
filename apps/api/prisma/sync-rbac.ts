@@ -275,44 +275,11 @@ export async function syncRbac(client?: PrismaClient) {
     }
   }
 
-  // 4. Backfill PlatformUserRoleAssignment records for all existing users with explicit platform roles
-  const users = await prisma.user.findMany();
-  let assignmentsBackfilled = 0;
-  const platformRoleCodes = ['PLATFORM_SUPER_ADMIN', 'SUPER_ADMIN', 'PLATFORM_OPERATIONS_ADMIN', 'PLATFORM_ONBOARDING', 'PLATFORM_SUPPORT', 'PLATFORM_BILLING', 'PLATFORM_AUDITOR'];
-
-  for (const u of users) {
-    if (platformRoleCodes.includes(u.role)) {
-      const code = u.role === 'SUPER_ADMIN' ? 'PLATFORM_SUPER_ADMIN' : u.role;
-      const role = await prisma.platformRole.findUnique({ where: { code } });
-      if (role) {
-        const existingAssignment = await prisma.platformUserRoleAssignment.findUnique({
-          where: {
-            userId_platformRoleId: {
-              userId: u.id,
-              platformRoleId: role.id,
-            },
-          },
-        });
-        if (!existingAssignment) {
-          await prisma.platformUserRoleAssignment.create({
-            data: {
-              userId: u.id,
-              platformRoleId: role.id,
-              status: 'ACTIVE',
-            },
-          });
-          assignmentsBackfilled++;
-        }
-      }
-    }
-  }
-
   console.log(`[RBAC Sync] Completed successfully.`);
   console.log(`  - Permissions Created: ${permissionsAdded}`);
   console.log(`  - Permissions Updated: ${permissionsUpdated}`);
   console.log(`  - Permissions Inactivated: ${permissionsInactivated}`);
   console.log(`  - Platform Grants Created: ${platformGrantsCreated}`);
-  console.log(`  - Platform Role Assignments Backfilled: ${assignmentsBackfilled}`);
   console.log(`  - Tenants Scanned: ${tenants.length}`);
   console.log(`  - Tenant Roles Initialized: ${tenantRolesInitialized}`);
   console.log(`  - Tenant Grants Created: ${tenantGrantsCreated}`);
