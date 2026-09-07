@@ -10,6 +10,7 @@ import { PlanQueryService, FormattedPlanDto, FormattedPlanVersionDto } from './p
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanMetadataDto, UpdatePlanDraftDto, PublishPlanDto } from './dto/update-plan.dto';
 import { PlanStatus, PlanVersionStatus } from '@prisma/client';
+import { classifyPlanTransactionError } from './plan-transaction-error';
 
 export interface PaginatedPlansResult {
   data: FormattedPlanDto[];
@@ -469,21 +470,17 @@ export class PlatformPlansService {
         });
 
         return this.queryService.formatVersion(fullDraft as any, fullDraft?.plan.currentPublishedVersionId || null);
-      } catch (err: any) {
-        if (
-          (err.code === 'P2034' || err.message?.includes('serialization') || err.message?.includes('deadlock') || err.message?.includes('write conflict')) &&
-          retries > 1
-        ) {
+      } catch (err: unknown) {
+        const failure = classifyPlanTransactionError(err);
+        if (failure === 'RETRYABLE' && retries > 1) {
           retries--;
           await new Promise((res) => setTimeout(res, 50));
           continue;
         }
         if (
-          err.code === 'P2002' ||
-          err.code === 'P2034' ||
-          err.message?.includes('unique constraint') ||
-          err.message?.includes('write conflict') ||
-          err.message?.includes('already has an active DRAFT')
+          failure !== 'OTHER' ||
+          (typeof err === 'object' && err !== null && 'message' in err &&
+            typeof err.message === 'string' && err.message.includes('already has an active DRAFT'))
         ) {
           throw new ConflictException(`Draft version allocation conflict for plan '${planId}'`);
         }
@@ -619,21 +616,14 @@ export class PlatformPlansService {
           },
           { isolationLevel: 'Serializable' },
         );
-      } catch (err: any) {
-        if (
-          (err.code === 'P2034' || err.message?.includes('serialization') || err.message?.includes('deadlock') || err.message?.includes('write conflict')) &&
-          retries > 1
-        ) {
+      } catch (err: unknown) {
+        const failure = classifyPlanTransactionError(err);
+        if (failure === 'RETRYABLE' && retries > 1) {
           retries--;
           await new Promise((res) => setTimeout(res, 50));
           continue;
         }
-        if (
-          err.code === 'P2002' ||
-          err.code === 'P2034' ||
-          err.message?.includes('unique constraint') ||
-          err.message?.includes('write conflict')
-        ) {
+        if (failure !== 'OTHER') {
           throw new ConflictException(`Update conflict for plan '${planId}'`);
         }
         throw err;
@@ -794,21 +784,14 @@ export class PlatformPlansService {
           },
           { isolationLevel: 'Serializable' },
         );
-      } catch (err: any) {
-        if (
-          (err.code === 'P2034' || err.message?.includes('serialization') || err.message?.includes('deadlock') || err.message?.includes('write conflict')) &&
-          retries > 1
-        ) {
+      } catch (err: unknown) {
+        const failure = classifyPlanTransactionError(err);
+        if (failure === 'RETRYABLE' && retries > 1) {
           retries--;
           await new Promise((res) => setTimeout(res, 50));
           continue;
         }
-        if (
-          err.code === 'P2002' ||
-          err.code === 'P2034' ||
-          err.message?.includes('unique constraint') ||
-          err.message?.includes('write conflict')
-        ) {
+        if (failure !== 'OTHER') {
           throw new ConflictException(`Publication conflict for plan '${planId}'`);
         }
         throw err;

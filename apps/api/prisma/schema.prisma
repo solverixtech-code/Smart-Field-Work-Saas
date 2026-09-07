@@ -35,6 +35,9 @@ enum DataScope {
 // ─── Users ──────────────────────────────────────────────────────────────────────
 
 model User {
+  masterLegacyReconciliations MasterLegacyReconciliation[]
+  masterValuesCreated MasterValue[] @relation("MasterValueCreator")
+  masterOverridesCreated MasterValueOverride[] @relation("MasterOverrideCreator")
   id                 String    @id @default(uuid())
   employeeCode       String    @unique
   fullName           String
@@ -465,7 +468,109 @@ model Payslip {
 
 // ─── Master Data Management ───────────────────────────────────────────────────
 
+enum MasterSource {
+  SYSTEM
+  INDUSTRY
+  TENANT
+}
+enum MasterOverrideScope {
+  INDUSTRY
+  TENANT
+}
+enum MasterSystemValuePolicy {
+  OVERRIDABLE_LABEL
+  LOCKED_IDENTITY
+}
+enum MasterDefinitionStatus {
+  ACTIVE
+  INACTIVE
+}
+model MasterDefinition {
+  id String @id @default(uuid())
+  code String @unique
+  name String
+  description String
+  moduleCode String?
+  module PlatformModule? @relation(fields: [moduleCode], references: [code], onDelete: Restrict, onUpdate: Restrict)
+  valueType String @default("LABEL")
+  metadataSchema String @default("NONE")
+  allowTenantCreate Boolean
+  allowTenantEdit Boolean
+  allowTenantDeactivate Boolean
+  allowIndustryDefaults Boolean
+  systemValuePolicy MasterSystemValuePolicy
+  displayOrder Int
+  status MasterDefinitionStatus @default(ACTIVE)
+  revision Int @default(1)
+  values MasterValue[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([moduleCode])
+}
+model MasterValue {
+  legacyReconciliation MasterLegacyReconciliation?
+  id String @id @default(uuid())
+  definitionId String
+  definition MasterDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  source MasterSource
+  tenantId String?
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  industryTemplateVersionId String?
+  industryTemplateVersion IndustryTemplateVersion? @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  code String
+  name String
+  description String?
+  displayColor String?
+  sortOrder Int
+  isActive Boolean @default(true)
+  revision Int @default(1)
+  createdByUserId String?
+  createdBy User? @relation("MasterValueCreator", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  overrides MasterValueOverride[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  // Partial source-specific uniqueness and scope checks are in M8 SQL.
+  @@index([definitionId, source])
+  @@index([tenantId, definitionId])
+  @@index([industryTemplateVersionId, definitionId])
+}
+model MasterValueOverride {
+  id String @id @default(uuid())
+  inheritedMasterValueId String
+  inheritedMasterValue MasterValue @relation(fields: [inheritedMasterValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  scope MasterOverrideScope
+  tenantId String?
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  industryTemplateVersionId String?
+  industryTemplateVersion IndustryTemplateVersion? @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  displayName String?
+  displayColor String?
+  sortOrder Int?
+  isHidden Boolean @default(false)
+  revision Int @default(1)
+  createdByUserId String?
+  createdBy User? @relation("MasterOverrideCreator", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([inheritedMasterValueId])
+  @@index([tenantId])
+  @@index([industryTemplateVersionId])
+}
+
+// Explicit reviewed legacy ownership; original rows remain retained and unchanged.
+model MasterLegacyReconciliation {
+  legacyRecordId String @id
+  legacyRecord MasterRecord @relation(fields: [legacyRecordId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  masterValueId String @unique
+  masterValue MasterValue @relation(fields: [masterValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  mappingHash String
+  actorUserId String
+  actor User @relation(fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  createdAt DateTime @default(now())
+}
+
 model MasterRecord {
+  reconciliation MasterLegacyReconciliation?
   id              String   @id @default(uuid())
   category        String // designation, team, incentive_type, allowance_type, deduction_type, shift, territory, expense_category, lead_stage, lead_source
   name            String
@@ -508,6 +613,7 @@ enum ModuleFeatureStatus {
 }
 
 model PlatformModule {
+  masterDefinitions MasterDefinition[]
   id          String                 @id @default(uuid())
   code        String                 @unique
   name        String
@@ -602,6 +708,8 @@ enum PlatformAssignmentStatus {
 }
 
 model Tenant {
+  masterValues MasterValue[]
+  masterOverrides MasterValueOverride[]
   industryCode    String?
   industry        IndustryClassification? @relation(fields: [industryCode], references: [code], onDelete: Restrict)
   subscription    TenantSubscription?
@@ -1056,6 +1164,8 @@ model IndustryTemplate {
 }
 
 model IndustryTemplateVersion {
+  masterValues MasterValue[]
+  masterOverrides MasterValueOverride[]
   id String @id @default(uuid())
   industryTemplateId String
   industryTemplate IndustryTemplate @relation("IndustryVersions", fields: [industryTemplateId], references: [id], onDelete: Restrict)

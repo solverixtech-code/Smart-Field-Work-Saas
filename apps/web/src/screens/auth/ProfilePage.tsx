@@ -319,7 +319,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Right Card: Role & Permissions */}
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm lg:col-span-6 flex flex-col  h-full">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm lg:col-span-6 flex flex-col justify-between h-full">
           <h3 className="mb-4 text-base font-extrabold text-[#0D1F3D]">Role & Permissions</h3>
           <div className="space-y-3.5 text-xs font-semibold">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">

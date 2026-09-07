@@ -32,7 +32,6 @@ import {
   Store,
   TrendingUp,
   ShoppingBag,
-  Zap,
   Lightbulb,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
@@ -40,11 +39,17 @@ import { Modal } from '../../../components/ui/Modal';
 import { DataTable } from '../../../components/ui/DataTable';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import {
-  masterCategories,
+  masterCategories as fixtureCategories,
   initialMasterRecords,
   MasterRecordItem,
   MasterCategoryConfig,
 } from './systemMastersData';
+
+// Preserve frozen fixture evidence, but do not present Plans or Shifts as
+// generic Master ownership. Full API wiring is reserved for Phase 0.11.
+const masterCategories = fixtureCategories.filter(
+  (category) => category.id !== 'subscription_plan' && category.id !== 'shift_type',
+);
 
 const domainGroups = [
   'HR & Personnel',
@@ -131,7 +136,7 @@ export default function MasterManagementPage() {
     contact_role: UserCheck,
     leave_type: Calendar,
     lead_stage: TrendingUp,
-    lead_source: Share2Icon,
+    lead_source: Briefcase,
     lost_reason: AlertTriangle,
     lead_rating: Flame,
     territory: MapPin,
@@ -144,13 +149,7 @@ export default function MasterManagementPage() {
     incentive_type: Percent,
     allowance_type: DollarSign,
     deduction_type: CreditCard,
-    subscription_plan: Zap,
   };
-
-  // Helper dummy icon fallback
-  function Share2Icon(props: any) {
-    return <Briefcase {...props} />;
-  }
 
   // Handlers
   const handleOpenAddModal = () => {
@@ -276,7 +275,8 @@ export default function MasterManagementPage() {
             </span>
           </div>
           <p className="text-xs font-normal text-slate-500 mt-0.5">
-            Configure reusable enterprise dropdown parameters, designations, sales pipeline stages, and operational masters.
+            Fixture preview only. Edits here are temporary and do not update production Masters, domain settings or policies.
+            Plans are managed in Plans &amp; Pricing; shifts belong to workforce configuration. Live Master editing is deferred to Phase 0.11.
           </p>
         </div>
 
@@ -285,7 +285,7 @@ export default function MasterManagementPage() {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => toast.success('Audit log downloaded for master records')}
+            onClick={() => toast.info('This fixture preview has no persisted audit log. Production Master changes are audited by the API.')}
             className="flex items-center gap-1.5 font-bold rounded-sm"
           >
             <FileText className="h-4 w-4 text-slate-600" /> Audit Log
@@ -403,7 +403,7 @@ export default function MasterManagementPage() {
               <h3 className="text-xs font-semibold">Master Data Help</h3>
             </div>
             <p className="text-[11px] font-normal leading-relaxed text-slate-500">
-              System masters populate dropdown menus throughout CRM Lead Management, Field Visits, and Payroll.
+              These fixture categories are non-authoritative previews. Domain and policy configuration remains deferred to its owning module.
             </p>
             <Button
               variant="outline"
