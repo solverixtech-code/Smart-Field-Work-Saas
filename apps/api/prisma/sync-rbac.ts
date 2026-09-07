@@ -115,10 +115,8 @@ export async function syncRbac(client?: PrismaClient) {
   }
 
   // Load all active synchronized permissions into a code map
-  const dbPermissions: any[] = await prisma.permission.findMany({ where: { isActive: true } });
-  const permMapByCode = new Map<string, any>(
-    dbPermissions.filter((p: any) => p.code !== null).map((p: any) => [p.code as string, p]),
-  );
+  const dbPermissions = await prisma.permission.findMany({ where: { isActive: true } });
+  const permMapByCode = new Map(dbPermissions.filter((p) => p.code !== null).map((p) => [p.code!, p]));
 
   // 2. Sync Built-in Platform Roles & PlatformRolePermissions
   const platformRoleNames: Record<string, string> = {
