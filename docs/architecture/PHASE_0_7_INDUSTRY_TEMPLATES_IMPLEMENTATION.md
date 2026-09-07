@@ -130,7 +130,8 @@ Candidate source retains reviewed fixture ID/hash provenance, verified against a
 | All unit tests | 74/74 PASS across 12 suites |
 | All E2E tests | 90/90 PASS across 6 suites; all 77 incumbent cases retained |
 | Focused lint | No explicit any or unused-variable errors in new files; no repository ESLint config exists |
-| Candidate CI / PR / merged-main CI | Pending; no M7 freeze certificate |
+| Candidate PR | [Draft PR #2](https://github.com/solverixtech-code/Smart-Field-Work-Saas/pull/2); candidate Actions verification in progress |
+| Merged-main CI | NOT APPLICABLE: unmerged draft; no M7 freeze certificate |
 
 Tests deploy the entire migration history into uniquely named suite-owned schemas and remove only those schemas afterward. No production mapping, seed or publication was executed. Incumbent Phase 0.6 tests are unchanged.
 
