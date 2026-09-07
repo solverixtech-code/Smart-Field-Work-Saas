@@ -2,6 +2,14 @@
 
 Status: **IN PROGRESS — OWNER-APPROVED SEED CONTRACT; CANONICAL SEED FOUNDATION IMPLEMENTED; M8/API/RELEASE GATES PENDING. NOT FROZEN.**
 
+## Current reviewed head and hygiene correction — 2026-09-07
+
+Current reviewed remote/main and feature-branch starting HEAD: `d838737ec0e87a212b6c1a3c0444754fdd1ea83c`. The earlier `8709198` remains the frozen Phase 0.7/seed provenance baseline, not the current repository head. Continue only on `feat/phase-0.8-master-engine`; its old `origin/main` upstream was removed. No further Phase 0.8 work may be pushed directly to main.
+
+Correction to the prior file accounting: `d838737` **did include** the unrelated `apps/web/src/screens/auth/ProfilePage.tsx` layout edit despite the earlier report saying it was not included. The hygiene correction restores the exact pre-`d838737` class list (`justify-between`) and changes no other profile behavior. This targeted revert is committed separately with message `fix: remove unrelated profile layout change from Phase 0.8`.
+
+Exact-head Actions run [34123919189](https://github.com/solverixtech-code/Smart-Field-Work-Saas/actions/runs/34123919189) was still IN PROGRESS at the hygiene check. Its final conclusion must be recorded before further engine expansion; no PASS is inferred from partial job progress. Seed gate remains PASSED; Phase 0.8 remains IN PROGRESS and far from freeze. Phase 0.9 remains unauthorized.
+
 ## Approved continuation — 2026-09-07
 
 The owner explicitly approved seed contract revision 1. The prerequisite seed-content stop is resolved; no further product approval is needed for that exact subset. Approval does not certify a database release or authorize Phase 0.9.
