@@ -832,7 +832,7 @@ describe('Phase 0.7 Industry PostgreSQL, API and concurrency proof', () => {
     ).toHaveLength(1);
   }, 30000);
 
-  it('keeps a provisioned Tenant commercial pin, seats, grants and history unchanged by recommendations', async () => {
+  it('proves the finalized v1/v2 contract: empty deferred snapshots, explicit pins and no commercial grants', async () => {
     const core = await prisma.platformModule.findUniqueOrThrow({
       where: { code: 'core_crm' },
     });
@@ -932,20 +932,76 @@ describe('Phase 0.7 Industry PostgreSQL, API and concurrency proof', () => {
       orderBy: { id: 'asc' },
     });
     await assign(receipt.tenantId, v1.id);
-    const v2 = await publish(
-      template.id,
-      await draft(template.id, [
-        'core_crm',
-        'field_visits',
-        'attendance',
-        'payroll',
-      ]),
-    );
+    const v2Draft = await draft(template.id, [
+      'core_crm',
+      'field_visits',
+      'attendance',
+      'payroll',
+    ]);
+    // Deferral is a fail-closed contract, not arbitrary product data or a skipped proof.
+    for (const unsupported of [
+      { terminology: { unapproved: 'Must not persist' } },
+      { masterDefaults: [{ code: 'UNAPPROVED' }] },
+    ]) {
+      await expect(
+        industries.updateDraft(
+          template.id,
+          v2Draft.id,
+          {
+            ...snapshot,
+            expectedRevision: v2Draft.revision,
+            reason,
+            ...unsupported,
+          },
+          actorUserId,
+        ),
+      ).rejects.toThrow();
+    }
+    const v2 = await publish(template.id, v2Draft);
+    for (const version of [v1, v2]) {
+      expect(version.schemaVersion).toBe(1);
+      expect(version.terminology).toEqual({});
+      expect(version.masterDefaults).toEqual([]);
+    }
+    expect(v1.recommendations.map((r) => r.module.code)).toEqual(['core_crm']);
+    expect(v2.recommendations.map((r) => r.module.code).sort()).toEqual([
+      'attendance',
+      'core_crm',
+      'field_visits',
+      'payroll',
+    ]);
+    expect(
+      (await assignments.read(receipt.tenantId))?.industryTemplateVersionId,
+    ).toBe(v1.id);
+    expect(await industries.version(template.id, v1.id)).toEqual(v1);
+    expect(
+      await prisma.tenantSubscription.findUniqueOrThrow({
+        where: { tenantId: receipt.tenantId },
+      }),
+    ).toEqual(before);
     await assignments.migrate(
       receipt.tenantId,
       { industryTemplateVersionId: v2.id, expectedRevision: 1, reason },
       actorUserId,
     );
+    const migrated = await assignments.read(receipt.tenantId);
+    expect(migrated?.industryTemplateVersionId).toBe(v2.id);
+    expect(migrated?.revision).toBe(2);
+    expect(migrated?.industryTemplateVersion.terminology).toEqual({});
+    expect(migrated?.industryTemplateVersion.masterDefaults).toEqual([]);
+    expect(await industries.version(template.id, v1.id)).toEqual(v1);
+    await expect(
+      industries.updateDraft(
+        template.id,
+        v1.id,
+        {
+          ...snapshot,
+          expectedRevision: v1.revision,
+          reason,
+        },
+        actorUserId,
+      ),
+    ).rejects.toThrow('immutable');
     expect(
       await prisma.tenantSubscription.findUniqueOrThrow({
         where: { tenantId: receipt.tenantId },

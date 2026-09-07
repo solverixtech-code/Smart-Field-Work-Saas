@@ -92,9 +92,11 @@ Repository-wide terminology/Master-default searches found only future architectu
 
 The Phase 0.7 brief requires both a strict reviewed contract and tests publishing v2 with changed terminology/defaults, while forbidding invented terminology keys and arbitrary fixture JSON. Those requirements cannot be satisfied from these source entries alone.
 
-Outstanding full-release decision (after the user authorized safe backend continuation):
+Historical alternatives presented after backend continuation:
 
 1. Supply the approved terminology key allowlist and Master-default code/value schemas, including concrete values for the required nonempty v1/v2 tests; or
 2. Explicitly narrow schemaVersion 1 to empty terminology/default snapshots, rejecting nonempty values until later product approval, and defer the nonempty terminology/default-change exit tests accordingly.
+
+Finalization decision: the user's subsequent instruction permits explicit deferral, and this pass adopts option 2. Empty terminology/default snapshots are the complete supported Phase 0.7 contract. Nonempty content and the original nonempty-change proof remain explicitly deferred to a separately authorized product-contract follow-up. The strengthened 0.7 exit test must prove empty v1/v2 snapshots, changed recommendations, exact Tenant pins, immutable history and unchanged commercial authority, plus rejection of nonempty content. This is not production approval for any fixture and does not authorize Phase 0.8.
 
 No domain labels or Master codes have been inferred from descriptions. Seed publication approval is a separate issue: the brief already authorizes DRAFT candidate import when product approval is absent, so missing publication approval does not itself require a second authorization to create candidates. Production assignment still needs exact reviewed published-version mappings.
