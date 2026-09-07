@@ -114,10 +114,10 @@ Candidate source retains reviewed fixture ID/hash provenance, verified against a
 | Gate | Result |
 | --- | --- |
 | Baseline exact-SHA CI | PASS, linked above |
-| Prisma validation/client generation/API TypeScript | PASS locally before final validation |
+| Prisma validation/client generation/API TypeScript | PASS locally |
 | Full migration chain | PASS in fresh test database and suite-owned schemas through M7.2 |
 | New unit tests | 5/5 PASS |
-| New PostgreSQL/API tests | 13/13 PASS |
+| New PostgreSQL/API tests | 14/14 PASS, including real CLI invocation and actor denial |
 | Draft import | 25 drafts, 69 recommendation rows, zero published; equal replay no duplicates |
 | Version pin/migration | PASS; v2 recommendation publication leaves v1 pin until explicit migration |
 | Nonempty terminology/default migration | NOT IMPLEMENTED; approved definitions missing |
@@ -128,7 +128,7 @@ Candidate source retains reviewed fixture ID/hash provenance, verified against a
 | Clean npm ci | PASS after user-approved stop of the exact local esbuild helper; 972 packages installed |
 | API/Web TypeScript and builds | PASS |
 | All unit tests | 74/74 PASS across 12 suites |
-| All E2E tests | 90/90 PASS across 6 suites; all 77 incumbent cases retained |
+| All E2E tests | 91/91 PASS across 6 suites; all 77 incumbent cases retained |
 | Focused lint | No explicit any or unused-variable errors in new files; no repository ESLint config exists |
 | Candidate PR | [Draft PR #2](https://github.com/solverixtech-code/Smart-Field-Work-Saas/pull/2); candidate Actions verification in progress |
 | Merged-main CI | NOT APPLICABLE: unmerged draft; no M7 freeze certificate |
@@ -145,7 +145,48 @@ Remaining P0 release gates: approved nonempty snapshot contract (or explicit def
 
 **Phase 0.1–0.6: FROZEN. Phase 0.7: IN PROGRESS / NOT FROZEN. Phase 0.8: DO NOT START.**
 
-After the decision: implement the M7 aggregate and publication/assignment/reconciliation paths, add dedicated deterministic test factories and full unit/PostgreSQL/HTTP regressions, run all gates, push/open the dedicated PR, and verify candidate plus merged final-main CI before recording the Phase 0.7 freeze. Database failures use a forward-fix migration; never delete historical pins or rewrite applied migrations.
+After the product decision: extend the versioned snapshot schema and add the required nonempty v1/v2 exit test, or record the explicit approved deferral. Then finish review and verify exact merged-main CI before any freeze. Database failures use a forward-fix migration; never delete historical pins or rewrite applied migrations.
+
+### CLI runtime regression and reuse
+
+A real CLI invocation exposed an AppModule-wide dependency on the unrelated shared package build, which Jest's source alias hid. IndustryCoreModule now supplies the same Industry services to HTTP controllers and the standalone CLI without bootstrapping HTTP authentication or unrelated domain modules. The CLI still uses the existing EffectivePermissionService and PermissionCacheService to authorize an ACTIVE platform actor; it requires configured DATABASE_URL, not JWT secrets. A subprocess regression verifies successful read-only candidate review and denial for an unprivileged actor. No frozen shared-package or auth implementation was changed.
+
+### Release checklist and file inventory
+
+| Area | Result |
+| --- | --- |
+| IndustryTemplate / IndustryTemplateVersion / recommendations / Tenant assignment | COMPLETE for the documented lifecycle and pinning boundary |
+| Terminology / Master-default contract | INCOMPLETE: only empty fail-closed v1 is implemented |
+| Published version update/delete and child insert/update/delete | PASS: PostgreSQL rejects all |
+| Version identity mutation | PASS: renumbering/reparenting rejected |
+| Publication aggregate validation / transaction / pointer / edit race / concurrent drafts | PASS for supported schema |
+| Exact pin / DRAFT rejection / v2 leaves v1 / explicit migration / competing migration / evidence | PASS |
+| Recommendation codes canonical / unknown Module rejected | PASS |
+| Recommendations change Subscription / PlanVersion / grants / RBAC | NO / NO / NO / NO |
+| Historical migrations / M5 / M6 / M7 | PASS via full migrate-deploy chain |
+| Reconciliation dry-run / hash apply / duplicate replay / invalid-batch rollback | PASS on isolated PostgreSQL |
+| RBAC sync / API tsc / Web tsc / API build / Web build | PASS |
+| Unit suites / tests | 12/12; 74/74 |
+| E2E suites / tests | 6/6; 91/91 |
+| Fixture entries found / reviewed / unique codes | 25 / 25 / 25 |
+| Current obsolete / unknown Module references | 0 / 0; known historical alias regressions covered |
+| Production-approved/published candidates | 0 / 0 |
+| Final main SHA | Unchanged baseline; this PR is not merged |
+
+Frozen touch accounting: **0.1 YES** (PlatformModule inverse schema relation only); **0.2 YES** (User/Tenant inverse schema relations only); **0.3 NO** (principal, isolation and guards unchanged); **0.4 YES** (one Industry manage permission, narrow existing super-admin grant); **0.5 NO**; **0.6 YES** (IndustryClassification inverse schema relation only, transaction code reused unchanged). The shared AppModule only registers the new module. No incumbent runtime behavior or historical migration was rewritten.
+
+Added files (relative to repository root):
+
+- `apps/api/src/platform/industries/`: industry-core.module.ts, platform-industries.module.ts, industry.service.ts, industry-assignment.service.ts, industry-import.service.ts, industry.controller.ts, industry-contract.ts, industry-contract.spec.ts, industry-candidates.ts.
+- `apps/api/prisma/backfills/reconcile-industries.ts`.
+- Three M7 migration.sql files listed above.
+- `apps/api/test/industry-templates.e2e-spec.ts`.
+- `docs/architecture/PHASE_0_7_INDUSTRY_FIXTURE_REVIEW.md` and this implementation/release report.
+
+Modified files: apps/api/package.json, apps/api/prisma/schema.prisma, apps/api/src/app.module.ts, apps/api/src/common/security/permission-registry.ts, docs/architecture/PHASE_0_EXECUTION_PLAN.md.
+
+P0: missing nonempty product snapshot definitions or approved deferral; reviewed release and exact merged-main CI. P1: no additional Phase 0.7 code blocker identified in this verification; the dependency audit findings below remain separately untriaged. P2: existing web bundle warning. Deferred to 0.8: final Master Engine and effective defaults. Deferred to 0.9: runtime resolver/bootstrap. Deployment-only gates: product publication approvals, database backup/deploy, RBAC sync and exact production Tenant mappings. No production migration or mapping was applied.
+
 ## Non-gating environment findings
 
 The clean install reports 35 dependency vulnerabilities (3 low, 16 moderate, 16 high). No dependency versions or lockfile were changed. Web build retains its existing large-bundle warning. No unrelated dependency or frontend refactor was attempted. Windows Vite/esbuild held a binary during the first npm ci; only that identified helper was stopped with explicit user approval. Restart the local development server when needed.

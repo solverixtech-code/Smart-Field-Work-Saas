@@ -1,11 +1,19 @@
 import { readFile } from 'fs/promises';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../../src/app.module';
+import { Module } from '@nestjs/common';
+import { IndustryCoreModule } from '../../src/platform/industries/industry-core.module';
+import { PermissionCacheService } from '../../src/common/security/permission-cache.service';
 import { EffectivePermissionService } from '../../src/common/security/effective-permission.service';
 import { PrismaService } from '../../src/persistence/prisma.service';
 import { IndustryAssignmentService } from '../../src/platform/industries/industry-assignment.service';
 import { IndustryImportService } from '../../src/platform/industries/industry-import.service';
 import { INDUSTRY_CANDIDATES } from '../../src/platform/industries/industry-candidates';
+
+@Module({
+  imports: [IndustryCoreModule],
+  providers: [EffectivePermissionService, PermissionCacheService],
+})
+class IndustryReconciliationModule {}
 
 async function main() {
   const [source, actorUserId, mode, approvedHash] = process.argv.slice(2);
@@ -19,9 +27,12 @@ async function main() {
       'Usage: npm run db:reconcile:industries -- mapping.json|--candidates actorUserId --dry-run|--apply reviewedHash',
     );
   }
-  const app = await NestFactory.createApplicationContext(AppModule, {
-    logger: ['error', 'warn'],
-  });
+  const app = await NestFactory.createApplicationContext(
+    IndustryReconciliationModule,
+    {
+      logger: ['error', 'warn'],
+    },
+  );
   try {
     const actor = await app.get(PrismaService).user.findUnique({
       where: { id: actorUserId },

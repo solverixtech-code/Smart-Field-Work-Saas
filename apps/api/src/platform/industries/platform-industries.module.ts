@@ -1,8 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PlatformSubscriptionsModule } from '../subscriptions/platform-subscriptions.module';
-import { IndustryService } from './industry.service';
-import { IndustryAssignmentService } from './industry-assignment.service';
-import { IndustryImportService } from './industry-import.service';
+import { IndustryCoreModule } from './industry-core.module';
 import {
   IndustryController,
   PlatformIndustryAssignmentController,
@@ -10,17 +7,12 @@ import {
 } from './industry.controller';
 
 @Module({
-  imports: [PlatformSubscriptionsModule],
-  providers: [
-    IndustryService,
-    IndustryAssignmentService,
-    IndustryImportService,
-  ],
+  imports: [IndustryCoreModule],
   controllers: [
     IndustryController,
     PlatformIndustryAssignmentController,
     TenantIndustryAssignmentController,
   ],
-  exports: [IndustryService, IndustryAssignmentService, IndustryImportService],
+  exports: [IndustryCoreModule],
 })
 export class PlatformIndustriesModule {}

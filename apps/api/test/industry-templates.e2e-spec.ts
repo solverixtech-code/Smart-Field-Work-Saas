@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { randomUUID } from 'crypto';
-import { execFileSync } from 'child_process';
+import { execFileSync, spawnSync } from 'child_process';
 import request from 'supertest';
 import { z } from 'zod';
 import { AppModule } from '../src/app.module';
@@ -228,6 +228,42 @@ describe('Phase 0.7 Industry PostgreSQL, API and concurrency proof', () => {
       ),
     ).rejects.toThrow('provenance');
   });
+
+  it('runs the actual CLI without HTTP bootstrap and enforces its actor permission', async () => {
+    const run = (userId: string) =>
+      spawnSync(
+        process.execPath,
+        [
+          require.resolve('ts-node/dist/bin.js'),
+          'prisma/backfills/reconcile-industries.ts',
+          '--candidates',
+          userId,
+          '--dry-run',
+        ],
+        {
+          cwd: process.cwd(),
+          env: {
+            ...process.env,
+            JWT_ACCESS_SECRET: undefined,
+            JWT_REFRESH_SECRET: undefined,
+          },
+          encoding: 'utf8',
+          timeout: 30000,
+        },
+      );
+    const allowed = run(actorUserId);
+    expect({ status: allowed.status, stderr: allowed.stderr }).toEqual({
+      status: 0,
+      stderr: '',
+    });
+    const report = z
+      .object({ mode: z.literal('DRY_RUN'), total: z.literal(25) })
+      .parse(JSON.parse(allowed.stdout));
+    expect(report.total).toBe(25);
+    const denied = run((await makeUser()).id);
+    expect(denied.status).toBe(1);
+    expect(denied.stderr).toContain('required Industry permission');
+  }, 60000);
 
   it('retains an exact v1 pin when v2 publishes, then explicitly migrates with immutable evidence', async () => {
     const template = await makeTemplate();
