@@ -10,11 +10,11 @@ import { TenantMembershipStatus, DataScope } from '@prisma/client';
 export class CreateMembershipDto {
   @IsString()
   @IsNotEmpty()
-  tenantId: string;
+  tenantId!: string;
 
   @IsString()
   @IsNotEmpty()
-  userId: string;
+  userId!: string;
 
   @IsString()
   @IsOptional()
@@ -60,7 +60,7 @@ export class CreateMembershipDto {
 export class UpdateMembershipStatusDto {
   @IsEnum(TenantMembershipStatus)
   @IsNotEmpty()
-  status: TenantMembershipStatus;
+  status!: TenantMembershipStatus;
 }
 
 export class UpdateMembershipProfileDto {
