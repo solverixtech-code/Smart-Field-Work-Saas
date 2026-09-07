@@ -11,6 +11,11 @@ jobs:
     name: Build, Lint & E2E Proof Verification
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public
+      TEST_DATABASE_URL: postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public
+      JWT_SECRET: super-secret-test-jwt-key
+
     services:
       postgres:
         image: postgres:15-alpine
