@@ -133,7 +133,7 @@ export class PlatformPlansService {
       throw new ConflictException(`Plan with code '${normalizedCode}' already exists`);
     }
 
-    // Resolve module IDs from codes
+    // Resolve module IDs from codes and verify completeness
     const modules = await this.prisma.platformModule.findMany({
       where: { code: { in: dto.includedModuleCodes } },
     });
@@ -471,7 +471,7 @@ export class PlatformPlansService {
         return this.queryService.formatVersion(fullDraft as any, fullDraft?.plan.currentPublishedVersionId || null);
       } catch (err: any) {
         if (
-          (err.code === 'P2034' || err.message?.includes('serialization') || err.message?.includes('deadlock')) &&
+          (err.code === 'P2034' || err.message?.includes('serialization') || err.message?.includes('deadlock') || err.message?.includes('write conflict')) &&
           retries > 1
         ) {
           retries--;
@@ -482,6 +482,7 @@ export class PlatformPlansService {
           err.code === 'P2002' ||
           err.code === 'P2034' ||
           err.message?.includes('unique constraint') ||
+          err.message?.includes('write conflict') ||
           err.message?.includes('already has an active DRAFT')
         ) {
           throw new ConflictException(`Draft version allocation conflict for plan '${planId}'`);
@@ -498,114 +499,147 @@ export class PlatformPlansService {
     dto: UpdatePlanDraftDto,
     actorUserId?: string,
   ): Promise<FormattedPlanVersionDto> {
-    const version = await this.prisma.planVersion.findFirst({
-      where: { id: versionId, planId },
-    });
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        return await this.prisma.$transaction(
+          async (tx) => {
+            // 1. Acquire FOR UPDATE row lock on PlanVersion FIRST inside transaction
+            const lockedVersionRows: Array<{ id: string; planId: string; version: number; status: PlanVersionStatus }> =
+              await tx.$queryRaw`SELECT "id", "planId", "version", "status" FROM "PlanVersion" WHERE "id" = ${versionId} AND "planId" = ${planId} FOR UPDATE`;
 
-    if (!version) {
-      throw new NotFoundException(`PlanVersion '${versionId}' not found for plan '${planId}'`);
-    }
+            if (!lockedVersionRows || lockedVersionRows.length === 0) {
+              throw new NotFoundException(`PlanVersion '${versionId}' not found for plan '${planId}'`);
+            }
+            const version = lockedVersionRows[0];
 
-    if (version.status === PlanVersionStatus.PUBLISHED) {
-      throw new ConflictException(`PlanVersion '${version.version}' is PUBLISHED and strictly immutable.`);
-    }
+            if (version.status === PlanVersionStatus.PUBLISHED) {
+              throw new ConflictException(`PlanVersion '${version.version}' is PUBLISHED and strictly immutable.`);
+            }
 
-    await this.prisma.$transaction(async (tx) => {
-      // Update pricing if provided
-      if (dto.pricing) {
-        await tx.planPricing.deleteMany({ where: { planVersionId: version.id } });
-        for (const p of dto.pricing) {
-          await tx.planPricing.create({
-            data: {
-              planVersionId: version.id,
-              model: p.model as any,
-              billingCycle: p.billingCycle,
-              currency: p.currency,
-              baseFee: p.baseFee ?? null,
-              perSeatFee: p.perSeatFee ?? null,
-              flatFee: p.flatFee ?? null,
-              setupFee: p.setupFee ?? null,
-              minimumCommitmentAmount: p.minimumCommitmentAmount ?? null,
-              discountPercent: p.discountPercent ?? null,
-              taxMode: p.taxMode,
-              prorationPolicy: p.prorationPolicy,
-            },
-          });
-        }
-      }
+            // 2. Validate included module codes ATOMICALLY (Item 3 fix: reject unknown modules)
+            if (dto.includedModuleCodes) {
+              const modules = await tx.platformModule.findMany({
+                where: { code: { in: dto.includedModuleCodes } },
+              });
+              if (modules.length !== dto.includedModuleCodes.length) {
+                const foundCodes = modules.map((m) => m.code);
+                const missing = dto.includedModuleCodes.filter((c) => !foundCodes.includes(c));
+                throw new BadRequestException(`Module codes not found in platform catalog: ${missing.join(', ')}`);
+              }
+              await tx.planModule.deleteMany({ where: { planVersionId: version.id } });
+              for (const m of modules) {
+                await tx.planModule.create({
+                  data: {
+                    planVersionId: version.id,
+                    moduleId: m.id,
+                  },
+                });
+              }
+            }
 
-      // Update limits if provided
-      if (dto.limits) {
-        await tx.planLimit.deleteMany({ where: { planVersionId: version.id } });
-        for (const l of dto.limits) {
-          await tx.planLimit.create({
-            data: {
-              planVersionId: version.id,
-              limitCode: l.limitCode,
-              valueType: l.valueType as any,
-              integerValue: l.integerValue ?? null,
-              decimalValue: l.decimalValue ?? null,
-              booleanValue: l.booleanValue ?? null,
-              isUnlimited: l.isUnlimited,
-              unit: l.unit ?? null,
-            },
-          });
-        }
-      }
+            // 3. Update pricing if provided
+            if (dto.pricing) {
+              await tx.planPricing.deleteMany({ where: { planVersionId: version.id } });
+              for (const p of dto.pricing) {
+                await tx.planPricing.create({
+                  data: {
+                    planVersionId: version.id,
+                    model: p.model as any,
+                    billingCycle: p.billingCycle,
+                    currency: p.currency,
+                    baseFee: p.baseFee ?? null,
+                    perSeatFee: p.perSeatFee ?? null,
+                    flatFee: p.flatFee ?? null,
+                    setupFee: p.setupFee ?? null,
+                    minimumCommitmentAmount: p.minimumCommitmentAmount ?? null,
+                    discountPercent: p.discountPercent ?? null,
+                    taxMode: p.taxMode,
+                    prorationPolicy: p.prorationPolicy,
+                  },
+                });
+              }
+            }
 
-      // Update modules if provided
-      if (dto.includedModuleCodes) {
-        const modules = await tx.platformModule.findMany({
-          where: { code: { in: dto.includedModuleCodes } },
-        });
-        await tx.planModule.deleteMany({ where: { planVersionId: version.id } });
-        for (const m of modules) {
-          await tx.planModule.create({
-            data: {
-              planVersionId: version.id,
-              moduleId: m.id,
-            },
-          });
-        }
-      }
+            // 4. Update limits if provided
+            if (dto.limits) {
+              await tx.planLimit.deleteMany({ where: { planVersionId: version.id } });
+              for (const l of dto.limits) {
+                await tx.planLimit.create({
+                  data: {
+                    planVersionId: version.id,
+                    limitCode: l.limitCode,
+                    valueType: l.valueType as any,
+                    integerValue: l.integerValue ?? null,
+                    decimalValue: l.decimalValue ?? null,
+                    booleanValue: l.booleanValue ?? null,
+                    isUnlimited: l.isUnlimited,
+                    unit: l.unit ?? null,
+                  },
+                });
+              }
+            }
 
-      // Update commercial rules if provided
-      if (dto.commercialRules) {
-        await tx.planCommercialRule.upsert({
-          where: { planVersionId: version.id },
-          create: {
-            planVersionId: version.id,
-            schemaVersion: 1,
-            rules: dto.commercialRules as any,
+            // 5. Update commercial rules if provided
+            if (dto.commercialRules) {
+              await tx.planCommercialRule.upsert({
+                where: { planVersionId: version.id },
+                create: {
+                  planVersionId: version.id,
+                  schemaVersion: 1,
+                  rules: dto.commercialRules as any,
+                },
+                update: {
+                  rules: dto.commercialRules as any,
+                },
+              });
+            }
+
+            await tx.auditLog.create({
+              data: {
+                actorUserId,
+                action: 'PLAN_DRAFT_UPDATED',
+                entityType: 'PlanVersion',
+                entityId: version.id,
+              },
+            });
+
+            const updated = await tx.planVersion.findUnique({
+              where: { id: version.id },
+              include: {
+                pricing: true,
+                limits: true,
+                modules: { include: { module: true } },
+                commercialRule: true,
+                plan: true,
+              },
+            });
+
+            return this.queryService.formatVersion(updated as any, updated?.plan.currentPublishedVersionId || null);
           },
-          update: {
-            rules: dto.commercialRules as any,
-          },
-        });
+          { isolationLevel: 'Serializable' },
+        );
+      } catch (err: any) {
+        if (
+          (err.code === 'P2034' || err.message?.includes('serialization') || err.message?.includes('deadlock') || err.message?.includes('write conflict')) &&
+          retries > 1
+        ) {
+          retries--;
+          await new Promise((res) => setTimeout(res, 50));
+          continue;
+        }
+        if (
+          err.code === 'P2002' ||
+          err.code === 'P2034' ||
+          err.message?.includes('unique constraint') ||
+          err.message?.includes('write conflict')
+        ) {
+          throw new ConflictException(`Update conflict for plan '${planId}'`);
+        }
+        throw err;
       }
-
-      await tx.auditLog.create({
-        data: {
-          actorUserId,
-          action: 'PLAN_DRAFT_UPDATED',
-          entityType: 'PlanVersion',
-          entityId: version.id,
-        },
-      });
-    });
-
-    const updated = await this.prisma.planVersion.findUnique({
-      where: { id: version.id },
-      include: {
-        pricing: true,
-        limits: true,
-        modules: { include: { module: true } },
-        commercialRule: true,
-        plan: true,
-      },
-    });
-
-    return this.queryService.formatVersion(updated as any, updated?.plan.currentPublishedVersionId || null);
+    }
+    throw new ConflictException(`Update conflict for plan '${planId}'`);
   }
 
   async publishPlanVersion(
@@ -614,120 +648,173 @@ export class PlatformPlansService {
     publishDto?: PublishPlanDto,
     actorUserId?: string,
   ): Promise<FormattedPlanDto> {
-    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
-    if (!plan) throw new NotFoundException(`Plan '${planId}' not found`);
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        return await this.prisma.$transaction(
+          async (tx) => {
+            // 1. Acquire FOR UPDATE row lock on Plan inside transaction FIRST
+            const lockedPlanRows: Array<{ id: string; status: PlanStatus; code: string; currentPublishedVersionId: string | null }> =
+              await tx.$queryRaw`SELECT "id", "status", "code", "currentPublishedVersionId" FROM "Plan" WHERE "id" = ${planId} FOR UPDATE`;
 
-    if (plan.status === PlanStatus.ARCHIVED) {
-      throw new ConflictException(`Cannot publish version for archived Plan '${plan.code}'`);
-    }
+            if (!lockedPlanRows || lockedPlanRows.length === 0) {
+              throw new NotFoundException(`Plan '${planId}' not found`);
+            }
+            const plan = lockedPlanRows[0];
 
-    const version = await this.prisma.planVersion.findFirst({
-      where: { id: versionId, planId },
-      include: {
-        pricing: true,
-        limits: true,
-        modules: { include: { module: true } },
-        commercialRule: true,
-      },
-    });
+            if (plan.status === PlanStatus.ARCHIVED) {
+              throw new ConflictException(`Cannot publish version for archived Plan '${plan.code}'`);
+            }
 
-    if (!version) {
-      throw new NotFoundException(`PlanVersion '${versionId}' not found for plan '${planId}'`);
-    }
+            // 2. Acquire FOR UPDATE row lock on PlanVersion inside transaction FIRST
+            const lockedVersionRows: Array<{ id: string; planId: string; version: number; status: PlanVersionStatus }> =
+              await tx.$queryRaw`SELECT "id", "planId", "version", "status" FROM "PlanVersion" WHERE "id" = ${versionId} AND "planId" = ${planId} FOR UPDATE`;
 
-    if (version.status === PlanVersionStatus.PUBLISHED) {
-      throw new ConflictException(`PlanVersion '${version.version}' is already PUBLISHED.`);
-    }
+            if (!lockedVersionRows || lockedVersionRows.length === 0) {
+              throw new NotFoundException(`PlanVersion '${versionId}' not found for plan '${planId}'`);
+            }
+            const versionRow = lockedVersionRows[0];
 
-    // Pass formatted pricing DTOs while keeping Decimal string representation intact
-    const pricingDtos = this.queryService.formatPricing(version.pricing).map((p) => ({
-      model: p.model as any,
-      billingCycle: p.billingCycle as any,
-      currency: p.currency,
-      baseFee: p.baseFee ? (p.baseFee as any) : undefined,
-      perSeatFee: p.perSeatFee ? (p.perSeatFee as any) : undefined,
-      flatFee: p.flatFee ? (p.flatFee as any) : undefined,
-      setupFee: p.setupFee ? (p.setupFee as any) : undefined,
-      minimumCommitmentAmount: p.minimumCommitmentAmount ? (p.minimumCommitmentAmount as any) : undefined,
-      discountPercent: p.discountPercent ? (p.discountPercent as any) : undefined,
-      taxMode: p.taxMode as any,
-      prorationPolicy: p.prorationPolicy as any,
-    }));
+            if (versionRow.status === PlanVersionStatus.PUBLISHED) {
+              throw new ConflictException(`PlanVersion '${versionRow.version}' is already PUBLISHED.`);
+            }
 
-    const limitDtos = this.queryService.formatLimits(version.limits).map((l) => ({
-      limitCode: l.limitCode,
-      valueType: l.valueType as any,
-      integerValue: l.integerValue ?? undefined,
-      decimalValue: l.decimalValue ? (l.decimalValue as any) : undefined,
-      booleanValue: l.booleanValue ?? undefined,
-      isUnlimited: l.isUnlimited,
-      unit: l.unit ?? undefined,
-    }));
+            // 3. Read the locked version children INSIDE the locking transaction
+            const version = await tx.planVersion.findUnique({
+              where: { id: versionId },
+              include: {
+                pricing: true,
+                limits: true,
+                modules: { include: { module: true } },
+                commercialRule: true,
+              },
+            });
 
-    const includedModuleCodes = version.modules.map((m) => m.module.code);
-    const commercialRules = (version.commercialRule?.rules as any) || {};
+            if (!version) {
+              throw new NotFoundException(`PlanVersion '${versionId}' not found for plan '${planId}'`);
+            }
 
-    const validationResult = await this.policyService.validateForPublication(
-      pricingDtos,
-      limitDtos,
-      includedModuleCodes,
-      commercialRules,
-      publishDto,
-    );
+            // 4. Format DTOs and validate INSIDE the locking transaction on the current locked snapshot
+            const pricingDtos = this.queryService.formatPricing(version.pricing).map((p) => ({
+              model: p.model as any,
+              billingCycle: p.billingCycle as any,
+              currency: p.currency,
+              baseFee: p.baseFee ? p.baseFee : undefined,
+              perSeatFee: p.perSeatFee ? p.perSeatFee : undefined,
+              flatFee: p.flatFee ? p.flatFee : undefined,
+              setupFee: p.setupFee ? p.setupFee : undefined,
+              minimumCommitmentAmount: p.minimumCommitmentAmount ? p.minimumCommitmentAmount : undefined,
+              discountPercent: p.discountPercent ? p.discountPercent : undefined,
+              taxMode: p.taxMode as any,
+              prorationPolicy: p.prorationPolicy as any,
+            }));
 
-    if (!validationResult.isValid) {
-      throw new BadRequestException({
-        message: 'Plan publication policy validation failed',
-        errors: validationResult.errors,
-        warnings: validationResult.warnings,
-      });
-    }
+            const limitDtos = this.queryService.formatLimits(version.limits).map((l) => ({
+              limitCode: l.limitCode,
+              valueType: l.valueType as any,
+              integerValue: l.integerValue ?? undefined,
+              decimalValue: l.decimalValue ? l.decimalValue : undefined,
+              booleanValue: l.booleanValue ?? undefined,
+              isUnlimited: l.isUnlimited,
+              unit: l.unit ?? undefined,
+            }));
 
-    // Atomic publication transaction with row lock
-    await this.prisma.$transaction(
-      async (tx) => {
-        // Row locks
-        await tx.$queryRaw`SELECT "id" FROM "Plan" WHERE "id" = ${plan.id} FOR UPDATE`;
-        const lockedVer = await tx.$queryRaw`SELECT "id", "status" FROM "PlanVersion" WHERE "id" = ${version.id} FOR UPDATE`;
-        const verStatus = (lockedVer as any)[0]?.status;
+            const includedModuleCodes = version.modules.map((m) => m.module.code);
+            const commercialRules = (version.commercialRule?.rules as any) || {};
 
-        if (verStatus === PlanVersionStatus.PUBLISHED) {
-          throw new ConflictException(`PlanVersion '${version.version}' is already PUBLISHED.`);
+            const validationResult = await this.policyService.validateForPublication(
+              pricingDtos as any,
+              limitDtos as any,
+              includedModuleCodes,
+              commercialRules,
+              publishDto,
+            );
+
+            if (!validationResult.isValid) {
+              throw new BadRequestException({
+                message: 'Plan publication policy validation failed',
+                errors: validationResult.errors,
+                warnings: validationResult.warnings,
+              });
+            }
+
+            // 5. Update status to PUBLISHED inside the transaction
+            const now = new Date();
+
+            await tx.planVersion.update({
+              where: { id: version.id },
+              data: {
+                status: PlanVersionStatus.PUBLISHED,
+                publishedAt: now,
+                publishedByUserId: actorUserId || null,
+              },
+            });
+
+            await tx.plan.update({
+              where: { id: plan.id },
+              data: {
+                status: PlanStatus.ACTIVE,
+                currentPublishedVersionId: version.id,
+              },
+            });
+
+            await tx.auditLog.create({
+              data: {
+                actorUserId,
+                action: 'PLAN_VERSION_PUBLISHED',
+                entityType: 'PlanVersion',
+                entityId: version.id,
+                afterJson: { planId: plan.id, version: version.version, publishedAt: now },
+              },
+            });
+
+            return this.queryService.formatPlan(
+              (await tx.plan.findUnique({
+                where: { id: plan.id },
+                include: {
+                  currentPublishedVersion: {
+                    include: {
+                      pricing: true,
+                      limits: true,
+                      modules: { include: { module: true } },
+                      commercialRule: true,
+                    },
+                  },
+                  versions: {
+                    include: {
+                      pricing: true,
+                      limits: true,
+                      modules: { include: { module: true } },
+                      commercialRule: true,
+                    },
+                  },
+                },
+              })) as any,
+            );
+          },
+          { isolationLevel: 'Serializable' },
+        );
+      } catch (err: any) {
+        if (
+          (err.code === 'P2034' || err.message?.includes('serialization') || err.message?.includes('deadlock') || err.message?.includes('write conflict')) &&
+          retries > 1
+        ) {
+          retries--;
+          await new Promise((res) => setTimeout(res, 50));
+          continue;
         }
-
-        const now = new Date();
-
-        await tx.planVersion.update({
-          where: { id: version.id },
-          data: {
-            status: PlanVersionStatus.PUBLISHED,
-            publishedAt: now,
-            publishedByUserId: actorUserId || null,
-          },
-        });
-
-        await tx.plan.update({
-          where: { id: plan.id },
-          data: {
-            status: PlanStatus.ACTIVE,
-            currentPublishedVersionId: version.id,
-          },
-        });
-
-        await tx.auditLog.create({
-          data: {
-            actorUserId,
-            action: 'PLAN_VERSION_PUBLISHED',
-            entityType: 'PlanVersion',
-            entityId: version.id,
-            afterJson: { planId: plan.id, version: version.version, publishedAt: now },
-          },
-        });
-      },
-      { isolationLevel: 'Serializable' },
-    );
-
-    return this.getPlanById(plan.id);
+        if (
+          err.code === 'P2002' ||
+          err.code === 'P2034' ||
+          err.message?.includes('unique constraint') ||
+          err.message?.includes('write conflict')
+        ) {
+          throw new ConflictException(`Publication conflict for plan '${planId}'`);
+        }
+        throw err;
+      }
+    }
+    throw new ConflictException(`Publication conflict for plan '${planId}'`);
   }
 
   async archivePlan(planId: string, actorUserId?: string): Promise<FormattedPlanDto> {

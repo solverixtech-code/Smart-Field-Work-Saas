@@ -9,7 +9,6 @@ import {
   IsArray,
   ValidateNested,
   IsBoolean,
-  IsNumber,
   Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -36,35 +35,34 @@ export class PlanPricingInputDto {
   currency!: string;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  baseFee?: number;
+  @IsString()
+  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'baseFee must be a valid decimal string (e.g. "499.00")' })
+  baseFee?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  perSeatFee?: number;
+  @IsString()
+  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'perSeatFee must be a valid decimal string (e.g. "499.00")' })
+  perSeatFee?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  flatFee?: number;
+  @IsString()
+  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'flatFee must be a valid decimal string (e.g. "499.00")' })
+  flatFee?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  setupFee?: number;
+  @IsString()
+  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'setupFee must be a valid decimal string (e.g. "1500.00")' })
+  setupFee?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  minimumCommitmentAmount?: number;
+  @IsString()
+  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'minimumCommitmentAmount must be a valid decimal string (e.g. "1000.00")' })
+  minimumCommitmentAmount?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  discountPercent?: number;
+  @IsString()
+  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'discountPercent must be a valid decimal string (e.g. "15.50")' })
+  discountPercent?: string;
 
   @IsEnum(TaxModeEnum)
   taxMode!: TaxModeEnum;
@@ -87,9 +85,9 @@ export class PlanLimitInputDto {
   integerValue?: number;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  decimalValue?: number;
+  @IsString()
+  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'decimalValue must be a valid decimal string (e.g. "10.00")' })
+  decimalValue?: string;
 
   @IsOptional()
   @IsBoolean()

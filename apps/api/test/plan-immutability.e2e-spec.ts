@@ -62,7 +62,7 @@ describe('Plan Commercial Engine — Database Immutability & Pointer Invariant E
         model: 'PER_USER' as any,
         billingCycle: 'MONTHLY' as any,
         currency: 'INR',
-        perSeatFee: 499,
+        perSeatFee: '499.00',
         taxMode: 'EXCLUSIVE' as any,
         prorationPolicy: 'IMMEDIATE' as any,
       },
@@ -127,7 +127,7 @@ describe('Plan Commercial Engine — Database Immutability & Pointer Invariant E
     await expect(
       prisma.planPricing.update({
         where: { id: pricing.id },
-        data: { perSeatFee: 999 },
+        data: { perSeatFee: '999.00' },
       })
     ).rejects.toThrow();
 
@@ -144,7 +144,7 @@ describe('Plan Commercial Engine — Database Immutability & Pointer Invariant E
           model: 'PER_USER' as any,
           billingCycle: 'ANNUAL' as any,
           currency: 'INR',
-          perSeatFee: 399,
+          perSeatFee: '399.00',
           taxMode: 'EXCLUSIVE' as any,
           prorationPolicy: 'IMMEDIATE' as any,
         },
@@ -170,7 +170,7 @@ describe('Plan Commercial Engine — Database Immutability & Pointer Invariant E
           planVersionId: publishedVersion.id,
           limitCode: 'storage_gb',
           valueType: 'DECIMAL' as any,
-          decimalValue: 100,
+          decimalValue: '100.00',
           isUnlimited: false,
         },
       })
@@ -208,7 +208,7 @@ describe('Plan Commercial Engine — Database Immutability & Pointer Invariant E
       data: { planId: plan.id, version: 1, status: 'DRAFT' as any },
     });
     await prisma.planPricing.create({
-      data: { planVersionId: v1.id, model: 'PER_USER' as any, billingCycle: 'MONTHLY' as any, currency: 'INR', perSeatFee: 499, taxMode: 'EXCLUSIVE' as any, prorationPolicy: 'NONE' as any },
+      data: { planVersionId: v1.id, model: 'PER_USER' as any, billingCycle: 'MONTHLY' as any, currency: 'INR', perSeatFee: '499.00', taxMode: 'EXCLUSIVE' as any, prorationPolicy: 'NONE' as any },
     });
     await prisma.planVersion.update({ where: { id: v1.id }, data: { status: 'PUBLISHED' as any, publishedAt: new Date() } });
     await prisma.plan.update({ where: { id: plan.id }, data: { status: 'ACTIVE' as any, currentPublishedVersionId: v1.id } });
@@ -218,13 +218,13 @@ describe('Plan Commercial Engine — Database Immutability & Pointer Invariant E
       data: { planId: plan.id, version: 2, status: 'DRAFT' as any },
     });
     const v2Pricing = await prisma.planPricing.create({
-      data: { planVersionId: v2.id, model: 'PER_USER' as any, billingCycle: 'MONTHLY' as any, currency: 'INR', perSeatFee: 699, taxMode: 'EXCLUSIVE' as any, prorationPolicy: 'NONE' as any },
+      data: { planVersionId: v2.id, model: 'PER_USER' as any, billingCycle: 'MONTHLY' as any, currency: 'INR', perSeatFee: '699.00', taxMode: 'EXCLUSIVE' as any, prorationPolicy: 'NONE' as any },
     });
 
     // Mutating v2 draft succeeds
     const updatedV2Pricing = await prisma.planPricing.update({
       where: { id: v2Pricing.id },
-      data: { perSeatFee: 799 },
+      data: { perSeatFee: '799.00' },
     });
     expect(updatedV2Pricing.perSeatFee?.toNumber()).toBe(799);
 

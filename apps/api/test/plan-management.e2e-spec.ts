@@ -115,7 +115,7 @@ describe('Plan Commercial Engine — REST API & Full RBAC Matrix E2E Test Suite'
     expect(resDeny.status).toBe(403);
   });
 
-  it('2. POST /platform/plans should create a new Plan identity and DRAFT v1 snapshot (Allow + Deny RBAC)', async () => {
+  it('2. POST /platform/plans should create a new Plan identity and DRAFT v1 snapshot with Decimal strings (Allow + Deny RBAC)', async () => {
     const testCode = `E2E_PLAN_${Date.now()}`;
     const payload = {
       code: testCode,
@@ -128,7 +128,7 @@ describe('Plan Commercial Engine — REST API & Full RBAC Matrix E2E Test Suite'
           model: 'PER_USER',
           billingCycle: 'MONTHLY',
           currency: 'INR',
-          perSeatFee: 999,
+          perSeatFee: '999.00',
           taxMode: 'EXCLUSIVE',
           prorationPolicy: 'IMMEDIATE',
         },
@@ -137,6 +137,7 @@ describe('Plan Commercial Engine — REST API & Full RBAC Matrix E2E Test Suite'
         { limitCode: 'minimum_seats', valueType: 'INTEGER', integerValue: 2, isUnlimited: false },
         { limitCode: 'default_seat_limit', valueType: 'INTEGER', integerValue: 10, isUnlimited: false },
         { limitCode: 'maximum_seats', valueType: 'INTEGER', integerValue: 50, isUnlimited: false },
+        { limitCode: 'storage_gb', valueType: 'DECIMAL', decimalValue: '10.00', isUnlimited: false },
       ],
       includedModuleCodes: ['core_crm'],
       commercialRules: {
@@ -190,7 +191,7 @@ describe('Plan Commercial Engine — REST API & Full RBAC Matrix E2E Test Suite'
         description: 'Test version detail endpoint',
         visibility: 'PUBLIC',
         displayOrder: 15,
-        pricing: [{ model: 'PER_USER', billingCycle: 'MONTHLY', currency: 'INR', perSeatFee: 499, taxMode: 'EXCLUSIVE', prorationPolicy: 'NONE' }],
+        pricing: [{ model: 'PER_USER', billingCycle: 'MONTHLY', currency: 'INR', perSeatFee: '499.00', taxMode: 'EXCLUSIVE', prorationPolicy: 'NONE' }],
         limits: [{ limitCode: 'minimum_seats', valueType: 'INTEGER', integerValue: 1, isUnlimited: false }],
         includedModuleCodes: ['core_crm'],
         commercialRules: { trialEnabled: false, trialDurationDays: 14, trialModulePolicy: 'USE_PLAN_MODULES', autoConvertAfterTrial: false, autoRenew: true, allowUpgrade: true, allowDowngrade: true, changeEffectiveTiming: 'IMMEDIATE', minimumCommitmentMonths: '0', availableForNewTenants: true, availableForExistingTenants: true, cancellationAllowed: true, gracePeriodDays: 7, accessAfterExpiry: 'READ_ONLY' },
@@ -207,7 +208,46 @@ describe('Plan Commercial Engine — REST API & Full RBAC Matrix E2E Test Suite'
     expect(detailRes.body.planId).toBe(planId);
   });
 
-  it('4. POST /platform/plans/:id/versions/draft should create v2 DRAFT and handle concurrent requests safely', async () => {
+  it('4. PATCH /platform/plans/:planId/versions/:versionId must atomically reject unknown module codes with 400', async () => {
+    const testCode = `UNKNOWN_MOD_${Date.now()}`;
+    const planRes = await request(app.getHttpServer())
+      .post('/platform/plans')
+      .set('Authorization', `Bearer ${platformAdminToken}`)
+      .send({
+        code: testCode,
+        name: 'Unknown Module Test Plan',
+        description: 'Test atomic rejection of unknown modules',
+        visibility: 'PUBLIC',
+        displayOrder: 18,
+        pricing: [{ model: 'PER_USER', billingCycle: 'MONTHLY', currency: 'INR', perSeatFee: '499.00', taxMode: 'EXCLUSIVE', prorationPolicy: 'NONE' }],
+        limits: [{ limitCode: 'minimum_seats', valueType: 'INTEGER', integerValue: 1, isUnlimited: false }],
+        includedModuleCodes: ['core_crm'],
+        commercialRules: { trialEnabled: false, trialDurationDays: 14, trialModulePolicy: 'USE_PLAN_MODULES', autoConvertAfterTrial: false, autoRenew: true, allowUpgrade: true, allowDowngrade: true, changeEffectiveTiming: 'IMMEDIATE', minimumCommitmentMonths: '0', availableForNewTenants: true, availableForExistingTenants: true, cancellationAllowed: true, gracePeriodDays: 7, accessAfterExpiry: 'READ_ONLY' },
+      });
+
+    const planId = planRes.body.id;
+    const versionId = planRes.body.currentDraftVersion.id;
+
+    // PATCH draft with unknown module code
+    const patchRes = await request(app.getHttpServer())
+      .patch(`/platform/plans/${planId}/versions/${versionId}`)
+      .set('Authorization', `Bearer ${platformAdminToken}`)
+      .send({
+        includedModuleCodes: ['core_crm', 'invalid_unknown_module_xyz'],
+      });
+
+    expect(patchRes.status).toBe(400);
+    expect(patchRes.body.message).toContain('invalid_unknown_module_xyz');
+
+    // Verify existing modules were NOT modified or deleted
+    const checkRes = await request(app.getHttpServer())
+      .get(`/platform/plans/${planId}`)
+      .set('Authorization', `Bearer ${platformAdminToken}`);
+
+    expect(checkRes.body.currentDraftVersion.includedModuleCodes).toEqual(['core_crm']);
+  });
+
+  it('5. POST /platform/plans/:id/versions/draft should create v2 DRAFT and handle concurrent requests safely', async () => {
     const testCode = `CONCURR_CLONE_${Date.now()}`;
 
     // Create & publish v1
@@ -220,7 +260,7 @@ describe('Plan Commercial Engine — REST API & Full RBAC Matrix E2E Test Suite'
         description: 'Test concurrent draft version creation',
         visibility: 'PUBLIC',
         displayOrder: 20,
-        pricing: [{ model: 'PER_USER', billingCycle: 'MONTHLY', currency: 'INR', perSeatFee: 499, taxMode: 'EXCLUSIVE', prorationPolicy: 'NONE' }],
+        pricing: [{ model: 'PER_USER', billingCycle: 'MONTHLY', currency: 'INR', perSeatFee: '499.00', taxMode: 'EXCLUSIVE', prorationPolicy: 'NONE' }],
         limits: [{ limitCode: 'minimum_seats', valueType: 'INTEGER', integerValue: 1, isUnlimited: false }],
         includedModuleCodes: ['core_crm'],
         commercialRules: { trialEnabled: false, trialDurationDays: 14, trialModulePolicy: 'USE_PLAN_MODULES', autoConvertAfterTrial: false, autoRenew: true, allowUpgrade: true, allowDowngrade: true, changeEffectiveTiming: 'IMMEDIATE', minimumCommitmentMonths: '0', availableForNewTenants: true, availableForExistingTenants: true, cancellationAllowed: true, gracePeriodDays: 7, accessAfterExpiry: 'READ_ONLY' },
@@ -249,7 +289,63 @@ describe('Plan Commercial Engine — REST API & Full RBAC Matrix E2E Test Suite'
     expect(statuses).toEqual([201, 409]);
   });
 
-  it('5. BETA module publication without allowBetaModules: true must fail with 400', async () => {
+  it('6. Parallel PATCH updateDraft and POST publishPlanVersion must execute with strict serializable row-locking concurrency safety', async () => {
+    const testCode = `CONCURR_PUB_${Date.now()}`;
+    const planRes = await request(app.getHttpServer())
+      .post('/platform/plans')
+      .set('Authorization', `Bearer ${platformAdminToken}`)
+      .send({
+        code: testCode,
+        name: 'Concurrent Publish/Patch Plan',
+        description: 'Testing row lock concurrency between PATCH and PUBLISH',
+        visibility: 'PUBLIC',
+        displayOrder: 22,
+        pricing: [{ model: 'PER_USER', billingCycle: 'MONTHLY', currency: 'INR', perSeatFee: '499.00', taxMode: 'EXCLUSIVE', prorationPolicy: 'NONE' }],
+        limits: [{ limitCode: 'minimum_seats', valueType: 'INTEGER', integerValue: 1, isUnlimited: false }],
+        includedModuleCodes: ['core_crm'],
+        commercialRules: { trialEnabled: false, trialDurationDays: 14, trialModulePolicy: 'USE_PLAN_MODULES', autoConvertAfterTrial: false, autoRenew: true, allowUpgrade: true, allowDowngrade: true, changeEffectiveTiming: 'IMMEDIATE', minimumCommitmentMonths: '0', availableForNewTenants: true, availableForExistingTenants: true, cancellationAllowed: true, gracePeriodDays: 7, accessAfterExpiry: 'READ_ONLY' },
+      });
+
+    const planId = planRes.body.id;
+    const versionId = planRes.body.currentDraftVersion.id;
+
+    // Run parallel PATCH updateDraft and POST publish
+    const [patchReq, publishReq] = await Promise.all([
+      request(app.getHttpServer())
+        .patch(`/platform/plans/${planId}/versions/${versionId}`)
+        .set('Authorization', `Bearer ${platformAdminToken}`)
+        .send({
+          pricing: [{ model: 'PER_USER', billingCycle: 'MONTHLY', currency: 'INR', perSeatFee: '599.00', taxMode: 'EXCLUSIVE', prorationPolicy: 'NONE' }],
+        }),
+      request(app.getHttpServer())
+        .post(`/platform/plans/${planId}/versions/${versionId}/publish`)
+        .set('Authorization', `Bearer ${platformAdminToken}`)
+        .send({ allowBetaModules: true }),
+    ]);
+
+    // Either PATCH finished first (200) and PUBLISH published the new price (200), or PUBLISH finished first (200) and PATCH was rejected (409)
+    const validCombinations = [
+      [200, 200],
+      [409, 200],
+      [200, 409],
+    ];
+    const actualCombination = [patchReq.status, publishReq.status];
+    const isValid = validCombinations.some(
+      (combo) => combo[0] === actualCombination[0] && combo[1] === actualCombination[1]
+    );
+
+    expect(isValid).toBe(true);
+
+    // Final verification: Plan MUST be published cleanly with no corrupt state
+    const finalPlan = await request(app.getHttpServer())
+      .get(`/platform/plans/${planId}`)
+      .set('Authorization', `Bearer ${platformAdminToken}`);
+
+    expect(finalPlan.body.status).toBe('ACTIVE');
+    expect(finalPlan.body.currentPublishedVersion).toBeDefined();
+  });
+
+  it('7. BETA module publication without allowBetaModules: true must fail with 400', async () => {
     const testCode = `BETA_PUB_${Date.now()}`;
     const planRes = await request(app.getHttpServer())
       .post('/platform/plans')

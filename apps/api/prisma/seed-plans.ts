@@ -1,4 +1,4 @@
-import { PrismaClient, PlatformModuleStatus } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -22,8 +22,8 @@ async function seedPlans() {
           model: 'PER_USER' as const,
           billingCycle: 'MONTHLY' as const,
           currency: 'INR',
-          perSeatFee: 499,
-          discountPercent: undefined as number | undefined,
+          perSeatFee: '499.00',
+          discountPercent: undefined as string | undefined,
           taxMode: 'EXCLUSIVE' as const,
           prorationPolicy: 'IMMEDIATE' as const,
         },
@@ -31,19 +31,19 @@ async function seedPlans() {
           model: 'PER_USER' as const,
           billingCycle: 'ANNUAL' as const,
           currency: 'INR',
-          perSeatFee: 399,
-          discountPercent: 20.04,
+          perSeatFee: '399.00',
+          discountPercent: '20.04',
           taxMode: 'EXCLUSIVE' as const,
           prorationPolicy: 'IMMEDIATE' as const,
         },
       ],
       limits: [
-        { limitCode: 'minimum_seats', valueType: 'INTEGER' as const, integerValue: 5, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'default_seat_limit', valueType: 'INTEGER' as const, integerValue: 15, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'maximum_seats', valueType: 'INTEGER' as const, integerValue: 20, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'seat_increment', valueType: 'INTEGER' as const, integerValue: 1, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'storage_gb', valueType: 'DECIMAL' as const, integerValue: undefined as number | undefined, decimalValue: 10, isUnlimited: false, unit: 'GB' },
-        { limitCode: 'data_retention_days', valueType: 'INTEGER' as const, integerValue: 90, decimalValue: undefined as number | undefined, isUnlimited: false, unit: 'days' },
+        { limitCode: 'minimum_seats', valueType: 'INTEGER' as const, integerValue: 5, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'default_seat_limit', valueType: 'INTEGER' as const, integerValue: 15, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'maximum_seats', valueType: 'INTEGER' as const, integerValue: 20, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'seat_increment', valueType: 'INTEGER' as const, integerValue: 1, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'storage_gb', valueType: 'DECIMAL' as const, integerValue: undefined as number | undefined, decimalValue: '10.00', isUnlimited: false, unit: 'GB' },
+        { limitCode: 'data_retention_days', valueType: 'INTEGER' as const, integerValue: 90, decimalValue: undefined as string | undefined, isUnlimited: false, unit: 'days' },
       ],
       moduleCodes: ['core_crm', 'field_visits'],
       commercialRules: {
@@ -80,8 +80,8 @@ async function seedPlans() {
           model: 'PER_USER' as const,
           billingCycle: 'MONTHLY' as const,
           currency: 'INR',
-          perSeatFee: 899,
-          discountPercent: undefined as number | undefined,
+          perSeatFee: '899.00',
+          discountPercent: undefined as string | undefined,
           taxMode: 'EXCLUSIVE' as const,
           prorationPolicy: 'IMMEDIATE' as const,
         },
@@ -89,19 +89,19 @@ async function seedPlans() {
           model: 'PER_USER' as const,
           billingCycle: 'ANNUAL' as const,
           currency: 'INR',
-          perSeatFee: 749,
-          discountPercent: 16.68,
+          perSeatFee: '749.00',
+          discountPercent: '16.68',
           taxMode: 'EXCLUSIVE' as const,
           prorationPolicy: 'IMMEDIATE' as const,
         },
       ],
       limits: [
-        { limitCode: 'minimum_seats', valueType: 'INTEGER' as const, integerValue: 3, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'default_seat_limit', valueType: 'INTEGER' as const, integerValue: 25, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'maximum_seats', valueType: 'INTEGER' as const, integerValue: 100, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'seat_increment', valueType: 'INTEGER' as const, integerValue: 5, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'storage_gb', valueType: 'DECIMAL' as const, integerValue: undefined as number | undefined, decimalValue: 50, isUnlimited: false, unit: 'GB' },
-        { limitCode: 'data_retention_days', valueType: 'INTEGER' as const, integerValue: 180, decimalValue: undefined as number | undefined, isUnlimited: false, unit: 'days' },
+        { limitCode: 'minimum_seats', valueType: 'INTEGER' as const, integerValue: 3, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'default_seat_limit', valueType: 'INTEGER' as const, integerValue: 25, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'maximum_seats', valueType: 'INTEGER' as const, integerValue: 100, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'seat_increment', valueType: 'INTEGER' as const, integerValue: 5, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'storage_gb', valueType: 'DECIMAL' as const, integerValue: undefined as number | undefined, decimalValue: '50.00', isUnlimited: false, unit: 'GB' },
+        { limitCode: 'data_retention_days', valueType: 'INTEGER' as const, integerValue: 180, decimalValue: undefined as string | undefined, isUnlimited: false, unit: 'days' },
       ],
       moduleCodes: ['core_crm', 'field_visits', 'attendance'],
       commercialRules: {
@@ -138,8 +138,8 @@ async function seedPlans() {
           model: 'PER_USER' as const,
           billingCycle: 'MONTHLY' as const,
           currency: 'INR',
-          perSeatFee: 1199,
-          discountPercent: undefined as number | undefined,
+          perSeatFee: '1199.00',
+          discountPercent: undefined as string | undefined,
           taxMode: 'EXCLUSIVE' as const,
           prorationPolicy: 'IMMEDIATE' as const,
         },
@@ -147,19 +147,19 @@ async function seedPlans() {
           model: 'PER_USER' as const,
           billingCycle: 'ANNUAL' as const,
           currency: 'INR',
-          perSeatFee: 999,
-          discountPercent: 16.68,
+          perSeatFee: '999.00',
+          discountPercent: '16.68',
           taxMode: 'EXCLUSIVE' as const,
           prorationPolicy: 'IMMEDIATE' as const,
         },
       ],
       limits: [
-        { limitCode: 'minimum_seats', valueType: 'INTEGER' as const, integerValue: 5, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'default_seat_limit', valueType: 'INTEGER' as const, integerValue: 50, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'maximum_seats', valueType: 'INTEGER' as const, integerValue: 250, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'seat_increment', valueType: 'INTEGER' as const, integerValue: 5, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'storage_gb', valueType: 'DECIMAL' as const, integerValue: undefined as number | undefined, decimalValue: 100, isUnlimited: false, unit: 'GB' },
-        { limitCode: 'data_retention_days', valueType: 'INTEGER' as const, integerValue: 365, decimalValue: undefined as number | undefined, isUnlimited: false, unit: 'days' },
+        { limitCode: 'minimum_seats', valueType: 'INTEGER' as const, integerValue: 5, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'default_seat_limit', valueType: 'INTEGER' as const, integerValue: 50, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'maximum_seats', valueType: 'INTEGER' as const, integerValue: 250, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'seat_increment', valueType: 'INTEGER' as const, integerValue: 5, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'storage_gb', valueType: 'DECIMAL' as const, integerValue: undefined as number | undefined, decimalValue: '100.00', isUnlimited: false, unit: 'GB' },
+        { limitCode: 'data_retention_days', valueType: 'INTEGER' as const, integerValue: 365, decimalValue: undefined as string | undefined, isUnlimited: false, unit: 'days' },
       ],
       moduleCodes: ['core_crm', 'field_visits', 'demo_scheduler', 'order_management', 'attendance'],
       commercialRules: {
@@ -196,8 +196,8 @@ async function seedPlans() {
           model: 'CUSTOM_CONTRACT' as const,
           billingCycle: 'MONTHLY' as const,
           currency: 'INR',
-          perSeatFee: undefined as number | undefined,
-          discountPercent: undefined as number | undefined,
+          perSeatFee: undefined as string | undefined,
+          discountPercent: undefined as string | undefined,
           taxMode: 'EXCLUSIVE' as const,
           prorationPolicy: 'IMMEDIATE' as const,
         },
@@ -205,19 +205,19 @@ async function seedPlans() {
           model: 'CUSTOM_CONTRACT' as const,
           billingCycle: 'ANNUAL' as const,
           currency: 'INR',
-          perSeatFee: undefined as number | undefined,
-          discountPercent: undefined as number | undefined,
+          perSeatFee: undefined as string | undefined,
+          discountPercent: undefined as string | undefined,
           taxMode: 'EXCLUSIVE' as const,
           prorationPolicy: 'IMMEDIATE' as const,
         },
       ],
       limits: [
-        { limitCode: 'minimum_seats', valueType: 'INTEGER' as const, integerValue: 10, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'default_seat_limit', valueType: 'INTEGER' as const, integerValue: 100, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'maximum_seats', valueType: 'INTEGER' as const, integerValue: undefined as number | undefined, decimalValue: undefined as number | undefined, isUnlimited: true, unit: undefined as string | undefined },
-        { limitCode: 'seat_increment', valueType: 'INTEGER' as const, integerValue: 10, decimalValue: undefined as number | undefined, isUnlimited: false, unit: undefined as string | undefined },
-        { limitCode: 'storage_gb', valueType: 'DECIMAL' as const, integerValue: undefined as number | undefined, decimalValue: 500, isUnlimited: false, unit: 'GB' },
-        { limitCode: 'data_retention_days', valueType: 'INTEGER' as const, integerValue: 730, decimalValue: undefined as number | undefined, isUnlimited: false, unit: 'days' },
+        { limitCode: 'minimum_seats', valueType: 'INTEGER' as const, integerValue: 10, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'default_seat_limit', valueType: 'INTEGER' as const, integerValue: 100, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'maximum_seats', valueType: 'INTEGER' as const, integerValue: undefined as number | undefined, decimalValue: undefined as string | undefined, isUnlimited: true, unit: undefined as string | undefined },
+        { limitCode: 'seat_increment', valueType: 'INTEGER' as const, integerValue: 10, decimalValue: undefined as string | undefined, isUnlimited: false, unit: undefined as string | undefined },
+        { limitCode: 'storage_gb', valueType: 'DECIMAL' as const, integerValue: undefined as number | undefined, decimalValue: '500.00', isUnlimited: false, unit: 'GB' },
+        { limitCode: 'data_retention_days', valueType: 'INTEGER' as const, integerValue: 730, decimalValue: undefined as string | undefined, isUnlimited: false, unit: 'days' },
       ],
       moduleCodes: ['core_crm', 'field_visits', 'attendance', 'payroll', 'demo_scheduler', 'order_management', 'whatsapp_automation', 'ai_copilot'],
       commercialRules: {
@@ -240,8 +240,6 @@ async function seedPlans() {
     },
   ];
 
-  const publishApproved = process.env.PUBLISH_SEED_PLANS === 'true';
-
   for (const planData of plansData) {
     const existing = await (prisma as any).plan.findUnique({ where: { code: planData.code } });
     if (existing) {
@@ -260,8 +258,6 @@ async function seedPlans() {
       throw new Error(`Seed failed: Module codes missing from database catalog: ${missing.join(', ')}`);
     }
 
-    const now = new Date();
-
     const plan = await (prisma as any).$transaction(async (tx: any) => {
       const createdPlan = await tx.plan.create({
         data: {
@@ -275,11 +271,11 @@ async function seedPlans() {
           recommendedFor: planData.recommendedFor,
           displayOrder: planData.displayOrder,
           color: planData.color,
-          status: publishApproved ? 'ACTIVE' : 'DRAFT',
+          status: 'DRAFT', // ALWAYS DRAFT. Publication authority belongs solely to PlanPublicationPolicyService / API.
         },
       });
 
-      // 1. Create version (DRAFT)
+      // 1. Create version 1 (ALWAYS DRAFT)
       const version = await tx.planVersion.create({
         data: {
           planId: createdPlan.id,
@@ -335,26 +331,10 @@ async function seedPlans() {
         },
       });
 
-      // 3. Optional publication only if explicit approval env var set
-      if (publishApproved) {
-        await tx.planVersion.update({
-          where: { id: version.id },
-          data: {
-            status: 'PUBLISHED',
-            publishedAt: now,
-          },
-        });
-
-        await tx.plan.update({
-          where: { id: createdPlan.id },
-          data: { currentPublishedVersionId: version.id },
-        });
-      }
-
       return createdPlan;
     });
 
-    console.log(`✅ Seeded Plan '${plan.code}' (Version 1, status: ${publishApproved ? 'PUBLISHED' : 'DRAFT'})`);
+    console.log(`✅ Seeded candidate Plan '${plan.code}' (Version 1, status: DRAFT)`);
   }
 }
 

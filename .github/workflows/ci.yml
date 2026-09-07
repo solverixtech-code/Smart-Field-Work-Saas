@@ -1,0 +1,74 @@
+name: Phase 0.5 Commercial Engine CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build, Lint & E2E Proof Verification
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_DB: visiblo_crm_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Validate Prisma Schema
+        run: npx prisma validate --schema=apps/api/prisma/schema.prisma
+
+      - name: Apply DB Migrations & Database Triggers on Test DB
+        env:
+          DATABASE_URL: postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public
+        run: |
+          npx prisma db push --schema=apps/api/prisma/schema.prisma --skip-generate
+          npx prisma db execute --schema=apps/api/prisma/schema.prisma --file apps/api/prisma/migrations/20260905170000_m5_1_commercial_integrity_gate/migration.sql
+
+      - name: Generate Prisma Client
+        run: npx prisma generate --schema=apps/api/prisma/schema.prisma
+
+      - name: TypeScript Check (API)
+        run: cd apps/api && npx tsc --noEmit
+
+      - name: TypeScript Check (Web)
+        run: cd apps/web && npx tsc --noEmit
+
+      - name: Build API Workspace
+        run: cd apps/api && npm run build
+
+      - name: Build Web Workspace
+        run: cd apps/web && npm run build
+
+      - name: Run API Unit Tests
+        run: cd apps/api && npm test -- --runInBand
+
+      - name: Run API E2E Integration Suite
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public
+          JWT_SECRET: super-secret-test-jwt-key
+        run: cd apps/api && npm run test:e2e -- --runInBand

@@ -68,15 +68,15 @@ export function transformBackendPlanToUi(backendPlan: any): Plan {
   const pricing: PlanPricing = {
     model: modelMap[activePricingObj.model] || 'Per User',
     currency: (activePricingObj.currency as any) || 'INR',
-    monthlyBaseFee: monthlyPrice?.baseFee ? Number(monthlyPrice.baseFee) : undefined,
-    monthlyPerUser: monthlyPrice?.perSeatFee ? Number(monthlyPrice.perSeatFee) : undefined,
-    monthlyFlatPrice: monthlyPrice?.flatFee ? Number(monthlyPrice.flatFee) : undefined,
-    annualBaseFee: annualPrice?.baseFee ? Number(annualPrice.baseFee) : undefined,
-    annualPerUser: annualPrice?.perSeatFee ? Number(annualPrice.perSeatFee) : undefined,
-    annualFlatPrice: annualPrice?.flatFee ? Number(annualPrice.flatFee) : undefined,
-    annualDiscountPercent: annualPrice?.discountPercent ? Number(annualPrice.discountPercent) : undefined,
-    minimumMonthlyCommitment: activePricingObj.minimumCommitmentAmount ? Number(activePricingObj.minimumCommitmentAmount) : undefined,
-    setupFee: activePricingObj.setupFee ? Number(activePricingObj.setupFee) : undefined,
+    monthlyBaseFee: monthlyPrice?.baseFee !== undefined && monthlyPrice?.baseFee !== null ? Number(monthlyPrice.baseFee) : undefined,
+    monthlyPerUser: monthlyPrice?.perSeatFee !== undefined && monthlyPrice?.perSeatFee !== null ? Number(monthlyPrice.perSeatFee) : undefined,
+    monthlyFlatPrice: monthlyPrice?.flatFee !== undefined && monthlyPrice?.flatFee !== null ? Number(monthlyPrice.flatFee) : undefined,
+    annualBaseFee: annualPrice?.baseFee !== undefined && annualPrice?.baseFee !== null ? Number(annualPrice.baseFee) : undefined,
+    annualPerUser: annualPrice?.perSeatFee !== undefined && annualPrice?.perSeatFee !== null ? Number(annualPrice.perSeatFee) : undefined,
+    annualFlatPrice: annualPrice?.flatFee !== undefined && annualPrice?.flatFee !== null ? Number(annualPrice.flatFee) : undefined,
+    annualDiscountPercent: annualPrice?.discountPercent !== undefined && annualPrice?.discountPercent !== null ? Number(annualPrice.discountPercent) : undefined,
+    minimumMonthlyCommitment: activePricingObj.minimumCommitmentAmount !== undefined && activePricingObj.minimumCommitmentAmount !== null ? Number(activePricingObj.minimumCommitmentAmount) : undefined,
+    setupFee: activePricingObj.setupFee !== undefined && activePricingObj.setupFee !== null ? Number(activePricingObj.setupFee) : undefined,
     allowMonthlyBilling: Boolean(monthlyPrice),
     allowAnnualBilling: Boolean(annualPrice),
     defaultBillingCycle: annualPrice && !monthlyPrice ? 'Annual' : 'Monthly',
@@ -160,17 +160,22 @@ export function transformUiDraftToBackend(input: PlanDraftInput): any {
     'Custom Contract': 'CUSTOM_CONTRACT',
   };
 
+  const toDecimalString = (val?: number): string | undefined => {
+    if (val === undefined || val === null || isNaN(val)) return undefined;
+    return Number(val).toFixed(2);
+  };
+
   const pricing: any[] = [];
   if (input.pricing.allowMonthlyBilling) {
     pricing.push({
       model: modelReverseMap[input.pricing.model] || 'PER_USER',
       billingCycle: 'MONTHLY',
       currency: input.pricing.currency || 'INR',
-      baseFee: input.pricing.monthlyBaseFee,
-      perSeatFee: input.pricing.monthlyPerUser,
-      flatFee: input.pricing.monthlyFlatPrice,
-      setupFee: input.pricing.setupFee,
-      minimumCommitmentAmount: input.pricing.minimumMonthlyCommitment,
+      baseFee: toDecimalString(input.pricing.monthlyBaseFee),
+      perSeatFee: toDecimalString(input.pricing.monthlyPerUser),
+      flatFee: toDecimalString(input.pricing.monthlyFlatPrice),
+      setupFee: toDecimalString(input.pricing.setupFee),
+      minimumCommitmentAmount: toDecimalString(input.pricing.minimumMonthlyCommitment),
       taxMode: input.pricing.taxMode === 'Inclusive' ? 'INCLUSIVE' : 'EXCLUSIVE',
       prorationPolicy: input.pricing.prorationPolicy === 'Next Billing Cycle' ? 'NEXT_BILLING_CYCLE' : input.pricing.prorationPolicy === 'Prorate Immediately' ? 'IMMEDIATE' : 'NONE',
     });
@@ -181,12 +186,12 @@ export function transformUiDraftToBackend(input: PlanDraftInput): any {
       model: modelReverseMap[input.pricing.model] || 'PER_USER',
       billingCycle: 'ANNUAL',
       currency: input.pricing.currency || 'INR',
-      baseFee: input.pricing.annualBaseFee,
-      perSeatFee: input.pricing.annualPerUser,
-      flatFee: input.pricing.annualFlatPrice,
-      setupFee: input.pricing.setupFee,
-      minimumCommitmentAmount: input.pricing.minimumMonthlyCommitment,
-      discountPercent: input.pricing.annualDiscountPercent,
+      baseFee: toDecimalString(input.pricing.annualBaseFee),
+      perSeatFee: toDecimalString(input.pricing.annualPerUser),
+      flatFee: toDecimalString(input.pricing.annualFlatPrice),
+      setupFee: toDecimalString(input.pricing.setupFee),
+      minimumCommitmentAmount: toDecimalString(input.pricing.minimumMonthlyCommitment),
+      discountPercent: toDecimalString(input.pricing.annualDiscountPercent),
       taxMode: input.pricing.taxMode === 'Inclusive' ? 'INCLUSIVE' : 'EXCLUSIVE',
       prorationPolicy: input.pricing.prorationPolicy === 'Next Billing Cycle' ? 'NEXT_BILLING_CYCLE' : input.pricing.prorationPolicy === 'Prorate Immediately' ? 'IMMEDIATE' : 'NONE',
     });
@@ -197,7 +202,7 @@ export function transformUiDraftToBackend(input: PlanDraftInput): any {
     { limitCode: 'default_seat_limit', valueType: 'INTEGER', integerValue: input.limits.defaultSeatLimit, isUnlimited: false },
     { limitCode: 'maximum_seats', valueType: 'INTEGER', integerValue: input.limits.maximumSeats ?? null, isUnlimited: !input.limits.maximumSeats },
     { limitCode: 'seat_increment', valueType: 'INTEGER', integerValue: input.limits.seatIncrement ?? 1, isUnlimited: false },
-    { limitCode: 'storage_gb', valueType: 'DECIMAL', decimalValue: input.limits.storageGb, isUnlimited: false, unit: 'GB' },
+    { limitCode: 'storage_gb', valueType: 'DECIMAL', decimalValue: toDecimalString(input.limits.storageGb), isUnlimited: false, unit: 'GB' },
     { limitCode: 'data_retention_days', valueType: 'INTEGER', integerValue: input.limits.dataRetentionDays ?? 90, isUnlimited: false, unit: 'days' },
   ];
 
