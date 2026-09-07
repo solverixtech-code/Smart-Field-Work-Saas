@@ -267,4 +267,58 @@ describe('Plan Commercial Engine — Database Immutability & Pointer Invariant E
       })
     ).rejects.toThrow();
   });
+
+  it('4. DRAFT PlanVersion delete succeeds (M5.2 trigger fix validation)', async () => {
+    const plan = await prisma.plan.create({
+      data: {
+        code: `DRAFT_DEL_${Date.now()}`,
+        name: 'Draft Delete Test Plan',
+        description: 'Testing draft deletion trigger behavior',
+        status: 'DRAFT' as any,
+      },
+    });
+
+    const draftVersion = await prisma.planVersion.create({
+      data: { planId: plan.id, version: 1, status: 'DRAFT' as any },
+    });
+
+    // Delete DRAFT version -> MUST succeed cleanly (trigger returns OLD)
+    const deleted = await prisma.planVersion.delete({
+      where: { id: draftVersion.id },
+    });
+
+    expect(deleted.id).toBe(draftVersion.id);
+
+    const check = await prisma.planVersion.findUnique({
+      where: { id: draftVersion.id },
+    });
+    expect(check).toBeNull();
+  });
+
+  it('5. Single SQL UPDATE attempting DRAFT -> PUBLISHED while changing version or planId must fail (M5.2 identity lock validation)', async () => {
+    const plan1 = await prisma.plan.create({
+      data: { code: `ID_LOCK_P1_${Date.now()}`, name: 'ID Lock Plan 1', description: 'Test', status: 'DRAFT' as any },
+    });
+    const plan2 = await prisma.plan.create({
+      data: { code: `ID_LOCK_P2_${Date.now()}`, name: 'ID Lock Plan 2', description: 'Test', status: 'DRAFT' as any },
+    });
+
+    const draftVersion = await prisma.planVersion.create({
+      data: { planId: plan1.id, version: 1, status: 'DRAFT' as any },
+    });
+
+    // Attempt DRAFT -> PUBLISHED while changing version (1 -> 99) -> MUST fail at DB trigger level!
+    await expect(
+      prisma.$executeRawUnsafe(
+        `UPDATE "PlanVersion" SET status = 'PUBLISHED', version = 99, "publishedAt" = NOW() WHERE id = '${draftVersion.id}'`
+      )
+    ).rejects.toThrow();
+
+    // Attempt DRAFT -> PUBLISHED while changing planId -> MUST fail at DB trigger level!
+    await expect(
+      prisma.$executeRawUnsafe(
+        `UPDATE "PlanVersion" SET status = 'PUBLISHED', "planId" = '${plan2.id}', "publishedAt" = NOW() WHERE id = '${draftVersion.id}'`
+      )
+    ).rejects.toThrow();
+  });
 });

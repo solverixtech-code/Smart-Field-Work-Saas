@@ -50,6 +50,9 @@ jobs:
       - name: Apply DB Migrations on Test DB
         run: npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
 
+      - name: Seed System RBAC Templates
+        run: cd apps/api && npm run db:sync:rbac
+
       - name: Generate Prisma Client
         run: npx prisma generate --schema=apps/api/prisma/schema.prisma
 
