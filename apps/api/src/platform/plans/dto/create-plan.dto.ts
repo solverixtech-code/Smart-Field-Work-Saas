@@ -36,32 +36,44 @@ export class PlanPricingInputDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'baseFee must be a valid decimal string (e.g. "499.00")' })
+  @Matches(/^(?:0|[1-9]\d{0,15})(?:\.\d{1,2})?$/, {
+    message: 'baseFee must be a valid non-negative decimal string with max 2 decimal places (e.g. "499.00")',
+  })
   baseFee?: string;
 
   @IsOptional()
   @IsString()
-  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'perSeatFee must be a valid decimal string (e.g. "499.00")' })
+  @Matches(/^(?:0|[1-9]\d{0,15})(?:\.\d{1,2})?$/, {
+    message: 'perSeatFee must be a valid non-negative decimal string with max 2 decimal places (e.g. "499.00")',
+  })
   perSeatFee?: string;
 
   @IsOptional()
   @IsString()
-  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'flatFee must be a valid decimal string (e.g. "499.00")' })
+  @Matches(/^(?:0|[1-9]\d{0,15})(?:\.\d{1,2})?$/, {
+    message: 'flatFee must be a valid non-negative decimal string with max 2 decimal places (e.g. "499.00")',
+  })
   flatFee?: string;
 
   @IsOptional()
   @IsString()
-  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'setupFee must be a valid decimal string (e.g. "1500.00")' })
+  @Matches(/^(?:0|[1-9]\d{0,15})(?:\.\d{1,2})?$/, {
+    message: 'setupFee must be a valid non-negative decimal string with max 2 decimal places (e.g. "1500.00")',
+  })
   setupFee?: string;
 
   @IsOptional()
   @IsString()
-  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'minimumCommitmentAmount must be a valid decimal string (e.g. "1000.00")' })
+  @Matches(/^(?:0|[1-9]\d{0,15})(?:\.\d{1,2})?$/, {
+    message: 'minimumCommitmentAmount must be a valid non-negative decimal string with max 2 decimal places (e.g. "1000.00")',
+  })
   minimumCommitmentAmount?: string;
 
   @IsOptional()
   @IsString()
-  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'discountPercent must be a valid decimal string (e.g. "15.50")' })
+  @Matches(/^(?:100(?:\.0{1,2})?|(?:0|[1-9]\d?)(?:\.\d{1,2})?)$/, {
+    message: 'discountPercent must be a valid decimal string between 0.00 and 100.00 (e.g. "15.50")',
+  })
   discountPercent?: string;
 
   @IsEnum(TaxModeEnum)
@@ -86,7 +98,9 @@ export class PlanLimitInputDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^\d+(\.\d{1,2})?$/, { message: 'decimalValue must be a valid decimal string (e.g. "10.00")' })
+  @Matches(/^(?:0|[1-9]\d{0,15})(?:\.\d{1,2})?$/, {
+    message: 'decimalValue must be a valid non-negative decimal string with max 2 decimal places (e.g. "10.00")',
+  })
   decimalValue?: string;
 
   @IsOptional()

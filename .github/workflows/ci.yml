@@ -42,12 +42,11 @@ jobs:
       - name: Validate Prisma Schema
         run: npx prisma validate --schema=apps/api/prisma/schema.prisma
 
-      - name: Apply DB Migrations & Database Triggers on Test DB
+      - name: Apply DB Migrations on Test DB
         env:
           DATABASE_URL: postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public
         run: |
-          npx prisma db push --schema=apps/api/prisma/schema.prisma --skip-generate
-          npx prisma db execute --schema=apps/api/prisma/schema.prisma --file apps/api/prisma/migrations/20260905170000_m5_1_commercial_integrity_gate/migration.sql
+          npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
 
       - name: Generate Prisma Client
         run: npx prisma generate --schema=apps/api/prisma/schema.prisma

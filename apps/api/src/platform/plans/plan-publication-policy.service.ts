@@ -41,6 +41,34 @@ export class PlanPublicationPolicyService {
       });
     } else {
       for (const p of pricing) {
+        if (p.discountPercent !== undefined && p.discountPercent !== null) {
+          const disc = Number(p.discountPercent);
+          if (isNaN(disc) || disc < 0 || disc > 100) {
+            errors.push({
+              code: 'PLAN_PRICING_INVALID',
+              message: `discountPercent must be a decimal between 0.00 and 100.00 for billing cycle ${p.billingCycle}`,
+            });
+          }
+        }
+
+        const checkFee = (val: string | undefined, name: string) => {
+          if (val !== undefined && val !== null) {
+            const num = Number(val);
+            if (isNaN(num) || num < 0) {
+              errors.push({
+                code: 'PLAN_PRICING_INVALID',
+                message: `${name} must be a non-negative decimal string for billing cycle ${p.billingCycle}`,
+              });
+            }
+          }
+        };
+
+        checkFee(p.baseFee, 'baseFee');
+        checkFee(p.perSeatFee, 'perSeatFee');
+        checkFee(p.flatFee, 'flatFee');
+        checkFee(p.setupFee, 'setupFee');
+        checkFee(p.minimumCommitmentAmount, 'minimumCommitmentAmount');
+
         if (p.model === 'PER_USER' && (p.perSeatFee === undefined || p.perSeatFee === null)) {
           errors.push({
             code: 'PLAN_PRICING_INVALID',

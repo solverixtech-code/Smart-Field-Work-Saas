@@ -343,6 +343,11 @@ describe('Plan Commercial Engine — REST API & Full RBAC Matrix E2E Test Suite'
 
     expect(finalPlan.body.status).toBe('ACTIVE');
     expect(finalPlan.body.currentPublishedVersion).toBeDefined();
+
+    // Snapshot invariant assertion: If PATCH completed first (200) and PUBLISH succeeded (200), published version must reflect the patched 599.00 price
+    if (patchReq.status === 200 && publishReq.status === 200) {
+      expect(finalPlan.body.currentPublishedVersion.pricing[0].perSeatFee).toBe('599.00');
+    }
   });
 
   it('7. BETA module publication without allowBetaModules: true must fail with 400', async () => {
