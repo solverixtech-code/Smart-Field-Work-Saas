@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Prisma, TenantSubscription } from '@prisma/client';
+import { PlanLimit, Prisma, TenantSubscription } from '@prisma/client';
 import { addMonths, readRules, Selection } from './subscription-contract';
 import { MODULE_REGISTRY } from '../modules/feature-registry';
 
@@ -83,14 +83,31 @@ export class SubscriptionPolicyService {
       const before = current.limits.find(l => l.limitCode === code);
       const after = target.limits.find(l => l.limitCode === code);
       if (!before || !after || before.valueType !== after.valueType) { upgrade = true; downgrade = true; continue; }
-      const value = (limit: typeof before) => limit.isUnlimited ? Infinity : Number(limit.integerValue ?? limit.decimalValue ?? limit.booleanValue ?? 0);
-      upgrade ||= value(after) > value(before);
-      downgrade ||= value(after) < value(before);
+      const limitComparison = this.compareLimits(before, after);
+      upgrade ||= limitComparison > 0;
+      downgrade ||= limitComparison < 0;
     }
     if (!upgrade && !downgrade && (current.id !== target.id || input.billingCycle !== sub.billingCycle)) { upgrade = true; downgrade = true; }
     if ((upgrade && !rules.allowUpgrade) || (downgrade && !rules.allowDowngrade)) {
       throw new BadRequestException('Pinned Plan does not allow this commercial change');
     }
     if (downgrade) this.commitment(sub, current, now);
+  }
+
+  private compareLimits(before: PlanLimit, after: PlanLimit): number {
+    if (before.isUnlimited || after.isUnlimited) {
+      return before.isUnlimited === after.isUnlimited ? 0 : after.isUnlimited ? 1 : -1;
+    }
+    switch (before.valueType) {
+      case 'INTEGER':
+        if (before.integerValue === null || after.integerValue === null) throw new BadRequestException('Integer limit value is missing');
+        return after.integerValue === before.integerValue ? 0 : after.integerValue > before.integerValue ? 1 : -1;
+      case 'DECIMAL':
+        if (before.decimalValue === null || after.decimalValue === null) throw new BadRequestException('Decimal limit value is missing');
+        return after.decimalValue.comparedTo(before.decimalValue);
+      case 'BOOLEAN':
+        if (before.booleanValue === null || after.booleanValue === null) throw new BadRequestException('Boolean limit value is missing');
+        return after.booleanValue === before.booleanValue ? 0 : after.booleanValue ? 1 : -1;
+    }
   }
 }

@@ -91,13 +91,13 @@ describe('Phase 0.6 PostgreSQL, API, replay and concurrency proof', () => {
     }
   });
 
-  async function makePlan(overrides: Prisma.InputJsonObject = {}) {
+  async function makePlan(overrides: Prisma.InputJsonObject = {}, extraLimits: Prisma.PlanLimitCreateWithoutPlanVersionInput[] = []) {
     const core = await prisma.platformModule.findUniqueOrThrow({ where: { code: 'core_crm' } });
     const plan = await prisma.plan.create({ data: { code: `P_${randomUUID()}`, name: 'Phase 0.6 test Plan', description: 'Test commercial contract' } });
     const v = await prisma.planVersion.create({ data: { planId: plan.id, version: 1,
       modules: { create: { moduleId: core.id } },
       pricing: { create: [{ billingCycle: 'MONTHLY', perSeatFee: '100.00' }, { billingCycle: 'ANNUAL', perSeatFee: '1200.00' }] },
-      limits: { create: [{ limitCode: 'minimum_seats', valueType: 'INTEGER', integerValue: 1 }, { limitCode: 'maximum_seats', valueType: 'INTEGER', integerValue: 100 }] },
+      limits: { create: [{ limitCode: 'minimum_seats', valueType: 'INTEGER', integerValue: 1 }, { limitCode: 'maximum_seats', valueType: 'INTEGER', integerValue: 100 }, ...extraLimits] },
       commercialRule: { create: { rules: { ...rules, ...overrides } } },
     } });
     await prisma.$transaction(async tx => {
@@ -223,10 +223,45 @@ describe('Phase 0.6 PostgreSQL, API, replay and concurrency proof', () => {
     const due = await create(source);
     await dates(due.tenantId, { currentPeriodStart: new Date(Date.now() - 86400000), currentPeriodEnd: past });
     await command(due.tenantId, 'CHANGE_PLAN', { planVersionId: versionId, billingCycle: 'ANNUAL', seatQuantity: 6 });
+    const pending = await prisma.subscriptionChange.findFirstOrThrow({ where: { tenantId: due.tenantId, status: 'SCHEDULED' } });
+    const processedAfter = new Date();
     await command(due.tenantId, 'APPLY_DUE');
-    expect((await subscriptions.get(due.tenantId)).planVersionId).toBe(versionId);
-    expect((await subscriptions.get(due.tenantId)).billingCycle).toBe('ANNUAL');
+    const applied = await subscriptions.get(due.tenantId);
+    expect(applied.planVersionId).toBe(versionId);
+    expect(applied.billingCycle).toBe('ANNUAL');
+    expect(applied.currentPeriodStart).toEqual(pending.effectiveAt);
+    const expectedEnd = new Date(pending.effectiveAt);
+    expectedEnd.setUTCFullYear(expectedEnd.getUTCFullYear() + 1);
+    expect(applied.currentPeriodEnd).toEqual(expectedEnd);
+    const appliedHistory = await prisma.subscriptionChange.findFirstOrThrow({ where: { tenantId: due.tenantId, kind: 'APPLY_DUE' } });
+    const appliedIntent = await prisma.subscriptionChange.findUniqueOrThrow({ where: { id: pending.id } });
+    expect(appliedHistory.effectiveAt).toEqual(pending.effectiveAt);
+    expect(appliedIntent.effectiveAt).toEqual(pending.effectiveAt);
+    expect(appliedHistory.appliedAt?.getTime()).toBeGreaterThanOrEqual(processedAfter.getTime());
+    expect(appliedIntent.appliedAt).toEqual(appliedHistory.appliedAt);
     expect(await subscriptions.command(r.tenantId, body, actor)).toEqual(receipt);
+  });
+
+  it.each([
+    ['MONTHLY', '2024-01-31T00:00:00.000Z', '2024-02-29T00:00:00.000Z'],
+    ['ANNUAL', '2024-02-29T00:00:00.000Z', '2025-02-28T00:00:00.000Z'],
+  ])('retains a late %s scheduled boundary across month/year clamping and replay', async (billingCycle, boundary, expectedEnd) => {
+    const source = await makePlan({ changeEffectiveTiming: 'NEXT_BILLING_CYCLE' });
+    const r = await create(source);
+    await dates(r.tenantId, { currentPeriodStart: new Date('2024-01-01T00:00:00Z'), currentPeriodEnd: new Date(boundary) });
+    await command(r.tenantId, 'CHANGE_PLAN', { planVersionId: versionId, billingCycle, seatQuantity: 6 });
+    const current = await subscriptions.get(r.tenantId);
+    const body = { action: 'APPLY_DUE', idempotencyKey: randomUUID(), expectedRevision: current.revision, reason: 'Delayed boundary application' };
+    const receipt = await subscriptions.command(r.tenantId, body, actor);
+    const applied = await subscriptions.get(r.tenantId);
+    expect(applied.currentPeriodStart.toISOString()).toBe(boundary);
+    expect(applied.currentPeriodEnd.toISOString()).toBe(expectedEnd);
+    expect(await subscriptions.command(r.tenantId, body, actor)).toEqual(receipt);
+    // A very late application preserves the original, even already-ended, period.
+    // A subsequent explicit renewal advances it, not the scheduling receipt.
+    await command(r.tenantId, 'APPLY_DUE');
+    expect(await subscriptions.command(r.tenantId, body, actor)).toEqual(receipt);
+    expect((await subscriptions.get(r.tenantId)).currentPeriodStart.toISOString()).toBe(expectedEnd);
   });
 
   it('preserves expired trial on suspend/resume and obeys auto-conversion and auto-renew rules', async () => {
@@ -389,5 +424,49 @@ describe('Phase 0.6 PostgreSQL, API, replay and concurrency proof', () => {
     expect(new Set(receipts.map(r => r.ownerMembershipId)).size).toBe(2);
     expect(await prisma.user.count({ where: { email } })).toBe(1);
     expect(JSON.stringify(receipts)).not.toMatch(/passwordHash|passwordReset|leaseToken/);
+  });
+
+  it.each([true, false])('protects direct membership creation versus seat downgrade (membership submitted first: %s)', async membershipFirst => {
+    for (let iteration = 0; iteration < 3; iteration++) {
+      const r = await create();
+      let ready = 0;
+      let release: () => void = () => undefined;
+      const barrier = new Promise<void>(resolve => { release = resolve; });
+      const rendezvous = async () => { if (++ready === 2) release(); await barrier; };
+      const insert = () => prisma.$transaction(async tx => {
+        await rendezvous();
+        await tx.tenantMembership.create({ data: { tenantId: r.tenantId, userId: outsider.id, status: 'INVITED' } });
+        await tx.$executeRaw`SET CONSTRAINTS ALL IMMEDIATE`;
+      });
+      const downgrade = () => prisma.$transaction(async tx => {
+        await rendezvous();
+        const changed = await tx.tenantSubscription.update({ where: { tenantId: r.tenantId }, data: { seatQuantity: 1, revision: { increment: 1 } } });
+        await tx.subscriptionChange.create({ data: {
+          subscriptionId: changed.id, tenantId: r.tenantId, idempotencyKey: randomUUID(), payloadHash: 'direct-capacity-test', kind: 'CHANGE_PLAN', reason: 'Direct capacity race',
+          fromPlanVersionId: versionId, toPlanVersionId: versionId, fromStatus: 'ACTIVE', toStatus: 'ACTIVE', status: 'APPLIED',
+          effectiveAt: new Date(), appliedAt: new Date(), actorUserId: actor.userId, revision: changed.revision,
+          requestData: { seatQuantity: 1 }, result: jsonValue(changed),
+        } });
+        await tx.$executeRaw`SET CONSTRAINTS ALL IMMEDIATE`;
+      });
+      const results = await Promise.allSettled(membershipFirst ? [insert(), downgrade()] : [downgrade(), insert()]);
+      expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+      expect(results.filter(result => result.status === 'rejected')).toHaveLength(1);
+      const occupied = await prisma.tenantMembership.count({ where: { tenantId: r.tenantId, status: { in: ['ACTIVE', 'INVITED', 'SUSPENDED'] } } });
+      const subscription = await prisma.tenantSubscription.findUniqueOrThrow({ where: { tenantId: r.tenantId } });
+      expect(occupied).toBeLessThanOrEqual(subscription.seatQuantity);
+      expect(await prisma.subscriptionChange.count({ where: { tenantId: r.tenantId, status: 'APPLIED' } })).toBe(subscription.revision);
+    }
+  }, 30000);
+
+  it.each([
+    ['9007199254740991.01', '9007199254740991.00', false, true],
+    ['9007199254740991.00', '9007199254740991.01', true, false],
+  ])('compares persisted decimal limits exactly: %s -> %s', async (before, after, allowUpgrade, allowDowngrade) => {
+    const source = await makePlan({ allowUpgrade, allowDowngrade }, [{ limitCode: 'storage_gb', valueType: 'DECIMAL', decimalValue: before }]);
+    const target = await makePlan({}, [{ limitCode: 'storage_gb', valueType: 'DECIMAL', decimalValue: after }]);
+    const r = await create(source);
+    await command(r.tenantId, 'CHANGE_PLAN', { planVersionId: target, billingCycle: 'MONTHLY', seatQuantity: 5 });
+    expect((await subscriptions.get(r.tenantId)).planVersionId).toBe(target);
   });
 });
