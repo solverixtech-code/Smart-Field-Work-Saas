@@ -1,6 +1,6 @@
 # Phase 0.6 subscription and provisioning implementation
 
-Status: **FINAL HARDENING — implementation verified locally; final SHA release gates pending; not frozen.**
+Status: **COMPLETED / CODE FROZEN — hardening implementation passed exact-SHA CI; production deployment gates remain explicit.**
 
 ## Current implementation report — 2026-09-07
 
@@ -97,9 +97,11 @@ No production mapping or production migration was applied in this implementation
 
 ### Validation and release gate
 
-Final hardening adds delayed-boundary/history assertions, monthly and annual leap-date/replay cases, six direct seat-downgrade/membership races across both submission orders, and two exact persisted-decimal direction cases. Local validation passed all 69 unit tests (11 suites), 77 E2E tests (5 suites, including 28 Phase 0.6 tests), API/Web TypeScript and builds, Prisma validation/generation, RBAC sync and all 19 migrations. One overlapping local web-build/unit run timed out in existing membership tests; the sequential rerun passed without changing tests or timeouts. Exact-final-SHA GitHub CI remains pending. The previous candidate `051549e45b1ebc135b3fabc3e4dafa8bbc0309b3` passed [GitHub Actions run 34098025485](https://github.com/solverixtech-code/Smart-Field-Work-Saas/actions/runs/34098025485); that evidence does not certify the final patch. No existing tests are muted or skipped in the full suite.
+Final hardening adds delayed-boundary/history assertions, monthly and annual leap-date/replay cases, six direct seat-downgrade/membership races across both submission orders, and two exact persisted-decimal direction cases. Local validation passed all 69 unit tests (11 suites), 77 E2E tests (5 suites, including 28 Phase 0.6 tests), API/Web TypeScript and builds, Prisma validation/generation, RBAC sync and all 19 migrations. One overlapping local web-build/unit run timed out in existing membership tests; the sequential rerun passed without changing tests or timeouts. No existing tests are muted or skipped in the full suite.
 
-Release requires green final checks and GitHub Actions on the actual final SHA. This document does not certify production mapping, external email delivery or payment handling. Do not begin Phase 0.7.
+Hardening code SHA `f71458a3a22e8cde16121139c018cd0a83e66858` passed [GitHub Actions run 34104085254](https://github.com/solverixtech-code/Smart-Field-Work-Saas/actions/runs/34104085254), including npm ci, clean PostgreSQL migration deployment, Prisma/client/RBAC checks, both TypeScript checks and builds, and unit/E2E suites. The patch and this freeze record are delivered in [PR #1](https://github.com/solverixtech-code/Smart-Field-Work-Saas/pull/1). The subsequent documentation-only commit must also pass its PR-head pipeline before merge; the CI evidence above identifies the exact tested implementation rather than claiming an untested SHA.
+
+Phase 0.6 code is frozen on this implementation boundary. Production migration and explicit legacy mappings are deployment gates. This document does not certify production mapping, external email delivery, payment handling, or PR merge. Phase 0.1–0.5 remain frozen. Do not begin Phase 0.7.
 
 ### Rollback / forward fix
 

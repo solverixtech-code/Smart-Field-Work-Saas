@@ -104,6 +104,8 @@ Exit: published versions are immutable at service and database levels; existing 
 
 ### 0.6 Subscription and provisioning
 
+Status: **COMPLETED / CODE FROZEN (2026-09-07)**. Hardening implementation `f71458a3a22e8cde16121139c018cd0a83e66858` passed [exact-SHA CI](https://github.com/solverixtech-code/Smart-Field-Work-Saas/actions/runs/34104085254). See [implementation and release report](PHASE_0_6_SUBSCRIPTION_PROVISIONING_IMPLEMENTATION.md) and [PR #1](https://github.com/solverixtech-code/Smart-Field-Work-Saas/pull/1). Production legacy-Tenant mappings remain an explicit deployment gate, not a code-freeze blocker. Phase 0.1–0.5 remain frozen; Phase 0.7 must not start yet.
+
 1. Implement Subscription state policy and explicit version changes.
 2. Provision Tenant, owner User/Membership, Industry assignment and Subscription core records transactionally.
 3. Emit provisioning events/outbox work for email, workspace defaults and cache warmup using idempotency keys.
