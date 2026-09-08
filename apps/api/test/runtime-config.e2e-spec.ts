@@ -376,25 +376,23 @@ describe("Phase 0.9 authoritative runtime configuration", () => {
       where: { tenantId: t.id },
       select: { revision: true },
     });
-    return app
-      .get(SubscriptionService)
-      .command(
-        t.id,
-        {
-          idempotencyKey: randomUUID(),
-          expectedRevision: sub.revision,
-          reason,
-          action,
-          ...(target
-            ? {
-                planVersionId: target,
-                billingCycle: "MONTHLY",
-                seatQuantity: 5,
-              }
-            : {}),
-        },
-        { userId: actor },
-      );
+    return app.get(SubscriptionService).command(
+      t.id,
+      {
+        idempotencyKey: randomUUID(),
+        expectedRevision: sub.revision,
+        reason,
+        action,
+        ...(target
+          ? {
+              planVersionId: target,
+              billingCycle: "MONTHLY",
+              seatQuantity: 5,
+            }
+          : {}),
+      },
+      { userId: actor },
+    );
   }
   async function template() {
     const code = `M9_${randomUUID().replace(/-/g, "").toUpperCase()}`;
@@ -651,14 +649,12 @@ describe("Phase 0.9 authoritative runtime configuration", () => {
         selectedMembershipId: a.membershipId,
       },
     });
-    const aToken = app
-      .get(JwtService)
-      .sign({
-        sub: a.userId,
-        sid: session.id,
-        mid: a.membershipId,
-        ctxv: session.contextVersion,
-      });
+    const aToken = app.get(JwtService).sign({
+      sub: a.userId,
+      sid: session.id,
+      mid: a.membershipId,
+      ctxv: session.contextVersion,
+    });
     const first = await bootstrap({ ...a, token: aToken });
     const switched = await app
       .get(AuthService)
@@ -717,13 +713,11 @@ describe("Phase 0.9 authoritative runtime configuration", () => {
       .expect(403);
   });
   it("retains frozen legacy behavior with no guessed commercial Modules or Industry pin", async () => {
-    const result = await app
-      .get(TenantService)
-      .createTenantFoundation({
-        slug: `m9-legacy-${randomUUID()}`,
-        displayName: reason,
-        status: "ACTIVE",
-      });
+    const result = await app.get(TenantService).createTenantFoundation({
+      slug: `m9-legacy-${randomUUID()}`,
+      displayName: reason,
+      status: "ACTIVE",
+    });
     const membership = await prisma.tenantMembership.create({
       data: {
         tenantId: result.id,
@@ -1373,6 +1367,65 @@ describe("Phase 0.9 authoritative runtime configuration", () => {
           .list(t.id, "lead_source", { limit: 100 })
       ).items.map((v) => v.code),
     ).toContain(code);
+  });
+  it("isolates different roles in the same Tenant, including warm cache and role deactivation", async () => {
+    const t = await tenant();
+    const role = await prisma.tenantRole.create({
+      data: {
+        tenantId: t.id,
+        code: "m9_empty",
+        name: "No runtime Master grants",
+      },
+    });
+    const member = await prisma.tenantMembership.create({
+      data: {
+        tenantId: t.id,
+        userId: actor,
+        tenantRoleId: role.id,
+        status: "ACTIVE",
+      },
+    });
+    const limited = {
+      ...t,
+      userId: actor,
+      membershipId: member.id,
+      roleId: role.id,
+      token: tokenFor(actor, member.id),
+    };
+    const owner = await bootstrap(t),
+      other = await bootstrap(limited);
+    expect(owner.permissions).toContain("system.masters.view");
+    expect(other.permissions).toEqual([]);
+    expect(other.masters.definitions).toEqual([]);
+    expect(other.configVersion).not.toBe(owner.configVersion);
+    expect((await bootstrap(t)).permissions).toEqual(owner.permissions);
+    expect((await bootstrap(limited)).permissions).toEqual([]);
+    await prisma.tenantRole.update({
+      where: { id: t.roleId },
+      data: { isActive: false },
+    });
+    const disabled = await bootstrap(t);
+    expect(disabled.permissions).toEqual([]);
+    expect(disabled.configVersion).not.toBe(owner.configVersion);
+  });
+  it("increments the durable Tenant epoch without lost updates under twenty concurrent writers", async () => {
+    const t = await tenant();
+    const before = await prisma.runtimeConfigEpoch.findUniqueOrThrow({
+      where: { tenantId: t.id },
+    });
+    await Promise.all(
+      Array.from({ length: 20 }, () =>
+        prisma.tenant.update({
+          where: { id: t.id },
+          data: { displayName: randomUUID() },
+        }),
+      ),
+    );
+    const after = await prisma.runtimeConfigEpoch.findUniqueOrThrow({
+      where: { tenantId: t.id },
+    });
+    expect(after.id).toBe(before.id);
+    expect(after.version).toBe(before.version + 20n);
   });
   it("retries typed serialization failures and bounds repeated driver failure", async () => {
     const t = await tenant(),

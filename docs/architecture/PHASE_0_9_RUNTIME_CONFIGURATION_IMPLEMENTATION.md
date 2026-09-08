@@ -2,6 +2,8 @@
 
 Status: **IMPLEMENTED - local release checks PASS; PR and exact merged-main CI pending. NOT FROZEN.**
 
+This is the **pre-merge candidate record**. The final immutable candidate/merged-main SHAs and their completed Actions results are recorded in the release-evidence comment on [PR #5](https://github.com/solverixtech-code/Smart-Field-Work-Saas/pull/5), after both runs finish. Pending statements here describe this commit's recording time, not a later verified release.
+
 ## Authorization and baseline
 
 Date: 2026-09-08. Repository: solverixtech-code/Smart-Field-Work-Saas.
@@ -103,7 +105,7 @@ Suite deploys all27 unchanged baseline migrations, creates an existing Tenant an
 
 Persisted decisive scenario: Plan P1 permits CRM/visits; exact Industry v1 contributes INDUSTRY_SOURCE_A. System referral/inbound/field sources and Tenant source coexist; Tenant renames REFERRAL and hides INBOUND; historical hidden lookup remains non-selectable. Publishing v2 with INDUSTRY_SOURCE_B leaves v1's pin/configVersion unchanged. Explicit migration changes both pin/version and effective values. Plan removal of visits removes Module and visit Master manifest/API access despite Industry recommendations; stored definitions survive. Nonempty scalar Industry proof remains approved deferral, not a simulated pass.
 
-Regressions cover direct settings/grant/Permission/Module/Master writes, real session switching, known-UUID/client-selector isolation, foreign roles, old ETags, legacy/blocked access, time-only trial/grace expiry, epoch rollback/corruption, stale/poisoned entries, independent caches, typed driver retries, repeated churn503, ten-way cold reads, and settings/RBAC/Plan/Industry/System-Master/Tenant-Master/Module changes during composition.
+Regressions cover direct settings/grant/Permission/Module/Master writes, real session switching, known-UUID/client-selector isolation, foreign roles, old ETags, legacy/blocked access, time-only trial/grace expiry, epoch rollback/corruption, stale/poisoned entries, independent caches, typed driver retries, repeated churn503, ten-way cold reads, twenty concurrent epoch writers without lost increments, same-Tenant different-role caches and role deactivation, and settings/RBAC/Plan/Industry/System-Master/Tenant-Master/Module changes during composition.
 
 ## Performance
 
@@ -120,7 +122,7 @@ E2E budget <=60cold/<=50warm, representative payload<32KiB. Hard payload128KiB; 
 | API TypeScript / Web TypeScript                                                     | PASS / PASS                                                   |
 | API build / Web build                                                               | PASS / PASS                                                   |
 | Unit tests / suites                                                                 | **217/217, 16/16 PASS** (baseline168/15; runtime49 new tests) |
-| E2E tests / suites                                                                  | **139/139, 8/8 PASS** (baseline104/7; runtime35 new tests)    |
+| E2E tests / suites                                                                  | **141/141, 8/8 PASS** (baseline104/7; runtime37 new tests)    |
 | Upgrade/backfill/replay, DB integrity, security, cache, time and concurrency proofs | PASS                                                          |
 | Candidate PR CI / exact merged-main CI                                              | PENDING / PENDING                                             |
 

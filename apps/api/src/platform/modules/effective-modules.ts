@@ -10,7 +10,7 @@ import {
 export async function readEffectiveModules(
   tx: Prisma.TransactionClient,
   tenantId: string,
-  now: Date,
+  clock: () => Date,
   write = false,
 ) {
   const subscription = await tx.tenantSubscription.findUnique({
@@ -32,6 +32,8 @@ export async function readEffectiveModules(
       },
     },
   });
+  // Preserve M8's clock evaluation after the subscription read completes.
+  const now = clock();
   const mode = subscription
     ? subscriptionAccess(
         subscription,

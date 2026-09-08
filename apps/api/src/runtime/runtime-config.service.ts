@@ -190,9 +190,7 @@ export class RuntimeConfigService {
     });
     if (epochRows.length !== (assignment ? 3 : 2))
       throw new ServiceUnavailableException("RUNTIME_CONFIG_SOURCE_INVALID");
-    const commercial = await readEffectiveModules(
-      tx,
-      principal.tenantId,
+    const commercial = await readEffectiveModules(tx, principal.tenantId, () =>
       this.clock.now(),
     );
     const identity = {

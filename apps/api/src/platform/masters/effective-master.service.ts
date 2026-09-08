@@ -119,7 +119,7 @@ export class EffectiveMasterService {
         where: { tenantId },
         select: { industryTemplateVersionId: true },
       }),
-      readEffectiveModules(tx, tenantId, new Date(), write),
+      readEffectiveModules(tx, tenantId, () => new Date(), write),
     ]);
     const modules = new Set(commercial.modules.map(m => m.code));
     return {
