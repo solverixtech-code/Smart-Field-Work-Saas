@@ -16,6 +16,7 @@ import { PlatformPlansModule } from './platform/plans/platform-plans.module';
 import { PlatformSubscriptionsModule } from './platform/subscriptions/platform-subscriptions.module';
 import { PlatformIndustriesModule } from './platform/industries/platform-industries.module';
 import { PlatformMastersModule } from './platform/masters/platform-masters.module';
+import { RuntimeModule } from './runtime/runtime.module';
 import { ApiThrottlerGuard } from './common/guards/api-throttler.guard';
 import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
 import { RedisThrottlerStorage } from './common/throttling/redis-throttler.storage';
@@ -63,6 +64,7 @@ import { AppController } from './app.controller';
     PlatformSubscriptionsModule,
     PlatformIndustriesModule,
     PlatformMastersModule,
+    RuntimeModule,
   ],
   providers: [
     {
