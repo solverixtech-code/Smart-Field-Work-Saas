@@ -1,16 +1,11 @@
 import {
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../persistence/prisma.service";
-import { MODULE_REGISTRY } from "../modules/feature-registry";
-import {
-  readRules,
-  subscriptionAccess,
-} from "../subscriptions/subscription-contract";
+import { readEffectiveModules } from "../modules/effective-modules";
 import {
   masterCode,
   masterDefinitionSelect,
@@ -119,54 +114,14 @@ export class EffectiveMasterService {
       select: { id: true },
     });
     if (!tenant) throw new NotFoundException("Tenant not found");
-    const [assignment, subscription] = await Promise.all([
+    const [assignment, commercial] = await Promise.all([
       tx.tenantIndustryTemplateAssignment.findUnique({
         where: { tenantId },
         select: { industryTemplateVersionId: true },
       }),
-      tx.tenantSubscription.findUnique({
-        where: { tenantId },
-        select: {
-          status: true,
-          trialEndsAt: true,
-          graceEndsAt: true,
-          planVersion: {
-            select: {
-              commercialRule: { select: { schemaVersion: true, rules: true } },
-              modules: {
-                select: { module: { select: { code: true, status: true } } },
-              },
-            },
-          },
-        },
-      }),
+      readEffectiveModules(tx, tenantId, new Date(), write),
     ]);
-    if (subscription) {
-      const access = subscriptionAccess(
-        subscription,
-        readRules(subscription.planVersion.commercialRule),
-        new Date(),
-      );
-      if (access === "BLOCKED" || (write && access === "READ_ONLY"))
-        throw new ForbiddenException(
-          "Subscription does not permit this Tenant operation",
-        );
-    }
-    const canonical = new Set(
-      MODULE_REGISTRY.filter((m) => ["ACTIVE", "BETA"].includes(m.status)).map(
-        (m) => m.code,
-      ),
-    );
-    // Legacy absence does not invent a Plan mapping. Only unbound definitions are available.
-    const modules = new Set(
-      subscription?.planVersion.modules
-        .filter(
-          (m) =>
-            canonical.has(m.module.code) &&
-            ["ACTIVE", "BETA"].includes(m.module.status),
-        )
-        .map((m) => m.module.code) ?? [],
-    );
+    const modules = new Set(commercial.modules.map(m => m.code));
     return {
       versionId: assignment?.industryTemplateVersionId ?? null,
       modules,
@@ -200,18 +155,20 @@ export class EffectiveMasterService {
     return this.prisma.$transaction(
       async (tx) => {
         const { modules } = await this.context(tx, tenantId);
-        return tx.masterDefinition.findMany({
-          where: {
-            status: "ACTIVE",
-            OR: [{ moduleCode: null }, { moduleCode: { in: [...modules] } }],
-          },
-          select: masterDefinitionSelect,
-          orderBy: [{ displayOrder: "asc" }, { code: "asc" }],
-          take: 24,
-        });
+        return this.definitionsInSnapshot(tx, modules);
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
     );
+  }
+
+  /** Internal M9 seam: caller supplies the shared commercial authority in this transaction. */
+  definitionsInSnapshot(tx: Prisma.TransactionClient, modules: ReadonlySet<string>) {
+    return tx.masterDefinition.findMany({
+      where: { status: "ACTIVE", OR: [{ moduleCode: null }, { moduleCode: { in: [...modules] } }] },
+      select: masterDefinitionSelect,
+      orderBy: [{ displayOrder: "asc" }, { code: "asc" }],
+      take: 24,
+    });
   }
 
   list(tenantId: string, code: string, input: unknown) {

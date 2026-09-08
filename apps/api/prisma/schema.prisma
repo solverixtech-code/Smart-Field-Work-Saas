@@ -7,6 +7,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum RuntimeConfigScope {
+  SYSTEM
+  INDUSTRY
+  TENANT
+}
+
+model RuntimeConfigEpoch {
+  id String @id @default(dbgenerated("gen_random_uuid()"))
+  scope RuntimeConfigScope
+  tenantId String? @unique
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  industryTemplateVersionId String? @unique
+  industryTemplateVersion IndustryTemplateVersion? @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Cascade)
+  version BigInt @default(1)
+}
+
 // ─── Roles ──────────────────────────────────────────────────────────────────────
 
 enum Role {
@@ -708,6 +724,7 @@ enum PlatformAssignmentStatus {
 }
 
 model Tenant {
+  runtimeConfigEpoch RuntimeConfigEpoch?
   masterValues MasterValue[]
   masterOverrides MasterValueOverride[]
   industryCode    String?
@@ -1164,6 +1181,7 @@ model IndustryTemplate {
 }
 
 model IndustryTemplateVersion {
+  runtimeConfigEpoch RuntimeConfigEpoch?
   masterValues MasterValue[]
   masterOverrides MasterValueOverride[]
   id String @id @default(uuid())

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../persistence/prisma.service';
 import { PermissionCacheService } from './permission-cache.service';
-import { PlatformAssignmentStatus, PermissionScope } from '@prisma/client';
+import { PlatformAssignmentStatus, PermissionScope, Prisma } from '@prisma/client';
 
 @Injectable()
 export class EffectivePermissionService {
@@ -95,11 +95,13 @@ export class EffectivePermissionService {
   async resolveTenantPermissions(
     tenantId: string | null,
     membershipId: string | null,
+    transaction?: Prisma.TransactionClient,
   ): Promise<string[]> {
     if (!tenantId || !membershipId) return [];
 
     // 1. Load active membership & role
-    const membership = await this.prisma.tenantMembership.findUnique({
+    const db = transaction ?? this.prisma;
+    const membership = await db.tenantMembership.findUnique({
       where: { id: membershipId },
       include: {
         tenantRole: {
@@ -126,13 +128,15 @@ export class EffectivePermissionService {
     const role = membership.tenantRole;
     const cacheKey = `rbac:tenant:${tenantId}:${membershipId}:${role.id}:v${role.permissionsVersion}`;
 
-    const cached = this.cache.get(cacheKey);
+    // Runtime composition supplies one authoritative snapshot. Never use an
+    // independently populated permission cache inside that transaction.
+    const cached = transaction ? null : this.cache.get(cacheKey);
     if (cached) {
       return cached;
     }
 
     // 2. Query TenantRolePermission join
-    const dbPermissions = await this.prisma.tenantRolePermission.findMany({
+    const dbPermissions = await db.tenantRolePermission.findMany({
       where: {
         tenantRoleId: role.id,
         permission: {
@@ -155,7 +159,7 @@ export class EffectivePermissionService {
       ),
     ).sort();
 
-    this.cache.set(cacheKey, permissionCodes);
+    if (!transaction) this.cache.set(cacheKey, permissionCodes);
     return permissionCodes;
   }
 }
