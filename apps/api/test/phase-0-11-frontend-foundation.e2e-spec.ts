@@ -11,6 +11,8 @@ import { syncRbac } from '../prisma/sync-rbac';
 import { seedTenantRoleTemplates } from '../prisma/seeds/tenant-role-templates';
 import { PlatformCatalogSyncService } from '../src/platform/modules/platform-catalog-sync.service';
 import { MasterSeedService } from '../src/platform/masters/master-seed.service';
+import { execFileSync } from 'child_process';
+import { PrismaClient } from '@prisma/client';
 import { ProvisioningService } from '../src/platform/subscriptions/provisioning.service';
 import { RuntimeConfigService } from '../src/runtime/runtime-config.service';
 import { IndustryService } from '../src/platform/industries/industry.service';
@@ -32,9 +34,17 @@ describe('Phase 0.11 Frontend Foundation Conversion E2E Proof', () => {
   let provisionedTenantId: string;
 
   const timestamp = Date.now();
+  const schema = `phase11_${randomUUID().replace(/-/g, '')}`;
+  let baseUrl: string;
 
   beforeAll(async () => {
     verifyTestDatabaseSafety();
+    baseUrl = process.env.TEST_DATABASE_URL ?? '';
+    const isolated = new URL(baseUrl);
+    isolated.searchParams.set('schema', schema);
+    process.env.DATABASE_URL = isolated.toString();
+    execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'migrate', 'deploy', '--schema=prisma/schema.prisma'], { cwd: process.cwd(), env: process.env, stdio: 'pipe' });
+
     const moduleRef: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -171,20 +181,15 @@ describe('Phase 0.11 Frontend Foundation Conversion E2E Proof', () => {
   }, 60000);
 
   afterAll(async () => {
-    if (provisionedTenantId) {
-      await prisma.provisioningEvent.deleteMany({ where: { provisioning: { tenantId: provisionedTenantId } } });
-      await prisma.tenantProvisioning.deleteMany({ where: { tenantId: provisionedTenantId } });
-      await prisma.subscriptionChange.deleteMany({ where: { tenantId: provisionedTenantId } });
-      await prisma.tenantSubscription.deleteMany({ where: { tenantId: provisionedTenantId } });
-      await prisma.userSession.deleteMany({ where: { selectedMembershipId: { in: (await prisma.tenantMembership.findMany({ where: { tenantId: provisionedTenantId }, select: { id: true } })).map((m) => m.id) } } });
-      await prisma.tenantMembership.deleteMany({ where: { tenantId: provisionedTenantId } });
-      await prisma.tenantRolePermission.deleteMany({ where: { tenantRole: { tenantId: provisionedTenantId } } });
-      await prisma.tenantRole.deleteMany({ where: { tenantId: provisionedTenantId } });
-      await prisma.tenantSettings.deleteMany({ where: { tenantId: provisionedTenantId } });
-      await prisma.tenantBranding.deleteMany({ where: { tenantId: provisionedTenantId } });
-      await prisma.tenant.deleteMany({ where: { id: provisionedTenantId } });
-    }
     if (app) await app.close();
+    if (prisma) await prisma.$disconnect();
+    if (baseUrl) {
+      const cleanup = new PrismaClient({ datasources: { db: { url: baseUrl } } });
+      if (!/^phase11_[a-f0-9]{32}$/.test(schema)) throw new Error('Unsafe test schema');
+      await cleanup.$executeRawUnsafe(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
+      await cleanup.$disconnect();
+      process.env.DATABASE_URL = baseUrl;
+    }
   });
 
   describe('SCENARIOS A & B: Platform Modules API and Permission Guard', () => {
