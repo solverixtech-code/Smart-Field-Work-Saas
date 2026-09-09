@@ -1,4 +1,5 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Optional } from "@nestjs/common";
+import { MetricsService } from '../observability/metrics.service';
 import {
   RuntimeBootstrap,
   RUNTIME_MAX_ENTRIES,
@@ -16,6 +17,7 @@ export class RuntimeClock {
 
 @Injectable()
 export class RuntimeConfigCache {
+  constructor(@Optional() private readonly metrics?: MetricsService) {}
   private readonly entries = new Map<
     string,
     { expiresAt: number; value: unknown }
@@ -28,6 +30,7 @@ export class RuntimeConfigCache {
     const entry = this.entries.get(key);
     if (!entry) return null;
     if (entry.expiresAt <= now.getTime()) {
+      this.metrics?.observe('runtime_cache', { cache: 'expired' });
       this.entries.delete(key);
       return null;
     }
@@ -38,11 +41,13 @@ export class RuntimeConfigCache {
         (parsed.nextRevalidationAt !== null &&
           Date.parse(parsed.nextRevalidationAt) <= now.getTime())
       ) {
+        this.metrics?.observe('runtime_cache', { cache: 'invalid' });
         this.entries.delete(key);
         return null;
       }
       return parsed; // Zod clones the DTO, preventing callers from mutating cached state.
     } catch {
+      this.metrics?.observe('runtime_cache', { cache: 'invalid' });
       this.entries.delete(key);
       return null;
     }

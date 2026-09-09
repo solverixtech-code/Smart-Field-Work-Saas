@@ -3,14 +3,16 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Optional,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from '../decorators/require-permissions.decorator';
 import { RequestPrincipal } from '../security/request-principal.interface';
+import { MetricsService } from '../../observability/metrics.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(private reflector: Reflector, @Optional() private readonly metrics?: MetricsService) {}
 
   canActivate(context: ExecutionContext): boolean {
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
@@ -43,6 +45,8 @@ export class PermissionsGuard implements CanActivate {
     });
 
     if (!hasAll) {
+      if (requiredPermissions.some((permission) => !permission.startsWith('platform.')))
+        this.metrics?.observe('tenant_denials', { operation: 'permission_denied', outcome: 'denied' });
       throw new ForbiddenException('You do not have permission to perform this action.');
     }
 

@@ -51,6 +51,7 @@ enum DataScope {
 // ─── Users ──────────────────────────────────────────────────────────────────────
 
 model User {
+  privateMediaCreated MediaAsset[]
   masterLegacyReconciliations MasterLegacyReconciliation[]
   masterValuesCreated MasterValue[] @relation("MasterValueCreator")
   masterOverridesCreated MasterValueOverride[] @relation("MasterOverrideCreator")
@@ -248,6 +249,17 @@ model OtpChallenge {
 // ─── Audit Logs ─────────────────────────────────────────────────────────────────
 
 model AuditLog {
+  schemaVersion Int @default(1)
+  scope String @default("LEGACY")
+  eventCode String?
+  category String?
+  outcome String?
+  actorType String @default("LEGACY")
+  requestId String?
+  correlationId String?
+  originRequestId String?
+  metadata Json?
+  redactionVersion Int?
   id                 String            @id @default(uuid())
   actorUserId        String?
   actorUser          User?             @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
@@ -271,6 +283,84 @@ model AuditLog {
   @@index([action])
   @@index([entityType, entityId])
   @@index([createdAt])
+  @@index([tenantId, createdAt, id])
+  @@index([eventCode, createdAt, id])
+}
+
+model MediaAsset {
+  id String @id @default(uuid())
+  tenantId String
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  creatorUserId String
+  creatorUser User @relation(fields: [creatorUserId], references: [id], onDelete: Restrict)
+  creatorMembershipId String
+  creatorMembership TenantMembership @relation(fields: [creatorMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  provider String @default("S3")
+  bucket String
+  objectKey String
+  displayName String
+  mimeType String
+  expectedBytes Int
+  checksumSha256 String
+  etag String?
+  status String @default("UPLOAD_PENDING")
+  uploadExpiresAt DateTime
+  completedAt DateTime?
+  deletedAt DateTime?
+  revision Int @default(1)
+  createdAt DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
+  updatedAt DateTime @updatedAt
+
+  @@unique([bucket, objectKey])
+  @@index([tenantId, status, createdAt])
+}
+
+model BackgroundJob {
+  id String @id @default(uuid())
+  type String
+  schemaVersion Int @default(1)
+  tenantId String?
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  actorUserId String?
+  membershipId String?
+  originRequestId String?
+  correlationId String
+  payload Json
+  idempotencyKey String
+  payloadHash String
+  status String @default("PENDING")
+  availableAt DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
+  attemptCount Int @default(0)
+  maxAttempts Int @default(5)
+  retryUntilAttempt Int @default(5)
+  workerId String?
+  leaseToken String?
+  leaseExpiresAt DateTime?
+  lastErrorCode String?
+  completedAt DateTime?
+  deadAt DateTime?
+  revision Int @default(1)
+  createdAt DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
+  updatedAt DateTime @updatedAt
+  attempts BackgroundJobAttempt[]
+
+  @@index([status, availableAt, id])
+  @@index([tenantId, createdAt, id])
+}
+
+model BackgroundJobAttempt {
+  id String @id @default(uuid())
+  jobId String
+  job BackgroundJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  number Int
+  leaseToken String @unique
+  workerId String
+  status String @default("RUNNING")
+  errorCode String?
+  startedAt DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
+  finishedAt DateTime?
+
+  @@unique([jobId, number])
 }
 
 // ─── Shift & Schedule Management ────────────────────────────────────────────────
@@ -724,6 +814,8 @@ enum PlatformAssignmentStatus {
 }
 
 model Tenant {
+  privateMedia MediaAsset[]
+  backgroundJobs BackgroundJob[]
   runtimeConfigEpoch RuntimeConfigEpoch?
   masterValues MasterValue[]
   masterOverrides MasterValueOverride[]
@@ -821,6 +913,7 @@ model TenantBranding {
 }
 
 model TenantMembership {
+  privateMediaCreated MediaAsset[]
   provisioningOwnership TenantProvisioning[]
   id                    String                 @id @default(uuid())
   tenantId              String

@@ -1,3 +1,4 @@
+import { auditEvents } from "../../audit/audit-event-writer";
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../persistence/prisma.service';
@@ -551,8 +552,8 @@ export class PlatformCatalogSyncService {
 
     // Record Audit Event
     try {
-      await this.prisma.auditLog.create({
-        data: {
+      await auditEvents.write(this.prisma, {
+          scope: 'PLATFORM',
           action: 'PLATFORM_CATALOG_SYNCHRONIZED',
           actorUserId: actorUserId ?? null,
           entityType: 'CATALOG',
@@ -563,10 +564,9 @@ export class PlatformCatalogSyncService {
             expectedFeatures: FEATURE_REGISTRY.length,
             syncedAt: new Date().toISOString(),
           },
-        },
       });
     } catch (e) {
-      this.logger.warn(`Failed to record audit log for catalog sync: ${e}`);
+      this.logger.warn('Catalog audit write failed');
     }
 
     const health = await this.getCatalogHealth();

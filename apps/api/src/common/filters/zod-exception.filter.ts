@@ -32,7 +32,7 @@ export class ZodExceptionFilter implements ExceptionFilter {
     );
 
     this.logger.warn(
-      `Validation Failed on [${request.method}] ${request.url}: ${errorMessages.join(', ')}`,
+      'Request validation failed',
     );
 
     return response.status(HttpStatus.BAD_REQUEST).json({

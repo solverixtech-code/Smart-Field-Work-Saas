@@ -15,7 +15,7 @@ export class SmsService {
 
     if (!providerUrl || !username || !apiKey || !sender) {
       this.logger.warn(
-        `SMS not configured. OTP for ${this.maskMobile(input.mobile)}: ${input.otp}`,
+        'SMS not configured; OTP delivery unavailable',
       );
       return;
     }
@@ -41,9 +41,7 @@ export class SmsService {
       this.logger.log(`OTP SMS sent to ${this.maskMobile(input.mobile)}`);
     } catch (error) {
       this.logger.warn(
-        `Failed to send SMS to ${this.maskMobile(input.mobile)}: ${
-          error instanceof Error ? error.message : 'unknown'
-        }`,
+        'OTP SMS delivery failed',
       );
     }
   }

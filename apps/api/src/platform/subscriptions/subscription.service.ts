@@ -5,6 +5,7 @@ import { PrismaService } from '../../persistence/prisma.service';
 import { addDays, CommandActor, jsonValue, payloadHash, periodEnd, readRules, Selection, selectionSchema, subscriptionAccess, subscriptionCommandSchema } from './subscription-contract';
 import { commercialVersionSelect, SubscriptionPolicyService } from './subscription-policy.service';
 import { SubscriptionTransactionService } from './subscription-transaction.service';
+import { auditEvents } from '../../audit/audit-event-writer';
 
 @Injectable()
 export class SubscriptionService {
@@ -39,6 +40,9 @@ export class SubscriptionService {
       status: 'APPLIED', effectiveAt: now, appliedAt: now, actorUserId: actor.userId, requestId, revision: sub.revision,
       requestData: jsonValue(input), result: jsonValue(sub),
     } });
+    await auditEvents.write(tx, { action: 'subscription.created', scope: 'TENANT', tenantId,
+      actorUserId: actor.userId, entityType: 'TenantSubscription', entityId: sub.id,
+      afterJson: { planVersionId: sub.planVersionId, status: sub.status, revision: sub.revision } });
     return sub;
   }
 
@@ -150,6 +154,11 @@ export class SubscriptionService {
         status: 'APPLIED', effectiveAt: transitionEffectiveAt, appliedAt: now, actorUserId: actor.userId, requestId: input.requestId, revision: updated.revision,
         requestData: jsonValue(input), result,
       } });
+      await auditEvents.write(tx, { action: 'subscription.changed', scope: 'TENANT', tenantId,
+        actorUserId: actor.userId, entityType: 'TenantSubscription', entityId: sub.id,
+        beforeJson: { planVersionId: sub.planVersionId, status: sub.status, revision: sub.revision },
+        afterJson: { planVersionId: updated.planVersionId, status: updated.status, revision: updated.revision },
+        metadata: { command: input.action, scheduled, effectiveAt: scheduled ? effectiveAt : transitionEffectiveAt, reason: input.reason } });
       return result;
     });
   }

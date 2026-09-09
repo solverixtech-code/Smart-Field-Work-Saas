@@ -24,6 +24,11 @@ import { ThrottlingModule } from './common/throttling/throttling.module';
 import { RepositoriesModule } from './repositories/repositories.module';
 
 import { AppController } from './app.controller';
+import { ObservabilityModule } from './observability/observability.module';
+import { ReadinessModule } from './observability/readiness.module';
+import { AuditModule } from './audit/audit.module';
+import { MediaModule } from './media/media.module';
+import { OperationsModule } from './jobs/operations.module';
 
 @Module({
   controllers: [AppController],
@@ -65,6 +70,11 @@ import { AppController } from './app.controller';
     PlatformIndustriesModule,
     PlatformMastersModule,
     RuntimeModule,
+    ObservabilityModule,
+    ReadinessModule,
+    AuditModule,
+    MediaModule,
+    OperationsModule,
   ],
   providers: [
     {

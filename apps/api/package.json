@@ -9,6 +9,8 @@
     "start": "nest start",
     "dev": "nest start --watch",
     "start:prod": "node dist/main",
+    "worker:jobs": "node dist/worker.js",
+    "worker:jobs:dev": "ts-node src/worker.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json --runInBand",
@@ -18,8 +20,8 @@
     "seed": "ts-node prisma/seed-dev.ts",
     "db:backfill:platform-roles": "ts-node prisma/backfills/backfill-platform-roles.ts",
     "db:report:tenant-ownership": "ts-node prisma/backfills/reconcile-tenant-ownership.ts",
-    "db:sync:rbac": "ts-node prisma/sync-rbac.ts"
-    ,"db:reconcile:subscriptions": "ts-node prisma/backfills/reconcile-subscriptions.ts",
+    "db:sync:rbac": "ts-node prisma/sync-rbac.ts",
+    "db:reconcile:subscriptions": "ts-node prisma/backfills/reconcile-subscriptions.ts",
     "db:reconcile:industries": "ts-node prisma/backfills/reconcile-industries.ts",
     "db:reconcile:masters": "ts-node prisma/backfills/reconcile-masters.ts"
   },
@@ -28,6 +30,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1111.0",
+    "@aws-sdk/s3-request-presigner": "^3.1111.0",
     "@nestjs/common": "^10.4.22",
     "@nestjs/config": "^3.0.0",
     "@nestjs/core": "^10.4.22",

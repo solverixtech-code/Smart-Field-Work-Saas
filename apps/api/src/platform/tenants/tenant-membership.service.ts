@@ -1,3 +1,4 @@
+import { auditEvents } from '../../audit/audit-event-writer';
 import {
   Injectable,
   Logger,
@@ -24,7 +25,8 @@ export class TenantMembershipService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createMembership(input: CreateMembershipDto, transaction?: import('@prisma/client').Prisma.TransactionClient): Promise<TenantMembershipSummaryDto> {
-    const db = transaction ?? this.prisma;
+    if (!transaction) return this.prisma.$transaction((tx) => this.createMembership(input, tx));
+    const db = transaction;
     // 1. Verify Tenant exists & status allows membership creation
     const tenant = await db.tenant.findUnique({
       where: { id: input.tenantId },
@@ -138,14 +140,18 @@ export class TenantMembershipService {
       },
     });
 
+    await auditEvents.write(db, { action: 'rbac.membership.changed', scope: 'TENANT', tenantId: created.tenantId, entityType: 'TenantMembership', entityId: created.id, afterJson: { status: created.status, roleId: created.tenantRoleId } });
     return this.mapToSummaryDto(created);
   }
 
   async updateMembershipProfile(
     id: string,
     input: UpdateMembershipProfileDto,
+  transaction?: import('@prisma/client').Prisma.TransactionClient,
   ): Promise<TenantMembershipSummaryDto> {
-    const existing = await this.prisma.tenantMembership.findUnique({
+    if (!transaction) return this.prisma.$transaction((tx) => this.updateMembershipProfile(id, input, tx));
+    const db = transaction;
+    const existing = await db.tenantMembership.findUnique({
       where: { id },
     });
     if (!existing) {
@@ -153,7 +159,7 @@ export class TenantMembershipService {
     }
 
     if (input.managerMembershipId) {
-      const mgr = await this.prisma.tenantMembership.findUnique({
+      const mgr = await db.tenantMembership.findUnique({
         where: { id: input.managerMembershipId },
       });
       if (!mgr) {
@@ -168,7 +174,7 @@ export class TenantMembershipService {
 
     if (input.employeeCode && input.employeeCode.trim()) {
       const empCode = input.employeeCode.trim();
-      const existingEmpCode = await this.prisma.tenantMembership.findFirst({
+      const existingEmpCode = await db.tenantMembership.findFirst({
         where: {
           tenantId: existing.tenantId,
           employeeCode: empCode,
@@ -182,7 +188,7 @@ export class TenantMembershipService {
       }
     }
 
-    const updated = await this.prisma.tenantMembership.update({
+    const updated = await db.tenantMembership.update({
       where: { id },
       data: {
         employeeCode: input.employeeCode !== undefined ? input.employeeCode.trim() : existing.employeeCode,
@@ -200,21 +206,25 @@ export class TenantMembershipService {
       },
     });
 
+    await auditEvents.write(db, { action: 'rbac.membership.changed', scope: 'TENANT', tenantId: updated.tenantId, entityType: 'TenantMembership', entityId: updated.id, beforeJson: { status: existing.status, roleId: existing.tenantRoleId, dataScope: existing.dataScope }, afterJson: { status: updated.status, roleId: updated.tenantRoleId, dataScope: updated.dataScope } });
     return this.mapToSummaryDto(updated);
   }
 
   async changeMembershipRole(
     id: string,
     tenantRoleId: string,
+  transaction?: import('@prisma/client').Prisma.TransactionClient,
   ): Promise<TenantMembershipSummaryDto> {
-    const existing = await this.prisma.tenantMembership.findUnique({
+    if (!transaction) return this.prisma.$transaction((tx) => this.changeMembershipRole(id, tenantRoleId, tx));
+    const db = transaction;
+    const existing = await db.tenantMembership.findUnique({
       where: { id },
     });
     if (!existing) {
       throw new NotFoundException(`TenantMembership with ID '${id}' not found.`);
     }
 
-    const role = await this.prisma.tenantRole.findUnique({
+    const role = await db.tenantRole.findUnique({
       where: { id: tenantRoleId },
     });
     if (!role) {
@@ -226,7 +236,7 @@ export class TenantMembershipService {
       );
     }
 
-    const updated = await this.prisma.tenantMembership.update({
+    const updated = await db.tenantMembership.update({
       where: { id },
       data: { tenantRoleId },
       include: {
@@ -236,14 +246,18 @@ export class TenantMembershipService {
       },
     });
 
+    await auditEvents.write(db, { action: 'rbac.membership.changed', scope: 'TENANT', tenantId: updated.tenantId, entityType: 'TenantMembership', entityId: updated.id, beforeJson: { status: existing.status, roleId: existing.tenantRoleId, dataScope: existing.dataScope }, afterJson: { status: updated.status, roleId: updated.tenantRoleId, dataScope: updated.dataScope } });
     return this.mapToSummaryDto(updated);
   }
 
   async transitionMembershipStatus(
     id: string,
     newStatus: TenantMembershipStatus,
+  transaction?: import('@prisma/client').Prisma.TransactionClient,
   ): Promise<TenantMembershipSummaryDto> {
-    const existing = await this.prisma.tenantMembership.findUnique({
+    if (!transaction) return this.prisma.$transaction((tx) => this.transitionMembershipStatus(id, newStatus, tx));
+    const db = transaction;
+    const existing = await db.tenantMembership.findUnique({
       where: { id },
     });
     if (!existing) {
@@ -251,7 +265,7 @@ export class TenantMembershipService {
     }
 
     if (existing.status === newStatus) {
-      const full = await this.prisma.tenantMembership.findUnique({
+      const full = await db.tenantMembership.findUnique({
         where: { id },
         include: { user: true, tenant: true, tenantRole: true },
       });
@@ -277,7 +291,7 @@ export class TenantMembershipService {
       updateData.deactivatedAt = now;
     }
 
-    const updated = await this.prisma.tenantMembership.update({
+    const updated = await db.tenantMembership.update({
       where: { id },
       data: updateData,
       include: {
@@ -287,6 +301,7 @@ export class TenantMembershipService {
       },
     });
 
+    await auditEvents.write(db, { action: 'rbac.membership.changed', scope: 'TENANT', tenantId: updated.tenantId, entityType: 'TenantMembership', entityId: updated.id, beforeJson: { status: existing.status, roleId: existing.tenantRoleId, dataScope: existing.dataScope }, afterJson: { status: updated.status, roleId: updated.tenantRoleId, dataScope: updated.dataScope } });
     return this.mapToSummaryDto(updated);
   }
 

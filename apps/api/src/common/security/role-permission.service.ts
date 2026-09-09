@@ -1,3 +1,4 @@
+import { auditEvents } from '../../audit/audit-event-writer';
 import {
   Injectable,
   BadRequestException,
@@ -67,6 +68,8 @@ export class RolePermissionService {
         },
       });
 
+      await auditEvents.write(tx, { action: 'rbac.platform.grant', scope: 'PLATFORM', entityType: 'PlatformRole', entityId: platformRoleId,
+        metadata: { permissionCode, permissionsVersion: updatedRole.permissionsVersion } });
       return {
         platformRoleId,
         permissionCode,
@@ -128,6 +131,8 @@ export class RolePermissionService {
         },
       });
 
+      await auditEvents.write(tx, { action: 'rbac.platform.revoke', scope: 'PLATFORM', entityType: 'PlatformRole', entityId: platformRoleId,
+        metadata: { permissionCode, permissionsVersion: updatedRole.permissionsVersion } });
       return {
         platformRoleId,
         permissionCode,
@@ -199,6 +204,8 @@ export class RolePermissionService {
         },
       });
 
+      await auditEvents.write(tx, { action: 'rbac.tenant.grant', scope: 'TENANT', tenantId, entityType: 'TenantRole', entityId: tenantRoleId,
+        metadata: { permissionCode, permissionsVersion: updatedRole.permissionsVersion } });
       return {
         tenantId,
         tenantRoleId,
@@ -267,6 +274,8 @@ export class RolePermissionService {
         },
       });
 
+      await auditEvents.write(tx, { action: 'rbac.tenant.revoke', scope: 'TENANT', tenantId, entityType: 'TenantRole', entityId: tenantRoleId,
+        metadata: { permissionCode, permissionsVersion: updatedRole.permissionsVersion } });
       return {
         tenantId,
         tenantRoleId,

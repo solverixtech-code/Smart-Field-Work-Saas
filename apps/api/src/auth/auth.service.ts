@@ -1,3 +1,4 @@
+import { auditEvents } from "../audit/audit-event-writer";
 import {
   BadRequestException,
   Injectable,
@@ -1116,33 +1117,25 @@ export class AuthService {
     actorUserId?: string | null;
     entityType?: string | null;
     entityId?: string | null;
-    metadata?: any;
-    beforeJson?: any;
-    afterJson?: any;
+    metadata?: unknown;
+    beforeJson?: unknown;
+    afterJson?: unknown;
     ip?: string | null;
     userAgent?: string | null;
     sessionId?: string | null;
   }): Promise<void> {
     try {
-      await this.prisma.auditLog.create({
-        data: {
+      await auditEvents.write(this.prisma, {
+          scope: 'SYSTEM',
           actorUserId: input.actorUserId ?? null,
           action: input.action,
           entityType: input.entityType ?? null,
           entityId: input.entityId ?? null,
           beforeJson: input.beforeJson ?? input.metadata ?? null,
           afterJson: input.afterJson ?? null,
-          ip: input.ip ?? null,
-          userAgent: input.userAgent ?? null,
-          sessionId: input.sessionId ?? null,
-        },
       });
     } catch (error) {
-      this.logger.warn(
-        `Failed to write audit log for action=${input.action}: ${
-          error instanceof Error ? error.message : 'unknown'
-        }`,
-      );
+      this.logger.warn('Authentication audit write failed');
     }
   }
 }

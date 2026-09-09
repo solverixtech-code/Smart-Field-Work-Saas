@@ -1,3 +1,4 @@
+import { auditEvents } from '../../audit/audit-event-writer';
 import {
   BadRequestException,
   ConflictException,
@@ -325,8 +326,7 @@ export class MasterReconciliationService {
             },
             select: { legacyRecordId: true },
           });
-          await tx.auditLog.create({
-            data: {
+          await auditEvents.write(tx, { scope: content.tenantId ? "TENANT" : "PLATFORM", ...{
               actorUserId: actorId,
               tenantId: content.tenantId,
               action: "master.legacy.reconcile",
@@ -339,9 +339,7 @@ export class MasterReconciliationService {
                 reason: command.reason,
                 requestId: command.requestId,
               }),
-            },
-            select: { id: true },
-          });
+            } });
         }
         results.push({
           legacyRecordId: legacy.id,

@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
+import { auditEvents } from '../../audit/audit-event-writer';
 import { z } from "zod";
 import { PrismaService } from "../../persistence/prisma.service";
 import { jsonValue } from "../subscriptions/subscription-contract";
@@ -92,8 +93,8 @@ export class MasterService {
     tenantId?: string,
   ) {
     masterId.parse(actorUserId);
-    await tx.auditLog.create({
-      data: {
+    await auditEvents.write(tx, {
+        scope: tenantId ? 'TENANT' : 'PLATFORM',
         actorUserId,
         tenantId,
         action,
@@ -101,8 +102,6 @@ export class MasterService {
         entityId,
         beforeJson: jsonValue({ value: before }),
         afterJson: jsonValue({ value: after, reason, requestId }),
-      },
-      select: { id: true },
     });
   }
 
