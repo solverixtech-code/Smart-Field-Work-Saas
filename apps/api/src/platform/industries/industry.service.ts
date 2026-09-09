@@ -1,3 +1,4 @@
+import { auditEvents } from '../../audit/audit-event-writer';
 import {
   BadRequestException,
   ConflictException,
@@ -386,15 +387,13 @@ export class IndustryService {
     before: unknown,
     after: unknown,
   ) {
-    await tx.auditLog.create({
-      data: {
+    await auditEvents.write(tx, { scope: "PLATFORM", ...{
         actorUserId,
         action,
         entityType: 'IndustryTemplate',
         entityId,
-        beforeJson: before === null ? Prisma.JsonNull : jsonValue(before),
+        beforeJson: before === null ? null : jsonValue(before),
         afterJson: jsonValue(after),
-      },
-    });
+      } });
   }
 }

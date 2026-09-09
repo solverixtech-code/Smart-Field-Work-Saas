@@ -86,7 +86,7 @@ describe("Bootstrap CORS policy through the Nest HTTP adapter", () => {
       "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD",
     );
     expect(response.headers["access-control-allow-headers"]).toBe(
-      "Content-Type,Authorization,X-Requested-With,Accept,Origin",
+      "Content-Type,Authorization,X-Requested-With,Accept,Origin,X-Correlation-Id",
     );
   });
 

@@ -7,10 +7,11 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { ZodExceptionFilter } from './common/filters/zod-exception.filter';
 import { createCorsOptions } from './common/security/cors-options';
+import { SafeNestLogger } from './observability/safe-nest-logger';
 
 async function bootstrap() {
   const logger = new Logger('EntryPoint');
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: new SafeNestLogger() });
   const configService = app.get(ConfigService);
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.use(cookieParser());

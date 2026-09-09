@@ -1,3 +1,4 @@
+import { auditEvents } from '../../audit/audit-event-writer';
 import {
   Injectable,
   NotFoundException,
@@ -224,15 +225,13 @@ export class PlatformPlansService {
         },
       });
 
-      await tx.auditLog.create({
-        data: {
+      await auditEvents.write(tx, { scope: "PLATFORM", ...{
           actorUserId,
           action: 'PLAN_CREATED',
           entityType: 'Plan',
           entityId: plan.id,
           afterJson: { code: plan.code, name: plan.name },
-        },
-      });
+        } });
 
       return plan;
     });
@@ -261,16 +260,14 @@ export class PlatformPlansService {
       },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
+    await auditEvents.write(this.prisma, { scope: "PLATFORM", ...{
         actorUserId,
         action: 'PLAN_METADATA_UPDATED',
         entityType: 'Plan',
         entityId: planId,
         beforeJson: { name: plan.name, visibility: plan.visibility },
         afterJson: { name: updated.name, visibility: updated.visibility },
-      },
-    });
+      } });
 
     return this.getPlanById(planId);
   }
@@ -443,15 +440,13 @@ export class PlatformPlansService {
               }
             }
 
-            await tx.auditLog.create({
-              data: {
+            await auditEvents.write(tx, { scope: "PLATFORM", ...{
                 actorUserId,
                 action: 'PLAN_DRAFT_CREATED',
                 entityType: 'PlanVersion',
                 entityId: newVersion.id,
                 afterJson: { planId: planRow.id, version: newVersion.version },
-              },
-            });
+              } });
 
             return newVersion;
           },
@@ -592,14 +587,12 @@ export class PlatformPlansService {
               });
             }
 
-            await tx.auditLog.create({
-              data: {
+            await auditEvents.write(tx, { scope: "PLATFORM", ...{
                 actorUserId,
                 action: 'PLAN_DRAFT_UPDATED',
                 entityType: 'PlanVersion',
                 entityId: version.id,
-              },
-            });
+              } });
 
             const updated = await tx.planVersion.findUnique({
               where: { id: version.id },
@@ -748,15 +741,13 @@ export class PlatformPlansService {
               },
             });
 
-            await tx.auditLog.create({
-              data: {
+            await auditEvents.write(tx, { scope: "PLATFORM", ...{
                 actorUserId,
                 action: 'PLAN_VERSION_PUBLISHED',
                 entityType: 'PlanVersion',
                 entityId: version.id,
                 afterJson: { planId: plan.id, version: version.version, publishedAt: now },
-              },
-            });
+              } });
 
             return this.queryService.formatPlan(
               (await tx.plan.findUnique({
@@ -818,15 +809,13 @@ export class PlatformPlansService {
         },
       });
 
-      await tx.auditLog.create({
-        data: {
+      await auditEvents.write(tx, { scope: "PLATFORM", ...{
           actorUserId,
           action: 'PLAN_ARCHIVED',
           entityType: 'Plan',
           entityId: planId,
           afterJson: { archivedAt: now },
-        },
-      });
+        } });
     });
 
     return this.getPlanById(planId);

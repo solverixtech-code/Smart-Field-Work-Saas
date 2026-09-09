@@ -1,3 +1,15 @@
+import { auditEvents } from "../../audit/audit-event-writer";
+import { redactDiagnostic } from '../../observability/redaction';
+
+function moduleAuditSnapshot(value: unknown) {
+  if (value === null || typeof value !== 'object') return null;
+  const result: Record<string, unknown> = {};
+  for (const key of ['id','moduleId','code','name','status','implementationKey','internalNotes','displayOrder']) {
+    const property = Object.getOwnPropertyDescriptor(value, key);
+    if (property && 'value' in property) result[key] = property.value;
+  }
+  return result;
+}
 import {
   Injectable,
   NotFoundException,
@@ -204,7 +216,7 @@ export class PlatformModulesService {
 
   async history(moduleId: string) {
     await this.findOne(moduleId);
-    return this.prisma.auditLog.findMany({
+    const events = await this.prisma.auditLog.findMany({
       where: {
         OR: [
           { entityType: 'MODULE', entityId: moduleId },
@@ -214,6 +226,7 @@ export class PlatformModulesService {
       include: { actorUser: { select: { id: true, fullName: true, email: true } } },
       orderBy: { createdAt: 'desc' },
     });
+    return events.map((event) => ({ ...event, beforeJson: redactDiagnostic(event.beforeJson), afterJson: redactDiagnostic(event.afterJson), metadata: redactDiagnostic(event.metadata) }));
   }
 
   // ─── Module Metadata Update ──────────────────────────────────────────────────
@@ -488,26 +501,23 @@ export class PlatformModulesService {
     actorUserId?: string | null;
     entityType: string;
     entityId: string;
-    beforeJson?: any;
-    afterJson?: any;
+    beforeJson?: unknown;
+    afterJson?: unknown;
     ip?: string | null;
     userAgent?: string | null;
   }) {
     try {
-      await this.prisma.auditLog.create({
-        data: {
+      await auditEvents.write(this.prisma, {
+          scope: 'PLATFORM',
           actorUserId: input.actorUserId ?? null,
           action: input.action,
           entityType: input.entityType,
           entityId: input.entityId,
-          beforeJson: input.beforeJson ?? null,
-          afterJson: input.afterJson ?? null,
-          ip: input.ip ?? null,
-          userAgent: input.userAgent ?? null,
-        },
+          beforeJson: moduleAuditSnapshot(input.beforeJson),
+          afterJson: moduleAuditSnapshot(input.afterJson),
       });
     } catch (e) {
-      this.logger.warn(`Failed to record audit log ${input.action}: ${e instanceof Error ? e.message : e}`);
+      this.logger.warn('Module audit write failed');
     }
   }
 }

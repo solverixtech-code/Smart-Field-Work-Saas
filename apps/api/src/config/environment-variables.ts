@@ -27,6 +27,7 @@ export interface EnvironmentVariables {
   SMS_API_KEY?: string;
   SMS_ROUTE?: string;
   SMS_SENDER?: string;
+  MEDIA_ENABLED?: boolean;
 }
 
 export const validationSchemaForEnv = Joi.object<EnvironmentVariables, true>({
@@ -56,4 +57,5 @@ export const validationSchemaForEnv = Joi.object<EnvironmentVariables, true>({
   SMS_API_KEY: Joi.string().allow('').optional(),
   SMS_ROUTE: Joi.string().allow('').optional(),
   SMS_SENDER: Joi.string().allow('').optional(),
+  MEDIA_ENABLED: Joi.boolean().truthy('true').falsy('false').default(false),
 });

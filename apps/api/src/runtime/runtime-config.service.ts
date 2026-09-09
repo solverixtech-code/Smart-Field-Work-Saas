@@ -1,10 +1,12 @@
 import {
   ForbiddenException,
   Injectable,
+  Optional,
   ServiceUnavailableException,
   UnauthorizedException,
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
+import { MetricsService } from '../observability/metrics.service';
 import { PrismaService } from "../persistence/prisma.service";
 import { RequestPrincipal } from "../common/security/request-principal.interface";
 import { EffectivePermissionService } from "../common/security/effective-permission.service";
@@ -31,6 +33,7 @@ export class RuntimeConfigService {
     private readonly masters: EffectiveMasterService,
     private readonly cache: RuntimeConfigCache,
     private readonly clock: RuntimeClock,
+    @Optional() private readonly metrics?: MetricsService,
   ) {}
 
   /** One snapshot per composition, then an independent authoritative double-check.
@@ -45,6 +48,7 @@ export class RuntimeConfigService {
             configVersion: state.version,
           });
           const cached = this.cache.get(key, this.clock.now());
+          this.metrics?.observe('runtime_cache', { cache: cached ? 'hit' : 'miss' });
           if (cached) return cached;
           return this.compose(tx, state);
         });
@@ -54,8 +58,10 @@ export class RuntimeConfigService {
           current.version !== candidate.configVersion ||
           (candidate.nextRevalidationAt !== null &&
             Date.parse(candidate.nextRevalidationAt) <= now.getTime())
-        )
+        ) {
+          this.metrics?.observe('runtime_cache', { cache: 'retry' });
           continue;
+        }
         const result = validateBootstrap({
           ...candidate,
           generatedAt: now.toISOString(),
@@ -63,10 +69,12 @@ export class RuntimeConfigService {
         try {
           this.cache.set(result, now);
         } catch {
+          this.metrics?.observe('runtime_cache', { cache: 'failure' });
           /* Cache availability is not business authority. */
         }
         return result;
       } catch (error: unknown) {
+        this.metrics?.observe('runtime_cache', { cache: 'failure' });
         if (classifyPlanTransactionError(error) === "RETRYABLE") {
           if (attempt < 2) continue;
           throw new ServiceUnavailableException("RUNTIME_CONFIG_UNSTABLE");

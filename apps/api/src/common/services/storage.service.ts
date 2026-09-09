@@ -45,7 +45,7 @@ export class StorageService {
 
     await this.s3Client.send(command);
     const fileUrl = `https://${this.bucketName}.s3.${this.region}.amazonaws.com/${key}`;
-    this.logger.log(`Uploaded file to AWS S3: ${fileUrl}`);
+    this.logger.log('Legacy avatar upload completed');
     return fileUrl;
   }
 }

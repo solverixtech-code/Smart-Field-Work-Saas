@@ -6,7 +6,8 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../persistence/prisma.service';
-import { PlatformAssignmentStatus } from '@prisma/client';
+import { PlatformAssignmentStatus, PlatformUserRoleAssignment, Prisma } from '@prisma/client';
+import { auditEvents } from '../../audit/audit-event-writer';
 
 export interface AssignPlatformRoleInput {
   userId: string;
@@ -21,6 +22,16 @@ export class PlatformRoleService {
   private readonly logger = new Logger(PlatformRoleService.name);
 
   constructor(private readonly prisma: PrismaService) {}
+
+  private auditedAssignment(work: (tx: Prisma.TransactionClient) => Promise<PlatformUserRoleAssignment>, actorUserId?: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const result = await work(tx);
+      await auditEvents.write(tx, { action: 'rbac.platform.assignment', scope: 'PLATFORM', actorUserId,
+        entityType: 'PlatformUserRoleAssignment', entityId: result.id,
+        afterJson: { userId: result.userId, platformRoleId: result.platformRoleId, status: result.status } });
+      return result;
+    });
+  }
 
   async assignPlatformRole(input: AssignPlatformRoleInput) {
     const user = await this.prisma.user.findUnique({ where: { id: input.userId } });
@@ -60,7 +71,7 @@ export class PlatformRoleService {
       if (existing.status === PlatformAssignmentStatus.ACTIVE) {
         return existing;
       }
-      return this.prisma.platformUserRoleAssignment.update({
+      return this.auditedAssignment((tx) => tx.platformUserRoleAssignment.update({
         where: { id: existing.id },
         data: {
           status: PlatformAssignmentStatus.ACTIVE,
@@ -68,10 +79,10 @@ export class PlatformRoleService {
           validUntil: input.validUntil || null,
           assignedByUserId: input.assignedByUserId || null,
         },
-      });
+      }), input.assignedByUserId);
     }
 
-    return this.prisma.platformUserRoleAssignment.create({
+    return this.auditedAssignment((tx) => tx.platformUserRoleAssignment.create({
       data: {
         userId: input.userId,
         platformRoleId: role.id,
@@ -80,7 +91,7 @@ export class PlatformRoleService {
         validUntil: input.validUntil || null,
         assignedByUserId: input.assignedByUserId || null,
       },
-    });
+    }), input.assignedByUserId);
   }
 
   async revokePlatformRole(assignmentId: string) {
@@ -91,10 +102,10 @@ export class PlatformRoleService {
       throw new NotFoundException(`PlatformUserRoleAssignment '${assignmentId}' not found.`);
     }
 
-    return this.prisma.platformUserRoleAssignment.update({
+    return this.auditedAssignment((tx) => tx.platformUserRoleAssignment.update({
       where: { id: assignmentId },
       data: { status: PlatformAssignmentStatus.REVOKED },
-    });
+    }));
   }
 
   async getUserPlatformRoles(userId: string) {

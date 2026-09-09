@@ -13,6 +13,10 @@ export interface PermissionDefinition {
 export const PERMISSION_REGISTRY_VERSION = '1.0.0';
 
 export const PERMISSION_REGISTRY: PermissionDefinition[] = [
+  { code: 'platform.operations.jobs.view', scope: PermissionScope.PLATFORM, domain: 'platform', resource: 'jobs', action: 'view', description: 'View durable job status and attempt history', moduleKey: 'platform_operations' },
+  { code: 'platform.operations.jobs.retry', scope: PermissionScope.PLATFORM, domain: 'platform', resource: 'jobs', action: 'retry', description: 'Retry a dead job with a recorded reason', moduleKey: 'platform_operations' },
+  { code: 'system.media.view', scope: PermissionScope.TENANT, domain: 'system', resource: 'media', action: 'view', description: 'Download private media in the selected Tenant', moduleKey: 'system' },
+  { code: 'system.media.manage', scope: PermissionScope.TENANT, domain: 'system', resource: 'media', action: 'manage', description: 'Upload and delete private media in the selected Tenant', moduleKey: 'system' },
   // ─── PLATFORM SCOPE PERMISSIONS ────────────────────────────────────────────────
   {
     code: 'platform.dashboard.view',
@@ -581,6 +585,8 @@ export const DEFAULT_PLATFORM_ROLE_GRANTS: Record<string, string[]> = {
     (p) => p.scope === PermissionScope.PLATFORM,
   ).map((p) => p.code),
   PLATFORM_OPERATIONS_ADMIN: [
+    'platform.operations.jobs.view',
+    'platform.operations.jobs.retry',
     'platform.dashboard.view',
     'platform.tenants.view',
     'platform.tenants.create',
@@ -622,6 +628,7 @@ export const DEFAULT_PLATFORM_ROLE_GRANTS: Record<string, string[]> = {
     'platform.billing.view',
   ],
   PLATFORM_AUDITOR: [
+    'platform.operations.jobs.view',
     'platform.dashboard.view',
     'platform.tenants.view',
     'platform.audit.view',

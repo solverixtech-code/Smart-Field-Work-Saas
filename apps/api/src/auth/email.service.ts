@@ -27,7 +27,7 @@ export class EmailService {
 
     if (!this.transporter) {
       this.logger.warn(
-        `SMTP not configured. OTP for ${this.maskEmail(input.to)}: ${input.otp}`,
+        'SMTP not configured; OTP delivery unavailable',
       );
       return;
     }
@@ -52,9 +52,7 @@ export class EmailService {
       });
     } catch (error) {
       this.logger.warn(
-        `Failed to send OTP email to ${this.maskEmail(input.to)}: ${
-          error instanceof Error ? error.message : 'unknown'
-        }`,
+        'OTP email delivery failed',
       );
     }
   }
@@ -67,7 +65,7 @@ export class EmailService {
 
     if (!this.transporter) {
       this.logger.warn(
-        `SMTP not configured. Reset link for ${this.maskEmail(input.to)}: ${input.resetUrl}`,
+        'SMTP not configured; password-reset delivery unavailable',
       );
       return;
     }
@@ -90,17 +88,9 @@ export class EmailService {
       });
     } catch (error) {
       this.logger.warn(
-        `Failed to send reset email to ${this.maskEmail(input.to)}: ${
-          error instanceof Error ? error.message : 'unknown'
-        }`,
+        'Password-reset email delivery failed',
       );
     }
   }
 
-  private maskEmail(email: string): string {
-    const [local, domain] = email.split('@');
-    if (!domain) return '***';
-    const visibleChars = Math.min(3, local.length);
-    return `${local.slice(0, visibleChars)}***@${domain}`;
-  }
 }

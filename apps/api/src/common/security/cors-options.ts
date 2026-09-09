@@ -32,6 +32,8 @@ export function createCorsOptions(
       "X-Requested-With",
       "Accept",
       "Origin",
+      "X-Correlation-Id",
     ],
+    exposedHeaders: ["X-Request-Id", "X-Correlation-Id"],
   };
 }

@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { RequestPrincipalService } from '../security/request-principal.service';
+import { requestContext } from '../../observability/request-context';
 
 @Injectable()
 export class RequestPrincipalGuard implements CanActivate {
@@ -20,6 +21,7 @@ export class RequestPrincipalGuard implements CanActivate {
 
     const principal = await this.principalService.resolvePrincipal(payload);
     request.principal = principal;
+    requestContext.attach(principal);
 
     return true;
   }

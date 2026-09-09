@@ -1,3 +1,4 @@
+import { auditEvents } from '../../audit/audit-event-writer';
 import {
   BadRequestException,
   ConflictException,
@@ -195,6 +196,10 @@ export class IndustryAssignmentService {
         requestId: command.requestId,
       },
     });
+    await auditEvents.write(tx, { action: 'industry.assignment.changed', scope: 'TENANT', tenantId, actorUserId,
+      entityType: 'TenantIndustryTemplateAssignment', entityId: next.id,
+      beforeJson: { versionId: old?.industryTemplateVersionId ?? null },
+      afterJson: { versionId: next.industryTemplateVersionId, revision: next.revision }, metadata: { reason: command.reason } });
     return next;
   }
 

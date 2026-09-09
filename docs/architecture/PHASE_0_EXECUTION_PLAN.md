@@ -1,5 +1,7 @@
 # Phase 0 execution plan
 
+Current owner authorization for Phase 0.10 (2026-09-08): **0.1-0.9 FROZEN** at `82f6522a4ee0acdf05b7be81a0ecfc04efcc79d1`; **0.10 AUTHORIZED / prerequisite stop condition 24 active**; **0.11+ NOT AUTHORIZED**. The [0.10 prerequisite report](PHASE_0_10_AUDIT_MEDIA_JOBS_IMPLEMENTATION.md) records the verified baseline and frozen CORS defect requiring owner direction. Earlier status paragraphs below remain historical evidence.
+
 Current owner authorization (2026-09-08): **0.1–0.8 FROZEN** at `5c4d445f7c831569e0f8e409636c3472647bd453`; **0.9 IMPLEMENTED / local checks PASS / PR and exact-main CI pending**; 0.10+ not authorized. The [0.9 implementation report](PHASE_0_9_RUNTIME_CONFIGURATION_IMPLEMENTATION.md) records the approved empty Industry scalar layer and release gates. Older status paragraphs below are historical evidence, not the current phase authorization.
 
 ## Delivery rule

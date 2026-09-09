@@ -1,4 +1,5 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { MetricsService } from '../../observability/metrics.service';
 import { Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -12,6 +13,7 @@ import { CreateTenantFoundationDto, TenantSettingsInputDto, TenantBrandingInputD
 import { CommandActor, payloadHash, selectionSchema } from './subscription-contract';
 import { SubscriptionService } from './subscription.service';
 import { SubscriptionTransactionService } from './subscription-transaction.service';
+import { auditEvents } from '../../audit/audit-event-writer';
 
 const provisionSchema = selectionSchema.extend({
   idempotencyKey: z.string().trim().min(1).max(200),
@@ -28,7 +30,19 @@ const receiptSelect = {
 
 @Injectable()
 export class ProvisioningService {
-  constructor(private readonly prisma: PrismaService, private readonly transactions: SubscriptionTransactionService, private readonly tenants: TenantService, private readonly memberships: TenantMembershipService, private readonly subscriptions: SubscriptionService) {}
+  constructor(private readonly prisma: PrismaService, private readonly transactions: SubscriptionTransactionService, private readonly tenants: TenantService, private readonly memberships: TenantMembershipService, private readonly subscriptions: SubscriptionService, @Optional() private readonly metrics?: MetricsService) {}
+
+  private async observe<T>(operation: 'provision' | 'owner' | 'tenant' | 'membership' | 'subscription' | 'receipt', work: () => Promise<T>): Promise<T> {
+    const start = performance.now();
+    try {
+      const result = await work();
+      this.metrics?.observe('provisioning', { operation, outcome: 'success' }, performance.now() - start);
+      return result;
+    } catch (error) {
+      this.metrics?.observe('provisioning', { operation, outcome: 'failure' }, performance.now() - start);
+      throw error;
+    }
+  }
 
   async provision(raw: unknown, actor: CommandActor) {
     const input = provisionSchema.parse(raw);
@@ -44,7 +58,7 @@ export class ProvisioningService {
     tenant.primaryDomain = tenant.primaryDomain?.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '') || undefined;
     for (const key of ['legalName', 'websiteUrl', 'description'] as const) tenant[key] = tenant[key]?.trim() || undefined;
     const hash = payloadHash({ ...input, tenant, requestId: undefined, actorUserId: actor.userId });
-    return this.transactions.run(`provision:${input.idempotencyKey}`, async tx => {
+    return this.observe('provision', () => this.transactions.run(`provision:${input.idempotencyKey}`, async tx => {
       const replay = await tx.tenantProvisioning.findUnique({ where: { idempotencyKey: input.idempotencyKey }, select: { ...receiptSelect, payloadHash: true } });
       if (replay) {
         if (replay.payloadHash !== hash) throw new ConflictException('Idempotency key belongs to a different provisioning request');
@@ -54,6 +68,7 @@ export class ProvisioningService {
       const industry = await tx.industryClassification.findUnique({ where: { code: input.industryCode }, select: { isActive: true } });
       if (!industry?.isActive) throw new BadRequestException('Select an active Industry classification');
       await this.transactions.lock(tx, `owner:${input.owner.email}`);
+      const owner = await this.observe('owner', async () => {
       const matches = await tx.user.findMany({ where: { email: { equals: input.owner.email, mode: 'insensitive' } }, select: { id: true, status: true }, take: 2 });
       if (matches.length > 1) throw new ConflictException('Owner identity requires reconciliation');
       let owner = matches[0];
@@ -66,18 +81,24 @@ export class ProvisioningService {
           role: 'SUPPORT', status: 'ACTIVE',
         }, select: { id: true, status: true } });
       }
-      const created = await this.tenants.createTenantFoundation(tenant, tx);
+      return owner;
+      });
+      const created = await this.observe('tenant', () => this.tenants.createTenantFoundation(tenant, tx));
       await tx.tenant.update({ where: { id: created.id }, data: { industryCode: input.industryCode } });
       const role = await tx.tenantRole.findUnique({ where: { tenantId_code: { tenantId: created.id, code: 'tenant_admin' } }, select: { id: true, isActive: true } });
       if (!role?.isActive) throw new ConflictException('Built-in tenant_admin role is unavailable; synchronize RBAC');
-      const membership = await this.memberships.createMembership({ tenantId: created.id, userId: owner.id, tenantRoleId: role.id, status: 'INVITED', isPrimary: false, invitedByUserId: actor.userId }, tx);
-      const sub = await this.subscriptions.create(tx, created.id, selectionSchema.parse(input), input.trial, actor, `provision:${input.idempotencyKey}`, 'Tenant provisioning', new Date(), input.requestId);
-      return tx.tenantProvisioning.create({ data: {
+      const membership = await this.observe('membership', () => this.memberships.createMembership({ tenantId: created.id, userId: owner.id, tenantRoleId: role.id, status: 'INVITED', isPrimary: false, invitedByUserId: actor.userId }, tx));
+      const sub = await this.observe('subscription', () => this.subscriptions.create(tx, created.id, selectionSchema.parse(input), input.trial, actor, `provision:${input.idempotencyKey}`, 'Tenant provisioning', new Date(), input.requestId));
+      const receipt = await this.observe('receipt', () => tx.tenantProvisioning.create({ data: {
         idempotencyKey: input.idempotencyKey, payloadHash: hash, tenantId: created.id, subscriptionId: sub.id,
         ownerMembershipId: membership.id, actorUserId: actor.userId, requestId: input.requestId,
         events: { create: [{ kind: 'OWNER_INVITATION' }, { kind: 'TENANT_INITIALIZED' }] },
-      }, select: receiptSelect });
-    });
+      }, select: receiptSelect }));
+      await auditEvents.write(tx, { action: 'tenant.provisioned', scope: 'TENANT', tenantId: created.id,
+        actorUserId: actor.userId, entityType: 'TenantProvisioning', entityId: receipt.id,
+        metadata: { ownerMembershipId: membership.id, subscriptionId: sub.id, industryCode: input.industryCode } });
+      return receipt;
+    }));
   }
 
   async accept(id: string, actor: CommandActor) {
@@ -93,6 +114,8 @@ export class ProvisioningService {
       const now = new Date();
       await tx.tenantMembership.update({ where: { id: invitation.ownerMembershipId }, data: { status: 'ACTIVE', activatedAt: now, joinedAt: now } });
       await tx.tenantProvisioning.update({ where: { id }, data: { acceptedAt: now } });
+      await auditEvents.write(tx, { action: 'tenant.invitation.accepted', scope: 'TENANT', tenantId: invitation.tenantId,
+        actorUserId: actor.userId, tenantMembershipId: invitation.ownerMembershipId, entityType: 'TenantProvisioning', entityId: id });
       return { membershipId: invitation.ownerMembershipId, acceptedAt: now };
     });
   }
