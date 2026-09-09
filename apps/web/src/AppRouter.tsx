@@ -34,6 +34,7 @@ import { PlansPricingPage } from './screens/platform/PlansPricingPage';
 import { CreatePlanWizardPage } from './screens/platform/CreatePlanWizardPage';
 import { PlanDetailsPage } from './screens/platform/PlanDetailsPage';
 import { AuditLogsPage } from './screens/platform/AuditLogsPage';
+import { IndustryManagementPage } from './screens/platform/IndustryManagementPage';
 import { TenantCreationProvider } from './features/platform/tenants/context/TenantCreationContext';
 import { PlatformAccessGuard } from './features/platform/auth/guards/PlatformAccessGuard';
 import { WorkspaceSettingsGuard } from './layouts/WorkspaceSettingsGuard';
@@ -169,6 +170,7 @@ import DataDeletionInstructionsPage from './screens/public/DataDeletionInstructi
 import { CreateNotificationPage, ExecutiveAlertsPage, NotificationCenterPage, NotificationTemplatesPage, PushNotificationsPage } from './screens/notifications/NotificationsPages';
 
 import AppShell from './layouts/AppShell';
+import { RuntimeBootstrapProvider } from './features/runtime/context/RuntimeBootstrapContext';
 import ProtectedRoute from './layouts/ProtectedRoute';
 import PermissionRoute from './components/auth/PermissionRoute';
 import { AuthTokensSchema } from '@visiblo/shared';
@@ -237,7 +239,7 @@ export default function AppRouter() {
 
         {/* Protected Base Routes inside App Shell */}
         <Route element={<ProtectedRoute />}>
-          <Route element={<AppShell />}>
+          <Route element={<RuntimeBootstrapProvider><AppShell /></RuntimeBootstrapProvider>}>
             {/* Executive Dashboard */}
             <Route element={<PermissionRoute permission="crm.dashboard.view" />}>
               <Route path="/admin/dashboard" element={<ExecutiveDashboardPage />} />
@@ -556,7 +558,9 @@ export default function AppRouter() {
               <Route element={<PlatformAccessGuard requiredPermission="platform.modules.update" />}>
                 <Route path="/platform/modules/:moduleId/edit" element={<EditModulePage />} />
               </Route>
-              <Route path="/platform/industries" element={<PlatformPlaceholderPage title="Industry Verticals" />} />
+              <Route element={<PlatformAccessGuard requiredPermission="platform.industries.view" />}>
+                <Route path="/platform/industries" element={<IndustryManagementPage />} />
+              </Route>
               <Route path="/platform/users" element={<PlatformPlaceholderPage title="Platform Operators" />} />
               <Route path="/platform/roles" element={<PlatformPlaceholderPage title="Platform RBAC & Roles" />} />
               <Route element={<PlatformAccessGuard requiredPermission="platform.audit.view" />}>

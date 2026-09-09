@@ -1,3 +1,6 @@
+import { api } from '../../../../common/api';
+import { runtimeService } from '../../../runtime/services/runtime.service';
+
 export interface WorkspaceProfileSettings {
   companyName: string;
   shortName: string;
@@ -68,87 +71,104 @@ export interface WorkspaceSettings {
   security: WorkspaceSecuritySettings;
 }
 
-const DEFAULT_SETTINGS_MAP: Record<string, WorkspaceSettings> = {
-  default: {
-    tenantId: 'default',
-    profile: {
-      companyName: 'Sunrise Healthcare Pvt Ltd',
-      shortName: 'Sunrise Healthcare',
-      industry: 'Pharma & Healthcare',
-      tenantCode: 'SRHC',
-      website: 'www.sunrisehealthcare.com',
-      primaryEmail: 'info@sunrisehealthcare.com',
-      primaryPhone: '9876543210',
-      primaryColor: '#6366F1',
-      secondaryColor: '#8B5CF6',
-      logoInLogin: true,
-      workspaceId: 'ws_8f3a2d9e-7c61-4b8d',
-      configVersion: 'v1.2.3',
-      createdOn: '24 May 2026, 10:30 AM',
-      createdBy: 'Amit Sharma (Platform Super Admin)',
-      address1: '201, Sunrise Tower, Andheri Kurla Road',
-      address2: 'Andheri East',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      country: 'India',
-      pincode: '400059',
-    },
-    localization: {
-      timezone: '(GMT+05:30) Asia/Kolkata',
-      dateFormat: 'DD MMM YYYY',
-      timeFormat: '12-hour (hh:mm AM/PM)',
-      language: 'English',
-      weekStart: 'Monday',
-      numberFormat: '1,23,456.78 (Indian)',
-    },
-    financial: {
-      currency: 'INR - Indian Rupee (₹)',
-      fyStart: 'April',
-      gstNumber: '27ABCDE1234F1ZH',
-      panNumber: 'ABCDE1234F',
-      billingAddress: '201, Sunrise Tower, Andheri Kurla Road, Andheri East, Mumbai 400059',
-      autoInvoice: true,
-    },
-    preferences: {
-      defaultLandingPage: 'Dashboard',
-      sessionTimeout: '30 minutes',
-      emailNotifications: true,
-      pushNotifications: true,
-      dailyDigest: false,
-      showMapView: true,
-      compactTable: false,
-    },
-    security: {
-      enforce2FA: true,
-      passwordMinLength: '8',
-      passwordExpiry: '90 days',
-      maxLoginAttempts: '5',
-      ipWhitelist: false,
-      geoFenceAttendance: true,
-      forceLogoutOnInactivity: true,
-    },
+const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
+  tenantId: 'default',
+  profile: {
+    companyName: 'Visiblo Workspace',
+    shortName: 'Visiblo',
+    industry: 'Pharma & Healthcare',
+    tenantCode: 'DEFAULT',
+    website: 'www.smartfieldwork.com',
+    primaryEmail: 'info@smartfieldwork.com',
+    primaryPhone: '9876543210',
+    primaryColor: '#0D1F3D',
+    secondaryColor: '#2563EB',
+    logoInLogin: true,
+    workspaceId: 'ws_default',
+    configVersion: 'v1.0.0',
+    createdOn: '24 May 2026',
+    createdBy: 'System Provisioning',
+    address1: 'Sunrise Tower',
+    address2: 'Andheri East',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    country: 'India',
+    pincode: '400059',
+  },
+  localization: {
+    timezone: '(GMT+05:30) Asia/Kolkata',
+    dateFormat: 'DD MMM YYYY',
+    timeFormat: '12-hour (hh:mm AM/PM)',
+    language: 'English',
+    weekStart: 'Monday',
+    numberFormat: '1,23,456.78 (Indian)',
+  },
+  financial: {
+    currency: 'INR - Indian Rupee (₹)',
+    fyStart: 'April',
+    gstNumber: '27ABCDE1234F1ZH',
+    panNumber: 'ABCDE1234F',
+    billingAddress: 'Sunrise Tower, Andheri East, Mumbai 400059',
+    autoInvoice: true,
+  },
+  preferences: {
+    defaultLandingPage: 'Dashboard',
+    sessionTimeout: '30 minutes',
+    emailNotifications: true,
+    pushNotifications: true,
+    dailyDigest: false,
+    showMapView: true,
+    compactTable: false,
+  },
+  security: {
+    enforce2FA: true,
+    passwordMinLength: '8',
+    passwordExpiry: '90 days',
+    maxLoginAttempts: '5',
+    ipWhitelist: false,
+    geoFenceAttendance: true,
+    forceLogoutOnInactivity: true,
   },
 };
 
-class FixtureWorkspaceSettingsService {
-  private savedSettings: Map<string, WorkspaceSettings> = new Map();
-  private initialDefaults: Map<string, WorkspaceSettings> = new Map();
-
-  async getWorkspaceSettings(tenantId: string): Promise<WorkspaceSettings> {
-    if (!this.savedSettings.has(tenantId)) {
-      const init: WorkspaceSettings = {
-        ...DEFAULT_SETTINGS_MAP.default,
-        tenantId,
+class ApiWorkspaceSettingsService {
+  async getWorkspaceSettings(tenantId?: string): Promise<WorkspaceSettings> {
+    try {
+      const bootstrap = await runtimeService.getBootstrap();
+      return {
+        ...DEFAULT_WORKSPACE_SETTINGS,
+        tenantId: bootstrap.tenant.id,
+        profile: {
+          ...DEFAULT_WORKSPACE_SETTINGS.profile,
+          companyName: bootstrap.tenant.displayName,
+          shortName: bootstrap.tenant.displayName,
+          workspaceId: bootstrap.tenant.id,
+          configVersion: bootstrap.configVersion,
+        },
+        localization: {
+          ...DEFAULT_WORKSPACE_SETTINGS.localization,
+          timezone: bootstrap.settings.timezone,
+          dateFormat: bootstrap.settings.dateFormat,
+          language: bootstrap.settings.language,
+          weekStart: bootstrap.settings.weekStartDay,
+        },
+        financial: {
+          ...DEFAULT_WORKSPACE_SETTINGS.financial,
+          currency: bootstrap.settings.currency,
+          fyStart: `Month ${bootstrap.settings.financialYearStartMonth}`,
+        },
       };
-      this.savedSettings.set(tenantId, JSON.parse(JSON.stringify(init)));
-      this.initialDefaults.set(tenantId, JSON.parse(JSON.stringify(init)));
+    } catch {
+      return {
+        ...DEFAULT_WORKSPACE_SETTINGS,
+        tenantId: tenantId || 'default',
+      };
     }
-    return Promise.resolve(JSON.parse(JSON.stringify(this.savedSettings.get(tenantId)!)));
   }
 
   async updateWorkspaceSettings(tenantId: string, updates: Partial<WorkspaceSettings>): Promise<WorkspaceSettings> {
     const current = await this.getWorkspaceSettings(tenantId);
-    const updated: WorkspaceSettings = {
+    return {
       ...current,
       ...updates,
       profile: { ...current.profile, ...(updates.profile || {}) },
@@ -157,16 +177,11 @@ class FixtureWorkspaceSettingsService {
       preferences: { ...current.preferences, ...(updates.preferences || {}) },
       security: { ...current.security, ...(updates.security || {}) },
     };
-    this.savedSettings.set(tenantId, JSON.parse(JSON.stringify(updated)));
-    return Promise.resolve(JSON.parse(JSON.stringify(updated)));
   }
 
   async resetWorkspaceSettings(tenantId: string): Promise<WorkspaceSettings> {
-    const initial = this.initialDefaults.get(tenantId) || { ...DEFAULT_SETTINGS_MAP.default, tenantId };
-    this.savedSettings.set(tenantId, JSON.parse(JSON.stringify(initial)));
-    return Promise.resolve(JSON.parse(JSON.stringify(initial)));
+    return this.getWorkspaceSettings(tenantId);
   }
 }
 
-export const workspaceSettingsService = new FixtureWorkspaceSettingsService();
-
+export const workspaceSettingsService = new ApiWorkspaceSettingsService();

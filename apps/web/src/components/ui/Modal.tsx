@@ -5,6 +5,7 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  title?: React.ReactNode;
   maxWidth?: string;
 }
 
@@ -12,6 +13,7 @@ export const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   children,
+  title,
   maxWidth = 'max-w-lg',
 }) => {
   const [rendered, setRendered] = useState(false);
@@ -61,6 +63,18 @@ export const Modal: React.FC<ModalProps> = ({
           visible ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'
         }`}
       >
+        {title && (
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 className="text-base font-extrabold text-[#0D1F3D]">{title}</h3>
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-600 rounded-sm p-1 text-xs font-bold"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         {children}
       </div>
     </div>,

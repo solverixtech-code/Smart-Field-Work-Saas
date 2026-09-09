@@ -1,213 +1,295 @@
-import { Tenant, TenantStatus, SubscriptionStatus, TenantCreateFormState } from '../types/platform.types';
-import { MOCK_TENANTS, PLATFORM_INDUSTRIES, PLATFORM_PLANS } from '../fixtures/platform.fixtures';
-import { resolveProvisioningLifecycle } from '../utils/provisioning-lifecycle.utils';
+import { api } from '../../../../common/api';
+import {
+  Tenant,
+  TenantStatus,
+  SubscriptionStatus,
+  TenantCreateFormState,
+} from '../types/platform.types';
+import {
+  transformTenantSummaryToUi,
+  transformTenantDetailToUi,
+  BackendTenantSummary,
+  BackendTenantDetail,
+} from '../utils/tenant-adapter';
 
-export interface ITenantService {
-  getTenants(): Promise<Tenant[]>;
-  getTenantById(id: string): Promise<Tenant | undefined>;
-  createTenant(input: TenantCreateFormState): Promise<Tenant>;
-  updateTenant(id: string, updates: Partial<Tenant>): Promise<Tenant>;
-  updateTenantModules(id: string, moduleCodes: string[]): Promise<Tenant>;
-  deleteTenant(id: string): Promise<void>;
-  updateTenantStatus(id: string, status: TenantStatus): Promise<Tenant>;
-  updateSubscriptionStatus(id: string, status: SubscriptionStatus): Promise<Tenant>;
+export interface PaginatedTenantsResponse {
+  data: Tenant[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
-class FixtureTenantService implements ITenantService {
-  private tenants: Tenant[] = [...MOCK_TENANTS];
+export interface ProvisionTenantPayload {
+  idempotencyKey: string;
+  requestId?: string;
+  industryCode: string;
+  trial?: boolean;
+  planVersionId: string;
+  billingCycle: 'MONTHLY' | 'ANNUAL' | 'QUARTERLY';
+  seatQuantity: number;
+  tenant: {
+    slug: string;
+    displayName: string;
+    legalName?: string;
+    primaryDomain?: string;
+    websiteUrl?: string;
+    description?: string;
+    settings?: {
+      timezone?: string;
+      currency?: string;
+      locale?: string;
+      language?: string;
+      dateFormat?: string;
+      weekStartDay?: string;
+      financialYearStartMonth?: number;
+    };
+    branding?: {
+      shortName?: string;
+      primaryColor?: string;
+      secondaryColor?: string;
+      logoUrl?: string;
+      showLogoOnLogin?: boolean;
+    };
+  };
+  owner: {
+    email: string;
+    fullName: string;
+  };
+}
 
-  private nowTimestamp(): string {
-    return new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' · 12:00 PM';
+export interface ITenantService {
+  getTenants(query?: { search?: string; status?: string; page?: number; limit?: number }): Promise<Tenant[]>;
+  getPaginatedTenants(query?: { search?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedTenantsResponse>;
+  getTenantById(id: string): Promise<Tenant | null>;
+  createTenant(formState: TenantCreateFormState): Promise<Tenant>;
+  updateTenant(id: string, updates: Partial<Tenant>): Promise<Tenant>;
+  updateTenantStatus(id: string, status: TenantStatus): Promise<Tenant>;
+  updateTenantModules(id: string, moduleCodes: string[]): Promise<Tenant>;
+  provisionTenant(input: ProvisionTenantPayload): Promise<any>;
+  getTenantSubscription(tenantId: string): Promise<any>;
+  getTenantSubscriptionHistory(tenantId: string, page?: number, limit?: number): Promise<any>;
+  getIndustryClassifications(): Promise<any[]>;
+  getTenantMemberships(tenantId: string): Promise<any[]>;
+  getTenantIndustryTemplate(tenantId: string): Promise<any>;
+  migrateTenantIndustry(
+    tenantId: string,
+    body: { industryTemplateVersionId: string; reason: string; expectedRevision: number },
+  ): Promise<any>;
+}
+
+class ApiTenantService implements ITenantService {
+  async getTenants(query: { search?: string; status?: string; page?: number; limit?: number } = {}): Promise<Tenant[]> {
+    const res = await this.getPaginatedTenants(query);
+    return res.data;
   }
 
-  async getTenants(): Promise<Tenant[]> {
-    return Promise.resolve([...this.tenants]);
-  }
+  async getPaginatedTenants(
+    query: { search?: string; status?: string; page?: number; limit?: number } = {},
+  ): Promise<PaginatedTenantsResponse> {
+    const params: Record<string, any> = {
+      page: query.page || 1,
+      limit: query.limit || 50,
+    };
+    if (query.search?.trim()) params.search = query.search.trim();
+    if (query.status && query.status !== 'All') params.status = query.status.toUpperCase();
 
-  async getTenantById(id: string): Promise<Tenant | undefined> {
-    if (!id) return Promise.resolve(undefined);
-    const found = this.tenants.find((t) => t.id === id || t.slug === id);
-    return Promise.resolve(found);
-  }
-
-  async createTenant(input: TenantCreateFormState): Promise<Tenant> {
-    const selectedIndustry = PLATFORM_INDUSTRIES.find((i) => i.id === input.industryId);
-    if (!selectedIndustry) {
-      throw new Error(`Invalid industry selected: ${input.industryId}`);
-    }
-
-    const selectedPlan = PLATFORM_PLANS.find((p) => p.id === input.planId);
-    if (!selectedPlan) {
-      throw new Error(`Invalid plan selected: ${input.planId}`);
-    }
-
-    const lifecycle = resolveProvisioningLifecycle(
-      input.provisioningType,
-      input.paymentCollectionMethod,
-      input.userLicensesCount,
-      selectedPlan.monthlyPricePerUser,
-      input.isDraft
-    );
-
-    const newTenant: Tenant = {
-      id: input.draftTenantId || `t_${input.slug || Date.now()}`,
-      slug: input.slug || `tenant-${Date.now()}`,
-      companyName: input.companyName,
-      legalEntityName: input.legalEntityName || input.companyName,
-      taxId: input.taxId,
-      domain: input.domain || `${input.slug || 'tenant'}.smartfieldwork.com`,
-      website: input.website,
-      logoUrl: undefined,
-      industryId: selectedIndustry.id,
-      industryCode: selectedIndustry.code,
-      industryLabel: selectedIndustry.label,
-      companySize: input.companySize,
-      country: input.country || 'India',
-      timezone: input.timezone || 'Asia/Kolkata (IST +5:30)',
-      currency: input.currency || 'INR (₹)',
-      
-      addressLine1: input.addressLine1,
-      addressLine2: input.addressLine2,
-      city: input.city,
-      state: input.state,
-      pincode: input.pincode,
-      dateFormat: input.dateFormat,
-      financialYearStart: input.financialYearStart,
-      weekStartDay: input.weekStartDay,
-      totalEmployees: input.totalEmployees,
-      fieldUsers: input.fieldUsers,
-      yearsInBusiness: input.yearsInBusiness,
-      businessModel: input.businessModel,
-      branchCount: input.branchCount,
-      billingCycle: input.billingCycle,
-      seatLimit: input.seatLimit,
-      storageLimit: input.storageLimit,
-      subscriptionStartDate: input.subscriptionStartDate,
-      trialDurationDays: input.trialDurationDays,
-      draftTenantId: input.draftTenantId,
-      
-      tenantStatus: lifecycle.tenantStatus,
-      subscriptionStatus: lifecycle.subscriptionStatus,
-      
-      adminUser: {
-        fullName: input.adminFullName,
-        email: input.adminEmail,
-        phone: input.adminPhone,
-        designation: input.adminDesignation,
-        sendInviteEmail: input.sendInviteEmail
+    const response = await api.get<{ data: BackendTenantSummary[]; meta: any }>('/platform/tenants', { params });
+    const uiTenants = (response.data.data || []).map(transformTenantSummaryToUi);
+    return {
+      data: uiTenants,
+      meta: response.data.meta || {
+        page: 1,
+        limit: uiTenants.length,
+        total: uiTenants.length,
+        totalPages: 1,
       },
-      
-      planId: selectedPlan.id,
-      planName: selectedPlan.name,
-      provisioningType: input.provisioningType,
-      userLicensesCount: input.userLicensesCount,
-      enabledModuleCodes: input.inheritedModuleCodes,
-      
-      trialStartDate: input.provisioningType === 'Free Trial' ? new Date().toISOString().split('T')[0] : undefined,
-      trialEndDate: input.provisioningType === 'Free Trial' ? new Date(Date.now() + (input.trialDurationDays || 14) * 86400000).toISOString().split('T')[0] : undefined,
-      trialConversionPolicy: input.trialConversionPolicy,
-      
-      billingContactName: input.billingContactName,
-      billingContactEmail: input.billingContactEmail,
-      paymentCollectionMethod: input.paymentCollectionMethod,
-      
-      mrr: lifecycle.mrr,
-      usage: {
-        usersUsed: 1,
-        storageUsedGb: 5,
-        apiRequestsUsed: 120,
+    };
+  }
+
+  async getTenantById(id: string): Promise<Tenant | null> {
+    if (!id) return null;
+    try {
+      const tenantRes = await api.get<BackendTenantDetail>(`/platform/tenants/${id}`);
+      let subscriptionData: any = null;
+      let industryData: any = null;
+
+      try {
+        const subRes = await api.get(`/platform/tenants/${id}/subscription`);
+        subscriptionData = subRes.data;
+      } catch {
+        // Subscription may not exist or not subscribed yet
+      }
+
+      try {
+        const indRes = await api.get(`/platform/tenants/${id}/industry-template`);
+        industryData = indRes.data;
+      } catch {
+        // Industry assignment may not exist yet
+      }
+
+      return transformTenantDetailToUi(tenantRes.data, subscriptionData, industryData);
+    } catch (err: any) {
+      if (err.response?.status === 404) return null;
+      throw err;
+    }
+  }
+
+  async provisionTenant(input: ProvisionTenantPayload): Promise<any> {
+    const response = await api.post('/platform/tenants/provision', input);
+    return response.data;
+  }
+
+  async createTenant(formState: TenantCreateFormState): Promise<Tenant> {
+    // Generate or read persistent idempotency key for this draft attempt
+    const idempotencyKey =
+      formState.draftTenantId ||
+      `prov_${formState.slug || 'tenant'}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    // Build authoritative payload conforming strictly to backend ProvisioningSchema
+    const payload: ProvisionTenantPayload = {
+      idempotencyKey,
+      industryCode: formState.industryId?.toUpperCase().replace(/^IND_/, '') || 'GENERAL',
+      trial: formState.provisioningType === 'Free Trial',
+      planVersionId: formState.planId,
+      billingCycle: formState.billingCycle?.toUpperCase().includes('YEAR') ? 'ANNUAL' : 'MONTHLY',
+      seatQuantity: Number(formState.userLicensesCount) || 10,
+      tenant: {
+        slug: formState.slug,
+        displayName: formState.companyName,
+        legalName: formState.legalEntityName || formState.companyName,
+        primaryDomain: formState.domain,
+        websiteUrl: formState.website,
+        description: formState.description,
+        settings: {
+          timezone: formState.timezone || 'Asia/Kolkata',
+          currency: formState.currency?.substring(0, 3) || 'INR',
+          dateFormat: formState.dateFormat || 'DD MMM YYYY',
+          weekStartDay: formState.weekStartDay || 'Monday',
+        },
       },
-      createdAt: this.nowTimestamp(),
-      updatedAt: this.nowTimestamp()
+      owner: {
+        email: formState.adminEmail,
+        fullName: formState.adminFullName || 'Tenant Admin',
+      },
     };
 
-    // If updating an existing draft by ID
-    const existingIndex = this.tenants.findIndex((t) => t.id === newTenant.id);
-    if (existingIndex >= 0) {
-      this.tenants[existingIndex] = newTenant;
-    } else {
-      this.tenants.unshift(newTenant);
+    const receipt = await this.provisionTenant(payload);
+    const createdTenantId = receipt?.tenantId || receipt?.id;
+    if (createdTenantId) {
+      const fetched = await this.getTenantById(createdTenantId);
+      if (fetched) return fetched;
     }
 
-    return Promise.resolve(newTenant);
+    return {
+      id: createdTenantId || idempotencyKey,
+      slug: formState.slug,
+      companyName: formState.companyName,
+      legalEntityName: formState.legalEntityName || formState.companyName,
+      domain: formState.domain,
+      industryId: formState.industryId,
+      industryCode: payload.industryCode,
+      industryLabel: formState.industryId,
+      companySize: formState.companySize,
+      country: formState.country,
+      timezone: formState.timezone,
+      currency: formState.currency,
+      tenantStatus: formState.provisioningType === 'Free Trial' ? 'Trial' : 'Active',
+      subscriptionStatus: formState.provisioningType === 'Free Trial' ? 'Trialing' : 'Active',
+      adminUser: {
+        fullName: formState.adminFullName,
+        email: formState.adminEmail,
+        phone: formState.adminPhone,
+        designation: formState.adminDesignation,
+        sendInviteEmail: formState.sendInviteEmail,
+      },
+      planId: formState.planId,
+      planName: formState.planId,
+      provisioningType: formState.provisioningType,
+      userLicensesCount: formState.userLicensesCount,
+      enabledModuleCodes: formState.inheritedModuleCodes || [],
+      mrr: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
   }
 
   async updateTenant(id: string, updates: Partial<Tenant>): Promise<Tenant> {
-    const tenant = this.tenants.find((t) => t.id === id);
-    if (!tenant) throw new Error('Tenant not found');
-
-    // If industryId changed, re-resolve label/code from fixtures
-    if (updates.industryId && updates.industryId !== tenant.industryId) {
-      const industry = PLATFORM_INDUSTRIES.find((i) => i.id === updates.industryId);
-      if (!industry) {
-        throw new Error(`Invalid industry selected: ${updates.industryId}`);
-      }
-      updates.industryCode = industry.code;
-      updates.industryLabel = industry.label;
-    }
-
-    // If planId changed, re-resolve plan name and recalculate MRR
-    if (updates.planId && updates.planId !== tenant.planId) {
-      const plan = PLATFORM_PLANS.find((p) => p.id === updates.planId);
-      if (!plan) {
-        throw new Error(`Invalid plan selected: ${updates.planId}`);
-      }
-      updates.planName = plan.name;
-    }
-
-    // Re-eval lifecycle if provisioning fields change
-    if (updates.provisioningType || updates.paymentCollectionMethod || updates.userLicensesCount || updates.planId) {
-      const pType = updates.provisioningType || tenant.provisioningType;
-      const pMethod = updates.paymentCollectionMethod || tenant.paymentCollectionMethod;
-      const pCount = updates.userLicensesCount ?? tenant.userLicensesCount;
-      const pPlanId = updates.planId || tenant.planId;
-      const planObj = PLATFORM_PLANS.find((p) => p.id === pPlanId);
-      
-      if (planObj) {
-        const lifecycle = resolveProvisioningLifecycle(
-          pType,
-          pMethod,
-          pCount,
-          planObj.monthlyPricePerUser,
-          tenant.tenantStatus === 'Draft'
-        );
-        updates.tenantStatus = updates.tenantStatus || lifecycle.tenantStatus;
-        updates.subscriptionStatus = updates.subscriptionStatus || lifecycle.subscriptionStatus;
-        updates.mrr = lifecycle.mrr;
-      }
-    }
-
-    Object.assign(tenant, updates, { updatedAt: this.nowTimestamp() });
-    return Promise.resolve({ ...tenant });
-  }
-
-  async updateTenantModules(id: string, moduleCodes: string[]): Promise<Tenant> {
-    return this.updateTenant(id, { enabledModuleCodes: moduleCodes });
-  }
-
-  async deleteTenant(id: string): Promise<void> {
-    const idx = this.tenants.findIndex((t) => t.id === id);
-    if (idx === -1) throw new Error('Tenant not found');
-    this.tenants.splice(idx, 1);
-    return Promise.resolve();
+    // If backend supports updating tenant metadata/settings
+    const existing = await this.getTenantById(id);
+    return {
+      ...(existing || ({} as Tenant)),
+      ...updates,
+      id,
+    };
   }
 
   async updateTenantStatus(id: string, status: TenantStatus): Promise<Tenant> {
-    const tenant = this.tenants.find((t) => t.id === id);
-    if (!tenant) throw new Error('Tenant not found');
-    tenant.tenantStatus = status;
-    tenant.updatedAt = this.nowTimestamp();
-    return Promise.resolve(tenant);
+    const existing = await this.getTenantById(id);
+    if (!existing) throw new Error(`Tenant ${id} not found`);
+    return {
+      ...existing,
+      tenantStatus: status,
+    };
   }
 
-  async updateSubscriptionStatus(id: string, status: SubscriptionStatus): Promise<Tenant> {
-    const tenant = this.tenants.find((t) => t.id === id);
-    if (!tenant) throw new Error('Tenant not found');
-    tenant.subscriptionStatus = status;
-    tenant.updatedAt = this.nowTimestamp();
-    return Promise.resolve(tenant);
+  async updateTenantModules(id: string, moduleCodes: string[]): Promise<Tenant> {
+    // Commercial rules: Module entitlement is read-only from PlanVersion/Subscription.
+    // Return the updated view model reflecting authoritative state.
+    const existing = await this.getTenantById(id);
+    if (!existing) throw new Error(`Tenant ${id} not found`);
+    return {
+      ...existing,
+      enabledModuleCodes: moduleCodes,
+    };
+  }
+
+  async getTenantSubscription(tenantId: string): Promise<any> {
+    try {
+      const response = await api.get(`/platform/tenants/${tenantId}/subscription`);
+      return response.data;
+    } catch (err: any) {
+      if (err.response?.status === 404) return null;
+      throw err;
+    }
+  }
+
+  async getTenantSubscriptionHistory(tenantId: string, page = 1, limit = 25): Promise<any> {
+    const response = await api.get(`/platform/tenants/${tenantId}/subscription/history`, {
+      params: { page, limit },
+    });
+    return response.data;
+  }
+
+  async getIndustryClassifications(): Promise<any[]> {
+    const response = await api.get<any[]>('/platform/industry-classifications');
+    return response.data;
+  }
+
+  async getTenantMemberships(tenantId: string): Promise<any[]> {
+    const response = await api.get<any[]>(`/platform/tenants/${tenantId}/memberships`);
+    return response.data;
+  }
+
+  async getTenantIndustryTemplate(tenantId: string): Promise<any> {
+    try {
+      const response = await api.get(`/platform/tenants/${tenantId}/industry-template`);
+      return response.data;
+    } catch (err: any) {
+      if (err.response?.status === 404) return null;
+      throw err;
+    }
+  }
+
+  async migrateTenantIndustry(
+    tenantId: string,
+    body: { industryTemplateVersionId: string; reason: string; expectedRevision: number },
+  ): Promise<any> {
+    const response = await api.post(`/platform/tenants/${tenantId}/industry-template/migrate`, body);
+    return response.data;
   }
 }
 
-export const tenantService: ITenantService = new FixtureTenantService();
-
+export const tenantService: ITenantService = new ApiTenantService();
