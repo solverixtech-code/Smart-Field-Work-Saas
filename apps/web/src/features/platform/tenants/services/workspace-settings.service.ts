@@ -6,60 +6,60 @@ export interface WorkspaceProfileSettings {
   shortName: string;
   industry: string;
   tenantCode: string;
-  website: string;
-  primaryEmail: string;
-  primaryPhone: string;
-  primaryColor: string;
-  secondaryColor: string;
+  website: string | null;
+  primaryEmail: string | null;
+  primaryPhone: string | null;
+  primaryColor: string | null;
+  secondaryColor: string | null;
   logoInLogin: boolean;
   workspaceId: string;
   configVersion: string;
   createdOn: string;
   createdBy: string;
-  address1: string;
-  address2: string;
-  city: string;
-  state: string;
-  country: string;
-  pincode: string;
+  address1: string | null;
+  address2: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  pincode: string | null;
 }
 
 export interface WorkspaceLocalizationSettings {
   timezone: string;
   dateFormat: string;
-  timeFormat: string;
+  timeFormat: string | null;
   language: string;
   weekStart: string;
-  numberFormat: string;
+  numberFormat: string | null;
 }
 
 export interface WorkspaceFinancialSettings {
   currency: string;
   fyStart: string;
-  gstNumber: string;
-  panNumber: string;
-  billingAddress: string;
+  gstNumber: string | null;
+  panNumber: string | null;
+  billingAddress: string | null;
   autoInvoice: boolean;
 }
 
 export interface WorkspacePreferencesSettings {
-  defaultLandingPage: string;
-  sessionTimeout: string;
-  emailNotifications: boolean;
-  pushNotifications: boolean;
-  dailyDigest: boolean;
-  showMapView: boolean;
-  compactTable: boolean;
+  defaultLandingPage: string | null;
+  sessionTimeout: string | null;
+  emailNotifications: boolean | null;
+  pushNotifications: boolean | null;
+  dailyDigest: boolean | null;
+  showMapView: boolean | null;
+  compactTable: boolean | null;
 }
 
 export interface WorkspaceSecuritySettings {
-  enforce2FA: boolean;
-  passwordMinLength: string;
-  passwordExpiry: string;
-  maxLoginAttempts: string;
-  ipWhitelist: boolean;
-  geoFenceAttendance: boolean;
-  forceLogoutOnInactivity: boolean;
+  enforce2FA: boolean | null;
+  passwordMinLength: string | null;
+  passwordExpiry: string | null;
+  maxLoginAttempts: string | null;
+  ipWhitelist: boolean | null;
+  geoFenceAttendance: boolean | null;
+  forceLogoutOnInactivity: boolean | null;
 }
 
 export interface WorkspaceSettings {
@@ -71,13 +71,9 @@ export interface WorkspaceSettings {
   security: WorkspaceSecuritySettings;
 }
 
-// Safe presentational defaults for form fields (empty strings / unconfigured indicators)
-// Authoritative data MUST come from server runtime bootstrap. No fake demo values are allowed.
-
 class ApiWorkspaceSettingsService {
-  async getWorkspaceSettings(tenantId?: string): Promise<WorkspaceSettings> {
+  async getWorkspaceSettings(_tenantId?: string): Promise<WorkspaceSettings> {
     // Authoritative call: get runtime bootstrap from server.
-    // If API fails, throw error so UI renders explicit error state.
     const bootstrap = await runtimeService.getBootstrap();
 
     if (!bootstrap || !bootstrap.tenant) {
@@ -91,68 +87,66 @@ class ApiWorkspaceSettingsService {
         shortName: bootstrap.tenant.displayName || '—',
         industry: bootstrap.industry?.templateId ? `Template #${bootstrap.industry.templateId}` : 'Unassigned',
         tenantCode: bootstrap.tenant.id,
-        website: '',
-        primaryEmail: '',
-        primaryPhone: '',
-        primaryColor: '#0D1F3D',
-        secondaryColor: '#2563EB',
+        website: null,
+        primaryEmail: null,
+        primaryPhone: null,
+        primaryColor: null,
+        secondaryColor: null,
         logoInLogin: false,
         workspaceId: bootstrap.tenant.id,
         configVersion: bootstrap.configVersion,
         createdOn: bootstrap.generatedAt ? new Date(bootstrap.generatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—',
         createdBy: 'System Provisioning',
-        address1: '',
-        address2: '',
-        city: '',
-        state: '',
-        country: '',
-        pincode: '',
+        address1: null,
+        address2: null,
+        city: null,
+        state: null,
+        country: null,
+        pincode: null,
       },
       localization: {
-        timezone: bootstrap.settings?.timezone || 'Asia/Kolkata',
-        dateFormat: bootstrap.settings?.dateFormat || 'DD MMM YYYY',
-        timeFormat: '12-hour (hh:mm AM/PM)',
-        language: bootstrap.settings?.language || 'English',
-        weekStart: bootstrap.settings?.weekStartDay || 'Monday',
-        numberFormat: '1,23,456.78 (Indian)',
+        timezone: bootstrap.settings?.timezone || 'Not Configured',
+        dateFormat: bootstrap.settings?.dateFormat || 'Not Configured',
+        timeFormat: null,
+        language: bootstrap.settings?.language || 'Not Configured',
+        weekStart: bootstrap.settings?.weekStartDay || 'Not Configured',
+        numberFormat: null,
       },
       financial: {
-        currency: bootstrap.settings?.currency || 'INR',
-        fyStart: bootstrap.settings?.financialYearStartMonth ? `Month ${bootstrap.settings.financialYearStartMonth}` : 'April',
-        gstNumber: '',
-        panNumber: '',
-        billingAddress: '',
+        currency: bootstrap.settings?.currency || 'Not Configured',
+        fyStart: bootstrap.settings?.financialYearStartMonth ? `Month ${bootstrap.settings.financialYearStartMonth}` : 'Not Configured',
+        gstNumber: null,
+        panNumber: null,
+        billingAddress: null,
         autoInvoice: false,
       },
       preferences: {
-        defaultLandingPage: 'Dashboard',
-        sessionTimeout: '30 minutes',
-        emailNotifications: true,
-        pushNotifications: true,
-        dailyDigest: false,
-        showMapView: true,
-        compactTable: false,
+        defaultLandingPage: null,
+        sessionTimeout: null,
+        emailNotifications: null,
+        pushNotifications: null,
+        dailyDigest: null,
+        showMapView: null,
+        compactTable: null,
       },
       security: {
-        enforce2FA: false,
-        passwordMinLength: '8',
-        passwordExpiry: '90 days',
-        maxLoginAttempts: '5',
-        ipWhitelist: false,
-        geoFenceAttendance: true,
-        forceLogoutOnInactivity: true,
+        enforce2FA: null,
+        passwordMinLength: null,
+        passwordExpiry: null,
+        maxLoginAttempts: null,
+        ipWhitelist: null,
+        geoFenceAttendance: null,
+        forceLogoutOnInactivity: null,
       },
     };
   }
 
-  async updateWorkspaceSettings(tenantId: string, updates: Partial<WorkspaceSettings>): Promise<WorkspaceSettings> {
-    // Prohibited: Local simulation of settings persistence.
-    // Every field must either use a real backend mutation endpoint or throw MUTATION_UNSUPPORTED.
+  async updateWorkspaceSettings(_tenantId?: string, _updates?: any): Promise<WorkspaceSettings> {
     throw new Error('MUTATION_UNSUPPORTED: Workspace settings update endpoint is not exposed by the current backend API contract.');
   }
 
-  async resetWorkspaceSettings(tenantId: string): Promise<WorkspaceSettings> {
-    return this.getWorkspaceSettings(tenantId);
+  async resetWorkspaceSettings(_tenantId?: string): Promise<WorkspaceSettings> {
+    return this.getWorkspaceSettings(_tenantId);
   }
 }
 

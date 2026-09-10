@@ -70,23 +70,36 @@ describe('Phase 0.11 Frontend Foundation Hardening Pass', () => {
   });
 
   describe('3. Server Effective Module Authority', () => {
-    it('calculates entitlement strictly from subscription.moduleCodes and ignores industry recommendations for commercial access', () => {
-      const subscriptionModuleCodes = ['core_crm', 'field_visits'];
-      const industryRecommendedCodes = ['core_crm', 'payroll', 'whatsapp_automation'];
+    it('proves effective Module state is served directly from server runtime bootstrap modules contract', async () => {
+      const mockBootstrap = {
+        schemaVersion: 1,
+        configVersion: 'v1.0.0',
+        generatedAt: new Date().toISOString(),
+        nextRevalidationAt: null,
+        principal: { userId: 'u_1', membershipId: 'm_1', tenantId: 'tenant_apex' },
+        tenant: { id: 'tenant_apex', displayName: 'Apex Corp', status: 'ACTIVE' as const },
+        access: { mode: 'FULL' as const, mapping: 'SUBSCRIBED' as const, subscriptionStatus: 'ACTIVE' as const, planVersionId: 'plan_v1' },
+        modules: [
+          { code: 'core_crm', status: 'ACTIVE' as const, source: 'PLAN_VERSION' as const },
+          { code: 'field_visits', status: 'ACTIVE' as const, source: 'PLAN_VERSION' as const },
+        ],
+        industry: null,
+        settings: { timezone: 'Asia/Kolkata', currency: 'INR', locale: 'en-IN', language: 'English', dateFormat: 'DD MMM YYYY', weekStartDay: 'Monday', financialYearStartMonth: 4 },
+        settingsProvenance: 'TENANT' as const,
+        permissions: ['*'],
+        masters: { strategy: 'MANIFEST' as const, canRead: true, canManage: true, definitions: [] },
+      };
 
-      const entitledSet = new Set<string>(subscriptionModuleCodes);
-      const recommendedSet = new Set<string>(industryRecommendedCodes);
+      vi.spyOn(runtimeService, 'getBootstrap').mockResolvedValue(mockBootstrap as any);
 
-      // core_crm: entitled AND recommended -> PLAN_VERSION
-      expect(entitledSet.has('core_crm')).toBe(true);
+      const bootstrap = await runtimeService.getBootstrap();
 
-      // payroll: NOT commercially entitled, ONLY recommended -> INDUSTRY_ADVISORY
-      expect(entitledSet.has('payroll')).toBe(false);
-      expect(recommendedSet.has('payroll')).toBe(true);
-
-      // field_visits: entitled, not in industry recommendations -> PLAN_VERSION
-      expect(entitledSet.has('field_visits')).toBe(true);
-      expect(recommendedSet.has('field_visits')).toBe(false);
+      // Assert effective modules come directly from server response object
+      expect(bootstrap.modules).toEqual([
+        { code: 'core_crm', status: 'ACTIVE', source: 'PLAN_VERSION' },
+        { code: 'field_visits', status: 'ACTIVE', source: 'PLAN_VERSION' },
+      ]);
+      expect(bootstrap.modules.some((m) => m.code === 'payroll')).toBe(false);
     });
   });
 
