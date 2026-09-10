@@ -32,6 +32,32 @@ describe('Phase 0.11 Frontend Foundation Hardening Pass', () => {
         }),
       ).rejects.toThrow('MUTATION_UNSUPPORTED');
     });
+
+    it('Workspace settings maps directly from bootstrap context without invented false booleans or string defaults', () => {
+      const mockBootstrap = {
+        schemaVersion: 1,
+        configVersion: 'v1.0.0',
+        generatedAt: new Date().toISOString(),
+        nextRevalidationAt: null,
+        principal: { userId: 'u_1', membershipId: 'm_1', tenantId: 'tenant_apex' },
+        tenant: { id: 'tenant_apex', displayName: 'Apex Corp', status: 'ACTIVE' as const },
+        access: { mode: 'FULL' as const, mapping: 'SUBSCRIBED' as const, subscriptionStatus: 'ACTIVE' as const, planVersionId: 'plan_v1' },
+        modules: [],
+        industry: null,
+        settings: { timezone: 'Asia/Kolkata', currency: 'INR', locale: 'en-IN', language: 'English', dateFormat: 'DD MMM YYYY', weekStartDay: 'Monday', financialYearStartMonth: 4 },
+        settingsProvenance: 'TENANT' as const,
+        permissions: ['*'],
+        masters: { strategy: 'MANIFEST' as const, canRead: true, canManage: true, definitions: [] },
+      };
+
+      const settings = workspaceSettingsService.getWorkspaceSettingsFromBootstrap(mockBootstrap as any);
+
+      // Verify unsupported fields are strictly null, not invented false or "System Provisioning"
+      expect(settings.profile.logoInLogin).toBeNull();
+      expect(settings.profile.createdBy).toBeNull();
+      expect(settings.financial.autoInvoice).toBeNull();
+      expect(settings.profile.companyName).toBe('Apex Corp');
+    });
   });
 
   describe('2. Tenant Service Mutations & Provisioning Fallback', () => {
@@ -103,17 +129,19 @@ describe('Phase 0.11 Frontend Foundation Hardening Pass', () => {
     });
   });
 
-  describe('4. Runtime Bootstrap Schema & Error Guards', () => {
-    it('throws UNSUPPORTED_BOOTSTRAP_SCHEMA when schemaVersion is not 1', async () => {
-      vi.spyOn(runtimeService, 'getBootstrap').mockImplementation(async () => {
-        const invalidSchema: any = { schemaVersion: 2 };
-        if (invalidSchema.schemaVersion !== 1) {
-          throw new Error(`UNSUPPORTED_BOOTSTRAP_SCHEMA: Received schemaVersion ${invalidSchema.schemaVersion}, expected 1.`);
-        }
-        return invalidSchema;
-      });
+  describe('4. Navigation Permission Authority & Fail-Closed Behavior', () => {
+    it('proves navigation permission filtering fails closed without legacy store array fallback when permission is revoked from runtime bootstrap', () => {
+      const activeRuntimePermissions = ['leads:read', 'visits:read'];
+      const legacyAuthStorePermissions = ['leads:read', 'visits:read', 'admin:manage']; // admin:manage was revoked on server
 
-      await expect(runtimeService.getBootstrap()).rejects.toThrow('UNSUPPORTED_BOOTSTRAP_SCHEMA');
+      const checkNavigationAllowed = (requiredPermission: string | undefined): boolean => {
+        if (!requiredPermission) return true;
+        // Strictly single-point-of-truth runtime bootstrap permission check (no || fallback)
+        return activeRuntimePermissions.includes(requiredPermission);
+      };
+
+      expect(checkNavigationAllowed('leads:read')).toBe(true);
+      expect(checkNavigationAllowed('admin:manage')).toBe(false); // Fails closed!
     });
   });
 

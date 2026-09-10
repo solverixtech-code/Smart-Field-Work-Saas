@@ -980,9 +980,7 @@ export default function AppShell() {
               )}
               {cat.items.map((item) => {
                 const isPermissionAllowed =
-                  !item.permission ||
-                  hasBootstrapPermission(item.permission) ||
-                  (authzLoaded && Boolean(tenant?.permissions?.includes(item.permission)));
+                  !item.permission || hasBootstrapPermission(item.permission);
                 const isModuleAllowed = !item.moduleCode || hasModule(item.moduleCode);
                 const isAllowed = isPermissionAllowed && isModuleAllowed;
                 const Icon = item.icon;

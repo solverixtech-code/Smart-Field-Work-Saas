@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useAppSelector } from '../../../store';
+import { useRuntimeBootstrap } from '../../../features/runtime/context/RuntimeBootstrapContext';
 import { workspaceSettingsService, WorkspaceSettings } from '../../../features/platform/tenants/services/workspace-settings.service';
 import {
   Building2,
@@ -11,35 +11,35 @@ import {
   Lock,
   MapPin,
   Check,
-  Info,
-  FileText,
-  RotateCcw,
-  Copy,
   Languages,
   Banknote,
   Settings,
   Plug,
-  Eye,
+  Copy,
   AlertCircle,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
 
 // ─── Disabled Read-Only Toggle Switch ───
-function DisabledToggleSwitch({ checked, label, description }: { checked: boolean; label: string; description?: string }) {
+function DisabledToggleSwitch({ checked, label, description }: { checked: boolean | null; label: string; description?: string }) {
+  const isValueKnown = checked !== null;
+  const isChecked = Boolean(checked);
+
   return (
     <div className="flex items-center justify-between opacity-70">
       <div>
         <span className="font-extrabold text-[#0D1F3D] text-xs">{label}</span>
         {description && <p className="text-[10px] text-slate-500 font-medium">{description}</p>}
+        {!isValueKnown && <p className="text-[9px] text-amber-600 font-semibold mt-0.5">Not Configured / Pending API Exposure</p>}
       </div>
       <div
         className={`relative inline-flex h-5 w-9 shrink-0 cursor-not-allowed rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-          checked ? 'bg-indigo-400' : 'bg-slate-300'
+          isChecked ? 'bg-indigo-400' : 'bg-slate-300'
         }`}
       >
-        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition duration-200 ${checked ? 'translate-x-4' : 'translate-x-0'}`} />
+        <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition duration-200 ${isChecked ? 'translate-x-4' : 'translate-x-0'}`} />
       </div>
     </div>
   );
@@ -98,42 +98,17 @@ function ProfileTab({ settings }: TabProps) {
 
           {/* Form Fields */}
           <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              label="Company Name"
-              value={p.companyName || 'Not Configured'}
-              disabled={true}
-              readOnly={true}
-            />
-            <Input
-              label="Industry"
-              value={p.industry || 'Not Configured'}
-              disabled={true}
-              readOnly={true}
-            />
+            <Input label="Company Name" value={p.companyName || 'Not Configured'} disabled readOnly />
+            <Input label="Industry" value={p.industry || 'Not Configured'} disabled readOnly />
             <div>
               <label className="text-xs font-semibold text-[#0B2E6B] block mb-1.5">Tenant Code / ID</label>
               <div className="flex rounded-sm border border-slate-200 bg-slate-100 overflow-hidden h-10">
                 <input type="text" value={p.tenantCode} disabled readOnly className="flex-1 px-3 text-xs font-mono font-bold text-slate-700 bg-slate-100 cursor-not-allowed focus:outline-none" />
               </div>
             </div>
-            <Input
-              label="Website"
-              value={p.website || 'Not Configured / Pending API Exposure'}
-              disabled={true}
-              readOnly={true}
-            />
-            <Input
-              label="Primary Contact Email"
-              value={p.primaryEmail || 'Not Configured / Pending API Exposure'}
-              disabled={true}
-              readOnly={true}
-            />
-            <Input
-              label="Primary Contact Phone"
-              value={p.primaryPhone || 'Not Configured / Pending API Exposure'}
-              disabled={true}
-              readOnly={true}
-            />
+            <Input label="Website" value={p.website || 'Not Configured / Pending API Exposure'} disabled readOnly />
+            <Input label="Primary Contact Email" value={p.primaryEmail || 'Not Configured / Pending API Exposure'} disabled readOnly />
+            <Input label="Primary Contact Phone" value={p.primaryPhone || 'Not Configured / Pending API Exposure'} disabled readOnly />
           </div>
         </div>
       </div>
@@ -152,24 +127,14 @@ function ProfileTab({ settings }: TabProps) {
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Primary Color"
-                value={p.primaryColor || 'Not Configured'}
-                disabled={true}
-                readOnly={true}
-              />
-              <Input
-                label="Secondary Color"
-                value={p.secondaryColor || 'Not Configured'}
-                disabled={true}
-                readOnly={true}
-              />
+              <Input label="Primary Color" value={p.primaryColor || 'Not Configured'} disabled readOnly />
+              <Input label="Secondary Color" value={p.secondaryColor || 'Not Configured'} disabled readOnly />
             </div>
           </div>
 
           <div className="space-y-3 border-t border-slate-100 pt-4">
             <DisabledToggleSwitch
-              checked={false}
+              checked={p.logoInLogin}
               label="Logo in Login"
               description="Login logo customization is pending backend API exposure"
             />
@@ -210,7 +175,7 @@ function ProfileTab({ settings }: TabProps) {
 
             <div className="border-t border-slate-100 pt-2">
               <span className="text-xs font-semibold text-slate-500 block mb-1">Created By</span>
-              <span className="font-bold text-[#0D1F3D] text-xs">{p.createdBy}</span>
+              <span className="font-bold text-slate-500 text-xs">{p.createdBy || 'Not Available / Pending API Exposure'}</span>
             </div>
           </div>
         </div>
@@ -228,12 +193,12 @@ function ProfileTab({ settings }: TabProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="sm:col-span-2">
-            <Input label="Address Line 1" value="Not Configured / Pending API Exposure" disabled={true} readOnly={true} />
+            <Input label="Address Line 1" value="Not Configured / Pending API Exposure" disabled readOnly />
           </div>
-          <Input label="City" value="Not Configured / Pending API Exposure" disabled={true} readOnly={true} />
-          <Input label="State" value="Not Configured / Pending API Exposure" disabled={true} readOnly={true} />
-          <Input label="Country" value="Not Configured / Pending API Exposure" disabled={true} readOnly={true} />
-          <Input label="PIN Code" value="Not Configured / Pending API Exposure" disabled={true} readOnly={true} />
+          <Input label="City" value="Not Configured / Pending API Exposure" disabled readOnly />
+          <Input label="State" value="Not Configured / Pending API Exposure" disabled readOnly />
+          <Input label="Country" value="Not Configured / Pending API Exposure" disabled readOnly />
+          <Input label="PIN Code" value="Not Configured / Pending API Exposure" disabled readOnly />
         </div>
       </div>
     </div>
@@ -258,12 +223,12 @@ function LocalizationTab({ settings }: TabProps) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Input label="Timezone" value={loc.timezone} disabled={true} readOnly={true} />
-          <Input label="Date Format" value={loc.dateFormat} disabled={true} readOnly={true} />
-          <Input label="Time Format" value={loc.timeFormat || 'Not Configured / Pending API Exposure'} disabled={true} readOnly={true} />
-          <Input label="Primary Language" value={loc.language} disabled={true} readOnly={true} />
-          <Input label="Week Start Day" value={loc.weekStart} disabled={true} readOnly={true} />
-          <Input label="Number Format" value={loc.numberFormat || 'Not Configured / Pending API Exposure'} disabled={true} readOnly={true} />
+          <Input label="Timezone" value={loc.timezone} disabled readOnly />
+          <Input label="Date Format" value={loc.dateFormat} disabled readOnly />
+          <Input label="Time Format" value={loc.timeFormat || 'Not Configured / Pending API Exposure'} disabled readOnly />
+          <Input label="Primary Language" value={loc.language} disabled readOnly />
+          <Input label="Week Start Day" value={loc.weekStart} disabled readOnly />
+          <Input label="Number Format" value={loc.numberFormat || 'Not Configured / Pending API Exposure'} disabled readOnly />
         </div>
       </div>
     </div>
@@ -288,10 +253,10 @@ function BusinessFinancialTab({ settings }: TabProps) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Input label="Currency" value={bf.currency} disabled={true} readOnly={true} />
-          <Input label="Financial Year Start" value={bf.fyStart} disabled={true} readOnly={true} />
-          <Input label="GST / Tax ID" value={bf.gstNumber || 'Not Configured / Pending API Exposure'} disabled={true} readOnly={true} />
-          <Input label="PAN Number" value={bf.panNumber || 'Not Configured / Pending API Exposure'} disabled={true} readOnly={true} />
+          <Input label="Currency" value={bf.currency} disabled readOnly />
+          <Input label="Financial Year Start" value={bf.fyStart} disabled readOnly />
+          <Input label="GST / Tax ID" value={bf.gstNumber || 'Not Configured / Pending API Exposure'} disabled readOnly />
+          <Input label="PAN Number" value={bf.panNumber || 'Not Configured / Pending API Exposure'} disabled readOnly />
         </div>
       </div>
     </div>
@@ -299,7 +264,7 @@ function BusinessFinancialTab({ settings }: TabProps) {
 }
 
 // ─── Tab: Preferences ───
-function PreferencesTab({ settings }: TabProps) {
+function PreferencesTab() {
   return (
     <div className="space-y-6">
       <ApiExposureNotice
@@ -317,9 +282,9 @@ function PreferencesTab({ settings }: TabProps) {
         </div>
 
         <div className="space-y-3">
-          <DisabledToggleSwitch checked={false} label="Email Notifications" description="Not configured in runtime bootstrap" />
-          <DisabledToggleSwitch checked={false} label="Push Notifications" description="Not configured in runtime bootstrap" />
-          <DisabledToggleSwitch checked={false} label="Compact Table Mode" description="Not configured in runtime bootstrap" />
+          <DisabledToggleSwitch checked={null} label="Email Notifications" description="Not configured in runtime bootstrap" />
+          <DisabledToggleSwitch checked={null} label="Push Notifications" description="Not configured in runtime bootstrap" />
+          <DisabledToggleSwitch checked={null} label="Compact Table Mode" description="Not configured in runtime bootstrap" />
         </div>
       </div>
     </div>
@@ -327,7 +292,7 @@ function PreferencesTab({ settings }: TabProps) {
 }
 
 // ─── Tab: Policies & Security ───
-function PoliciesSecurityTab({ settings }: TabProps) {
+function PoliciesSecurityTab() {
   return (
     <div className="space-y-6">
       <ApiExposureNotice
@@ -345,8 +310,8 @@ function PoliciesSecurityTab({ settings }: TabProps) {
         </div>
 
         <div className="space-y-3">
-          <DisabledToggleSwitch checked={false} label="Enforce Two-Factor Authentication" description="Managed by platform security policy" />
-          <DisabledToggleSwitch checked={false} label="Geofence Attendance Check-in" description="Managed by field policy module" />
+          <DisabledToggleSwitch checked={null} label="Enforce Two-Factor Authentication" description="Managed by platform security policy" />
+          <DisabledToggleSwitch checked={null} label="Geofence Attendance Check-in" description="Managed by field policy module" />
         </div>
       </div>
     </div>
@@ -435,33 +400,19 @@ function RightSidebar({ settings }: { settings?: WorkspaceSettings | null }) {
 
 // ─── MAIN EXPORT ───
 export function WorkspaceSettingsPage() {
-  const user = useAppSelector((state) => state.auth.user);
+  const { bootstrap, loading, error: bootstrapError, reloadBootstrap } = useRuntimeBootstrap();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'profile';
-  const [settings, setSettings] = useState<WorkspaceSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const loadSettings = async () => {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const data = await workspaceSettingsService.getWorkspaceSettings();
-      setSettings(data);
-    } catch (err: any) {
-      setLoadError(err.message || 'Failed to load authoritative workspace settings from runtime bootstrap.');
-      setSettings(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadSettings();
-  }, [(user as any)?.tenantId]);
+  // React to authoritative runtime bootstrap context directly!
+  // Re-maps automatically upon tenant switch (when principal.membershipId or configVersion changes).
+  const settings = useMemo<WorkspaceSettings | null>(() => {
+    if (!bootstrap) return null;
+    return workspaceSettingsService.getWorkspaceSettingsFromBootstrap(bootstrap);
+  }, [bootstrap]);
 
   const handleReset = async () => {
-    await loadSettings();
+    await reloadBootstrap();
     toast.info('Refreshed settings from authoritative server bootstrap');
   };
 
@@ -487,7 +438,7 @@ export function WorkspaceSettingsPage() {
     );
   }
 
-  if (loadError || !settings) {
+  if (bootstrapError || !settings) {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 text-center font-sans space-y-4">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
@@ -496,13 +447,13 @@ export function WorkspaceSettingsPage() {
         <div>
           <h2 className="text-xl font-extrabold text-[#0D1F3D]">Workspace Settings Unavailable</h2>
           <p className="text-xs text-slate-500 font-medium mt-1 max-w-md mx-auto">
-            {loadError || 'Failed to load authoritative workspace configuration.'}
+            {bootstrapError || 'Failed to load authoritative workspace configuration.'}
           </p>
         </div>
         <Button
           variant="accent"
           size="sm"
-          onClick={loadSettings}
+          onClick={handleReset}
           className="font-bold px-6 shadow-xs bg-indigo-600 hover:bg-indigo-700 text-white"
         >
           Retry Loading Settings
@@ -561,8 +512,8 @@ export function WorkspaceSettingsPage() {
           {activeTab === 'profile' && <ProfileTab settings={settings} />}
           {activeTab === 'localization' && <LocalizationTab settings={settings} />}
           {activeTab === 'business-financial' && <BusinessFinancialTab settings={settings} />}
-          {activeTab === 'preferences' && <PreferencesTab settings={settings} />}
-          {activeTab === 'policies-security' && <PoliciesSecurityTab settings={settings} />}
+          {activeTab === 'preferences' && <PreferencesTab />}
+          {activeTab === 'policies-security' && <PoliciesSecurityTab />}
           {activeTab === 'integrations' && <IntegrationsTab />}
         </div>
 

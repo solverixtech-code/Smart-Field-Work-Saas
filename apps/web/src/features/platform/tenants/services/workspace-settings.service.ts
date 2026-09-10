@@ -1,5 +1,5 @@
 import { api } from '../../../../common/api';
-import { runtimeService } from '../../../runtime/services/runtime.service';
+import { runtimeService, RuntimeBootstrapDto } from '../../../runtime/services/runtime.service';
 
 export interface WorkspaceProfileSettings {
   companyName: string;
@@ -11,11 +11,11 @@ export interface WorkspaceProfileSettings {
   primaryPhone: string | null;
   primaryColor: string | null;
   secondaryColor: string | null;
-  logoInLogin: boolean;
+  logoInLogin: boolean | null;
   workspaceId: string;
   configVersion: string;
   createdOn: string;
-  createdBy: string;
+  createdBy: string | null;
   address1: string | null;
   address2: string | null;
   city: string | null;
@@ -39,7 +39,7 @@ export interface WorkspaceFinancialSettings {
   gstNumber: string | null;
   panNumber: string | null;
   billingAddress: string | null;
-  autoInvoice: boolean;
+  autoInvoice: boolean | null;
 }
 
 export interface WorkspacePreferencesSettings {
@@ -72,10 +72,7 @@ export interface WorkspaceSettings {
 }
 
 class ApiWorkspaceSettingsService {
-  async getWorkspaceSettings(_tenantId?: string): Promise<WorkspaceSettings> {
-    // Authoritative call: get runtime bootstrap from server.
-    const bootstrap = await runtimeService.getBootstrap();
-
+  getWorkspaceSettingsFromBootstrap(bootstrap: RuntimeBootstrapDto): WorkspaceSettings {
     if (!bootstrap || !bootstrap.tenant) {
       throw new Error('AUTHORITATIVE_BOOTSTRAP_UNAVAILABLE: Workspace bootstrap returned empty or missing tenant data.');
     }
@@ -92,11 +89,11 @@ class ApiWorkspaceSettingsService {
         primaryPhone: null,
         primaryColor: null,
         secondaryColor: null,
-        logoInLogin: false,
+        logoInLogin: null, // Strictly null: unsupported by runtime response
         workspaceId: bootstrap.tenant.id,
         configVersion: bootstrap.configVersion,
         createdOn: bootstrap.generatedAt ? new Date(bootstrap.generatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—',
-        createdBy: 'System Provisioning',
+        createdBy: null, // Strictly null: unsupported by runtime response
         address1: null,
         address2: null,
         city: null,
@@ -118,7 +115,7 @@ class ApiWorkspaceSettingsService {
         gstNumber: null,
         panNumber: null,
         billingAddress: null,
-        autoInvoice: false,
+        autoInvoice: null, // Strictly null: unsupported by runtime response
       },
       preferences: {
         defaultLandingPage: null,
@@ -139,6 +136,11 @@ class ApiWorkspaceSettingsService {
         forceLogoutOnInactivity: null,
       },
     };
+  }
+
+  async getWorkspaceSettings(_tenantId?: string): Promise<WorkspaceSettings> {
+    const bootstrap = await runtimeService.getBootstrap();
+    return this.getWorkspaceSettingsFromBootstrap(bootstrap);
   }
 
   async updateWorkspaceSettings(_tenantId?: string, _updates?: any): Promise<WorkspaceSettings> {

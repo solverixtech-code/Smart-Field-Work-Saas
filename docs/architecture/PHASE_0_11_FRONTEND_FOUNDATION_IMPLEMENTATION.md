@@ -37,8 +37,8 @@ A final corrective hardening pass was performed to resolve all remaining archite
 ### Core Architectural Principles Maintained
 1. **Preserved Strict Hierarchy**:
    `PAGE` ➔ `HOOK / CONTEXT` ➔ `SERVICE INTERFACE / FEATURE SERVICE` ➔ `API CLIENT` ➔ `AUTHORITATIVE BACKEND`
-2. **Zero Client-Side Domain Calculation**:
-   - The browser does not compute effective modules.
+2. **No Client-Side Effective Runtime Module Resolution**:
+   - The browser does not compute effective runtime modules.
    - The browser does not resolve master precedence.
    - The browser does not calculate plan pricing, limits, or entitlements.
    - The browser does not infer platform privilege from email address or legacy `User.role`.

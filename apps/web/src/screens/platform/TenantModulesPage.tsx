@@ -6,7 +6,6 @@ import {
   Search,
   CheckCircle2,
   Users,
-  Info,
   Puzzle,
   ShieldCheck,
   Lock,
@@ -37,9 +36,10 @@ interface ModuleItem {
   icon: React.ElementType;
   iconBg: string;
   iconColor: string;
-  isCommerciallyEntitled: boolean;
+  isEffectiveRuntimeModule: boolean | null; // true/false for active session, null for cross-tenant
+  isInSubscribedPlan: boolean; // true/false based on plan subscription codes
   isIndustryRecommended: boolean;
-  provenance: "PLAN_VERSION" | "INDUSTRY_ADVISORY" | "UNAVAILABLE";
+  provenance: "SERVER_BOOTSTRAP" | "SUBSCRIBED_PLAN_CODE" | "INDUSTRY_ADVISORY" | "UNAVAILABLE";
   category: "core" | "advanced" | "integrations";
 }
 
@@ -86,15 +86,16 @@ export function TenantModulesPage() {
         setSubscription(sub);
 
         const currentBootstrap = runtimeService.getCurrentBootstrap();
-        const isActiveTenantSession = currentBootstrap && currentBootstrap.tenant?.id === tenantId;
+        const isActiveTenantSession = Boolean(currentBootstrap && currentBootstrap.tenant?.id === tenantId);
+        const subCodes = new Set<string>(sub?.moduleCodes || []);
+        const recommendedCodes = new Set<string>(
+          ind?.recommendedModuleCodes || ind?.version?.recommendedModuleCodes || [],
+        );
 
-        if (isActiveTenantSession && currentBootstrap.modules) {
-          // Authoritative Server Effective Modules: read directly from server bootstrap
+        if (isActiveTenantSession && currentBootstrap?.modules) {
+          // Authoritative Server Effective Modules: read directly from active session bootstrap
           setIsCrossTenantGap(false);
           const serverModulesMap = new Map(currentBootstrap.modules.map((m) => [m.code, m]));
-          const recommendedCodes = new Set<string>(
-            ind?.recommendedModuleCodes || ind?.version?.recommendedModuleCodes || [],
-          );
 
           const mapped: ModuleItem[] = (catalogModules || []).map((pm: PlatformModule) => {
             const iconMeta = MODULE_ICONS[pm.code] || { icon: Layers, iconBg: "bg-slate-100", iconColor: "text-slate-600" };
@@ -106,12 +107,13 @@ export function TenantModulesPage() {
                 : "advanced";
 
             const serverModule = serverModulesMap.get(pm.code);
-            const isCommerciallyEntitled = Boolean(serverModule);
+            const isEffectiveRuntimeModule = Boolean(serverModule);
+            const isInSubscribedPlan = subCodes.has(pm.code);
             const isIndustryRecommended = recommendedCodes.has(pm.code);
 
-            let provenance: "PLAN_VERSION" | "INDUSTRY_ADVISORY" | "UNAVAILABLE" = "UNAVAILABLE";
-            if (isCommerciallyEntitled) {
-              provenance = "PLAN_VERSION";
+            let provenance: "SERVER_BOOTSTRAP" | "SUBSCRIBED_PLAN_CODE" | "INDUSTRY_ADVISORY" | "UNAVAILABLE" = "UNAVAILABLE";
+            if (isEffectiveRuntimeModule) {
+              provenance = "SERVER_BOOTSTRAP";
             } else if (isIndustryRecommended) {
               provenance = "INDUSTRY_ADVISORY";
             }
@@ -124,7 +126,8 @@ export function TenantModulesPage() {
               icon: iconMeta.icon,
               iconBg: iconMeta.iconBg,
               iconColor: iconMeta.iconColor,
-              isCommerciallyEntitled,
+              isEffectiveRuntimeModule,
+              isInSubscribedPlan,
               isIndustryRecommended,
               provenance,
               category,
@@ -136,10 +139,6 @@ export function TenantModulesPage() {
           // Cross-tenant platform inspection: backend lacks GET /platform/tenants/:id/effective-modules.
           // Do NOT calculate effective entitlement in React! Mark cross-tenant API gap.
           setIsCrossTenantGap(true);
-          const subCodes = new Set<string>(sub?.moduleCodes || []);
-          const recommendedCodes = new Set<string>(
-            ind?.recommendedModuleCodes || ind?.version?.recommendedModuleCodes || [],
-          );
 
           const mapped: ModuleItem[] = (catalogModules || []).map((pm: PlatformModule) => {
             const iconMeta = MODULE_ICONS[pm.code] || { icon: Layers, iconBg: "bg-slate-100", iconColor: "text-slate-600" };
@@ -150,12 +149,12 @@ export function TenantModulesPage() {
                 ? "integrations"
                 : "advanced";
 
-            const isSubscribedInPlan = subCodes.has(pm.code);
+            const isInSubscribedPlan = subCodes.has(pm.code);
             const isIndustryRecommended = recommendedCodes.has(pm.code);
 
-            let provenance: "PLAN_VERSION" | "INDUSTRY_ADVISORY" | "UNAVAILABLE" = "UNAVAILABLE";
-            if (isSubscribedInPlan) {
-              provenance = "PLAN_VERSION";
+            let provenance: "SERVER_BOOTSTRAP" | "SUBSCRIBED_PLAN_CODE" | "INDUSTRY_ADVISORY" | "UNAVAILABLE" = "UNAVAILABLE";
+            if (isInSubscribedPlan) {
+              provenance = "SUBSCRIBED_PLAN_CODE";
             } else if (isIndustryRecommended) {
               provenance = "INDUSTRY_ADVISORY";
             }
@@ -168,7 +167,8 @@ export function TenantModulesPage() {
               icon: iconMeta.icon,
               iconBg: iconMeta.iconBg,
               iconColor: iconMeta.iconColor,
-              isCommerciallyEntitled: isSubscribedInPlan,
+              isEffectiveRuntimeModule: null, // Strictly null: effective runtime module cannot be computed client-side
+              isInSubscribedPlan,
               isIndustryRecommended,
               provenance,
               category,
@@ -225,7 +225,8 @@ export function TenantModulesPage() {
         m.code.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
-  const totalEntitled = modules.filter((m) => m.isCommerciallyEntitled).length;
+  const totalSubscribedInPlan = modules.filter((m) => m.isInSubscribedPlan).length;
+  const totalEffectiveRuntime = modules.filter((m) => m.isEffectiveRuntimeModule === true).length;
   const totalRecommended = modules.filter((m) => m.isIndustryRecommended).length;
 
   return (
@@ -263,14 +264,14 @@ export function TenantModulesPage() {
 
           <div className="flex items-center gap-2 mt-1.5">
             <h1 className="text-2xl font-extrabold text-[#0D1F3D] tracking-tight">
-              Tenant Effective Modules & Entitlements
+              Tenant Modules & Entitlements
             </h1>
             <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-purple-100 text-purple-700">
               <Puzzle className="h-4.5 w-4.5" />
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Server-issued module entitlements and commercial provenance for {tenant?.companyName}.
+            Server-issued module entitlements and plan details for {tenant?.companyName}.
           </p>
         </div>
 
@@ -340,7 +341,7 @@ export function TenantModulesPage() {
           <p className="text-xs text-amber-900 font-medium leading-relaxed">
             Effective runtime modules are server-composed during tenant session bootstrap (<code className="font-mono bg-amber-100 px-1 py-0.5 rounded">GET /tenant/runtime/bootstrap</code>).
             A platform HTTP endpoint for inspecting cross-tenant effective modules (<code className="font-mono bg-amber-100 px-1 py-0.5 rounded">GET /platform/tenants/:id/effective-modules</code>) is currently an API gap.
-            Client-side entitlement recalculation in React is prohibited. Subscription plan module codes and industry advisory codes are listed separately below.
+            Client-side effective module calculation is disabled. Subscription plan module codes are presented separately below.
           </p>
         </div>
       ) : (
@@ -350,7 +351,7 @@ export function TenantModulesPage() {
             <span>Authoritative Active Session Runtime Bootstrap</span>
           </div>
           <p className="text-xs text-emerald-900 font-medium leading-relaxed">
-            Effective modules displayed below are server-issued directly from the active runtime bootstrap response (<code className="font-mono bg-emerald-100 px-1 py-0.5 rounded">bootstrap.modules</code>). No browser-side entitlement calculation is performed.
+            Effective modules displayed below are server-issued directly from active runtime bootstrap (<code className="font-mono bg-emerald-100 px-1 py-0.5 rounded">bootstrap.modules</code>).
           </p>
         </div>
       )}
@@ -463,7 +464,7 @@ export function TenantModulesPage() {
                   <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
                     <th className="py-3 px-4">Module Details</th>
                     <th className="py-3 px-4">Module Code</th>
-                    <th className="py-3 px-4">{isCrossTenantGap ? "Plan Subscription" : "Server Entitlement"}</th>
+                    <th className="py-3 px-4">{isCrossTenantGap ? "Subscribed Plan Code" : "Server Effective Module"}</th>
                     <th className="py-3 px-4">Provenance</th>
                   </tr>
                 </thead>
@@ -498,22 +499,39 @@ export function TenantModulesPage() {
                             {m.code}
                           </td>
                           <td className="py-3.5 px-4">
-                            {m.isCommerciallyEntitled ? (
+                            {isCrossTenantGap ? (
+                              m.isInSubscribedPlan ? (
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-extrabold text-emerald-700 border border-emerald-200">
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                  Subscribed in Plan
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500 border border-slate-200">
+                                  <Lock className="h-3.5 w-3.5 text-slate-400" />
+                                  Not Subscribed
+                                </span>
+                              )
+                            ) : m.isEffectiveRuntimeModule ? (
                               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-extrabold text-emerald-700 border border-emerald-200">
                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                                {isCrossTenantGap ? "Subscribed in Plan" : "Active Entitlement"}
+                                Active Server Module
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500 border border-slate-200">
                                 <Lock className="h-3.5 w-3.5 text-slate-400" />
-                                Not Subscribed
+                                Not Entitled
                               </span>
                             )}
                           </td>
                           <td className="py-3.5 px-4">
-                            {m.provenance === "PLAN_VERSION" && (
+                            {m.provenance === "SERVER_BOOTSTRAP" && (
                               <span className="inline-flex rounded-xs bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200">
-                                Plan Version: {tenant.planName}
+                                Server Bootstrap: {tenant.planName}
+                              </span>
+                            )}
+                            {m.provenance === "SUBSCRIBED_PLAN_CODE" && (
+                              <span className="inline-flex rounded-xs bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200">
+                                Subscribed Plan Code: {tenant.planName}
                               </span>
                             )}
                             {m.provenance === "INDUSTRY_ADVISORY" && (
@@ -546,13 +564,13 @@ export function TenantModulesPage() {
               <div className="p-3.5 rounded-sm border border-emerald-100 bg-emerald-50/40 flex items-center justify-between">
                 <div>
                   <span className="text-[11px] text-slate-500 font-medium block">
-                    {isCrossTenantGap ? "Plan Module Codes" : "Effective Active Modules"}
+                    {isCrossTenantGap ? "Subscribed Plan Codes" : "Effective Runtime Modules"}
                   </span>
                   <span className="text-lg font-extrabold text-[#0D1F3D]">
-                    {totalEntitled} / {modules.length} Modules
+                    {isCrossTenantGap ? totalSubscribedInPlan : totalEffectiveRuntime} / {modules.length} Modules
                   </span>
                   <span className="text-[10px] text-emerald-700 block font-bold mt-0.5">
-                    {isCrossTenantGap ? "From Subscription Plan" : "Server Issued Bootstrap"}
+                    {isCrossTenantGap ? "From Subscription Plan" : "Active Session Bootstrap"}
                   </span>
                 </div>
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white font-bold">

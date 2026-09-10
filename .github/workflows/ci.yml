@@ -70,6 +70,9 @@ jobs:
       - name: Build Web Workspace
         run: cd apps/web && npm run build
 
+      - name: Run Web Frontend Unit Tests
+        run: cd apps/web && npm test
+
       - name: Run API Unit Tests
         run: cd apps/api && npm test -- --runInBand
 
