@@ -71,112 +71,84 @@ export interface WorkspaceSettings {
   security: WorkspaceSecuritySettings;
 }
 
-const DEFAULT_WORKSPACE_SETTINGS: WorkspaceSettings = {
-  tenantId: 'default',
-  profile: {
-    companyName: 'Visiblo Workspace',
-    shortName: 'Visiblo',
-    industry: 'Pharma & Healthcare',
-    tenantCode: 'DEFAULT',
-    website: 'www.smartfieldwork.com',
-    primaryEmail: 'info@smartfieldwork.com',
-    primaryPhone: '9876543210',
-    primaryColor: '#0D1F3D',
-    secondaryColor: '#2563EB',
-    logoInLogin: true,
-    workspaceId: 'ws_default',
-    configVersion: 'v1.0.0',
-    createdOn: '24 May 2026',
-    createdBy: 'System Provisioning',
-    address1: 'Sunrise Tower',
-    address2: 'Andheri East',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    country: 'India',
-    pincode: '400059',
-  },
-  localization: {
-    timezone: '(GMT+05:30) Asia/Kolkata',
-    dateFormat: 'DD MMM YYYY',
-    timeFormat: '12-hour (hh:mm AM/PM)',
-    language: 'English',
-    weekStart: 'Monday',
-    numberFormat: '1,23,456.78 (Indian)',
-  },
-  financial: {
-    currency: 'INR - Indian Rupee (₹)',
-    fyStart: 'April',
-    gstNumber: '27ABCDE1234F1ZH',
-    panNumber: 'ABCDE1234F',
-    billingAddress: 'Sunrise Tower, Andheri East, Mumbai 400059',
-    autoInvoice: true,
-  },
-  preferences: {
-    defaultLandingPage: 'Dashboard',
-    sessionTimeout: '30 minutes',
-    emailNotifications: true,
-    pushNotifications: true,
-    dailyDigest: false,
-    showMapView: true,
-    compactTable: false,
-  },
-  security: {
-    enforce2FA: true,
-    passwordMinLength: '8',
-    passwordExpiry: '90 days',
-    maxLoginAttempts: '5',
-    ipWhitelist: false,
-    geoFenceAttendance: true,
-    forceLogoutOnInactivity: true,
-  },
-};
+// Safe presentational defaults for form fields (empty strings / unconfigured indicators)
+// Authoritative data MUST come from server runtime bootstrap. No fake demo values are allowed.
 
 class ApiWorkspaceSettingsService {
   async getWorkspaceSettings(tenantId?: string): Promise<WorkspaceSettings> {
-    try {
-      const bootstrap = await runtimeService.getBootstrap();
-      return {
-        ...DEFAULT_WORKSPACE_SETTINGS,
-        tenantId: bootstrap.tenant.id,
-        profile: {
-          ...DEFAULT_WORKSPACE_SETTINGS.profile,
-          companyName: bootstrap.tenant.displayName,
-          shortName: bootstrap.tenant.displayName,
-          workspaceId: bootstrap.tenant.id,
-          configVersion: bootstrap.configVersion,
-        },
-        localization: {
-          ...DEFAULT_WORKSPACE_SETTINGS.localization,
-          timezone: bootstrap.settings.timezone,
-          dateFormat: bootstrap.settings.dateFormat,
-          language: bootstrap.settings.language,
-          weekStart: bootstrap.settings.weekStartDay,
-        },
-        financial: {
-          ...DEFAULT_WORKSPACE_SETTINGS.financial,
-          currency: bootstrap.settings.currency,
-          fyStart: `Month ${bootstrap.settings.financialYearStartMonth}`,
-        },
-      };
-    } catch {
-      return {
-        ...DEFAULT_WORKSPACE_SETTINGS,
-        tenantId: tenantId || 'default',
-      };
+    // Authoritative call: get runtime bootstrap from server.
+    // If API fails, throw error so UI renders explicit error state.
+    const bootstrap = await runtimeService.getBootstrap();
+
+    if (!bootstrap || !bootstrap.tenant) {
+      throw new Error('AUTHORITATIVE_BOOTSTRAP_UNAVAILABLE: Workspace bootstrap returned empty or missing tenant data.');
     }
+
+    return {
+      tenantId: bootstrap.tenant.id,
+      profile: {
+        companyName: bootstrap.tenant.displayName || '—',
+        shortName: bootstrap.tenant.displayName || '—',
+        industry: bootstrap.industry?.templateId ? `Template #${bootstrap.industry.templateId}` : 'Unassigned',
+        tenantCode: bootstrap.tenant.id,
+        website: '',
+        primaryEmail: '',
+        primaryPhone: '',
+        primaryColor: '#0D1F3D',
+        secondaryColor: '#2563EB',
+        logoInLogin: false,
+        workspaceId: bootstrap.tenant.id,
+        configVersion: bootstrap.configVersion,
+        createdOn: bootstrap.generatedAt ? new Date(bootstrap.generatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—',
+        createdBy: 'System Provisioning',
+        address1: '',
+        address2: '',
+        city: '',
+        state: '',
+        country: '',
+        pincode: '',
+      },
+      localization: {
+        timezone: bootstrap.settings?.timezone || 'Asia/Kolkata',
+        dateFormat: bootstrap.settings?.dateFormat || 'DD MMM YYYY',
+        timeFormat: '12-hour (hh:mm AM/PM)',
+        language: bootstrap.settings?.language || 'English',
+        weekStart: bootstrap.settings?.weekStartDay || 'Monday',
+        numberFormat: '1,23,456.78 (Indian)',
+      },
+      financial: {
+        currency: bootstrap.settings?.currency || 'INR',
+        fyStart: bootstrap.settings?.financialYearStartMonth ? `Month ${bootstrap.settings.financialYearStartMonth}` : 'April',
+        gstNumber: '',
+        panNumber: '',
+        billingAddress: '',
+        autoInvoice: false,
+      },
+      preferences: {
+        defaultLandingPage: 'Dashboard',
+        sessionTimeout: '30 minutes',
+        emailNotifications: true,
+        pushNotifications: true,
+        dailyDigest: false,
+        showMapView: true,
+        compactTable: false,
+      },
+      security: {
+        enforce2FA: false,
+        passwordMinLength: '8',
+        passwordExpiry: '90 days',
+        maxLoginAttempts: '5',
+        ipWhitelist: false,
+        geoFenceAttendance: true,
+        forceLogoutOnInactivity: true,
+      },
+    };
   }
 
   async updateWorkspaceSettings(tenantId: string, updates: Partial<WorkspaceSettings>): Promise<WorkspaceSettings> {
-    const current = await this.getWorkspaceSettings(tenantId);
-    return {
-      ...current,
-      ...updates,
-      profile: { ...current.profile, ...(updates.profile || {}) },
-      localization: { ...current.localization, ...(updates.localization || {}) },
-      financial: { ...current.financial, ...(updates.financial || {}) },
-      preferences: { ...current.preferences, ...(updates.preferences || {}) },
-      security: { ...current.security, ...(updates.security || {}) },
-    };
+    // Prohibited: Local simulation of settings persistence.
+    // Every field must either use a real backend mutation endpoint or throw MUTATION_UNSUPPORTED.
+    throw new Error('MUTATION_UNSUPPORTED: Workspace settings update endpoint is not exposed by the current backend API contract.');
   }
 
   async resetWorkspaceSettings(tenantId: string): Promise<WorkspaceSettings> {

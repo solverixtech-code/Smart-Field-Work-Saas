@@ -93,9 +93,9 @@ export function TenantModulesPage() {
         setSubscription(sub);
         setIndustryTemplate(ind);
 
-        const entitledCodes = new Set<string>(
-          sub?.moduleCodes || t?.enabledModuleCodes || [],
-        );
+        // Authoritative Server Entitlement: strictly derived from subscription.moduleCodes.
+        // Tenant.enabledModuleCodes and industry recommendations must never grant entitlement client-side.
+        const entitledCodes = new Set<string>(sub?.moduleCodes || []);
         const recommendedCodes = new Set<string>(
           ind?.recommendedModuleCodes || ind?.version?.recommendedModuleCodes || [],
         );

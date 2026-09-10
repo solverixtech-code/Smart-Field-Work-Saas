@@ -3,7 +3,7 @@ import { runtimeService, RuntimeBootstrapDto } from '../services/runtime.service
 import { useAppDispatch, useAppSelector } from '../../../store';
 import { api } from '../../../common/api';
 import { setCredentials } from '../../../store/slices/authSlice';
-import { fetchAuthorizationBootstrap } from '../../../store/slices/authorizationSlice';
+import { clearAuthorization, fetchAuthorizationBootstrap } from '../../../store/slices/authorizationSlice';
 import { toast } from 'sonner';
 
 interface RuntimeBootstrapContextType {
@@ -71,7 +71,10 @@ export function RuntimeBootstrapProvider({ children }: { children: ReactNode }) 
       // 2. Rotate credentials in client session
       dispatch(setCredentials({ accessToken, refreshToken, user }));
 
-      // 3. Clear and invalidate all tenant-specific cached data
+      // 3. Clear authorization state in Redux
+      dispatch(clearAuthorization());
+
+      // 4. Clear and invalidate all tenant-specific cached data
       runtimeService.invalidateTenantCache();
 
       // 4. Reload authorization and runtime bootstrap for the new membership

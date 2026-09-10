@@ -39,6 +39,7 @@ import { TenantCreationProvider } from './features/platform/tenants/context/Tena
 import { PlatformAccessGuard } from './features/platform/auth/guards/PlatformAccessGuard';
 import { WorkspaceSettingsGuard } from './layouts/WorkspaceSettingsGuard';
 import { PlatformPlaceholderPage } from './screens/platform/PlatformPlaceholderPage';
+import { PlatformRolesPage } from './screens/platform/PlatformRolesPage';
 import { ModulesFeaturesPage } from './screens/platform/modules/ModulesFeaturesPage';
 import { ModuleDetailPage } from './screens/platform/modules/ModuleDetailPage';
 import { EditModulePage } from './screens/platform/modules/EditModulePage';
@@ -562,7 +563,7 @@ export default function AppRouter() {
                 <Route path="/platform/industries" element={<IndustryManagementPage />} />
               </Route>
               <Route path="/platform/users" element={<PlatformPlaceholderPage title="Platform Operators" />} />
-              <Route path="/platform/roles" element={<PlatformPlaceholderPage title="Platform RBAC & Roles" />} />
+              <Route path="/platform/roles" element={<PlatformRolesPage />} />
               <Route element={<PlatformAccessGuard requiredPermission="platform.audit.view" />}>
                 <Route path="/platform/audit" element={<AuditLogsPage />} />
               </Route>

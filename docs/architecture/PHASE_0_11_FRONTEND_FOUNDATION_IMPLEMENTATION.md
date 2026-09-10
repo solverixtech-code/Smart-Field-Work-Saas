@@ -1,9 +1,9 @@
-# Phase 0.11 Frontend Foundation Conversion Implementation Report
+# Phase 0.11 Frontend Foundation Conversion & Final Hardening Implementation Report
 
 ## Release Gate Information
-- **Phase Status**: Phase 0.11 Implementation Complete (Ready for Owner Review / PR Gate)
+- **Phase Status**: Phase 0.11 Implementation & Final Hardening Complete (Ready for Owner Review / PR Gate)
 - **Authorized Baseline SHA**: `87ce77738965b1fd9d4b653cbec0dd6201cd306a`
-- **Feature Branch**: `feat/phase-0.11-frontend-foundation`
+- **Reviewed Feature Branch**: `feat/phase-0.11-frontend-foundation`
 - **Scope Boundary**: Phases 0.1–0.10 **FROZEN**; Phase 0.11 **AUTHORIZED**; Phase 0.12+ **UNAUTHORIZED**
 
 ---
@@ -11,6 +11,22 @@
 ## 1. Executive Summary
 
 Phase 0.11 converts the frontend foundation of the **Visiblo Smart Field Work** SaaS platform from fixture/demo/mock authority into an authoritative consumer of the backend platform APIs developed and frozen in Phases 0.1–0.10.
+
+A final hardening pass was performed to resolve 11 audit requirements:
+1. **Tenant Effective Module Authority**: Removed client-side module entitlement calculation. Authoritative subscription `moduleCodes` from `GET /platform/tenants/:id/subscription` is consumed directly. Industry recommendations are displayed strictly as `INDUSTRY_ADVISORY` without granting entitlement.
+2. **Workspace Settings Fixture Fallback Prohibition**: Removed production fallback to `DEFAULT_WORKSPACE_SETTINGS` demo fixtures (Sunrise Tower, fake GST/PAN). API failures render an explicit error state (`Workspace Settings Unavailable`).
+3. **Workspace Settings Fake Update Prohibition**: Prohibited local merging of settings in `updateWorkspaceSettings()`. Attempts to save trigger `MUTATION_UNSUPPORTED` handling with clear read-only notice.
+4. **Tenant Service Fake Mutations Removal**: Removed local-only fake mutations in `updateTenant()`, `updateTenantStatus()`, and `updateTenantModules()`. Each throws `MUTATION_UNSUPPORTED`.
+5. **Tenant Provisioning Reload Fallback**: In `createTenant()`, if authoritative tenant reload fails after provisioning, throws `TENANT_PROVISIONING_RELOAD_FAILED` rather than fabricating a fake `Tenant` object.
+6. **Runtime Navigation Hardening**: Converted `AppShell` navigation to consume `RuntimeBootstrapContext`, filtering items by BOTH `hasPermission()` AND `hasModule()` for canonical module ownership (`core_crm`, `field_visits`, `demo_scheduler`, `attendance`, `payroll`).
+7. **Tenant Switch Invalidation**: Ensured `switchMembership` purges Redux authorization state (`clearAuthorization()`), invalidates runtime cache (`invalidateTenantCache()`), and reloads fresh bootstrap context.
+8. **Platform RBAC Explicit API Gap**: Replaced placeholder at `/platform/roles` with a dedicated `PlatformRolesPage.tsx` screen rendering `PLATFORM_RBAC_FRONTEND_BLOCKED_BY_API_EXPOSURE` and detailing smallest required HTTP read/manage endpoints (`GET /platform/roles`, `GET /platform/roles/:id`, `POST /platform/roles`, `GET /platform/users/roles`).
+9. **Frontend Unit Tests**: Created 10 focused unit tests in `apps/web/src/tests/phase-0.11-hardening.spec.ts` using Vitest, all passing 100%.
+
+### Identified Backend API Gap
+- **PLATFORM_RBAC_FRONTEND_BLOCKED_BY_API_EXPOSURE**: Backend Phase 0.4 contains internal `PlatformRoleService`, but lacks exposed HTTP controller endpoints (`/platform/roles`) for listing, viewing, or managing platform operator roles. Rendered explicitly as an API gap state on `/platform/roles`.
+
+---
 
 ### Core Architectural Principles Maintained
 1. **Preserved Strict Hierarchy**:

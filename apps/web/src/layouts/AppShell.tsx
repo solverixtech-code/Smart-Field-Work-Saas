@@ -55,6 +55,7 @@ import {
 import { useAppSelector, useAppDispatch } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
 import { clearAuthorization, fetchAuthorizationBootstrap } from "../store/slices/authorizationSlice";
+import { useRuntimeBootstrap } from "../features/runtime/context/RuntimeBootstrapContext";
 import { clearStoredRefreshToken, getStoredRefreshToken } from "../common/authSession";
 import { api } from "../common/api";
 import { Button } from "../components/ui/Button";
@@ -68,6 +69,7 @@ interface NavItem {
   icon: React.ElementType;
   to: string;
   permission?: string;
+  moduleCode?: string;
   badge?: string;
 }
 
@@ -96,6 +98,7 @@ const navCategories: NavCategory[] = [
         icon: TrendingUp,
         to: "/admin/sales/pipeline",
         permission: "crm.pipeline.view",
+        moduleCode: "core_crm",
         badge: "₹2.46 Cr",
       },
       {
@@ -103,6 +106,7 @@ const navCategories: NavCategory[] = [
         icon: UserPlus,
         to: "/admin/leads",
         permission: "crm.leads.view",
+        moduleCode: "core_crm",
         badge: "1,250 Leads",
       },
       {
@@ -110,6 +114,7 @@ const navCategories: NavCategory[] = [
         icon: Building2,
         to: "/admin/businesses",
         permission: "crm.businesses.view",
+        moduleCode: "core_crm",
         badge: "5.8k Stores",
       },
       {
@@ -117,6 +122,7 @@ const navCategories: NavCategory[] = [
         icon: Globe,
         to: "/admin/territories",
         permission: "crm.territories.view",
+        moduleCode: "core_crm",
         badge: "12 Active",
       },
     ],
@@ -311,6 +317,7 @@ const navCategories: NavCategory[] = [
         icon: UserCheck,
         to: "/admin/customers/field-sales",
         permission: "crm.customers.view",
+        moduleCode: "core_crm",
         badge: "2,148",
       },
     ],
@@ -323,6 +330,7 @@ const navCategories: NavCategory[] = [
         icon: Monitor,
         to: "/admin/demos",
         permission: "crm.demos.view",
+        moduleCode: "demo_scheduler",
         badge: "128 Demos",
       },
       {
@@ -330,6 +338,7 @@ const navCategories: NavCategory[] = [
         icon: Clock,
         to: "/admin/demos/today",
         permission: "crm.demos.view",
+        moduleCode: "demo_scheduler",
         badge: "22 Today",
       },
       {
@@ -337,6 +346,7 @@ const navCategories: NavCategory[] = [
         icon: Calendar,
         to: "/admin/demos/scheduled",
         permission: "crm.demos.view",
+        moduleCode: "demo_scheduler",
         badge: "32 Upcoming",
       },
       {
@@ -344,6 +354,7 @@ const navCategories: NavCategory[] = [
         icon: CheckCircle2,
         to: "/admin/demos/completed",
         permission: "crm.demos.view",
+        moduleCode: "demo_scheduler",
         badge: "78 Done",
       },
       {
@@ -351,6 +362,7 @@ const navCategories: NavCategory[] = [
         icon: TrendingUp,
         to: "/admin/demos/conversions",
         permission: "crm.demos.view",
+        moduleCode: "demo_scheduler",
       },
     ],
   },
@@ -402,6 +414,7 @@ const navCategories: NavCategory[] = [
         icon: MapPin,
         to: "/admin/visits",
         permission: "crm.visits.view",
+        moduleCode: "field_visits",
         badge: "128 Visits",
       },
       {
@@ -409,6 +422,7 @@ const navCategories: NavCategory[] = [
         icon: ShieldAlert,
         to: "/admin/visits/gps-exceptions",
         permission: "crm.visits.view",
+        moduleCode: "field_visits",
         badge: "18 Pending",
       },
     ],
@@ -421,6 +435,7 @@ const navCategories: NavCategory[] = [
         icon: Radio,
         to: "/admin/map/live",
         permission: "crm.map.view",
+        moduleCode: "field_visits",
         badge: "28 Live",
       },
       {
@@ -428,12 +443,14 @@ const navCategories: NavCategory[] = [
         icon: MapPin,
         to: "/admin/map/executives",
         permission: "crm.map.view",
+        moduleCode: "field_visits",
       },
       {
         label: "Business Prospect Map",
         icon: Building2,
         to: "/admin/map/businesses",
         permission: "crm.map.view",
+        moduleCode: "field_visits",
         badge: "248 Pins",
       },
       {
@@ -441,24 +458,28 @@ const navCategories: NavCategory[] = [
         icon: PieChart,
         to: "/admin/map/visits",
         permission: "crm.map.view",
+        moduleCode: "field_visits",
       },
       {
         label: "Sales Heatmap",
         icon: TrendingUp,
         to: "/admin/map/sales",
         permission: "crm.map.view",
+        moduleCode: "field_visits",
       },
       {
         label: "Territory Map",
         icon: Globe,
         to: "/admin/map/territories",
         permission: "crm.map.view",
+        moduleCode: "field_visits",
       },
       {
         label: "Route Playback",
         icon: Clock,
         to: "/admin/map/routes/FE-1009",
         permission: "crm.map.view",
+        moduleCode: "field_visits",
       },
     ],
   },
@@ -514,6 +535,7 @@ const navCategories: NavCategory[] = [
         icon: Smartphone,
         to: "/admin/attendance",
         permission: "attendance.monitoring.view",
+        moduleCode: "attendance",
         badge: "Live",
       },
     ],
@@ -526,6 +548,7 @@ const navCategories: NavCategory[] = [
         icon: CreditCard,
         to: "/admin/payroll",
         permission: "payroll.payslips.view",
+        moduleCode: "payroll",
       },
       {
         label: "Revenue Dashboard",
@@ -838,6 +861,7 @@ export default function AppShell() {
 
   const { user } = useAppSelector((s) => s.auth);
   const { tenant, loaded: authzLoaded, loading: authzLoading } = useAppSelector((s) => s.authorization);
+  const { hasPermission: hasBootstrapPermission, hasModule } = useRuntimeBootstrap();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -955,8 +979,12 @@ export default function AppShell() {
                 </p>
               )}
               {cat.items.map((item) => {
-                const isAllowed =
-                  !item.permission || (authzLoaded && Boolean(tenant?.permissions?.includes(item.permission)));
+                const isPermissionAllowed =
+                  !item.permission ||
+                  hasBootstrapPermission(item.permission) ||
+                  (authzLoaded && Boolean(tenant?.permissions?.includes(item.permission)));
+                const isModuleAllowed = !item.moduleCode || hasModule(item.moduleCode);
+                const isAllowed = isPermissionAllowed && isModuleAllowed;
                 const Icon = item.icon;
                 const isActive = (() => {
                   if (item.to === "/admin/demos") {

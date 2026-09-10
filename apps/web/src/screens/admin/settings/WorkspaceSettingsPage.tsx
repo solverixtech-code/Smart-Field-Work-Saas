@@ -907,6 +907,8 @@ export function WorkspaceSettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'profile';
   const [settings, setSettings] = useState<WorkspaceSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const updateSettings = (updater: (prev: WorkspaceSettings) => WorkspaceSettings) => {
@@ -914,8 +916,17 @@ export function WorkspaceSettingsPage() {
   };
 
   const loadSettings = async () => {
-    const data = await workspaceSettingsService.getWorkspaceSettings(tenantId);
-    setSettings(data);
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const data = await workspaceSettingsService.getWorkspaceSettings(tenantId);
+      setSettings(data);
+    } catch (err: any) {
+      setLoadError(err.message || 'Failed to load authoritative workspace settings from runtime bootstrap.');
+      setSettings(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -925,15 +936,25 @@ export function WorkspaceSettingsPage() {
   const handleSave = async () => {
     if (!settings) return;
     setIsSaving(true);
-    await workspaceSettingsService.updateWorkspaceSettings(tenantId, settings);
-    setIsSaving(false);
-    toast.success('Workspace settings updated and persisted successfully!');
+    try {
+      await workspaceSettingsService.updateWorkspaceSettings(tenantId, settings);
+      toast.success('Workspace settings updated successfully');
+    } catch (err: any) {
+      if (err.message?.includes('MUTATION_UNSUPPORTED')) {
+        toast.info('Workspace Settings Read-Only: Backend mutation API is not currently exposed.', {
+          description: 'Settings values are authoritatively managed by server runtime bootstrap.',
+        });
+      } else {
+        toast.error(err.message || 'Failed to update workspace settings');
+      }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleReset = async () => {
-    const resetData = await workspaceSettingsService.resetWorkspaceSettings(tenantId);
-    setSettings(resetData);
-    toast.info('Workspace settings reset to saved default configuration!');
+    await loadSettings();
+    toast.info('Workspace settings refreshed from authoritative server state');
   };
 
   const setTab = (tab: string) => {
@@ -949,11 +970,35 @@ export function WorkspaceSettingsPage() {
     { id: 'integrations', label: 'Integrations' },
   ];
 
-  if (!settings) {
+  if (loading) {
     return (
       <div className="p-12 text-center text-slate-500 font-sans">
         <div className="inline-block animate-spin h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full mb-2" />
-        <p className="text-xs font-semibold">Loading workspace settings...</p>
+        <p className="text-xs font-semibold">Loading authoritative workspace settings...</p>
+      </div>
+    );
+  }
+
+  if (loadError || !settings) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 text-center font-sans space-y-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+          <Info className="h-7 w-7" />
+        </div>
+        <div>
+          <h2 className="text-xl font-extrabold text-[#0D1F3D]">Workspace Settings Unavailable</h2>
+          <p className="text-xs text-slate-500 font-medium mt-1 max-w-md mx-auto">
+            {loadError || 'Failed to load authoritative workspace configuration.'}
+          </p>
+        </div>
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={loadSettings}
+          className="font-bold px-6 shadow-xs bg-indigo-600 hover:bg-indigo-700 text-white"
+        >
+          Retry Loading Settings
+        </Button>
       </div>
     );
   }

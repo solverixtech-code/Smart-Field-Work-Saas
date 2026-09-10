@@ -183,67 +183,27 @@ class ApiTenantService implements ITenantService {
       if (fetched) return fetched;
     }
 
-    return {
-      id: createdTenantId || idempotencyKey,
-      slug: formState.slug,
-      companyName: formState.companyName,
-      legalEntityName: formState.legalEntityName || formState.companyName,
-      domain: formState.domain,
-      industryId: formState.industryId,
-      industryCode: payload.industryCode,
-      industryLabel: formState.industryId,
-      companySize: formState.companySize,
-      country: formState.country,
-      timezone: formState.timezone,
-      currency: formState.currency,
-      tenantStatus: formState.provisioningType === 'Free Trial' ? 'Trial' : 'Active',
-      subscriptionStatus: formState.provisioningType === 'Free Trial' ? 'Trialing' : 'Active',
-      adminUser: {
-        fullName: formState.adminFullName,
-        email: formState.adminEmail,
-        phone: formState.adminPhone,
-        designation: formState.adminDesignation,
-        sendInviteEmail: formState.sendInviteEmail,
-      },
-      planId: formState.planId,
-      planName: formState.planId,
-      provisioningType: formState.provisioningType,
-      userLicensesCount: formState.userLicensesCount,
-      enabledModuleCodes: formState.inheritedModuleCodes || [],
-      mrr: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    // Do NOT manufacture a Tenant object from local form state.
+    // Return authoritative provisioning receipt/state or throw reload error so UI displays pending/retry state.
+    throw new Error(
+      `TENANT_PROVISIONING_RELOAD_FAILED: Provisioning request accepted (Tenant ID: ${createdTenantId || 'Pending'}), but authoritative tenant details reload failed. Please retry loading tenant record.`
+    );
   }
 
   async updateTenant(id: string, updates: Partial<Tenant>): Promise<Tenant> {
-    // If backend supports updating tenant metadata/settings
-    const existing = await this.getTenantById(id);
-    return {
-      ...(existing || ({} as Tenant)),
-      ...updates,
-      id,
-    };
+    // Prohibited: Local simulation of tenant updates.
+    throw new Error('MUTATION_UNSUPPORTED: Direct tenant metadata mutation endpoint is not exposed by current platform API contract.');
   }
 
   async updateTenantStatus(id: string, status: TenantStatus): Promise<Tenant> {
-    const existing = await this.getTenantById(id);
-    if (!existing) throw new Error(`Tenant ${id} not found`);
-    return {
-      ...existing,
-      tenantStatus: status,
-    };
+    // Prohibited: Local simulation of status mutation.
+    throw new Error('MUTATION_UNSUPPORTED: Direct tenant status update endpoint is not exposed by current platform API contract.');
   }
 
   async updateTenantModules(id: string, moduleCodes: string[]): Promise<Tenant> {
-    // Commercial rules: Module entitlement is read-only from PlanVersion/Subscription.
-    // Return the updated view model reflecting authoritative state.
-    const existing = await this.getTenantById(id);
-    if (!existing) throw new Error(`Tenant ${id} not found`);
-    return {
-      ...existing,
-      enabledModuleCodes: moduleCodes,
-    };
+    // Prohibited: Client-side mutation of enabledModuleCodes.
+    // Module entitlements are strictly derived from server PlanVersion / Subscription.
+    throw new Error('MUTATION_UNSUPPORTED: Tenant module entitlements are read-only and strictly issued by server PlanVersion Subscription.');
   }
 
   async getTenantSubscription(tenantId: string): Promise<any> {
