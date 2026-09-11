@@ -213,19 +213,19 @@ export function TenantModulesPage() {
               {tenant?.companyName}
             </button>
             <span>›</span>
-            <span className="font-extrabold text-[#0D1F3D]">Effective Modules</span>
+            <span className="font-extrabold text-[#0D1F3D]">Modules & Plan Membership</span>
           </div>
 
           <div className="flex items-center gap-2 mt-1.5">
             <h1 className="text-2xl font-extrabold text-[#0D1F3D] tracking-tight">
-              Tenant Modules & Entitlements
+              Tenant Modules & Plan Membership
             </h1>
             <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-purple-100 text-purple-700">
               <Puzzle className="h-4.5 w-4.5" />
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Server-issued module entitlements and plan details for {tenant?.companyName}.
+            Subscribed Plan modules and Industry recommendations for {tenant?.companyName}.
           </p>
         </div>
 
