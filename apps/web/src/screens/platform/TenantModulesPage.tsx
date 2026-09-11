@@ -24,11 +24,10 @@ import {
 import { Button } from "../../components/ui/Button";
 import { tenantService } from "../../features/platform/tenants/services/tenant.service";
 import { moduleService } from "../../features/platform/catalog/modules/services/module.service";
-import { runtimeService } from "../../features/runtime/services/runtime.service";
 import { Tenant } from "../../features/platform/tenants/types/platform.types";
 import { PlatformModule } from "../../features/platform/catalog/modules/types/module.types";
 
-interface ModuleItem {
+export interface TenantModuleItem {
   id: string;
   name: string;
   code: string;
@@ -36,10 +35,10 @@ interface ModuleItem {
   icon: React.ElementType;
   iconBg: string;
   iconColor: string;
-  isEffectiveRuntimeModule: boolean | null; // true/false for active session, null for cross-tenant
-  isInSubscribedPlan: boolean; // true/false based on plan subscription codes
-  isIndustryRecommended: boolean;
-  provenance: "SERVER_BOOTSTRAP" | "SUBSCRIBED_PLAN_CODE" | "INDUSTRY_ADVISORY" | "UNAVAILABLE";
+  isEffectiveRuntimeModule: null; // Explicitly null: effective runtime modules require GET /platform/tenants/:id/effective-modules
+  isInSubscribedPlan: boolean; // True/false based strictly on subscribed Plan version module codes
+  isIndustryRecommended: boolean; // True/false advisory indicator
+  provenance: "SUBSCRIBED_PLAN_CODE" | "INDUSTRY_ADVISORY" | "UNAVAILABLE";
   category: "core" | "advanced" | "integrations";
 }
 
@@ -63,9 +62,8 @@ export function TenantModulesPage() {
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [subscription, setSubscription] = useState<any>(null);
-  const [modules, setModules] = useState<ModuleItem[]>([]);
+  const [modules, setModules] = useState<TenantModuleItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isCrossTenantGap, setIsCrossTenantGap] = useState(false);
 
   const setTab = (tab: string) => {
     setSearchParams({ tab });
@@ -85,98 +83,55 @@ export function TenantModulesPage() {
         setTenant(t);
         setSubscription(sub);
 
-        const currentBootstrap = runtimeService.getCurrentBootstrap();
-        const isActiveTenantSession = Boolean(currentBootstrap && currentBootstrap.tenant?.id === tenantId);
+        // Authoritative Platform cross-Tenant inspection:
+        // Do NOT use runtimeService.getCurrentBootstrap(). TenantModulesPage is a Platform operator
+        // inspection screen mounted under PlatformShell, never the active Tenant application context.
+        // Raw plan module codes are strictly Plan membership; Industry recommendations are advisory only.
         const subCodes = new Set<string>(sub?.moduleCodes || []);
         const recommendedCodes = new Set<string>(
           ind?.recommendedModuleCodes || ind?.version?.recommendedModuleCodes || [],
         );
 
-        if (isActiveTenantSession && currentBootstrap?.modules) {
-          // Authoritative Server Effective Modules: read directly from active session bootstrap
-          setIsCrossTenantGap(false);
-          const serverModulesMap = new Map(currentBootstrap.modules.map((m) => [m.code, m]));
+        const mapped: TenantModuleItem[] = (catalogModules || []).map((pm: PlatformModule) => {
+          const iconMeta = MODULE_ICONS[pm.code] || {
+            icon: Layers,
+            iconBg: "bg-slate-100",
+            iconColor: "text-slate-600",
+          };
+          const category: "core" | "advanced" | "integrations" =
+            pm.category === "CORE"
+              ? "core"
+              : pm.category === "AUTOMATION"
+              ? "integrations"
+              : "advanced";
 
-          const mapped: ModuleItem[] = (catalogModules || []).map((pm: PlatformModule) => {
-            const iconMeta = MODULE_ICONS[pm.code] || { icon: Layers, iconBg: "bg-slate-100", iconColor: "text-slate-600" };
-            const category: "core" | "advanced" | "integrations" =
-              pm.category === "CORE"
-                ? "core"
-                : pm.category === "AUTOMATION"
-                ? "integrations"
-                : "advanced";
+          const isInSubscribedPlan = subCodes.has(pm.code);
+          const isIndustryRecommended = recommendedCodes.has(pm.code);
 
-            const serverModule = serverModulesMap.get(pm.code);
-            const isEffectiveRuntimeModule = Boolean(serverModule);
-            const isInSubscribedPlan = subCodes.has(pm.code);
-            const isIndustryRecommended = recommendedCodes.has(pm.code);
+          let provenance: "SUBSCRIBED_PLAN_CODE" | "INDUSTRY_ADVISORY" | "UNAVAILABLE" = "UNAVAILABLE";
+          if (isInSubscribedPlan) {
+            provenance = "SUBSCRIBED_PLAN_CODE";
+          } else if (isIndustryRecommended) {
+            provenance = "INDUSTRY_ADVISORY";
+          }
 
-            let provenance: "SERVER_BOOTSTRAP" | "SUBSCRIBED_PLAN_CODE" | "INDUSTRY_ADVISORY" | "UNAVAILABLE" = "UNAVAILABLE";
-            if (isEffectiveRuntimeModule) {
-              provenance = "SERVER_BOOTSTRAP";
-            } else if (isIndustryRecommended) {
-              provenance = "INDUSTRY_ADVISORY";
-            }
+          return {
+            id: pm.id,
+            name: pm.name,
+            code: pm.code,
+            description: pm.description || "Platform capability",
+            icon: iconMeta.icon,
+            iconBg: iconMeta.iconBg,
+            iconColor: iconMeta.iconColor,
+            isEffectiveRuntimeModule: null, // Strictly null: effective runtime module requires backend endpoint
+            isInSubscribedPlan,
+            isIndustryRecommended,
+            provenance,
+            category,
+          };
+        });
 
-            return {
-              id: pm.id,
-              name: pm.name,
-              code: pm.code,
-              description: pm.description || "Platform capability",
-              icon: iconMeta.icon,
-              iconBg: iconMeta.iconBg,
-              iconColor: iconMeta.iconColor,
-              isEffectiveRuntimeModule,
-              isInSubscribedPlan,
-              isIndustryRecommended,
-              provenance,
-              category,
-            };
-          });
-
-          setModules(mapped);
-        } else {
-          // Cross-tenant platform inspection: backend lacks GET /platform/tenants/:id/effective-modules.
-          // Do NOT calculate effective entitlement in React! Mark cross-tenant API gap.
-          setIsCrossTenantGap(true);
-
-          const mapped: ModuleItem[] = (catalogModules || []).map((pm: PlatformModule) => {
-            const iconMeta = MODULE_ICONS[pm.code] || { icon: Layers, iconBg: "bg-slate-100", iconColor: "text-slate-600" };
-            const category: "core" | "advanced" | "integrations" =
-              pm.category === "CORE"
-                ? "core"
-                : pm.category === "AUTOMATION"
-                ? "integrations"
-                : "advanced";
-
-            const isInSubscribedPlan = subCodes.has(pm.code);
-            const isIndustryRecommended = recommendedCodes.has(pm.code);
-
-            let provenance: "SERVER_BOOTSTRAP" | "SUBSCRIBED_PLAN_CODE" | "INDUSTRY_ADVISORY" | "UNAVAILABLE" = "UNAVAILABLE";
-            if (isInSubscribedPlan) {
-              provenance = "SUBSCRIBED_PLAN_CODE";
-            } else if (isIndustryRecommended) {
-              provenance = "INDUSTRY_ADVISORY";
-            }
-
-            return {
-              id: pm.id,
-              name: pm.name,
-              code: pm.code,
-              description: pm.description || "Platform capability",
-              icon: iconMeta.icon,
-              iconBg: iconMeta.iconBg,
-              iconColor: iconMeta.iconColor,
-              isEffectiveRuntimeModule: null, // Strictly null: effective runtime module cannot be computed client-side
-              isInSubscribedPlan,
-              isIndustryRecommended,
-              provenance,
-              category,
-            };
-          });
-
-          setModules(mapped);
-        }
+        setModules(mapped);
       })
       .catch((_err) => {
         toast.error("Failed to load tenant modules");
@@ -188,7 +143,7 @@ export function TenantModulesPage() {
     return (
       <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 text-center font-sans">
         <div className="inline-block animate-spin h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full mb-3" />
-        <p className="text-xs font-semibold text-slate-600">Loading server-issued effective module contract...</p>
+        <p className="text-xs font-semibold text-slate-600">Loading tenant module details...</p>
       </div>
     );
   }
@@ -226,11 +181,10 @@ export function TenantModulesPage() {
   );
 
   const totalSubscribedInPlan = modules.filter((m) => m.isInSubscribedPlan).length;
-  const totalEffectiveRuntime = modules.filter((m) => m.isEffectiveRuntimeModule === true).length;
   const totalRecommended = modules.filter((m) => m.isIndustryRecommended).length;
 
   return (
-    <div className="space-y-6 font-sans text-slate-800 pb-16">
+    <div className="space-y-6 font-sans text-slate-800 pb-16" data-testid="tenant-modules-page">
       {/* 1. Header Breadcrumb & Title */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
         <div>
@@ -259,19 +213,19 @@ export function TenantModulesPage() {
               {tenant?.companyName}
             </button>
             <span>›</span>
-            <span className="font-extrabold text-[#0D1F3D]">Effective Modules</span>
+            <span className="font-extrabold text-[#0D1F3D]">Modules & Plan Membership</span>
           </div>
 
           <div className="flex items-center gap-2 mt-1.5">
             <h1 className="text-2xl font-extrabold text-[#0D1F3D] tracking-tight">
-              Tenant Modules & Entitlements
+              Tenant Modules & Plan Membership
             </h1>
             <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-purple-100 text-purple-700">
               <Puzzle className="h-4.5 w-4.5" />
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Server-issued module entitlements and plan details for {tenant?.companyName}.
+            Subscribed Plan modules and Industry recommendations for {tenant?.companyName}.
           </p>
         </div>
 
@@ -331,30 +285,21 @@ export function TenantModulesPage() {
         </div>
       </div>
 
-      {/* 2. Cross-Tenant API Gap or Active Bootstrap Banner */}
-      {isCrossTenantGap ? (
-        <div className="rounded-sm border border-amber-200 bg-amber-50/70 p-4 space-y-2">
-          <div className="flex items-center gap-2 text-amber-950 font-bold text-xs">
-            <Lock className="h-4 w-4 text-amber-600 shrink-0" />
-            <span>PLATFORM_TENANT_EFFECTIVE_MODULES_READ_BLOCKED_BY_API_EXPOSURE</span>
-          </div>
-          <p className="text-xs text-amber-900 font-medium leading-relaxed">
-            Effective runtime modules are server-composed during tenant session bootstrap (<code className="font-mono bg-amber-100 px-1 py-0.5 rounded">GET /tenant/runtime/bootstrap</code>).
-            A platform HTTP endpoint for inspecting cross-tenant effective modules (<code className="font-mono bg-amber-100 px-1 py-0.5 rounded">GET /platform/tenants/:id/effective-modules</code>) is currently an API gap.
-            Client-side effective module calculation is disabled. Subscription plan module codes are presented separately below.
-          </p>
+      {/* 2. Explicit Notice: Cross-Tenant Effective Modules Read Blocked By API Exposure */}
+      <div
+        className="rounded-sm border border-amber-200 bg-amber-50/70 p-4 space-y-2"
+        data-testid="cross-tenant-notice"
+      >
+        <div className="flex items-center gap-2 text-amber-950 font-bold text-xs">
+          <Lock className="h-4 w-4 text-amber-600 shrink-0" />
+          <span>PLATFORM_TENANT_EFFECTIVE_MODULES_READ_BLOCKED_BY_API_EXPOSURE</span>
         </div>
-      ) : (
-        <div className="rounded-sm border border-emerald-200 bg-emerald-50/70 p-4 space-y-2">
-          <div className="flex items-center gap-2 text-emerald-950 font-bold text-xs">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-            <span>Authoritative Active Session Runtime Bootstrap</span>
-          </div>
-          <p className="text-xs text-emerald-900 font-medium leading-relaxed">
-            Effective modules displayed below are server-issued directly from active runtime bootstrap (<code className="font-mono bg-emerald-100 px-1 py-0.5 rounded">bootstrap.modules</code>).
-          </p>
-        </div>
-      )}
+        <p className="text-xs text-amber-900 font-medium leading-relaxed">
+          Effective runtime modules are server-composed during tenant session bootstrap (<code className="font-mono bg-amber-100 px-1 py-0.5 rounded">GET /tenant/runtime/bootstrap</code>).
+          A platform HTTP endpoint for inspecting cross-tenant effective modules (<code className="font-mono bg-amber-100 px-1 py-0.5 rounded">GET /platform/tenants/:id/effective-modules</code>) is currently an API gap.
+          Client-side effective module calculation is disabled. Subscription plan module codes are presented separately below as Plan Membership only.
+        </p>
+      </div>
 
       {/* 3. Top Tenant Commercial Authority Banner */}
       <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
@@ -383,15 +328,19 @@ export function TenantModulesPage() {
           </div>
         </div>
 
+        {/* Commercial Access: Real Authoritative State (Never defaulted to FULL) */}
         <div className="lg:col-span-4 border-l border-slate-100 pl-6 space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500">Commercial Access Mode</span>
-            <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-700 border border-emerald-200">
-              {subscription?.access?.mode || "FULL"}
+            <span className="text-xs font-semibold text-slate-500">Effective Runtime Access</span>
+            <span
+              className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-600 border border-slate-200"
+              data-testid="effective-runtime-access-state"
+            >
+              Not Available / API Exposure Required
             </span>
           </div>
-          <p className="text-xs font-extrabold text-[#0D1F3D]">
-            Status: {subscription?.status || tenant.subscriptionStatus}
+          <p className="text-xs font-extrabold text-[#0D1F3D]" data-testid="subscription-status">
+            Subscription Status: {subscription?.status || tenant.subscriptionStatus}
           </p>
         </div>
 
@@ -464,7 +413,7 @@ export function TenantModulesPage() {
                   <tr className="border-b border-slate-200 bg-[#F8FAFC] text-slate-700 font-extrabold">
                     <th className="py-3 px-4">Module Details</th>
                     <th className="py-3 px-4">Module Code</th>
-                    <th className="py-3 px-4">{isCrossTenantGap ? "Subscribed Plan Code" : "Server Effective Module"}</th>
+                    <th className="py-3 px-4">Plan Membership</th>
                     <th className="py-3 px-4">Provenance</th>
                   </tr>
                 </thead>
@@ -479,7 +428,7 @@ export function TenantModulesPage() {
                     filteredModules.map((m) => {
                       const Icon = m.icon;
                       return (
-                        <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
+                        <tr key={m.id} className="hover:bg-slate-50/80 transition-colors" data-testid={`module-row-${m.code}`}>
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-3">
                               <div
@@ -499,48 +448,44 @@ export function TenantModulesPage() {
                             {m.code}
                           </td>
                           <td className="py-3.5 px-4">
-                            {isCrossTenantGap ? (
-                              m.isInSubscribedPlan ? (
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-extrabold text-emerald-700 border border-emerald-200">
-                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                                  Subscribed in Plan
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500 border border-slate-200">
-                                  <Lock className="h-3.5 w-3.5 text-slate-400" />
-                                  Not Subscribed
-                                </span>
-                              )
-                            ) : m.isEffectiveRuntimeModule ? (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-extrabold text-emerald-700 border border-emerald-200">
+                            {m.isInSubscribedPlan ? (
+                              <span
+                                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-extrabold text-emerald-700 border border-emerald-200"
+                                data-testid={`plan-membership-status-${m.code}`}
+                              >
                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                                Active Server Module
+                                Subscribed in Plan
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500 border border-slate-200">
+                              <span
+                                className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500 border border-slate-200"
+                                data-testid={`plan-membership-status-${m.code}`}
+                              >
                                 <Lock className="h-3.5 w-3.5 text-slate-400" />
-                                Not Entitled
+                                Not in Subscribed Plan
                               </span>
                             )}
                           </td>
                           <td className="py-3.5 px-4">
-                            {m.provenance === "SERVER_BOOTSTRAP" && (
-                              <span className="inline-flex rounded-xs bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200">
-                                Server Bootstrap: {tenant.planName}
-                              </span>
-                            )}
                             {m.provenance === "SUBSCRIBED_PLAN_CODE" && (
-                              <span className="inline-flex rounded-xs bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200">
-                                Subscribed Plan Code: {tenant.planName}
+                              <span
+                                className="inline-flex rounded-xs bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200"
+                                data-testid={`provenance-${m.code}`}
+                              >
+                                Plan Membership: {tenant.planName}
                               </span>
                             )}
                             {m.provenance === "INDUSTRY_ADVISORY" && (
-                              <span className="inline-flex rounded-xs bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200" title="Recommended by Industry Template but not included in current subscription">
+                              <span
+                                className="inline-flex rounded-xs bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200"
+                                title="Recommended by Industry Template but not included in current subscription"
+                                data-testid={`provenance-${m.code}`}
+                              >
                                 Industry Advisory
                               </span>
                             )}
                             {m.provenance === "UNAVAILABLE" && (
-                              <span className="text-[10px] text-slate-400 font-medium">—</span>
+                              <span className="text-[10px] text-slate-400 font-medium" data-testid={`provenance-${m.code}`}>—</span>
                             )}
                           </td>
                         </tr>
@@ -561,19 +506,19 @@ export function TenantModulesPage() {
             </h3>
 
             <div className="space-y-3">
-              <div className="p-3.5 rounded-sm border border-emerald-100 bg-emerald-50/40 flex items-center justify-between">
+              <div className="p-3.5 rounded-sm border border-indigo-100 bg-indigo-50/40 flex items-center justify-between">
                 <div>
                   <span className="text-[11px] text-slate-500 font-medium block">
-                    {isCrossTenantGap ? "Subscribed Plan Codes" : "Effective Runtime Modules"}
+                    Subscribed Plan Modules
                   </span>
-                  <span className="text-lg font-extrabold text-[#0D1F3D]">
-                    {isCrossTenantGap ? totalSubscribedInPlan : totalEffectiveRuntime} / {modules.length} Modules
+                  <span className="text-lg font-extrabold text-[#0D1F3D]" data-testid="total-subscribed-count">
+                    {totalSubscribedInPlan} / {modules.length} Modules
                   </span>
-                  <span className="text-[10px] text-emerald-700 block font-bold mt-0.5">
-                    {isCrossTenantGap ? "From Subscription Plan" : "Active Session Bootstrap"}
+                  <span className="text-[10px] text-indigo-700 block font-bold mt-0.5">
+                    Plan Inclusion Only ({tenant.planName})
                   </span>
                 </div>
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 text-white font-bold">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-white font-bold">
                   <ShieldCheck className="h-5 w-5" />
                 </div>
               </div>
@@ -583,7 +528,7 @@ export function TenantModulesPage() {
                   <span className="text-[11px] text-slate-500 font-medium block">
                     Industry Recommendations
                   </span>
-                  <span className="text-lg font-extrabold text-[#0D1F3D]">
+                  <span className="text-lg font-extrabold text-[#0D1F3D]" data-testid="total-recommended-count">
                     {totalRecommended} Modules
                   </span>
                   <span className="text-[10px] text-amber-700 block font-bold mt-0.5">
@@ -592,6 +537,23 @@ export function TenantModulesPage() {
                 </div>
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500 text-white font-bold">
                   <Sparkles className="h-5 w-5" />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-sm border border-slate-200 bg-slate-50/70 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] text-slate-500 font-medium block">
+                    Effective Runtime Modules
+                  </span>
+                  <span className="text-sm font-extrabold text-slate-700" data-testid="effective-runtime-modules-state">
+                    Not Available
+                  </span>
+                  <span className="text-[10px] text-slate-500 block font-medium mt-0.5">
+                    API Exposure Required
+                  </span>
+                </div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-slate-600 font-bold">
+                  <Lock className="h-4 w-4" />
                 </div>
               </div>
             </div>
