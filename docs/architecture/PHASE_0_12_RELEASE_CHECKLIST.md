@@ -1,25 +1,26 @@
 # Phase 0.12 Release & Production Deployment Checklist
 
 ## Executive Summary
-This document provides the mandatory step-by-step procedures, environment verifications, deployment sequence, smoke tests, and rollback triggers for releasing Phase 0 to production for the **Visiblo Smart Field Work** SaaS platform.
+This document provides the mandatory step-by-step procedures, environment verifications, deployment sequence, smoke tests, rollback triggers, and explicit external pre-production infrastructure requirements for releasing Phase 0 to production for the **Visiblo Smart Field Work** SaaS platform.
 
 ---
 
-## 1. Pre-Deployment Phase
+## 1. Pre-Deployment Phase & External Requirements
 
-### A. Code & Governance Verification
-- [x] **Release Commit SHA**: Approved candidate SHA on `main`.
-- [x] **CI Pipeline**: 100% green build and test suite run.
-- [x] **Immutability Check**: 33 Prisma migrations verified (0 historical edits).
+### A. Repository Verification
+- [x] **Approved Release SHA**: Verified candidate SHA on `main`.
+- [x] **CI Pipeline**: 100% green build and test suite run (Candidate & Merged Main).
+- [x] **Immutability Audit**: 33 Prisma migrations verified (0 historical edits).
 
-### B. Environment & Infrastructure Readiness
-- [ ] **PostgreSQL Backup**: Complete binary dump of production database created (`pg_dump -Fc ...`).
-- [ ] **Environment Secret Validation**:
-  - `DATABASE_URL` (SSL mode enabled)
-  - `JWT_SECRET` & `JWT_REFRESH_SECRET` (Minimum 64-char high-entropy string)
-  - `CORS_ORIGIN` (Strict white-listed production domains, no wildcard `*`)
-  - `S3_BUCKET`, `S3_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
-  - `NODE_ENV=production`
+### B. External Infrastructure Requirements (EXTERNAL / Pre-Production)
+*These items cannot be verified inside repository CI and must be signed off by Operations prior to production deployment:*
+- [ ] **EXTERNAL: Production Database Backup/Restore**: Verified point-in-time PostgreSQL backup image created (`pg_dump -Fc ...`).
+- [ ] **EXTERNAL: Secret Validation**: `JWT_SECRET` & `JWT_REFRESH_SECRET` generated with high-entropy (>64 characters).
+- [ ] **EXTERNAL: DATABASE_URL SSL**: `DATABASE_URL` configured with `sslmode=require` or higher.
+- [ ] **EXTERNAL: CORS Allowlist**: `CORS_ORIGIN` restricted to production domain origins (no wildcards).
+- [ ] **EXTERNAL: S3 / Object Storage Security**: Bucket policies, IAM roles, KMS encryption, and private-by-default access enforced.
+- [ ] **EXTERNAL: Worker Process Configuration**: Dedicated background job worker container/service scaled and configured.
+- [ ] **EXTERNAL: Production Readiness Health Probes**: Edge proxies configured to check `/api/v1/health` and `/api/v1/readiness`.
 
 ---
 
@@ -30,14 +31,14 @@ Run database schema updates using the production deployment tool:
 ```bash
 npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
 ```
-*Expected output: `All migrations have been successfully applied.`*
+*Expected output: `33 migrations found in prisma/migrations. No pending migrations to apply.`*
 
-### Step 2: Seed & System RBAC Synchronization
+### Step 2: System RBAC Synchronization
 Run idempotent system role and permission synchronization:
 ```bash
 cd apps/api && npm run db:sync:rbac
 ```
-*Expected output: `RBAC synchronization complete. System roles & permissions verified.`*
+*Expected output: `[RBAC Sync] Completed successfully.`*
 
 ### Step 3: Application Server Deployment (API & Workers)
 1. Deploy updated API container/process.
