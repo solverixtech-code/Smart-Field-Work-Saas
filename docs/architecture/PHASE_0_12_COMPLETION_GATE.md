@@ -138,8 +138,8 @@ Every single gate item has been independently audited and verified against exact
 ### Item 19: Migration Rehearsal, Build, TypeScript, Unit, and Integration Suites Pass
 - **Status**: **PASS**
 - **Exact Source Path**: [schema.prisma](file:///C:/Users/MY%20PC/OneDrive/Desktop/Smart-Field-Work-Saas/apps/api/prisma/schema.prisma)
-- **Exact Test Path**: [upgrade-rehearsal.e2e-spec.ts](file:///C:/Users/MY%20PC/OneDrive/Desktop/Smart-Field-Work-Saas/apps/api/test/upgrade-rehearsal.e2e-spec.ts) & Automated CI Pipeline
-- **Actual Evidence**: 460 tests passed across 34 test files (API unit: 279, API E2E: 168 including upgrade rehearsal, Web unit: 13), TypeScript 0 errors, Vite build 0 errors, Prisma validation PASS.
+- **Exact Test Path**: [upgrade-rehearsal.e2e-spec.ts](file:///C:/Users/MY%20PC/OneDrive/Desktop/Smart-Field-Work-Saas/apps/api/test/upgrade-rehearsal.e2e-spec.ts), [historical-migration-upgrade.e2e-spec.ts](file:///C:/Users/MY%20PC/OneDrive/Desktop/Smart-Field-Work-Saas/apps/api/test/historical-migration-upgrade.e2e-spec.ts) & Automated CI Pipeline
+- **Actual Evidence**: 463 tests passed across 35 test files (API unit: 279, API E2E: 171 including upgrade rehearsals, Web unit: 13), TypeScript 0 errors, Vite build 0 errors, Prisma validation PASS.
 - **Remaining Risk**: None.
 
 ### Item 20: Feature Implementation Maturity Matrix Truthfulness

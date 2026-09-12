@@ -30,7 +30,7 @@ All 20 canonical Phase 0 completion items have been independently audited, verif
 | :--- | :--- | :--- | :--- |
 | **Migration Inventory** | Exact migration directory audit with SHA-256 hashes | **PASS** | 33 exact migration directories in `apps/api/prisma/migrations/` |
 | **Fresh Installation** | Clean PostgreSQL install & idempotent RBAC sync | **PASS** | `npx prisma migrate deploy` & `npm run db:sync:rbac` (0 duplicates created) |
-| **Upgrade Rehearsal** | Reproducible pre-current snapshot upgrade & failure on ambiguity | **PASS** | Committed E2E test `apps/api/test/upgrade-rehearsal.e2e-spec.ts` |
+| **Upgrade Rehearsal** | Reproducible pre-current snapshot upgrade & failure on ambiguity | **PASS** | Committed E2E tests `apps/api/test/upgrade-rehearsal.e2e-spec.ts` & `apps/api/test/historical-migration-upgrade.e2e-spec.ts` |
 | **Rollback Strategy** | Real historical migration schema rollback analysis | **PASS** | `docs/architecture/PHASE_0_12_ROLLBACK_FORWARD_FIX.md` |
 | **Tenant Isolation** | Adversarial cross-tenant isolation enforcement | **PASS** | 15 tests in `apps/api/test/tenant-isolation.e2e-spec.ts` |
 | **Multi-Membership** | Isolated UA -> Tenant A and UB -> Tenant B switching | **PASS** | `apps/api/src/platform/tenants/tenant-membership.service.spec.ts` |
@@ -52,8 +52,8 @@ All 20 canonical Phase 0 completion items have been independently audited, verif
 
 - **Web Frontend Unit Tests**: `cd apps/web && npm test` — 13 passed (2 files)
 - **API Unit Tests**: `cd apps/api && npm test -- --runInBand` — 279 passed (21 files)
-- **API PostgreSQL E2E Suite**: `cd apps/api && npm run test:e2e -- --runInBand` — 168 passed (11 files including upgrade rehearsal)
-- **Total Verified Tests**: **460 passed tests across 34 test files (100% PASS)**.
+- **API PostgreSQL E2E Suite**: `cd apps/api && npm run test:e2e -- --runInBand` — 171 passed (12 files including upgrade rehearsal & historical upgrade rehearsal)
+- **Total Verified Tests**: **463 passed tests across 35 test files (100% PASS)**.
 
 ---
 
