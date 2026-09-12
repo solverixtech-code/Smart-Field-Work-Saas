@@ -9,7 +9,9 @@
 - **PR #10 Merged Main SHA**: `421997792ce44e6114123bc77e270bfe8965f36f` (Merged-Main CI: `34606240212` ✅)
 - **PR #11 Historical Upgrade Candidate SHA**: `1bd1b0bbdea50339b4ed90196c4fa4ff2ef76412` (Candidate CI: `34689227390` ✅)
 - **PR #11 Merged Main SHA**: `fe3d280ce68ef546593b0d79491d568d9c795fc9` (Merged-Main CI: `34689508876` ✅)
-- **Final Evidence Correction Branch**: `chore/phase-0.12-evidence-correction`
+- **PR #12 Evidence Correction Candidate SHA**: `8e56941a39840a69656a3cfddfd8c332d32267d3` (Candidate CI: `34691686283` ✅)
+- **PR #12 Merged Main (Base) SHA**: `ec058043d1237d16096210d756529d3b29490256` (Merged-Main CI: `34691960202` ✅)
+- **Final Evidence Correction Branch**: `chore/phase-0.12-final-evidence-pass`
 - **Environment Stack**:
   - Node.js: `v24.15.0`
   - npm: `11.12.1`
