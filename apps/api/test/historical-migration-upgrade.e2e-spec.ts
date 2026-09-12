@@ -1,10 +1,13 @@
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import { PrismaClient } from "@prisma/client";
+import { JwtService } from "@nestjs/jwt";
+import { ConfigService } from "@nestjs/config";
 import { randomUUID } from "crypto";
 import { execFileSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { PrismaService } from "../src/persistence/prisma.service";
 import { MasterReconciliationService } from "../src/platform/masters/master-reconciliation.service";
@@ -14,23 +17,28 @@ import { verifyTestDatabaseSafety } from "../src/test-utils/test-db-safety";
 import { syncRbac } from "../prisma/sync-rbac";
 
 /**
- * Synthetic Historical Schema Upgrade Rehearsal & Evidence Verification
+ * Synthetic Historical Schema Upgrade Rehearsal & Post-Upgrade Isolation Verification
  * 
  * Note: This test executes a synthetic schema upgrade rehearsal. Historical cutoff migrations 1 through 11
  * are applied via raw SQL statement execution into an isolated schema, pre-upgrade synthetic data is inserted,
  * and subsequent migrations 12 through 33 are deployed via `prisma migrate deploy` to verify post-upgrade data
- * preservation, tenant isolation boundaries, and legacy reconciliation.
+ * preservation, tenant membership isolation, legacy reconciliation, and HTTP cross-tenant authorization denial.
+ * Comprehensive adversarial API cross-tenant attack vectors are verified separately in `apps/api/test/tenant-isolation.e2e-spec.ts`.
  */
-describe("Phase 0.12 Synthetic Historical Migration Upgrade Rehearsal", () => {
+describe("Phase 0.12 Synthetic Historical Migration Upgrade Rehearsal & Post-Upgrade Isolation Verification", () => {
   let app: INestApplication,
     prisma: PrismaService,
     reconcile: MasterReconciliationService,
-    seed: MasterSeedService;
+    seed: MasterSeedService,
+    jwtService: JwtService,
+    configService: ConfigService;
   let actorId: string,
     preUpgradeTenant1Id: string,
     preUpgradeTenant2Id: string,
     preUpgradeUser1Id: string,
-    preUpgradeUser2Id: string;
+    preUpgradeUser2Id: string,
+    user1SessionId: string,
+    user1Membership1Id: string;
   const schema = `phase012_hist_upgrade_${randomUUID().replace(/-/g, "")}`;
   const baseUrl = process.env.TEST_DATABASE_URL ?? process.env.DATABASE_URL ?? "postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public";
 
@@ -104,6 +112,8 @@ describe("Phase 0.12 Synthetic Historical Migration Upgrade Rehearsal", () => {
     preUpgradeUser2Id = randomUUID();
     preUpgradeTenant1Id = randomUUID();
     preUpgradeTenant2Id = randomUUID();
+    user1SessionId = randomUUID();
+    user1Membership1Id = randomUUID();
 
     // Users
     await rawPrisma.$executeRawUnsafe(`
@@ -128,9 +138,15 @@ describe("Phase 0.12 Synthetic Historical Migration Upgrade Rehearsal", () => {
     await rawPrisma.$executeRawUnsafe(`
       INSERT INTO "${schema}"."TenantMembership" ("id", "tenantId", "userId", "updatedAt")
       VALUES 
-        ('${randomUUID()}', '${preUpgradeTenant1Id}', '${preUpgradeUser1Id}', now()),
+        ('${user1Membership1Id}', '${preUpgradeTenant1Id}', '${preUpgradeUser1Id}', now()),
         ('${randomUUID()}', '${preUpgradeTenant1Id}', '${preUpgradeUser2Id}', now()),
         ('${randomUUID()}', '${preUpgradeTenant2Id}', '${preUpgradeUser2Id}', now())
+    `);
+
+    // UserSession for User 1 in Tenant 1
+    await rawPrisma.$executeRawUnsafe(`
+      INSERT INTO "${schema}"."UserSession" ("id", "userId", "selectedMembershipId", "refreshTokenHash", "status", "contextVersion", "updatedAt")
+      VALUES ('${user1SessionId}', '${preUpgradeUser1Id}', '${user1Membership1Id}', 'dummy_hash', 'ACTIVE', 1, now())
     `);
 
     // MasterRecords
@@ -166,6 +182,8 @@ describe("Phase 0.12 Synthetic Historical Migration Upgrade Rehearsal", () => {
     prisma = app.get(PrismaService);
     reconcile = app.get(MasterReconciliationService);
     seed = app.get(MasterSeedService);
+    jwtService = app.get(JwtService);
+    configService = app.get(ConfigService);
 
     // Sync platform catalog & RBAC
     await app.get(PlatformCatalogSyncService).syncCatalog();
@@ -273,7 +291,7 @@ describe("Phase 0.12 Synthetic Historical Migration Upgrade Rehearsal", () => {
     ).rejects.toThrow("Closed Master catalog cannot accept a legacy extension");
   });
 
-  it("UPGRADE VERIFICATION 3: Preserves tenant isolation and RBAC integrity on upgraded pre-existing tenant data", async () => {
+  it("UPGRADE VERIFICATION 3: Preserves post-upgrade tenant membership & data-scoping isolation with HTTP cross-tenant denial", async () => {
     // 1. Verify User 1 is active in Tenant 1 but has ZERO membership in Tenant 2 (fail closed)
     const mUser1Tenant1 = await prisma.tenantMembership.findFirst({
       where: { tenantId: preUpgradeTenant1Id, userId: preUpgradeUser1Id },
@@ -303,7 +321,23 @@ describe("Phase 0.12 Synthetic Historical Migration Upgrade Rehearsal", () => {
     });
     expect(tenant2ScopedRecords.length).toBe(0);
 
-    // 4. Verify system permissions were initialized via syncRbac without duplicating pre-existing grants
+    // 4. HTTP Cross-Tenant Authorization Denial Verification: User 1 attempts request to Tenant 2 context
+    const secret = configService.getOrThrow<string>("JWT_ACCESS_SECRET");
+    const user1AccessToken = jwtService.sign(
+      { sub: preUpgradeUser1Id, sid: user1SessionId, mid: user1Membership1Id, ctxv: 1, tokenUse: "access" },
+      { secret, expiresIn: "1h" },
+    );
+
+    // Authenticated request with User 1 token querying Tenant 2 context must fail closed (401/403/404)
+    await request(app.getHttpServer())
+      .get("/shifts")
+      .set("Authorization", `Bearer ${user1AccessToken}`)
+      .set("x-tenant-id", preUpgradeTenant2Id)
+      .expect((res) => {
+        expect([401, 403, 404]).toContain(res.status);
+      });
+
+    // 5. Verify system permissions were initialized via syncRbac without duplicating pre-existing grants
     const platformGrants = await prisma.platformRolePermission.count();
     expect(platformGrants).toBeGreaterThan(0);
   });
