@@ -5,8 +5,11 @@
 - **Original PR #8 Candidate SHA**: `a6cb297449d9c2075865c26420afa0bffd98f68b` (Candidate CI: `34596437835` ✅)
 - **PR #8 Merged Main SHA**: `81c4b02837482b6763849b61c489ec67a6186d32` (Merged-Main CI: `34596940089` ✅)
 - **PR #9 Correction Candidate SHA**: `d7c17adc55b3a6c69f856a9151e8bf4d216ac94c` (Candidate CI: `34602835332` ✅)
-- **PR #9 Merged Main (Current Base) SHA**: `5457948f59f0e5e9e074cf61db0ceb827fd27b3b` (Merged-Main CI: `34603366815` ✅)
-- **Final Release Proof Branch**: `chore/phase-0.12-final-proof`
+- **PR #10 Final Proof Candidate SHA**: `16075c3efc1aa390bb9a695db28399e5a1bdfdff` (Candidate CI: `34605943743` ✅)
+- **PR #10 Merged Main SHA**: `421997792ce44e6114123bc77e270bfe8965f36f` (Merged-Main CI: `34606240212` ✅)
+- **PR #11 Historical Upgrade Candidate SHA**: `1bd1b0bbdea50339b4ed90196c4fa4ff2ef76412` (Candidate CI: `34689227390` ✅)
+- **PR #11 Merged Main SHA**: `fe3d280ce68ef546593b0d79491d568d9c795fc9` (Merged-Main CI: `34689508876` ✅)
+- **Final Evidence Correction Branch**: `chore/phase-0.12-evidence-correction`
 - **Environment Stack**:
   - Node.js: `v24.15.0`
   - npm: `11.12.1`
