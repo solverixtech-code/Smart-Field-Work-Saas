@@ -749,7 +749,7 @@ function Step4PlanSubscription({
                       {plan.name}
                     </h4>
                     <p className="text-[11px] font-mono text-slate-400 font-medium mb-3 truncate">
-                      ID: {plan.id}
+                      Code: <span className="font-bold text-slate-600">{plan.code}</span>
                     </p>
                   </div>
 
@@ -1340,9 +1340,9 @@ function CreateTenantWizardInner() {
 
   const stepsList = [
     { num: 1, label: 'Company Details', desc: 'Basic info & code' },
-    { num: 2, label: 'Industry & Profile', desc: 'Canonical registry' },
+    { num: 2, label: 'Industry & Profile', desc: 'Industry selection' },
     { num: 3, label: 'Administrator', desc: 'Primary contact' },
-    { num: 4, label: 'Plan & Subscription', desc: 'PLATFORM_PLANS' },
+    { num: 4, label: 'Plan & Subscription', desc: 'Tier & pricing' },
     { num: 5, label: 'Review & Confirm', desc: 'Review & submit' },
   ];
 
