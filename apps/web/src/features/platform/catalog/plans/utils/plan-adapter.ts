@@ -227,7 +227,7 @@ export function transformUiDraftToBackend(input: PlanDraftInput): any {
   return {
     code: input.code.trim().toUpperCase(),
     name: input.name,
-    description: input.description,
+    description: input.description?.trim() || input.name || 'Commercial plan subscription',
     internalDescription: input.internalDescription,
     visibility: mapUiVisibilityToBackend(input.visibility),
     tier: input.tier,

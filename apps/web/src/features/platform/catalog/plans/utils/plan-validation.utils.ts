@@ -18,6 +18,10 @@ export function validateBasicInformation(
     fieldErrors.name = 'Plan Name is required';
   }
 
+  if (!formState.description || !formState.description.trim()) {
+    fieldErrors.description = 'Customer-Facing Description is required';
+  }
+
   const code = formState.code ? formState.code.trim().toUpperCase() : '';
   if (!code) {
     fieldErrors.code = 'Plan Code is required';

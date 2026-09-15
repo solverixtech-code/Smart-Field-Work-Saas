@@ -376,7 +376,9 @@ function WizardContent() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-600 block">Customer-Facing Description</label>
+                    <label className="text-xs font-semibold text-slate-600 block">
+                      Customer-Facing Description <span className="text-rose-600">*</span>
+                    </label>
                     <textarea
                       rows={3}
                       placeholder="Public tagline displayed on tenant billing page..."
