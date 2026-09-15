@@ -131,6 +131,7 @@ export function transformBackendPlanToUi(backendPlan: any): Plan {
 
   return {
     id: backendPlan.id,
+    versionId: activeVersion.id || backendPlan.currentPublishedVersion?.id || backendPlan.currentDraftVersion?.id,
     code: backendPlan.code,
     name: backendPlan.name,
     description: backendPlan.description,

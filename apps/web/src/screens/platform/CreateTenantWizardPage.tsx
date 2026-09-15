@@ -584,7 +584,7 @@ function transformBackendPlanToPlatformPlan(p: Plan): PlatformPlan {
   const monthlyPrice = p.pricing?.monthlyPerUser || p.pricing?.monthlyFlatPrice || 0;
   const annualPrice = p.pricing?.annualPerUser || p.pricing?.annualFlatPrice || 0;
   return {
-    id: p.id,
+    id: p.versionId || p.id,
     code: p.code,
     name: p.name,
     tier: (p.tier as any) || 'Growth',
@@ -1011,8 +1011,8 @@ function Step6ReviewConfirm({
               <span className="font-extrabold text-[#0D1F3D]">{selectedIndustry.label}</span>
             </div>
             <div>
-              <span className="text-slate-400 text-[11px] block mb-0.5">Canonical ID</span>
-              <span className="font-mono font-bold text-slate-800">{selectedIndustry.id}</span>
+              <span className="text-slate-400 text-[11px] block mb-0.5">Industry Code</span>
+              <span className="font-mono font-bold text-slate-800">{selectedIndustry.code || selectedIndustry.id}</span>
             </div>
             <div>
               <span className="text-slate-400 text-[11px] block mb-0.5">Business Size</span>
@@ -1506,7 +1506,9 @@ function CreateTenantWizardInner() {
                   </span>
                   <div>
                     <p className="font-extrabold text-[#0D1F3D]">Industry</p>
-                    <p className="text-[11px] text-slate-500 font-medium">{formState.industryId || 'ind_pharma'}</p>
+                    <p className="text-[11px] text-slate-700 font-bold">
+                      {PLATFORM_INDUSTRIES.find((i) => i.id === formState.industryId || i.code === formState.industryId)?.label || formState.industryId || 'Pharma & Healthcare'}
+                    </p>
                   </div>
                 </div>
                 <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => updateStepInUrl(2)} />
@@ -1532,7 +1534,16 @@ function CreateTenantWizardInner() {
                   </span>
                   <div>
                     <p className="font-extrabold text-[#0D1F3D]">Plan</p>
-                    <p className="text-[11px] text-slate-500 font-medium">{formState.planId}</p>
+                    <p className="text-[11px] text-slate-700 font-bold">
+                      {(() => {
+                        const matchedPlan =
+                          livePlans.find((p) => p.id === formState.planId) ||
+                          PLATFORM_PLANS.find((p) => p.id === formState.planId);
+                        return matchedPlan
+                          ? `${matchedPlan.name} (${matchedPlan.code})`
+                          : formState.planId;
+                      })()}
+                    </p>
                   </div>
                 </div>
                 <Edit2 className="h-3.5 w-3.5 text-slate-400 cursor-pointer hover:text-indigo-600" onClick={() => updateStepInUrl(4)} />

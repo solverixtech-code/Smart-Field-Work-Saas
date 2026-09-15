@@ -91,6 +91,7 @@ export interface PlanCommercialRules {
 
 export interface Plan {
   id: string;
+  versionId?: string;
   code: string;
   name: string;
 
