@@ -3,6 +3,7 @@ import { redact, REDACTION_VERSION } from "../observability/redaction";
 import { requestContext } from "../observability/request-context";
 
 const catalog = {
+  CRM: ['account.created', 'account.updated', 'account.deleted', 'account.owner.changed', 'account.primary_contact.changed', 'contact.created', 'contact.updated', 'contact.deleted', 'contact.owner.changed'],
   AUTH: [
     "LOGIN_FAILURE",
     "LOGIN_SUCCESS",

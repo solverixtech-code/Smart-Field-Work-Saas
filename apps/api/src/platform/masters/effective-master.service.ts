@@ -232,6 +232,87 @@ export class EffectiveMasterService {
     );
   }
 
+  /** CRM callers share their transaction and resolve a bounded set of historical references.
+   * The existing resolver remains the single source of layering/selectability semantics. */
+  async referencesInTransaction(
+    tx: Prisma.TransactionClient,
+    tenantId: string,
+    ids: readonly string[],
+  ) {
+    if (ids.length > 400)
+      throw new ConflictException("MASTER_REFERENCE_LIMIT_EXCEEDED");
+    const { versionId, modules } = await this.context(tx, tenantId);
+    const rows = await tx.masterValue.findMany({
+      where: {
+        id: { in: [...new Set(ids)] },
+        OR: [
+          { source: "SYSTEM" },
+          { source: "TENANT", tenantId },
+          {
+            source: "INDUSTRY",
+            industryTemplateVersion: { changesTo: { some: { tenantId } } },
+          },
+        ],
+      },
+      select: {
+        ...masterValueSelect,
+        definition: { select: masterDefinitionSelect },
+      },
+    });
+    const versions = [
+      ...new Set(
+        [versionId, ...rows.map((v) => v.industryTemplateVersionId)].filter(
+          (v): v is string => v !== null,
+        ),
+      ),
+    ];
+    const overrides = await tx.masterValueOverride.findMany({
+      where: {
+        inheritedMasterValueId: { in: rows.map((v) => v.id) },
+        OR: [
+          { scope: "TENANT", tenantId },
+          { scope: "INDUSTRY", industryTemplateVersionId: { in: versions } },
+        ],
+      },
+      select: masterOverrideSelect,
+    });
+    return new Map(
+      rows
+        .filter(
+          (v) =>
+            v.definition.moduleCode === null ||
+            modules.has(v.definition.moduleCode),
+        )
+        .map(({ definition, ...row }) => {
+          const historicalVersion =
+            row.source === "INDUSTRY"
+              ? row.industryTemplateVersionId
+              : versionId;
+          const applicable = overrides.filter(
+            (o) =>
+              o.inheritedMasterValueId === row.id &&
+              (o.scope === "TENANT" ||
+                o.industryTemplateVersionId === historicalVersion),
+          );
+          const resolved = resolveMasterValues(
+            definition,
+            [row],
+            applicable,
+          )[0];
+          return [
+            row.id,
+            {
+              ...resolved,
+              definitionCode: definition.code,
+              selectable:
+                resolved.selectable &&
+                (row.source !== "INDUSTRY" ||
+                  row.industryTemplateVersionId === versionId),
+            },
+          ] as const;
+        }),
+    );
+  }
   historical(tenantId: string, valueId: string) {
     masterId.parse(valueId);
     return this.prisma.$transaction(

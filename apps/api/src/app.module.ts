@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CrmModule } from './crm/crm.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -75,6 +76,7 @@ import { OperationsModule } from './jobs/operations.module';
     AuditModule,
     MediaModule,
     OperationsModule,
+    CrmModule,
   ],
   providers: [
     {

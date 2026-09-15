@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { syncCrmAdministratorGrants } from './sync-crm-grants';
 import {
   PERMISSION_REGISTRY,
   PERMISSION_REGISTRY_VERSION,
@@ -275,6 +276,8 @@ export async function syncRbac(client?: PrismaClient) {
     }
   }
 
+  const crm = await syncCrmAdministratorGrants(prisma);
+  tenantGrantsCreated += crm.added;
   console.log(`[RBAC Sync] Completed successfully.`);
   console.log(`  - Permissions Created: ${permissionsAdded}`);
   console.log(`  - Permissions Updated: ${permissionsUpdated}`);

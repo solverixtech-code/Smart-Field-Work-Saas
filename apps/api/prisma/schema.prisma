@@ -614,6 +614,9 @@ model MasterDefinition {
   @@index([moduleCode])
 }
 model MasterValue {
+  crmBusinessTypes Account[] @relation("AccountBusinessType")
+  crmSources Account[] @relation("AccountSource")
+  crmContactRoles Contact[] @relation("ContactRole")
   legacyReconciliation MasterLegacyReconciliation?
   id String @id @default(uuid())
   definitionId String
@@ -814,6 +817,8 @@ enum PlatformAssignmentStatus {
 }
 
 model Tenant {
+  crmAccounts Account[]
+  crmContacts Contact[]
   privateMedia MediaAsset[]
   backgroundJobs BackgroundJob[]
   runtimeConfigEpoch RuntimeConfigEpoch?
@@ -913,6 +918,12 @@ model TenantBranding {
 }
 
 model TenantMembership {
+  ownedAccounts Account[] @relation("AccountOwner")
+  createdAccounts Account[] @relation("AccountCreator")
+  updatedAccounts Account[] @relation("AccountUpdater")
+  ownedContacts Contact[] @relation("ContactOwner")
+  createdContacts Contact[] @relation("ContactCreator")
+  updatedContacts Contact[] @relation("ContactUpdater")
   privateMediaCreated MediaAsset[]
   provisioningOwnership TenantProvisioning[]
   id                    String                 @id @default(uuid())
@@ -1486,4 +1497,75 @@ model ProvisioningAttempt {
   finishedAt  DateTime?
 
   @@unique([eventId, attemptKey])
+}
+
+enum CrmRecordStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+model Account {
+  id String @id @default(uuid())
+  tenantId String
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  name String
+  businessTypeValueId String?
+  businessTypeValue MasterValue? @relation("AccountBusinessType", fields: [businessTypeValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  sourceValueId String?
+  sourceValue MasterValue? @relation("AccountSource", fields: [sourceValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  categoryLabel String?
+  status CrmRecordStatus @default(ACTIVE)
+  ownerMembershipId String
+  ownerMembership TenantMembership @relation("AccountOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  addressLine1 String?
+  addressLine2 String?
+  city String?
+  state String?
+  postalCode String?
+  countryCode String?
+  website String?
+  gstin String?
+  establishedYear Int?
+  description String?
+  revision Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdByMembershipId String
+  createdByMembership TenantMembership @relation("AccountCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  updatedByMembershipId String
+  updatedByMembership TenantMembership @relation("AccountUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  contacts Contact[]
+  @@unique([id, tenantId])
+  @@index([tenantId, deletedAt, createdAt, id])
+  @@index([tenantId, ownerMembershipId, deletedAt])
+}
+
+model Contact {
+  id String @id @default(uuid())
+  tenantId String
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  accountId String?
+  account Account? @relation(fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  name String
+  phone String?
+  email String?
+  roleValueId String?
+  roleValue MasterValue? @relation("ContactRole", fields: [roleValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  status CrmRecordStatus @default(ACTIVE)
+  ownerMembershipId String?
+  ownerMembership TenantMembership? @relation("ContactOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  isPrimary Boolean @default(false)
+  revision Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdByMembershipId String
+  createdByMembership TenantMembership @relation("ContactCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  updatedByMembershipId String
+  updatedByMembership TenantMembership @relation("ContactUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  @@unique([id, tenantId])
+  @@index([tenantId, accountId, deletedAt, createdAt, id])
+  @@index([tenantId, ownerMembershipId, deletedAt])
 }

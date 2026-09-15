@@ -119,6 +119,7 @@ import {
 } from './screens/reports/ReportsPages';
 
 import AllBusinessesPage from './screens/businesses/AllBusinessesPage';
+import { CrmBoundary } from './features/crm/CrmContext';
 import AddBusinessPage from './screens/businesses/AddBusinessPage';
 import BusinessLayoutWrapper from './screens/businesses/BusinessLayoutWrapper';
 import BusinessDetailsPage from './screens/businesses/BusinessDetailsPage';
@@ -451,16 +452,18 @@ export default function AppRouter() {
 
             {/* Business Database Management Routes (Screens 54 to 60) */}
             <Route element={<PermissionRoute permission="crm.businesses.view" />}>
-              <Route path="/admin/businesses" element={<AllBusinessesPage />} />
-              <Route path="/admin/businesses/create" element={<AddBusinessPage />} />
-              <Route path="/admin/businesses/:businessId/edit" element={<AddBusinessPage isEdit />} />
-              <Route path="/admin/businesses/:businessId" element={<BusinessLayoutWrapper />}>
-                <Route index element={<BusinessDetailsPage />} />
-                <Route path="contacts" element={<BusinessContactsPage />} />
-                <Route path="google-profile" element={<BusinessGoogleProfilePage />} />
-                <Route path="sales-history" element={<BusinessSalesHistoryPage />} />
-                <Route path="visits" element={<BusinessVisitHistoryPage />} />
-                <Route path="subscription" element={<BusinessSubscriptionPage />} />
+              <Route element={<CrmBoundary />}>
+                <Route path="/admin/businesses" element={<AllBusinessesPage />} />
+                <Route path="/admin/businesses/create" element={<AddBusinessPage />} />
+                <Route path="/admin/businesses/:businessId/edit" element={<AddBusinessPage isEdit />} />
+                <Route path="/admin/businesses/:businessId" element={<BusinessLayoutWrapper />}>
+                  <Route index element={<BusinessDetailsPage />} />
+                  <Route path="contacts" element={<BusinessContactsPage />} />
+                  <Route path="google-profile" element={<BusinessGoogleProfilePage />} />
+                  <Route path="sales-history" element={<BusinessSalesHistoryPage />} />
+                  <Route path="visits" element={<BusinessVisitHistoryPage />} />
+                  <Route path="subscription" element={<BusinessSubscriptionPage />} />
+                </Route>
               </Route>
             </Route>
 

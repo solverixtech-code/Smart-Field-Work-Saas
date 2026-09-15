@@ -10,9 +10,49 @@ export interface PermissionDefinition {
   moduleKey: string;
 }
 
-export const PERMISSION_REGISTRY_VERSION = '1.0.0';
+export const PERMISSION_REGISTRY_VERSION = '1.1.0';
 
+export const CRM_PHASE_1_1_PERMISSIONS: PermissionDefinition[] = [
+  ...(
+    [
+      'create',
+      'update',
+      'delete',
+      'assign',
+      'access.own',
+      'access.tenant',
+    ] as const
+  ).map((action) => ({
+    code: `crm.businesses.${action}`,
+    scope: PermissionScope.TENANT,
+    domain: 'crm',
+    resource: 'businesses',
+    action,
+    description: `Business ${action} access`,
+    moduleKey: 'crm_businesses',
+  })),
+  ...(
+    [
+      'view',
+      'create',
+      'update',
+      'delete',
+      'assign',
+      'access.own',
+      'access.tenant',
+    ] as const
+  ).map((action) => ({
+    code: `crm.contacts.${action}`,
+    scope: PermissionScope.TENANT,
+    domain: 'crm',
+    resource: 'contacts',
+    action,
+    description: `Contact ${action} access`,
+    moduleKey: 'crm_contacts',
+  })),
+];
 export const PERMISSION_REGISTRY: PermissionDefinition[] = [
+  ...CRM_PHASE_1_1_PERMISSIONS,
   { code: 'platform.operations.jobs.view', scope: PermissionScope.PLATFORM, domain: 'platform', resource: 'jobs', action: 'view', description: 'View durable job status and attempt history', moduleKey: 'platform_operations' },
   { code: 'platform.operations.jobs.retry', scope: PermissionScope.PLATFORM, domain: 'platform', resource: 'jobs', action: 'retry', description: 'Retry a dead job with a recorded reason', moduleKey: 'platform_operations' },
   { code: 'system.media.view', scope: PermissionScope.TENANT, domain: 'system', resource: 'media', action: 'view', description: 'Download private media in the selected Tenant', moduleKey: 'system' },

@@ -1,515 +1,143 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Plus } from "lucide-react";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import { Select } from "../../components/ui/Select";
+import { DataTable, ColumnDef } from "../../components/ui/DataTable";
 import {
-  Building2,
-  Plus,
-  Search,
-  Download,
-  Upload,
-  Eye,
-  Edit,
-  MoreVertical,
-  RefreshCw,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  UserPlus,
-  ChevronRight,
-} from 'lucide-react';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
-import { KpiCard } from '../../components/dashboard/KpiCard';
-import { Button } from '../../components/ui/Button';
-import { Select } from '../../components/ui/Select';
-import { DataTable, ColumnDef } from '../../components/ui/DataTable';
-import { mockBusinesses, BusinessItem } from './businessesData';
-
-const statusDistributionData = [
-  { name: 'Active', value: 5102, color: '#10B981' },
-  { name: 'Inactive', value: 540, color: '#F59E0B' },
-  { name: 'Blocked', value: 200, color: '#E20613' },
-];
-
-const sourceDistribution = [
-  { name: 'Website', count: 1420, pct: '24.3%', color: 'bg-blue-600' },
-  { name: 'Referral', count: 1080, pct: '18.5%', color: 'bg-emerald-500' },
-  { name: 'Google Ads', count: 890, pct: '15.2%', color: 'bg-amber-500' },
-  { name: 'Justdial', count: 760, pct: '13.0%', color: 'bg-purple-500' },
-  { name: 'Facebook', count: 620, pct: '10.6%', color: 'bg-indigo-500' },
-  { name: 'Others', count: 1072, pct: '18.4%', color: 'bg-slate-400' },
-];
-
+  useCrm,
+  useCrmQuery,
+  useDebouncedSearch,
+} from "../../features/crm/CrmContext";
+import {
+  CrmFailure,
+  statuses,
+  statusLabel,
+} from "../../features/crm/CrmControls";
+import { AccountDto, CrmStatus } from "../../features/crm/crm.types";
 export default function AllBusinessesPage() {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('All');
-  const [cityFilter, setCityFilter] = useState('All');
-  const [sourceFilter, setSourceFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const filteredBusinesses = mockBusinesses.filter((b) => {
-    const matchesSearch =
-      b.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.phone.includes(searchTerm);
-    const matchesType = typeFilter === 'All' || b.businessType.includes(typeFilter);
-    const matchesCity = cityFilter === 'All' || b.city === cityFilter;
-    const matchesSource = sourceFilter === 'All' || b.source === sourceFilter;
-    const matchesStatus = statusFilter === 'All' || b.status === statusFilter;
-    return matchesSearch && matchesType && matchesCity && matchesSource && matchesStatus;
-  });
-
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedIds(filteredBusinesses.map((b) => b.id));
-    } else {
-      setSelectedIds([]);
-    }
-  };
-
-  const handleSelectOne = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-  };
-
-  const columns: ColumnDef<BusinessItem>[] = [
+  const { can, readOnly } = useCrm();
+  const [search, setSearch] = useState("");
+  const debounced = useDebouncedSearch(search);
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState("");
+  const result = useCrmQuery(
+    `accounts:${debounced}:${status}:${page}`,
+    (service, signal) =>
+      service.accounts(
+        {
+          page,
+          limit: 25,
+          search: debounced,
+          status: status ? (status as CrmStatus) : undefined,
+        },
+        signal,
+      ),
+  );
+  const columns: ColumnDef<AccountDto>[] = [
     {
-      header: 'Business Details',
-      cell: (b) => (
-        <div className="flex items-center gap-2.5">
-          {b.logoUrl ? (
-            <img
-              src={b.logoUrl}
-              alt={b.name}
-              className="h-8 w-8 rounded-md object-cover border border-slate-200 shrink-0"
-            />
-          ) : (
-            <div className={`flex h-8 w-8 items-center justify-center rounded-md font-bold text-xs shrink-0 ${b.logoBg}`}>
-              {b.logoText}
-            </div>
-          )}
+      header: "Business",
+      cell: (row) => (
+        <Link
+          className="font-semibold text-slate-900 underline underline-offset-4 focus:ring-2"
+          to={`/admin/businesses/${row.id}`}
+        >
+          {row.name}
+        </Link>
+      ),
+    },
+    { header: "Business type", cell: (row) => row.businessType || "Not set" },
+    { header: "City", cell: (row) => row.city || "Not set" },
+    { header: "Owner", cell: (row) => row.owner.displayName },
+    { header: "Status", cell: (row) => statusLabel(row.status) },
+  ];
+  if (can("crm.contacts.view"))
+    columns.splice(3, 0, {
+      header: "Primary contact",
+      cell: (row) =>
+        row.primaryContact ? (
           <div>
-            <button
-              onClick={() => navigate(`/admin/businesses/${b.id}`)}
-              className="font-bold text-[#0D1F3D] hover:text-blue-600 hover:underline text-left block whitespace-nowrap"
-            >
-              {b.name}
-            </button>
-            <p className="text-[11px] text-slate-500 font-normal whitespace-nowrap">
-              {b.city}, Maharashtra • <span className="font-mono text-[10px] text-slate-400">ID: {b.id}</span>
+            <p>{row.primaryContact.name}</p>
+            <p className="text-slate-600">
+              {row.primaryContact.phone || row.primaryContact.email}
             </p>
           </div>
-        </div>
-      ),
-    },
-    {
-      header: 'Business Type',
-      cell: (b) => (
-        <span className="rounded-md bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 border border-blue-100">
-          {b.businessType}
-        </span>
-      ),
-    },
-    {
-      header: 'Contact Person',
-      cell: (b) => (
-        <div>
-          <p className="font-bold text-[#0D1F3D]">{b.contactPerson}</p>
-          <p className="text-[11px] text-slate-500 font-normal">{b.contactRole}</p>
-        </div>
-      ),
-    },
-    {
-      header: 'Contact Info',
-      cell: (b) => (
-        <div>
-          <p className="font-semibold text-slate-800">{b.phone}</p>
-          <p className="text-[11px] text-slate-500">{b.email}</p>
-        </div>
-      ),
-    },
-    {
-      header: 'Source',
-      accessorKey: 'source',
-    },
-    {
-      header: 'Assigned To',
-      cell: (b) => (
-        <div className="flex items-center gap-2">
-          <img
-            src={b.assignedToAvatar}
-            alt={b.assignedToName}
-            className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0"
-          />
-          <div>
-            <p className="font-semibold text-[#0D1F3D]">{b.assignedToName}</p>
-            <p className="text-[10px] text-slate-500">{b.assignedToRole}</p>
-          </div>
-        </div>
-      ),
-    },
-    {
-      header: 'Status',
-      align: 'center',
-      cell: (b) => (
-        <span
-          className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-bold border ${
-            b.status === 'Active'
-              ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-              : b.status === 'Inactive'
-              ? 'bg-amber-50 text-amber-600 border-amber-200'
-              : 'bg-red-50 text-red-600 border-red-200'
-          }`}
-        >
-          {b.status}
-        </span>
-      ),
-    },
-    {
-      header: 'Actions',
-      align: 'right',
-      cell: (b) => (
-        <div className="flex items-center justify-end gap-1">
-          <button
-            onClick={() => navigate(`/admin/businesses/${b.id}`)}
-            className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
-            title="View Business Details"
-          >
-            <Eye className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => navigate(`/admin/businesses/${b.id}/edit`)}
-            className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
-            title="Edit Business"
-          >
-            <Edit className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => toast.info(`Options for ${b.name}`)}
-            className="p-1.5 text-slate-500 hover:text-[#0D1F3D] hover:bg-slate-100 rounded-sm transition-colors cursor-pointer"
-          >
-            <MoreVertical className="h-4 w-4" />
-          </button>
-        </div>
-      ),
-    },
-  ];
-
+        ) : (
+          "Not set"
+        ),
+    });
   return (
-    <div className="space-y-3 font-sans pb-10">
-      {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-4 pb-8">
+      <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D1F3D]">All Businesses</h1>
-          <p className="text-xs font-normal text-slate-500">
-            Manage and view all registered business accounts and merchant profiles.
+          <h1 className="text-2xl font-semibold text-slate-900">
+            Business database
+          </h1>
+          <p className="text-sm text-slate-600">
+            {result.data
+              ? `${result.data.total.toLocaleString()} businesses`
+              : "Businesses in your workspace"}
           </p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => toast.success('Exporting business directory...')}
-            className="flex items-center gap-1.5 font-bold border-slate-200 text-slate-700 hover:bg-slate-50 shadow-xs"
-          >
-            <Download className="h-4 w-4 text-emerald-600" /> Export
+        {can("crm.businesses.create") && !readOnly && (
+          <Button onClick={() => navigate("/admin/businesses/create")}>
+            <Plus size={16} className="mr-2" />
+            Add business
           </Button>
-          <Button
-            variant="accent"
-            size="sm"
-            onClick={() => navigate('/admin/businesses/create')}
-            className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm"
-          >
-            <Plus className="h-4 w-4" /> Add Business
-          </Button>
-        </div>
-      </div>
-
-      {/* 5 Top Metric KPI Cards */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 sm:grid-cols-3">
-        <KpiCard
-          title="Total Businesses"
-          value="5,842"
-          subValue="All time"
-          icon={Building2}
-          iconBgColor="bg-[#0D1F3D]/10"
-          iconTextColor="text-[#0D1F3D]"
+        )}
+      </header>
+      <div className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-2">
+        <Input
+          id="business-search"
+          label="Search businesses"
+          maxLength={200}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
         />
-        <KpiCard
-          title="Active Businesses"
-          value="5,102"
-          subValue="87.3% of total"
-          icon={CheckCircle2}
-          iconBgColor="bg-emerald-500/10"
-          iconTextColor="text-emerald-600"
-        />
-        <KpiCard
-          title="Inactive Businesses"
-          value="540"
-          subValue="9.2% of total"
-          icon={AlertCircle}
-          iconBgColor="bg-amber-500/10"
-          iconTextColor="text-amber-600"
-        />
-        <KpiCard
-          title="Blocked Businesses"
-          value="200"
-          subValue="3.4% of total"
-          icon={XCircle}
-          iconBgColor="bg-red-500/10"
-          iconTextColor="text-[#E20613]"
-        />
-        <KpiCard
-          title="New This Month"
-          value="148"
-          change="+12.6%"
-          changeType="positive"
-          timeframe="vs last month"
-          icon={RefreshCw}
-          iconBgColor="bg-purple-500/10"
-          iconTextColor="text-purple-600"
-        />
-      </div>
-
-      {/* Toolbar & Filters */}
-      <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs space-y-3">
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 text-xs font-semibold">
-          {/* Search Input */}
-          <div className="relative xl:col-span-2">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search name, phone, email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-sm border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
-            />
-          </div>
-
-          <Select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            options={[
-              { label: 'All Business Types', value: 'All' },
-              { label: 'Gym / Fitness', value: 'Gym' },
-              { label: 'Food & Beverage', value: 'Food' },
-              { label: 'Security Services', value: 'Security' },
-              { label: 'Construction', value: 'Construction' },
-              { label: 'Retail Supermarket', value: 'Retail' },
-              { label: 'Beauty & Salon', value: 'Beauty' },
-            ]}
-          />
-
-          <Select
-            value={cityFilter}
-            onChange={(e) => setCityFilter(e.target.value)}
-            options={[
-              { label: 'All Cities', value: 'All' },
-              { label: 'Mumbai', value: 'Mumbai' },
-              { label: 'Pune', value: 'Pune' },
-              { label: 'Thane', value: 'Thane' },
-              { label: 'Navi Mumbai', value: 'Navi Mumbai' },
-            ]}
-          />
-
-          <Select
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-            options={[
-              { label: 'All Sources', value: 'All' },
-              { label: 'Website', value: 'Website' },
-              { label: 'Referral', value: 'Referral' },
-              { label: 'Google Ads', value: 'Google Ads' },
-              { label: 'Justdial', value: 'Justdial' },
-              { label: 'Cold Call', value: 'Cold Call' },
-              { label: 'Instagram', value: 'Instagram' },
-            ]}
-          />
-
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            options={[
-              { label: 'All Statuses', value: 'All' },
-              { label: 'Active', value: 'Active' },
-              { label: 'Inactive', value: 'Inactive' },
-              { label: 'Blocked', value: 'Blocked' },
-            ]}
-          />
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSearchTerm('');
-                setTypeFilter('All');
-                setCityFilter('All');
-                setSourceFilter('All');
-                setStatusFilter('All');
-              }}
-              className="w-full text-slate-600 border-slate-200 hover:bg-slate-50 text-xs font-bold rounded-sm"
-            >
-              Clear Filters
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Full Width DataTable Container */}
-      <div className="space-y-3">
-        <DataTable
-          columns={columns}
-          data={filteredBusinesses}
-          keyExtractor={(b) => b.id}
-          selectable
-          selectedIds={selectedIds}
-          onSelectAll={handleSelectAll}
-          onSelectOne={handleSelectOne}
-          density="relaxed"
-          pagination={{
-            currentPage,
-            totalPages: 585,
-            totalEntries: 5842,
-            pageSize: 10,
-            onPageChange: (p) => setCurrentPage(p),
+        <Select
+          native
+          id="business-filter-status"
+          label="Status"
+          placeholder="All statuses"
+          value={status}
+          options={statuses}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
           }}
         />
       </div>
-
-      {/* 3 Inspection & Analytics Cards Side-by-Side After the Table */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pt-2">
-        {/* Card 1: Businesses by Status (4 Cols) */}
-        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs lg:col-span-4 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xs font-bold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center justify-between">
-              <span>Businesses by Status</span>
-              <span className="font-bold text-slate-400 text-[11px]">Total: 5,842</span>
-            </h3>
-
-            <div className="flex items-center justify-center pt-2">
-              <div className="h-40 w-40">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statusDistributionData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={60}
-                      paddingAngle={3}
-                      dataKey="value"
-                    >
-                      {statusDistributionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(val: any) => [`${val} Businesses`, 'Count']}
-                      contentStyle={{ backgroundColor: '#0D1F3D', color: '#fff', borderRadius: '4px', fontSize: '11px' }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2 text-xs font-semibold text-slate-600 pt-2 border-t border-slate-100">
-            {statusDistributionData.map((s) => (
-              <div key={s.name} className="flex justify-between items-center">
-                <span className="flex items-center gap-1.5 font-bold">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-                  {s.name}
-                </span>
-                <span className="font-extrabold text-[#0D1F3D]">{s.value.toLocaleString()} ({((s.value / 5842) * 100).toFixed(1)}%)</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Card 2: Businesses by Source (5 Cols) */}
-        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs lg:col-span-5 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xs font-bold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center justify-between">
-              <span>Businesses by Source</span>
-              <span className="font-bold text-slate-400 text-[11px]">6 Lead Channels</span>
-            </h3>
-
-            <div className="space-y-2.5 text-xs font-semibold pt-2">
-              {sourceDistribution.map((src) => (
-                <div key={src.name} className="space-y-1">
-                  <div className="flex justify-between text-slate-700">
-                    <span className="font-bold text-[#0D1F3D]">{src.name}</span>
-                    <span className="font-bold text-slate-600">{src.count.toLocaleString()} ({src.pct})</span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className={`h-full ${src.color} rounded-full`} style={{ width: src.pct }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3: Quick Actions (3 Cols) */}
-        <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs lg:col-span-3 flex flex-col justify-between">
-          <div>
-            <h3 className="text-xs font-bold text-[#0D1F3D] border-b border-slate-100 pb-2">
-              Quick Actions
-            </h3>
-            <p className="text-[11px] text-slate-500 pt-1 font-medium">Perform quick merchant operations and bulk imports.</p>
-          </div>
-
-          <div className="space-y-2 text-xs font-semibold pt-1">
-            <button
-              onClick={() => navigate('/admin/businesses/create')}
-              className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-2.5 hover:bg-slate-100 text-left transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <UserPlus className="h-4 w-4 text-blue-600" />
-                <div>
-                  <p className="font-bold text-[#0D1F3D]">Add New Business</p>
-                  <p className="text-[10px] text-slate-400">Manually add a new merchant</p>
-                </div>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-            </button>
-
-            <button
-              onClick={() => toast.info('Select Excel file to import businesses...')}
-              className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-2.5 hover:bg-slate-100 text-left transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <Upload className="h-4 w-4 text-purple-600" />
-                <div>
-                  <p className="font-bold text-[#0D1F3D]">Import Businesses</p>
-                  <p className="text-[10px] text-slate-400">Bulk import from CSV/Excel</p>
-                </div>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-            </button>
-
-            <button
-              onClick={() => toast.success('Exporting business list...')}
-              className="w-full flex items-center justify-between rounded-sm border border-slate-100 bg-slate-50/60 p-2.5 hover:bg-slate-100 text-left transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <Download className="h-4 w-4 text-emerald-600" />
-                <div>
-                  <p className="font-bold text-[#0D1F3D]">Export Businesses</p>
-                  <p className="text-[10px] text-slate-400">Download business list</p>
-                </div>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-            </button>
-          </div>
-        </div>
-      </div>
+      {result.error ? (
+        <CrmFailure error={result.error} retry={result.reload} />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={result.data?.items ?? []}
+          keyExtractor={(row) => row.id}
+          isLoading={result.loading}
+          emptyMessage={
+            search || status
+              ? "No businesses match these filters."
+              : "No businesses yet."
+          }
+          pagination={
+            result.data
+              ? {
+                  currentPage: result.data.page,
+                  totalPages: result.data.totalPages,
+                  totalEntries: result.data.total,
+                  pageSize: result.data.limit,
+                  onPageChange: setPage,
+                }
+              : undefined
+          }
+        />
+      )}
     </div>
   );
 }

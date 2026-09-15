@@ -46,6 +46,7 @@ export interface SelectProps {
   className?: string;
   disabled?: boolean;
   searchable?: boolean;
+  native?: boolean;
   children?: React.ReactNode;
 }
 
@@ -65,6 +66,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
       name,
       disabled = false,
       searchable = true,
+      native = false,
       children,
     },
     ref,
@@ -139,6 +141,15 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
       }
     };
 
+    if (native) return <div className="w-full space-y-1.5">
+      {label && <label htmlFor={id} className="block text-xs font-semibold text-slate-700">{label}</label>}
+      <select id={id} name={name} value={currentValue} disabled={disabled} onChange={onChange} aria-invalid={Boolean(error)}
+        className={`h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-60 ${className}`}>
+        <option value="">{placeholder}</option>
+        {parsedOptions.map(option=><option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+      {error && <p role="alert" className="text-sm text-rose-700">{error}</p>}
+    </div>;
     return (
       <div ref={containerRef} className="w-full space-y-1 relative font-sans text-xs">
         {label && (

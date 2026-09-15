@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { runtimeService, RuntimeBootstrapDto } from '../services/runtime.service';
-import { useAppDispatch, useAppSelector } from '../../../store';
+import store, { useAppDispatch, useAppSelector } from '../../../store';
 import { api } from '../../../common/api';
 import { setCredentials } from '../../../store/slices/authSlice';
 import { clearAuthorization, fetchAuthorizationBootstrap } from '../../../store/slices/authorizationSlice';
@@ -27,6 +27,7 @@ export function RuntimeBootstrapProvider({ children }: { children: ReactNode }) 
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const tenantAuth = useAppSelector((s) => s.authorization.tenant);
 
+  const requestGeneration = useRef(0);
   const [bootstrap, setBootstrap] = useState<RuntimeBootstrapDto | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,13 +38,27 @@ export function RuntimeBootstrapProvider({ children }: { children: ReactNode }) 
       setBootstrap(null);
       return;
     }
+    const generation = ++requestGeneration.current;
+    const expectedTenant = tenantAuth.id;
+    const expectedMembership = tenantAuth.membershipId;
+    const current = () => {
+      const selected = store.getState().authorization.tenant;
+      return generation === requestGeneration.current && selected?.id === expectedTenant && selected.membershipId === expectedMembership;
+    };
     setLoading(true);
+    setBootstrap(null);
     setError(null);
     setUnsupportedSchema(false);
     try {
       const data = await runtimeService.getBootstrap();
+      if (!current()) return;
+      if (data.principal.tenantId !== expectedTenant || data.principal.membershipId !== expectedMembership) {
+        setError('Workspace selection changed. Reload its settings.');
+        return;
+      }
       setBootstrap(data);
     } catch (err: any) {
+      if (!current()) return;
       if (err.message?.includes('UNSUPPORTED_BOOTSTRAP_SCHEMA')) {
         setUnsupportedSchema(true);
         setError('Server returned an unsupported runtime bootstrap schema version.');
@@ -53,12 +68,13 @@ export function RuntimeBootstrapProvider({ children }: { children: ReactNode }) 
         setError(err.response?.data?.message || 'Failed to resolve runtime bootstrap.');
       }
     } finally {
-      setLoading(false);
+      if (current()) setLoading(false);
     }
-  }, [isAuthenticated, tenantAuth?.id]);
+  }, [isAuthenticated, tenantAuth?.id, tenantAuth?.membershipId]);
 
   useEffect(() => {
-    reloadBootstrap();
+    void reloadBootstrap();
+    return () => { requestGeneration.current++; };
   }, [reloadBootstrap]);
 
   const switchMembership = async (membershipId: string) => {
@@ -79,7 +95,7 @@ export function RuntimeBootstrapProvider({ children }: { children: ReactNode }) 
 
       // 4. Reload authorization and runtime bootstrap for the new membership
       await dispatch(fetchAuthorizationBootstrap()).unwrap();
-      await reloadBootstrap();
+      // The authorization-context effect reloads the newly selected membership.
 
       toast.success('Switched tenant workspace successfully');
     } catch (err: any) {

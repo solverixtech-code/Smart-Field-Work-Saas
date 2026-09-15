@@ -1,16 +1,17 @@
 import { auditEvents } from '../../audit/audit-event-writer';
 import {
   Injectable,
+  Inject,
   BadRequestException,
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../persistence/prisma.service';
-import { PermissionScope } from '@prisma/client';
+import { PermissionScope, PrismaClient } from '@prisma/client';
 
 @Injectable()
 export class RolePermissionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaClient) {}
 
   /**
    * Grants a PLATFORM-scoped permission to a PlatformRole.
@@ -151,6 +152,7 @@ export class RolePermissionService {
     tenantId: string,
     tenantRoleId: string,
     permissionCode: string,
+    onlyIfMissing = false,
   ) {
     const role = await this.prisma.tenantRole.findUnique({
       where: { id: tenantRoleId },
@@ -179,6 +181,10 @@ export class RolePermissionService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      if (onlyIfMissing) {
+        const locked = await tx.$queryRaw<Array<{id:string}>>`SELECT id FROM "TenantRole" WHERE id=${tenantRoleId} AND "tenantId"=${tenantId} AND "isActive"=true FOR UPDATE`;
+        if (!locked.length) throw new NotFoundException('Tenant role not found or inactive.');
+      }
       const existing = await tx.tenantRolePermission.findUnique({
         where: {
           tenantRoleId_permissionId: {
@@ -188,6 +194,9 @@ export class RolePermissionService {
         },
       });
 
+      if (existing && onlyIfMissing) {
+        return {tenantId,tenantRoleId,permissionCode,granted:true,permissionsVersion:role.permissionsVersion,changed:false};
+      }
       if (!existing) {
         await tx.tenantRolePermission.create({
           data: {
@@ -211,6 +220,7 @@ export class RolePermissionService {
         tenantRoleId,
         permissionCode,
         granted: true,
+        changed: true,
         permissionsVersion: updatedRole.permissionsVersion,
       };
     });
