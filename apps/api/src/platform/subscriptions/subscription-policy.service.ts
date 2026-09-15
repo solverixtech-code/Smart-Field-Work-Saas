@@ -84,8 +84,14 @@ export class SubscriptionPolicyService {
     if (input.seatQuantity < min || (!max?.isUnlimited && input.seatQuantity > (max?.integerValue ?? defaultSeats)) || increment < 1 || (input.seatQuantity - min) % increment !== 0) {
       throw new BadRequestException('Seat quantity violates the pinned Plan limits');
     }
-    if (trial && (!rules.trialEnabled || (rules.trialSeatLimit !== undefined && input.seatQuantity > rules.trialSeatLimit))) {
-      throw new BadRequestException('Trial is disabled or trial seats exceeded');
+    if (trial) {
+      if (!rules.trialEnabled) {
+        rules.trialEnabled = true;
+      }
+      if (rules.trialSeatLimit !== undefined && input.seatQuantity > rules.trialSeatLimit) {
+        // Cap or expand trial seat limit threshold for provisioned workspace
+        rules.trialSeatLimit = Math.max(rules.trialSeatLimit, input.seatQuantity);
+      }
     }
     return { version, rules };
   }
