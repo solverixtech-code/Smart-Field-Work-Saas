@@ -10,8 +10,9 @@
 - **PR #11 Historical Upgrade Candidate SHA**: `1bd1b0bbdea50339b4ed90196c4fa4ff2ef76412` (Candidate CI: `34689227390` ✅)
 - **PR #11 Merged Main SHA**: `fe3d280ce68ef546593b0d79491d568d9c795fc9` (Merged-Main CI: `34689508876` ✅)
 - **PR #12 Evidence Correction Candidate SHA**: `8e56941a39840a69656a3cfddfd8c332d32267d3` (Candidate CI: `34691686283` ✅)
-- **PR #12 Merged Main (Base) SHA**: `ec058043d1237d16096210d756529d3b29490256` (Merged-Main CI: `34691960202` ✅)
-- **Final Evidence Correction Branch**: `chore/phase-0.12-final-evidence-pass`
+- **PR #13 Evidence Correction Candidate SHA**: `ff4d912735e0b4b1d2458a3bb775d014336ff59f` (Candidate CI: `34694238159` ✅)
+- **PR #13 Merged Main SHA**: `17c348cc440aef68d22b451b2aba78fbb6376a1f` (Merged-Main CI: `34694457347` ✅)
+- **Final Evidence Cleanup Branch**: `chore/phase-0.12-final-cleanup`
 - **Environment Stack**:
   - Node.js: `v24.15.0`
   - npm: `11.12.1`
@@ -25,7 +26,7 @@
 
 Phase 0.12 serves as the final release-hardening, migration rehearsal, and production readiness verification gate for Phase 0 of the **Visiblo Smart Field Work** SaaS platform.
 
-All 20 canonical Phase 0 completion items have been independently audited, verified, and backed by committed E2E test files (`apps/api/test/upgrade-rehearsal.e2e-spec.ts`), durable PostgreSQL query plan evidence (`docs/architecture/PHASE_0_12_QUERY_PLAN_EVIDENCE.md`), manual multi-viewport browser QA logs (`docs/architecture/PHASE_0_12_BROWSER_QA.md`), and dependency security triage analysis (`docs/architecture/PHASE_0_12_DEPENDENCY_AUDIT.md`).
+All 20 canonical Phase 0 completion items have been independently audited, verified, and backed by committed E2E test files (`apps/api/test/upgrade-rehearsal.e2e-spec.ts` and `apps/api/test/historical-migration-upgrade.e2e-spec.ts`), 15 dedicated API cross-tenant attack tests (`apps/api/test/tenant-isolation.e2e-spec.ts`), durable PostgreSQL query plan evidence (`docs/architecture/PHASE_0_12_QUERY_PLAN_EVIDENCE.md`), manual multi-viewport browser QA logs (`docs/architecture/PHASE_0_12_BROWSER_QA.md`), and dependency security triage analysis (`docs/architecture/PHASE_0_12_DEPENDENCY_AUDIT.md`).
 
 ---
 
@@ -37,7 +38,7 @@ All 20 canonical Phase 0 completion items have been independently audited, verif
 | **Fresh Installation** | Clean PostgreSQL install & idempotent RBAC sync | **PASS** | `npx prisma migrate deploy` & `npm run db:sync:rbac` (0 duplicates created) |
 | **Upgrade Rehearsal** | Reproducible pre-current snapshot upgrade & failure on ambiguity | **PASS** | Committed E2E tests `apps/api/test/upgrade-rehearsal.e2e-spec.ts` & `apps/api/test/historical-migration-upgrade.e2e-spec.ts` |
 | **Rollback Strategy** | Real historical migration schema rollback analysis | **PASS** | `docs/architecture/PHASE_0_12_ROLLBACK_FORWARD_FIX.md` |
-| **Tenant Isolation** | Adversarial cross-tenant isolation enforcement | **PASS** | 15 tests in `apps/api/test/tenant-isolation.e2e-spec.ts` |
+| **Tenant Isolation** | Adversarial cross-tenant isolation enforcement | **PASS** | Dedicated 15-test suite in `apps/api/test/tenant-isolation.e2e-spec.ts` |
 | **Multi-Membership** | Isolated UA -> Tenant A and UB -> Tenant B switching | **PASS** | `apps/api/src/platform/tenants/tenant-membership.service.spec.ts` |
 | **RBAC Security** | Platform vs Tenant RBAC namespace separation | **PASS** | `apps/api/test/rbac-enforcement.e2e-spec.ts` |
 | **Subscription Engine** | Frozen Commercial Engine state enforcement | **PASS** | `apps/api/test/subscription-provisioning.e2e-spec.ts` |
