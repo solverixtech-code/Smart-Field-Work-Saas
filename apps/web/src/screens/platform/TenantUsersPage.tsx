@@ -25,6 +25,7 @@ import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { Input } from '../../components/ui/Input';
+import { Modal } from '../../components/ui/Modal';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { tenantService } from '../../features/platform/tenants/services/tenant.service';
 import { tenantMembershipService } from '../../features/platform/tenants/services/tenant-membership.service';
@@ -684,48 +685,47 @@ export function TenantUsersPage() {
       </div>
 
       {/* Invite Modal */}
-      {showInviteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
-          <form onSubmit={handleInviteSubmit} className="w-full max-w-md rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 font-sans">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Invite User to Tenant Workspace</h3>
-              <button type="button" onClick={() => setShowInviteModal(false)} className="text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
-            </div>
-            <div className="space-y-3">
-              <Input label="Full Name *" placeholder="Enter full name" value={inviteName} onChange={(e) => setInviteName(e.target.value)} />
-              <Input label="Email Address *" type="email" placeholder="user@company.com" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
-              <Select
-                label="Role *"
-                value={inviteRole}
-                onChange={(e) => setInviteRole(e.target.value)}
-                searchable={true}
-                options={[
-                  { value: 'Field Executive', label: 'Field Executive' },
-                  { value: 'Sales Manager', label: 'Sales Manager' },
-                  { value: 'Team Leader', label: 'Team Leader' },
-                  { value: 'Tenant Admin', label: 'Tenant Admin' },
-                ]}
-              />
-              <Select
-                label="Department / Zone *"
-                value={inviteDept}
-                onChange={(e) => setInviteDept(e.target.value)}
-                searchable={true}
-                options={[
-                  { value: 'Field Operations', label: 'Field Operations' },
-                  { value: 'Sales', label: 'Sales' },
-                  { value: 'Operations', label: 'Operations' },
-                  { value: 'Customer Support', label: 'Customer Support' },
-                ]}
-              />
-            </div>
-            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
-              <Button type="button" variant="outline" size="sm" onClick={() => setShowInviteModal(false)}>Cancel</Button>
-              <Button type="submit" variant="accent" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Send Invitation</Button>
-            </div>
-          </form>
-        </div>
-      )}
+      <Modal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        title="Invite User to Tenant Workspace"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleInviteSubmit} className="space-y-4 font-sans">
+          <div className="space-y-3">
+            <Input label="Full Name *" placeholder="Enter full name" value={inviteName} onChange={(e) => setInviteName(e.target.value)} />
+            <Input label="Email Address *" type="email" placeholder="user@company.com" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} />
+            <Select
+              label="Role *"
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value)}
+              searchable={true}
+              options={[
+                { value: 'Field Executive', label: 'Field Executive' },
+                { value: 'Sales Manager', label: 'Sales Manager' },
+                { value: 'Team Leader', label: 'Team Leader' },
+                { value: 'Tenant Admin', label: 'Tenant Admin' },
+              ]}
+            />
+            <Select
+              label="Department / Zone *"
+              value={inviteDept}
+              onChange={(e) => setInviteDept(e.target.value)}
+              searchable={true}
+              options={[
+                { value: 'Field Operations', label: 'Field Operations' },
+                { value: 'Sales', label: 'Sales' },
+                { value: 'Operations', label: 'Operations' },
+                { value: 'Customer Support', label: 'Customer Support' },
+              ]}
+            />
+          </div>
+          <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <Button type="button" variant="outline" size="sm" onClick={() => setShowInviteModal(false)}>Cancel</Button>
+            <Button type="submit" variant="accent" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold">Send Invitation</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
