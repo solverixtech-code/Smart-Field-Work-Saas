@@ -42,6 +42,7 @@ import {
   validateCommercialRules,
 } from '../../features/platform/catalog/plans/utils/plan-validation.utils';
 import { planService } from '../../features/platform/catalog/plans/services/plan.service';
+import { extractErrorMessage } from '../../common/api';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { ModuleSelectionGrid } from '../../components/platform/ModuleSelectionGrid';
@@ -183,8 +184,8 @@ function WizardContent() {
     try {
       const draft = await saveDraft();
       toast.success(`Plan draft '${draft.name || draft.code}' saved successfully!`);
-    } catch {
-      toast.error('Failed to save draft');
+    } catch (err) {
+      toast.error(extractErrorMessage(err, 'Failed to save draft'));
     }
   };
 
@@ -195,7 +196,7 @@ function WizardContent() {
       resetForm();
       navigate('/platform/plans');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to publish plan');
+      toast.error(extractErrorMessage(err, 'Failed to publish plan'));
     }
   };
 

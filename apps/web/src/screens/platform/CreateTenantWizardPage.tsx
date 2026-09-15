@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { extractErrorMessage } from '../../common/api';
 import {
   Building2,
   Globe,
@@ -39,7 +40,9 @@ import { DatePicker } from '../../components/ui/DatePicker';
 import { TenantCreationProvider, useTenantCreation } from '../../features/platform/tenants/context/TenantCreationContext';
 import { PLATFORM_INDUSTRIES, PLATFORM_PLANS, PLATFORM_MODULES } from '../../features/platform/tenants/fixtures/platform.fixtures';
 import { tenantService } from '../../features/platform/tenants/services/tenant.service';
-import { Tenant, ProvisioningType, PaymentCollectionMethod } from '../../features/platform/tenants/types/platform.types';
+import { planService } from '../../features/platform/catalog/plans/services/plan.service';
+import { Plan } from '../../features/platform/catalog/plans/types/plan.types';
+import { Tenant, ProvisioningType, PaymentCollectionMethod, PlatformPlan } from '../../features/platform/tenants/types/platform.types';
 import { calculatePlanPrice } from '../../features/platform/tenants/utils/cost-calculation.utils';
 import { ModuleSelectionGrid } from '../../components/platform/ModuleSelectionGrid';
 
@@ -574,12 +577,62 @@ function Step3Administrator() {
   );
 }
 
+function transformBackendPlanToPlatformPlan(p: Plan): PlatformPlan {
+  const monthlyPrice = p.pricing?.monthlyPerUser || p.pricing?.monthlyFlatPrice || 0;
+  const annualPrice = p.pricing?.annualPerUser || p.pricing?.annualFlatPrice || 0;
+  return {
+    id: p.id,
+    code: p.code,
+    name: p.name,
+    tier: (p.tier as any) || 'Growth',
+    monthlyPricePerUser: monthlyPrice,
+    annualPricePerUser: annualPrice,
+    minUsers: p.limits?.minimumSeats || 1,
+    includedModules: [...(p.includedModuleCodes || [])],
+    features: [
+      `Min ${p.limits?.minimumSeats || 1} User Seats`,
+      `${p.limits?.storageGb || 10} GB Storage Included`,
+      `${(p.includedModuleCodes || []).length} Modules Included`,
+      p.badge && p.badge !== 'None' ? `Badge: ${p.badge}` : 'Custom Commercial Plan',
+    ],
+  };
+}
+
 // STEP 4: PLAN & SUBSCRIPTION
-function Step4PlanSubscription() {
+function Step4PlanSubscription({
+  livePlans,
+  onLivePlansLoaded,
+}: {
+  livePlans: PlatformPlan[];
+  onLivePlansLoaded: (plans: PlatformPlan[]) => void;
+}) {
   const { formState, updateFormState } = useTenantCreation();
+  const [planSource, setPlanSource] = useState<'canonical' | 'live'>('canonical');
+  const [loadingLive, setLoadingLive] = useState(false);
+
+  useEffect(() => {
+    if (livePlans.length === 0) {
+      setLoadingLive(true);
+      planService
+        .getPlans()
+        .then((plans) => {
+          const mapped = plans.map(transformBackendPlanToPlatformPlan);
+          onLivePlansLoaded(mapped);
+          if (mapped.length > 0) {
+            setPlanSource('live');
+          }
+        })
+        .catch(() => {
+          // keep canonical as default on error
+        })
+        .finally(() => setLoadingLive(false));
+    }
+  }, [livePlans.length, onLivePlansLoaded]);
+
+  const displayedPlans = planSource === 'live' && livePlans.length > 0 ? livePlans : PLATFORM_PLANS;
 
   const handlePlanSelect = (planId: string) => {
-    const selectedPlan = PLATFORM_PLANS.find((p) => p.id === planId);
+    const selectedPlan = displayedPlans.find((p) => p.id === planId) || PLATFORM_PLANS.find((p) => p.id === planId);
 
     updateFormState({
       planId,
@@ -590,13 +643,57 @@ function Step4PlanSubscription() {
   return (
     <div className="space-y-6 font-sans">
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-        <div>
-          <h3 className="text-base font-extrabold text-[#0D1F3D]">Choose Canonical Subscription Plan</h3>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">Select a subscription plan from the canonical PLATFORM_PLANS catalog.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-base font-extrabold text-[#0D1F3D]">Choose Subscription Plan</h3>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Select a commercial subscription plan from live API catalog or standard system tiers.
+            </p>
+          </div>
+
+          {/* Segmented Source Toggle */}
+          <div className="inline-flex rounded-sm bg-slate-100 p-1 border border-slate-200 shrink-0">
+            <button
+              type="button"
+              onClick={() => setPlanSource('canonical')}
+              className={`px-3 py-1 text-xs font-bold rounded-2xs transition-all cursor-pointer ${
+                planSource === 'canonical'
+                  ? 'bg-white text-[#0D1F3D] shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Canonical Tiers ({PLATFORM_PLANS.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setPlanSource('live')}
+              className={`px-3 py-1 text-xs font-bold rounded-2xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                planSource === 'live'
+                  ? 'bg-[#0D1F3D] text-white shadow-2xs'
+                  : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+              Live Published {loadingLive ? '...' : `(${livePlans.length})`}
+            </button>
+          </div>
         </div>
 
+        {planSource === 'live' && livePlans.length === 0 && !loadingLive && (
+          <div className="p-4 rounded-sm bg-amber-50 border border-amber-200 text-xs text-amber-800 font-medium flex items-center justify-between">
+            <span>No published database plans found. Showing Canonical System Tiers.</span>
+            <button
+              type="button"
+              onClick={() => setPlanSource('canonical')}
+              className="font-extrabold underline hover:text-amber-900 cursor-pointer"
+            >
+              View Canonical Plans
+            </button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          {PLATFORM_PLANS.map((plan) => {
+          {displayedPlans.map((plan) => {
             const isSelected = formState.planId === plan.id;
             return (
               <div
@@ -614,7 +711,7 @@ function Step4PlanSubscription() {
                   </span>
                 )}
                 <p className="text-base font-extrabold text-[#0D1F3D]">{plan.name}</p>
-                <p className="text-[11px] text-slate-500 font-medium mb-3 font-mono">ID: {plan.id}</p>
+                <p className="text-[11px] text-slate-500 font-medium mb-3 font-mono truncate">ID: {plan.id}</p>
 
                 <p className="text-2xl font-extrabold text-[#0D1F3D]">
                   ₹{plan.monthlyPricePerUser.toLocaleString('en-IN')} <span className="text-xs font-normal text-slate-400">/ user / mo</span>
@@ -757,11 +854,20 @@ function Step5Modules() {
 }
 
 // STEP 6: REVIEW & CONFIRM
-function Step6ReviewConfirm({ onNavigateStep }: { onNavigateStep: (step: number) => void }) {
+function Step6ReviewConfirm({
+  onNavigateStep,
+  livePlans = [],
+}: {
+  onNavigateStep: (step: number) => void;
+  livePlans?: PlatformPlan[];
+}) {
   const { formState } = useTenantCreation();
 
   const selectedIndustry = PLATFORM_INDUSTRIES.find((i) => i.id === formState.industryId) || PLATFORM_INDUSTRIES[0];
-  const selectedPlan = PLATFORM_PLANS.find((p) => p.id === formState.planId) || PLATFORM_PLANS[0];
+  const selectedPlan =
+    livePlans.find((p) => p.id === formState.planId) ||
+    PLATFORM_PLANS.find((p) => p.id === formState.planId) ||
+    PLATFORM_PLANS[0];
 
   const priceResult = calculatePlanPrice({
     plan: selectedPlan,
@@ -1012,6 +1118,7 @@ function CreateTenantWizardInner() {
   const [loadingTenant, setLoadingTenant] = useState(false);
   const [tenantNotFound, setTenantNotFound] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [livePlans, setLivePlans] = useState<PlatformPlan[]>([]);
 
   // Sync step from query param if available
   useEffect(() => {
@@ -1089,7 +1196,9 @@ function CreateTenantWizardInner() {
     }
 
     if (currentStep === 4) {
-      const selectedPlan = PLATFORM_PLANS.find((p) => p.id === formState.planId);
+      const selectedPlan =
+        livePlans.find((p) => p.id === formState.planId) ||
+        PLATFORM_PLANS.find((p) => p.id === formState.planId);
       if (!selectedPlan) {
         toast.error('Please select a valid Subscription Plan to continue');
         return;
@@ -1129,8 +1238,8 @@ function CreateTenantWizardInner() {
       );
       resetForm();
       navigate('/platform/tenants');
-    } catch {
-      toast.error('Failed to save tenant');
+    } catch (err) {
+      toast.error(extractErrorMessage(err, 'Failed to save tenant'));
     }
   };
 
@@ -1271,8 +1380,8 @@ function CreateTenantWizardInner() {
           {currentStep === 1 && <Step1CompanyDetails />}
           {currentStep === 2 && <Step2IndustryProfile />}
           {currentStep === 3 && <Step3Administrator />}
-          {currentStep === 4 && <Step4PlanSubscription />}
-          {currentStep === 5 && <Step6ReviewConfirm onNavigateStep={(step) => updateStepInUrl(step)} />}
+          {currentStep === 4 && <Step4PlanSubscription livePlans={livePlans} onLivePlansLoaded={setLivePlans} />}
+          {currentStep === 5 && <Step6ReviewConfirm onNavigateStep={(step) => updateStepInUrl(step)} livePlans={livePlans} />}
 
           {/* Navigation Actions Footer */}
           <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4 shadow-xs">

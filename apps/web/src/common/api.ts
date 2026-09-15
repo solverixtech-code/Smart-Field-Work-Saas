@@ -88,3 +88,48 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+export function extractErrorMessage(err: unknown, fallbackMessage = 'An unexpected error occurred'): string {
+  if (!err) return fallbackMessage;
+
+  const axiosError = err as any;
+  const data = axiosError?.response?.data;
+
+  if (data) {
+    // 1. Domain policy errors array e.g. { errors: [{ message: '...' }] }
+    if (Array.isArray(data.errors) && data.errors.length > 0) {
+      const firstErr = data.errors[0];
+      if (typeof firstErr === 'string' && firstErr.trim()) return firstErr;
+      if (firstErr?.message && typeof firstErr.message === 'string') return firstErr.message;
+    }
+
+    // 2. Validation pipe errors array e.g. { message: ['description should not be empty'] }
+    if (Array.isArray(data.message) && data.message.length > 0) {
+      return data.message.join('. ');
+    }
+
+    // 3. Single string message e.g. { message: 'Plan publication policy validation failed' }
+    if (typeof data.message === 'string' && data.message.trim()) {
+      return data.message;
+    }
+
+    // 4. Detail string
+    if (typeof data.detail === 'string' && data.detail.trim()) {
+      return data.detail;
+    }
+
+    // 5. Error string
+    if (typeof data.error === 'string' && data.error.trim()) {
+      return data.error;
+    }
+  }
+
+  if (err instanceof Error && err.message) {
+    if (!err.message.startsWith('Request failed with status code')) {
+      return err.message;
+    }
+  }
+
+  return fallbackMessage;
+}
+

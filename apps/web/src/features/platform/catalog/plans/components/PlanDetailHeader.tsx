@@ -13,6 +13,8 @@ import {
   Clock,
   MoreVertical,
   Check,
+  Send,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Plan } from '../types/plan.types';
@@ -20,6 +22,7 @@ import { planService } from '../services/plan.service';
 import { getPlanStatusBadge } from '../utils/plan-pricing.utils';
 import { Button } from '../../../../../components/ui/Button';
 import { usePlatformPermissions } from '../../../tenants/hooks/usePlatformPermissions';
+import { extractErrorMessage } from '../../../../../common/api';
 
 export interface PlanDetailHeaderProps {
   plan: Plan;
@@ -33,6 +36,8 @@ export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeade
 
   const [archiving, setArchiving] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [showBetaConfirm, setShowBetaConfirm] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
@@ -65,10 +70,32 @@ export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeade
       const duplicated = await planService.duplicatePlan(plan.id);
       toast.success(`Plan '${plan.name}' duplicated as draft '${duplicated.name}'`);
       navigate(`/platform/plans/create?planId=${duplicated.id}&step=basic`);
-    } catch {
-      toast.error('Failed to duplicate plan');
+    } catch (err) {
+      toast.error(extractErrorMessage(err, 'Failed to duplicate plan'));
     } finally {
       setDuplicating(false);
+    }
+  };
+
+  const handlePublish = async (allowBetaModules = false) => {
+    if (!canUpdatePlan) return;
+    setPublishing(true);
+    try {
+      await planService.publishPlan(plan.id, allowBetaModules);
+      toast.success(`Commercial Plan '${plan.name}' published as Active!`);
+      setShowBetaConfirm(false);
+      onRefresh();
+    } catch (err: any) {
+      const isBetaReq = err?.response?.data?.errors?.some(
+        (e: any) => e.code === 'PLAN_MODULE_BETA_ACKNOWLEDGEMENT_REQUIRED'
+      );
+      if (isBetaReq && !allowBetaModules) {
+        setShowBetaConfirm(true);
+      } else {
+        toast.error(extractErrorMessage(err, 'Failed to publish plan'));
+      }
+    } finally {
+      setPublishing(false);
     }
   };
 
@@ -80,8 +107,8 @@ export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeade
       toast.success(`Plan '${plan.name}' has been archived.`);
       setShowArchiveConfirm(false);
       onRefresh();
-    } catch {
-      toast.error('Failed to archive plan');
+    } catch (err) {
+      toast.error(extractErrorMessage(err, 'Failed to archive plan'));
     } finally {
       setArchiving(false);
     }
@@ -190,13 +217,26 @@ export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeade
 
           {canUpdatePlan && (
             <Button
-              variant="accent"
+              variant="outline"
               size="sm"
               onClick={() => navigate(`/platform/plans/create?planId=${plan.id}&step=${editConfig.step}`)}
-              className="gap-2 font-bold shadow-xs bg-[#1D4ED8] hover:bg-blue-700 text-white border-none"
+              className="gap-2 font-bold text-slate-700 bg-white border-slate-200 hover:bg-slate-50"
             >
-              <Edit className="h-4 w-4" />
+              <Edit className="h-4 w-4 text-slate-500" />
               {editConfig.label}
+            </Button>
+          )}
+
+          {canUpdatePlan && plan.status === 'Draft' && (
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => handlePublish(false)}
+              disabled={publishing}
+              className="gap-2 font-bold shadow-xs bg-emerald-600 hover:bg-emerald-700 text-white border-none"
+            >
+              <Send className="h-4 w-4" />
+              {publishing ? 'Publishing...' : 'Publish Plan'}
             </Button>
           )}
 
@@ -241,6 +281,43 @@ export function PlanDetailHeader({ plan, activeTab, onRefresh }: PlanDetailHeade
                 className="flex-1 font-bold bg-rose-600 hover:bg-rose-700 text-white justify-center"
               >
                 {archiving ? 'Archiving...' : 'Archive Plan'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Beta Module Acknowledgment Confirmation Modal */}
+      {showBetaConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="w-full max-w-md rounded-sm border border-slate-200 bg-white p-6 shadow-2xl space-y-4 text-center font-sans">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+              <Sparkles className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-[#0D1F3D]">Publish Plan with Beta Modules</h3>
+              <p className="text-xs text-slate-600 font-medium mt-1">
+                This plan includes BETA stage modules (e.g. AI Copilot). Do you want to acknowledge beta module inclusion and publish <strong>{plan.name}</strong> as Active?
+              </p>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBetaConfirm(false)}
+                disabled={publishing}
+                className="flex-1 font-bold justify-center"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="accent"
+                size="sm"
+                onClick={() => handlePublish(true)}
+                disabled={publishing}
+                className="flex-1 font-bold bg-emerald-600 hover:bg-emerald-700 text-white justify-center"
+              >
+                {publishing ? 'Publishing...' : 'Acknowledge & Publish'}
               </Button>
             </div>
           </div>
