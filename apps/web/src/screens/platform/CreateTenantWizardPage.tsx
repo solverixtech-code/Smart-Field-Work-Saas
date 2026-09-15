@@ -351,11 +351,11 @@ function Step1CompanyDetails() {
             onChange={(e) => updateFormState({ timezone: e.target.value })}
             searchable={true}
             options={[
-              { value: '(GMT+05:30) Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' },
-              { value: '(GMT+00:00) UTC', label: '(GMT+00:00) UTC' },
-              { value: '(GMT-05:00) America/New_York', label: '(GMT-05:00) America/New_York' },
-              { value: '(GMT+01:00) Europe/London', label: '(GMT+01:00) Europe/London' },
-              { value: '(GMT+08:00) Asia/Singapore', label: '(GMT+08:00) Asia/Singapore' },
+              { value: 'Asia/Kolkata', label: '(GMT+05:30) Asia/Kolkata' },
+              { value: 'UTC', label: '(GMT+00:00) UTC' },
+              { value: 'America/New_York', label: '(GMT-05:00) America/New_York' },
+              { value: 'Europe/London', label: '(GMT+01:00) Europe/London' },
+              { value: 'Asia/Singapore', label: '(GMT+08:00) Asia/Singapore' },
             ]}
           />
           <Select

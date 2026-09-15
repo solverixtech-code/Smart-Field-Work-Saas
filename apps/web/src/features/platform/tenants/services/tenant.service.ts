@@ -80,6 +80,18 @@ export interface ITenantService {
   ): Promise<any>;
 }
 
+function sanitizeIanaTimezone(tz?: string): string {
+  if (!tz) return 'Asia/Kolkata';
+  let cleaned = tz.replace(/^\([^)]+\)\s*/, '').trim();
+  if (cleaned.includes(' ')) {
+    const parts = cleaned.split(' ');
+    if (parts[0].includes('/')) {
+      cleaned = parts[0];
+    }
+  }
+  return cleaned || 'Asia/Kolkata';
+}
+
 class ApiTenantService implements ITenantService {
   async getTenants(query: { search?: string; status?: string; page?: number; limit?: number } = {}): Promise<Tenant[]> {
     const res = await this.getPaginatedTenants(query);
@@ -164,7 +176,7 @@ class ApiTenantService implements ITenantService {
         websiteUrl: formState.website,
         description: formState.description,
         settings: {
-          timezone: formState.timezone || 'Asia/Kolkata',
+          timezone: sanitizeIanaTimezone(formState.timezone),
           currency: formState.currency?.substring(0, 3) || 'INR',
           dateFormat: formState.dateFormat || 'DD MMM YYYY',
           weekStartDay: formState.weekStartDay || 'Monday',
