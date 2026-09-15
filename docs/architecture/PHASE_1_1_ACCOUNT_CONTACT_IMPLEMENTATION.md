@@ -31,7 +31,7 @@ One forward-only migration:
 - SQL guards prevent deleting a Business with live Contacts or deleting/deactivating its primary Contact.
 - Shared SYSTEM/INDUSTRY Master references use definition/source integrity checks; Tenant Master references must belong to the same Tenant.
 - Extends the existing AuditLog category check by adding CRM; the other frozen audit rules remain intact.
-- No Phase 0 CRM data backfill, duplicate merge, hard-delete API or restore endpoint.
+- SQL rejects physical Account/Contact deletion; all removal uses soft deletion. No Phase 0 CRM data backfill, duplicate merge or restore endpoint.
 
 Mutation writes use atomic scoped revision predicates and increments. Linked commands lock Account before Contact. Primary switching demotes/promotes under the Account lock, increments affected revisions and writes audits in the same transaction. The existing Master Tenant lock precedes other locks, avoiding a shared-lock upgrade deadlock discovered by the concurrency tests. This serializes CRM writes per Tenant while validating effective Master choices; it is an intentional first-slice throughput trade-off.
 

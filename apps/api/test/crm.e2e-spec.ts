@@ -415,6 +415,9 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
       standalone = await contact(),
       linked = await contact(a, { accountId: row.id });
     expect(standalone.ownerMembershipId).toBe(a.membershipId);
+    await expect(
+      prisma.contact.delete({ where: { id: standalone.id } }),
+    ).rejects.toThrow("CRM_SOFT_DELETE_ONLY");
     expect(linked.ownerMembershipId).toBeNull();
     await expect(
       prisma.contact.update({
@@ -455,6 +458,13 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
       primaryContact: { name: "Primary", email: "primary@test.invalid" },
     });
     const child = await contact(a, { accountId: row.id });
+    await expect(
+      prisma.contact.delete({ where: { id: row.primaryContact!.id } }),
+    ).rejects.toThrow("CRM_SOFT_DELETE_ONLY");
+    const empty = await account();
+    await expect(
+      prisma.account.delete({ where: { id: empty.id } }),
+    ).rejects.toThrow("CRM_SOFT_DELETE_ONLY");
     await expect(
       prisma.contact.update({
         where: { id: child.id },

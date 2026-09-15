@@ -12,6 +12,7 @@ import {
 } from "../../features/crm/CrmContext";
 import {
   CrmFailure,
+  CrmLookup,
   statuses,
   statusLabel,
 } from "../../features/crm/CrmControls";
@@ -23,14 +24,21 @@ export default function AllBusinessesPage() {
   const debounced = useDebouncedSearch(search);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("");
+  const [city, setCity] = useState("");
+  const cityQuery = useDebouncedSearch(city);
+  const [businessTypeValueId, setBusinessTypeValueId] = useState("");
+  const [sourceValueId, setSourceValueId] = useState("");
   const result = useCrmQuery(
-    `accounts:${debounced}:${status}:${page}`,
+    `accounts:${debounced}:${status}:${cityQuery}:${businessTypeValueId}:${sourceValueId}:${page}`,
     (service, signal) =>
       service.accounts(
         {
           page,
           limit: 25,
           search: debounced,
+          city: cityQuery || undefined,
+          businessTypeValueId: businessTypeValueId || undefined,
+          sourceValueId: sourceValueId || undefined,
           status: status ? (status as CrmStatus) : undefined,
         },
         signal,
@@ -50,6 +58,7 @@ export default function AllBusinessesPage() {
     },
     { header: "Business type", cell: (row) => row.businessType || "Not set" },
     { header: "City", cell: (row) => row.city || "Not set" },
+    { header: "Source", cell: (row) => row.source || "Not set" },
     { header: "Owner", cell: (row) => row.owner.displayName },
     { header: "Status", cell: (row) => statusLabel(row.status) },
   ];
@@ -112,6 +121,42 @@ export default function AllBusinessesPage() {
           }}
         />
       </div>
+      <div className="grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Input
+          id="business-filter-city"
+          label="City (exact match)"
+          maxLength={100}
+          value={city}
+          onChange={(e) => {
+            setCity(e.target.value);
+            setPage(1);
+          }}
+        />
+        {can("system.masters.view") && (
+          <>
+            <CrmLookup
+              id="business-filter-type"
+              label="Business type"
+              kind="business_type"
+              value={businessTypeValueId}
+              onChange={(id) => {
+                setBusinessTypeValueId(id);
+                setPage(1);
+              }}
+            />
+            <CrmLookup
+              id="business-filter-source"
+              label="Source"
+              kind="lead_source"
+              value={sourceValueId}
+              onChange={(id) => {
+                setSourceValueId(id);
+                setPage(1);
+              }}
+            />
+          </>
+        )}
+      </div>
       {result.error ? (
         <CrmFailure error={result.error} retry={result.reload} />
       ) : (
@@ -121,7 +166,7 @@ export default function AllBusinessesPage() {
           keyExtractor={(row) => row.id}
           isLoading={result.loading}
           emptyMessage={
-            search || status
+            search || status || city || businessTypeValueId || sourceValueId
               ? "No businesses match these filters."
               : "No businesses yet."
           }

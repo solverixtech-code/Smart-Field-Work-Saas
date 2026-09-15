@@ -127,6 +127,7 @@ export class CrmRepository {
           "CRM_CONTACT_LINK_IMMUTABLE",
           "CRM_PRIMARY_CONTACT_REQUIRED_CHANGE",
           "CRM_ACCOUNT_DELETED",
+          "CRM_SOFT_DELETE_ONLY",
         ].find((code) => error.message.includes(code));
         if (match) crmConflict(match);
         if (error instanceof Prisma.PrismaClientKnownRequestError) {

@@ -195,3 +195,11 @@ BEGIN
  RETURN NEW;
 END $$;
 CREATE TRIGGER crm_contact_integrity BEFORE INSERT OR UPDATE ON "Contact" FOR EACH ROW EXECUTE FUNCTION crm_contact_integrity();
+
+-- CRM records are retained through soft deletion, including direct SQL access.
+CREATE FUNCTION crm_reject_hard_delete() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ RAISE EXCEPTION 'CRM_SOFT_DELETE_ONLY' USING ERRCODE='23514';
+END $$;
+CREATE TRIGGER crm_account_soft_delete_only BEFORE DELETE ON "Account" FOR EACH ROW EXECUTE FUNCTION crm_reject_hard_delete();
+CREATE TRIGGER crm_contact_soft_delete_only BEFORE DELETE ON "Contact" FOR EACH ROW EXECUTE FUNCTION crm_reject_hard_delete();
