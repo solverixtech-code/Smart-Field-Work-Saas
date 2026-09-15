@@ -15,6 +15,9 @@ import {
   Eye,
   EyeOff,
   User,
+  Users,
+  Crown,
+  Star,
   Shield,
   FileText,
   Lock,
@@ -598,6 +601,23 @@ function transformBackendPlanToPlatformPlan(p: Plan): PlatformPlan {
   };
 }
 
+function getPlanCardIconConfig(code: string, tier?: string) {
+  const upperCode = (code || tier || '').toUpperCase();
+  if (upperCode.includes('STARTER') || upperCode.includes('BASE')) {
+    return { icon: Users, bg: 'bg-blue-50 text-blue-600 border border-blue-100' };
+  }
+  if (upperCode.includes('GROWTH')) {
+    return { icon: BarChart3, bg: 'bg-emerald-50 text-emerald-600 border border-emerald-100' };
+  }
+  if (upperCode.includes('PROFESSIONAL') || upperCode.includes('PRO')) {
+    return { icon: Crown, bg: 'bg-purple-50 text-purple-600 border border-purple-100' };
+  }
+  if (upperCode.includes('ENTERPRISE') || upperCode.includes('CUSTOM')) {
+    return { icon: Building2, bg: 'bg-sky-50 text-sky-600 border border-sky-100' };
+  }
+  return { icon: Layers, bg: 'bg-indigo-50 text-indigo-600 border border-indigo-100' };
+}
+
 // STEP 4: PLAN & SUBSCRIPTION
 function Step4PlanSubscription({
   livePlans,
@@ -692,39 +712,79 @@ function Step4PlanSubscription({
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {displayedPlans.map((plan) => {
             const isSelected = formState.planId === plan.id;
+            const iconConfig = getPlanCardIconConfig(plan.code, plan.tier);
+            const IconComponent = iconConfig.icon;
+            const isRecommended = plan.code === 'PROFESSIONAL' || plan.tier === 'Professional' || plan.id.includes('professional');
+
             return (
               <div
                 key={plan.id}
                 onClick={() => handlePlanSelect(plan.id)}
-                className={`relative rounded-sm border p-5 cursor-pointer transition-all ${
+                className={`relative flex flex-col justify-between rounded-2xl border-2 p-6 cursor-pointer transition-all duration-200 ${
                   isSelected
-                    ? 'border-indigo-600 bg-white ring-2 ring-indigo-500 shadow-md'
-                    : 'border-slate-200 bg-white hover:border-slate-300'
+                    ? 'border-blue-500 bg-white ring-4 ring-blue-500/10 shadow-lg'
+                    : 'border-slate-200/90 bg-white hover:border-slate-300 hover:shadow-md'
                 }`}
               >
-                {plan.code === 'PROFESSIONAL' && (
-                  <span className="absolute right-3 top-3 rounded-full bg-purple-100 px-2.5 py-0.5 text-[9px] font-extrabold text-purple-700">
-                    Recommended
-                  </span>
-                )}
-                <p className="text-base font-extrabold text-[#0D1F3D]">{plan.name}</p>
-                <p className="text-[11px] text-slate-500 font-medium mb-3 font-mono truncate">ID: {plan.id}</p>
+                <div>
+                  {/* Top Row: Icon Badge & Recommended Pill */}
+                  <div className="flex items-center justify-between gap-2 mb-4">
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${iconConfig.bg}`}>
+                      <IconComponent className="h-5 w-5" />
+                    </div>
 
-                <p className="text-2xl font-extrabold text-[#0D1F3D]">
-                  ₹{plan.monthlyPricePerUser.toLocaleString('en-IN')} <span className="text-xs font-normal text-slate-400">/ user / mo</span>
-                </p>
-                <p className="text-[10px] text-slate-400 font-semibold mb-4">Min Users: {plan.minUsers}</p>
+                    {isRecommended && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-100/90 px-3 py-1 text-[11px] font-extrabold text-purple-700 border border-purple-200/60">
+                        <Star className="h-3 w-3 fill-purple-600 text-purple-600" /> Recommended
+                      </span>
+                    )}
+                  </div>
 
-                <ul className="mt-4 space-y-2 text-xs text-slate-600 border-t border-slate-100 pt-3">
-                  {plan.features.map((f, idx) => (
-                    <li key={idx} className="flex items-center gap-1.5 text-[11px] font-semibold">
-                      <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" /> {f}
-                    </li>
-                  ))}
-                </ul>
+                  {/* Plan Name & ID */}
+                  <div>
+                    <h4 className="text-base font-extrabold text-[#0D1F3D] leading-snug tracking-tight mb-0.5">
+                      {plan.name}
+                    </h4>
+                    <p className="text-[11px] font-mono text-slate-400 font-medium mb-3 truncate">
+                      ID: {plan.id}
+                    </p>
+                  </div>
+
+                  {/* Price Block */}
+                  <div className="my-2">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-extrabold text-[#0D1F3D] tracking-tight">
+                        ₹{plan.monthlyPricePerUser.toLocaleString('en-IN')}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-400">
+                        / user / mo
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-slate-500 mt-1">
+                      Min Users: {plan.minUsers}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  {/* Divider Line */}
+                  <div className="border-t border-slate-100 my-3.5" />
+
+                  {/* Feature Checklist */}
+                  <ul className="space-y-2.5 text-xs font-medium text-slate-700">
+                    {plan.features.map((f, idx) => (
+                      <li key={idx} className="flex items-center gap-2.5 text-xs font-semibold text-slate-700">
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                          <Check className="h-2.5 w-2.5 stroke-[3]" />
+                        </span>
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             );
           })}
