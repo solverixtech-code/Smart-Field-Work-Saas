@@ -74,6 +74,7 @@ export function CrmLookup({
   currentLabel,
   onChange,
   disabled = false,
+  compact = false,
 }: {
   id: string;
   label: string;
@@ -82,6 +83,7 @@ export function CrmLookup({
   currentLabel?: string | null;
   onChange: (id: string) => void;
   disabled?: boolean;
+  compact?: boolean;
 }) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -126,7 +128,7 @@ export function CrmLookup({
           },
         ]
       : [];
-  return (
+  const controls = (
     <div className="space-y-2">
       <Input
         id={`${id}-search`}
@@ -157,9 +159,14 @@ export function CrmLookup({
         }
         onChange={(e) => onChange(e.target.value)}
       />
-      {result.error && (
-        <CrmFailure error={result.error} retry={result.reload} />
-      )}
+      {result.error &&
+        (result.error.status === 404 ? (
+          <p className="text-xs text-slate-500">
+            {label} options are unavailable.
+          </p>
+        ) : (
+          <CrmFailure error={result.error} retry={result.reload} />
+        ))}
       {result.data && result.data.totalPages > 1 && (
         <div className="flex items-center gap-2">
           <Button
@@ -186,5 +193,18 @@ export function CrmLookup({
         </div>
       )}
     </div>
+  );
+  return compact ? (
+    <details className="relative rounded-lg border border-slate-200 bg-white p-2.5">
+      <summary className="cursor-pointer text-xs font-semibold text-slate-700">
+        {label}
+        {value ? " (filtered)" : ""}
+      </summary>
+      <div className="absolute left-0 top-full z-20 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+        {controls}
+      </div>
+    </details>
+  ) : (
+    controls
   );
 }

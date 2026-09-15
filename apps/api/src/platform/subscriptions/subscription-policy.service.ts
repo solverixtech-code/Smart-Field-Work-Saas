@@ -15,52 +15,9 @@ export type CommercialVersion = Prisma.PlanVersionGetPayload<{ select: typeof co
 @Injectable()
 export class SubscriptionPolicyService {
   async select(tx: Prisma.TransactionClient, input: Selection, audience: 'NEW' | 'EXISTING', trial = false) {
-    let version = await tx.planVersion.findUnique({ where: { id: input.planVersionId }, select: commercialVersionSelect });
-
-    if (!version) {
-      const targetCode = input.planVersionId.replace(/^plan_/, '').toUpperCase();
-      const plan = await tx.plan.findFirst({
-        where: {
-          OR: [
-            { id: input.planVersionId },
-            { code: targetCode },
-            { code: input.planVersionId.toUpperCase() },
-          ],
-        },
-        select: {
-          currentPublishedVersionId: true,
-          versions: {
-            orderBy: { version: 'desc' },
-            select: { id: true },
-            take: 1,
-          },
-        },
-      });
-
-      if (plan) {
-        const targetVersionId = plan.currentPublishedVersionId || plan.versions[0]?.id;
-        if (targetVersionId) {
-          version = await tx.planVersion.findUnique({ where: { id: targetVersionId }, select: commercialVersionSelect });
-        }
-      }
-    }
-
-    if (!version) {
+    const version = await tx.planVersion.findUnique({ where: { id: input.planVersionId }, select: commercialVersionSelect });
+    if (!version || version.status !== 'PUBLISHED' || !version.publishedAt || version.plan.status !== 'ACTIVE') {
       throw new BadRequestException('Select an explicitly published version of an active Plan');
-    }
-
-    // Auto-promote DRAFT plans/versions to ACTIVE/PUBLISHED during tenant provisioning
-    if (version.status !== 'PUBLISHED' || !version.publishedAt || version.plan.status !== 'ACTIVE') {
-      const now = new Date();
-      await tx.planVersion.update({
-        where: { id: version.id },
-        data: { status: 'PUBLISHED', publishedAt: now },
-      });
-      await tx.plan.update({
-        where: { id: version.plan.id },
-        data: { status: 'ACTIVE', currentPublishedVersionId: version.id },
-      });
-      version = (await tx.planVersion.findUnique({ where: { id: version.id }, select: commercialVersionSelect }))!;
     }
     const rules = readRules(version.commercialRule);
     const codes = new Set(version.modules.map(m => m.module.code));
@@ -84,14 +41,8 @@ export class SubscriptionPolicyService {
     if (input.seatQuantity < min || (!max?.isUnlimited && input.seatQuantity > (max?.integerValue ?? defaultSeats)) || increment < 1 || (input.seatQuantity - min) % increment !== 0) {
       throw new BadRequestException('Seat quantity violates the pinned Plan limits');
     }
-    if (trial) {
-      if (!rules.trialEnabled) {
-        rules.trialEnabled = true;
-      }
-      if (rules.trialSeatLimit !== undefined && input.seatQuantity > rules.trialSeatLimit) {
-        // Cap or expand trial seat limit threshold for provisioned workspace
-        rules.trialSeatLimit = Math.max(rules.trialSeatLimit, input.seatQuantity);
-      }
+    if (trial && (!rules.trialEnabled || (rules.trialSeatLimit !== undefined && input.seatQuantity > rules.trialSeatLimit))) {
+      throw new BadRequestException('Trial is disabled or trial seats exceeded');
     }
     return { version, rules };
   }

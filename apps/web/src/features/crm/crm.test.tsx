@@ -118,6 +118,14 @@ async function click(text: string) {
   await flush();
 }
 beforeEach(() => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
   state.tenant = "tenant-a";
   state.token = "token-a";
   host = document.createElement("div");
@@ -128,6 +136,7 @@ afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 describe("CRM frontend production flow", () => {
   it("loads real totals and records under StrictMode", async () => {
@@ -145,6 +154,41 @@ describe("CRM frontend production flow", () => {
     expect(host.textContent).toContain("1 businesses");
     expect(host.textContent).not.toContain("5,842");
   });
+  it("uses server totals, not the displayed page, for status KPIs", async () => {
+    const api = service();
+    vi.mocked(api.accounts).mockImplementation(async (query) => ({
+      items: query.limit === 1 ? [] : [initial],
+      page: 1,
+      limit: query.limit ?? 25,
+      totalPages: 4,
+      total:
+        query.status === "ACTIVE"
+          ? 71
+          : query.status === "INACTIVE"
+            ? 19
+            : query.status === "BLOCKED"
+              ? 10
+              : 100,
+    }));
+    await act(async () => root.render(view(api)));
+    await flush();
+    expect(host.textContent).toContain("100 businesses");
+    for (const [label, count] of [
+      ["Total Businesses", "100"],
+      ["Active Businesses", "71"],
+      ["Inactive Businesses", "19"],
+      ["Blocked Businesses", "10"],
+    ]) {
+      const title = Array.from(host.querySelectorAll("span[title]")).find(
+        (el) => el.getAttribute("title") === label,
+      );
+      expect(title?.parentElement?.parentElement?.textContent).toContain(count);
+    }
+    expect(api.accounts).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 1, status: "ACTIVE" }),
+      expect.any(AbortSignal),
+    );
+  });
   it("renders a real empty result without fixture fallback", async () => {
     const api = service();
     vi.mocked(api.accounts).mockResolvedValue({
@@ -157,6 +201,23 @@ describe("CRM frontend production flow", () => {
     await act(async () => root.render(view(api)));
     await flush();
     expect(host.textContent).toContain("No businesses yet");
+    for (const label of [
+      "Total Businesses",
+      "Active Businesses",
+      "Inactive Businesses",
+      "Blocked Businesses",
+      "New This Month",
+      "Businesses by Status",
+      "Businesses by Source",
+      "Quick Actions",
+    ])
+      expect(host.textContent).toContain(label);
+    expect(host.textContent).toContain("Monthly analytics unavailable");
+    expect(
+      host.querySelector<HTMLButtonElement>(
+        'button[title="Export is not available in this phase"]',
+      )?.disabled,
+    ).toBe(true);
   });
   it.each([400, 401, 403, 404, 409, 412, 422, 429, 500])(
     "shows explicit API %s failure without demo data",
