@@ -20,6 +20,8 @@ import {
   PauseCircle,
   PlayCircle,
   RefreshCw,
+  Copy,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
@@ -226,6 +228,13 @@ export function TenantUsersPage() {
   const handleResendInvite = async (memberId: string) => {
     await tenantMembershipService.resendInvite(tenant.id, memberId);
     toast.success('Invitation email resent successfully');
+    setActiveRowMenuId(null);
+  };
+
+  const handleCopyInviteLink = (memberId: string) => {
+    const inviteUrl = `${window.location.origin}/accept-invitation?id=${memberId}`;
+    navigator.clipboard.writeText(inviteUrl);
+    toast.success('Invitation link copied to clipboard');
     setActiveRowMenuId(null);
   };
 
@@ -583,16 +592,28 @@ export function TenantUsersPage() {
                               className="absolute right-2 top-full z-50 mt-1 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-2xl text-xs font-semibold space-y-0.5 animate-in fade-in zoom-in-95 text-left"
                             >
                               {u.status === 'Invited' ? (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleResendInvite(u.id);
-                                  }}
-                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-1.5 text-indigo-700 hover:bg-indigo-50 cursor-pointer"
-                                >
-                                  <Mail className="h-3.5 w-3.5 text-indigo-600" /> Resend Invite
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCopyInviteLink(u.id);
+                                    }}
+                                    className="w-full flex items-center gap-2 rounded-sm px-3 py-1.5 text-indigo-700 hover:bg-indigo-50 cursor-pointer"
+                                  >
+                                    <Copy className="h-3.5 w-3.5 text-indigo-600" /> Copy Invite Link
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleResendInvite(u.id);
+                                    }}
+                                    className="w-full flex items-center gap-2 rounded-sm px-3 py-1.5 text-slate-700 hover:bg-slate-100 cursor-pointer"
+                                  >
+                                    <Mail className="h-3.5 w-3.5 text-slate-500" /> Resend Invite
+                                  </button>
+                                </>
                               ) : u.status === 'Active' ? (
                                 <button
                                   type="button"

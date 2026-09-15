@@ -5,6 +5,7 @@ import LoginPage from './screens/auth/LoginPage';
 import ForgotPasswordPage from './screens/auth/ForgotPasswordPage';
 import ResetPasswordPage from './screens/auth/ResetPasswordPage';
 import VerifyOtpPage from './screens/auth/VerifyOtpPage';
+import AcceptInvitationPage from './screens/auth/AcceptInvitationPage';
 import ProfilePage from './screens/auth/ProfilePage';
 import ChangePasswordPage from './screens/auth/ChangePasswordPage';
 import ActiveSessionsPage from './screens/auth/ActiveSessionsPage';
@@ -234,6 +235,8 @@ export default function AppRouter() {
         <Route path="/user-data-deletion" element={<DataDeletionInstructionsPage />} />
 
         {/* Public Auth Routes */}
+        <Route path="/accept-invitation" element={<AcceptInvitationPage />} />
+        <Route path="/invitation/accept" element={<AcceptInvitationPage />} />
         <Route path="/admin/login" element={<LoginPage />} />
         <Route path="/admin/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/admin/reset-password" element={<ResetPasswordPage />} />
