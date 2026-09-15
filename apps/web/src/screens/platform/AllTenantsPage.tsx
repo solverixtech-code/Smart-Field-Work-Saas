@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
+import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { tenantService } from '../../features/platform/tenants/services/tenant.service';
@@ -406,92 +407,19 @@ export function AllTenantsPage() {
                         <td className="py-3.5 font-bold text-[#0D1F3D]">{formatCurrency(t.mrr)}</td>
                         <td className="py-3.5">{getStatusBadge(t.tenantStatus)}</td>
                         <td className="py-3.5 text-slate-500 font-medium">{t.createdAt.split(' ·')[0]}</td>
-                        <td className="py-3.5 text-right relative">
-                          <button
-                            type="button"
-                            onClick={() => setActiveMenuId(activeMenuId === t.id ? null : t.id)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
-
-                          {activeMenuId === t.id && (
-                            <div className="absolute right-0 top-full z-30 mt-1 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  navigate(`/platform/tenants/${t.id}`);
-                                }}
-                                className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                              >
-                                <Eye className="h-4 w-4 text-blue-600" /> View Details
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  navigate(`/platform/tenants/create?tenantId=${t.id}`);
-                                }}
-                                className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                              >
-                                <Edit className="h-4 w-4 text-emerald-600" /> Edit Tenant
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  navigate(`/platform/tenants/${t.id}/users`);
-                                }}
-                                className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                              >
-                                <Users className="h-4 w-4 text-purple-600" /> Manage Users
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  navigate(`/platform/tenants/${t.id}/modules`);
-                                }}
-                                className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                              >
-                                <Layers className="h-4 w-4 text-indigo-600" /> Manage Modules
-                              </button>
-                              {t.tenantStatus === 'Active' ? (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveMenuId(null);
-                                    setSuspendTarget(t);
-                                  }}
-                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-amber-700 hover:bg-amber-50 border-t border-slate-100"
-                                >
-                                  <PauseCircle className="h-4 w-4 text-amber-600" /> Suspend Tenant
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActiveMenuId(null);
-                                    handleUpdateStatus(t.id, 'Active');
-                                  }}
-                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 border-t border-slate-100"
-                                >
-                                  <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Activate Tenant
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  handleUpdateStatus(t.id, 'Archived');
-                                }}
-                                className="w-full flex items-center gap-2 rounded-sm px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
-                              >
-                                <Archive className="h-4 w-4 text-slate-500" /> Archive Tenant
-                              </button>
-                            </div>
-                          )}
+                        <td className="py-3.5 text-right">
+                          <RowActionsMenu
+                            items={[
+                              { label: 'View Details', icon: Eye, onClick: () => navigate(`/platform/tenants/${t.id}`) },
+                              { label: 'Edit Tenant', icon: Edit, onClick: () => navigate(`/platform/tenants/create?tenantId=${t.id}`) },
+                              { label: 'Manage Users', icon: Users, onClick: () => navigate(`/platform/tenants/${t.id}/users`) },
+                              { label: 'Manage Modules', icon: Layers, onClick: () => navigate(`/platform/tenants/${t.id}/modules`) },
+                              ...(t.tenantStatus === 'Active'
+                                ? [{ label: 'Suspend Tenant', icon: PauseCircle, danger: true, divider: true, onClick: () => setSuspendTarget(t) }]
+                                : [{ label: 'Activate Tenant', icon: CheckCircle2, divider: true, onClick: () => handleUpdateStatus(t.id, 'Active') }]),
+                              { label: 'Archive Tenant', icon: Archive, danger: true, onClick: () => handleUpdateStatus(t.id, 'Archived') },
+                            ]}
+                          />
                         </td>
                       </tr>
                     ))

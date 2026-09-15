@@ -28,6 +28,7 @@ import { Select } from '../../components/ui/Select';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
+import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { tenantService } from '../../features/platform/tenants/services/tenant.service';
 import { tenantMembershipService } from '../../features/platform/tenants/services/tenant-membership.service';
@@ -574,71 +575,19 @@ export function TenantUsersPage() {
                         </td>
                         <td className="py-3 px-3 font-semibold text-slate-600">{u.joinedOn}</td>
                         <td className="py-3 px-3 font-semibold text-slate-600">{u.lastActive}</td>
-                        <td className="py-3 px-3 text-right relative">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveRowMenuId(activeRowMenuId === u.id ? null : u.id);
-                            }}
-                            className="p-1.5 rounded-sm hover:bg-slate-100 text-slate-500 hover:text-slate-800 cursor-pointer transition-colors"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </button>
-
-                          {activeRowMenuId === u.id && (
-                            <div
-                              onClick={(e) => e.stopPropagation()}
-                              className="absolute right-2 top-full z-50 mt-1 w-48 rounded-sm border border-slate-200 bg-white p-1.5 shadow-2xl text-xs font-semibold space-y-0.5 animate-in fade-in zoom-in-95 text-left"
-                            >
-                              {u.status === 'Invited' ? (
-                                <>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleCopyInviteLink(u.id);
-                                    }}
-                                    className="w-full flex items-center gap-2 rounded-sm px-3 py-1.5 text-indigo-700 hover:bg-indigo-50 cursor-pointer"
-                                  >
-                                    <Copy className="h-3.5 w-3.5 text-indigo-600" /> Copy Invite Link
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleResendInvite(u.id);
-                                    }}
-                                    className="w-full flex items-center gap-2 rounded-sm px-3 py-1.5 text-slate-700 hover:bg-slate-100 cursor-pointer"
-                                  >
-                                    <Mail className="h-3.5 w-3.5 text-slate-500" /> Resend Invite
-                                  </button>
-                                </>
-                              ) : u.status === 'Active' ? (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleUpdateUserStatus(u.id, 'Suspended');
-                                  }}
-                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-1.5 text-rose-600 hover:bg-rose-50 cursor-pointer"
-                                >
-                                  <PauseCircle className="h-3.5 w-3.5 text-rose-600" /> Suspend Access
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleUpdateUserStatus(u.id, 'Active');
-                                  }}
-                                  className="w-full flex items-center gap-2 rounded-sm px-3 py-1.5 text-emerald-700 hover:bg-emerald-50 cursor-pointer"
-                                >
-                                  <PlayCircle className="h-3.5 w-3.5 text-emerald-600" /> Reactivate User
-                                </button>
-                              )}
-                            </div>
-                          )}
+                        <td className="py-3 px-3 text-right">
+                          <RowActionsMenu
+                            items={
+                              u.status === 'Invited'
+                                ? [
+                                    { label: 'Copy Invite Link', icon: Copy, onClick: () => handleCopyInviteLink(u.id) },
+                                    { label: 'Resend Invite', icon: Mail, onClick: () => handleResendInvite(u.id) },
+                                  ]
+                                : u.status === 'Active'
+                                ? [{ label: 'Suspend Access', icon: PauseCircle, danger: true, onClick: () => handleUpdateUserStatus(u.id, 'Suspended') }]
+                                : [{ label: 'Reactivate User', icon: PlayCircle, onClick: () => handleUpdateUserStatus(u.id, 'Active') }]
+                            }
+                          />
                         </td>
                       </tr>
                     );

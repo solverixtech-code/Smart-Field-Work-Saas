@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { MoreVertical } from 'lucide-react';
 
 export interface ActionMenuItem {
@@ -23,63 +24,121 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
   align = 'right',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  const updatePosition = () => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const menuWidth = 192; // w-48 = 12rem = 192px
+    const estimatedHeight = items.length * 36 + 16; // approximate menu height
+
+    let left = align === 'right' ? rect.right - menuWidth : rect.left;
+    if (left + menuWidth > window.innerWidth - 8) {
+      left = window.innerWidth - menuWidth - 8;
+    }
+    if (left < 8) left = 8;
+
+    let top = rect.bottom + 4;
+    if (top + estimatedHeight > window.innerHeight - 8 && rect.top - estimatedHeight > 8) {
+      top = rect.top - estimatedHeight - 4;
+    }
+
+    setCoords({ top, left });
+  };
+
+  const toggleMenu = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isOpen) {
+      updatePosition();
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  };
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+    if (!isOpen) return;
+
+    const handleOutside = (e: MouseEvent) => {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(e.target as Node) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+
+    const handleScrollOrResize = () => {
+      setIsOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleOutside);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutside);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+    };
   }, [isOpen]);
 
   return (
-    <div className="relative inline-block text-left" ref={menuRef} onClick={(e) => e.stopPropagation()}>
+    <div className="inline-block" onClick={(e) => e.stopPropagation()}>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleMenu}
         className={triggerClassName}
         title="More Actions"
       >
         <TriggerIcon className="h-4 w-4" />
       </button>
 
-      {isOpen && (
-        <div
-          className={`absolute ${
-            align === 'right' ? 'right-0' : 'left-0'
-          } top-full mt-1 z-[99999] w-48 rounded-sm border border-slate-200 bg-white py-1 shadow-xl text-xs font-semibold animate-in fade-in zoom-in-95 duration-150`}
-        >
-          {items.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <React.Fragment key={idx}>
-                {item.divider && <div className="my-1 border-t border-slate-100" />}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsOpen(false);
-                    item.onClick();
-                  }}
-                  className={`flex w-full items-center gap-2 px-3 py-2 text-left transition-colors cursor-pointer ${
-                    item.danger
-                      ? 'text-red-600 hover:bg-red-50'
-                      : 'text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]'
-                  }`}
-                >
-                  {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${item.danger ? 'text-red-500' : 'text-slate-400'}`} />}
-                  <span className="truncate">{item.label}</span>
-                </button>
-              </React.Fragment>
-            );
-          })}
-        </div>
-      )}
+      {isOpen &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: 'fixed',
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              zIndex: 999999,
+            }}
+            className="w-48 rounded-sm border border-slate-200 bg-white py-1.5 shadow-2xl text-xs font-semibold animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {items.map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <React.Fragment key={idx}>
+                  {item.divider && <div className="my-1 border-t border-slate-100" />}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsOpen(false);
+                      item.onClick();
+                    }}
+                    className={`flex w-full items-center gap-2 px-3 py-2 text-left transition-colors cursor-pointer ${
+                      item.danger
+                        ? 'text-red-600 hover:bg-red-50'
+                        : 'text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D]'
+                    }`}
+                  >
+                    {Icon && <Icon className={`h-3.5 w-3.5 shrink-0 ${item.danger ? 'text-red-500' : 'text-slate-400'}`} />}
+                    <span className="truncate">{item.label}</span>
+                  </button>
+                </React.Fragment>
+              );
+            })}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };
