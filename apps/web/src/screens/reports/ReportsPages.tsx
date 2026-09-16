@@ -27,10 +27,12 @@ import {
   ShieldCheck,
   CreditCard,
   Building2,
-  CalendarCheck
+  CalendarCheck,
+  Zap,
 } from 'lucide-react';
 import { Button, DataTable, Input, Select, type ColumnDef } from '../../components/ui';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { KpiCard } from '../../components/dashboard/KpiCard';
 
 type ReportKind = 'dashboard' | 'sales' | 'executives' | 'visits' | 'territories' | 'conversions' | 'revenue' | 'payments' | 'attendance' | 'incentives' | 'categories';
 
@@ -193,31 +195,46 @@ export function ReportsDashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Total Sales Revenue</p>
-          <p className="text-xl font-extrabold text-[#0D1F3D] mt-1">₹42,85,400</p>
-          <p className="mt-2 text-[11px] font-semibold text-emerald-600">↑ 18.4% <span className="text-slate-400 font-normal">vs last month</span></p>
-        </div>
-        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Visits Completed</p>
-          <p className="text-xl font-extrabold text-[#0D1F3D] mt-1">1,842</p>
-          <p className="mt-2 text-[11px] font-semibold text-emerald-600">↑ 12.1% <span className="text-slate-400 font-normal">97.6% Verified</span></p>
-        </div>
-        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Lead Conversion Rate</p>
-          <p className="text-xl font-extrabold text-[#0D1F3D] mt-1">32.4%</p>
-          <p className="mt-2 text-[11px] font-semibold text-emerald-600">↑ 4.2% <span className="text-slate-400 font-normal">vs last month</span></p>
-        </div>
-        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Revenue Collected</p>
-          <p className="text-xl font-extrabold text-[#0D1F3D] mt-1">₹38,20,000</p>
-          <p className="mt-2 text-[11px] font-semibold text-blue-600">89.1% <span className="text-slate-400 font-normal">Settled</span></p>
-        </div>
-        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Active Field Reps</p>
-          <p className="text-xl font-extrabold text-[#0D1F3D] mt-1">128</p>
-          <p className="mt-2 text-[11px] font-semibold text-emerald-600">94.8% <span className="text-slate-400 font-normal">Present Today</span></p>
-        </div>
+        <KpiCard
+          title="Total Sales Revenue"
+          value="₹42,85,400"
+          subValue="↑ 18.4% vs last month"
+          icon={DollarSign}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Visits Completed"
+          value="1,842"
+          subValue="↑ 12.1% (97.6% Verified)"
+          icon={MapPin}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="Lead Conversion Rate"
+          value="32.4%"
+          subValue="↑ 4.2% vs last month"
+          icon={TrendingUp}
+          iconBgColor="bg-indigo-500/10"
+          iconTextColor="text-indigo-600"
+        />
+        <KpiCard
+          title="Revenue Collected"
+          value="₹38,20,000"
+          subValue="89.1% Settled"
+          icon={CreditCard}
+          iconBgColor="bg-teal-500/10"
+          iconTextColor="text-teal-600"
+        />
+        <KpiCard
+          title="Active Field Reps"
+          value="128"
+          subValue="94.8% Present Today"
+          icon={Users}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
+        />
       </div>
 
       {/* Reports Grid */}
@@ -289,26 +306,46 @@ export function DailySalesReportPage() {
       <ReportHeader kind="sales" title="Daily Sales Report" description="Track real-time sales transactions, daily closures and payment modes." />
 
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Daily Sales Revenue</p>
-          <p className="text-xl font-extrabold text-[#0D1F3D] mt-1">₹1,48,500</p>
-        </div>
-        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Orders / Closures</p>
-          <p className="text-xl font-extrabold text-[#0D1F3D] mt-1">42 Orders</p>
-        </div>
-        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Avg Order Value</p>
-          <p className="text-xl font-extrabold text-[#0D1F3D] mt-1">₹3,535</p>
-        </div>
-        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Top Performer Today</p>
-          <p className="text-sm font-extrabold text-emerald-700 mt-1">Rahul Verma (6 Deals)</p>
-        </div>
-        <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500">Highest Category</p>
-          <p className="text-sm font-extrabold text-[#0D1F3D] mt-1">Retail Tech (₹64,000)</p>
-        </div>
+        <KpiCard
+          title="Daily Sales Revenue"
+          value="₹1,48,500"
+          subValue="Across 4 active zones"
+          icon={DollarSign}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Orders / Closures"
+          value="42 Orders"
+          subValue="Daily deals won"
+          icon={CheckCircle2}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="Avg Order Value"
+          value="₹3,535"
+          subValue="Per transaction"
+          icon={TrendingUp}
+          iconBgColor="bg-indigo-500/10"
+          iconTextColor="text-indigo-600"
+        />
+        <KpiCard
+          title="Top Performer Today"
+          value="Rahul Verma"
+          subValue="6 Deals closed"
+          icon={Award}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
+        />
+        <KpiCard
+          title="Highest Category"
+          value="Retail Tech"
+          subValue="₹64,000 Revenue"
+          icon={Layers}
+          iconBgColor="bg-amber-500/10"
+          iconTextColor="text-amber-600"
+        />
       </div>
 
       <ReportFilterBar />
@@ -345,6 +382,49 @@ export function ExecutiveReportPage() {
     <div className="space-y-4 font-sans pb-12">
       <ReportHeader kind="executives" title="Executive Performance Report" description="Productivity ranking, lead conversions, and revenue contribution per field executive." />
 
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        <KpiCard
+          title="Active Field Reps"
+          value="128 Reps"
+          subValue="94.8% Present"
+          icon={Users}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="Avg Productivity"
+          value="88.4%"
+          subValue="Target > 85%"
+          icon={TrendingUp}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Total Visits"
+          value="842 Visits"
+          subValue="This month"
+          icon={MapPin}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
+        />
+        <KpiCard
+          title="Demos Logged"
+          value="324 Demos"
+          subValue="47.6% Converted"
+          icon={Zap}
+          iconBgColor="bg-amber-500/10"
+          iconTextColor="text-amber-600"
+        />
+        <KpiCard
+          title="Top Sales Rep"
+          value="Rahul Verma"
+          subValue="₹3.45L Generated"
+          icon={Award}
+          iconBgColor="bg-teal-500/10"
+          iconTextColor="text-teal-600"
+        />
+      </div>
+
       <ReportFilterBar />
 
       <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
@@ -375,6 +455,49 @@ export function VisitReportPage() {
   return (
     <div className="space-y-4 font-sans pb-12">
       <ReportHeader kind="visits" title="Field Visit Report" description="GPS audit logs, check-in accuracy and field visit completion metrics." />
+
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        <KpiCard
+          title="Total Visits"
+          value="1,842"
+          subValue="↑ 12.1% MTD"
+          icon={MapPin}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="GPS Verified %"
+          value="98.2%"
+          subValue="Within 50m radius"
+          icon={ShieldCheck}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Avg Meeting Time"
+          value="32 Mins"
+          subValue="Productive duration"
+          icon={Clock}
+          iconBgColor="bg-indigo-500/10"
+          iconTextColor="text-indigo-600"
+        />
+        <KpiCard
+          title="Closures on Visit"
+          value="24.6%"
+          subValue="Instant conversion"
+          icon={CheckCircle2}
+          iconBgColor="bg-teal-500/10"
+          iconTextColor="text-teal-600"
+        />
+        <KpiCard
+          title="Out of Bounds"
+          value="1.8%"
+          subValue="Flagged check-ins"
+          icon={AlertCircle}
+          iconBgColor="bg-rose-500/10"
+          iconTextColor="text-rose-600"
+        />
+      </div>
 
       <ReportFilterBar />
 
@@ -408,6 +531,49 @@ export function TerritoryReportPage() {
     <div className="space-y-4 font-sans pb-12">
       <ReportHeader kind="territories" title="Territory & Zone Report" description="Regional market penetration, territory targets and sales coverage analytics." />
 
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        <KpiCard
+          title="Active Territories"
+          value="14 Zones"
+          subValue="100% Operational"
+          icon={Layers}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="Top Zone"
+          value="Mumbai West"
+          subValue="₹14.8L Revenue"
+          icon={Award}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Avg Target Achievement"
+          value="93.2%"
+          subValue="Across all zones"
+          icon={TrendingUp}
+          iconBgColor="bg-indigo-500/10"
+          iconTextColor="text-indigo-600"
+        />
+        <KpiCard
+          title="Total Field Coverage"
+          value="88.6%"
+          subValue="Market penetration"
+          icon={MapPin}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
+        />
+        <KpiCard
+          title="High Growth Areas"
+          value="4 Zones"
+          subValue=">20% MoM growth"
+          icon={Zap}
+          iconBgColor="bg-amber-500/10"
+          iconTextColor="text-amber-600"
+        />
+      </div>
+
       <ReportFilterBar />
 
       <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
@@ -439,6 +605,49 @@ export function LeadConversionReportPage() {
     <div className="space-y-4 font-sans pb-12">
       <ReportHeader kind="conversions" title="Lead Conversion Report" description="Full sales funnel conversion metrics from lead capture to final deal closure." />
 
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        <KpiCard
+          title="Total Leads"
+          value="2,870"
+          subValue="All channels"
+          icon={Users}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="Qualified %"
+          value="76.3%"
+          subValue="2,190 Qualified"
+          icon={CheckCircle2}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Demos Scheduled"
+          value="1,442"
+          subValue="65.8% Demo rate"
+          icon={Zap}
+          iconBgColor="bg-indigo-500/10"
+          iconTextColor="text-indigo-600"
+        />
+        <KpiCard
+          title="Deals Won"
+          value="978"
+          subValue="Closed accounts"
+          icon={Award}
+          iconBgColor="bg-teal-500/10"
+          iconTextColor="text-teal-600"
+        />
+        <KpiCard
+          title="Blended Win Rate"
+          value="34.1%"
+          subValue="Lead to sale"
+          icon={TrendingUp}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
+        />
+      </div>
+
       <ReportFilterBar />
 
       <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
@@ -468,6 +677,49 @@ export function RevenueReportPage() {
   return (
     <div className="space-y-4 font-sans pb-12">
       <ReportHeader kind="revenue" title="Revenue & Growth Report" description="Monthly revenue growth, gross vs net profits, recurring subscriptions and margins." />
+
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        <KpiCard
+          title="Gross Sales"
+          value="₹42,85,400"
+          subValue="↑ 14.8% MoM"
+          icon={DollarSign}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Recurring MRR"
+          value="₹18,40,000"
+          subValue="42.9% of revenue"
+          icon={BarChart3}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="Net Profit Margin"
+          value="28.6%"
+          subValue="After field costs"
+          icon={TrendingUp}
+          iconBgColor="bg-indigo-500/10"
+          iconTextColor="text-indigo-600"
+        />
+        <KpiCard
+          title="Avg Contract Value"
+          value="₹32,400"
+          subValue="Per merchant annual"
+          icon={Building2}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
+        />
+        <KpiCard
+          title="Refund Rate"
+          value="0.6%"
+          subValue="Within SLA"
+          icon={CheckCircle2}
+          iconBgColor="bg-teal-500/10"
+          iconTextColor="text-teal-600"
+        />
+      </div>
 
       <ReportFilterBar />
 
@@ -501,6 +753,49 @@ export function PaymentReportPage() {
     <div className="space-y-4 font-sans pb-12">
       <ReportHeader kind="payments" title="Payment Collection Report" description="Payment gateway collection ledger, settlement logs, and gateway fee breakdown." />
 
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        <KpiCard
+          title="Total Collections"
+          value="₹38,20,000"
+          subValue="89.1% of orders"
+          icon={CreditCard}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="UPI / QR Payments"
+          value="₹22,40,000"
+          subValue="58.6% of volume"
+          icon={Zap}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="Gateway Settlements"
+          value="₹11,20,000"
+          subValue="Razorpay processed"
+          icon={DollarSign}
+          iconBgColor="bg-indigo-500/10"
+          iconTextColor="text-indigo-600"
+        />
+        <KpiCard
+          title="Cash Collected"
+          value="₹4,60,000"
+          subValue="Verified in field"
+          icon={Building2}
+          iconBgColor="bg-amber-500/10"
+          iconTextColor="text-amber-600"
+        />
+        <KpiCard
+          title="Settlement Ratio"
+          value="97.4%"
+          subValue="T+1 settlement"
+          icon={CheckCircle2}
+          iconBgColor="bg-teal-500/10"
+          iconTextColor="text-teal-600"
+        />
+      </div>
+
       <ReportFilterBar />
 
       <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
@@ -533,6 +828,49 @@ export function AttendanceReportPage() {
     <div className="space-y-4 font-sans pb-12">
       <ReportHeader kind="attendance" title="Executive Attendance Report" description="Monthly muster roll, punctuality scores, working hours and attendance logs." />
 
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        <KpiCard
+          title="Active Muster"
+          value="128 Reps"
+          subValue="94.8% Attendance"
+          icon={CalendarCheck}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="On-Time Rate"
+          value="94.2%"
+          subValue="Check-in < 9:30 AM"
+          icon={CheckCircle2}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Late Arrivals"
+          value="4.8%"
+          subValue="6 Reps today"
+          icon={Clock}
+          iconBgColor="bg-amber-500/10"
+          iconTextColor="text-amber-600"
+        />
+        <KpiCard
+          title="Avg Daily Hours"
+          value="8h 12m"
+          subValue="Productive field time"
+          icon={TrendingUp}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
+        />
+        <KpiCard
+          title="Geo-fence Accuracy"
+          value="99.1%"
+          subValue="Valid site logins"
+          icon={ShieldCheck}
+          iconBgColor="bg-teal-500/10"
+          iconTextColor="text-teal-600"
+        />
+      </div>
+
       <ReportFilterBar />
 
       <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
@@ -564,6 +902,49 @@ export function IncentiveReportPage() {
     <div className="space-y-4 font-sans pb-12">
       <ReportHeader kind="incentives" title="Incentive & Payout Report" description="Monthly target achievement, commission tier calculations and payout logs." />
 
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        <KpiCard
+          title="Total Pool"
+          value="₹4,20,000"
+          subValue="Accrued incentives"
+          icon={Award}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
+        />
+        <KpiCard
+          title="Eligible Reps"
+          value="84 Reps"
+          subValue="Met quota target"
+          icon={Users}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="Avg Payout"
+          value="₹5,000"
+          subValue="Per qualifying rep"
+          icon={DollarSign}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Top Earner"
+          value="₹41,400"
+          subValue="Rahul Verma (115%)"
+          icon={TrendingUp}
+          iconBgColor="bg-teal-500/10"
+          iconTextColor="text-teal-600"
+        />
+        <KpiCard
+          title="Disbursement"
+          value="82% Paid"
+          subValue="Remaining pending"
+          icon={CheckCircle2}
+          iconBgColor="bg-amber-500/10"
+          iconTextColor="text-amber-600"
+        />
+      </div>
+
       <ReportFilterBar />
 
       <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
@@ -594,6 +975,49 @@ export function CategoryRoiReportPage() {
   return (
     <div className="space-y-4 font-sans pb-12">
       <ReportHeader kind="categories" title="Category ROI Report" description="Category gross margins, marketing/travel expenditure and net ROI multiplier analysis." />
+
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        <KpiCard
+          title="Top Category"
+          value="Retail Tech"
+          subValue="₹18.4L Gross Revenue"
+          icon={Layers}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="Blended ROI"
+          value="13.8x"
+          subValue="Revenue / Travel Spend"
+          icon={TrendingUp}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Average Margin"
+          value="31.2%"
+          subValue="Across 3 sectors"
+          icon={DollarSign}
+          iconBgColor="bg-indigo-500/10"
+          iconTextColor="text-indigo-600"
+        />
+        <KpiCard
+          title="Total Units Sold"
+          value="12,850"
+          subValue="Hardware & Subscriptions"
+          icon={Building2}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
+        />
+        <KpiCard
+          title="Marketing Spend"
+          value="₹3,07,000"
+          subValue="Field allowances"
+          icon={CreditCard}
+          iconBgColor="bg-amber-500/10"
+          iconTextColor="text-amber-600"
+        />
+      </div>
 
       <ReportFilterBar />
 

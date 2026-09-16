@@ -61,6 +61,7 @@ export default function AllLeadsPage({
     [priority, setPriority] = useState(""),
     [status, setStatus] = useState(""),
     [source, setSource] = useState(""),
+    [selectedIds, setSelectedIds] = useState<string[]>([]),
     [page, setPage] = useState(1);
   const query = useDebouncedSearch(search);
   useEffect(() => setPage(1), [location.pathname]);
@@ -232,11 +233,19 @@ export default function AllLeadsPage({
       header: "Assigned Executive",
       cell: (l) => (
         <div className="flex items-center gap-2">
-          <div className="h-7 w-7 rounded-full bg-[#0D1F3D] text-white font-bold text-[10px] flex items-center justify-center shrink-0 border border-slate-200">
-            {(l.assignee?.displayName || l.owner.displayName)
-              .slice(0, 2)
-              .toUpperCase()}
-          </div>
+          {l.assignee?.displayName ? (
+            <img
+              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
+              alt={l.assignee.displayName}
+              className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0"
+            />
+          ) : (
+            <div className="h-7 w-7 rounded-full bg-[#0D1F3D] text-white font-bold text-[10px] flex items-center justify-center shrink-0 border border-slate-200">
+              {(l.assignee?.displayName || l.owner.displayName)
+                .slice(0, 2)
+                .toUpperCase()}
+            </div>
+          )}
           <div>
             <p className="font-bold text-slate-900 text-xs">
               {l.assignee?.displayName || "Unassigned"}
@@ -288,76 +297,91 @@ export default function AllLeadsPage({
       header: "Actions",
       align: "right",
       cell: (l) => (
-        <RowActionsMenu
-          items={[
-            {
-              label: "View Details",
-              icon: Eye,
-              onClick: () => navigate("/admin/leads/" + l.id),
-            },
-            ...(can("crm.leads.update") &&
-            !readOnly &&
-            ["OPEN", "QUALIFIED"].includes(l.status)
-              ? [
-                  {
-                    label: "Edit Lead",
-                    icon: Edit,
-                    onClick: () => navigate("/admin/leads/" + l.id + "/edit"),
-                  },
-                ]
-              : []),
-            ...(can("crm.leads.assign") &&
-            !readOnly &&
-            ["OPEN", "QUALIFIED"].includes(l.status)
-              ? [
-                  {
-                    label: "Assign Lead",
-                    icon: UserCheck,
-                    onClick: () =>
-                      navigate("/admin/leads/" + l.id + "/assignment"),
-                  },
-                ]
-              : []),
-            ...(can("crm.leads.update") &&
-            !readOnly &&
-            l.status === "OPEN"
-              ? [
-                  {
-                    label: "Mark Qualified",
-                    icon: CheckCircle2,
-                    onClick: () => updateStatus(l, "QUALIFIED"),
-                  },
-                ]
-              : []),
-            ...(can("crm.leads.convert") &&
-            !readOnly &&
-            l.status === "QUALIFIED"
-              ? [
-                  {
-                    label: "Convert Lead",
-                    icon: CheckCircle2,
-                    onClick: () => navigate("/admin/leads/" + l.id),
-                  },
-                ]
-              : []),
-            ...(can("crm.leads.update") &&
-            !readOnly &&
-            ["OPEN", "QUALIFIED"].includes(l.status)
-              ? [
-                  {
-                    label: "Disqualify",
-                    icon: XCircle,
-                    onClick: () => updateStatus(l, "DISQUALIFIED", "LOST"),
-                  },
-                  {
-                    label: "Mark Duplicate",
-                    icon: Copy,
-                    onClick: () => updateStatus(l, "DUPLICATE"),
-                  },
-                ]
-              : []),
-          ]}
-        />
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            type="button"
+            onClick={() => navigate("/admin/leads/" + l.id)}
+            title="View Lead Details"
+            className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs cursor-pointer"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          <RowActionsMenu
+            items={[
+              {
+                label: "View Details",
+                icon: Eye,
+                onClick: () => navigate("/admin/leads/" + l.id),
+              },
+              {
+                label: "Activity Timeline",
+                icon: Clock,
+                onClick: () => navigate("/admin/leads/" + l.id + "/timeline"),
+              },
+              ...(can("crm.leads.update") &&
+              !readOnly &&
+              ["OPEN", "QUALIFIED"].includes(l.status)
+                ? [
+                    {
+                      label: "Edit Lead Info",
+                      icon: Edit,
+                      onClick: () => navigate("/admin/leads/" + l.id + "/edit"),
+                    },
+                  ]
+                : []),
+              ...(can("crm.leads.assign") &&
+              !readOnly &&
+              ["OPEN", "QUALIFIED"].includes(l.status)
+                ? [
+                    {
+                      label: "Assign Lead",
+                      icon: UserCheck,
+                      onClick: () =>
+                        navigate("/admin/leads/" + l.id + "/assignment"),
+                    },
+                  ]
+                : []),
+              ...(can("crm.leads.update") &&
+              !readOnly &&
+              l.status === "OPEN"
+                ? [
+                    {
+                      label: "Mark Qualified",
+                      icon: CheckCircle2,
+                      onClick: () => updateStatus(l, "QUALIFIED"),
+                    },
+                  ]
+                : []),
+              ...(can("crm.leads.convert") &&
+              !readOnly &&
+              l.status === "QUALIFIED"
+                ? [
+                    {
+                      label: "Convert Lead",
+                      icon: CheckCircle2,
+                      onClick: () => navigate("/admin/leads/" + l.id),
+                    },
+                  ]
+                : []),
+              ...(can("crm.leads.update") &&
+              !readOnly &&
+              ["OPEN", "QUALIFIED"].includes(l.status)
+                ? [
+                    {
+                      label: "Disqualify",
+                      icon: XCircle,
+                      onClick: () => updateStatus(l, "DISQUALIFIED", "LOST"),
+                    },
+                    {
+                      label: "Mark Duplicate",
+                      icon: Copy,
+                      onClick: () => updateStatus(l, "DUPLICATE"),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        </div>
       ),
     },
   ];
@@ -453,28 +477,37 @@ export default function AllLeadsPage({
       </div>
       <nav
         aria-label="Lead categories"
-        className="flex overflow-x-auto gap-1 border-b border-slate-200 bg-white p-1.5 rounded-lg shadow-xs"
+        className="flex overflow-x-auto gap-1 border-b border-slate-200 bg-white p-1.5 rounded-lg shadow-xs scrollbar-none"
       >
-        {tabs.map((tab) => (
-          <Button
-            key={tab.id}
-            variant={viewMode === tab.id ? "primary" : "ghost"}
-            size="sm"
-            aria-current={viewMode === tab.id ? "page" : undefined}
-            className="shrink-0 whitespace-nowrap"
-            onClick={() =>
-              navigate("/admin/leads" + (tab.id === "all" ? "" : "/" + tab.id))
-            }
-          >
-            <tab.icon className="mr-2 h-3.5 w-3.5" />
-            {tab.label}
-            {tab.count !== undefined && (
-              <span className="ml-2 rounded-md bg-slate-100 px-2 text-slate-700">
-                {tab.count.toLocaleString()}
-              </span>
-            )}
-          </Button>
-        ))}
+        {tabs.map((tab) => {
+          const isActive = viewMode === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() =>
+                navigate("/admin/leads" + (tab.id === "all" ? "" : "/" + tab.id))
+              }
+              className={`flex items-center gap-2 rounded-md px-3.5 py-2 text-xs font-extrabold transition-all whitespace-nowrap cursor-pointer ${
+                isActive
+                  ? "bg-[#0D1F3D] text-white shadow-xs"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D]"
+              }`}
+            >
+              <tab.icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
+              <span>{tab.label}</span>
+              {tab.count !== undefined && (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {tab.count.toLocaleString()}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </nav>
       <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-2 xl:grid-cols-6 rounded-lg border border-slate-200/80 bg-white p-3 shadow-xs">
         <div className="min-w-0 sm:col-span-2">
@@ -492,9 +525,17 @@ export default function AllLeadsPage({
           />
         </div>
         <Select
-          disabled
-          options={[]}
+          native
+          id="lead-region"
           placeholder="All Regions"
+          options={[
+            { value: "all", label: "All Regions" },
+            { value: "mumbai_north", label: "North Mumbai" },
+            { value: "mumbai_west", label: "Western Suburbs" },
+            { value: "mumbai_east", label: "Eastern Suburbs" },
+            { value: "thane", label: "Thane & Navi Mumbai" },
+            { value: "pune", label: "Pune" },
+          ]}
         />
         <Select
           native
@@ -535,6 +576,47 @@ export default function AllLeadsPage({
           />
         )}
       </div>
+      {selectedIds.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#0D1F3D] bg-[#0D1F3D] px-4 py-2.5 text-white shadow-md animate-fadeIn">
+          <div className="flex items-center gap-2 text-xs font-bold">
+            <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-mono">
+              {selectedIds.length}
+            </span>
+            <span>Leads Selected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedIds([])}
+              className="text-white/80 hover:text-white hover:bg-white/10 text-xs font-semibold"
+            >
+              Deselect All
+            </Button>
+            {can("crm.leads.assign") && !readOnly && (
+              <Button
+                size="sm"
+                onClick={() => navigate("/admin/leads/bulk-assign")}
+                className="bg-white text-[#0D1F3D] hover:bg-slate-100 text-xs font-bold shadow-xs"
+              >
+                <UserCheck className="mr-1.5 h-3.5 w-3.5" />
+                Bulk Assign ({selectedIds.length})
+              </Button>
+            )}
+            {can("crm.leads.export") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/admin/leads/export")}
+                className="border-white/30 text-white hover:bg-white/10 text-xs font-bold"
+              >
+                <Download className="mr-1.5 h-3.5 w-3.5" />
+                Export Selected
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
       {result.error ? (
         <CrmFailure error={result.error} retry={result.reload} />
       ) : (
@@ -542,6 +624,18 @@ export default function AllLeadsPage({
           columns={columns}
           data={result.data?.items ?? []}
           keyExtractor={(l) => l.id}
+          selectable={true}
+          selectedIds={selectedIds}
+          onSelectAll={(e) =>
+            setSelectedIds(
+              e.target.checked ? (result.data?.items ?? []).map((l) => l.id) : []
+            )
+          }
+          onSelectOne={(id) =>
+            setSelectedIds((prev) =>
+              prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+            )
+          }
           isLoading={result.loading}
           density="relaxed"
           emptyMessage={
