@@ -52,6 +52,8 @@ export const CRM_PHASE_1_1_PERMISSIONS: PermissionDefinition[] = [
   })),
 ];
 export const CRM_PHASE_1_2_PERMISSIONS: PermissionDefinition[] = [
+  "view",
+  "create",
   "update",
   "delete",
   "assign",
@@ -67,7 +69,7 @@ export const CRM_PHASE_1_2_PERMISSIONS: PermissionDefinition[] = [
   domain: "crm",
   resource: "leads",
   action,
-  description: "Lead " + action + " access",
+  description: "Lead " + action + " action",
   moduleKey: "crm_leads",
 }));
 export const PERMISSION_REGISTRY: PermissionDefinition[] = [

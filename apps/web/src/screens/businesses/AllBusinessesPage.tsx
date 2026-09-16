@@ -92,11 +92,11 @@ export default function AllBusinessesPage() {
       ]
     : [];
   const metric = (value?: number) =>
-    value === undefined ? "Unavailable" : value.toLocaleString();
+    value === undefined ? "—" : value.toLocaleString();
   const metricHint = counts.loading
     ? "Loading..."
     : counts.error
-      ? "Unavailable"
+      ? "—"
       : "Within your access";
   const canCreate = can("crm.businesses.create") && !readOnly;
   const columns: ColumnDef<AccountDto>[] = [

@@ -111,8 +111,7 @@ export default function AllLeadsPage({
       counts.reload();
     }
   };
-  const metric = (n?: number) =>
-    n === undefined ? "Unavailable" : n.toLocaleString();
+  const metric = (n?: number) => (n === undefined ? "—" : n.toLocaleString());
   const byStatus = (s: LeadStatus) =>
     counts.data
       ? (counts.data.lifecycle.find((r) => r.status === s)?.count ?? 0)
@@ -431,9 +430,11 @@ export default function AllLeadsPage({
           >
             <tab.icon className="mr-2 h-3.5 w-3.5" />
             {tab.label}
-            <span className="ml-2 rounded-md bg-slate-100 px-2 text-slate-700">
-              {tab.count ?? "Unavailable"}
-            </span>
+            {tab.count !== undefined && (
+              <span className="ml-2 rounded-md bg-slate-100 px-2 text-slate-700">
+                {tab.count.toLocaleString()}
+              </span>
+            )}
           </Button>
         ))}
       </nav>
@@ -456,7 +457,7 @@ export default function AllLeadsPage({
           disabled
           label="Region"
           options={[]}
-          placeholder="Territory unavailable"
+          placeholder="All Regions"
         />
         <Select
           native
