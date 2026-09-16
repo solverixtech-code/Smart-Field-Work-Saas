@@ -60,6 +60,7 @@ import { clearStoredRefreshToken, getStoredRefreshToken } from "../common/authSe
 import { api } from "../common/api";
 import { Button } from "../components/ui/Button";
 import { Role, getUserRoleLabel } from "@visiblo/shared";
+import { HeaderNotificationBell } from "../components/notifications/HeaderNotificationBell";
 
 const bigLogo = "/assets/sfw-logo.png";
 const smallLogo = "/assets/sfw-icon.png";
@@ -1306,10 +1307,7 @@ export default function AppShell() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="relative inline-flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100">
-              <Bell className="h-4 w-4" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#E20613]" />
-            </button>
+            <HeaderNotificationBell />
 
             {/* Header User Profile Avatar Card */}
             {user && (

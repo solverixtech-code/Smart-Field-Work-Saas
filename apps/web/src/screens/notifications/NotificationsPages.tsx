@@ -1,6 +1,13 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import {
+  notificationApi,
+  type CampaignRecord,
+  type NotificationOverview,
+  type PushTokenRecord,
+  type NotificationTemplate,
+} from "../../features/notifications/notification.api";
 import {
   AlertCircle,
   Bell,
@@ -480,10 +487,62 @@ function PageHeader({
 function Stats({
   alert = false,
   template = false,
+  overview,
 }: {
   alert?: boolean;
   template?: boolean;
+  overview?: NotificationOverview | null;
 }) {
+  const defaultCards = overview
+    ? [
+        {
+          label: "Total Sent",
+          value: overview.sentCampaigns.toLocaleString(),
+          change: "↑ Live",
+          percent: `${overview.deliverySuccessRate}%`,
+          subtext: "broadcast campaigns",
+          icon: Send,
+          color: "text-emerald-600 bg-emerald-50",
+        },
+        {
+          label: "Delivery Rate",
+          value: `${overview.deliverySuccessRate}%`,
+          change: "↑ High",
+          percent: "",
+          subtext: overview.simulationMode ? "Dual simulation mode" : "FCM cloud verified",
+          icon: CheckCircle2,
+          color: "text-blue-600 bg-blue-50",
+        },
+        {
+          label: "Active Push Devices",
+          value: overview.activePushDevices.toLocaleString(),
+          change: "↑ Active",
+          percent: "",
+          subtext: "registered tokens",
+          icon: Smartphone,
+          color: "text-purple-600 bg-purple-50",
+        },
+        {
+          label: "Scheduled",
+          value: overview.scheduledCampaigns.toLocaleString(),
+          change: "↑ Pending",
+          percent: "",
+          subtext: "upcoming delivery",
+          icon: CalendarClock,
+          color: "text-amber-600 bg-amber-50",
+        },
+        {
+          label: "FCM Mode",
+          value: overview.simulationMode ? "Simulation" : "Connected",
+          change: overview.simulationMode ? "Dry Run" : "Cloud FCM",
+          percent: "",
+          subtext: overview.simulationMode ? "Ready for prod keys" : "Firebase Admin SDK",
+          icon: Radio,
+          color: overview.simulationMode ? "text-amber-600 bg-amber-50" : "text-emerald-600 bg-emerald-50",
+        },
+      ]
+    : statCards;
+
   const cards = alert
     ? [
         {
@@ -580,7 +639,7 @@ function Stats({
             color: "text-rose-600 bg-rose-50",
           },
         ]
-      : statCards;
+      : defaultCards;
 
   return (
     <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
@@ -755,18 +814,80 @@ export function NotificationCenterPage() {
   const [activeTab, setActiveTab] = useState<
     "all" | "sent" | "scheduled" | "drafts" | "failed"
   >("all");
+  const [overview, setOverview] = useState<NotificationOverview | null>(null);
+  const [campaigns, setCampaigns] = useState<CampaignRecord[]>([]);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [ov, camps] = await Promise.all([
+          notificationApi.getOverview(),
+          notificationApi.listCampaigns(),
+        ]);
+        setOverview(ov);
+        setCampaigns(camps.data);
+      } catch {
+        // Fallback gracefully
+      }
+    }
+    loadData();
+  }, []);
+
+  const allRows: NotificationRow[] = useMemo(() => {
+    if (campaigns.length > 0) {
+      const liveRows: NotificationRow[] = campaigns.map((c) => ({
+        id: `NOT-${c.id.slice(0, 6).toUpperCase()}`,
+        title: c.title,
+        description: c.body,
+        type: (c.type === "ANNOUNCEMENT"
+          ? "Announcement"
+          : c.type === "EMERGENCY_ALERT" || c.type === "ALERT"
+            ? "Alert"
+            : c.type === "REMINDER"
+              ? "Reminder"
+              : c.type === "PROMOTION"
+                ? "Promotion"
+                : "Update") as NoticeType,
+        audience:
+          c.targetAudience === "ALL_EXECUTIVES"
+            ? `All Field Executives (${c.totalRecipients || 1} Users)`
+            : c.targetAudience,
+        channel: c.channels.join(" · "),
+        status: (c.status === "SENT"
+          ? "Sent"
+          : c.status === "SCHEDULED"
+            ? "Scheduled"
+            : c.status === "FAILED"
+              ? "Failed"
+              : "Active") as any,
+        created: new Date(c.createdAt).toLocaleString([], {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }),
+        delivery: `${c.successCount} (${
+          c.totalRecipients > 0
+            ? Math.round((c.successCount / c.totalRecipients) * 100)
+            : 100
+        }%)`,
+        icon: c.type.includes("ALERT") ? AlertCircle : Send,
+        tone: c.type.includes("ALERT") ? "rose" : "emerald",
+      }));
+      return [...liveRows, ...notificationRows];
+    }
+    return notificationRows;
+  }, [campaigns]);
 
   const filteredRows = useMemo(() => {
     if (activeTab === "sent")
-      return notificationRows.filter((r) => r.status === "Sent");
+      return allRows.filter((r) => r.status === "Sent");
     if (activeTab === "scheduled")
-      return notificationRows.filter((r) => r.status === "Scheduled");
+      return allRows.filter((r) => r.status === "Scheduled");
     if (activeTab === "failed")
-      return notificationRows.filter((r) => r.status === "Failed");
+      return allRows.filter((r) => r.status === "Failed");
     if (activeTab === "drafts")
-      return notificationRows.filter((r) => r.type === "Other");
-    return notificationRows;
-  }, [activeTab]);
+      return allRows.filter((r) => r.type === "Other");
+    return allRows;
+  }, [activeTab, allRows]);
 
   const columns: ColumnDef<NotificationRow>[] = [
     {
@@ -886,7 +1007,7 @@ export function NotificationCenterPage() {
         description="Manage all system notifications, announcements and communication history."
       />
 
-      <Stats />
+      <Stats overview={overview} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Main Left Column (8 Cols) */}
@@ -1063,6 +1184,7 @@ export function NotificationCenterPage() {
 
 // SCREEN 164: CREATE NOTIFICATION (/admin/notifications/create)
 export function CreateNotificationPage() {
+  const navigate = useNavigate();
   const [noticeType, setNoticeType] = useState<NoticeType>("Announcement");
   const [selectedExec, setSelectedExec] = useState("rahul_verma");
   const [selectedCustomer, setSelectedCustomer] = useState("apex_electronics");
@@ -1071,6 +1193,54 @@ export function CreateNotificationPage() {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [sendNow, setSendNow] = useState(true);
+  const [scheduleDate, setScheduleDate] = useState("");
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([
+    "PUSH",
+    "IN_APP",
+  ]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleBroadcast = async () => {
+    if (!title.trim()) {
+      toast.error("Please enter a notification title.");
+      return;
+    }
+    if (!message.trim()) {
+      toast.error("Please enter the notification message body.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await notificationApi.createCampaign({
+        title,
+        body: message,
+        channels: selectedChannels,
+        category:
+          noticeType === "Announcement"
+            ? "ANNOUNCEMENT"
+            : noticeType === "Alert"
+              ? "ALERT"
+              : noticeType === "Reminder"
+                ? "REMINDER"
+                : noticeType === "Promotion"
+                  ? "PROMOTION"
+                  : "SYSTEM_UPDATE",
+        priority: "NORMAL",
+        audienceType: "ALL_EXECUTIVES",
+        scheduledAt: !sendNow && scheduleDate ? scheduleDate : undefined,
+      });
+
+      toast.success("Notification broadcast dispatched successfully!");
+      navigate("/admin/notifications");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Failed to dispatch notification.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-4 font-sans pb-12">
@@ -1362,6 +1532,26 @@ export function CreateNotificationPage() {
                   {sendNow ? "Immediately" : "Scheduled"}
                 </span>
               </div>
+              <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                <span className="text-slate-500">Channels</span>
+                <span className="font-bold text-slate-700">
+                  {selectedChannels.join(", ")}
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <Button
+                variant="accent"
+                size="sm"
+                fullWidth
+                disabled={submitting}
+                onClick={handleBroadcast}
+                className="font-bold shadow-xs py-2.5"
+              >
+                <Send className="h-4 w-4 mr-1.5" />
+                {submitting ? "Broadcasting..." : "Dispatch Broadcast Now"}
+              </Button>
             </div>
           </div>
         </div>
@@ -1374,23 +1564,199 @@ export function CreateNotificationPage() {
 export function PushNotificationsPage() {
   const [platform, setPlatform] = useState<"android" | "ios" | "both">("both");
   const [selectedExec, setSelectedExec] = useState("rahul_verma");
+  const [pushTitle, setPushTitle] = useState("Shift Route Update");
+  const [pushMessage, setPushMessage] = useState(
+    "Hi Rahul, your afternoon visit sequence in Western Zone has been updated with 2 high-priority leads."
+  );
+  const [actionUrl, setActionUrl] = useState("/admin/visits/today");
+  const [sendingPush, setSendingPush] = useState(false);
+  const [overview, setOverview] = useState<NotificationOverview | null>(null);
+  const [tokensData, setTokensData] = useState<PushTokenRecord[]>([]);
+  const [tokensLoading, setTokensLoading] = useState(false);
+
+  const loadPushData = async () => {
+    try {
+      setTokensLoading(true);
+      const [ov, tokensRes] = await Promise.all([
+        notificationApi.getOverview(),
+        notificationApi.getPushTokens(),
+      ]);
+      setOverview(ov);
+      setTokensData(tokensRes.tokens);
+    } catch {
+      // Fallback
+    } finally {
+      setTokensLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPushData();
+  }, []);
+
+  const handleSendTestPush = async () => {
+    if (!pushTitle.trim()) {
+      toast.error("Please enter a push notification title.");
+      return;
+    }
+    if (!pushMessage.trim()) {
+      toast.error("Please enter a push notification message.");
+      return;
+    }
+
+    try {
+      setSendingPush(true);
+      const res = await notificationApi.sendTestPush({
+        title: pushTitle,
+        body: pushMessage,
+        actionUrl: actionUrl || undefined,
+      });
+
+      toast.success(
+        `Push dispatched! ${res.successCount} delivered (${
+          res.simulationMode ? "Dual Simulation Mode" : "Firebase Cloud Messaging"
+        }).`
+      );
+      loadPushData();
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Failed to dispatch test push."
+      );
+    } finally {
+      setSendingPush(false);
+    }
+  };
+
+  const handleRegisterDemoDevice = async () => {
+    try {
+      const simToken = `fcm_${Math.random().toString(36).slice(2, 12)}_${Date.now()}`;
+      await notificationApi.registerDeviceToken({
+        token: simToken,
+        platform: "ANDROID",
+        deviceModel: "Google Pixel 8 Pro",
+        appVersion: "2.4.0",
+      });
+      toast.success("Test device token registered successfully!");
+      loadPushData();
+    } catch (err: any) {
+      toast.error("Could not register device token.");
+    }
+  };
+
+  const tokenColumns: ColumnDef<PushTokenRecord>[] = [
+    {
+      header: "Device / Model",
+      cell: (row) => (
+        <div className="flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-slate-100 text-slate-700 font-bold">
+            <Smartphone className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="font-extrabold text-[#0D1F3D] text-xs">
+              {row.deviceModel || "Mobile Device"}
+            </p>
+            <p className="text-[10px] text-slate-500">v{row.appVersion || "1.0.0"}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: "Platform",
+      cell: (row) => (
+        <span
+          className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${
+            row.platform === "ANDROID"
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              : row.platform === "IOS"
+                ? "bg-blue-50 text-blue-700 border-blue-200"
+                : "bg-purple-50 text-purple-700 border-purple-200"
+          }`}
+        >
+          {row.platform}
+        </span>
+      ),
+    },
+    {
+      header: "FCM Push Token",
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-sm">
+            {row.maskedToken}
+          </span>
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(row.token);
+              toast.info("FCM Token copied to clipboard");
+            }}
+            title="Copy full token"
+            className="p-1 text-slate-400 hover:text-[#0D1F3D] cursor-pointer"
+          >
+            <ClipboardCopy className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ),
+    },
+    {
+      header: "Executive / User",
+      cell: (row) => (
+        <div>
+          <p className="font-extrabold text-[#0D1F3D] text-xs">
+            {row.user?.name || "Workspace Member"}
+          </p>
+          <p className="text-[10px] text-slate-500">{row.user?.email || "—"}</p>
+        </div>
+      ),
+    },
+    {
+      header: "Last Seen",
+      cell: (row) => (
+        <span className="text-xs font-semibold text-slate-600">
+          {new Date(row.lastSeenAt).toLocaleString([], {
+            dateStyle: "short",
+            timeStyle: "short",
+          })}
+        </span>
+      ),
+    },
+    {
+      header: "Status",
+      cell: (row) => (
+        <span
+          className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${
+            row.isActive
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              : "bg-slate-100 text-slate-500 border-slate-200"
+          }`}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-current" />
+          {row.isActive ? "Active" : "Inactive"}
+        </span>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-4 font-sans pb-12">
       <PageHeader
         kind="push"
-        title="Push Notifications"
-        description="Send instant push notifications to mobile app users."
+        title="Push Notifications & FCM Tokens"
+        description="Dispatch instant push notifications to mobile app users and monitor active FCM device tokens."
       />
 
-      <Stats />
+      <Stats overview={overview} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Push Form (8 Cols) */}
         <div className="lg:col-span-8 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold">
-          <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
-            Create Push Notification
-          </h3>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+              Dispatch Live Push Notification
+            </h3>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-700 border border-emerald-200">
+              <Radio className="h-3 w-3 animate-pulse text-emerald-600" />
+              FCM Push Engine Active
+            </span>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Select
@@ -1425,42 +1791,59 @@ export function PushNotificationsPage() {
             </div>
           </div>
 
-          <Input label="Title *" defaultValue="Plan Renewal Reminder" />
+          <Input
+            label="Title *"
+            value={pushTitle}
+            onChange={(e) => setPushTitle(e.target.value)}
+            placeholder="Notification title..."
+          />
 
           <div className="space-y-1">
             <label className="font-bold text-[#0D1F3D] block">Message *</label>
             <textarea
               rows={3}
-              defaultValue="Hi {{name}}, your plan will expire on {{expiry_date}}. Please renew to continue using all features."
+              value={pushMessage}
+              onChange={(e) => setPushMessage(e.target.value)}
+              placeholder="Message body..."
               className="w-full rounded-sm border border-slate-200 bg-slate-50/60 p-3 font-semibold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input label="Deep Link (Optional)" defaultValue="sfw://renewal" />
+            <Input
+              label="Deep Link / Route"
+              value={actionUrl}
+              onChange={(e) => setActionUrl(e.target.value)}
+              placeholder="/admin/visits/today"
+            />
             <div className="space-y-1">
               <label className="font-bold text-[#0D1F3D] block">
-                Image Attachment
+                Simulation & Dev Actions
               </label>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.info("Upload image dialog opened")}
+                onClick={handleRegisterDemoDevice}
                 className="w-full font-bold"
               >
-                📷 Upload Notification Banner
+                + Register Demo Device Token
               </Button>
             </div>
           </div>
 
-          <div className="flex justify-end pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            <p className="text-[11px] text-slate-500 font-medium">
+              Push notification payload will be multicast to active device tokens.
+            </p>
             <Button
               variant="accent"
               size="sm"
-              onClick={() => toast.success("Push notification sent!")}
+              disabled={sendingPush}
+              onClick={handleSendTestPush}
               className="font-bold shadow-xs"
             >
-              <Send className="h-4 w-4 mr-1.5" /> Send Push Notification Now
+              <Send className="h-4 w-4 mr-1.5" />
+              {sendingPush ? "Delivering..." : "Send Push Notification Now"}
             </Button>
           </div>
         </div>
@@ -1489,19 +1872,69 @@ export function PushNotificationsPage() {
                   <span className="text-slate-400 font-mono">now</span>
                 </div>
                 <h4 className="text-xs font-extrabold text-[#0D1F3D]">
-                  Plan Renewal Reminder
+                  {pushTitle || "Push Notification"}
                 </h4>
                 <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                  Hi Rahul, your plan will expire on 22 May 2025. Please renew
-                  to continue using all features.
+                  {pushMessage || "Push message body will appear on executive screen."}
                 </p>
                 <span className="text-[10px] font-extrabold text-[#E20613] hover:underline cursor-pointer pt-1 flex items-center gap-0.5">
-                  View Renewal Options <ChevronRight className="h-3 w-3" />
+                  View in App <ChevronRight className="h-3 w-3" />
                 </span>
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Active Device Push Tokens Table */}
+      <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+              Registered FCM Push Devices & Mobile Tokens
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Real-time register of active Android, iOS, and Web push tokens receiving broadcasts.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadPushData}
+            className="font-bold text-xs"
+          >
+            <RotateCcw className="h-3.5 w-3.5 mr-1" /> Refresh Devices
+          </Button>
+        </div>
+
+        {tokensLoading ? (
+          <div className="p-8 text-center text-xs font-semibold text-slate-400">
+            Loading active device tokens...
+          </div>
+        ) : tokensData.length === 0 ? (
+          <div className="p-8 text-center space-y-2">
+            <Smartphone className="h-8 w-8 mx-auto text-slate-300" />
+            <p className="text-xs font-bold text-[#0D1F3D]">No device tokens registered yet</p>
+            <p className="text-[11px] text-slate-500">
+              When field executives log into the Android/iOS app or accept Web Push, their tokens appear here.
+            </p>
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={handleRegisterDemoDevice}
+              className="mt-2 text-xs font-bold"
+            >
+              + Register Demo Device Token Now
+            </Button>
+          </div>
+        ) : (
+          <DataTable
+            columns={tokenColumns}
+            data={tokensData}
+            keyExtractor={(row) => row.id}
+            density="compact"
+          />
+        )}
       </div>
     </div>
   );
@@ -1727,6 +2160,7 @@ export function ExecutiveAlertsPage() {
 
 // SCREEN 167: NOTIFICATION TEMPLATES (/admin/notifications/templates)
 export function NotificationTemplatesPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<
     | "all"
     | "announcements"
@@ -1736,22 +2170,62 @@ export function NotificationTemplatesPage() {
     | "updates"
     | "other"
   >("all");
+  const [realTemplates, setRealTemplates] = useState<NotificationTemplate[]>([]);
+
+  const loadTemplates = async () => {
+    try {
+      const list = await notificationApi.listTemplates();
+      setRealTemplates(list);
+    } catch {
+      // Fallback
+    }
+  };
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
+
+  const allTemplates: NotificationRow[] = useMemo(() => {
+    if (realTemplates.length > 0) {
+      const live = realTemplates.map((t) => ({
+        id: t.id,
+        title: t.name,
+        description: t.body,
+        type: (t.category.toUpperCase().includes("ALERT")
+          ? "Alert"
+          : t.category.toUpperCase().includes("REMIND")
+            ? "Reminder"
+            : t.category.toUpperCase().includes("PROMO")
+              ? "Promotion"
+              : "Announcement") as NoticeType,
+        audience: "Field Executives",
+        channel: t.channels.join(" · "),
+        status: (t.isActive ? "Active" : "Disabled") as any,
+        created: new Date(t.createdAt).toLocaleDateString(),
+        delivery: "Template",
+        icon: FileText,
+        tone: "purple",
+      }));
+      return live;
+    }
+    return notificationRows;
+  }, [realTemplates]);
 
   const templateRows = useMemo(() => {
     if (activeTab === "announcements")
-      return notificationRows.filter((r) => r.type === "Announcement");
+      return allTemplates.filter((r) => r.type === "Announcement");
     if (activeTab === "alerts")
-      return notificationRows.filter((r) => r.type === "Alert");
+      return allTemplates.filter((r) => r.type === "Alert");
     if (activeTab === "reminders")
-      return notificationRows.filter((r) => r.type === "Reminder");
+      return allTemplates.filter((r) => r.type === "Reminder");
     if (activeTab === "promotions")
-      return notificationRows.filter((r) => r.type === "Promotion");
+      return allTemplates.filter((r) => r.type === "Promotion");
     if (activeTab === "updates")
-      return notificationRows.filter((r) => r.type === "Update");
+      return allTemplates.filter((r) => r.type === "Update");
     if (activeTab === "other")
-      return notificationRows.filter((r) => r.type === "Other");
-    return notificationRows;
-  }, [activeTab]);
+      return allTemplates.filter((r) => r.type === "Other");
+    return allTemplates;
+  }, [activeTab, allTemplates]);
 
   const templateColumns: ColumnDef<NotificationRow>[] = [
     {
