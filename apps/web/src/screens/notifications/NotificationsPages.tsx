@@ -495,10 +495,14 @@ function Stats({
   alert = false,
   template = false,
   overview,
+  alertCounts,
+  templateCounts,
 }: {
   alert?: boolean;
   template?: boolean;
   overview?: NotificationOverview | null;
+  alertCounts?: { total: number; critical: number; pending: number; acknowledged: number; resolved: number };
+  templateCounts?: { total: number; active: number };
 }) {
   const defaultCards = overview
     ? [
@@ -554,46 +558,46 @@ function Stats({
     ? [
         {
           label: "Total Alerts",
-          value: "156",
-          change: "↑ 18.6%",
+          value: alertCounts ? alertCounts.total.toLocaleString() : "0",
+          change: "↑ Live",
           percent: "",
-          subtext: "vs last 30 days",
+          subtext: "monitored alerts",
           icon: Bell,
           color: "text-rose-600 bg-rose-50",
         },
         {
           label: "Critical Alerts",
-          value: "28",
-          change: "↑ 27.3%",
+          value: alertCounts ? alertCounts.critical.toLocaleString() : "0",
+          change: "↑ High priority",
           percent: "",
-          subtext: "vs last 30 days",
+          subtext: "urgent escalation",
           icon: AlertCircle,
           color: "text-rose-600 bg-rose-50",
         },
         {
           label: "Pending Alerts",
-          value: "42",
-          change: "↑ 14.2%",
+          value: alertCounts ? alertCounts.pending.toLocaleString() : "0",
+          change: "↑ Open",
           percent: "",
-          subtext: "vs last 30 days",
+          subtext: "awaiting action",
           icon: CalendarClock,
           color: "text-amber-600 bg-amber-50",
         },
         {
           label: "Acknowledged",
-          value: "72",
-          change: "↑ 16.8%",
+          value: alertCounts ? alertCounts.acknowledged.toLocaleString() : "0",
+          change: "— Verified",
           percent: "",
-          subtext: "vs last 30 days",
+          subtext: "seen by managers",
           icon: CheckCircle2,
           color: "text-emerald-600 bg-emerald-50",
         },
         {
           label: "Resolved",
-          value: "42",
-          change: "↑ 12.5%",
+          value: alertCounts ? alertCounts.resolved.toLocaleString() : "0",
+          change: "— Closed",
           percent: "",
-          subtext: "vs last 30 days",
+          subtext: "completed alerts",
           icon: ClipboardCopy,
           color: "text-violet-600 bg-violet-50",
         },
@@ -602,48 +606,48 @@ function Stats({
       ? [
           {
             label: "Total Templates",
-            value: "126",
-            change: "↑ 18.6%",
+            value: templateCounts ? templateCounts.total.toLocaleString() : "0",
+            change: "↑ Live",
             percent: "",
-            subtext: "vs last 30 days",
+            subtext: "configured templates",
             icon: ClipboardCopy,
             color: "text-blue-600 bg-blue-50",
           },
           {
             label: "Active Templates",
-            value: "98",
-            change: "↑ 16.2%",
+            value: templateCounts ? templateCounts.active.toLocaleString() : "0",
+            change: "↑ Enabled",
             percent: "",
-            subtext: "vs last 30 days",
+            subtext: "ready for dispatch",
             icon: Send,
             color: "text-emerald-600 bg-emerald-50",
           },
           {
-            label: "Scheduled Templates",
-            value: "14",
-            change: "↑ 12.5%",
+            label: "Channels Supported",
+            value: "5",
+            change: "↑ Full",
             percent: "",
-            subtext: "vs last 30 days",
+            subtext: "Push, In-App, Email, WA, SMS",
             icon: CalendarClock,
             color: "text-amber-600 bg-amber-50",
           },
           {
-            label: "Archived Templates",
-            value: "14",
-            change: "↑ 9.3%",
+            label: "Merge Tags",
+            value: "Dynamic",
+            change: "↑ Active",
             percent: "",
-            subtext: "vs last 30 days",
+            subtext: "{{name}}, {{date}}, {{amount}}",
             icon: ClipboardCopy,
             color: "text-violet-600 bg-violet-50",
           },
           {
-            label: "Disabled Templates",
-            value: "6",
-            change: "↓ 4.1%",
+            label: "Template Status",
+            value: "Ready",
+            change: "— Cloud Sync",
             percent: "",
-            subtext: "vs last 30 days",
-            icon: XCircle,
-            color: "text-rose-600 bg-rose-50",
+            subtext: "workspace shared",
+            icon: CheckCircle2,
+            color: "text-emerald-600 bg-emerald-50",
           },
         ]
       : defaultCards;
@@ -842,7 +846,7 @@ export function NotificationCenterPage() {
 
   const allRows: NotificationRow[] = useMemo(() => {
     if (campaigns.length > 0) {
-      const liveRows: NotificationRow[] = campaigns.map((c) => ({
+      return campaigns.map((c) => ({
         id: `NOT-${c.id.slice(0, 6).toUpperCase()}`,
         title: c.title,
         description: c.body,
@@ -856,10 +860,10 @@ export function NotificationCenterPage() {
                 ? "Promotion"
                 : "Update") as NoticeType,
         audience:
-          c.targetAudience === "ALL_EXECUTIVES"
+          c.targetAudience === "ALL_EXECUTIVES" || c.targetAudience === "ALL_USERS"
             ? `All Field Executives (${c.totalRecipients || 1} Users)`
             : c.targetAudience,
-        channel: c.channels.join(" · "),
+        channel: (c.channels && c.channels.length > 0 ? c.channels : ["PUSH", "IN_APP"]).join(" · "),
         status: (c.status === "SENT"
           ? "Sent"
           : c.status === "SCHEDULED"
@@ -876,12 +880,11 @@ export function NotificationCenterPage() {
             ? Math.round((c.successCount / c.totalRecipients) * 100)
             : 100
         }%)`,
-        icon: c.type.includes("ALERT") ? AlertCircle : Send,
-        tone: c.type.includes("ALERT") ? "rose" : "emerald",
+        icon: c.type?.includes("ALERT") ? AlertCircle : Send,
+        tone: c.type?.includes("ALERT") ? "rose" : "emerald",
       }));
-      return [...liveRows, ...notificationRows];
     }
-    return notificationRows;
+    return [];
   }, [campaigns]);
 
   const filteredRows = useMemo(() => {
@@ -909,18 +912,18 @@ export function NotificationCenterPage() {
                   ? "bg-emerald-50 text-emerald-600"
                   : row.tone === "blue"
                     ? "bg-blue-50 text-blue-600"
-                    : row.tone === "violet"
+                    : row.tone === "purple"
                       ? "bg-purple-50 text-purple-600"
                       : "bg-rose-50 text-rose-600"
               }`}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4.5 w-4.5" />
             </span>
             <div>
-              <p className="font-extrabold text-[#0D1F3D] text-xs">
+              <p className="font-extrabold text-[#0D1F3D] text-xs hover:underline cursor-pointer">
                 {row.title}
               </p>
-              <p className="text-[11px] font-medium text-slate-500 truncate max-w-[240px] mt-0.5">
+              <p className="text-[11px] text-slate-500 truncate max-w-[280px]">
                 {row.description}
               </p>
             </div>
@@ -932,7 +935,7 @@ export function NotificationCenterPage() {
       header: "Type",
       cell: (row) => (
         <span
-          className={`inline-flex rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${typeStyles[row.type]}`}
+          className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${typeStyles[row.type]}`}
         >
           {row.type}
         </span>
@@ -941,11 +944,9 @@ export function NotificationCenterPage() {
     {
       header: "Audience",
       cell: (row) => (
-        <div>
-          <p className="font-extrabold text-[#0D1F3D] text-xs">
-            {row.audience}
-          </p>
-        </div>
+        <span className="text-xs font-semibold text-slate-700">
+          {row.audience}
+        </span>
       ),
     },
     {
@@ -961,17 +962,17 @@ export function NotificationCenterPage() {
       cell: (row) => <StatusBadge status={row.status} />,
     },
     {
-      header: "Sent / Scheduled",
+      header: "Sent / Created",
       cell: (row) => (
-        <span className="text-xs font-semibold text-slate-600">
+        <span className="text-xs text-slate-500 font-medium">
           {row.created}
         </span>
       ),
     },
     {
-      header: "Delivery",
+      header: "Delivery Rate",
       cell: (row) => (
-        <span className="font-mono font-extrabold text-[#0D1F3D] text-xs">
+        <span className="text-xs font-extrabold text-emerald-700 font-mono">
           {row.delivery}
         </span>
       ),
@@ -998,13 +999,93 @@ export function NotificationCenterPage() {
     },
   ];
 
-  const tabs = [
-    { id: "all", label: "All Notifications", count: 1248 },
-    { id: "sent", label: "Sent", count: 1089 },
-    { id: "scheduled", label: "Scheduled", count: 117 },
-    { id: "drafts", label: "Drafts", count: 18 },
-    { id: "failed", label: "Failed", count: 42 },
-  ] as const;
+  const tabs = useMemo(
+    () => [
+      { id: "all", label: "All Notifications", count: allRows.length },
+      {
+        id: "sent",
+        label: "Sent",
+        count: allRows.filter((r) => r.status === "Sent").length,
+      },
+      {
+        id: "scheduled",
+        label: "Scheduled",
+        count: allRows.filter((r) => r.status === "Scheduled").length,
+      },
+      {
+        id: "drafts",
+        label: "Drafts",
+        count: allRows.filter(
+          (r) =>
+            r.status === "Pending" ||
+            r.status === "Active" ||
+            r.type === "Other",
+        ).length,
+      },
+      {
+        id: "failed",
+        label: "Failed",
+        count: allRows.filter((r) => r.status === "Failed").length,
+      },
+    ] as const,
+    [allRows],
+  );
+
+  const typeOverview = useMemo(() => {
+    const total = allRows.length;
+    const reminders = allRows.filter((r) => r.type === "Reminder").length;
+    const alerts = allRows.filter((r) => r.type === "Alert").length;
+    const promotions = allRows.filter((r) => r.type === "Promotion").length;
+    const announcements = allRows.filter(
+      (r) => r.type === "Announcement" || r.type === "Update",
+    ).length;
+    const calc = (n: number) =>
+      total > 0 ? ((n / total) * 100).toFixed(1) : "0.0";
+    return {
+      total,
+      reminders,
+      remindersPct: calc(reminders),
+      alerts,
+      alertsPct: calc(alerts),
+      promotions,
+      promotionsPct: calc(promotions),
+      announcements,
+      announcementsPct: calc(announcements),
+    };
+  }, [allRows]);
+
+  const channelDelivery = useMemo(() => {
+    let push = 0;
+    let inApp = 0;
+    let email = 0;
+    let whatsapp = 0;
+    for (const c of campaigns) {
+      for (const ch of c.channels || []) {
+        const u = ch.toUpperCase();
+        if (u.includes("PUSH")) push += c.successCount || 1;
+        if (u.includes("IN_APP")) inApp += c.successCount || 1;
+        if (u.includes("EMAIL")) email += c.successCount || 1;
+        if (u.includes("WHATSAPP")) whatsapp += c.successCount || 1;
+      }
+    }
+    const total = push + inApp + email + whatsapp || 1;
+    return {
+      push,
+      pushPct: Math.min(100, Math.round((push / total) * 100)),
+      inApp,
+      inAppPct: Math.min(100, Math.round((inApp / total) * 100)),
+      email,
+      emailPct: Math.min(100, Math.round((email / total) * 100)),
+      whatsapp,
+      whatsappPct: Math.min(100, Math.round((whatsapp / total) * 100)),
+    };
+  }, [campaigns]);
+
+  const topPerforming = useMemo(() => {
+    return [...campaigns]
+      .sort((a, b) => (b.successCount || 0) - (a.successCount || 0))
+      .slice(0, 3);
+  }, [campaigns]);
 
   return (
     <div className="space-y-4 font-sans pb-12">
@@ -1063,7 +1144,7 @@ export function NotificationCenterPage() {
             <div className="flex items-center gap-4 pt-1">
               <div className="h-28 w-28 shrink-0 rounded-full border-[10px] border-purple-500 border-t-blue-500 border-r-emerald-500 border-b-amber-500 flex flex-col items-center justify-center bg-slate-50">
                 <span className="text-xl font-extrabold text-[#0D1F3D]">
-                  1,248
+                  {typeOverview.total}
                 </span>
                 <span className="text-[10px] font-bold text-slate-400">
                   Total
@@ -1075,28 +1156,28 @@ export function NotificationCenterPage() {
                     <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />{" "}
                     Reminder
                   </span>
-                  <span className="font-mono text-[#0D1F3D]">35.3% (440)</span>
+                  <span className="font-mono text-[#0D1F3D]">{typeOverview.remindersPct}% ({typeOverview.reminders})</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
                   <span className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />{" "}
                     Alert
                   </span>
-                  <span className="font-mono text-[#0D1F3D]">24.1% (300)</span>
+                  <span className="font-mono text-[#0D1F3D]">{typeOverview.alertsPct}% ({typeOverview.alerts})</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
                   <span className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />{" "}
                     Promotion
                   </span>
-                  <span className="font-mono text-[#0D1F3D]">18.3% (228)</span>
+                  <span className="font-mono text-[#0D1F3D]">{typeOverview.promotionsPct}% ({typeOverview.promotions})</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
                   <span className="flex items-center gap-1.5">
                     <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />{" "}
                     Announcement
                   </span>
-                  <span className="font-mono text-[#0D1F3D]">12.8% (160)</span>
+                  <span className="font-mono text-[#0D1F3D]">{typeOverview.announcementsPct}% ({typeOverview.announcements})</span>
                 </div>
               </div>
             </div>
@@ -1112,13 +1193,13 @@ export function NotificationCenterPage() {
                 <div className="flex justify-between text-xs font-bold mb-1">
                   <span className="text-slate-700">WhatsApp</span>
                   <span className="text-emerald-600 font-mono">
-                    812 (89.9%)
+                    {channelDelivery.whatsapp} ({channelDelivery.whatsappPct}%)
                   </span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div
                     className="h-full bg-emerald-500 rounded-full"
-                    style={{ width: "89.9%" }}
+                    style={{ width: `${channelDelivery.whatsappPct}%` }}
                   />
                 </div>
               </div>
@@ -1126,12 +1207,12 @@ export function NotificationCenterPage() {
               <div>
                 <div className="flex justify-between text-xs font-bold mb-1">
                   <span className="text-slate-700">Email</span>
-                  <span className="text-purple-600 font-mono">358 (78.0%)</span>
+                  <span className="text-purple-600 font-mono">{channelDelivery.email} ({channelDelivery.emailPct}%)</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div
                     className="h-full bg-purple-600 rounded-full"
-                    style={{ width: "78.0%" }}
+                    style={{ width: `${channelDelivery.emailPct}%` }}
                   />
                 </div>
               </div>
@@ -1139,12 +1220,12 @@ export function NotificationCenterPage() {
               <div>
                 <div className="flex justify-between text-xs font-bold mb-1">
                   <span className="text-slate-700">In-App Push</span>
-                  <span className="text-blue-600 font-mono">198 (92.5%)</span>
+                  <span className="text-blue-600 font-mono">{channelDelivery.push + channelDelivery.inApp} ({Math.max(channelDelivery.pushPct, channelDelivery.inAppPct)}%)</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div
                     className="h-full bg-blue-600 rounded-full"
-                    style={{ width: "92.5%" }}
+                    style={{ width: `${Math.max(channelDelivery.pushPct, channelDelivery.inAppPct)}%` }}
                   />
                 </div>
               </div>
@@ -1157,30 +1238,20 @@ export function NotificationCenterPage() {
               Top Performing Notifications
             </h3>
             <div className="space-y-2.5 pt-1">
-              <div className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
-                <span className="font-extrabold text-[#0D1F3D]">
-                  Plan Renewal Reminder
-                </span>
-                <span className="text-emerald-700 font-mono font-extrabold">
-                  62.4% Open
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
-                <span className="font-extrabold text-[#0D1F3D]">
-                  Discount Offer – 20% Off
-                </span>
-                <span className="text-emerald-700 font-mono font-extrabold">
-                  58.7% Open
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
-                <span className="font-extrabold text-[#0D1F3D]">
-                  New Feature Released
-                </span>
-                <span className="text-emerald-700 font-mono font-extrabold">
-                  55.1% Open
-                </span>
-              </div>
+              {topPerforming.length === 0 ? (
+                <p className="text-xs text-slate-400 font-medium py-2">No broadcast campaigns dispatched yet.</p>
+              ) : (
+                topPerforming.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
+                    <span className="font-extrabold text-[#0D1F3D] truncate max-w-[190px]">
+                      {c.title}
+                    </span>
+                    <span className="text-emerald-700 font-mono font-extrabold">
+                      {c.totalRecipients > 0 ? Math.round((c.successCount / c.totalRecipients) * 100) : 100}% Delivered
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -1954,86 +2025,57 @@ export function ExecutiveAlertsPage() {
   const [activeTab, setActiveTab] = useState<
     "all" | "critical" | "pending" | "acknowledged" | "resolved"
   >("all");
+  const [liveAlerts, setLiveAlerts] = useState<CampaignRecord[]>([]);
+
+  useEffect(() => {
+    async function loadAlerts() {
+      try {
+        const res = await notificationApi.listCampaigns();
+        setLiveAlerts(res.data);
+      } catch {
+        // Fallback
+      }
+    }
+    loadAlerts();
+  }, []);
+
+  const allAlertRows = useMemo(() => {
+    const alertCampaigns = liveAlerts.filter(
+      (c) =>
+        c.type?.toUpperCase().includes("ALERT") ||
+        c.priority === "HIGH" ||
+        c.priority === "URGENT",
+    );
+
+    return alertCampaigns.map((c) => ({
+      id: `ALT-${c.id.slice(0, 6).toUpperCase()}`,
+      title: c.title,
+      description: c.body,
+      type: "Alert" as NoticeType,
+      audience:
+        c.targetAudience === "ALL_EXECUTIVES" || c.targetAudience === "ALL_USERS"
+          ? `All Field Executives (${c.totalRecipients || 1} Users)`
+          : c.targetAudience,
+      channel: (c.channels && c.channels.length > 0 ? c.channels : ["PUSH", "IN_APP"]).join(" · "),
+      status: (c.status === "SENT" ? "Pending" : c.status === "FAILED" ? "Failed" : "Pending") as any,
+      created: new Date(c.createdAt).toLocaleString([], { dateStyle: "short", timeStyle: "short" }),
+      delivery: c.priority === "URGENT" ? "Critical" : "High",
+      icon: AlertCircle,
+      tone: "rose",
+    }));
+  }, [liveAlerts]);
 
   const alertRows = useMemo(() => {
-    const base = [
-      {
-        id: "ALT-1001",
-        title: "Sales Target at Risk",
-        description: "Team Mumbai West is 35% behind the monthly target.",
-        type: "Alert" as NoticeType,
-        audience: "Amit Verma (Sales Manager)",
-        channel: "WhatsApp · Push",
-        status: "Pending" as const,
-        created: "22 May 2025 · 10:30 AM",
-        delivery: "Critical",
-        icon: AlertCircle,
-        tone: "rose",
-      },
-      {
-        id: "ALT-1002",
-        title: "Executive Inactive",
-        description: "Rahul Kumar has been inactive for 2 days.",
-        type: "Alert" as NoticeType,
-        audience: "Rahul Kumar (Field Executive)",
-        channel: "WhatsApp · Push",
-        status: "Pending" as const,
-        created: "22 May 2025 · 09:15 AM",
-        delivery: "High",
-        icon: AlertCircle,
-        tone: "rose",
-      },
-      {
-        id: "ALT-1003",
-        title: "High Pending Payments",
-        description: "5 payment leads are pending for more than 7 days.",
-        type: "Alert" as NoticeType,
-        audience: "Neha Patel (Sales Manager)",
-        channel: "Email · WhatsApp",
-        status: "Pending" as const,
-        created: "22 May 2025 · 08:45 AM",
-        delivery: "High",
-        icon: AlertCircle,
-        tone: "rose",
-      },
-      {
-        id: "ALT-1004",
-        title: "Visit Verification Failed",
-        description: "3 visits failed GPS verification yesterday.",
-        type: "Alert" as NoticeType,
-        audience: "Suresh Tiwari (Area Manager)",
-        channel: "In-App",
-        status: "Acknowledged" as const,
-        created: "21 May 2025 · 07:30 PM",
-        delivery: "Medium",
-        icon: CalendarClock,
-        tone: "amber",
-      },
-      {
-        id: "ALT-1005",
-        title: "Top Performer",
-        description: "Vikram Bansal achieved 120% of monthly target.",
-        type: "Announcement" as NoticeType,
-        audience: "Vikram Bansal (Field Executive)",
-        channel: "In-App",
-        status: "Resolved" as const,
-        created: "21 May 2025 · 06:20 PM",
-        delivery: "Low",
-        icon: CheckCircle2,
-        tone: "emerald",
-      },
-    ];
-
     if (activeTab === "critical")
-      return base.filter((r) => r.delivery === "Critical");
+      return allAlertRows.filter((r) => r.delivery === "Critical");
     if (activeTab === "pending")
-      return base.filter((r) => r.status === "Pending");
+      return allAlertRows.filter((r) => r.status === "Pending");
     if (activeTab === "acknowledged")
-      return base.filter((r) => r.status === "Acknowledged");
+      return allAlertRows.filter((r) => r.status === "Acknowledged");
     if (activeTab === "resolved")
-      return base.filter((r) => r.status === "Resolved");
-    return base;
-  }, [activeTab]);
+      return allAlertRows.filter((r) => r.status === "Resolved");
+    return allAlertRows;
+  }, [activeTab, allAlertRows]);
 
   const alertColumns: ColumnDef<NotificationRow>[] = [
     {
@@ -2077,7 +2119,7 @@ export function ExecutiveAlertsPage() {
       ),
     },
     {
-      header: "Executive / Role",
+      header: "Executive / Target",
       cell: (row) => (
         <div className="flex items-center gap-2">
           <img
@@ -2113,13 +2155,21 @@ export function ExecutiveAlertsPage() {
     },
   ];
 
-  const alertTabs = [
-    { id: "all", label: "All Alerts", count: 156 },
-    { id: "critical", label: "Critical", count: 28 },
-    { id: "pending", label: "Pending", count: 42 },
-    { id: "acknowledged", label: "Acknowledged", count: 72 },
-    { id: "resolved", label: "Resolved", count: 42 },
-  ] as const;
+  const alertTabs = useMemo(() => [
+    { id: "all", label: "All Alerts", count: allAlertRows.length },
+    { id: "critical", label: "Critical", count: allAlertRows.filter((r) => r.delivery === "Critical").length },
+    { id: "pending", label: "Pending", count: allAlertRows.filter((r) => r.status === "Pending").length },
+    { id: "acknowledged", label: "Acknowledged", count: allAlertRows.filter((r) => r.status === "Acknowledged").length },
+    { id: "resolved", label: "Resolved", count: allAlertRows.filter((r) => r.status === "Resolved").length },
+  ], [allAlertRows]);
+
+  const alertCounts = useMemo(() => ({
+    total: allAlertRows.length,
+    critical: allAlertRows.filter((r) => r.delivery === "Critical").length,
+    pending: allAlertRows.filter((r) => r.status === "Pending").length,
+    acknowledged: allAlertRows.filter((r) => r.status === "Acknowledged").length,
+    resolved: allAlertRows.filter((r) => r.status === "Resolved").length,
+  }), [allAlertRows]);
 
   return (
     <div className="space-y-4 font-sans pb-12">
@@ -2129,7 +2179,7 @@ export function ExecutiveAlertsPage() {
         description="Critical alerts and important notifications for executives and managers."
       />
 
-      <Stats alert />
+      <Stats alert alertCounts={alertCounts} />
 
       <FilterBar mode="alerts" />
 
@@ -2208,7 +2258,7 @@ export function NotificationTemplatesPage() {
               ? "Promotion"
               : "Announcement") as NoticeType,
         audience: "Field Executives",
-        channel: t.channels.join(" · "),
+        channel: (t.channels && t.channels.length > 0 ? t.channels : ["PUSH", "IN_APP"]).join(" · "),
         status: (t.isActive ? "Active" : "Disabled") as any,
         created: new Date(t.createdAt).toLocaleDateString(),
         delivery: "Template",
@@ -2217,7 +2267,7 @@ export function NotificationTemplatesPage() {
       }));
       return live;
     }
-    return notificationRows;
+    return [];
   }, [realTemplates]);
 
   const templateRows = useMemo(() => {
@@ -2295,15 +2345,20 @@ export function NotificationTemplatesPage() {
     },
   ];
 
-  const templateTabs = [
-    { id: "all", label: "All Templates", count: 126 },
-    { id: "announcements", label: "Announcements", count: 28 },
-    { id: "alerts", label: "Alerts", count: 32 },
-    { id: "reminders", label: "Reminders", count: 24 },
-    { id: "promotions", label: "Promotions", count: 18 },
-    { id: "updates", label: "Updates", count: 16 },
-    { id: "other", label: "Other", count: 8 },
-  ] as const;
+  const templateTabs = useMemo(() => [
+    { id: "all", label: "All Templates", count: allTemplates.length },
+    { id: "announcements", label: "Announcements", count: allTemplates.filter((r) => r.type === "Announcement").length },
+    { id: "alerts", label: "Alerts", count: allTemplates.filter((r) => r.type === "Alert").length },
+    { id: "reminders", label: "Reminders", count: allTemplates.filter((r) => r.type === "Reminder").length },
+    { id: "promotions", label: "Promotions", count: allTemplates.filter((r) => r.type === "Promotion").length },
+    { id: "updates", label: "Updates", count: allTemplates.filter((r) => r.type === "Update").length },
+    { id: "other", label: "Other", count: allTemplates.filter((r) => r.type === "Other").length },
+  ], [allTemplates]);
+
+  const templateCounts = useMemo(() => ({
+    total: allTemplates.length,
+    active: allTemplates.filter((t) => t.status === "Active").length,
+  }), [allTemplates]);
 
   return (
     <div className="space-y-4 font-sans pb-12">
@@ -2313,7 +2368,7 @@ export function NotificationTemplatesPage() {
         description="Create, manage and reuse templates for notifications across all channels."
       />
 
-      <Stats template />
+      <Stats template templateCounts={templateCounts} />
 
       <FilterBar mode="templates" />
 

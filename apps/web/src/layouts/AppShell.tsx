@@ -288,10 +288,10 @@ const navCategories: NavCategory[] = [
   {
     title: "Notifications",
     items: [
-      { label: "Notification Center", icon: Bell, to: "/admin/notifications", permission: "crm.notifications.view", badge: "1,248" },
+      { label: "Notification Center", icon: Bell, to: "/admin/notifications", permission: "crm.notifications.view" },
       { label: "Create Notification", icon: PlusCircle, to: "/admin/notifications/create", permission: "crm.notifications.view" },
       { label: "Push Notifications", icon: Send, to: "/admin/notifications/push", permission: "crm.notifications.view" },
-      { label: "Executive Alerts", icon: ShieldAlert, to: "/admin/notifications/executives", permission: "crm.notifications.view", badge: "28" },
+      { label: "Executive Alerts", icon: ShieldAlert, to: "/admin/notifications/executives", permission: "crm.notifications.view" },
       { label: "Notification Templates", icon: ClipboardCopy, to: "/admin/notifications/templates", permission: "crm.notifications.view" },
     ],
   },
