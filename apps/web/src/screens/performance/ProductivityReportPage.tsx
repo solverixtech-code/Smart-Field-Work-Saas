@@ -15,6 +15,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { KpiCard } from '../../components/dashboard/KpiCard';
 
 interface ExecutiveProductivityItem {
   rank: number;
@@ -65,41 +66,54 @@ export const ProductivityReportPage: React.FC = () => {
 
       {/* TOP 6 KPI SUMMARY CARDS */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-1.5">
-          <span className="text-xs font-semibold text-slate-600">Total Executives</span>
-          <div className="text-2xl font-extrabold text-[#0D1F3D]">125</div>
-          <p className="text-[11px] font-bold text-emerald-600">↑ 8 vs. Apr 2025</p>
-        </div>
-
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-1.5">
-          <span className="text-xs font-semibold text-slate-600">Working Days</span>
-          <div className="text-2xl font-extrabold text-[#0D1F3D]">26 / 31</div>
-          <p className="text-[11px] font-bold text-emerald-600">83.9% of total days</p>
-        </div>
-
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-1.5">
-          <span className="text-xs font-semibold text-slate-600">Total Working Hours</span>
-          <div className="text-xl font-extrabold text-[#0D1F3D]">2,487h 32m</div>
-          <p className="text-[11px] font-bold text-emerald-600">↑ 9.6% vs. Apr 2025</p>
-        </div>
-
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-1.5">
-          <span className="text-xs font-semibold text-slate-600">Avg. Daily Output</span>
-          <div className="text-2xl font-extrabold text-[#0D1F3D]">23.6</div>
-          <p className="text-[11px] font-bold text-emerald-600">↑ 11.8% vs. Apr 2025</p>
-        </div>
-
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-1.5">
-          <span className="text-xs font-semibold text-slate-600">Avg. Productive Hours</span>
-          <div className="text-2xl font-extrabold text-[#0D1F3D]">6h 45m</div>
-          <p className="text-[11px] font-bold text-emerald-600">↑ 8.3% vs. Apr 2025</p>
-        </div>
-
-        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-1.5">
-          <span className="text-xs font-semibold text-slate-600">Productivity Score</span>
-          <div className="text-2xl font-extrabold text-emerald-600">81.4 / 100</div>
-          <p className="text-[11px] font-bold text-emerald-600">↑ 7.5 pts vs. Apr 2025</p>
-        </div>
+        <KpiCard
+          title="Total Executives"
+          value="125"
+          subValue="↑ 8 vs last month"
+          icon={UserCheck}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="Working Days"
+          value="26 / 31"
+          subValue="83.9% of total days"
+          icon={Calendar}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Total Hours"
+          value="2,487h"
+          subValue="↑ 9.6% vs last month"
+          icon={Clock}
+          iconBgColor="bg-indigo-500/10"
+          iconTextColor="text-indigo-600"
+        />
+        <KpiCard
+          title="Avg Daily Output"
+          value="23.6"
+          subValue="↑ 11.8% vs last month"
+          icon={TrendingUp}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
+        />
+        <KpiCard
+          title="Productive Hours"
+          value="6h 45m"
+          subValue="↑ 8.3% vs last month"
+          icon={Zap}
+          iconBgColor="bg-amber-500/10"
+          iconTextColor="text-amber-600"
+        />
+        <KpiCard
+          title="Productivity Score"
+          value="81.4 / 100"
+          subValue="↑ 7.5 pts vs last month"
+          icon={Award}
+          iconBgColor="bg-teal-500/10"
+          iconTextColor="text-teal-600"
+        />
       </div>
 
       {/* 100% FULL-WIDTH PRODUCTIVITY TABLE */}

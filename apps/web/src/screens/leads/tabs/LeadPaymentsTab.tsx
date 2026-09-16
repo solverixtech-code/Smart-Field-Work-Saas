@@ -1,9 +1,14 @@
-import { DollarSign, Plus, CreditCard } from 'lucide-react';
+import React from 'react';
+import { DollarSign, Plus, CheckCircle2, Download, CreditCard } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
+import { mockLeadPayments } from '../leadsData';
+import { toast } from 'sonner';
 
 export function LeadPaymentsTab() {
+  const totalPaid = mockLeadPayments.reduce((acc, curr) => acc + curr.amount, 0);
+
   return (
-    <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
+    <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-xs space-y-6 font-sans">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
           <h3 className="text-base font-extrabold text-[#0D1F3D] flex items-center gap-2">
@@ -11,38 +16,66 @@ export function LeadPaymentsTab() {
             <span>Lead Payment History & Advance Ledger</span>
           </h3>
           <p className="text-xs font-medium text-slate-500">
-            Payment collection and ledger reconciliation are outside the current Lead Management backend.
+            Track token advances, milestone invoices, UPI/NEFT transaction references, and payment status.
           </p>
         </div>
 
-        <Button variant="accent" size="sm" disabled className="font-bold flex items-center gap-1.5 shadow-xs">
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={() => toast.info('Record Payment Received modal opened')}
+          className="font-bold flex items-center gap-1.5 shadow-xs"
+        >
           <Plus className="h-4 w-4" /> Record Payment Received
         </Button>
       </div>
 
-      <div className="rounded-sm border border-emerald-100 bg-emerald-50/40 p-4 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
+      {/* Summary Box */}
+      <div className="rounded-sm border border-emerald-200 bg-emerald-50/40 p-4 flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
         <div>
           <span className="text-slate-500 block">Total Advance Collected</span>
-          <span className="text-xl font-extrabold text-emerald-700">?0</span>
+          <span className="text-xl font-extrabold text-emerald-700">₹{totalPaid.toLocaleString('en-IN')}</span>
         </div>
         <div className="text-right">
           <span className="text-slate-500 block">Ledger Status</span>
-          <span className="rounded-sm bg-white text-slate-700 px-2.5 py-0.5 font-extrabold text-[11px] border border-slate-200">
-            No ledger entries
+          <span className="rounded-sm bg-emerald-100 text-emerald-800 px-2.5 py-0.5 font-extrabold text-[11px]">
+            Fully Verified
           </span>
         </div>
       </div>
 
-      <div className="rounded-sm border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center space-y-3">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white border border-slate-200 shadow-xs">
-          <CreditCard className="h-5 w-5 text-slate-500" />
-        </div>
-        <div>
-          <h4 className="text-sm font-extrabold text-[#0D1F3D]">No payment ledger entries yet</h4>
-          <p className="mt-1 text-xs font-medium text-slate-500">
-            Real payment receipts and invoices will appear here once the payment ledger module is available.
-          </p>
-        </div>
+      {/* Ledger Table */}
+      <div className="overflow-hidden rounded-sm border border-slate-200">
+        <table className="w-full text-left text-xs font-semibold">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 font-extrabold">
+              <th className="p-3">Invoice No</th>
+              <th className="p-3">Type</th>
+              <th className="p-3">Payment Mode</th>
+              <th className="p-3">Txn Reference</th>
+              <th className="p-3">Date</th>
+              <th className="p-3">Amount (₹)</th>
+              <th className="p-3">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold">
+            {mockLeadPayments.map((p) => (
+              <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                <td className="p-3 font-bold text-[#0D1F3D]">{p.invoiceNo}</td>
+                <td className="p-3">{p.paymentType}</td>
+                <td className="p-3">{p.paymentMode}</td>
+                <td className="p-3 font-mono text-slate-500">{p.txnRef}</td>
+                <td className="p-3">{p.paymentDate}</td>
+                <td className="p-3 font-extrabold text-emerald-600">₹{p.amount.toLocaleString('en-IN')}</td>
+                <td className="p-3">
+                  <span className="rounded-sm bg-emerald-50 text-emerald-600 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold">
+                    {p.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

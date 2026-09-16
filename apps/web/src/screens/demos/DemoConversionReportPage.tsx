@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { KpiCard } from '../../components/dashboard/KpiCard';
 
 export default function DemoConversionReportPage() {
   const navigate = useNavigate();
@@ -48,35 +49,46 @@ export default function DemoConversionReportPage() {
 
       {/* 5 KPI Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs">
-          <span className="text-[10px] text-slate-400 font-bold block uppercase">Total Demos</span>
-          <span className="text-2xl font-extrabold text-[#0D1F3D]">128</span>
-          <span className="text-[10px] text-slate-400 font-medium block mt-0.5">Conducted this period</span>
-        </div>
-
-        <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs">
-          <span className="text-[10px] text-slate-400 font-bold block uppercase">Demos Converted</span>
-          <span className="text-2xl font-extrabold text-emerald-600">61</span>
-          <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">Closed deals won</span>
-        </div>
-
-        <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs">
-          <span className="text-[10px] text-slate-400 font-bold block uppercase">Conversion Rate</span>
-          <span className="text-2xl font-extrabold text-[#0D1F3D]">47.6%</span>
-          <span className="text-[10px] text-slate-400 font-medium block mt-0.5">Demo to sale ratio</span>
-        </div>
-
-        <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs">
-          <span className="text-[10px] text-slate-400 font-bold block uppercase">Total Value Converted</span>
-          <span className="text-2xl font-extrabold text-teal-700">₹48,20,000</span>
-          <span className="text-[10px] text-slate-400 font-medium block mt-0.5">Total deal revenue</span>
-        </div>
-
-        <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs">
-          <span className="text-[10px] text-slate-400 font-bold block uppercase">Avg. Days to Close</span>
-          <span className="text-2xl font-extrabold text-purple-600">6.4 Days</span>
-          <span className="text-[10px] text-slate-400 font-medium block mt-0.5">Demo date to closure</span>
-        </div>
+        <KpiCard
+          title="Total Demos"
+          value="128"
+          subValue="Conducted this period"
+          icon={CheckCircle2}
+          iconBgColor="bg-blue-500/10"
+          iconTextColor="text-blue-600"
+        />
+        <KpiCard
+          title="Demos Converted"
+          value="61"
+          subValue="Closed deals won"
+          icon={Award}
+          iconBgColor="bg-emerald-500/10"
+          iconTextColor="text-emerald-600"
+        />
+        <KpiCard
+          title="Conversion Rate"
+          value="47.6%"
+          subValue="Demo to sale ratio"
+          icon={TrendingUp}
+          iconBgColor="bg-indigo-500/10"
+          iconTextColor="text-indigo-600"
+        />
+        <KpiCard
+          title="Value Converted"
+          value="₹48,20,000"
+          subValue="Total deal revenue"
+          icon={DollarSign}
+          iconBgColor="bg-teal-500/10"
+          iconTextColor="text-teal-600"
+        />
+        <KpiCard
+          title="Avg Days to Close"
+          value="6.4 Days"
+          subValue="Demo to closure"
+          icon={PieChart}
+          iconBgColor="bg-purple-500/10"
+          iconTextColor="text-purple-600"
+        />
       </div>
 
       {/* Conversion Funnel Section */}
