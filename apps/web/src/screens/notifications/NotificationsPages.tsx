@@ -344,10 +344,14 @@ function PageHeader({
   title,
   description,
   kind,
+  onSubmit,
+  submitting,
 }: {
   title: string;
   description: string;
   kind: PageKind;
+  onSubmit?: () => void;
+  submitting?: boolean;
 }) {
   const navigate = useNavigate();
 
@@ -449,12 +453,15 @@ function PageHeader({
         <Button
           variant="accent"
           size="sm"
-          onClick={() =>
-            toast.success("Notification submitted for final delivery!")
+          disabled={submitting}
+          onClick={
+            onSubmit ??
+            (() => toast.success("Notification submitted for final delivery!"))
           }
           className="gap-2 font-bold shadow-xs"
         >
-          <Send className="h-3.5 w-3.5" /> Review & Send
+          <Send className="h-3.5 w-3.5" />
+          {submitting ? "Sending..." : "Review & Send"}
         </Button>
       </>
     );
@@ -1248,6 +1255,8 @@ export function CreateNotificationPage() {
         kind="create"
         title="Create Notification"
         description="Send updates, alerts and announcements to the right audience."
+        onSubmit={handleBroadcast}
+        submitting={submitting}
       />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">

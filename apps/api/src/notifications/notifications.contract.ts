@@ -14,10 +14,15 @@ export enum NotificationChannel {
 
 export enum NotificationCategory {
   ANNOUNCEMENT = 'ANNOUNCEMENT',
+  ALERT = 'ALERT',
+  REMINDER = 'REMINDER',
+  PROMOTION = 'PROMOTION',
+  UPDATE = 'UPDATE',
   LEAD_UPDATE = 'LEAD_UPDATE',
   TARGET_ALERT = 'TARGET_ALERT',
   EMERGENCY_ALERT = 'EMERGENCY_ALERT',
   SYSTEM_UPDATE = 'SYSTEM_UPDATE',
+  OTHER = 'OTHER',
 }
 
 export enum NotificationPriority {
@@ -37,7 +42,9 @@ export enum NotificationStatus {
 
 export enum AudienceType {
   ALL_EXECUTIVES = 'ALL_EXECUTIVES',
+  ALL_USERS = 'ALL_USERS',
   BY_ROLE = 'BY_ROLE',
   BY_TERRITORY = 'BY_TERRITORY',
   SPECIFIC_EXECUTIVES = 'SPECIFIC_EXECUTIVES',
+  CUSTOM = 'CUSTOM',
 }
