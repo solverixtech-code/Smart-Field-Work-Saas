@@ -9,7 +9,7 @@
 - Branch: `feat/phase-1.2-lead-manual-assignment`, created from the corrected baseline.
 - The main-targeted PR includes the unmerged preflight repair. See [preflight report](PHASE_1_2_PREFLIGHT.md) for the Business fixture regression and restored frozen subscription policy.
 - Development and verification use the isolated worktree `C:\Users\MY PC\.codex\worktrees\smart-field-phase-1-2`. The original IDE checkout was preserved.
-- Candidate SHA and CI attestation are recorded below after publication. No merge or Phase 1.3 work is authorized by this candidate.
+- Candidate SHA and CI attestation are recorded below. No merge or Phase 1.3 work is authorized by this candidate.
 
 ## Persistence and invariants
 
@@ -132,4 +132,8 @@ Known limits: browser discovery returned no connected browser, so no visual, res
 
 ## Candidate attestation
 
-Publication evidence will be completed after the candidate commit and GitHub Actions run exist.
+- Implementation candidate SHA: `67be614624bed065e39c587a9071c8b00d8b6e8c`.
+- Review PR: [#18](https://github.com/solverixtech-code/Smart-Field-Work-Saas/pull/18), targeting main, unmerged.
+- Local full integration rerun: **218/218 passed**, 14 suites, with command-line `--testTimeout=30000` (95.368 seconds). No test timeout or CI workflow file was changed.
+- Candidate CI run: [35062568054](https://github.com/solverixtech-code/Smart-Field-Work-Saas/actions/runs/35062568054). **SUCCESS** on the exact implementation SHA, job `104685800050`: 305 API unit tests, 218 PostgreSQL integration tests, 52 frontend tests, both TypeScript checks/builds, fresh migration deployment, Prisma validation/generation and RBAC sync. CI used its unchanged timeout configuration.
+- This attestation is a documentation-only follow-up to the implementation SHA. The PR records the exact final documentation commit and its independent CI result, avoiding a self-referential commit hash inside this file.
