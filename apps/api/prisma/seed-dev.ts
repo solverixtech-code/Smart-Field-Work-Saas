@@ -153,6 +153,46 @@ async function main() {
           },
         });
       }
+    } else {
+      const demoTenant = await prisma.tenant.findFirst({
+        where: { status: 'ACTIVE' },
+        include: { roles: true },
+      });
+      if (demoTenant) {
+        const roleCodeMap: Record<string, string> = {
+          SUPER_ADMIN: 'tenant_admin',
+          ADMIN: 'tenant_admin',
+          SALES_MANAGER: 'sales_manager',
+          TEAM_LEADER: 'team_leader',
+          FINANCE_OPS: 'finance_ops',
+          SUPPORT: 'support',
+        };
+        const targetCode = roleCodeMap[u.role] || 'tenant_admin';
+        const tenantRole =
+          demoTenant.roles.find((r) => r.code === targetCode) ||
+          demoTenant.roles.find((r) => r.code === 'tenant_admin');
+        if (tenantRole) {
+          await prisma.tenantMembership.upsert({
+            where: {
+              tenantId_userId: {
+                tenantId: demoTenant.id,
+                userId: user.id,
+              },
+            },
+            update: {
+              tenantRoleId: tenantRole.id,
+              status: 'ACTIVE',
+            },
+            create: {
+              tenantId: demoTenant.id,
+              userId: user.id,
+              tenantRoleId: tenantRole.id,
+              status: 'ACTIVE',
+              dataScope: 'ALL',
+            },
+          });
+        }
+      }
     }
   }
 

@@ -983,6 +983,13 @@ export default function AppShell() {
               {cat.items.map((item) => {
                 const isPermissionAllowed = (() => {
                   if (!item.permission) return true;
+                  if (
+                    userRole === Role.SUPER_ADMIN ||
+                    userRole === Role.ADMIN ||
+                    tenant?.roleCode === "tenant_admin"
+                  ) {
+                    return true;
+                  }
                   const isPlatformScope = item.permission.startsWith("platform.");
                   const permissionsList = isPlatformScope
                     ? platform?.permissions
