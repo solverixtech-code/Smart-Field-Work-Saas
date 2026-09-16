@@ -862,7 +862,7 @@ export default function AppShell() {
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
 
   const { user } = useAppSelector((s) => s.auth);
-  const { tenant, loaded: authzLoaded, loading: authzLoading } = useAppSelector((s) => s.authorization);
+  const { platform, tenant, loaded: authzLoaded, loading: authzLoading } = useAppSelector((s) => s.authorization);
   const { hasPermission: hasBootstrapPermission, hasModule } = useRuntimeBootstrap();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -981,11 +981,18 @@ export default function AppShell() {
                 </p>
               )}
               {cat.items.map((item) => {
-                const isPermissionAllowed =
-                  !item.permission ||
-                  userRole === Role.SUPER_ADMIN ||
-                  userRole === Role.ADMIN ||
-                  hasBootstrapPermission(item.permission);
+                const isPermissionAllowed = (() => {
+                  if (!item.permission) return true;
+                  const isPlatformScope = item.permission.startsWith("platform.");
+                  const permissionsList = isPlatformScope
+                    ? platform?.permissions
+                    : tenant?.permissions;
+
+                  if (authzLoaded) {
+                    return Boolean(permissionsList?.includes(item.permission));
+                  }
+                  return hasBootstrapPermission(item.permission);
+                })();
                 const isModuleAllowed = !item.moduleCode || hasModule(item.moduleCode);
                 const isAllowed = isPermissionAllowed && isModuleAllowed;
                 const Icon = item.icon;
