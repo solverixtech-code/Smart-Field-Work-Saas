@@ -174,13 +174,13 @@ export default function MasterManagementPage() {
     }
   };
 
-  const filteredDefinitions = definitions.filter(
+  const filteredDefinitions = (Array.isArray(definitions) ? definitions : []).filter(
     (d) =>
       d.name.toLowerCase().includes(categorySearchQuery.toLowerCase()) ||
       d.code.toLowerCase().includes(categorySearchQuery.toLowerCase()),
   );
 
-  const filteredValues = values
+  const filteredValues = (Array.isArray(values) ? values : [])
     .filter((v) => {
       const matchSearch =
         searchTerm === '' ||

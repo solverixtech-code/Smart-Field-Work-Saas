@@ -212,17 +212,22 @@ export function LeadRecordLookup({
   );
 }
 export function LeadForm({ initial }: { initial?: LeadDto }) {
-  const { can, readOnly } = useCrm(),
-    navigate = useNavigate(),
-    mutation = useCrmMutation();
-  const [draft, setDraft] = useState(() => editable(initial)),
-    [revision, setRevision] = useState(initial?.revision ?? 1),
-    [status, setStatus] = useState(initial?.status ?? "OPEN"),
-    [owner, setOwner] = useState(""),
-    [assigned, setAssigned] = useState(""),
-    [reviewed, setReviewed] = useState(false),
-    [current, setCurrent] = useState<LeadDto>();
+  const { can, readOnly } = useCrm();
+  const navigate = useNavigate();
+  const mutation = useCrmMutation();
   const reload = useCrmMutation();
+
+  const [draft, setDraft] = useState(() => editable(initial));
+  const [revision, setRevision] = useState(initial?.revision ?? 1);
+  const [status, setStatus] = useState(initial?.status ?? "OPEN");
+  const [owner, setOwner] = useState("");
+  const [assigned, setAssigned] = useState("");
+  const [reviewed, setReviewed] = useState(false);
+  const [current, setCurrent] = useState<LeadDto>();
+  const [tagInput, setTagInput] = useState("");
+
+  const presetTags = ["POS Terminal", "Field App", "Enterprise License", "Fleet Tracking", "Medical Rep Mapping"];
+
   const blocked =
     mutation.pending ||
     readOnly ||
@@ -232,8 +237,20 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
       !["OPEN", "QUALIFIED"].includes(current?.status ?? initial.status),
     ) ||
     Boolean(mutation.error?.conflict && !reviewed);
+
   const set = <K extends keyof LeadInput>(key: K, value: LeadInput[K]) =>
     setDraft((d) => ({ ...d, [key]: value }));
+
+  const addTag = (tagName: string) => {
+    const trimmed = tagName.trim();
+    if (!trimmed) return;
+    const currentNote = draft.requirementNote || "";
+    if (currentNote.includes(`[Tag: ${trimmed}]`)) return;
+    const newNote = currentNote ? `${currentNote}, [Tag: ${trimmed}]` : `[Tag: ${trimmed}]`;
+    set("requirementNote", newNote);
+    setTagInput("");
+  };
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (blocked) return;
@@ -260,61 +277,62 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
     );
     if (saved) navigate("/admin/leads/" + saved.id);
   }
-  const fields = (
-    items: ReadonlyArray<readonly [keyof LeadInput, string, string, number]>,
-  ) =>
-    items.map(([key, label, type, max]) => (
-      <Input
-        key={key}
-        id={"lead-" + key}
-        label={label}
-        type={type}
-        maxLength={max}
-        required={key === "name"}
-        value={String(draft[key] ?? "")}
-        onChange={(e) => {
-          const value = key === "name" ? e.target.value : e.target.value || null;
-          set(key, value as LeadInput[typeof key]);
-          if (key === "name" && draft.kind === "BUSINESS")
-            set("businessName", e.target.value || null);
-        }}
-      />
-    ));
+
   return (
     <div className="space-y-4 font-sans pb-16">
-      <header className="flex flex-wrap justify-between gap-3">
+      {/* Top Action Bar */}
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
         <div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate("/admin/leads")}
+            className="text-slate-600 hover:text-[#0D1F3D] mb-1 font-semibold"
           >
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            Back to Leads
+            <ArrowLeft className="mr-1.5 h-4 w-4" />
+            Back to All Leads
           </Button>
           <h1 className="text-2xl font-bold text-[#0D1F3D]">
-            {initial ? "Edit Lead" : "Add New Lead"}
+            {initial ? "Edit Lead Information" : "Create New Lead"}
           </h1>
+          <p className="text-xs text-slate-500 font-medium">
+            {initial
+              ? "Update commercial details, contact information, and assignment."
+              : "Enter lead details, contact person, and initial requirements."}
+          </p>
         </div>
-        <Button
-          type="submit"
-          form="lead-form"
-          disabled={blocked}
-          isLoading={mutation.pending}
-        >
-          <Save className="mr-2 h-4 w-4" />
-          Save Lead
-        </Button>
+
+        <div className="flex items-center gap-2.5">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/admin/leads")}
+            className="font-semibold text-slate-700 border-slate-200"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="lead-form"
+            disabled={blocked}
+            isLoading={mutation.pending}
+            className="font-bold bg-[#0D1F3D] hover:bg-slate-800 text-white shadow-xs"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {initial ? "Save Changes" : "Save Lead"}
+          </Button>
+        </div>
       </header>
-      {mutation.error && <CrmFailure error={mutation.error} />}{" "}
+
+      {mutation.error && <CrmFailure error={mutation.error} />}
       {mutation.error?.conflict && initial && (
-        <Card variant="panel">
-          <p className="text-sm">
-            Your form contents are retained. Reload the current record, review
-            its values, then submit again.
+        <Card variant="panel" className="border-amber-200 bg-amber-50/50">
+          <p className="text-xs font-semibold text-amber-900">
+            Record was modified concurrently. Review changes before re-submitting.
           </p>
           <Button
             variant="outline"
+            size="sm"
             disabled={reload.pending}
             onClick={async () => {
               const latest = await reload.run((s, signal) =>
@@ -326,106 +344,206 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                 setReviewed(true);
               }
             }}
+            className="mt-2"
           >
-            Reload current revision
+            Reload latest version
           </Button>
-          {current && (
-            <p className="text-xs">
-              Current record: {current.name}, {leadLabel(current.status)},
-              revision {current.revision}
-            </p>
-          )}
-          {reload.error && <CrmFailure error={reload.error} />}
         </Card>
       )}
+
       <form id="lead-form" onSubmit={submit}>
         <fieldset
           disabled={mutation.pending || readOnly}
           className="grid grid-cols-1 gap-4 lg:grid-cols-12"
         >
+          {/* LEFT MAIN COLUMN (8 COLS) */}
           <div className="space-y-4 lg:col-span-8">
+            {/* Card 1: Lead Type Selection */}
             <Card variant="panel" className="space-y-3">
-              <h2 className="text-sm font-bold text-[#0D1F3D]">Lead Type</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {(["BUSINESS", "INDIVIDUAL"] as const).map((kind) => (
-                  <Button
-                    key={kind}
-                    type="button"
-                    variant={draft.kind === kind ? "primary" : "outline"}
-                    aria-pressed={draft.kind === kind}
-                    onClick={() => set("kind", kind)}
+              <label className="text-xs font-bold text-[#0D1F3D] block">
+                Lead Type <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-semibold">
+                <div
+                  onClick={() => set("kind", "BUSINESS")}
+                  className={`flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${
+                    draft.kind === "BUSINESS"
+                      ? "border-[#0D1F3D] bg-blue-50/30 ring-1 ring-[#0D1F3D]"
+                      : "border-slate-200 bg-white hover:bg-slate-50"
+                  }`}
+                >
+                  <div
+                    className={`flex h-4 w-4 items-center justify-center rounded-full border ${
+                      draft.kind === "BUSINESS"
+                        ? "border-[#0D1F3D] bg-[#0D1F3D]"
+                        : "border-slate-300"
+                    }`}
                   >
-                    {kind === "BUSINESS" ? (
-                      <Building2 className="mr-2 h-4 w-4" />
-                    ) : (
-                      <User className="mr-2 h-4 w-4" />
+                    {draft.kind === "BUSINESS" && (
+                      <div className="h-1.5 w-1.5 rounded-full bg-white" />
                     )}
-                    {kind === "BUSINESS"
-                      ? "Business / Company"
-                      : "Individual / Person"}
-                  </Button>
-                ))}
+                  </div>
+                  <Building2
+                    className={`h-4 w-4 ${
+                      draft.kind === "BUSINESS" ? "text-[#0D1F3D]" : "text-slate-400"
+                    }`}
+                  />
+                  <span
+                    className={`font-bold ${
+                      draft.kind === "BUSINESS" ? "text-[#0D1F3D]" : "text-slate-700"
+                    }`}
+                  >
+                    Business / Company
+                  </span>
+                </div>
+
+                <div
+                  onClick={() => set("kind", "INDIVIDUAL")}
+                  className={`flex items-center gap-3 rounded-lg border p-3.5 cursor-pointer transition-all ${
+                    draft.kind === "INDIVIDUAL"
+                      ? "border-[#0D1F3D] bg-blue-50/30 ring-1 ring-[#0D1F3D]"
+                      : "border-slate-200 bg-white hover:bg-slate-50"
+                  }`}
+                >
+                  <div
+                    className={`flex h-4 w-4 items-center justify-center rounded-full border ${
+                      draft.kind === "INDIVIDUAL"
+                        ? "border-[#0D1F3D] bg-[#0D1F3D]"
+                        : "border-slate-300"
+                    }`}
+                  >
+                    {draft.kind === "INDIVIDUAL" && (
+                      <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <User
+                    className={`h-4 w-4 ${
+                      draft.kind === "INDIVIDUAL" ? "text-[#0D1F3D]" : "text-slate-400"
+                    }`}
+                  />
+                  <span
+                    className={`font-bold ${
+                      draft.kind === "INDIVIDUAL" ? "text-[#0D1F3D]" : "text-slate-700"
+                    }`}
+                  >
+                    Individual / Person
+                  </span>
+                </div>
               </div>
             </Card>
+
+            {/* Card 2: Basic Information */}
             <Card variant="panel" className="space-y-4">
-              <h2 className="text-sm font-bold text-[#0D1F3D]">
-                Basic Information
-              </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                {fields([
-                  [
-                    "name",
-                    draft.kind === "BUSINESS" ? "Business Name" : "Full Name",
-                    "text",
-                    200,
-                  ],
-                  ["contactName", "Contact Person", "text", 200],
-                  ["phone", "Phone (include country code)", "tel", 30],
-                  ["email", "Email", "email", 254],
-                  ["website", "Website", "url", 2048],
-                ])}
+              <h2 className="text-sm font-bold text-[#0D1F3D]">Basic Information</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Input
+                  id="lead-name"
+                  label={draft.kind === "BUSINESS" ? "Business Name *" : "Full Name *"}
+                  placeholder={draft.kind === "BUSINESS" ? "e.g. Acme Retail Pvt Ltd" : "e.g. Vikram Malhotra"}
+                  maxLength={200}
+                  required
+                  value={draft.name}
+                  onChange={(e) => {
+                    set("name", e.target.value);
+                    if (draft.kind === "BUSINESS") set("businessName", e.target.value || null);
+                  }}
+                />
+
+                <Input
+                  id="lead-contact-name"
+                  label="Contact Person Name *"
+                  placeholder="e.g. Rohan Sharma"
+                  maxLength={200}
+                  value={draft.contactName ?? ""}
+                  onChange={(e) => set("contactName", e.target.value || null)}
+                />
+
+                {/* Mobile Number with +91 Prefix Mask */}
+                <div className="space-y-1.5">
+                  <label htmlFor="lead-phone" className="block text-[#0D1F3D] font-bold text-xs font-sans">
+                    Mobile Number *
+                  </label>
+                  <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden focus-within:border-[#0D1F3D] shadow-xs">
+                    <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-2 border-r border-slate-200 text-slate-700 font-bold text-xs shrink-0">
+                      <span>🇮🇳</span>
+                      <span>+91</span>
+                    </div>
+                    <input
+                      id="lead-phone"
+                      type="tel"
+                      placeholder="98765 43210"
+                      maxLength={30}
+                      value={draft.phone ?? ""}
+                      onChange={(e) => set("phone", e.target.value || null)}
+                      className="w-full px-3.5 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <Input
+                  id="lead-email"
+                  label="Email Address"
+                  type="email"
+                  placeholder="e.g. contact@business.com"
+                  maxLength={254}
+                  value={draft.email ?? ""}
+                  onChange={(e) => set("email", e.target.value || null)}
+                />
+
+                <div className="sm:col-span-2">
+                  <Input
+                    id="lead-website"
+                    label="Website URL"
+                    type="url"
+                    placeholder="https://www.example.com"
+                    maxLength={2048}
+                    value={draft.website ?? ""}
+                    onChange={(e) => set("website", e.target.value || null)}
+                  />
+                </div>
               </div>
             </Card>
+
+            {/* Card 3: Lead Details & Commercials */}
             <Card variant="panel" className="space-y-4">
-              <h2 className="text-sm font-bold text-[#0D1F3D]">Lead Details</h2>
+              <h2 className="text-sm font-bold text-[#0D1F3D]">Lead Details & Commercials</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 {can("system.masters.view") && (
                   <CrmLookup
                     id="lead-form-source"
-                    label="Lead source"
+                    label="Lead Source"
                     kind="lead_source"
                     value={draft.sourceValueId}
                     currentLabel={initial?.source}
                     onChange={(id) => set("sourceValueId", id || null)}
                   />
                 )}
+
                 <Select
                   native
                   id="lead-form-priority"
-                  label="Priority"
+                  label="Priority Level"
                   value={draft.priority}
                   options={leadPriorities}
                   onChange={(e) => {
-                    const option = leadPriorities.find(
-                      (o) => o.value === e.target.value,
-                    );
+                    const option = leadPriorities.find((o) => o.value === e.target.value);
                     if (option) set("priority", option.value);
                   }}
                 />
+
                 <Select
                   native
                   id="lead-form-status"
-                  label="Lifecycle"
+                  label="Lifecycle Status"
                   value={status}
                   disabled={!initial}
                   options={leadStatuses.filter((o) => o.value !== "CONVERTED")}
                   onChange={(e) => {
-                    const option = leadStatuses.find(
-                      (o) => o.value === e.target.value,
-                    );
+                    const option = leadStatuses.find((o) => o.value === e.target.value);
                     if (option) setStatus(option.value);
                   }}
                 />
+
                 {status === "DISQUALIFIED" && (
                   <Select
                     native
@@ -433,32 +551,30 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                     label="Disqualification Reason"
                     value={draft.disqualificationReason ?? ""}
                     options={[
-                      { value: "LOST", label: "Lost" },
+                      { value: "LOST", label: "Lost Opportunity" },
                       { value: "NOT_INTERESTED", label: "Not Interested" },
                     ]}
                     onChange={(e) =>
                       set(
                         "disqualificationReason",
-                        e.target.value
-                          ? (e.target.value as "LOST" | "NOT_INTERESTED")
-                          : null,
+                        e.target.value ? (e.target.value as "LOST" | "NOT_INTERESTED") : null,
                       )
                     }
                   />
                 )}
+
                 <Input
                   id="lead-estimated-value"
-                  label="Estimated Value"
+                  label="Estimated Value (₹)"
                   type="number"
                   min="0"
+                  placeholder="e.g. 500000"
                   value={draft.estimatedValue ?? ""}
                   onChange={(e) =>
-                    set(
-                      "estimatedValue",
-                      e.target.value ? Number(e.target.value) : null,
-                    )
+                    set("estimatedValue", e.target.value ? Number(e.target.value) : null)
                   }
                 />
+
                 <Input
                   id="lead-expected-closing-date"
                   label="Expected Closing Date"
@@ -467,84 +583,141 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                   onChange={(e) =>
                     set(
                       "expectedClosingDate",
-                      e.target.value
-                        ? new Date(e.target.value + "T00:00:00").toISOString()
-                        : null,
+                      e.target.value ? new Date(e.target.value + "T00:00:00").toISOString() : null,
                     )
                   }
                 />
               </div>
             </Card>
+
+            {/* Card 4: Address & Location Details */}
             <Card variant="panel" className="space-y-4">
-              <h2 className="text-sm font-bold text-[#0D1F3D]">Address</h2>
+              <h2 className="text-sm font-bold text-[#0D1F3D]">Address & Location Details</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {fields([
-                  ["addressLine1", "Address Line 1", "text", 200],
-                  ["addressLine2", "Address Line 2", "text", 200],
-                  ["city", "City", "text", 100],
-                  ["state", "State", "text", 100],
-                  ["postalCode", "Postal Code", "text", 20],
-                  [
-                    "countryCode",
-                    "Country Code (two uppercase letters)",
-                    "text",
-                    2,
-                  ],
-                ])}
-              </div>
-            </Card>
-            <Card variant="panel" className="space-y-4">
-              <h2 className="text-sm font-bold text-[#0D1F3D]">Requirement Tags</h2>
-              <div className="space-y-2">
                 <Input
-                  id="lead-tags-input"
-                  label="Add Product / Requirement Tag"
-                  placeholder="Type tag (e.g. POS Terminal, Field App) and press Enter"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      const target = e.target as HTMLInputElement;
-                      const val = target.value.trim();
-                      if (val) {
-                        const currentNote = draft.requirementNote || "";
-                        const newNote = currentNote ? `${currentNote}, [Tag: ${val}]` : `[Tag: ${val}]`;
-                        set("requirementNote", newNote);
-                        target.value = "";
-                      }
-                    }
-                  }}
+                  id="lead-address1"
+                  label="Address Line 1"
+                  placeholder="Building, street, plot number"
+                  maxLength={200}
+                  value={draft.addressLine1 ?? ""}
+                  onChange={(e) => set("addressLine1", e.target.value || null)}
                 />
-                <p className="text-[11px] text-slate-400">Press Enter to attach tag to requirement notes.</p>
+
+                <Input
+                  id="lead-address2"
+                  label="Address Line 2"
+                  placeholder="Area, landmark"
+                  maxLength={200}
+                  value={draft.addressLine2 ?? ""}
+                  onChange={(e) => set("addressLine2", e.target.value || null)}
+                />
+
+                <Input
+                  id="lead-city"
+                  label="City"
+                  placeholder="e.g. Mumbai"
+                  maxLength={100}
+                  value={draft.city ?? ""}
+                  onChange={(e) => set("city", e.target.value || null)}
+                />
+
+                <Input
+                  id="lead-state"
+                  label="State"
+                  placeholder="e.g. Maharashtra"
+                  maxLength={100}
+                  value={draft.state ?? ""}
+                  onChange={(e) => set("state", e.target.value || null)}
+                />
+
+                <Input
+                  id="lead-postal-code"
+                  label="Postal Code"
+                  placeholder="e.g. 400001"
+                  maxLength={20}
+                  value={draft.postalCode ?? ""}
+                  onChange={(e) => set("postalCode", e.target.value || null)}
+                />
+
+                <Input
+                  id="lead-country"
+                  label="Country Code"
+                  placeholder="IN"
+                  maxLength={2}
+                  value={draft.countryCode ?? "IN"}
+                  onChange={(e) => set("countryCode", e.target.value.toUpperCase() || null)}
+                />
               </div>
             </Card>
-          </div>
-          <div className="space-y-4 lg:col-span-4">
+
+            {/* Card 5: Requirement Tags */}
             <Card variant="panel" className="space-y-4">
-              <h2 className="text-sm font-bold text-[#0D1F3D]">
-                Assign & Ownership
-              </h2>
-              {initial ? (
-                <>
-                  <p className="text-sm">
-                    Owner: {initial.owner.displayName}
-                    <br />
-                    Assigned: {initial.assignee?.displayName ?? "Unassigned"}
-                  </p>
+              <h2 className="text-sm font-bold text-[#0D1F3D]">Requirement & Product Tags</h2>
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <Input
+                    id="lead-tags-input"
+                    placeholder="Type requirement tag and press Add"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addTag(tagInput);
+                      }
+                    }}
+                  />
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() =>
-                      navigate("/admin/leads/" + initial.id + "/assignment")
-                    }
+                    onClick={() => addTag(tagInput)}
+                    className="font-bold shrink-0 self-end h-10 border-slate-200"
+                  >
+                    Add Tag
+                  </Button>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-xs font-semibold text-slate-500 mr-1">Quick Presets:</span>
+                  {presetTags.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => addTag(t)}
+                      className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-[#0D1F3D] hover:text-white transition-colors"
+                    >
+                      + {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* RIGHT SIDEBAR COLUMN (4 COLS) */}
+          <div className="space-y-4 lg:col-span-4">
+            {/* Card 1: Assign & Ownership */}
+            <Card variant="panel" className="space-y-4">
+              <h2 className="text-sm font-bold text-[#0D1F3D]">Assign & Ownership</h2>
+              {initial ? (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs space-y-1">
+                  <p className="font-bold text-slate-800">Owner: {initial.owner.displayName}</p>
+                  <p className="text-slate-600">Assigned: {initial.assignee?.displayName ?? "Unassigned"}</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 w-full font-bold"
+                    onClick={() => navigate("/admin/leads/" + initial.id + "/assignment")}
                   >
                     Manage Assignment
                   </Button>
-                </>
+                </div>
               ) : can("crm.leads.assign") ? (
-                <>
+                <div className="space-y-3">
                   <CrmLookup
                     id="lead-owner"
-                    label="Owner"
+                    label="Lead Owner"
                     kind="lead-owner"
                     emptyLabel="Your membership"
                     value={owner}
@@ -552,24 +725,23 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                   />
                   <CrmLookup
                     id="lead-assignee"
-                    label="Assigned executive"
+                    label="Assigned Executive"
                     kind="lead-owner"
                     emptyLabel="Unassigned"
                     value={assigned}
                     onChange={setAssigned}
                   />
-                </>
+                </div>
               ) : (
                 <p className="text-xs text-slate-500">
-                  You will own this lead. Assignment requires additional
-                  permission.
+                  You will own this lead. Executive assignment is governed by tenant permissions.
                 </p>
               )}
             </Card>
+
+            {/* Card 2: Linked Business / Contact */}
             <Card variant="panel" className="space-y-4">
-              <h2 className="text-sm font-bold text-[#0D1F3D]">
-                Account & Contact Links
-              </h2>
+              <h2 className="text-sm font-bold text-[#0D1F3D]">Account & Contact Links</h2>
               {can("crm.businesses.view") && (
                 <LeadRecordLookup
                   kind="account"
@@ -592,53 +764,52 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                 />
               )}
             </Card>
+
+            {/* Card 3: Follow-up & Next Action */}
             <Card variant="panel" className="space-y-4">
-              <h2 className="text-sm font-bold text-[#0D1F3D]">
-                Follow-up & Next Action
-              </h2>
+              <h2 className="text-sm font-bold text-[#0D1F3D]">Follow-up & Next Action</h2>
               <Input
                 id="lead-next-follow-up"
-                label="Next Follow-up"
+                label="Next Follow-up Date & Time"
                 type="datetime-local"
                 value={toDateTimeLocal(draft.nextFollowUpAt)}
-                onChange={(e) =>
-                  set("nextFollowUpAt", fromDateTimeLocal(e.target.value))
-                }
+                onChange={(e) => set("nextFollowUpAt", fromDateTimeLocal(e.target.value))}
               />
               <Textarea
                 id="lead-next-action"
-                label="Next Action Note"
+                label="Next Action / Note"
+                placeholder="What is the next action or follow-up plan?"
                 maxLength={1000}
                 value={draft.nextActionNote ?? ""}
-                onChange={(e) =>
-                  set("nextActionNote", e.target.value || null)
-                }
+                onChange={(e) => set("nextActionNote", e.target.value || null)}
               />
             </Card>
+
+            {/* Card 4: Additional Information */}
             <Card variant="panel" className="space-y-4">
-              <h2 className="text-sm font-bold text-[#0D1F3D]">
-                Additional Information
-              </h2>
+              <h2 className="text-sm font-bold text-[#0D1F3D]">Additional Information</h2>
               <Textarea
                 id="lead-description"
                 label="Lead Description"
+                placeholder="Enter background context or company description..."
                 maxLength={2000}
                 value={draft.description ?? ""}
                 onChange={(e) => set("description", e.target.value || null)}
               />
               <Textarea
                 id="lead-requirement-note"
-                label="Requirement Note"
+                label="Requirement Notes"
+                placeholder="Specific commercial or technical requirements..."
                 maxLength={5000}
                 value={draft.requirementNote ?? ""}
-                onChange={(e) =>
-                  set("requirementNote", e.target.value || null)
-                }
+                onChange={(e) => set("requirementNote", e.target.value || null)}
               />
             </Card>
+
+            {/* Card 5: Attachments Dropzone */}
             <Card variant="panel" className="space-y-3">
               <h2 className="text-sm font-bold text-[#0D1F3D]">Attachments</h2>
-              <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/50 p-6 text-center space-y-2">
+              <div className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-6 text-center space-y-2">
                 <p className="text-xs text-slate-600 font-semibold">
                   Drag & drop files here or browse
                 </p>

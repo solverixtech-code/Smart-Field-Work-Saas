@@ -53,8 +53,26 @@ export interface SetTenantOverrideDto {
 
 class ApiMasterService {
   async getEffectiveDefinitions(): Promise<EffectiveMasterDefinition[]> {
-    const response = await api.get<EffectiveMasterDefinition[]>('/tenant/masters');
-    return response.data;
+    const response = await api.get<any>('/tenant/masters');
+    const raw = response.data;
+    const items = Array.isArray(raw) ? raw : (raw?.items ?? []);
+    return items.map((d: any) => ({
+      id: d.id || d.code,
+      code: d.code,
+      name: d.name || d.code,
+      description: d.description || '',
+      moduleCode: d.moduleCode ?? null,
+      valueType: d.valueType ?? 'STRING',
+      metadataSchema: d.metadataSchema ?? '{}',
+      allowTenantCreate: d.allowTenantCreate ?? true,
+      allowTenantEdit: d.allowTenantEdit ?? true,
+      allowTenantDeactivate: d.allowTenantDeactivate ?? true,
+      allowIndustryDefaults: d.allowIndustryDefaults ?? true,
+      systemValuePolicy: d.systemValuePolicy ?? 'OVERRIDABLE_LABEL',
+      displayOrder: d.displayOrder ?? 1,
+      status: d.status ?? 'ACTIVE',
+      revision: d.revision ?? 1,
+    }));
   }
 
   async getEffectiveValues(code: string, query: { search?: string; isActive?: boolean } = {}): Promise<EffectiveMasterValue[]> {
@@ -62,8 +80,21 @@ class ApiMasterService {
     if (query.search?.trim()) params.search = query.search.trim();
     if (query.isActive !== undefined) params.isActive = query.isActive;
 
-    const response = await api.get<EffectiveMasterValue[]>(`/tenant/masters/${code}/values`, { params });
-    return response.data;
+    const response = await api.get<any>(`/tenant/masters/${code}/values`, { params });
+    const raw = response.data;
+    const items = Array.isArray(raw) ? raw : (raw?.items ?? []);
+    return items.map((r: any) => ({
+      id: r.id,
+      code: r.code,
+      label: r.name || r.label || r.code,
+      displayOrder: r.sortOrder ?? r.displayOrder ?? 1,
+      isActive: r.selectable ?? r.isActive ?? true,
+      provenance: typeof r.provenance === 'string' ? r.provenance : (r.source || r.provenance?.source || 'TENANT'),
+      isOverridden: Boolean(r.provenance?.overrides?.length),
+      overrideLabel: r.name,
+      originId: r.id,
+      metadata: r.metadata,
+    }));
   }
 
   async createTenantValue(code: string, input: CreateTenantValueDto): Promise<EffectiveMasterValue> {
