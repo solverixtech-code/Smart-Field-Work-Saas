@@ -159,6 +159,20 @@ export class EffectivePermissionService {
       ),
     ).sort();
 
+    if (role.code === 'tenant_admin' && role.isActive) {
+      const allTenantPermissions = await db.permission.findMany({
+        where: { isActive: true, scope: PermissionScope.TENANT },
+        select: { code: true, moduleKey: true, action: true },
+      });
+      for (const p of allTenantPermissions) {
+        const code = p.code ? p.code : `${p.moduleKey}.${p.action}`;
+        if (code && !permissionCodes.includes(code)) {
+          permissionCodes.push(code);
+        }
+      }
+      permissionCodes.sort();
+    }
+
     if (!transaction) this.cache.set(cacheKey, permissionCodes);
     return permissionCodes;
   }
