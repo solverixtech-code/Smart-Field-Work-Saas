@@ -101,12 +101,15 @@ export function CrmLookup({
     `${kind}:${query}:${page}`,
     async (service, signal) => {
       if (kind === "owner" || kind === "lead-owner") {
-        const response = await service.owners({ search: query, page, limit: 25 }, signal);
+        const ownerFn = kind === "lead-owner" && service.leads?.owners ? service.leads.owners : service.owners;
+        const response = await ownerFn({ search: query, page, limit: 25 }, signal);
         return {
           ...response,
-          items: response.items.map((r: { id: string; displayName: string }) => ({
+          items: response.items.map((r: any) => ({
             value: r.id,
-            label: r.displayName,
+            label: r.displayName || r.name,
+            avatar: r.avatarUrl ?? undefined,
+            sublabel: r.role ?? undefined,
           })),
         };
       }
@@ -137,7 +140,7 @@ export function CrmLookup({
     placeholder ??
     (result.loading
       ? "Loading options..."
-      : kind === "owner"
+      : kind === "owner" || kind === "lead-owner"
         ? currentLabel
           ? `Keep ${currentLabel}`
           : "Your membership"

@@ -1,0 +1,168 @@
+import { z } from "zod";
+import {
+  accountFields,
+  contactFields,
+  createAccount,
+  createLinkedContact,
+  crmId,
+  revisionCommand,
+} from "./crm-contract";
+import { masterPage } from "../platform/masters/master-contract";
+
+export const leadStatus = z.enum([
+  "OPEN",
+  "QUALIFIED",
+  "CONVERTED",
+  "DISQUALIFIED",
+  "DUPLICATE",
+]);
+export const leadPriority = z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]);
+export const leadFields = accountFields
+  .pick({
+    name: true,
+    website: true,
+    addressLine1: true,
+    addressLine2: true,
+    city: true,
+    state: true,
+    postalCode: true,
+    countryCode: true,
+    description: true,
+    sourceValueId: true,
+  })
+  .extend({
+    kind: z.enum(["BUSINESS", "INDIVIDUAL"]).optional(),
+    businessName: z.string().trim().min(1).max(200).nullable().optional(),
+    contactName: z.string().trim().max(200).nullable().optional(),
+    phone: contactFields.shape.phone,
+    email: contactFields.shape.email,
+    priority: leadPriority.optional(),
+    accountId: crmId.nullable().optional(),
+    contactId: crmId.nullable().optional(),
+    estimatedValue: z.coerce.number().min(0).max(999999999999.99).nullable().optional(),
+    expectedClosingDate: z.coerce.date().nullable().optional(),
+    nextFollowUpAt: z.coerce.date().nullable().optional(),
+    nextActionNote: z.string().trim().max(1000).nullable().optional(),
+    requirementNote: z.string().trim().max(5000).nullable().optional(),
+    disqualificationReason: z.enum(["LOST", "NOT_INTERESTED"]).nullable().optional(),
+  })
+  .strict();
+export const createLead = leadFields
+  .extend({
+    ownerMembershipId: crmId.optional(),
+    assignedMembershipId: crmId.nullable().optional(),
+  })
+  .strict()
+  .refine((v) => Boolean(v.phone || v.email), "Provide phone or email")
+  .refine(
+    (v) => (v.kind ?? "BUSINESS") !== "INDIVIDUAL" || Boolean(v.contactName),
+    "Individual leads require contactName",
+  );
+export const updateLead = leadFields
+  .partial()
+  .extend({ status: leadStatus.exclude(["CONVERTED"]).optional() })
+  .merge(revisionCommand)
+  .strict()
+  .refine(
+    (v) => Object.keys(v).length > 1,
+    "Provide at least one changed field",
+  );
+export const assignLead = revisionCommand
+  .extend({
+    ownerMembershipId: crmId.optional(),
+    assignedMembershipId: crmId.nullable().optional(),
+  })
+  .strict()
+  .refine((v) => Object.keys(v).length > 1, "Provide an owner or assignee");
+export const leadFilters = z
+  .object({
+    status: leadStatus.optional(),
+    priority: leadPriority.optional(),
+    sourceValueId: crmId.optional(),
+    ownerMembershipId: crmId.optional(),
+    assignedMembershipId: crmId.optional(),
+    accountId: crmId.optional(),
+    hot: z.literal("true").optional(),
+    followUp: z.enum(["pending"]).optional(),
+    disqualificationReason: z.enum(["LOST", "NOT_INTERESTED"]).optional(),
+    unassigned: z.enum(["true", "false"]).optional(),
+  })
+  .strict();
+export const leadQuery = masterPage
+  .merge(leadFilters)
+  .extend({
+    sortBy: z.enum(["name", "createdAt", "updatedAt"]).default("createdAt"),
+    sortDirection: z.enum(["asc", "desc"]).default("desc"),
+  })
+  .strict()
+  .refine(
+    (v) => (v.page - 1) * v.limit <= 100000,
+    "Pagination offset exceeds 100000",
+  );
+export const conversionCommand = revisionCommand
+  .extend({
+    idempotencyKey: z.string().trim().min(1).max(100),
+    account: z
+      .discriminatedUnion("mode", [
+        z.object({ mode: z.literal("link"), id: crmId }).strict(),
+        z.object({ mode: z.literal("create"), data: createAccount }).strict(),
+      ])
+      .optional(),
+    contact: z
+      .discriminatedUnion("mode", [
+        z.object({ mode: z.literal("link"), id: crmId }).strict(),
+        z
+          .object({ mode: z.literal("create"), data: createLinkedContact })
+          .strict(),
+      ])
+      .optional(),
+  })
+  .strict()
+  .refine(
+    (v) => Boolean(v.account || v.contact),
+    "Choose an account or contact",
+  )
+  .refine(
+    (v) => v.account?.mode !== "create" || !v.account.data.primaryContact,
+    "Use the conversion contact choice",
+  );
+export type LeadInput = z.infer<typeof leadFields>;
+export type LeadQuery = z.infer<typeof leadQuery>;
+export type ConversionCommand = z.infer<typeof conversionCommand>;
+
+export const bulkAssignLead = z
+  .object({
+    leadIds: z.array(crmId).min(1).max(100),
+    assignedMembershipId: crmId.nullable(),
+    reason: z.string().trim().min(1).max(500).optional(),
+  })
+  .strict();
+
+export const csvDuplicatePolicy = z.enum(["SKIP", "REJECT"]);
+export const importPreview = z
+  .object({
+    csv: z.string().min(1).max(1024 * 1024),
+    duplicatePolicy: csvDuplicatePolicy.default("SKIP"),
+    defaultSourceValueId: crmId.nullable().optional(),
+  })
+  .strict();
+export const importLeads = importPreview.extend({
+  confirmed: z.literal(true),
+});
+
+export const exportQuery = masterPage
+  .merge(leadFilters)
+  .extend({
+    sortBy: z.enum(["name", "createdAt", "updatedAt"]).default("createdAt"),
+    sortDirection: z.enum(["asc", "desc"]).default("desc"),
+    maxRows: z.coerce.number().int().min(1).max(1000).default(1000),
+  })
+  .strict()
+  .refine(
+    (v) => (v.page - 1) * v.limit <= 100000,
+    "Pagination offset exceeds 100000",
+  );
+
+export const createLeadNote = z
+  .object({ note: z.string().trim().min(1).max(2000) })
+  .strict();

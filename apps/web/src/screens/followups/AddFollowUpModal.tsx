@@ -17,7 +17,6 @@ import { DatePicker } from '../../components/ui/DatePicker';
 import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
 import { mockTerritoryExecutives } from '../territories/territoriesData';
 import { mockBusinesses } from '../businesses/businessesData';
-import { mockLeadsData, LeadItem } from '../leads/leadsData';
 import { mockFollowUpsList } from './followupsData';
 
 interface AddFollowUpModalProps {
@@ -27,18 +26,6 @@ interface AddFollowUpModalProps {
 }
 
 const allAvailableTargets = [
-  ...mockLeadsData.map((l: LeadItem) => ({
-    name: l.companyName,
-    type: 'Lead',
-    code: l.code || l.id,
-    contactPerson: l.contactPerson,
-    contactRole: l.designation,
-    phone: l.phone,
-    email: l.email,
-    address: l.address || `${l.city}, ${l.region}`,
-    city: l.city,
-    category: l.industry || 'Prospect Lead',
-  })),
   ...mockBusinesses.map((b) => ({
     name: b.name,
     type: 'Business',
@@ -158,7 +145,7 @@ export function AddFollowUpModal({ isOpen, onClose, onSuccess }: AddFollowUpModa
                 Add New Follow-up
               </h2>
               <p className="text-[11px] font-semibold text-slate-500">
-                Schedule a follow-up action for a Lead or Business.
+                Schedule a follow-up action for an existing business.
               </p>
             </div>
           </div>
@@ -177,7 +164,7 @@ export function AddFollowUpModal({ isOpen, onClose, onSuccess }: AddFollowUpModa
           {/* Target Selection */}
           <div className="space-y-1">
             <Select
-              label="Select Target Lead or Business *"
+              label="Select Target Business *"
               value={selectedBusinessName}
               onChange={handleBusinessSelect}
               searchable

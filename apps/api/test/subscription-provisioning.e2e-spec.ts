@@ -286,6 +286,8 @@ describe('Phase 0.6 PostgreSQL, API, replay and concurrency proof', () => {
   it('enforces commitment, trial seats, availability and commercial change flags', async () => {
     const restricted = await makePlan({ minimumCommitmentMonths: '12', allowUpgrade: false, allowDowngrade: false, trialSeatLimit: 1 });
     await expect(provision.provision({ ...payload(restricted), trial: true }, actor)).rejects.toThrow('trial seats');
+    const disabledTrial = await makePlan({ trialEnabled: false });
+    await expect(provision.provision({ ...payload(disabledTrial), trial: true }, actor)).rejects.toThrow('Trial is disabled');
     const r = await create(restricted);
     await expect(command(r.tenantId, 'CANCEL')).rejects.toThrow('commitment');
     await expect(command(r.tenantId, 'CHANGE_PLAN', { planVersionId: versionId, billingCycle: 'MONTHLY', seatQuantity: 6 })).rejects.toThrow('does not allow');
@@ -385,6 +387,10 @@ describe('Phase 0.6 PostgreSQL, API, replay and concurrency proof', () => {
     const original = await prisma.planVersion.findUniqueOrThrow({ where: { id: versionId } });
     const draft = await prisma.planVersion.create({ data: { planId: original.planId, version: 2 } });
     await expect(create(draft.id)).rejects.toThrow('published');
+    expect((await prisma.planVersion.findUniqueOrThrow({ where: { id: draft.id } })).status).toBe('DRAFT');
+    await expect(create(original.planId)).rejects.toThrow('published');
+    const planCode = (await prisma.plan.findUniqueOrThrow({ where: { id: original.planId } })).code;
+    await expect(create(planCode)).rejects.toThrow('published');
     await prisma.$transaction(async tx => {
       await tx.planVersion.update({ where: { id: draft.id }, data: { status: 'PUBLISHED', publishedAt: new Date() } });
       await tx.plan.update({ where: { id: original.planId }, data: { currentPublishedVersionId: draft.id } });

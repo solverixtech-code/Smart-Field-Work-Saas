@@ -417,6 +417,7 @@ export default function AppRouter() {
 
             {/* Leads Management Routes (Screens 33 to 53) */}
             <Route element={<PermissionRoute permission="crm.leads.view" />}>
+              <Route element={<CrmBoundary />}>
               <Route path="/admin/leads" element={<AllLeadsPage viewMode="all" />} />
               <Route path="/admin/leads/create" element={<AddLeadPage />} />
               <Route path="/admin/leads/bulk-assign" element={<BulkAssignLeadsPage />} />
@@ -438,6 +439,7 @@ export default function AppRouter() {
               <Route path="/admin/leads/:leadId/communications" element={<LeadDetailsPage />} />
               <Route path="/admin/leads/:leadId/payments" element={<LeadDetailsPage />} />
               <Route path="/admin/leads/:leadId/assignment" element={<LeadDetailsPage />} />
+              </Route>
             </Route>
 
             {/* Sales Pipeline Routes (Screens 105 to 113) */}

@@ -1,14 +1,30 @@
-import React from 'react';
+import React from "react";
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "default" | "panel";
+  size?: "sm" | "md" | "lg";
 }
 
-export const Card = ({ className = '', size = 'lg', children, ...props }: CardProps) => {
+export const Card = ({
+  className = "",
+  size = "lg",
+  variant = "default",
+  children,
+  ...props
+}: CardProps) => {
+  if (variant === "panel")
+    return (
+      <div
+        className={`rounded-lg border border-slate-200/80 bg-white p-5 shadow-xs ${className}`}
+        {...props}
+      >
+        {children}
+      </div>
+    );
   const paddingSizes = {
-    sm: 'p-6 sm:p-8',
-    md: 'p-8 sm:p-10',
-    lg: 'p-10 sm:p-12',
+    sm: "p-6 sm:p-8",
+    md: "p-8 sm:p-10",
+    lg: "p-10 sm:p-12",
   };
 
   return (

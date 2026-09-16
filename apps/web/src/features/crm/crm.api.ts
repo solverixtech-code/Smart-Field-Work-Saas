@@ -1,7 +1,9 @@
+import { leadApi } from "./lead.api";
 import { api } from "../../common/api";
 import type { CrmService } from "./crm.types";
 const root = "/tenant/crm";
 export const crmApi: CrmService = {
+  leads: leadApi,
   accounts: async (params, signal) =>
     (await api.get(`${root}/accounts`, { params, signal })).data,
   account: async (id, signal) =>
@@ -17,7 +19,12 @@ export const crmApi: CrmService = {
     });
   },
   contacts: async (id, params, signal) =>
-    (await api.get(`${root}/accounts/${id}/contacts`, { params, signal })).data,
+    (
+      await api.get(
+        id ? `${root}/accounts/${id}/contacts` : `${root}/contacts`,
+        { params, signal },
+      )
+    ).data,
   contact: async (id, signal) =>
     (await api.get(`${root}/contacts/${id}`, { signal })).data,
   createContact: async (id, body, signal) =>
