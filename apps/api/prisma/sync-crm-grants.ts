@@ -1,5 +1,8 @@
 import { PrismaClient } from "@prisma/client";
-import { CRM_PHASE_1_1_PERMISSIONS } from "../src/common/security/permission-registry";
+import {
+  CRM_PHASE_1_1_PERMISSIONS,
+  CRM_PHASE_1_2_PERMISSIONS,
+} from "../src/common/security/permission-registry";
 import { RolePermissionService } from "../src/common/security/role-permission.service";
 
 /** Add only approved CRM grants to active built-in administrators, including versioned roles. */
@@ -16,7 +19,10 @@ export async function syncCrmAdministratorGrants(prisma: PrismaClient) {
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
     for (const role of roles)
-      for (const permission of CRM_PHASE_1_1_PERMISSIONS) {
+      for (const permission of [
+        ...CRM_PHASE_1_1_PERMISSIONS,
+        ...CRM_PHASE_1_2_PERMISSIONS,
+      ]) {
         const result = await grants.grantTenantPermission(
           role.tenantId,
           role.id,

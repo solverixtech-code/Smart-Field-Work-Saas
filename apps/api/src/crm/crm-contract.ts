@@ -142,14 +142,17 @@ export const contactQueryFields = pageFields
     roleValueId: crmId.optional(),
     ownerMembershipId: crmId.optional(),
     accountId: crmId.optional(),
+    standalone: z.literal("true").optional(),
   })
   .strict();
-export const contactQuery = contactQueryFields.refine(
-  boundedOffset,
-  "Pagination offset exceeds 100000",
-);
+export const contactQuery = contactQueryFields
+  .refine(boundedOffset, "Pagination offset exceeds 100000")
+  .refine(
+    (v) => !v.standalone || !v.accountId,
+    "Standalone contacts cannot have an Account filter",
+  );
 export const nestedContactQuery = contactQueryFields
-  .omit({ accountId: true })
+  .omit({ accountId: true, standalone: true })
   .strict()
   .refine(boundedOffset, "Pagination offset exceeds 100000");
 export const ownerQuery = masterPage.refine(

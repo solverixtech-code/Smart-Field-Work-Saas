@@ -171,67 +171,75 @@ export class CrmService {
   }
   async createAccount(actor: RequestPrincipal, body: unknown) {
     const v = dto.createAccount.parse(body);
-    return this.repo.run(actor, true, async (tx, p) => {
-      this.authorize(p, "businesses", "create");
-      const owner = v.ownerMembershipId ?? p.scope.membershipId;
-      p.targetOwner("businesses", owner);
-      await this.repo.owner(tx, p, owner);
-      await this.accountMasters(tx, p, v);
-      if (v.primaryContact) {
-        this.authorize(p, "contacts", "create");
-        await this.repo.master(
-          tx,
-          p,
-          v.primaryContact.roleValueId,
-          "contact_role",
-        );
-      }
-      const row = await tx.account.create({
+    return this.repo.run(actor, true, (tx, p) =>
+      this.createAccountInTransaction(tx, p, v),
+    );
+  }
+  async createAccountInTransaction(
+    tx: Prisma.TransactionClient,
+    p: CrmPolicy,
+    input: z.infer<typeof dto.createAccount>,
+  ) {
+    const v = dto.createAccount.parse(input);
+    this.authorize(p, "businesses", "create");
+    const owner = v.ownerMembershipId ?? p.scope.membershipId;
+    p.targetOwner("businesses", owner);
+    await this.repo.owner(tx, p, owner);
+    await this.accountMasters(tx, p, v);
+    if (v.primaryContact) {
+      this.authorize(p, "contacts", "create");
+      await this.repo.master(
+        tx,
+        p,
+        v.primaryContact.roleValueId,
+        "contact_role",
+      );
+    }
+    const row = await tx.account.create({
+      data: {
+        ...accountData(v),
+        name: v.name,
+        ownerMembershipId: owner,
+        tenantId: p.scope.tenantId,
+        createdByMembershipId: p.scope.membershipId,
+        updatedByMembershipId: p.scope.membershipId,
+      },
+      select: accountSelect,
+    });
+    await this.repo.audit(tx, p, "account.created", "Account", row.id, {
+      revisionAfter: 1,
+      status: row.status,
+      ownerMembershipId: owner,
+    });
+    if (v.primaryContact) {
+      const contact = await tx.contact.create({
         data: {
-          ...accountData(v),
-          name: v.name,
-          ownerMembershipId: owner,
+          ...contactData(v.primaryContact),
+          name: v.primaryContact.name,
           tenantId: p.scope.tenantId,
+          accountId: row.id,
+          ownerMembershipId: null,
+          isPrimary: true,
           createdByMembershipId: p.scope.membershipId,
           updatedByMembershipId: p.scope.membershipId,
         },
-        select: accountSelect,
+        select: { id: true },
       });
-      await this.repo.audit(tx, p, "account.created", "Account", row.id, {
+      await this.repo.audit(tx, p, "contact.created", "Contact", contact.id, {
+        accountId: row.id,
         revisionAfter: 1,
-        status: row.status,
-        ownerMembershipId: owner,
+        status: "ACTIVE",
       });
-      if (v.primaryContact) {
-        const contact = await tx.contact.create({
-          data: {
-            ...contactData(v.primaryContact),
-            name: v.primaryContact.name,
-            tenantId: p.scope.tenantId,
-            accountId: row.id,
-            ownerMembershipId: null,
-            isPrimary: true,
-            createdByMembershipId: p.scope.membershipId,
-            updatedByMembershipId: p.scope.membershipId,
-          },
-          select: { id: true },
-        });
-        await this.repo.audit(tx, p, "contact.created", "Contact", contact.id, {
-          accountId: row.id,
-          revisionAfter: 1,
-          status: "ACTIVE",
-        });
-        await this.repo.audit(
-          tx,
-          p,
-          "account.primary_contact.changed",
-          "Account",
-          row.id,
-          { primaryContactId: contact.id, revisionAfter: 1 },
-        );
-      }
-      return (await this.repo.accountsDto(tx, p, [row]))[0];
-    });
+      await this.repo.audit(
+        tx,
+        p,
+        "account.primary_contact.changed",
+        "Account",
+        row.id,
+        { primaryContactId: contact.id, revisionAfter: 1 },
+      );
+    }
+    return (await this.repo.accountsDto(tx, p, [row]))[0];
   }
   async updateAccount(actor: RequestPrincipal, id: string, body: unknown) {
     dto.crmId.parse(id);
@@ -317,7 +325,7 @@ export class CrmService {
         AND: [
           p.contacts(),
           {
-            accountId: q.accountId,
+            accountId: q.standalone ? null : q.accountId,
             status: q.status,
             roleValueId: q.roleValueId,
             ...(q.ownerMembershipId
@@ -385,43 +393,51 @@ export class CrmService {
     const v = dto.createContact.parse(
       accountId ? { ...dto.createLinkedContact.parse(body), accountId } : body,
     );
-    return this.repo.run(actor, true, async (tx, p) => {
-      this.authorize(p, "contacts", "create");
-      let parent: AccountRow | undefined;
-      let owner: string | null = null;
-      if (v.accountId) {
-        this.authorize(p, "businesses", "update");
-        p.require("crm.businesses.view");
-        parent = await this.repo.account(tx, p, v.accountId, true);
-        if (parent.status !== "ACTIVE")
-          throw new UnprocessableEntityException("CRM_ACCOUNT_INACTIVE");
-      } else {
-        owner = v.ownerMembershipId ?? p.scope.membershipId;
-        p.targetOwner("contacts", owner);
-        await this.repo.owner(tx, p, owner);
-      }
-      await this.repo.master(tx, p, v.roleValueId, "contact_role");
-      const row = await tx.contact.create({
-        data: {
-          ...contactData(v),
-          name: v.name,
-          tenantId: p.scope.tenantId,
-          accountId: v.accountId ?? null,
-          ownerMembershipId: owner,
-          createdByMembershipId: p.scope.membershipId,
-          updatedByMembershipId: p.scope.membershipId,
-        },
-        select: contactSelect,
-      });
-      if (parent) await this.bumpAccount(tx, p, parent);
-      await this.repo.audit(tx, p, "contact.created", "Contact", row.id, {
-        accountId: row.accountId,
+    return this.repo.run(actor, true, (tx, p) =>
+      this.createContactInTransaction(tx, p, v),
+    );
+  }
+  async createContactInTransaction(
+    tx: Prisma.TransactionClient,
+    p: CrmPolicy,
+    input: z.infer<typeof dto.createContact>,
+  ) {
+    const v = dto.createContact.parse(input);
+    this.authorize(p, "contacts", "create");
+    let parent: AccountRow | undefined;
+    let owner: string | null = null;
+    if (v.accountId) {
+      this.authorize(p, "businesses", "update");
+      p.require("crm.businesses.view");
+      parent = await this.repo.account(tx, p, v.accountId, true);
+      if (parent.status !== "ACTIVE")
+        throw new UnprocessableEntityException("CRM_ACCOUNT_INACTIVE");
+    } else {
+      owner = v.ownerMembershipId ?? p.scope.membershipId;
+      p.targetOwner("contacts", owner);
+      await this.repo.owner(tx, p, owner);
+    }
+    await this.repo.master(tx, p, v.roleValueId, "contact_role");
+    const row = await tx.contact.create({
+      data: {
+        ...contactData(v),
+        name: v.name,
+        tenantId: p.scope.tenantId,
+        accountId: v.accountId ?? null,
         ownerMembershipId: owner,
-        revisionAfter: 1,
-        status: row.status,
-      });
-      return (await this.repo.contactsDto(tx, p, [row]))[0];
+        createdByMembershipId: p.scope.membershipId,
+        updatedByMembershipId: p.scope.membershipId,
+      },
+      select: contactSelect,
     });
+    if (parent) await this.bumpAccount(tx, p, parent);
+    await this.repo.audit(tx, p, "contact.created", "Contact", row.id, {
+      accountId: row.accountId,
+      ownerMembershipId: owner,
+      revisionAfter: 1,
+      status: row.status,
+    });
+    return (await this.repo.contactsDto(tx, p, [row]))[0];
   }
   async updateContact(actor: RequestPrincipal, id: string, body: unknown) {
     dto.crmId.parse(id);

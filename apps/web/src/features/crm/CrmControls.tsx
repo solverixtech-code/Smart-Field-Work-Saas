@@ -5,6 +5,7 @@ import { Select } from "../../components/ui/Select";
 import { CrmError } from "./crm.state";
 import { useCrmQuery, useDebouncedSearch } from "./CrmContext";
 import { MasterCode } from "./crm.types";
+
 const fieldLabels: Record<string, string> = {
   name: "Name",
   phone: "Phone",
@@ -28,6 +29,7 @@ const fieldLabels: Record<string, string> = {
   expectedRevision: "Record version",
   primaryContact: "Primary contact",
 };
+
 export function CrmFailure({
   error,
   retry,
@@ -45,7 +47,7 @@ export function CrmFailure({
         <ul className="list-disc space-y-1 pl-5">
           {error.details.map((detail, index) => (
             <li key={index}>
-              {fieldLabels[detail.field.split(".").at(-1) ?? ""] ?? "Form"}:{" "}
+              {fieldLabels[detail.field.split(".").at(-1) ?? ""] ?? "Form"}: {" "}
               {detail.message}
             </li>
           ))}
@@ -59,13 +61,16 @@ export function CrmFailure({
     </div>
   );
 }
+
 export const statuses = [
   { value: "ACTIVE", label: "Active" },
   { value: "INACTIVE", label: "Inactive" },
   { value: "BLOCKED", label: "Blocked" },
 ];
+
 export const statusLabel = (status: string) =>
   statuses.find((s) => s.value === status)?.label ?? status;
+
 export function CrmLookup({
   id,
   label,
@@ -75,40 +80,46 @@ export function CrmLookup({
   currentLabel,
   onChange,
   disabled = false,
+  compact = false,
+  emptyLabel,
   placeholder,
 }: {
   id: string;
   label: string;
   showLabel?: boolean;
-  kind: MasterCode | "owner";
+  kind: MasterCode | "owner" | "lead-owner";
   value?: string | null;
   currentLabel?: string | null;
   onChange: (id: string) => void;
   disabled?: boolean;
   compact?: boolean;
+  emptyLabel?: string;
   placeholder?: string;
 }) {
-  const [search] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const query = useDebouncedSearch(search);
   const result = useCrmQuery(
-    `${kind}:${query}:1`,
+    `${kind}:${query}:${page}`,
     async (service, signal) => {
-      if (kind === "owner") {
-        const response = await service.owners(
-          { search: query, page: 1, limit: 50 },
-          signal,
-        );
+      if (kind === "owner" || kind === "lead-owner") {
+        const response = await (
+          kind === "lead-owner" ? service.leads.owners : service.owners
+        )({ search: query, page, limit: 25 }, signal);
         return {
           ...response,
           items: response.items.map((r) => ({
             value: r.id,
             label: r.displayName,
+            avatar: r.avatarUrl ?? undefined,
+            avatarFallback: kind === "lead-owner",
+            sublabel: r.role ?? undefined,
           })),
         };
       }
       const response = await service.masters(
         kind,
-        { search: query, page: 1, limit: 50 },
+        { search: query, page, limit: 25 },
         signal,
       );
       return {
@@ -125,30 +136,95 @@ export function CrmLookup({
       ? [
           {
             value,
-            label: currentLabel || "Current selection",
+            label: currentLabel || "Current selection (reload options to verify)",
           },
         ]
       : [];
-
-  return (
-    <Select
-      id={id}
-      label={showLabel ? label : undefined}
-      value={value ?? ""}
-      options={[...selected, ...options]}
-      disabled={disabled || result.loading}
-      searchable={true}
-      placeholder={
-        placeholder ??
-        (result.loading
-          ? "Loading options..."
-          : kind === "owner"
-            ? currentLabel
-              ? `Keep ${currentLabel}`
-              : "Select owner"
-            : `All ${label.toLowerCase()}s`)
-      }
-      onChange={(e) => onChange(e.target.value)}
-    />
+  const selectPlaceholder =
+    placeholder ??
+    (result.loading
+      ? "Loading options..."
+      : kind === "owner"
+        ? currentLabel
+          ? `Keep ${currentLabel}`
+          : "Your membership"
+        : "No selection");
+  const controls = (
+    <div className="space-y-2">
+      <Input
+        id={`${id}-search`}
+        label={showLabel || compact ? `Search ${label.toLowerCase()}` : undefined}
+        value={search}
+        disabled={disabled}
+        maxLength={200}
+        placeholder={`Search ${label.toLowerCase()}`}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPage(1);
+        }}
+      />
+      <Select
+        native
+        id={id}
+        label={showLabel ? label : undefined}
+        value={value ?? ""}
+        options={[
+          ...(kind === "lead-owner"
+            ? [{ value: "", label: emptyLabel ?? "Unassigned" }]
+            : []),
+          ...selected,
+          ...options,
+        ]}
+        disabled={disabled || result.loading}
+        placeholder={selectPlaceholder}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      {result.error &&
+        (result.error.status === 404 ? (
+          <p className="text-xs text-slate-500">
+            {label} options are unavailable.
+          </p>
+        ) : (
+          <CrmFailure error={result.error} retry={result.reload} />
+        ))}
+      {result.data && result.data.totalPages > 1 && (
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={page === 1}
+            onClick={() => setPage((p) => p - 1)}
+          >
+            Previous options
+          </Button>
+          <span className="text-xs">
+            {page} / {result.data.totalPages}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={page >= result.data.totalPages}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next options
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+  return compact ? (
+    <details className="relative rounded-lg border border-slate-200 bg-white p-2.5">
+      <summary className="cursor-pointer text-xs font-semibold text-slate-700">
+        {label}
+        {value ? " (filtered)" : ""}
+      </summary>
+      <div className="absolute left-0 top-full z-20 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+        {controls}
+      </div>
+    </details>
+  ) : (
+    controls
   );
 }

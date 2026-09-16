@@ -1,14 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'sonner';
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Target,
   UserPlus,
   Search,
-  Filter,
   Download,
   Upload,
-  UserCheck,
   Flame,
   Clock,
   CheckCircle2,
@@ -17,498 +14,558 @@ import {
   Copy,
   Eye,
   Edit,
-  MoreVertical,
-  ChevronLeft,
-  ChevronRight,
-  TrendingUp,
-  MapPin,
-  Phone,
-  Mail,
-  Calendar,
-  Layers,
-  Sparkles,
-  DollarSign,
-  FileText,
-  MessageSquare,
-  Video,
-  CalendarClock,
-  Ban,
-} from 'lucide-react';
-import { KpiCard } from '../../components/dashboard/KpiCard';
-import { Button } from '../../components/ui/Button';
-import { Select } from '../../components/ui/Select';
-import { DataTable, ColumnDef } from '../../components/ui/DataTable';
-import { mockLeadsData, LeadItem } from './leadsData';
-
-interface AllLeadsPageProps {
-  viewMode?: 'all' | 'unassigned' | 'hot' | 'follow-up' | 'converted' | 'lost' | 'not-interested' | 'duplicates';
-}
-
-export default function AllLeadsPage({ viewMode }: AllLeadsPageProps) {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Determine active view mode from props or URL pathname
-  const currentPath = location.pathname;
-  let activeCategory = viewMode || 'all';
-  if (currentPath.includes('/unassigned')) activeCategory = 'unassigned';
-  else if (currentPath.includes('/hot')) activeCategory = 'hot';
-  else if (currentPath.includes('/follow-up')) activeCategory = 'follow-up';
-  else if (currentPath.includes('/converted')) activeCategory = 'converted';
-  else if (currentPath.includes('/lost')) activeCategory = 'lost';
-  else if (currentPath.includes('/not-interested')) activeCategory = 'not-interested';
-  else if (currentPath.includes('/duplicates')) activeCategory = 'duplicates';
-
-  const [leads, setLeads] = useState<LeadItem[]>(mockLeadsData);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [regionFilter, setRegionFilter] = useState('All');
-  const [priorityFilter, setPriorityFilter] = useState('All');
-  const [stageFilter, setStageFilter] = useState('All');
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const handleGlobalClick = () => setActiveMenuId(null);
-    window.addEventListener('click', handleGlobalClick);
-    return () => window.removeEventListener('click', handleGlobalClick);
-  }, []);
-
-  // Filter leads based on active category tab & search parameters
-  const filteredLeads = leads.filter((lead) => {
-    const search = searchTerm.toLowerCase().trim();
-    const matchesSearch =
-      search === '' ||
-      lead.companyName.toLowerCase().includes(search) ||
-      lead.contactPerson.toLowerCase().includes(search) ||
-      lead.code.toLowerCase().includes(search) ||
-      lead.email.toLowerCase().includes(search) ||
-      lead.phone.includes(search);
-
-    const matchesRegion = regionFilter === 'All' || lead.region.includes(regionFilter);
-    const matchesPriority = priorityFilter === 'All' || lead.priority === priorityFilter;
-    const matchesStage = stageFilter === 'All' || lead.stage === stageFilter;
-
-    let matchesCategory = true;
-    if (activeCategory === 'unassigned') matchesCategory = lead.status === 'Unassigned';
-    else if (activeCategory === 'hot') matchesCategory = lead.status === 'Hot';
-    else if (activeCategory === 'follow-up') matchesCategory = lead.status === 'Follow-up';
-    else if (activeCategory === 'converted') matchesCategory = lead.status === 'Converted';
-    else if (activeCategory === 'lost') matchesCategory = lead.status === 'Lost';
-    else if (activeCategory === 'not-interested') matchesCategory = lead.status === 'Not Interested';
-    else if (activeCategory === 'duplicates') matchesCategory = lead.status === 'Duplicate';
-
-    return matchesSearch && matchesRegion && matchesPriority && matchesStage && matchesCategory;
-  });
-
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedIds(filteredLeads.map((l) => l.id));
-    } else {
-      setSelectedIds([]);
-    }
+  UserCheck,
+} from "lucide-react";
+import { KpiCard } from "../../components/dashboard/KpiCard";
+import { Button } from "../../components/ui/Button";
+import { Input } from "../../components/ui/Input";
+import { Select } from "../../components/ui/Select";
+import { Card } from "../../components/ui/Card";
+import { DataTable, ColumnDef } from "../../components/ui/DataTable";
+import { RowActionsMenu } from "../../components/ui/RowActionsMenu";
+import {
+  useCrm,
+  useCrmMutation,
+  useCrmQuery,
+  useDebouncedSearch,
+} from "../../features/crm/CrmContext";
+import { CrmFailure, CrmLookup } from "../../features/crm/CrmControls";
+import {
+  LeadDto,
+  LeadPriority,
+  LeadStatus,
+  LeadQuery,
+  leadLabel,
+  leadStatuses,
+  leadPriorities,
+} from "../../features/crm/lead.types";
+type Category =
+  | "all"
+  | "unassigned"
+  | "hot"
+  | "follow-up"
+  | "converted"
+  | "lost"
+  | "not-interested"
+  | "duplicates";
+export default function AllLeadsPage({
+  viewMode = "all",
+}: {
+  viewMode?: Category;
+}) {
+  const navigate = useNavigate(),
+    location = useLocation();
+  const { can, readOnly } = useCrm();
+  const mutation = useCrmMutation();
+  const [search, setSearch] = useState(""),
+    [priority, setPriority] = useState(""),
+    [status, setStatus] = useState(""),
+    [source, setSource] = useState(""),
+    [page, setPage] = useState(1);
+  const query = useDebouncedSearch(search);
+  useEffect(() => setPage(1), [location.pathname]);
+  const filters: LeadQuery = {
+    search: query,
+    priority: priority ? (priority as LeadPriority) : undefined,
+    status: status ? (status as LeadStatus) : undefined,
+    sourceValueId: source || undefined,
   };
-
-  const handleSelectOne = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+  const category: LeadQuery =
+    viewMode === "unassigned"
+      ? { unassigned: "true" }
+      : viewMode === "hot"
+        ? { hot: "true" }
+        : viewMode === "follow-up"
+          ? { followUp: "pending" }
+        : viewMode === "converted"
+          ? { status: "CONVERTED" }
+          : viewMode === "lost"
+            ? { status: "DISQUALIFIED", disqualificationReason: "LOST" }
+          : viewMode === "not-interested"
+            ? { status: "DISQUALIFIED", disqualificationReason: "NOT_INTERESTED" }
+            : viewMode === "duplicates"
+              ? { status: "DUPLICATE" }
+              : {};
+  const result = useCrmQuery(
+    JSON.stringify(["leads", viewMode, filters, page]),
+    (service, signal) =>
+      service.leads.list({ ...filters, ...category, page, limit: 25 }, signal),
+  );
+  const counts = useCrmQuery("lead-workspace-counts", (service, signal) =>
+    service.leads.summary({}, signal),
+  );
+  const updateStatus = async (
+    lead: LeadDto,
+    status: Exclude<LeadStatus, "CONVERTED">,
+    disqualificationReason?: "LOST" | "NOT_INTERESTED" | null,
+  ) => {
+    const saved = await mutation.run((service, signal) =>
+      service.leads.update(
+        lead.id,
+        { expectedRevision: lead.revision, status, disqualificationReason },
+        signal,
+      ),
     );
-  };
-
-  const getCategoryTitle = () => {
-    switch (activeCategory) {
-      case 'unassigned': return 'Unassigned Leads';
-      case 'hot': return 'Hot High-Priority Leads';
-      case 'follow-up': return 'Pending Follow-up Leads';
-      case 'converted': return 'Won / Converted Deals';
-      case 'lost': return 'Lost Opportunities';
-      case 'not-interested': return 'Not Interested Leads';
-      case 'duplicates': return 'Duplicate Lead Entries';
-      default: return 'All Enterprise Leads';
+    if (saved) {
+      result.reload();
+      counts.reload();
     }
   };
-
-  // Stats calculation
-  const totalPipelineValue = filteredLeads.reduce((acc, curr) => acc + curr.estimatedValue, 0);
-  const hotLeadsCount = leads.filter((l) => l.status === 'Hot').length;
-  const unassignedCount = leads.filter((l) => l.status === 'Unassigned').length;
-  const followUpCount = leads.filter((l) => l.status === 'Follow-up').length;
-  const convertedCount = leads.filter((l) => l.status === 'Converted').length;
-
-  return (
-    <div className="space-y-3 font-sans pb-10">
-      {/* Page Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+  const metric = (n?: number) =>
+    n === undefined ? "Unavailable" : n.toLocaleString();
+  const byStatus = (s: LeadStatus) =>
+    counts.data
+      ? (counts.data.lifecycle.find((r) => r.status === s)?.count ?? 0)
+      : undefined;
+  const hot = counts.data
+    ? counts.data.priorities
+        .filter((r) => r.priority === "HIGH" || r.priority === "URGENT")
+        .reduce((n, r) => n + r.count, 0)
+    : undefined;
+  const tabs = [
+    { id: "all", label: "All Leads", count: counts.data?.total, icon: Target },
+    { id: "hot", label: "Hot Leads", count: hot, icon: Flame },
+    { id: "follow-up", label: "Follow-ups", icon: Clock },
+    {
+      id: "unassigned",
+      label: "Unassigned",
+      count: counts.data?.unassigned,
+      icon: UserPlus,
+    },
+    {
+      id: "converted",
+      label: "Converted",
+      count: byStatus("CONVERTED"),
+      icon: CheckCircle2,
+    },
+    { id: "lost", label: "Lost Leads", count: byStatus("DISQUALIFIED"), icon: XCircle },
+    {
+      id: "not-interested",
+      label: "Disqualified",
+      count: byStatus("DISQUALIFIED"),
+      icon: AlertCircle,
+    },
+    {
+      id: "duplicates",
+      label: "Duplicates",
+      count: byStatus("DUPLICATE"),
+      icon: Copy,
+    },
+  ];
+  const columns: ColumnDef<LeadDto>[] = [
+    {
+      header: "Lead / Company",
+      cell: (l) => (
         <div>
-          <h1 className="text-2xl font-bold text-[#0D1F3D]">All Leads</h1>
-          <p className="text-xs font-normal text-slate-500">
-            Manage and track all incoming leads from multiple sources.
+          <Button
+            variant="ghost"
+            size="sm"
+            className="font-extrabold text-[#0D1F3D]"
+            onClick={() => navigate("/admin/leads/" + l.id)}
+          >
+            {l.leadCode} / {l.name}
+          </Button>
+          <p className="text-xs text-slate-500">{l.source || "No source"}</p>
+        </div>
+      ),
+    },
+    {
+      header: "Contact Person",
+      cell: (l) => (
+        <div>
+          <p className="font-bold text-slate-900">
+            {l.contactName || "Not set"}
+          </p>
+          <p className="text-xs text-slate-500">
+            {l.phone || l.email || "Contact details not set"}
           </p>
         </div>
-
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/admin/leads/import')}
-              className="flex items-center gap-1.5 font-bold"
-            >
-              <Upload className="h-4 w-4 text-blue-600" /> Import Leads
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/admin/leads/export')}
-              className="flex items-center gap-1.5 font-bold"
-            >
-              <Download className="h-4 w-4 text-emerald-600" /> Export Data
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/admin/leads/bulk-assign')}
-              className="flex items-center gap-1.5 font-bold"
-            >
-              <UserCheck className="h-4 w-4 text-purple-600" /> Bulk Assign
-            </Button>
-
-            <Button
-              variant="accent"
-              size="sm"
-              onClick={() => navigate('/admin/leads/create')}
-              className="flex items-center gap-1.5 font-bold shadow-xs"
-            >
-              <UserPlus className="h-4 w-4" /> Add New Lead
-            </Button>
+      ),
+    },
+    {
+      header: "Lifecycle & Priority",
+      cell: (l) => (
+        <div className="flex items-center gap-2">
+          <span className="rounded-md border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+            {leadLabel(l.status)}
+          </span>
+          <span className="rounded-md bg-slate-900 px-2 py-1 text-xs font-bold text-white">
+            {leadLabel(l.priority)}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: "Estimated Value",
+      cell: (l) =>
+        l.estimatedValue == null ? (
+          <span className="text-xs text-slate-500">Not set</span>
+        ) : (
+          <span className="font-bold text-emerald-700">
+            ₹{l.estimatedValue.toLocaleString("en-IN")}
+          </span>
+        ),
+    },
+    {
+      header: "Assigned Executive",
+      cell: (l) => (
+        <div className="flex items-center gap-2">
+          <UserCheck className="h-7 w-7 rounded-full border border-slate-200 p-1 text-slate-500" />
+          <div>
+            <p className="font-bold text-slate-900">
+              {l.assignee?.displayName || "Unassigned"}
+            </p>
+            <p className="text-xs text-slate-500">
+              Owner: {l.owner.displayName}
+            </p>
           </div>
         </div>
-
-      {/* KPI Cards Row */}
+      ),
+    },
+    {
+      header: "Region & Territory",
+      cell: (l) => (
+        <div>
+          <p className="font-bold text-slate-800">{l.city || "City not set"}</p>
+          <p className="text-xs text-slate-500">Territory unavailable</p>
+        </div>
+      ),
+    },
+    {
+      header: "Next Follow-up",
+      cell: (l) =>
+        l.nextFollowUpAt ? (
+          <div>
+            <p className="font-bold text-slate-900">
+              {new Date(l.nextFollowUpAt).toLocaleString()}
+            </p>
+            <p className="text-xs text-slate-500">
+              {l.nextActionNote || "No action note"}
+            </p>
+          </div>
+        ) : (
+          <span className="text-xs text-slate-500">Not scheduled</span>
+        ),
+    },
+    {
+      header: "Actions",
+      align: "right",
+      cell: (l) => (
+        <RowActionsMenu
+          items={[
+            {
+              label: "View Details",
+              icon: Eye,
+              onClick: () => navigate("/admin/leads/" + l.id),
+            },
+            ...(can("crm.leads.update") &&
+            !readOnly &&
+            ["OPEN", "QUALIFIED"].includes(l.status)
+              ? [
+                  {
+                    label: "Edit Lead",
+                    icon: Edit,
+                    onClick: () => navigate("/admin/leads/" + l.id + "/edit"),
+                  },
+                ]
+              : []),
+            ...(can("crm.leads.assign") &&
+            !readOnly &&
+            ["OPEN", "QUALIFIED"].includes(l.status)
+              ? [
+                  {
+                    label: "Assign Lead",
+                    icon: UserCheck,
+                    onClick: () =>
+                      navigate("/admin/leads/" + l.id + "/assignment"),
+                  },
+                ]
+              : []),
+            ...(can("crm.leads.update") &&
+            !readOnly &&
+            l.status === "OPEN"
+              ? [
+                  {
+                    label: "Mark Qualified",
+                    icon: CheckCircle2,
+                    onClick: () => updateStatus(l, "QUALIFIED"),
+                  },
+                ]
+              : []),
+            ...(can("crm.leads.convert") &&
+            !readOnly &&
+            l.status === "QUALIFIED"
+              ? [
+                  {
+                    label: "Convert Lead",
+                    icon: CheckCircle2,
+                    onClick: () => navigate("/admin/leads/" + l.id),
+                  },
+                ]
+              : []),
+            ...(can("crm.leads.update") &&
+            !readOnly &&
+            ["OPEN", "QUALIFIED"].includes(l.status)
+              ? [
+                  {
+                    label: "Disqualify",
+                    icon: XCircle,
+                    onClick: () => updateStatus(l, "DISQUALIFIED", "LOST"),
+                  },
+                  {
+                    label: "Mark Duplicate",
+                    icon: Copy,
+                    onClick: () => updateStatus(l, "DUPLICATE"),
+                  },
+                ]
+              : []),
+          ]}
+        />
+      ),
+    },
+  ];
+  return (
+    <div className="space-y-3 font-sans pb-10">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-[#0D1F3D]">All Leads</h1>
+          <p className="text-xs text-slate-500">
+            Manage and track incoming leads within your access.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={readOnly || !can("crm.leads.import")}
+            onClick={() => navigate("/admin/leads/import")}
+          >
+            <Upload className="mr-1.5 h-4 w-4 text-blue-600" />
+            Import Leads
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={readOnly || !can("crm.leads.export")}
+            onClick={() => navigate("/admin/leads/export")}
+          >
+            <Download className="mr-1.5 h-4 w-4 text-emerald-600" />
+            Export Data
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={readOnly || !can("crm.leads.assign")}
+            onClick={() => navigate("/admin/leads/bulk-assign")}
+          >
+            <UserCheck className="mr-1.5 h-4 w-4" />
+            Bulk Assign
+          </Button>
+          <Button
+            variant="accent"
+            size="sm"
+            disabled={readOnly || !can("crm.leads.create")}
+            onClick={() => navigate("/admin/leads/create")}
+          >
+            <UserPlus className="mr-1.5 h-4 w-4" />
+            Add New Lead
+          </Button>
+        </div>
+      </header>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 sm:grid-cols-3">
         <KpiCard
           title="Total Leads"
-          value={String(leads.length)}
-          subValue="Active Pipeline"
-          timeframe=""
+          value={metric(counts.data?.total)}
+          subValue="Within your access"
           icon={Target}
           iconBgColor="bg-[#0D1F3D]/10"
           iconTextColor="text-[#0D1F3D]"
         />
         <KpiCard
           title="Hot High Priority"
-          value={String(hotLeadsCount)}
-          subValue="Immediate Action"
-          timeframe=""
+          value={metric(hot)}
+          subValue="High and urgent priority"
           icon={Flame}
           iconBgColor="bg-red-500/10"
           iconTextColor="text-[#E20613]"
         />
         <KpiCard
           title="Pending Follow-ups"
-          value={String(followUpCount)}
-          subValue="Scheduled Calls"
-          timeframe=""
+          value={metric(counts.data?.pendingFollowUps)}
+          subValue="Due follow-ups"
           icon={Clock}
           iconBgColor="bg-amber-500/10"
           iconTextColor="text-amber-600"
         />
         <KpiCard
           title="Unassigned Leads"
-          value={String(unassignedCount)}
-          subValue="Needs Executive"
-          timeframe=""
+          value={metric(counts.data?.unassigned)}
+          subValue="Needs executive"
           icon={AlertCircle}
           iconBgColor="bg-purple-500/10"
           iconTextColor="text-purple-600"
         />
         <KpiCard
-          title="Won / Converted"
-          value={String(convertedCount)}
-          subValue={`₹${(totalPipelineValue / 100000).toFixed(1)}L Total`}
-          timeframe=""
+          title="Converted"
+          value={metric(byStatus("CONVERTED"))}
+          subValue="Account / contact conversion"
           icon={CheckCircle2}
           iconBgColor="bg-emerald-500/10"
           iconTextColor="text-emerald-600"
         />
       </div>
-
-      {/* Category Filter Sub-Tabs Bar */}
-      <div className="flex overflow-x-auto gap-1 border-b border-slate-200 bg-white p-1.5 rounded-md shadow-xs scrollbar-none">
-        {[
-          { id: 'all', label: 'All Leads', path: '/admin/leads', count: leads.length, icon: Target },
-          { id: 'hot', label: 'Hot Leads', path: '/admin/leads/hot', count: hotLeadsCount, icon: Flame },
-          { id: 'follow-up', label: 'Follow-ups', path: '/admin/leads/follow-up', count: followUpCount, icon: CalendarClock },
-          { id: 'unassigned', label: 'Unassigned', path: '/admin/leads/unassigned', count: unassignedCount, icon: UserPlus },
-          { id: 'converted', label: 'Won / Converted', path: '/admin/leads/converted', count: convertedCount, icon: TrendingUp },
-          { id: 'lost', label: 'Lost Leads', path: '/admin/leads/lost', count: leads.filter((l) => l.status === 'Lost').length, icon: XCircle },
-          { id: 'not-interested', label: 'Not Interested', path: '/admin/leads/not-interested', count: leads.filter((l) => l.status === 'Not Interested').length, icon: Ban },
-          { id: 'duplicates', label: 'Duplicates', path: '/admin/leads/duplicates', count: leads.filter((l) => l.status === 'Duplicate').length, icon: Copy },
-        ].map((tab) => {
-          const isActive = activeCategory === tab.id;
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => navigate(tab.path)}
-              className={`flex items-center gap-2 rounded-md px-3.5 py-2 text-xs font-extrabold transition-all whitespace-nowrap cursor-pointer ${
-                isActive
-                  ? 'bg-[#0D1F3D] text-white shadow-xs'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D]'
-              }`}
-            >
-              <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-slate-500'}`} />
-              <span>{tab.label}</span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
-                }`}
-              >
-                {tab.count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Main Table Section */}
-      <div className="space-y-3">
-        {/* Search & Filter Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200/80 bg-white p-3 shadow-xs">
-          {/* Search Input */}
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by company, contact person, lead ID, phone..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
-            />
-          </div>
-
-          {/* Region Filter */}
-          <div className="min-w-[160px]">
-            <Select
-              value={regionFilter}
-              onChange={(e) => setRegionFilter(e.target.value)}
-              options={[
-                { label: 'All Regions', value: 'All' },
-                { label: 'North Mumbai', value: 'North Mumbai' },
-                { label: 'Western Suburbs', value: 'Western Suburbs' },
-                { label: 'Eastern Suburbs', value: 'Eastern Suburbs' },
-                { label: 'Thane & Navi Mumbai', value: 'Thane' },
-                { label: 'Pune', value: 'Pune' },
-              ]}
-            />
-          </div>
-
-          {/* Priority Filter */}
-          <div className="min-w-[160px]">
-            <Select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              options={[
-                { label: 'All Priorities', value: 'All' },
-                { label: 'Urgent', value: 'Urgent' },
-                { label: 'High', value: 'High' },
-                { label: 'Medium', value: 'Medium' },
-                { label: 'Low', value: 'Low' },
-              ]}
-            />
-          </div>
-
-          {/* Stage Filter */}
-          <div className="min-w-[170px]">
-            <Select
-              value={stageFilter}
-              onChange={(e) => setStageFilter(e.target.value)}
-              options={[
-                { label: 'All Lead Stages', value: 'All' },
-                { label: 'New / Fresh', value: 'New / Fresh' },
-                { label: 'Contacted', value: 'Contacted' },
-                { label: 'Meeting Scheduled', value: 'Meeting Scheduled' },
-                { label: 'Demo Completed', value: 'Demo Completed' },
-                { label: 'Proposal Sent', value: 'Proposal Sent' },
-                { label: 'Negotiation', value: 'Negotiation' },
-                { label: 'Won / Converted', value: 'Won / Converted' },
-                { label: 'Lost', value: 'Lost' },
-              ]}
-            />
-          </div>
+      <nav
+        aria-label="Lead categories"
+        className="flex overflow-x-auto gap-1 border-b border-slate-200 bg-white p-1.5 rounded-lg shadow-xs"
+      >
+        {tabs.map((tab) => (
+          <Button
+            key={tab.id}
+            variant={viewMode === tab.id ? "primary" : "ghost"}
+            size="sm"
+            aria-current={viewMode === tab.id ? "page" : undefined}
+            className="shrink-0 whitespace-nowrap"
+            onClick={() =>
+              navigate("/admin/leads" + (tab.id === "all" ? "" : "/" + tab.id))
+            }
+          >
+            <tab.icon className="mr-2 h-3.5 w-3.5" />
+            {tab.label}
+            <span className="ml-2 rounded-md bg-slate-100 px-2 text-slate-700">
+              {tab.count ?? "Unavailable"}
+            </span>
+          </Button>
+        ))}
+      </nav>
+      <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:grid-cols-6 rounded-lg border border-slate-200/80 bg-white p-3 shadow-xs">
+        <div className="min-w-0 sm:col-span-2">
+          <Input
+            id="lead-search"
+            aria-label="Search leads"
+            placeholder="Search company, contact, lead ID, phone..."
+            leftIcon={<Search className="h-4 w-4" />}
+            value={search}
+            maxLength={200}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+          />
         </div>
-
-        {/* Leads Data Table Container */}
-        <DataTable
-          columns={[
-            {
-              header: 'Lead / Company',
-              cell: (lead) => (
-                <div>
-                  <button
-                    onClick={() => navigate(`/admin/leads/${lead.id}`)}
-                    className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline block text-left"
-                  >
-                    {lead.companyName}
-                  </button>
-                  <span className="text-[10px] font-mono text-slate-400">{lead.code} • {lead.leadSource}</span>
-                </div>
-              ),
-            },
-            {
-              header: 'Contact Person',
-              cell: (lead) => (
-                <div>
-                  <p className="font-bold text-slate-900">{lead.contactPerson}</p>
-                  <p className="text-[10px] text-slate-500 font-medium">{lead.phone}</p>
-                </div>
-              ),
-            },
-            {
-              header: 'Stage & Score',
-              cell: (lead) => (
-                <div className="flex items-center gap-2">
-                  <span className={`rounded-md px-2.5 py-0.5 text-[10px] font-extrabold border ${
-                    lead.stage === 'Won / Converted' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-                    lead.stage === 'Lost' ? 'bg-red-50 text-red-600 border-red-200' :
-                    lead.stage === 'Negotiation' ? 'bg-purple-50 text-purple-600 border-purple-200' :
-                    lead.stage === 'Proposal Sent' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                    'bg-slate-100 text-slate-700 border-slate-200'
-                  }`}>
-                    {lead.stage}
-                  </span>
-                  <span className="rounded-full bg-slate-900 text-white px-2 py-0.5 text-[10px] font-extrabold">
-                    {lead.score} pts
-                  </span>
-                </div>
-              ),
-            },
-            {
-              header: 'Est. Value (₹)',
-              cell: (lead) => (
-                <div>
-                  <p className="font-extrabold text-[#0D1F3D]">₹{lead.estimatedValue.toLocaleString()}</p>
-                  <span className="text-[10px] text-slate-400 font-medium">{lead.probabilityPct}% Prob</span>
-                </div>
-              ),
-            },
-            {
-              header: 'Assigned Executive',
-              cell: (lead) => (
-                <div className="flex items-center gap-2">
-                  <img
-                    src={lead.assignedExecutiveAvatar}
-                    alt={lead.assignedExecutive}
-                    className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0"
-                  />
-                  <div>
-                    <p className="font-bold text-slate-900 text-xs">{lead.assignedExecutive}</p>
-                    <p className="text-[10px] text-slate-400 font-medium">{lead.assignedLeader}</p>
-                  </div>
-                </div>
-              ),
-            },
-            {
-              header: 'Region & Territory',
-              cell: (lead) => (
-                <div>
-                  <p className="font-bold text-slate-800">{lead.territory}</p>
-                  <p className="text-[10px] text-slate-400 font-medium">{lead.region}</p>
-                </div>
-              ),
-            },
-            {
-              header: 'Next Follow-up',
-              accessorKey: 'nextFollowUpDate',
-              className: 'font-bold text-slate-700',
-            },
-            {
-              header: 'Actions',
-              align: 'right',
-              cell: (lead) => (
-                <div className="flex items-center justify-end gap-1">
-                  <button
-                    onClick={() => navigate(`/admin/leads/${lead.id}`)}
-                    title="View Lead Details"
-                    className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </button>
-
-                  <div className="relative">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveMenuId(activeMenuId === lead.id ? null : lead.id);
-                      }}
-                      title="Lead Actions Menu"
-                      className={`p-1.5 rounded-lg transition-colors border shadow-xs ${
-                        activeMenuId === lead.id
-                          ? 'bg-[#0D1F3D] text-white border-[#0D1F3D]'
-                          : 'text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-[#0D1F3D]'
-                      }`}
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-
-                    {activeMenuId === lead.id && (
-                      <div
-                        className="absolute right-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 bg-white p-1.5 shadow-2xl space-y-1 text-left animate-fadeIn"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button
-                          onClick={() => { setActiveMenuId(null); navigate(`/admin/leads/${lead.id}`); }}
-                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-[#0D1F3D] hover:bg-slate-50 transition-colors"
-                        >
-                          <Eye className="h-4 w-4 text-blue-600" />
-                          <span>View Full Details</span>
-                        </button>
-
-                        <button
-                          onClick={() => { setActiveMenuId(null); navigate(`/admin/leads/${lead.id}/edit`); }}
-                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          <Edit className="h-4 w-4 text-emerald-600" />
-                          <span>Edit Lead Info</span>
-                        </button>
-
-                        <button
-                          onClick={() => { setActiveMenuId(null); navigate(`/admin/leads/${lead.id}/assignment`); }}
-                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          <UserCheck className="h-4 w-4 text-purple-600" />
-                          <span>Assign / Reassign Lead</span>
-                        </button>
-
-                        <button
-                          onClick={() => { setActiveMenuId(null); navigate(`/admin/leads/${lead.id}/timeline`); }}
-                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          <Clock className="h-4 w-4 text-amber-600" />
-                          <span>View Activity Timeline</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ),
-            },
-          ]}
-          data={filteredLeads}
-          keyExtractor={(l) => l.id}
-          selectable
-          selectedIds={selectedIds}
-          onSelectAll={handleSelectAll}
-          onSelectOne={handleSelectOne}
-          pagination={{
-            currentPage: 1,
-            totalPages: 1,
-            totalEntries: filteredLeads.length,
-            pageSize: 10,
-            onPageChange: () => {},
-          }}
-          emptyMessage="No Leads Found"
+        <Select
+          disabled
+          label="Region"
+          options={[]}
+          placeholder="Territory unavailable"
         />
+        <Select
+          native
+          id="lead-priority"
+          label="Priority"
+          placeholder="All Priorities"
+          options={leadPriorities}
+          value={priority}
+          onChange={(e) => {
+            setPriority(e.target.value);
+            setPage(1);
+          }}
+        />
+        <Select
+          native
+          id="lead-status"
+          label="Lifecycle"
+          placeholder="All Lifecycle States"
+          disabled={Boolean(category.status)}
+          options={leadStatuses}
+          value={category.status || status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
+        />
+        {can("system.masters.view") && (
+          <CrmLookup
+            compact
+            id="lead-source"
+            label="Source"
+            kind="lead_source"
+            value={source}
+            onChange={(id) => {
+              setSource(id);
+              setPage(1);
+            }}
+          />
+        )}
+      </div>
+      {result.error ? (
+        <CrmFailure error={result.error} retry={result.reload} />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={result.data?.items ?? []}
+          keyExtractor={(l) => l.id}
+          isLoading={result.loading}
+          density="relaxed"
+          emptyMessage={
+            query || priority || status || source || viewMode !== "all"
+              ? "No leads match these filters."
+              : "No leads yet."
+          }
+          pagination={
+            result.data
+              ? {
+                  currentPage: result.data.page,
+                  totalPages: result.data.totalPages,
+                  totalEntries: result.data.total,
+                  pageSize: result.data.limit,
+                  onPageChange: setPage,
+                }
+              : undefined
+          }
+        />
+      )}
+      <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
+        <Card variant="panel">
+          <h2 className="text-sm font-bold text-[#0D1F3D]">
+            Leads by Lifecycle
+          </h2>
+          <div className="space-y-3 pt-4">
+            {leadStatuses.map((s) => (
+              <div key={s.value} className="flex justify-between text-xs">
+                <span>{s.label}</span>
+                <strong>{metric(byStatus(s.value))}</strong>
+              </div>
+            ))}
+          </div>
+        </Card>
+        <Card variant="panel">
+          <h2 className="text-sm font-bold text-[#0D1F3D]">Top Lead Sources</h2>
+          <div className="space-y-3 pt-4">
+            {counts.data?.sources.map((s) => (
+              <div key={s.id ?? "none"}>
+                <div className="flex justify-between text-xs">
+                  <span>{s.name}</span>
+                  <strong>{s.count}</strong>
+                </div>
+                <progress
+                  className="h-2 w-full"
+                  value={s.count}
+                  max={Math.max(counts.data?.total ?? 0, 1)}
+                  aria-label={s.name}
+                />
+              </div>
+            ))}
+            {!counts.data?.sources.length && (
+              <p className="text-xs text-slate-500">
+                {counts.loading
+                  ? "Loading analytics..."
+                  : counts.error
+                    ? "Analytics unavailable"
+                    : "No source data yet."}
+              </p>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   );
