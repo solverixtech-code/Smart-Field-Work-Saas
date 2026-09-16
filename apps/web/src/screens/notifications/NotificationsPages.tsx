@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   AlertCircle,
   Bell,
@@ -35,13 +35,21 @@ import {
   Mail,
   Info,
   Radio,
-  FileText
-} from 'lucide-react';
-import { Button, Checkbox, DataTable, Input, Select, type ColumnDef } from '../../components/ui';
-import { DateRangePicker } from '../../components/ui/DateRangePicker';
+  FileText,
+} from "lucide-react";
+import {
+  Button,
+  Checkbox,
+  DataTable,
+  Input,
+  Select,
+  type ColumnDef,
+} from "../../components/ui";
+import { DateRangePicker } from "../../components/ui/DateRangePicker";
 
-type PageKind = 'center' | 'create' | 'push' | 'alerts' | 'templates';
-type NoticeType = 'Announcement' | 'Alert' | 'Reminder' | 'Promotion' | 'Update' | 'Other';
+type PageKind = "center" | "create" | "push" | "alerts" | "templates";
+type NoticeType =
+  "Announcement" | "Alert" | "Reminder" | "Promotion" | "Update" | "Other";
 
 interface NotificationRow {
   id: string;
@@ -50,7 +58,15 @@ interface NotificationRow {
   type: NoticeType;
   audience: string;
   channel: string;
-  status: 'Sent' | 'Scheduled' | 'Failed' | 'Active' | 'Disabled' | 'Pending' | 'Acknowledged' | 'Resolved';
+  status:
+    | "Sent"
+    | "Scheduled"
+    | "Failed"
+    | "Active"
+    | "Disabled"
+    | "Pending"
+    | "Acknowledged"
+    | "Resolved";
   created: string;
   delivery: string;
   icon: React.ElementType;
@@ -58,155 +74,379 @@ interface NotificationRow {
 }
 
 const notificationRows: NotificationRow[] = [
-  { id: 'NOT-1001', title: 'Plan Renewal Reminder', description: 'Hi {{name}}, your plan will expire on {{date}}...', type: 'Reminder', audience: 'All Customers (2,145 Users)', channel: 'WhatsApp · Email', status: 'Sent', created: '22 May 2025 · 10:30 AM', delivery: '1,892 (88.2%)', icon: Send, tone: 'rose' },
-  { id: 'NOT-1002', title: 'Discount Offer – 20% Off', description: 'Exclusive offer for your active plan...', type: 'Promotion', audience: 'Active Customers (1,532 Users)', channel: 'WhatsApp · Email', status: 'Sent', created: '21 May 2025 · 04:15 PM', delivery: '1,401 (91.5%)', icon: Gift, tone: 'emerald' },
-  { id: 'NOT-1003', title: 'Field Visit Assigned', description: 'You have been assigned a new visit today...', type: 'Alert', audience: 'Field Executives (320 Users)', channel: 'In-App · WhatsApp', status: 'Sent', created: '21 May 2025 · 11:00 AM', delivery: '312 (97.5%)', icon: CalendarClock, tone: 'blue' },
-  { id: 'NOT-1004', title: 'New Feature Released', description: 'We are excited to introduce a new feature...', type: 'Announcement', audience: 'All Customers (2,145 Users)', channel: 'Email · In-App', status: 'Sent', created: '20 May 2025 · 03:30 PM', delivery: '1,723 (80.3%)', icon: Megaphone, tone: 'violet' },
-  { id: 'NOT-1005', title: 'Payment Failed Alert', description: 'We could not process your payment for this plan...', type: 'Alert', audience: 'Customers (85 Users)', channel: 'Email · WhatsApp', status: 'Failed', created: '20 May 2025 · 09:20 AM', delivery: '12 (14.1%)', icon: AlertCircle, tone: 'rose' },
-  { id: 'NOT-1006', title: 'Monthly Target Update', description: 'Your monthly target has been updated...', type: 'Update', audience: 'Sales Executives (150 Users)', channel: 'WhatsApp', status: 'Sent', created: '19 May 2025 · 10:45 AM', delivery: '147 (98.0%)', icon: CheckCircle2, tone: 'emerald' },
-  { id: 'NOT-1007', title: 'Incentive Announcement', description: 'Great news! New incentive scheme is live...', type: 'Announcement', audience: 'Sales Executives (150 Users)', channel: 'Email · WhatsApp', status: 'Sent', created: '18 May 2025 · 05:00 PM', delivery: '138 (92.0%)', icon: Sparkles, tone: 'violet' },
-  { id: 'NOT-1008', title: 'Survey Request', description: 'We value your feedback. Please take 2 mins...', type: 'Other', audience: 'Active Customers (1,200 Users)', channel: 'Email', status: 'Scheduled', created: '23 May 2025 · 09:00 AM', delivery: '—', icon: FileText, tone: 'cyan' },
+  {
+    id: "NOT-1001",
+    title: "Plan Renewal Reminder",
+    description: "Hi {{name}}, your plan will expire on {{date}}...",
+    type: "Reminder",
+    audience: "All Customers (2,145 Users)",
+    channel: "WhatsApp · Email",
+    status: "Sent",
+    created: "22 May 2025 · 10:30 AM",
+    delivery: "1,892 (88.2%)",
+    icon: Send,
+    tone: "rose",
+  },
+  {
+    id: "NOT-1002",
+    title: "Discount Offer – 20% Off",
+    description: "Exclusive offer for your active plan...",
+    type: "Promotion",
+    audience: "Active Customers (1,532 Users)",
+    channel: "WhatsApp · Email",
+    status: "Sent",
+    created: "21 May 2025 · 04:15 PM",
+    delivery: "1,401 (91.5%)",
+    icon: Gift,
+    tone: "emerald",
+  },
+  {
+    id: "NOT-1003",
+    title: "Field Visit Assigned",
+    description: "You have been assigned a new visit today...",
+    type: "Alert",
+    audience: "Field Executives (320 Users)",
+    channel: "In-App · WhatsApp",
+    status: "Sent",
+    created: "21 May 2025 · 11:00 AM",
+    delivery: "312 (97.5%)",
+    icon: CalendarClock,
+    tone: "blue",
+  },
+  {
+    id: "NOT-1004",
+    title: "New Feature Released",
+    description: "We are excited to introduce a new feature...",
+    type: "Announcement",
+    audience: "All Customers (2,145 Users)",
+    channel: "Email · In-App",
+    status: "Sent",
+    created: "20 May 2025 · 03:30 PM",
+    delivery: "1,723 (80.3%)",
+    icon: Megaphone,
+    tone: "violet",
+  },
+  {
+    id: "NOT-1005",
+    title: "Payment Failed Alert",
+    description: "We could not process your payment for this plan...",
+    type: "Alert",
+    audience: "Customers (85 Users)",
+    channel: "Email · WhatsApp",
+    status: "Failed",
+    created: "20 May 2025 · 09:20 AM",
+    delivery: "12 (14.1%)",
+    icon: AlertCircle,
+    tone: "rose",
+  },
+  {
+    id: "NOT-1006",
+    title: "Monthly Target Update",
+    description: "Your monthly target has been updated...",
+    type: "Update",
+    audience: "Sales Executives (150 Users)",
+    channel: "WhatsApp",
+    status: "Sent",
+    created: "19 May 2025 · 10:45 AM",
+    delivery: "147 (98.0%)",
+    icon: CheckCircle2,
+    tone: "emerald",
+  },
+  {
+    id: "NOT-1007",
+    title: "Incentive Announcement",
+    description: "Great news! New incentive scheme is live...",
+    type: "Announcement",
+    audience: "Sales Executives (150 Users)",
+    channel: "Email · WhatsApp",
+    status: "Sent",
+    created: "18 May 2025 · 05:00 PM",
+    delivery: "138 (92.0%)",
+    icon: Sparkles,
+    tone: "violet",
+  },
+  {
+    id: "NOT-1008",
+    title: "Survey Request",
+    description: "We value your feedback. Please take 2 mins...",
+    type: "Other",
+    audience: "Active Customers (1,200 Users)",
+    channel: "Email",
+    status: "Scheduled",
+    created: "23 May 2025 · 09:00 AM",
+    delivery: "—",
+    icon: FileText,
+    tone: "cyan",
+  },
 ];
 
 const executiveSelectOptions = [
   {
-    value: 'all_executives',
-    label: 'All Field Executives',
-    sublabel: '326 Active Field Sales Reps',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80',
+    value: "all_executives",
+    label: "All Field Executives",
+    sublabel: "326 Active Field Sales Reps",
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80",
   },
   {
-    value: 'rahul_verma',
-    label: 'Rahul Verma',
-    sublabel: 'FE-1001 • Mumbai North Zone',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
+    value: "rahul_verma",
+    label: "Rahul Verma",
+    sublabel: "FE-1001 • Mumbai North Zone",
+    avatar:
+      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
   },
   {
-    value: 'priya_mehta',
-    label: 'Priya Mehta',
-    sublabel: 'FE-1002 • Western Suburbs Zone',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    value: "priya_mehta",
+    label: "Priya Mehta",
+    sublabel: "FE-1002 • Western Suburbs Zone",
+    avatar:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
   },
   {
-    value: 'sanjay_yadav',
-    label: 'Sanjay Yadav',
-    sublabel: 'TL-1003 • Eastern Suburbs (Team Leader)',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+    value: "sanjay_yadav",
+    label: "Sanjay Yadav",
+    sublabel: "TL-1003 • Eastern Suburbs (Team Leader)",
+    avatar:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
   },
   {
-    value: 'karan_patil',
-    label: 'Karan Patil',
-    sublabel: 'FE-1009 • Thane Team',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+    value: "karan_patil",
+    label: "Karan Patil",
+    sublabel: "FE-1009 • Thane Team",
+    avatar:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
   },
   {
-    value: 'neha_deshpande',
-    label: 'Neha Deshpande',
-    sublabel: 'FE-1014 • Pune Team',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+    value: "neha_deshpande",
+    label: "Neha Deshpande",
+    sublabel: "FE-1014 • Pune Team",
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
   },
 ];
 
 const customerSelectOptions = [
   {
-    value: 'all_customers',
-    label: 'All Active Customers',
-    sublabel: '2,145 Total Subscribed Stores',
-    avatar: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=150',
+    value: "all_customers",
+    label: "All Active Customers",
+    sublabel: "2,145 Total Subscribed Stores",
+    avatar:
+      "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=150",
   },
   {
-    value: 'apex_electronics',
-    label: 'Apex Electronics',
-    sublabel: 'B2B Merchant • Bandra West, Mumbai',
-    avatar: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=150',
+    value: "apex_electronics",
+    label: "Apex Electronics",
+    sublabel: "B2B Merchant • Bandra West, Mumbai",
+    avatar:
+      "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?w=150",
   },
   {
-    value: 'metro_retail',
-    label: 'Metro Retail Stores',
-    sublabel: 'Retail Chain • Andheri East, Mumbai',
-    avatar: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=150',
+    value: "metro_retail",
+    label: "Metro Retail Stores",
+    sublabel: "Retail Chain • Andheri East, Mumbai",
+    avatar:
+      "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=150",
   },
   {
-    value: 'vanguard_pharma',
-    label: 'Vanguard Pharmacy',
-    sublabel: 'Healthcare Supplier • Dadar, Mumbai',
-    avatar: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?w=150',
+    value: "vanguard_pharma",
+    label: "Vanguard Pharmacy",
+    sublabel: "Healthcare Supplier • Dadar, Mumbai",
+    avatar: "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=150",
   },
 ];
 
 const teamTerritorySelectOptions = [
-  { value: 'mumbai_west', label: 'Mumbai West Zone', sublabel: '24 Executives • Territory Pool' },
-  { value: 'mumbai_north', label: 'Mumbai North Zone', sublabel: '18 Executives • Territory Pool' },
-  { value: 'pune_central', label: 'Pune Central Zone', sublabel: '12 Executives • Territory Pool' },
-  { value: 'thane_team', label: 'Thane Sales Team', sublabel: '15 Executives • Team Pool' },
+  {
+    value: "mumbai_west",
+    label: "Mumbai West Zone",
+    sublabel: "24 Executives • Territory Pool",
+  },
+  {
+    value: "mumbai_north",
+    label: "Mumbai North Zone",
+    sublabel: "18 Executives • Territory Pool",
+  },
+  {
+    value: "pune_central",
+    label: "Pune Central Zone",
+    sublabel: "12 Executives • Territory Pool",
+  },
+  {
+    value: "thane_team",
+    label: "Thane Sales Team",
+    sublabel: "15 Executives • Team Pool",
+  },
 ];
 
 const statCards = [
-  { label: 'Total Sent', value: '1,248', change: '↑ 18.6%', subtext: 'vs last 30 days', icon: Send, color: 'text-rose-600 bg-rose-50' },
-  { label: 'Delivered', value: '1,089', change: '↑ 14.2%', percent: '87.3%', subtext: 'vs last 30 days', icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
-  { label: 'Opened', value: '623', change: '↑ 12.7%', percent: '57.2%', subtext: 'vs last 30 days', icon: Eye, color: 'text-amber-600 bg-amber-50' },
-  { label: 'Clicked', value: '248', change: '↑ 9.7%', percent: '22.8%', subtext: 'vs last 30 days', icon: Bell, color: 'text-blue-600 bg-blue-50' },
-  { label: 'Failed', value: '42', change: '↓ 2.3%', percent: '3.4%', subtext: 'vs last 30 days', icon: XCircle, color: 'text-rose-600 bg-rose-50' },
+  {
+    label: "Total Sent",
+    value: "1,248",
+    change: "↑ 18.6%",
+    subtext: "vs last 30 days",
+    icon: Send,
+    color: "text-rose-600 bg-rose-50",
+  },
+  {
+    label: "Delivered",
+    value: "1,089",
+    change: "↑ 14.2%",
+    percent: "87.3%",
+    subtext: "vs last 30 days",
+    icon: CheckCircle2,
+    color: "text-emerald-600 bg-emerald-50",
+  },
+  {
+    label: "Opened",
+    value: "623",
+    change: "↑ 12.7%",
+    percent: "57.2%",
+    subtext: "vs last 30 days",
+    icon: Eye,
+    color: "text-amber-600 bg-amber-50",
+  },
+  {
+    label: "Clicked",
+    value: "248",
+    change: "↑ 9.7%",
+    percent: "22.8%",
+    subtext: "vs last 30 days",
+    icon: Bell,
+    color: "text-blue-600 bg-blue-50",
+  },
+  {
+    label: "Failed",
+    value: "42",
+    change: "↓ 2.3%",
+    percent: "3.4%",
+    subtext: "vs last 30 days",
+    icon: XCircle,
+    color: "text-rose-600 bg-rose-50",
+  },
 ];
 
 const typeStyles: Record<NoticeType, string> = {
-  Announcement: 'bg-violet-50 text-violet-700 border-violet-200',
-  Alert: 'bg-rose-50 text-rose-700 border-rose-200',
-  Reminder: 'bg-blue-50 text-blue-700 border-blue-200',
-  Promotion: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  Update: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-  Other: 'bg-slate-100 text-slate-700 border-slate-200',
+  Announcement: "bg-violet-50 text-violet-700 border-violet-200",
+  Alert: "bg-rose-50 text-rose-700 border-rose-200",
+  Reminder: "bg-blue-50 text-blue-700 border-blue-200",
+  Promotion: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  Update: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  Other: "bg-slate-100 text-slate-700 border-slate-200",
 };
 
-function PageHeader({ title, description, kind }: { title: string; description: string; kind: PageKind }) {
+function PageHeader({
+  title,
+  description,
+  kind,
+}: {
+  title: string;
+  description: string;
+  kind: PageKind;
+}) {
   const navigate = useNavigate();
 
   const actions =
-    kind === 'center' ? (
+    kind === "center" ? (
       <>
-        <Button variant="outline" size="sm" onClick={() => navigate('/admin/notifications/push')} className="gap-2 font-bold shadow-xs">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/admin/notifications/push")}
+          className="gap-2 font-bold shadow-xs"
+        >
           <Send className="h-3.5 w-3.5" /> Push Notification
         </Button>
-        <Button variant="outline" size="sm" onClick={() => navigate('/admin/notifications/create')} className="gap-2 font-bold shadow-xs">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/admin/notifications/create")}
+          className="gap-2 font-bold shadow-xs"
+        >
           <Plus className="h-3.5 w-3.5" /> Create Notification
         </Button>
-        <Button variant="accent" size="sm" onClick={() => navigate('/admin/notifications/executives')} className="gap-2 font-bold shadow-xs">
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={() => navigate("/admin/notifications/executives")}
+          className="gap-2 font-bold shadow-xs"
+        >
           <Bell className="h-3.5 w-3.5" /> Executive Alerts
         </Button>
       </>
-    ) : kind === 'templates' ? (
+    ) : kind === "templates" ? (
       <>
-        <Button variant="outline" size="sm" onClick={() => toast.info('Template import wizard opened.')} className="font-bold shadow-xs">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => toast.info("Template import wizard opened.")}
+          className="font-bold shadow-xs"
+        >
           Import Template
         </Button>
-        <Button variant="accent" size="sm" onClick={() => navigate('/admin/notifications/create')} className="gap-2 font-bold shadow-xs">
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={() => navigate("/admin/notifications/create")}
+          className="gap-2 font-bold shadow-xs"
+        >
           <Plus className="h-3.5 w-3.5" /> Create Template
         </Button>
       </>
-    ) : kind === 'alerts' ? (
+    ) : kind === "alerts" ? (
       <>
-        <Button variant="outline" size="sm" onClick={() => toast.info('Alert settings panel opened.')} className="font-bold shadow-xs">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => toast.info("Alert settings panel opened.")}
+          className="font-bold shadow-xs"
+        >
           Alert Settings
         </Button>
-        <Button variant="accent" size="sm" onClick={() => navigate('/admin/notifications/create')} className="gap-2 font-bold shadow-xs">
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={() => navigate("/admin/notifications/create")}
+          className="gap-2 font-bold shadow-xs"
+        >
           <Plus className="h-3.5 w-3.5" /> Create Executive Alert
         </Button>
       </>
-    ) : kind === 'push' ? (
+    ) : kind === "push" ? (
       <>
-        <Button variant="outline" size="sm" onClick={() => navigate('/admin/notifications')} className="font-bold shadow-xs">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/admin/notifications")}
+          className="font-bold shadow-xs"
+        >
           ← Notification Center
         </Button>
-        <Button variant="accent" size="sm" onClick={() => toast.success('New push notification draft created.')} className="gap-2 font-bold shadow-xs">
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={() => toast.success("New push notification draft created.")}
+          className="gap-2 font-bold shadow-xs"
+        >
           <Plus className="h-3.5 w-3.5" /> New Push Notification
         </Button>
       </>
     ) : (
       <>
-        <Button variant="outline" size="sm" onClick={() => toast.success('Notification saved as draft.')} className="font-bold shadow-xs">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => toast.success("Notification saved as draft.")}
+          className="font-bold shadow-xs"
+        >
           Save as Draft
         </Button>
-        <Button variant="accent" size="sm" onClick={() => toast.success('Notification submitted for final delivery!')} className="gap-2 font-bold shadow-xs">
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={() =>
+            toast.success("Notification submitted for final delivery!")
+          }
+          className="gap-2 font-bold shadow-xs"
+        >
           <Send className="h-3.5 w-3.5" /> Review & Send
         </Button>
       </>
@@ -216,85 +456,200 @@ function PageHeader({ title, description, kind }: { title: string; description: 
     <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200/80 pb-3">
       <div>
         <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-          <button onClick={() => navigate('/admin/notifications')} className="hover:text-[#0D1F3D] cursor-pointer">
+          <button
+            onClick={() => navigate("/admin/notifications")}
+            className="hover:text-[#0D1F3D] cursor-pointer"
+          >
             Notifications
           </button>
           <ChevronRight className="h-3.5 w-3.5" />
           <span className="text-[#0D1F3D] font-bold">{title}</span>
         </div>
-        <h1 className="text-2xl font-extrabold text-[#0D1F3D] tracking-tight">{title}</h1>
-        <p className="mt-0.5 text-xs font-medium text-slate-500">{description}</p>
+        <h1 className="text-2xl font-extrabold text-[#0D1F3D] tracking-tight">
+          {title}
+        </h1>
+        <p className="mt-0.5 text-xs font-medium text-slate-500">
+          {description}
+        </p>
       </div>
       <div className="flex flex-wrap items-center gap-2.5">{actions}</div>
     </div>
   );
 }
 
-function Stats({ alert = false, template = false }: { alert?: boolean; template?: boolean }) {
+function Stats({
+  alert = false,
+  template = false,
+}: {
+  alert?: boolean;
+  template?: boolean;
+}) {
   const cards = alert
     ? [
-        { label: 'Total Alerts', value: '156', change: '↑ 18.6%', percent: '', subtext: 'vs last 30 days', icon: Bell, color: 'text-rose-600 bg-rose-50' },
-        { label: 'Critical Alerts', value: '28', change: '↑ 27.3%', percent: '', subtext: 'vs last 30 days', icon: AlertCircle, color: 'text-rose-600 bg-rose-50' },
-        { label: 'Pending Alerts', value: '42', change: '↑ 14.2%', percent: '', subtext: 'vs last 30 days', icon: CalendarClock, color: 'text-amber-600 bg-amber-50' },
-        { label: 'Acknowledged', value: '72', change: '↑ 16.8%', percent: '', subtext: 'vs last 30 days', icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
-        { label: 'Resolved', value: '42', change: '↑ 12.5%', percent: '', subtext: 'vs last 30 days', icon: ClipboardCopy, color: 'text-violet-600 bg-violet-50' },
+        {
+          label: "Total Alerts",
+          value: "156",
+          change: "↑ 18.6%",
+          percent: "",
+          subtext: "vs last 30 days",
+          icon: Bell,
+          color: "text-rose-600 bg-rose-50",
+        },
+        {
+          label: "Critical Alerts",
+          value: "28",
+          change: "↑ 27.3%",
+          percent: "",
+          subtext: "vs last 30 days",
+          icon: AlertCircle,
+          color: "text-rose-600 bg-rose-50",
+        },
+        {
+          label: "Pending Alerts",
+          value: "42",
+          change: "↑ 14.2%",
+          percent: "",
+          subtext: "vs last 30 days",
+          icon: CalendarClock,
+          color: "text-amber-600 bg-amber-50",
+        },
+        {
+          label: "Acknowledged",
+          value: "72",
+          change: "↑ 16.8%",
+          percent: "",
+          subtext: "vs last 30 days",
+          icon: CheckCircle2,
+          color: "text-emerald-600 bg-emerald-50",
+        },
+        {
+          label: "Resolved",
+          value: "42",
+          change: "↑ 12.5%",
+          percent: "",
+          subtext: "vs last 30 days",
+          icon: ClipboardCopy,
+          color: "text-violet-600 bg-violet-50",
+        },
       ]
     : template
-    ? [
-        { label: 'Total Templates', value: '126', change: '↑ 18.6%', percent: '', subtext: 'vs last 30 days', icon: ClipboardCopy, color: 'text-blue-600 bg-blue-50' },
-        { label: 'Active Templates', value: '98', change: '↑ 16.2%', percent: '', subtext: 'vs last 30 days', icon: Send, color: 'text-emerald-600 bg-emerald-50' },
-        { label: 'Scheduled Templates', value: '14', change: '↑ 12.5%', percent: '', subtext: 'vs last 30 days', icon: CalendarClock, color: 'text-amber-600 bg-amber-50' },
-        { label: 'Archived Templates', value: '14', change: '↑ 9.3%', percent: '', subtext: 'vs last 30 days', icon: ClipboardCopy, color: 'text-violet-600 bg-violet-50' },
-        { label: 'Disabled Templates', value: '6', change: '↓ 4.1%', percent: '', subtext: 'vs last 30 days', icon: XCircle, color: 'text-rose-600 bg-rose-50' },
-      ]
-    : statCards;
+      ? [
+          {
+            label: "Total Templates",
+            value: "126",
+            change: "↑ 18.6%",
+            percent: "",
+            subtext: "vs last 30 days",
+            icon: ClipboardCopy,
+            color: "text-blue-600 bg-blue-50",
+          },
+          {
+            label: "Active Templates",
+            value: "98",
+            change: "↑ 16.2%",
+            percent: "",
+            subtext: "vs last 30 days",
+            icon: Send,
+            color: "text-emerald-600 bg-emerald-50",
+          },
+          {
+            label: "Scheduled Templates",
+            value: "14",
+            change: "↑ 12.5%",
+            percent: "",
+            subtext: "vs last 30 days",
+            icon: CalendarClock,
+            color: "text-amber-600 bg-amber-50",
+          },
+          {
+            label: "Archived Templates",
+            value: "14",
+            change: "↑ 9.3%",
+            percent: "",
+            subtext: "vs last 30 days",
+            icon: ClipboardCopy,
+            color: "text-violet-600 bg-violet-50",
+          },
+          {
+            label: "Disabled Templates",
+            value: "6",
+            change: "↓ 4.1%",
+            percent: "",
+            subtext: "vs last 30 days",
+            icon: XCircle,
+            color: "text-rose-600 bg-rose-50",
+          },
+        ]
+      : statCards;
 
   return (
     <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
-      {cards.map(({ label, value, change, percent, subtext, icon: Icon, color }) => (
-        <div key={label} className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center gap-3">
-            <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-sm ${color}`}>
-              <Icon className="h-5 w-5" />
-            </span>
-            <div>
-              <p className="text-xs font-semibold text-slate-500">{label}</p>
-              <div className="flex items-baseline gap-1.5">
-                <p className="text-xl font-extrabold text-[#0D1F3D]">{value}</p>
-                {percent && <span className="text-xs font-bold text-slate-600">({percent})</span>}
+      {cards.map(
+        ({ label, value, change, percent, subtext, icon: Icon, color }) => (
+          <div
+            key={label}
+            className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex flex-col justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <span
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-sm ${color}`}
+              >
+                <Icon className="h-5 w-5" />
+              </span>
+              <div>
+                <p className="text-xs font-semibold text-slate-500">{label}</p>
+                <div className="flex items-baseline gap-1.5">
+                  <p className="text-xl font-extrabold text-[#0D1F3D]">
+                    {value}
+                  </p>
+                  {percent && (
+                    <span className="text-xs font-bold text-slate-600">
+                      ({percent})
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
+            <p className="mt-2.5 text-[11px] font-semibold text-emerald-600">
+              {change}{" "}
+              <span className="text-slate-400 font-normal">{subtext}</span>
+            </p>
           </div>
-          <p className="mt-2.5 text-[11px] font-semibold text-emerald-600">
-            {change} <span className="text-slate-400 font-normal">{subtext}</span>
-          </p>
-        </div>
-      ))}
+        ),
+      )}
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: NotificationRow['status'] }) {
+function StatusBadge({ status }: { status: NotificationRow["status"] }) {
   const style =
-    status === 'Failed'
-      ? 'bg-rose-50 text-rose-700 border-rose-200'
-      : status === 'Scheduled' || status === 'Pending'
-      ? 'bg-amber-50 text-amber-700 border-amber-200'
-      : status === 'Resolved'
-      ? 'bg-violet-50 text-violet-700 border-violet-200'
-      : status === 'Disabled'
-      ? 'bg-slate-100 text-slate-600 border-slate-200'
-      : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    status === "Failed"
+      ? "bg-rose-50 text-rose-700 border-rose-200"
+      : status === "Scheduled" || status === "Pending"
+        ? "bg-amber-50 text-amber-700 border-amber-200"
+        : status === "Resolved"
+          ? "bg-violet-50 text-violet-700 border-violet-200"
+          : status === "Disabled"
+            ? "bg-slate-100 text-slate-600 border-slate-200"
+            : "bg-emerald-50 text-emerald-700 border-emerald-200";
 
-  return <span className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${style}`}>
-    <span className="h-1.5 w-1.5 rounded-full bg-current" />
-    {status}
-  </span>;
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${style}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {status}
+    </span>
+  );
 }
 
-function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'templates' }) {
-  const [search, setSearch] = useState('');
-  const [selectedExec, setSelectedExec] = useState('all_executives');
+function FilterBar({
+  mode = "center",
+}: {
+  mode?: "center" | "alerts" | "templates";
+}) {
+  const [search, setSearch] = useState("");
+  const [selectedExec, setSelectedExec] = useState("all_executives");
 
   return (
     <div className="rounded-sm border border-slate-200 bg-white p-3.5 shadow-xs space-y-3">
@@ -304,11 +659,11 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
           <input
             type="text"
             placeholder={
-              mode === 'alerts'
-                ? 'Search by alert title or description...'
-                : mode === 'templates'
-                ? 'Search by template name or keyword...'
-                : 'Search by title, message, or audience...'
+              mode === "alerts"
+                ? "Search by alert title or description..."
+                : mode === "templates"
+                  ? "Search by template name or keyword..."
+                  : "Search by title, message, or audience..."
             }
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -320,11 +675,11 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
           value="all"
           onChange={() => {}}
           options={[
-            { value: 'all', label: 'All Types' },
-            { value: 'announcement', label: 'Announcement' },
-            { value: 'alert', label: 'Alert' },
-            { value: 'reminder', label: 'Reminder' },
-            { value: 'promotion', label: 'Promotion' },
+            { value: "all", label: "All Types" },
+            { value: "announcement", label: "Announcement" },
+            { value: "alert", label: "Alert" },
+            { value: "reminder", label: "Reminder" },
+            { value: "promotion", label: "Promotion" },
           ]}
           searchable={true}
           placeholder="Filter Type..."
@@ -342,10 +697,10 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
           value="all"
           onChange={() => {}}
           options={[
-            { value: 'all', label: 'All Status' },
-            { value: 'sent', label: 'Sent' },
-            { value: 'scheduled', label: 'Scheduled' },
-            { value: 'failed', label: 'Failed' },
+            { value: "all", label: "All Status" },
+            { value: "sent", label: "Sent" },
+            { value: "scheduled", label: "Scheduled" },
+            { value: "failed", label: "Failed" },
           ]}
           searchable={true}
           placeholder="Filter Status..."
@@ -355,10 +710,10 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
           value="all"
           onChange={() => {}}
           options={[
-            { value: 'all', label: 'All Channels' },
-            { value: 'whatsapp', label: 'WhatsApp' },
-            { value: 'email', label: 'Email' },
-            { value: 'inapp', label: 'In-App' },
+            { value: "all", label: "All Channels" },
+            { value: "whatsapp", label: "WhatsApp" },
+            { value: "email", label: "Email" },
+            { value: "inapp", label: "In-App" },
           ]}
           searchable={true}
           placeholder="Filter Channel..."
@@ -373,10 +728,20 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => toast.info('Filters cleared')} className="font-bold">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => toast.info("Filters cleared")}
+            className="font-bold"
+          >
             Clear Filters
           </Button>
-          <Button variant="accent" size="sm" onClick={() => toast.success('Filters applied')} className="font-bold shadow-xs">
+          <Button
+            variant="accent"
+            size="sm"
+            onClick={() => toast.success("Filters applied")}
+            className="font-bold shadow-xs"
+          >
             Apply Filters
           </Button>
         </div>
@@ -387,56 +752,76 @@ function FilterBar({ mode = 'center' }: { mode?: 'center' | 'alerts' | 'template
 
 // SCREEN 163: NOTIFICATION CENTER (/admin/notifications)
 export function NotificationCenterPage() {
-  const [activeTab, setActiveTab] = useState<'all' | 'sent' | 'scheduled' | 'drafts' | 'failed'>('all');
+  const [activeTab, setActiveTab] = useState<
+    "all" | "sent" | "scheduled" | "drafts" | "failed"
+  >("all");
 
   const filteredRows = useMemo(() => {
-    if (activeTab === 'sent') return notificationRows.filter((r) => r.status === 'Sent');
-    if (activeTab === 'scheduled') return notificationRows.filter((r) => r.status === 'Scheduled');
-    if (activeTab === 'failed') return notificationRows.filter((r) => r.status === 'Failed');
-    if (activeTab === 'drafts') return notificationRows.filter((r) => r.type === 'Other');
+    if (activeTab === "sent")
+      return notificationRows.filter((r) => r.status === "Sent");
+    if (activeTab === "scheduled")
+      return notificationRows.filter((r) => r.status === "Scheduled");
+    if (activeTab === "failed")
+      return notificationRows.filter((r) => r.status === "Failed");
+    if (activeTab === "drafts")
+      return notificationRows.filter((r) => r.type === "Other");
     return notificationRows;
   }, [activeTab]);
 
   const columns: ColumnDef<NotificationRow>[] = [
     {
-      header: 'Title & Message',
+      header: "Title & Message",
       cell: (row) => {
         const Icon = row.icon;
         return (
           <div className="flex items-center gap-3 min-w-[220px]">
-            <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm ${
-              row.tone === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
-              row.tone === 'blue' ? 'bg-blue-50 text-blue-600' :
-              row.tone === 'violet' ? 'bg-purple-50 text-purple-600' : 'bg-rose-50 text-rose-600'
-            }`}>
+            <span
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm ${
+                row.tone === "emerald"
+                  ? "bg-emerald-50 text-emerald-600"
+                  : row.tone === "blue"
+                    ? "bg-blue-50 text-blue-600"
+                    : row.tone === "violet"
+                      ? "bg-purple-50 text-purple-600"
+                      : "bg-rose-50 text-rose-600"
+              }`}
+            >
               <Icon className="h-4 w-4" />
             </span>
             <div>
-              <p className="font-extrabold text-[#0D1F3D] text-xs">{row.title}</p>
-              <p className="text-[11px] font-medium text-slate-500 truncate max-w-[240px] mt-0.5">{row.description}</p>
+              <p className="font-extrabold text-[#0D1F3D] text-xs">
+                {row.title}
+              </p>
+              <p className="text-[11px] font-medium text-slate-500 truncate max-w-[240px] mt-0.5">
+                {row.description}
+              </p>
             </div>
           </div>
         );
       },
     },
     {
-      header: 'Type',
+      header: "Type",
       cell: (row) => (
-        <span className={`inline-flex rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${typeStyles[row.type]}`}>
+        <span
+          className={`inline-flex rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${typeStyles[row.type]}`}
+        >
           {row.type}
         </span>
       ),
     },
     {
-      header: 'Audience',
+      header: "Audience",
       cell: (row) => (
         <div>
-          <p className="font-extrabold text-[#0D1F3D] text-xs">{row.audience}</p>
+          <p className="font-extrabold text-[#0D1F3D] text-xs">
+            {row.audience}
+          </p>
         </div>
       ),
     },
     {
-      header: 'Channel',
+      header: "Channel",
       cell: (row) => (
         <span className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-sm">
           {row.channel}
@@ -444,20 +829,28 @@ export function NotificationCenterPage() {
       ),
     },
     {
-      header: 'Status',
+      header: "Status",
       cell: (row) => <StatusBadge status={row.status} />,
     },
     {
-      header: 'Sent / Scheduled',
-      cell: (row) => <span className="text-xs font-semibold text-slate-600">{row.created}</span>,
+      header: "Sent / Scheduled",
+      cell: (row) => (
+        <span className="text-xs font-semibold text-slate-600">
+          {row.created}
+        </span>
+      ),
     },
     {
-      header: 'Delivery',
-      cell: (row) => <span className="font-mono font-extrabold text-[#0D1F3D] text-xs">{row.delivery}</span>,
+      header: "Delivery",
+      cell: (row) => (
+        <span className="font-mono font-extrabold text-[#0D1F3D] text-xs">
+          {row.delivery}
+        </span>
+      ),
     },
     {
-      header: 'Actions',
-      align: 'right',
+      header: "Actions",
+      align: "right",
       cell: (row) => (
         <div className="flex justify-end gap-1">
           <button
@@ -478,17 +871,21 @@ export function NotificationCenterPage() {
   ];
 
   const tabs = [
-    { id: 'all', label: 'All Notifications', count: 1248 },
-    { id: 'sent', label: 'Sent', count: 1089 },
-    { id: 'scheduled', label: 'Scheduled', count: 117 },
-    { id: 'drafts', label: 'Drafts', count: 18 },
-    { id: 'failed', label: 'Failed', count: 42 },
+    { id: "all", label: "All Notifications", count: 1248 },
+    { id: "sent", label: "Sent", count: 1089 },
+    { id: "scheduled", label: "Scheduled", count: 117 },
+    { id: "drafts", label: "Drafts", count: 18 },
+    { id: "failed", label: "Failed", count: 42 },
   ] as const;
 
   return (
     <div className="space-y-4 font-sans pb-12">
-      <PageHeader kind="center" title="Notification Center" description="Manage all system notifications, announcements and communication history." />
-      
+      <PageHeader
+        kind="center"
+        title="Notification Center"
+        description="Manage all system notifications, announcements and communication history."
+      />
+
       <Stats />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
@@ -506,18 +903,25 @@ export function NotificationCenterPage() {
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? 'border-indigo-600 text-indigo-700 bg-slate-50/80 rounded-t-sm'
-                      : 'border-transparent text-slate-500 hover:text-[#0D1F3D] hover:border-slate-300'
+                      ? "border-indigo-600 text-indigo-700 bg-slate-50/80 rounded-t-sm"
+                      : "border-transparent text-slate-500 hover:text-[#0D1F3D] hover:border-slate-300"
                   }`}
                 >
-                  <span>{tab.label} ({tab.count})</span>
+                  <span>
+                    {tab.label} ({tab.count})
+                  </span>
                 </button>
               );
             })}
           </div>
 
-          <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-            <DataTable columns={columns} data={filteredRows} keyExtractor={(row) => row.id} density="compact" />
+          <div className="">
+            <DataTable
+              columns={columns}
+              data={filteredRows}
+              keyExtractor={(row) => row.id}
+              density="compact"
+            />
           </div>
         </div>
 
@@ -525,27 +929,45 @@ export function NotificationCenterPage() {
         <div className="lg:col-span-4 space-y-4">
           {/* Donut Overview */}
           <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Notification Overview</h3>
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+              Notification Overview
+            </h3>
             <div className="flex items-center gap-4 pt-1">
               <div className="h-28 w-28 shrink-0 rounded-full border-[10px] border-purple-500 border-t-blue-500 border-r-emerald-500 border-b-amber-500 flex flex-col items-center justify-center bg-slate-50">
-                <span className="text-xl font-extrabold text-[#0D1F3D]">1,248</span>
-                <span className="text-[10px] font-bold text-slate-400">Total</span>
+                <span className="text-xl font-extrabold text-[#0D1F3D]">
+                  1,248
+                </span>
+                <span className="text-[10px] font-bold text-slate-400">
+                  Total
+                </span>
               </div>
               <div className="space-y-1.5 text-xs font-bold w-full">
                 <div className="flex items-center justify-between text-slate-700">
-                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-500" /> Reminder</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />{" "}
+                    Reminder
+                  </span>
                   <span className="font-mono text-[#0D1F3D]">35.3% (440)</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
-                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" /> Alert</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />{" "}
+                    Alert
+                  </span>
                   <span className="font-mono text-[#0D1F3D]">24.1% (300)</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
-                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Promotion</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />{" "}
+                    Promotion
+                  </span>
                   <span className="font-mono text-[#0D1F3D]">18.3% (228)</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">
-                  <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Announcement</span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />{" "}
+                    Announcement
+                  </span>
                   <span className="font-mono text-[#0D1F3D]">12.8% (160)</span>
                 </div>
               </div>
@@ -554,15 +976,22 @@ export function NotificationCenterPage() {
 
           {/* Channel Wise Delivery */}
           <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Channel Wise Delivery</h3>
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+              Channel Wise Delivery
+            </h3>
             <div className="space-y-3 pt-1">
               <div>
                 <div className="flex justify-between text-xs font-bold mb-1">
                   <span className="text-slate-700">WhatsApp</span>
-                  <span className="text-emerald-600 font-mono">812 (89.9%)</span>
+                  <span className="text-emerald-600 font-mono">
+                    812 (89.9%)
+                  </span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: '89.9%' }} />
+                  <div
+                    className="h-full bg-emerald-500 rounded-full"
+                    style={{ width: "89.9%" }}
+                  />
                 </div>
               </div>
 
@@ -572,7 +1001,10 @@ export function NotificationCenterPage() {
                   <span className="text-purple-600 font-mono">358 (78.0%)</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-purple-600 rounded-full" style={{ width: '78.0%' }} />
+                  <div
+                    className="h-full bg-purple-600 rounded-full"
+                    style={{ width: "78.0%" }}
+                  />
                 </div>
               </div>
 
@@ -582,7 +1014,10 @@ export function NotificationCenterPage() {
                   <span className="text-blue-600 font-mono">198 (92.5%)</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-                  <div className="h-full bg-blue-600 rounded-full" style={{ width: '92.5%' }} />
+                  <div
+                    className="h-full bg-blue-600 rounded-full"
+                    style={{ width: "92.5%" }}
+                  />
                 </div>
               </div>
             </div>
@@ -590,19 +1025,33 @@ export function NotificationCenterPage() {
 
           {/* Top Performing */}
           <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Top Performing Notifications</h3>
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+              Top Performing Notifications
+            </h3>
             <div className="space-y-2.5 pt-1">
               <div className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
-                <span className="font-extrabold text-[#0D1F3D]">Plan Renewal Reminder</span>
-                <span className="text-emerald-700 font-mono font-extrabold">62.4% Open</span>
+                <span className="font-extrabold text-[#0D1F3D]">
+                  Plan Renewal Reminder
+                </span>
+                <span className="text-emerald-700 font-mono font-extrabold">
+                  62.4% Open
+                </span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
-                <span className="font-extrabold text-[#0D1F3D]">Discount Offer – 20% Off</span>
-                <span className="text-emerald-700 font-mono font-extrabold">58.7% Open</span>
+                <span className="font-extrabold text-[#0D1F3D]">
+                  Discount Offer – 20% Off
+                </span>
+                <span className="text-emerald-700 font-mono font-extrabold">
+                  58.7% Open
+                </span>
               </div>
               <div className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
-                <span className="font-extrabold text-[#0D1F3D]">New Feature Released</span>
-                <span className="text-emerald-700 font-mono font-extrabold">55.1% Open</span>
+                <span className="font-extrabold text-[#0D1F3D]">
+                  New Feature Released
+                </span>
+                <span className="text-emerald-700 font-mono font-extrabold">
+                  55.1% Open
+                </span>
               </div>
             </div>
           </div>
@@ -614,46 +1063,87 @@ export function NotificationCenterPage() {
 
 // SCREEN 164: CREATE NOTIFICATION (/admin/notifications/create)
 export function CreateNotificationPage() {
-  const [noticeType, setNoticeType] = useState<NoticeType>('Announcement');
-  const [selectedExec, setSelectedExec] = useState('rahul_verma');
-  const [selectedCustomer, setSelectedCustomer] = useState('apex_electronics');
-  const [selectedTeam, setSelectedTeam] = useState('mumbai_west');
+  const [noticeType, setNoticeType] = useState<NoticeType>("Announcement");
+  const [selectedExec, setSelectedExec] = useState("rahul_verma");
+  const [selectedCustomer, setSelectedCustomer] = useState("apex_electronics");
+  const [selectedTeam, setSelectedTeam] = useState("mumbai_west");
 
-  const [title, setTitle] = useState('');
-  const [message, setMessage] = useState('');
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
   const [sendNow, setSendNow] = useState(true);
 
   return (
     <div className="space-y-4 font-sans pb-12">
-      <PageHeader kind="create" title="Create Notification" description="Send updates, alerts and announcements to the right audience." />
+      <PageHeader
+        kind="create"
+        title="Create Notification"
+        description="Send updates, alerts and announcements to the right audience."
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Main Compose Form (8 Cols) */}
         <div className="lg:col-span-8 space-y-4">
           {/* Stepper Bar */}
           <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4 shadow-xs text-xs font-bold">
-            <span className="text-[#E20613] flex items-center gap-1.5"><span className="h-5 w-5 rounded-full bg-red-100 text-[#E20613] flex items-center justify-center text-[10px]">1</span> Compose</span>
-            <span className="text-slate-400 flex items-center gap-1.5"><span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">2</span> Audience</span>
-            <span className="text-slate-400 flex items-center gap-1.5"><span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">3</span> Delivery</span>
-            <span className="text-slate-400 flex items-center gap-1.5"><span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">4</span> Review</span>
+            <span className="text-[#E20613] flex items-center gap-1.5">
+              <span className="h-5 w-5 rounded-full bg-red-100 text-[#E20613] flex items-center justify-center text-[10px]">
+                1
+              </span>{" "}
+              Compose
+            </span>
+            <span className="text-slate-400 flex items-center gap-1.5">
+              <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">
+                2
+              </span>{" "}
+              Audience
+            </span>
+            <span className="text-slate-400 flex items-center gap-1.5">
+              <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">
+                3
+              </span>{" "}
+              Delivery
+            </span>
+            <span className="text-slate-400 flex items-center gap-1.5">
+              <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">
+                4
+              </span>{" "}
+              Review
+            </span>
           </div>
 
           {/* Type Selector Grid */}
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Notification Type</h3>
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+              Notification Type
+            </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-              {(['Announcement', 'Alert', 'Reminder', 'Promotion', 'Update', 'Other'] as NoticeType[]).map((t) => (
+              {(
+                [
+                  "Announcement",
+                  "Alert",
+                  "Reminder",
+                  "Promotion",
+                  "Update",
+                  "Other",
+                ] as NoticeType[]
+              ).map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setNoticeType(t)}
                   className={`p-3 rounded-sm border text-left transition-all cursor-pointer ${
-                    noticeType === t ? 'border-[#E20613] bg-red-50/50 shadow-xs' : 'border-slate-200 hover:border-slate-300 bg-white'
+                    noticeType === t
+                      ? "border-[#E20613] bg-red-50/50 shadow-xs"
+                      : "border-slate-200 hover:border-slate-300 bg-white"
                   }`}
                 >
                   <p className="text-xs font-extrabold text-[#0D1F3D]">{t}</p>
                   <p className="text-[10px] text-slate-500 font-medium mt-1 leading-tight">
-                    {t === 'Announcement' ? 'General updates' : t === 'Alert' ? 'Important alerts' : 'Scheduled reminders'}
+                    {t === "Announcement"
+                      ? "General updates"
+                      : t === "Alert"
+                        ? "Important alerts"
+                        : "Scheduled reminders"}
                   </p>
                 </button>
               ))}
@@ -662,12 +1152,17 @@ export function CreateNotificationPage() {
 
           {/* Audience Selection */}
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Audience Target Selection</h3>
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+              Audience Target Selection
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <Select
                 label="Send To *"
                 value="all"
-                options={[{ value: 'all', label: 'All Platform Users' }, { value: 'custom', label: 'Custom Targeted Audience' }]}
+                options={[
+                  { value: "all", label: "All Platform Users" },
+                  { value: "custom", label: "Custom Targeted Audience" },
+                ]}
                 searchable={true}
               />
               <Select
@@ -699,14 +1194,26 @@ export function CreateNotificationPage() {
 
           {/* Message Content */}
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Message Content</h3>
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+              Message Content
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Input label="Title *" placeholder="Enter notification title" value={title} onChange={(e) => setTitle(e.target.value)} />
-              <Input label="Short Description (Optional)" placeholder="Enter short description" />
+              <Input
+                label="Title *"
+                placeholder="Enter notification title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+              <Input
+                label="Short Description (Optional)"
+                placeholder="Enter short description"
+              />
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700 block">Message *</label>
+              <label className="text-xs font-bold text-slate-700 block">
+                Message *
+              </label>
               <textarea
                 rows={4}
                 value={message}
@@ -715,19 +1222,38 @@ export function CreateNotificationPage() {
                 className="w-full rounded-sm border border-slate-200 bg-slate-50/50 p-3 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
               />
               <div className="flex justify-between text-[11px] text-slate-400 font-medium pt-1">
-                <span>Use merge fields to personalize. Example: <code>&#123;name&#125;</code>, <code>&#123;expiry_date&#125;</code></span>
+                <span>
+                  Use merge fields to personalize. Example:{" "}
+                  <code>&#123;name&#125;</code>,{" "}
+                  <code>&#123;expiry_date&#125;</code>
+                </span>
                 <span>{message.length} / 5000</span>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
-              <Button variant="outline" size="sm" onClick={() => setMessage((m) => m + ' {{name}}')} className="font-bold">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMessage((m) => m + " {{name}}")}
+                className="font-bold"
+              >
                 + Add Merge Field
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setMessage((m) => m + ' 😊')} className="font-bold">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setMessage((m) => m + " 😊")}
+                className="font-bold"
+              >
                 😊 Add Emoji
               </Button>
-              <Button variant="outline" size="sm" onClick={() => toast.info('Media attachment opened')} className="font-bold">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toast.info("Media attachment opened")}
+                className="font-bold"
+              >
                 📎 Add Media
               </Button>
             </div>
@@ -735,13 +1261,17 @@ export function CreateNotificationPage() {
 
           {/* Delivery Settings */}
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Delivery Settings</h3>
+            <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+              Delivery Settings
+            </h3>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <button
                 type="button"
                 onClick={() => setSendNow(true)}
                 className={`p-3 rounded-sm border text-left font-bold text-xs cursor-pointer ${
-                  sendNow ? 'border-[#E20613] bg-red-50/50 text-[#0D1F3D]' : 'border-slate-200 text-slate-600'
+                  sendNow
+                    ? "border-[#E20613] bg-red-50/50 text-[#0D1F3D]"
+                    : "border-slate-200 text-slate-600"
                 }`}
               >
                 Send Immediately
@@ -750,13 +1280,26 @@ export function CreateNotificationPage() {
                 type="button"
                 onClick={() => setSendNow(false)}
                 className={`p-3 rounded-sm border text-left font-bold text-xs cursor-pointer ${
-                  !sendNow ? 'border-[#E20613] bg-red-50/50 text-[#0D1F3D]' : 'border-slate-200 text-slate-600'
+                  !sendNow
+                    ? "border-[#E20613] bg-red-50/50 text-[#0D1F3D]"
+                    : "border-slate-200 text-slate-600"
                 }`}
               >
                 Schedule For Later
               </button>
-              <Input label="Schedule Date" type="date" defaultValue="2025-05-22" />
-              <Select label="Priority" options={[{ value: 'high', label: 'High Priority' }, { value: 'normal', label: 'Normal' }]} searchable={true} />
+              <Input
+                label="Schedule Date"
+                type="date"
+                defaultValue="2025-05-22"
+              />
+              <Select
+                label="Priority"
+                options={[
+                  { value: "high", label: "High Priority" },
+                  { value: "normal", label: "Normal" },
+                ]}
+                searchable={true}
+              />
             </div>
           </div>
         </div>
@@ -764,21 +1307,32 @@ export function CreateNotificationPage() {
         {/* Live Preview Sidebar (4 Cols) */}
         <div className="lg:col-span-4 space-y-4">
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Live Mobile Preview</h3>
-            
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+              Live Mobile Preview
+            </h3>
+
             {/* Light Enterprise Mobile Preview Box */}
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3 shadow-xs">
               <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold border-b border-slate-200/80 pb-2">
                 <span>10:30 AM</span>
-                <span className="font-semibold text-slate-400">Smart Field Work</span>
+                <span className="font-semibold text-slate-400">
+                  Smart Field Work
+                </span>
               </div>
               <div className="bg-white rounded-xl p-3.5 space-y-1.5 border border-slate-200 shadow-sm">
                 <div className="flex items-center gap-2 mb-1">
-                  <img src="/assets/sfw-logo.png" alt="Smart Field Work" className="h-5 w-auto object-contain" />
+                  <img
+                    src="/assets/sfw-logo.png"
+                    alt="Smart Field Work"
+                    className="h-5 w-auto object-contain"
+                  />
                 </div>
-                <h4 className="text-xs font-extrabold text-[#0D1F3D]">{title || 'Notification Title'}</h4>
+                <h4 className="text-xs font-extrabold text-[#0D1F3D]">
+                  {title || "Notification Title"}
+                </h4>
                 <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                  {message || 'This is how your notification message will appear on customer mobile screens.'}
+                  {message ||
+                    "This is how your notification message will appear on customer mobile screens."}
                 </p>
                 <span className="text-[10px] font-extrabold text-[#E20613] hover:underline cursor-pointer pt-1 flex items-center gap-0.5">
                   View Details <ChevronRight className="h-3 w-3" />
@@ -788,7 +1342,9 @@ export function CreateNotificationPage() {
           </div>
 
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3 text-xs font-semibold">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Notification Summary</h3>
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+              Notification Summary
+            </h3>
             <div className="space-y-2">
               <div className="flex justify-between border-b border-slate-100 pb-1.5">
                 <span className="text-slate-500">Type</span>
@@ -796,11 +1352,15 @@ export function CreateNotificationPage() {
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-1.5">
                 <span className="text-slate-500">Recipients</span>
-                <span className="font-bold text-emerald-600 font-mono">1,892 Users</span>
+                <span className="font-bold text-emerald-600 font-mono">
+                  1,892 Users
+                </span>
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-1.5">
                 <span className="text-slate-500">Delivery</span>
-                <span className="font-bold text-blue-600">{sendNow ? 'Immediately' : 'Scheduled'}</span>
+                <span className="font-bold text-blue-600">
+                  {sendNow ? "Immediately" : "Scheduled"}
+                </span>
               </div>
             </div>
           </div>
@@ -812,20 +1372,26 @@ export function CreateNotificationPage() {
 
 // SCREEN 165: PUSH NOTIFICATIONS (/admin/notifications/push)
 export function PushNotificationsPage() {
-  const [platform, setPlatform] = useState<'android' | 'ios' | 'both'>('both');
-  const [selectedExec, setSelectedExec] = useState('rahul_verma');
+  const [platform, setPlatform] = useState<"android" | "ios" | "both">("both");
+  const [selectedExec, setSelectedExec] = useState("rahul_verma");
 
   return (
     <div className="space-y-4 font-sans pb-12">
-      <PageHeader kind="push" title="Push Notifications" description="Send instant push notifications to mobile app users." />
+      <PageHeader
+        kind="push"
+        title="Push Notifications"
+        description="Send instant push notifications to mobile app users."
+      />
 
       <Stats />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Push Form (8 Cols) */}
         <div className="lg:col-span-8 rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-4 text-xs font-semibold">
-          <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Create Push Notification</h3>
-          
+          <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+            Create Push Notification
+          </h3>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Select
               label="Target Field Executive *"
@@ -835,20 +1401,24 @@ export function PushNotificationsPage() {
               searchable={true}
               placeholder="Search field executive..."
             />
-            
+
             <div className="space-y-1">
-              <label className="font-bold text-[#0D1F3D] block">Platform Target *</label>
+              <label className="font-bold text-[#0D1F3D] block">
+                Platform Target *
+              </label>
               <div className="grid grid-cols-3 gap-2">
-                {(['android', 'ios', 'both'] as const).map((p) => (
+                {(["android", "ios", "both"] as const).map((p) => (
                   <button
                     key={p}
                     type="button"
                     onClick={() => setPlatform(p)}
                     className={`p-2.5 rounded-sm border font-bold text-xs capitalize transition-all cursor-pointer ${
-                      platform === p ? 'border-[#E20613] bg-red-50/50 text-[#0D1F3D]' : 'border-slate-200 text-slate-600 bg-white'
+                      platform === p
+                        ? "border-[#E20613] bg-red-50/50 text-[#0D1F3D]"
+                        : "border-slate-200 text-slate-600 bg-white"
                     }`}
                   >
-                    {p === 'both' ? 'Both' : p}
+                    {p === "both" ? "Both" : p}
                   </button>
                 ))}
               </div>
@@ -856,7 +1426,7 @@ export function PushNotificationsPage() {
           </div>
 
           <Input label="Title *" defaultValue="Plan Renewal Reminder" />
-          
+
           <div className="space-y-1">
             <label className="font-bold text-[#0D1F3D] block">Message *</label>
             <textarea
@@ -869,15 +1439,27 @@ export function PushNotificationsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input label="Deep Link (Optional)" defaultValue="sfw://renewal" />
             <div className="space-y-1">
-              <label className="font-bold text-[#0D1F3D] block">Image Attachment</label>
-              <Button variant="outline" size="sm" onClick={() => toast.info('Upload image dialog opened')} className="w-full font-bold">
+              <label className="font-bold text-[#0D1F3D] block">
+                Image Attachment
+              </label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toast.info("Upload image dialog opened")}
+                className="w-full font-bold"
+              >
                 📷 Upload Notification Banner
               </Button>
             </div>
           </div>
 
           <div className="flex justify-end pt-3 border-t border-slate-100">
-            <Button variant="accent" size="sm" onClick={() => toast.success('Push notification sent!')} className="font-bold shadow-xs">
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => toast.success("Push notification sent!")}
+              className="font-bold shadow-xs"
+            >
               <Send className="h-4 w-4 mr-1.5" /> Send Push Notification Now
             </Button>
           </div>
@@ -886,21 +1468,32 @@ export function PushNotificationsPage() {
         {/* Right Phone Mockup Preview (4 Cols) */}
         <div className="lg:col-span-4 space-y-4">
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs space-y-3">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Phone Lockscreen Preview</h3>
-            
+            <h3 className="text-sm font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
+              Phone Lockscreen Preview
+            </h3>
+
             {/* Light Enterprise Mobile Notification Preview */}
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3 shadow-xs">
-              <div className="text-center text-[10px] text-slate-500 font-mono font-bold">10:30 AM • Mon, 22 May</div>
+              <div className="text-center text-[10px] text-slate-500 font-mono font-bold">
+                10:30 AM • Mon, 22 May
+              </div>
               <div className="bg-white rounded-xl p-3.5 space-y-1.5 border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between text-[10px] pb-1 border-b border-slate-100">
                   <div className="flex items-center gap-1.5">
-                    <img src="/assets/sfw-logo.png" alt="SFW Push" className="h-4.5 w-auto object-contain" />
+                    <img
+                      src="/assets/sfw-logo.png"
+                      alt="SFW Push"
+                      className="h-4.5 w-auto object-contain"
+                    />
                   </div>
                   <span className="text-slate-400 font-mono">now</span>
                 </div>
-                <h4 className="text-xs font-extrabold text-[#0D1F3D]">Plan Renewal Reminder</h4>
+                <h4 className="text-xs font-extrabold text-[#0D1F3D]">
+                  Plan Renewal Reminder
+                </h4>
                 <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
-                  Hi Rahul, your plan will expire on 22 May 2025. Please renew to continue using all features.
+                  Hi Rahul, your plan will expire on 22 May 2025. Please renew
+                  to continue using all features.
                 </p>
                 <span className="text-[10px] font-extrabold text-[#E20613] hover:underline cursor-pointer pt-1 flex items-center gap-0.5">
                   View Renewal Options <ChevronRight className="h-3 w-3" />
@@ -916,27 +1509,93 @@ export function PushNotificationsPage() {
 
 // SCREEN 166: EXECUTIVE ALERTS (/admin/notifications/executives)
 export function ExecutiveAlertsPage() {
-  const [activeTab, setActiveTab] = useState<'all' | 'critical' | 'pending' | 'acknowledged' | 'resolved'>('all');
+  const [activeTab, setActiveTab] = useState<
+    "all" | "critical" | "pending" | "acknowledged" | "resolved"
+  >("all");
 
   const alertRows = useMemo(() => {
     const base = [
-      { id: 'ALT-1001', title: 'Sales Target at Risk', description: 'Team Mumbai West is 35% behind the monthly target.', type: 'Alert' as NoticeType, audience: 'Amit Verma (Sales Manager)', channel: 'WhatsApp · Push', status: 'Pending' as const, created: '22 May 2025 · 10:30 AM', delivery: 'Critical', icon: AlertCircle, tone: 'rose' },
-      { id: 'ALT-1002', title: 'Executive Inactive', description: 'Rahul Kumar has been inactive for 2 days.', type: 'Alert' as NoticeType, audience: 'Rahul Kumar (Field Executive)', channel: 'WhatsApp · Push', status: 'Pending' as const, created: '22 May 2025 · 09:15 AM', delivery: 'High', icon: AlertCircle, tone: 'rose' },
-      { id: 'ALT-1003', title: 'High Pending Payments', description: '5 payment leads are pending for more than 7 days.', type: 'Alert' as NoticeType, audience: 'Neha Patel (Sales Manager)', channel: 'Email · WhatsApp', status: 'Pending' as const, created: '22 May 2025 · 08:45 AM', delivery: 'High', icon: AlertCircle, tone: 'rose' },
-      { id: 'ALT-1004', title: 'Visit Verification Failed', description: '3 visits failed GPS verification yesterday.', type: 'Alert' as NoticeType, audience: 'Suresh Tiwari (Area Manager)', channel: 'In-App', status: 'Acknowledged' as const, created: '21 May 2025 · 07:30 PM', delivery: 'Medium', icon: CalendarClock, tone: 'amber' },
-      { id: 'ALT-1005', title: 'Top Performer', description: 'Vikram Bansal achieved 120% of monthly target.', type: 'Announcement' as NoticeType, audience: 'Vikram Bansal (Field Executive)', channel: 'In-App', status: 'Resolved' as const, created: '21 May 2025 · 06:20 PM', delivery: 'Low', icon: CheckCircle2, tone: 'emerald' },
+      {
+        id: "ALT-1001",
+        title: "Sales Target at Risk",
+        description: "Team Mumbai West is 35% behind the monthly target.",
+        type: "Alert" as NoticeType,
+        audience: "Amit Verma (Sales Manager)",
+        channel: "WhatsApp · Push",
+        status: "Pending" as const,
+        created: "22 May 2025 · 10:30 AM",
+        delivery: "Critical",
+        icon: AlertCircle,
+        tone: "rose",
+      },
+      {
+        id: "ALT-1002",
+        title: "Executive Inactive",
+        description: "Rahul Kumar has been inactive for 2 days.",
+        type: "Alert" as NoticeType,
+        audience: "Rahul Kumar (Field Executive)",
+        channel: "WhatsApp · Push",
+        status: "Pending" as const,
+        created: "22 May 2025 · 09:15 AM",
+        delivery: "High",
+        icon: AlertCircle,
+        tone: "rose",
+      },
+      {
+        id: "ALT-1003",
+        title: "High Pending Payments",
+        description: "5 payment leads are pending for more than 7 days.",
+        type: "Alert" as NoticeType,
+        audience: "Neha Patel (Sales Manager)",
+        channel: "Email · WhatsApp",
+        status: "Pending" as const,
+        created: "22 May 2025 · 08:45 AM",
+        delivery: "High",
+        icon: AlertCircle,
+        tone: "rose",
+      },
+      {
+        id: "ALT-1004",
+        title: "Visit Verification Failed",
+        description: "3 visits failed GPS verification yesterday.",
+        type: "Alert" as NoticeType,
+        audience: "Suresh Tiwari (Area Manager)",
+        channel: "In-App",
+        status: "Acknowledged" as const,
+        created: "21 May 2025 · 07:30 PM",
+        delivery: "Medium",
+        icon: CalendarClock,
+        tone: "amber",
+      },
+      {
+        id: "ALT-1005",
+        title: "Top Performer",
+        description: "Vikram Bansal achieved 120% of monthly target.",
+        type: "Announcement" as NoticeType,
+        audience: "Vikram Bansal (Field Executive)",
+        channel: "In-App",
+        status: "Resolved" as const,
+        created: "21 May 2025 · 06:20 PM",
+        delivery: "Low",
+        icon: CheckCircle2,
+        tone: "emerald",
+      },
     ];
 
-    if (activeTab === 'critical') return base.filter((r) => r.delivery === 'Critical');
-    if (activeTab === 'pending') return base.filter((r) => r.status === 'Pending');
-    if (activeTab === 'acknowledged') return base.filter((r) => r.status === 'Acknowledged');
-    if (activeTab === 'resolved') return base.filter((r) => r.status === 'Resolved');
+    if (activeTab === "critical")
+      return base.filter((r) => r.delivery === "Critical");
+    if (activeTab === "pending")
+      return base.filter((r) => r.status === "Pending");
+    if (activeTab === "acknowledged")
+      return base.filter((r) => r.status === "Acknowledged");
+    if (activeTab === "resolved")
+      return base.filter((r) => r.status === "Resolved");
     return base;
   }, [activeTab]);
 
   const alertColumns: ColumnDef<NotificationRow>[] = [
     {
-      header: 'Alert Title',
+      header: "Alert Title",
       cell: (row) => (
         <div className="flex items-center gap-3">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-50 text-rose-600 font-extrabold">
@@ -944,46 +1603,68 @@ export function ExecutiveAlertsPage() {
           </span>
           <div>
             <p className="font-extrabold text-[#0D1F3D] text-xs">{row.title}</p>
-            <p className="text-[10px] text-slate-500 truncate max-w-[200px]">{row.description}</p>
+            <p className="text-[10px] text-slate-500 truncate max-w-[200px]">
+              {row.description}
+            </p>
           </div>
         </div>
       ),
     },
     {
-      header: 'Type',
-      cell: () => <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-sm text-[10px] font-extrabold">Critical Alert</span>,
+      header: "Type",
+      cell: () => (
+        <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded-sm text-[10px] font-extrabold">
+          Critical Alert
+        </span>
+      ),
     },
     {
-      header: 'Urgency',
+      header: "Urgency",
       cell: (row) => (
-        <span className={`font-extrabold px-2 py-0.5 rounded-sm text-[10px] ${
-          row.delivery === 'Critical' ? 'bg-red-600 text-white' :
-          row.delivery === 'High' ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white'
-        }`}>
+        <span
+          className={`font-extrabold px-2 py-0.5 rounded-sm text-[10px] ${
+            row.delivery === "Critical"
+              ? "bg-red-600 text-white"
+              : row.delivery === "High"
+                ? "bg-amber-500 text-white"
+                : "bg-blue-600 text-white"
+          }`}
+        >
           {row.delivery.toUpperCase()}
         </span>
       ),
     },
     {
-      header: 'Executive / Role',
+      header: "Executive / Role",
       cell: (row) => (
         <div className="flex items-center gap-2">
-          <img src={executiveSelectOptions[1].avatar} alt="" className="h-6 w-6 rounded-full object-cover border border-slate-200" />
+          <img
+            src={executiveSelectOptions[1].avatar}
+            alt=""
+            className="h-6 w-6 rounded-full object-cover border border-slate-200"
+          />
           <div>
-            <p className="font-extrabold text-[#0D1F3D] text-xs">{row.audience}</p>
+            <p className="font-extrabold text-[#0D1F3D] text-xs">
+              {row.audience}
+            </p>
           </div>
         </div>
       ),
     },
     {
-      header: 'Status',
+      header: "Status",
       cell: (row) => <StatusBadge status={row.status} />,
     },
     {
-      header: 'Actions',
-      align: 'right',
+      header: "Actions",
+      align: "right",
       cell: (row) => (
-        <Button variant="outline" size="sm" onClick={() => toast.info(`Resolving alert: ${row.title}`)} className="text-[10px] font-bold py-1">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => toast.info(`Resolving alert: ${row.title}`)}
+          className="text-[10px] font-bold py-1"
+        >
           Acknowledge
         </Button>
       ),
@@ -991,17 +1672,21 @@ export function ExecutiveAlertsPage() {
   ];
 
   const alertTabs = [
-    { id: 'all', label: 'All Alerts', count: 156 },
-    { id: 'critical', label: 'Critical', count: 28 },
-    { id: 'pending', label: 'Pending', count: 42 },
-    { id: 'acknowledged', label: 'Acknowledged', count: 72 },
-    { id: 'resolved', label: 'Resolved', count: 42 },
+    { id: "all", label: "All Alerts", count: 156 },
+    { id: "critical", label: "Critical", count: 28 },
+    { id: "pending", label: "Pending", count: 42 },
+    { id: "acknowledged", label: "Acknowledged", count: 72 },
+    { id: "resolved", label: "Resolved", count: 42 },
   ] as const;
 
   return (
     <div className="space-y-4 font-sans pb-12">
-      <PageHeader kind="alerts" title="Executive Alerts" description="Critical alerts and important notifications for executives and managers." />
-      
+      <PageHeader
+        kind="alerts"
+        title="Executive Alerts"
+        description="Critical alerts and important notifications for executives and managers."
+      />
+
       <Stats alert />
 
       <FilterBar mode="alerts" />
@@ -1016,18 +1701,25 @@ export function ExecutiveAlertsPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? 'border-indigo-600 text-indigo-700 bg-slate-50/80 rounded-t-sm'
-                  : 'border-transparent text-slate-500 hover:text-[#0D1F3D] hover:border-slate-300'
+                  ? "border-indigo-600 text-indigo-700 bg-slate-50/80 rounded-t-sm"
+                  : "border-transparent text-slate-500 hover:text-[#0D1F3D] hover:border-slate-300"
               }`}
             >
-              <span>{tab.label} ({tab.count})</span>
+              <span>
+                {tab.label} ({tab.count})
+              </span>
             </button>
           );
         })}
       </div>
 
       <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-        <DataTable columns={alertColumns} data={alertRows} keyExtractor={(row) => row.id} density="compact" />
+        <DataTable
+          columns={alertColumns}
+          data={alertRows}
+          keyExtractor={(row) => row.id}
+          density="compact"
+        />
       </div>
     </div>
   );
@@ -1035,21 +1727,35 @@ export function ExecutiveAlertsPage() {
 
 // SCREEN 167: NOTIFICATION TEMPLATES (/admin/notifications/templates)
 export function NotificationTemplatesPage() {
-  const [activeTab, setActiveTab] = useState<'all' | 'announcements' | 'alerts' | 'reminders' | 'promotions' | 'updates' | 'other'>('all');
+  const [activeTab, setActiveTab] = useState<
+    | "all"
+    | "announcements"
+    | "alerts"
+    | "reminders"
+    | "promotions"
+    | "updates"
+    | "other"
+  >("all");
 
   const templateRows = useMemo(() => {
-    if (activeTab === 'announcements') return notificationRows.filter((r) => r.type === 'Announcement');
-    if (activeTab === 'alerts') return notificationRows.filter((r) => r.type === 'Alert');
-    if (activeTab === 'reminders') return notificationRows.filter((r) => r.type === 'Reminder');
-    if (activeTab === 'promotions') return notificationRows.filter((r) => r.type === 'Promotion');
-    if (activeTab === 'updates') return notificationRows.filter((r) => r.type === 'Update');
-    if (activeTab === 'other') return notificationRows.filter((r) => r.type === 'Other');
+    if (activeTab === "announcements")
+      return notificationRows.filter((r) => r.type === "Announcement");
+    if (activeTab === "alerts")
+      return notificationRows.filter((r) => r.type === "Alert");
+    if (activeTab === "reminders")
+      return notificationRows.filter((r) => r.type === "Reminder");
+    if (activeTab === "promotions")
+      return notificationRows.filter((r) => r.type === "Promotion");
+    if (activeTab === "updates")
+      return notificationRows.filter((r) => r.type === "Update");
+    if (activeTab === "other")
+      return notificationRows.filter((r) => r.type === "Other");
     return notificationRows;
   }, [activeTab]);
 
   const templateColumns: ColumnDef<NotificationRow>[] = [
     {
-      header: 'Template Name',
+      header: "Template Name",
       cell: (row) => (
         <div className="flex items-center gap-3">
           <span className="flex h-8 w-8 items-center justify-center rounded-sm bg-purple-50 text-purple-600 font-extrabold">
@@ -1063,26 +1769,42 @@ export function NotificationTemplatesPage() {
       ),
     },
     {
-      header: 'Type',
-      cell: (row) => <span className={`inline-flex rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${typeStyles[row.type]}`}>{row.type}</span>,
+      header: "Type",
+      cell: (row) => (
+        <span
+          className={`inline-flex rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${typeStyles[row.type]}`}
+        >
+          {row.type}
+        </span>
+      ),
     },
     {
-      header: 'Channel',
-      cell: (row) => <span className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-sm">{row.channel}</span>,
+      header: "Channel",
+      cell: (row) => (
+        <span className="text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-sm">
+          {row.channel}
+        </span>
+      ),
     },
     {
-      header: 'Status',
+      header: "Status",
       cell: (row) => <StatusBadge status={row.status} />,
     },
     {
-      header: 'Actions',
-      align: 'right',
+      header: "Actions",
+      align: "right",
       cell: (row) => (
         <div className="flex justify-end gap-1">
-          <button onClick={() => toast.info(`Editing template ${row.title}`)} className="p-1 text-slate-600 hover:text-[#0D1F3D] cursor-pointer">
+          <button
+            onClick={() => toast.info(`Editing template ${row.title}`)}
+            className="p-1 text-slate-600 hover:text-[#0D1F3D] cursor-pointer"
+          >
             <Pencil className="h-4 w-4" />
           </button>
-          <button onClick={() => toast.info(`Duplicating template ${row.title}`)} className="p-1 text-slate-600 hover:text-[#0D1F3D] cursor-pointer">
+          <button
+            onClick={() => toast.info(`Duplicating template ${row.title}`)}
+            className="p-1 text-slate-600 hover:text-[#0D1F3D] cursor-pointer"
+          >
             <ClipboardCopy className="h-4 w-4" />
           </button>
         </div>
@@ -1091,18 +1813,22 @@ export function NotificationTemplatesPage() {
   ];
 
   const templateTabs = [
-    { id: 'all', label: 'All Templates', count: 126 },
-    { id: 'announcements', label: 'Announcements', count: 28 },
-    { id: 'alerts', label: 'Alerts', count: 32 },
-    { id: 'reminders', label: 'Reminders', count: 24 },
-    { id: 'promotions', label: 'Promotions', count: 18 },
-    { id: 'updates', label: 'Updates', count: 16 },
-    { id: 'other', label: 'Other', count: 8 },
+    { id: "all", label: "All Templates", count: 126 },
+    { id: "announcements", label: "Announcements", count: 28 },
+    { id: "alerts", label: "Alerts", count: 32 },
+    { id: "reminders", label: "Reminders", count: 24 },
+    { id: "promotions", label: "Promotions", count: 18 },
+    { id: "updates", label: "Updates", count: 16 },
+    { id: "other", label: "Other", count: 8 },
   ] as const;
 
   return (
     <div className="space-y-4 font-sans pb-12">
-      <PageHeader kind="templates" title="Notification Templates" description="Create, manage and reuse templates for notifications across all channels." />
+      <PageHeader
+        kind="templates"
+        title="Notification Templates"
+        description="Create, manage and reuse templates for notifications across all channels."
+      />
 
       <Stats template />
 
@@ -1118,18 +1844,25 @@ export function NotificationTemplatesPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition-all border-b-2 whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? 'border-indigo-600 text-indigo-700 bg-slate-50/80 rounded-t-sm'
-                  : 'border-transparent text-slate-500 hover:text-[#0D1F3D] hover:border-slate-300'
+                  ? "border-indigo-600 text-indigo-700 bg-slate-50/80 rounded-t-sm"
+                  : "border-transparent text-slate-500 hover:text-[#0D1F3D] hover:border-slate-300"
               }`}
             >
-              <span>{tab.label} ({tab.count})</span>
+              <span>
+                {tab.label} ({tab.count})
+              </span>
             </button>
           );
         })}
       </div>
 
       <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs">
-        <DataTable columns={templateColumns} data={templateRows} keyExtractor={(row) => row.id} density="compact" />
+        <DataTable
+          columns={templateColumns}
+          data={templateRows}
+          keyExtractor={(row) => row.id}
+          density="compact"
+        />
       </div>
     </div>
   );
