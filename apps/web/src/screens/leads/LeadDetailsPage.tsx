@@ -26,6 +26,11 @@ import {
 import { leadLabel } from "../../features/crm/lead.types";
 import { LeadOverviewTab } from "./tabs/LeadOverviewTab";
 import { LeadTimelineTab } from "./tabs/LeadTimelineTab";
+import { LeadVisitsTab } from "./tabs/LeadVisitsTab";
+import { LeadFollowUpsTab } from "./tabs/LeadFollowUpsTab";
+import { LeadDemosTab } from "./tabs/LeadDemosTab";
+import { LeadCommunicationTab } from "./tabs/LeadCommunicationTab";
+import { LeadPaymentsTab } from "./tabs/LeadPaymentsTab";
 export default function LeadDetailsPage() {
   const { leadId = "" } = useParams();
   return <LeadDetailsContent key={leadId} />;
@@ -171,6 +176,16 @@ function LeadDetailsContent() {
         <LeadOverviewTab lead={lead} />
       ) : active === "timeline" ? (
         <LeadTimelineTab leadId={lead.id} />
+      ) : active === "visits" ? (
+        <LeadVisitsTab />
+      ) : active === "follow-ups" ? (
+        <LeadFollowUpsTab />
+      ) : active === "demos" ? (
+        <LeadDemosTab />
+      ) : active === "communications" ? (
+        <LeadCommunicationTab />
+      ) : active === "payments" ? (
+        <LeadPaymentsTab />
       ) : active === "assignment" ? (
         <LeadAssignment
           key={lead.id}
@@ -178,7 +193,7 @@ function LeadDetailsContent() {
           onSaved={() => navigate("/admin/leads")}
         />
       ) : (
-        <LeadDeferred title={active ?? "Lead details"} />
+        <LeadOverviewTab lead={lead} />
       )}
       {converting && (
         <LeadConversionModal
