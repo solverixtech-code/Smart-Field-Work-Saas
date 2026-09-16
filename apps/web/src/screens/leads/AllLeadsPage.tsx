@@ -438,7 +438,7 @@ export default function AllLeadsPage({
           </Button>
         ))}
       </nav>
-      <div className="grid grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:grid-cols-6 rounded-lg border border-slate-200/80 bg-white p-3 shadow-xs">
+      <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-2 xl:grid-cols-6 rounded-lg border border-slate-200/80 bg-white p-3 shadow-xs">
         <div className="min-w-0 sm:col-span-2">
           <Input
             id="lead-search"
@@ -455,14 +455,12 @@ export default function AllLeadsPage({
         </div>
         <Select
           disabled
-          label="Region"
           options={[]}
           placeholder="All Regions"
         />
         <Select
           native
           id="lead-priority"
-          label="Priority"
           placeholder="All Priorities"
           options={leadPriorities}
           value={priority}
@@ -474,7 +472,6 @@ export default function AllLeadsPage({
         <Select
           native
           id="lead-status"
-          label="Lifecycle"
           placeholder="All Lifecycle States"
           disabled={Boolean(category.status)}
           options={leadStatuses}
@@ -487,10 +484,12 @@ export default function AllLeadsPage({
         {can("system.masters.view") && (
           <CrmLookup
             compact
+            showLabel={false}
             id="lead-source"
             label="Source"
             kind="lead_source"
             value={source}
+            placeholder="All Sources"
             onChange={(id) => {
               setSource(id);
               setPage(1);

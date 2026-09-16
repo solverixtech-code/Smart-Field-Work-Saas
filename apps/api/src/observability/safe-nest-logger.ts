@@ -33,12 +33,20 @@ export class SafeNestLogger implements LoggerService {
         return;
       }
     }
-    // Driver/framework error messages can contain input values. Keep only source
-    // stack frames internally; do not serialize raw messages or SQL parameters.
+
+    const errStr = message instanceof Error ? message.message : typeof message === 'string' ? message : JSON.stringify(message);
+    const stackStr = message instanceof Error ? message.stack : (typeof details[0] === 'string' ? details[0] : undefined);
+
+    process.stderr.write(`[API ERROR] ${errStr}\n`);
+    if (stackStr) {
+      process.stderr.write(`${stackStr}\n`);
+    }
+
     const candidates = message instanceof Error ? [message.stack, ...details] : details;
     const frames = candidates.filter((value): value is string => typeof value === 'string')
-      .flatMap((value) => value.split('\n')).filter((line) => /^\s*at .+:\d+:\d+\)?$/.test(line)).slice(0, 12);
-    this.emit("error", { errorCode: 'APPLICATION_ERROR', frames }, []);
+      .flatMap((value) => value.split('\n')).filter((line) => /^\s*at .+/i.test(line)).slice(0, 20);
+
+    this.emit("error", { errorCode: 'APPLICATION_ERROR', errorMessage: errStr, stack: stackStr ?? null, frames }, details);
   }
   debug(message: unknown, ...details: unknown[]) {
     this.emit("debug", message, details);
