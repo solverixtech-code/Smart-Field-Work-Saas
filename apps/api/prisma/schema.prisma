@@ -104,6 +104,9 @@ model User {
   publishedIndustryVersions IndustryTemplateVersion[] @relation("IndustryPublishedBy")
   industryAssignments TenantIndustryTemplateAssignment[] @relation("IndustryAssignedBy")
   industryAssignmentChanges TenantIndustryTemplateChange[] @relation("IndustryChangeActor")
+  devicePushTokens DevicePushToken[]
+  notificationRecordsCreated NotificationRecord[] @relation("NotificationCreatedBy")
+  notificationRecipientLogs NotificationRecipientLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -818,6 +821,9 @@ enum PlatformAssignmentStatus {
 }
 
 model Tenant {
+  devicePushTokens DevicePushToken[]
+  notificationRecords NotificationRecord[]
+  notificationTemplates NotificationTemplate[]
   crmLeads Lead[]
   leadHistories LeadHistory[]
   leadConversions LeadConversionCommand[]
@@ -937,6 +943,7 @@ model TenantMembership {
   updatedContacts Contact[] @relation("ContactUpdater")
   privateMediaCreated MediaAsset[]
   provisioningOwnership TenantProvisioning[]
+  devicePushTokens DevicePushToken[]
   id                    String                 @id @default(uuid())
   tenantId              String
   tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -1708,3 +1715,99 @@ model LeadConversionCommand {
   @@unique([leadId, tenantId])
   @@unique([tenantId, leadId, idempotencyKey])
 }
+
+// ─── Push Notification Device Tokens ──────────────────────────────────────────
+model DevicePushToken {
+  id               String            @id @default(uuid())
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId         String
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membershipId     String?
+  membership       TenantMembership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  token            String            @unique
+  platform         String            // ANDROID, IOS, WEB
+  deviceModel      String?
+  appVersion       String?
+  isActive         Boolean           @default(true)
+  lastSeenAt       DateTime          @default(now())
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  recipientLogs    NotificationRecipientLog[]
+
+  @@index([userId, isActive])
+  @@index([tenantId, isActive])
+  @@index([platform])
+}
+
+// ─── Notification Broadcast / Campaign Record ─────────────────────────────────
+model NotificationRecord {
+  id               String            @id @default(uuid())
+  tenantId         String
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  title            String
+  description      String
+  type             String            // ANNOUNCEMENT, ALERT, REMINDER, PROMOTION, UPDATE, SYSTEM
+  channels         String[]          // PUSH, IN_APP, EMAIL, WHATSAPP, SMS
+  targetAudience   String            // ALL_USERS, FIELD_EXECUTIVES, MANAGERS, CUSTOMERS, INDIVIDUAL
+  targetFilter     Json?             // Optional segment filter
+  dataPayload      Json?             // Custom key-value pairs
+  imageUrl         String?
+  priority         String            @default("NORMAL") // NORMAL, HIGH, URGENT
+  status           String            @default("SENT")   // DRAFT, SCHEDULED, SENDING, SENT, FAILED, CANCELLED
+  scheduledAt      DateTime?
+  sentAt           DateTime?
+  totalRecipients  Int               @default(0)
+  successCount     Int               @default(0)
+  failureCount     Int               @default(0)
+  createdById      String
+  createdBy        User              @relation("NotificationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  recipients       NotificationRecipientLog[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+}
+
+// ─── Individual Recipient Delivery Log ─────────────────────────────────────────
+model NotificationRecipientLog {
+  id               String              @id @default(uuid())
+  notificationId   String
+  notification     NotificationRecord  @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceTokenId    String?
+  deviceToken      DevicePushToken?    @relation(fields: [deviceTokenId], references: [id], onDelete: SetNull)
+  channel          String              // PUSH, IN_APP, EMAIL, WHATSAPP, SMS
+  status           String              @default("PENDING") // PENDING, DELIVERED, READ, FAILED
+  errorMessage     String?
+  deliveredAt      DateTime?
+  readAt           DateTime?
+  createdAt        DateTime            @default(now())
+
+  @@index([notificationId, status])
+  @@index([userId, status])
+}
+
+// ─── Notification Templates ───────────────────────────────────────────────────
+model NotificationTemplate {
+  id               String            @id @default(uuid())
+  tenantId         String
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code             String            // e.g. LEAD_ASSIGNED, VISIT_REMINDER, PAYMENT_COLLECTED
+  name             String
+  category         String            // Operations, Sales, Billing, Security
+  subject          String
+  body             String
+  channels         String[]          // PUSH, IN_APP, EMAIL, WHATSAPP, SMS
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([tenantId, code])
+  @@index([tenantId, category])
+}
+

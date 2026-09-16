@@ -51,6 +51,7 @@ import {
   Compass,
   ClipboardCopy,
   Send,
+  Lock,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
@@ -60,6 +61,7 @@ import { clearStoredRefreshToken, getStoredRefreshToken } from "../common/authSe
 import { api } from "../common/api";
 import { Button } from "../components/ui/Button";
 import { Role, getUserRoleLabel } from "@visiblo/shared";
+import { HeaderNotificationBell } from "../components/notifications/HeaderNotificationBell";
 
 const bigLogo = "/assets/sfw-logo.png";
 const smallLogo = "/assets/sfw-icon.png";
@@ -980,7 +982,10 @@ export default function AppShell() {
               )}
               {cat.items.map((item) => {
                 const isPermissionAllowed =
-                  !item.permission || hasBootstrapPermission(item.permission);
+                  !item.permission ||
+                  userRole === Role.SUPER_ADMIN ||
+                  userRole === Role.ADMIN ||
+                  hasBootstrapPermission(item.permission);
                 const isModuleAllowed = !item.moduleCode || hasModule(item.moduleCode);
                 const isAllowed = isPermissionAllowed && isModuleAllowed;
                 const Icon = item.icon;
@@ -1123,33 +1128,48 @@ export default function AppShell() {
                     />
 
                     {showBigLogo && (
-                      <div className="flex flex-1 items-center justify-between min-w-0">
-                        <span className="whitespace-nowrap font-medium">
+                      <div className="flex flex-1 items-center justify-between min-w-0 gap-2">
+                        <span className="truncate min-w-0 font-medium">
                           {item.label}
                         </span>
-                        {item.badge && (
-                          <span
-                            className={`ml-2 shrink-0 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-extrabold transition-colors ${
-                              isActive
-                                ? "bg-[#E20613] text-white border border-[#E20613]"
-                                : "bg-red-50 text-[#E20613] border border-red-200/60"
-                            }`}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
-                        {!isAllowed && (
-                          <span className="ml-2 shrink-0 whitespace-nowrap rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
-                            Locked
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                          {item.badge && isAllowed && (
+                            <span
+                              className={`shrink-0 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-extrabold transition-colors ${
+                                isActive
+                                  ? "bg-[#E20613] text-white border border-[#E20613]"
+                                  : "bg-red-50 text-[#E20613] border border-red-200/60"
+                              }`}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                          {!isAllowed && (
+                            <span
+                              className={`inline-flex items-center gap-1 shrink-0 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+                                isActive
+                                  ? "bg-white/20 text-white border border-white/30"
+                                  : "bg-slate-100 text-slate-500 border border-slate-200/80"
+                              }`}
+                            >
+                              <Lock className="h-2.5 w-2.5 opacity-70" />
+                              Locked
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
 
                     {/* Tooltip on Collapsed Hover */}
                     {!showBigLogo && (
-                      <div className="pointer-events-none absolute left-full ml-3 z-50 whitespace-nowrap rounded-sm bg-slate-900 px-2.5 py-1 text-xs font-medium text-white shadow-xl opacity-0 transition-opacity group-hover:opacity-100">
-                        {item.label}
+                      <div className="pointer-events-none absolute left-full ml-3 z-50 whitespace-nowrap rounded-sm bg-slate-900 px-2.5 py-1 text-xs font-medium text-white shadow-xl opacity-0 transition-opacity group-hover:opacity-100 flex items-center gap-1.5">
+                        <span>{item.label}</span>
+                        {!isAllowed && (
+                          <span className="inline-flex items-center gap-1 rounded bg-white/20 px-1 py-0.5 text-[9px] font-semibold text-white">
+                            <Lock className="h-2.5 w-2.5" />
+                            Locked
+                          </span>
+                        )}
                       </div>
                     )}
                   </NavLink>
@@ -1306,10 +1326,7 @@ export default function AppShell() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button className="relative inline-flex h-9 w-9 items-center justify-center rounded-sm border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100">
-              <Bell className="h-4 w-4" />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#E20613]" />
-            </button>
+            <HeaderNotificationBell />
 
             {/* Header User Profile Avatar Card */}
             {user && (

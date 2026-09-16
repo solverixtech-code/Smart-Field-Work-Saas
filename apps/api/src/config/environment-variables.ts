@@ -28,6 +28,9 @@ export interface EnvironmentVariables {
   SMS_ROUTE?: string;
   SMS_SENDER?: string;
   MEDIA_ENABLED?: boolean;
+  FIREBASE_PROJECT_ID?: string;
+  FIREBASE_CLIENT_EMAIL?: string;
+  FIREBASE_PRIVATE_KEY?: string;
 }
 
 export const validationSchemaForEnv = Joi.object<EnvironmentVariables, true>({
@@ -58,4 +61,7 @@ export const validationSchemaForEnv = Joi.object<EnvironmentVariables, true>({
   SMS_ROUTE: Joi.string().allow('').optional(),
   SMS_SENDER: Joi.string().allow('').optional(),
   MEDIA_ENABLED: Joi.boolean().truthy('true').falsy('false').default(false),
+  FIREBASE_PROJECT_ID: Joi.string().allow('').optional(),
+  FIREBASE_CLIENT_EMAIL: Joi.string().allow('').optional(),
+  FIREBASE_PRIVATE_KEY: Joi.string().allow('').optional(),
 });
