@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Button } from "../../components/ui/Button";
-import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
 import { CrmError } from "./crm.state";
 import { useCrmQuery, useDebouncedSearch } from "./CrmContext";
 import { MasterCode } from "./crm.types";
+
 const fieldLabels: Record<string, string> = {
   name: "Name",
   phone: "Phone",
@@ -28,6 +28,7 @@ const fieldLabels: Record<string, string> = {
   expectedRevision: "Record version",
   primaryContact: "Primary contact",
 };
+
 export function CrmFailure({
   error,
   retry,
@@ -59,44 +60,51 @@ export function CrmFailure({
     </div>
   );
 }
+
 export const statuses = [
   { value: "ACTIVE", label: "Active" },
   { value: "INACTIVE", label: "Inactive" },
   { value: "BLOCKED", label: "Blocked" },
 ];
+
 export const statusLabel = (status: string) =>
   statuses.find((s) => s.value === status)?.label ?? status;
+
 export function CrmLookup({
   id,
   label,
+  showLabel = true,
   kind,
   value,
   currentLabel,
   onChange,
   disabled = false,
+  emptyLabel,
+  placeholder,
 }: {
   id: string;
   label: string;
-  kind: MasterCode | "owner";
+  showLabel?: boolean;
+  kind: MasterCode | "owner" | "lead-owner";
   value?: string | null;
   currentLabel?: string | null;
   onChange: (id: string) => void;
   disabled?: boolean;
+  compact?: boolean;
+  emptyLabel?: string;
+  placeholder?: string;
 }) {
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [search] = useState("");
+  const [page] = useState(1);
   const query = useDebouncedSearch(search);
   const result = useCrmQuery(
     `${kind}:${query}:${page}`,
     async (service, signal) => {
-      if (kind === "owner") {
-        const response = await service.owners(
-          { search: query, page, limit: 25 },
-          signal,
-        );
+      if (kind === "owner" || kind === "lead-owner") {
+        const response = await service.owners({ search: query, page, limit: 25 }, signal);
         return {
           ...response,
-          items: response.items.map((r) => ({
+          items: response.items.map((r: { id: string; displayName: string }) => ({
             value: r.id,
             label: r.displayName,
           })),
@@ -110,81 +118,48 @@ export function CrmLookup({
       return {
         ...response,
         items: response.items
-          .filter((r) => r.selectable)
-          .map((r) => ({ value: r.id, label: r.name })),
+          .filter((r: { selectable: boolean }) => r.selectable)
+          .map((r: { id: string; name: string }) => ({ value: r.id, label: r.name })),
       };
     },
   );
   const options = result.data?.items ?? [];
   const selected =
-    value && !options.some((o) => o.value === value)
+    value && !options.some((o: { value: string }) => o.value === value)
       ? [
           {
             value,
-            label:
-              currentLabel || "Current selection (reload options to verify)",
+            label: currentLabel || "Current selection",
           },
         ]
       : [];
+  const selectPlaceholder =
+    placeholder ??
+    (result.loading
+      ? "Loading options..."
+      : kind === "owner"
+        ? currentLabel
+          ? `Keep ${currentLabel}`
+          : "Your membership"
+        : `All ${label.toLowerCase()}s`);
+
   return (
-    <div className="space-y-2">
-      <Input
-        id={`${id}-search`}
-        label={`Search ${label.toLowerCase()}`}
-        value={search}
-        disabled={disabled}
-        maxLength={200}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(1);
-        }}
-      />
+    <div className="w-full">
       <Select
-        native
         id={id}
-        label={label}
+        label={showLabel ? label : undefined}
         value={value ?? ""}
-        options={[...selected, ...options]}
+        options={[
+          ...(kind === "lead-owner"
+            ? [{ value: "", label: emptyLabel ?? "Unassigned" }]
+            : []),
+          ...selected,
+          ...options,
+        ]}
         disabled={disabled || result.loading}
-        placeholder={
-          result.loading
-            ? "Loading options..."
-            : kind === "owner"
-              ? currentLabel
-                ? `Keep ${currentLabel}`
-                : "Your membership"
-              : "No selection"
-        }
+        placeholder={selectPlaceholder}
         onChange={(e) => onChange(e.target.value)}
       />
-      {result.error && (
-        <CrmFailure error={result.error} retry={result.reload} />
-      )}
-      {result.data && result.data.totalPages > 1 && (
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            Previous options
-          </Button>
-          <span className="text-xs">
-            {page} / {result.data.totalPages}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={page >= result.data.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next options
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
