@@ -33,6 +33,7 @@ import {
   Puzzle,
   ShieldCheck,
   BarChart3,
+  Lock,
 } from "lucide-react";
 import { usePlatformPermissions } from "../features/platform/tenants/hooks/usePlatformPermissions";
 import {
@@ -486,33 +487,48 @@ export default function PlatformShell() {
                     />
 
                     {showBigLogo && (
-                      <div className="flex flex-1 items-center justify-between min-w-0">
-                        <span className="whitespace-nowrap font-medium">
+                      <div className="flex flex-1 items-center justify-between min-w-0 gap-2">
+                        <span className="truncate min-w-0 font-medium">
                           {item.label}
                         </span>
-                        {item.badge && (
-                          <span
-                            className={`ml-2 shrink-0 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-extrabold transition-colors ${
-                              isActive
-                                ? "bg-[#E20613] text-white border border-[#E20613]"
-                                : "bg-red-50 text-[#E20613] border border-red-200/60"
-                            }`}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
-                        {!isAllowed && (
-                          <span className="ml-2 shrink-0 whitespace-nowrap rounded-sm bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-500">
-                            Locked
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5 shrink-0 ml-auto">
+                          {item.badge && isAllowed && (
+                            <span
+                              className={`shrink-0 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-extrabold transition-colors ${
+                                isActive
+                                  ? "bg-[#E20613] text-white border border-[#E20613]"
+                                  : "bg-red-50 text-[#E20613] border border-red-200/60"
+                              }`}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                          {!isAllowed && (
+                            <span
+                              className={`inline-flex items-center gap-1 shrink-0 whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+                                isActive
+                                  ? "bg-white/20 text-white border border-white/30"
+                                  : "bg-slate-100 text-slate-500 border border-slate-200/80"
+                              }`}
+                            >
+                              <Lock className="h-2.5 w-2.5 opacity-70" />
+                              Locked
+                            </span>
+                          )}
+                        </div>
                       </div>
                     )}
 
                     {/* Tooltip on Collapsed Hover */}
                     {!showBigLogo && (
-                      <div className="pointer-events-none absolute left-full ml-3 z-50 whitespace-nowrap rounded-sm bg-slate-900 px-2.5 py-1 text-xs font-medium text-white shadow-xl opacity-0 transition-opacity group-hover:opacity-100">
-                        {item.label}
+                      <div className="pointer-events-none absolute left-full ml-3 z-50 whitespace-nowrap rounded-sm bg-slate-900 px-2.5 py-1 text-xs font-medium text-white shadow-xl opacity-0 transition-opacity group-hover:opacity-100 flex items-center gap-1.5">
+                        <span>{item.label}</span>
+                        {!isAllowed && (
+                          <span className="inline-flex items-center gap-1 rounded bg-white/20 px-1 py-0.5 text-[9px] font-semibold text-white">
+                            <Lock className="h-2.5 w-2.5" />
+                            Locked
+                          </span>
+                        )}
                       </div>
                     )}
                   </NavLink>
