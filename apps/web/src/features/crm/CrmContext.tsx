@@ -104,7 +104,7 @@ export function useCrmQuery<T>(
     const abort = () => controller.abort();
     scope.signal.addEventListener("abort", abort);
     let active = true;
-    setState({ key, loading: true });
+    setState((prev) => ({ ...prev, key, loading: true }));
     loader
       .current(service, controller.signal)
       .then((data) => {
@@ -122,7 +122,7 @@ export function useCrmQuery<T>(
     };
   }, [key, version, service, scope]);
   return {
-    ...(state.key === key ? state : { key, loading: true }),
+    ...(state.key === key ? state : { key, data: state.data, loading: true }),
     reload: () => setVersion((v) => v + 1),
   };
 }

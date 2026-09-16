@@ -195,9 +195,14 @@ export function DataTable<T>({
       {pagination && (
         <div className="flex flex-wrap items-center justify-between border-t border-slate-200 bg-slate-50/50 px-4 py-3 text-xs text-slate-500 gap-2">
           <span>
-            Showing {data.length === 0 ? 0 : (pagination.currentPage - 1) * (pagination.pageSize ?? data.length) + 1} to{' '}
-            {Math.min(pagination.currentPage * (pagination.pageSize ?? data.length), pagination.totalEntries ?? data.length)} of{' '}
-            {(pagination.totalEntries ?? data.length).toLocaleString()} entries
+            Showing{' '}
+            {data.length === 0
+              ? '0 to 0'
+              : `${(pagination.currentPage - 1) * (pagination.pageSize ?? 25) + 1} to ${Math.min(
+                  pagination.currentPage * (pagination.pageSize ?? 25),
+                  pagination.totalEntries ?? data.length,
+                )}`}{' '}
+            of {(pagination.totalEntries ?? 0).toLocaleString()} entries
           </span>
 
           <div className="flex items-center gap-1">

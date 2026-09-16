@@ -511,17 +511,13 @@ export default function AllLeadsPage({
               ? "No leads match these filters."
               : "No leads yet."
           }
-          pagination={
-            result.data
-              ? {
-                  currentPage: result.data.page,
-                  totalPages: result.data.totalPages,
-                  totalEntries: result.data.total,
-                  pageSize: result.data.limit,
-                  onPageChange: setPage,
-                }
-              : undefined
-          }
+          pagination={{
+            currentPage: result.data?.page ?? page,
+            totalPages: result.data?.totalPages ?? 1,
+            totalEntries: result.data?.total ?? 0,
+            pageSize: result.data?.limit ?? 25,
+            onPageChange: setPage,
+          }}
         />
       )}
       <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
