@@ -308,7 +308,7 @@ export default function AllBusinessesPage() {
 
       {/* Toolbar & Filters */}
       <div className="rounded-lg border border-slate-200/80 bg-white p-3.5 shadow-xs space-y-3">
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 text-xs font-semibold">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 text-xs font-semibold items-end">
           <div className="xl:col-span-2">
             <Input
               id="business-search"
@@ -325,9 +325,10 @@ export default function AllBusinessesPage() {
           </div>
           {can("system.masters.view") ? (
             <CrmLookup
-              compact
               id="business-filter-type"
               label="Business type"
+              showLabel={false}
+              placeholder="All business types"
               kind="business_type"
               value={typeFilter}
               onChange={(id) => {
@@ -338,7 +339,6 @@ export default function AllBusinessesPage() {
           ) : (
             <Select
               disabled
-              label="Business type"
               placeholder="Unavailable"
               options={[]}
             />
@@ -356,9 +356,10 @@ export default function AllBusinessesPage() {
           />
           {can("system.masters.view") ? (
             <CrmLookup
-              compact
               id="business-filter-source"
               label="Source"
+              showLabel={false}
+              placeholder="All sources"
               kind="lead_source"
               value={sourceFilter}
               onChange={(id) => {
@@ -369,15 +370,12 @@ export default function AllBusinessesPage() {
           ) : (
             <Select
               disabled
-              label="Source"
               placeholder="Unavailable"
               options={[]}
             />
           )}
           <Select
-            native
             id="business-filter-status"
-            label="Status"
             placeholder="All Statuses"
             value={statusFilter}
             options={statuses}
@@ -398,7 +396,7 @@ export default function AllBusinessesPage() {
                 setStatusFilter("");
                 setCurrentPage(1);
               }}
-              className="w-full text-slate-600 border-slate-200 hover:bg-slate-50 text-xs font-bold rounded-lg"
+              className="w-full text-slate-600 border-slate-200 hover:bg-slate-50 text-xs font-bold rounded-lg h-10"
             >
               Clear Filters
             </Button>

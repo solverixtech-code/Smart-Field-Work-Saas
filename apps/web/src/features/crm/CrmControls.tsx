@@ -69,31 +69,33 @@ export const statusLabel = (status: string) =>
 export function CrmLookup({
   id,
   label,
+  showLabel = true,
   kind,
   value,
   currentLabel,
   onChange,
   disabled = false,
-  compact = false,
+  placeholder,
 }: {
   id: string;
   label: string;
+  showLabel?: boolean;
   kind: MasterCode | "owner";
   value?: string | null;
   currentLabel?: string | null;
   onChange: (id: string) => void;
   disabled?: boolean;
   compact?: boolean;
+  placeholder?: string;
 }) {
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
+  const [search] = useState("");
   const query = useDebouncedSearch(search);
   const result = useCrmQuery(
-    `${kind}:${query}:${page}`,
+    `${kind}:${query}:1`,
     async (service, signal) => {
       if (kind === "owner") {
         const response = await service.owners(
-          { search: query, page, limit: 25 },
+          { search: query, page: 1, limit: 50 },
           signal,
         );
         return {
@@ -106,7 +108,7 @@ export function CrmLookup({
       }
       const response = await service.masters(
         kind,
-        { search: query, page, limit: 25 },
+        { search: query, page: 1, limit: 50 },
         signal,
       );
       return {
@@ -123,88 +125,30 @@ export function CrmLookup({
       ? [
           {
             value,
-            label:
-              currentLabel || "Current selection (reload options to verify)",
+            label: currentLabel || "Current selection",
           },
         ]
       : [];
-  const controls = (
-    <div className="space-y-2">
-      <Input
-        id={`${id}-search`}
-        label={`Search ${label.toLowerCase()}`}
-        value={search}
-        disabled={disabled}
-        maxLength={200}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(1);
-        }}
-      />
-      <Select
-        native
-        id={id}
-        label={label}
-        value={value ?? ""}
-        options={[...selected, ...options]}
-        disabled={disabled || result.loading}
-        placeholder={
-          result.loading
-            ? "Loading options..."
-            : kind === "owner"
-              ? currentLabel
-                ? `Keep ${currentLabel}`
-                : "Your membership"
-              : "No selection"
-        }
-        onChange={(e) => onChange(e.target.value)}
-      />
-      {result.error &&
-        (result.error.status === 404 ? (
-          <p className="text-xs text-slate-500">
-            {label} options are unavailable.
-          </p>
-        ) : (
-          <CrmFailure error={result.error} retry={result.reload} />
-        ))}
-      {result.data && result.data.totalPages > 1 && (
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={page === 1}
-            onClick={() => setPage((p) => p - 1)}
-          >
-            Previous options
-          </Button>
-          <span className="text-xs">
-            {page} / {result.data.totalPages}
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={page >= result.data.totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next options
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-  return compact ? (
-    <details className="relative rounded-lg border border-slate-200 bg-white p-2.5">
-      <summary className="cursor-pointer text-xs font-semibold text-slate-700">
-        {label}
-        {value ? " (filtered)" : ""}
-      </summary>
-      <div className="absolute left-0 top-full z-20 w-64 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
-        {controls}
-      </div>
-    </details>
-  ) : (
-    controls
+
+  return (
+    <Select
+      id={id}
+      label={showLabel ? label : undefined}
+      value={value ?? ""}
+      options={[...selected, ...options]}
+      disabled={disabled || result.loading}
+      searchable={true}
+      placeholder={
+        placeholder ??
+        (result.loading
+          ? "Loading options..."
+          : kind === "owner"
+            ? currentLabel
+              ? `Keep ${currentLabel}`
+              : "Select owner"
+            : `All ${label.toLowerCase()}s`)
+      }
+      onChange={(e) => onChange(e.target.value)}
+    />
   );
 }
