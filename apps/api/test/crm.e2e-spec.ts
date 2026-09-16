@@ -922,7 +922,11 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
       shape.parse(
         (
           await api(t.token)
-            .post("/leads", { name: "Lead proof", ...extra })
+            .post("/leads", {
+              name: "Lead proof",
+              phone: "+919876543210",
+              ...extra,
+            })
             .expect(201)
         ).body,
       );
@@ -1044,10 +1048,18 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
           .post("/leads", { name: "bad", [field]: randomUUID() })
           .expect(400);
       await api(c.token)
-        .post("/leads", { name: "bad", sourceValueId: roleValue })
+        .post("/leads", {
+          name: "bad",
+          phone: "+919876543210",
+          sourceValueId: roleValue,
+        })
         .expect(422);
       await api(c.token)
-        .post("/leads", { name: "bad", sourceValueId: randomUUID() })
+        .post("/leads", {
+          name: "bad",
+          phone: "+919876543210",
+          sourceValueId: randomUUID(),
+        })
         .expect(404);
       await api(c.token).get("/leads?limit=101").expect(400);
     });
@@ -1120,7 +1132,7 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
       await api(restricted.token).get("/leads").expect(403);
       await api(restricted.token).get("/leads/counts").expect(403);
       await api(restricted.token)
-        .post("/leads", { name: "Denied" })
+        .post("/leads", { name: "Denied", phone: "+919876543210" })
         .expect(403);
       await grants([
         "crm.leads.view",
@@ -1152,7 +1164,10 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
       const row = shape.parse(
         (
           await api(restricted.token)
-            .post("/leads", { name: "Scoped create" })
+            .post("/leads", {
+              name: "Scoped create",
+              phone: "+919876543210",
+            })
             .expect(201)
         ).body,
       );
@@ -1221,18 +1236,105 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
         "role",
       ]);
     });
+    it("supports real bulk assignment, history, notes, import preview, import and CSV export", async () => {
+      const row = await createLead({ phone: "+919000000001" });
+      const bulk = await api(c.token)
+        .post("/leads/bulk-assign", {
+          leadIds: [row.id],
+          assignedMembershipId: c.membershipId,
+          reason: "Manual coverage",
+        })
+        .expect(201);
+      expect(bulk.body).toMatchObject({
+        mode: "atomic",
+        requested: 1,
+        assigned: 1,
+      });
+
+      await api(c.token)
+        .post("/leads/" + row.id + "/notes", { note: "Customer asked for demo" })
+        .expect(201);
+      const history = await api(c.token)
+        .get("/leads/" + row.id + "/history")
+        .expect(200);
+      expect(
+        history.body.items.some(
+          (item: { eventType: string; note?: string }) =>
+            item.eventType === "note" && item.note === "Customer asked for demo",
+        ),
+      ).toBe(true);
+      expect(
+        history.body.items.some(
+          (item: { eventType: string; note?: string }) =>
+            item.eventType === "assigned" && item.note === "Manual coverage",
+        ),
+      ).toBe(true);
+
+      const csv = [
+        "leadType,businessName,contactName,phone,email,priority,sourceValueId,nextFollowUpAt,nextActionNote",
+        `BUSINESS,=Injected,Importer,+919000000002,importer@test.invalid,HIGH,${source},2000-01-01T00:00:00.000Z,Call back`,
+      ].join("\n");
+      const preview = await api(c.token)
+        .post("/leads/import/preview", {
+          csv,
+          duplicatePolicy: "SKIP",
+          defaultSourceValueId: source,
+        })
+        .expect(201);
+      expect(preview.body).toMatchObject({
+        totalRows: 1,
+        readyRows: 1,
+        rejectedRows: 0,
+      });
+      const imported = await api(c.token)
+        .post("/leads/import", {
+          csv,
+          duplicatePolicy: "SKIP",
+          defaultSourceValueId: source,
+          confirmed: true,
+        })
+        .expect(201);
+      expect(imported.body).toMatchObject({
+        created: 1,
+        skipped: 0,
+        rejected: 0,
+      });
+
+      const counts = await api(c.token)
+        .get("/leads/summary?followUp=pending")
+        .expect(200);
+      expect(counts.body.pendingFollowUps).toBeGreaterThanOrEqual(1);
+      const exported = await api(c.token)
+        .get("/leads/export?priority=HIGH&maxRows=50")
+        .expect(200)
+        .expect("Content-Type", /text\/csv/);
+      expect(exported.text).toContain("Lead Code");
+      expect(exported.text).toContain("'=Injected");
+    });
     it("validates Account/Contact links and protects referenced records", async () => {
       const parent = await account(c),
         linked = await contact(c, { accountId: parent.id }),
         foreign = await account(d);
       await api(c.token)
-        .post("/leads", { name: "bad", accountId: foreign.id })
+        .post("/leads", {
+          name: "bad",
+          phone: "+919876543210",
+          accountId: foreign.id,
+        })
         .expect(404);
       await api(c.token)
-        .post("/leads", { name: "bad", contactId: (await contact(d)).id })
+        .post("/leads", {
+          name: "bad",
+          phone: "+919876543210",
+          contactId: (await contact(d)).id,
+        })
         .expect(404);
       await api(c.token)
-        .post("/leads", { name: "bad", contactId: linked.id })
+        .post("/leads", {
+          name: "bad",
+          phone: "+919876543210",
+          contactId: linked.id,
+        })
         .expect(422);
       const lead = await createLead({
         accountId: parent.id,
@@ -1403,7 +1505,10 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
         account: { mode: "link", id: accountRow.id },
         contact: { mode: "link", id: contactRow.id },
       }).expect(201);
-      const individual = await qualify({ kind: "INDIVIDUAL" });
+      const individual = await qualify({
+        kind: "INDIVIDUAL",
+        contactName: "Person",
+      });
       await convert(individual.id, {
         expectedRevision: 2,
         idempotencyKey: randomUUID(),
@@ -1499,7 +1604,9 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
       });
       try {
         await api(c.token).get("/leads").expect(403);
-        await api(c.token).post("/leads", { name: "Denied" }).expect(403);
+        await api(c.token)
+          .post("/leads", { name: "Denied", phone: "+919876543210" })
+          .expect(403);
       } finally {
         await prisma.platformModule.update({
           where: { code: "core_crm" },

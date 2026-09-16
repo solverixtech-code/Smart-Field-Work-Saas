@@ -25,6 +25,7 @@ import {
 } from "../../features/crm/LeadForms";
 import { leadLabel } from "../../features/crm/lead.types";
 import { LeadOverviewTab } from "./tabs/LeadOverviewTab";
+import { LeadTimelineTab } from "./tabs/LeadTimelineTab";
 export default function LeadDetailsPage() {
   const { leadId = "" } = useParams();
   return <LeadDetailsContent key={leadId} />;
@@ -168,6 +169,8 @@ function LeadDetailsContent() {
       </nav>
       {overview ? (
         <LeadOverviewTab lead={lead} />
+      ) : active === "timeline" ? (
+        <LeadTimelineTab leadId={lead.id} />
       ) : active === "assignment" ? (
         <LeadAssignment
           key={lead.id}

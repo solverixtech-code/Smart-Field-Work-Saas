@@ -819,6 +819,7 @@ enum PlatformAssignmentStatus {
 
 model Tenant {
   crmLeads Lead[]
+  leadHistories LeadHistory[]
   leadConversions LeadConversionCommand[]
   crmAccounts Account[]
   crmContacts Contact[]
@@ -926,6 +927,7 @@ model TenantMembership {
   lead2 Lead[] @relation("LeadCreator")
   lead3 Lead[] @relation("LeadUpdater")
   lead4 Lead[] @relation("LeadConverter")
+  leadHistoryEvents LeadHistory[]
   leadConversionCommands LeadConversionCommand[]
   ownedAccounts Account[] @relation("AccountOwner")
   createdAccounts Account[] @relation("AccountCreator")
@@ -1607,8 +1609,10 @@ model Lead {
   id String @id @default(uuid())
   tenantId String
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  leadCode String
   kind LeadKind @default(BUSINESS)
   name String
+  businessName String?
   contactName String?
   phone String?
   email String?
@@ -1620,6 +1624,12 @@ model Lead {
   postalCode String?
   countryCode String?
   description String?
+  estimatedValue Decimal? @db.Decimal(14, 2)
+  expectedClosingDate DateTime?
+  nextFollowUpAt DateTime?
+  nextActionNote String?
+  requirementNote String?
+  disqualificationReason String?
   sourceValueId String?
   sourceValue MasterValue? @relation("LeadSource", fields: [sourceValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   status LeadLifecycle @default(OPEN)
@@ -1647,16 +1657,35 @@ model Lead {
   createdByMembership TenantMembership @relation("LeadCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
   updatedByMembershipId String
   updatedByMembership TenantMembership @relation("LeadUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  histories LeadHistory[]
   conversion LeadConversionCommand?
   @@unique([id, tenantId])
+  @@unique([tenantId, leadCode])
   @@index([tenantId, deletedAt, createdAt, id])
   @@index([tenantId, ownerMembershipId, deletedAt])
   @@index([tenantId, assignedMembershipId, deletedAt])
   @@index([tenantId, status, priority, deletedAt])
+  @@index([tenantId, nextFollowUpAt, deletedAt])
   @@index([tenantId, accountId])
   @@index([tenantId, contactId])
   @@index([tenantId, convertedAccountId])
   @@index([tenantId, convertedContactId])
+}
+model LeadHistory {
+  id String @id @default(uuid())
+  tenantId String
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  leadId String
+  lead Lead @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  eventType String
+  message String
+  note String?
+  actorMembershipId String
+  actorMembership TenantMembership @relation(fields: [actorMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  metadata Json?
+  createdAt DateTime @default(now())
+  @@index([tenantId, leadId, createdAt])
+  @@index([tenantId, eventType, createdAt])
 }
 model LeadConversionCommand {
   id String @id @default(uuid())

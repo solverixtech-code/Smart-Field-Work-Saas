@@ -1,67 +1,85 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { ArrowLeft, UserCheck, AlertCircle, Building2 } from "lucide-react";
+import { Button } from "../../components/ui/Button";
+import { Select } from "../../components/ui/Select";
+import { Checkbox } from "../../components/ui/Checkbox";
 import {
-  ArrowLeft,
-  UserCheck,
-  Users,
-  Search,
-  Filter,
-  CheckCircle2,
-  AlertCircle,
-  Building2,
-  MapPin,
-  Save,
-} from 'lucide-react';
-import { Button } from '../../components/ui/Button';
-import { Select } from '../../components/ui/Select';
-import { mockLeadsData, LeadItem } from './leadsData';
+  useCrm,
+  useCrmMutation,
+  useCrmQuery,
+} from "../../features/crm/CrmContext";
+import { CrmFailure } from "../../features/crm/CrmControls";
 
 export default function BulkAssignLeadsPage() {
   const navigate = useNavigate();
-  const [selectedIds, setSelectedIds] = useState<string[]>(['LD-1003']);
-  const [targetExecutive, setTargetExecutive] = useState('Rahul Verma (FE-1001)');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { readOnly, can } = useCrm();
+  const mutation = useCrmMutation();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [targetMembershipId, setTargetMembershipId] = useState("");
+  const [reason, setReason] = useState("");
 
-  const unassignedLeads = mockLeadsData.filter((l) => l.status === 'Unassigned' || l.assignedExecutive === 'Unassigned');
+  const leads = useCrmQuery("bulk-unassigned-leads", (service, signal) =>
+    service.leads.list({ unassigned: "true", page: 1, limit: 100 }, signal),
+  );
+  const owners = useCrmQuery("bulk-assignment-owners", (service, signal) =>
+    service.leads.owners({ page: 1, limit: 100 }, signal),
+  );
+  const rows = leads.data?.items ?? [];
+  const ownerOptions = useMemo(
+    () =>
+      (owners.data?.items ?? []).map((owner) => ({
+        value: owner.id,
+        label: owner.displayName,
+        sublabel: owner.role || "Active membership",
+        avatar: owner.avatarUrl || undefined,
+      })),
+    [owners.data?.items],
+  );
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
-      setSelectedIds(unassignedLeads.map((l) => l.id));
-    } else {
-      setSelectedIds([]);
-    }
-  };
-
-  const handleSelectOne = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+  const toggleAll = (checked: boolean) =>
+    setSelectedIds(checked ? rows.map((lead) => lead.id) : []);
+  const toggleOne = (id: string) =>
+    setSelectedIds((current) =>
+      current.includes(id)
+        ? current.filter((selected) => selected !== id)
+        : [...current, id],
     );
-  };
 
-  const handleBulkAssign = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selectedIds.length === 0) {
-      toast.error('Please select at least one lead to assign.');
+  const handleBulkAssign = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+    if (!targetMembershipId) {
+      toast.error("Choose the target assignee.");
       return;
     }
-
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      toast.success(`Successfully assigned ${selectedIds.length} lead(s) to ${targetExecutive}!`);
-      navigate('/admin/leads');
-    }, 600);
+    if (selectedIds.length === 0) {
+      toast.error("Select at least one lead.");
+      return;
+    }
+    const result = await mutation.run((service, signal) =>
+      service.leads.bulkAssign(
+        {
+          leadIds: selectedIds,
+          assignedMembershipId: targetMembershipId,
+          reason: reason.trim() || undefined,
+        },
+        signal,
+      ),
+    );
+    if (result) {
+      toast.success(`Assigned ${result.assigned} lead(s).`);
+      navigate("/admin/leads");
+    }
   };
 
   return (
-    <div className="space-y-3 font-sans pb-12">
-      {/* Top Header Controls */}
+    <form className="space-y-3 pb-12 font-sans" onSubmit={handleBulkAssign}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
-          onClick={() => navigate('/admin/leads')}
-          className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#0D1F3D] transition-colors"
+          onClick={() => navigate("/admin/leads")}
+          className="flex items-center gap-1.5 text-xs font-bold text-slate-500 transition-colors hover:text-[#0D1F3D]"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Leads
         </button>
@@ -69,136 +87,158 @@ export default function BulkAssignLeadsPage() {
         <Button
           variant="accent"
           size="sm"
-          type="button"
-          onClick={handleBulkAssign}
-          isLoading={isSubmitting}
+          type="submit"
+          disabled={readOnly || !can("crm.leads.assign")}
+          isLoading={mutation.pending}
           className="flex items-center gap-2 font-bold shadow-xs"
         >
-          <UserCheck className="h-4 w-4" /> Apply Bulk Assignment ({selectedIds.length})
+          <UserCheck className="h-4 w-4" /> Apply Bulk Assignment (
+          {selectedIds.length})
         </Button>
       </div>
 
-      {/* Main Card */}
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-6">
+      <div className="space-y-6 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 border border-purple-100 shadow-xs">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-purple-100 bg-purple-50 text-purple-600 shadow-xs">
               <UserCheck className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-extrabold text-[#0D1F3D]">Bulk Lead Assignment</h2>
+              <h2 className="text-lg font-extrabold text-[#0D1F3D]">
+                Bulk Lead Assignment
+              </h2>
               <p className="text-xs font-medium text-slate-500">
-                Select unassigned leads or territory pools and assign them in batch to a designated field executive.
+                Select unassigned leads and assign them to an active tenant
+                member in one atomic operation.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Target Executive Selector */}
-        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-2 text-xs font-semibold">
-          <label className="font-bold text-[#0D1F3D] block">Select Target Field Executive *</label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 text-xs font-semibold">
+          <label className="block font-bold text-[#0D1F3D]">
+            Select Target Assignee *
+          </label>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Select
-              value={targetExecutive}
-              onChange={(e) => setTargetExecutive(e.target.value)}
-              options={[
-                {
-                  value: 'Rahul Verma (FE-1001)',
-                  label: 'Rahul Verma',
-                  sublabel: 'FE-1001 • Mumbai North',
-                  avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150',
-                },
-                {
-                  value: 'Priya Mehta (FE-1002)',
-                  label: 'Priya Mehta',
-                  sublabel: 'FE-1002 • Western Suburbs',
-                  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-                },
-                {
-                  value: 'Sanjay Yadav (FE-1003)',
-                  label: 'Sanjay Yadav',
-                  sublabel: 'FE-1003 • Eastern Suburbs',
-                  avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-                },
-                {
-                  value: 'Karan Patil (FE-1009)',
-                  label: 'Karan Patil',
-                  sublabel: 'FE-1009 • Thane Team',
-                  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-                },
-                {
-                  value: 'Neha Deshpande (FE-1014)',
-                  label: 'Neha Deshpande',
-                  sublabel: 'FE-1014 • Pune Team',
-                  avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
-                },
-              ]}
+              value={targetMembershipId}
+              onChange={(event) => setTargetMembershipId(event.target.value)}
+              options={ownerOptions}
               searchable={true}
-              placeholder="Search target executive..."
+              placeholder={
+                owners.loading ? "Loading assignees..." : "Search assignee..."
+              }
+              disabled={owners.loading || ownerOptions.length === 0}
             />
-
-            <div className="flex items-center gap-2 text-slate-500 font-medium">
-              <AlertCircle className="h-4 w-4 text-purple-600 shrink-0" />
-              <span>Assigned leads will receive real-time push notifications on their mobile app.</span>
+            <div className="flex items-center gap-2 font-medium text-slate-500">
+              <AlertCircle className="h-4 w-4 shrink-0 text-purple-600" />
+              <span>
+                The API validates every selected lead and rolls back the batch
+                if any record is invalid.
+              </span>
             </div>
           </div>
+          <textarea
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            maxLength={500}
+            rows={3}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] shadow-xs outline-none focus:border-[#0D1F3D]"
+            placeholder="Reason for reassignment, if applicable"
+          />
         </div>
 
-        {/* Unassigned Leads Table */}
+        {mutation.error && <CrmFailure error={mutation.error} />}
+        {leads.error && <CrmFailure error={leads.error} retry={leads.reload} />}
+
         <div className="space-y-2">
-          <h3 className="text-xs font-extrabold text-[#0D1F3D]">Select Leads to Assign ({unassignedLeads.length} Available)</h3>
+          <h3 className="text-xs font-extrabold text-[#0D1F3D]">
+            Select Leads to Assign ({rows.length} Available)
+          </h3>
 
           <div className="overflow-hidden rounded-xl border border-slate-200">
             <table className="w-full text-left text-xs font-semibold">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
                   <th className="p-3 text-center">
-                    <input
-                      type="checkbox"
-                      onChange={handleSelectAll}
-                      checked={selectedIds.length === unassignedLeads.length && unassignedLeads.length > 0}
-                      className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                    <Checkbox
+                      checked={
+                        rows.length > 0 && selectedIds.length === rows.length
+                      }
+                      onChange={toggleAll}
+                      aria-label="Select all unassigned leads"
                     />
                   </th>
                   <th className="p-3">Lead Code</th>
-                  <th className="p-3">Company Name</th>
-                  <th className="p-3">Contact Person</th>
+                  <th className="p-3">Business</th>
+                  <th className="p-3">Contact</th>
                   <th className="p-3">Region</th>
-                  <th className="p-3">Est. Value (₹)</th>
+                  <th className="p-3">Priority</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold">
-                {unassignedLeads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
+              <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
+                {rows.map((lead) => (
+                  <tr
+                    key={lead.id}
+                    className="transition-colors hover:bg-slate-50"
+                  >
                     <td className="p-3 text-center">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={selectedIds.includes(lead.id)}
-                        onChange={() => handleSelectOne(lead.id)}
-                        className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                        onChange={() => toggleOne(lead.id)}
+                        aria-label={`Select ${lead.leadCode}`}
                       />
                     </td>
-                    <td className="p-3 font-mono text-slate-500">{lead.code}</td>
-                    <td className="p-3 font-extrabold text-[#0D1F3D]">{lead.companyName}</td>
-                    <td className="p-3">{lead.contactPerson}</td>
-                    <td className="p-3">{lead.region}</td>
-                    <td className="p-3 font-bold text-emerald-600">₹{lead.estimatedValue.toLocaleString()}</td>
+                    <td className="p-3 font-mono text-slate-600">
+                      {lead.leadCode}
+                    </td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-slate-400" />
+                        <span className="font-extrabold text-[#0D1F3D]">
+                          {lead.businessName || lead.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-3">{lead.contactName || "Not set"}</td>
+                    <td className="p-3">{lead.city || "Not set"}</td>
+                    <td className="p-3">{lead.priority}</td>
                   </tr>
                 ))}
+                {!leads.loading && rows.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="p-6 text-center text-slate-500">
+                      No unassigned leads are available.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-          <Button variant="outline" size="sm" type="button" onClick={() => navigate('/admin/leads')} className="font-bold">
+        <div className="flex items-center justify-end gap-3 border-t border-slate-100 pt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            type="button"
+            onClick={() => navigate("/admin/leads")}
+            className="font-bold"
+          >
             Cancel
           </Button>
-          <Button variant="accent" size="sm" type="button" onClick={handleBulkAssign} isLoading={isSubmitting} className="font-bold shadow-xs">
+          <Button
+            variant="accent"
+            size="sm"
+            type="submit"
+            disabled={readOnly || !can("crm.leads.assign")}
+            isLoading={mutation.pending}
+            className="font-bold shadow-xs"
+          >
             Confirm Bulk Assignment
           </Button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }

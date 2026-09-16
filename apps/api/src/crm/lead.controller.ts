@@ -8,8 +8,10 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseFilters,
 } from "@nestjs/common";
+import { Response } from "express";
 import { CurrentPrincipal } from "../common/decorators/current-principal.decorator";
 import { RequirePermissions } from "../common/decorators/require-permissions.decorator";
 import { TenantAuthorized } from "../common/decorators/tenant-authorized.decorator";
@@ -31,10 +33,45 @@ export class LeadController {
   counts(@CurrentPrincipal() p: RequestPrincipal, @Query() q: unknown) {
     return this.leads.counts(p, q);
   }
+  @Get("summary")
+  @RequirePermissions("crm.leads.view")
+  summary(@CurrentPrincipal() p: RequestPrincipal, @Query() q: unknown) {
+    return this.leads.counts(p, q);
+  }
   @Get("owner-options")
   @RequirePermissions("crm.leads.assign")
   owners(@CurrentPrincipal() p: RequestPrincipal, @Query() q: unknown) {
     return this.leads.owners(p, q);
+  }
+  @Post("bulk-assign")
+  @RequirePermissions("crm.leads.assign")
+  bulkAssign(@CurrentPrincipal() p: RequestPrincipal, @Body() v: unknown) {
+    return this.leads.bulkAssign(p, v);
+  }
+  @Post("import/preview")
+  @RequirePermissions("crm.leads.import")
+  importPreview(@CurrentPrincipal() p: RequestPrincipal, @Body() v: unknown) {
+    return this.leads.importPreview(p, v);
+  }
+  @Post("import")
+  @RequirePermissions("crm.leads.import")
+  import(@CurrentPrincipal() p: RequestPrincipal, @Body() v: unknown) {
+    return this.leads.import(p, v);
+  }
+  @Get("export")
+  @RequirePermissions("crm.leads.export")
+  async export(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Query() q: unknown,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const csv = await this.leads.exportCsv(p, q);
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="leads-export.csv"',
+    );
+    return csv;
   }
   @Get(":id")
   @RequirePermissions("crm.leads.view")
@@ -72,6 +109,29 @@ export class LeadController {
     @Body() v: unknown,
   ) {
     return this.leads.convert(p, id, v);
+  }
+  @Post(":id/convert")
+  @RequirePermissions("crm.leads.convert")
+  convertAlias(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("id") id: string,
+    @Body() v: unknown,
+  ) {
+    return this.leads.convert(p, id, v);
+  }
+  @Get(":id/history")
+  @RequirePermissions("crm.leads.view")
+  history(@CurrentPrincipal() p: RequestPrincipal, @Param("id") id: string) {
+    return this.leads.history(p, id);
+  }
+  @Post(":id/notes")
+  @RequirePermissions("crm.leads.update")
+  note(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("id") id: string,
+    @Body() v: unknown,
+  ) {
+    return this.leads.note(p, id, v);
   }
   @Delete(":id")
   @HttpCode(204)

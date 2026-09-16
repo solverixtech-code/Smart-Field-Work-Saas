@@ -25,10 +25,16 @@ import {
   leadPriorities,
 } from "./lead.types";
 
+const toDateTimeLocal = (value?: string | null) =>
+  value ? new Date(value).toISOString().slice(0, 16) : "";
+const fromDateTimeLocal = (value: string) =>
+  value ? new Date(value).toISOString() : null;
+
 function editable(row?: LeadDto): LeadInput {
   return {
     name: row?.name ?? "",
     kind: row?.kind ?? "BUSINESS",
+    businessName: row?.businessName,
     contactName: row?.contactName,
     phone: row?.phone,
     email: row?.email,
@@ -44,6 +50,12 @@ function editable(row?: LeadDto): LeadInput {
     priority: row?.priority ?? "MEDIUM",
     accountId: row?.accountId,
     contactId: row?.contactId,
+    estimatedValue: row?.estimatedValue,
+    expectedClosingDate: row?.expectedClosingDate,
+    nextFollowUpAt: row?.nextFollowUpAt,
+    nextActionNote: row?.nextActionNote,
+    requirementNote: row?.requirementNote,
+    disqualificationReason: row?.disqualificationReason,
   };
 }
 export function LeadDeferred({
@@ -260,9 +272,12 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
         maxLength={max}
         required={key === "name"}
         value={String(draft[key] ?? "")}
-        onChange={(e) =>
-          set(key, key === "name" ? e.target.value : e.target.value || null)
-        }
+        onChange={(e) => {
+          const value = key === "name" ? e.target.value : e.target.value || null;
+          set(key, value as LeadInput[typeof key]);
+          if (key === "name" && draft.kind === "BUSINESS")
+            set("businessName", e.target.value || null);
+        }}
       />
     ));
   return (
@@ -411,11 +426,54 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                     if (option) setStatus(option.value);
                   }}
                 />
+                {status === "DISQUALIFIED" && (
+                  <Select
+                    native
+                    id="lead-disqualification-reason"
+                    label="Disqualification Reason"
+                    value={draft.disqualificationReason ?? ""}
+                    options={[
+                      { value: "LOST", label: "Lost" },
+                      { value: "NOT_INTERESTED", label: "Not Interested" },
+                    ]}
+                    onChange={(e) =>
+                      set(
+                        "disqualificationReason",
+                        e.target.value
+                          ? (e.target.value as "LOST" | "NOT_INTERESTED")
+                          : null,
+                      )
+                    }
+                  />
+                )}
+                <Input
+                  id="lead-estimated-value"
+                  label="Estimated Value"
+                  type="number"
+                  min="0"
+                  value={draft.estimatedValue ?? ""}
+                  onChange={(e) =>
+                    set(
+                      "estimatedValue",
+                      e.target.value ? Number(e.target.value) : null,
+                    )
+                  }
+                />
+                <Input
+                  id="lead-expected-closing-date"
+                  label="Expected Closing Date"
+                  type="date"
+                  value={draft.expectedClosingDate?.slice(0, 10) ?? ""}
+                  onChange={(e) =>
+                    set(
+                      "expectedClosingDate",
+                      e.target.value
+                        ? new Date(e.target.value + "T00:00:00").toISOString()
+                        : null,
+                    )
+                  }
+                />
               </div>
-              <p className="text-xs text-slate-500">
-                Lead scoring, estimated deal value and expected closing dates
-                are unavailable in this phase.
-              </p>
             </Card>
             <Card variant="panel" className="space-y-4">
               <h2 className="text-sm font-bold text-[#0D1F3D]">Address</h2>
@@ -516,9 +574,33 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                 />
               )}
             </Card>
-            <LeadDeferred title="Follow-up & Next Action">
-              Scheduling and product activities are planned for later phases.
-            </LeadDeferred>
+            <Card variant="panel" className="space-y-4">
+              <h2 className="text-sm font-bold text-[#0D1F3D]">
+                Follow-up & Next Action
+              </h2>
+              <Input
+                id="lead-next-follow-up"
+                label="Next Follow-up"
+                type="datetime-local"
+                value={toDateTimeLocal(draft.nextFollowUpAt)}
+                onChange={(e) =>
+                  set("nextFollowUpAt", fromDateTimeLocal(e.target.value))
+                }
+              />
+              <Textarea
+                id="lead-next-action"
+                label="Next Action Note"
+                maxLength={1000}
+                value={draft.nextActionNote ?? ""}
+                onChange={(e) =>
+                  set("nextActionNote", e.target.value || null)
+                }
+              />
+              <p className="text-xs text-slate-500">
+                Reminders and full follow-up workflow remain in the follow-up
+                module.
+              </p>
+            </Card>
             <Card variant="panel" className="space-y-4">
               <h2 className="text-sm font-bold text-[#0D1F3D]">
                 Additional Information
@@ -529,6 +611,15 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                 maxLength={2000}
                 value={draft.description ?? ""}
                 onChange={(e) => set("description", e.target.value || null)}
+              />
+              <Textarea
+                id="lead-requirement-note"
+                label="Requirement Note"
+                maxLength={5000}
+                value={draft.requirementNote ?? ""}
+                onChange={(e) =>
+                  set("requirementNote", e.target.value || null)
+                }
               />
             </Card>
             <LeadDeferred title="Attachments">

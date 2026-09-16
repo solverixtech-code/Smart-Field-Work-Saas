@@ -13,7 +13,9 @@ export function LeadOverviewTab({ lead }: { lead: LeadDto }) {
           </h2>
           <dl className="grid grid-cols-1 gap-4 text-xs sm:grid-cols-2">
             {[
+              ["Lead Code", lead.leadCode],
               ["Name", lead.name],
+              ["Business Name", lead.businessName],
               ["Contact Person", lead.contactName],
               ["Official Email", lead.email],
               ["Phone Number", lead.phone],
@@ -31,6 +33,25 @@ export function LeadOverviewTab({ lead }: { lead: LeadDto }) {
                   .join(", "),
               ],
               ["Lead Source", lead.source],
+              [
+                "Estimated Value",
+                lead.estimatedValue == null
+                  ? null
+                  : `₹${lead.estimatedValue.toLocaleString("en-IN")}`,
+              ],
+              [
+                "Expected Closing",
+                lead.expectedClosingDate
+                  ? new Date(lead.expectedClosingDate).toLocaleDateString()
+                  : null,
+              ],
+              [
+                "Next Follow-up",
+                lead.nextFollowUpAt
+                  ? new Date(lead.nextFollowUpAt).toLocaleString()
+                  : null,
+              ],
+              ["Next Action", lead.nextActionNote],
               ["Linked Business", lead.accountId],
               ["Linked Contact", lead.contactId],
             ].map(([label, value]) => (
@@ -51,6 +72,12 @@ export function LeadOverviewTab({ lead }: { lead: LeadDto }) {
           <p className="whitespace-pre-wrap break-words rounded-lg bg-slate-50 p-4 text-xs">
             {lead.description || "No description recorded."}
           </p>
+          {lead.requirementNote && (
+            <p className="whitespace-pre-wrap break-words rounded-lg bg-slate-50 p-4 text-xs">
+              <strong>Requirement: </strong>
+              {lead.requirementNote}
+            </p>
+          )}
         </Card>
       </div>
       <div className="space-y-3 lg:col-span-4">

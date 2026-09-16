@@ -6,6 +6,8 @@ export const leadApi: LeadApi = {
     (await api.get(root, { params, signal })).data,
   counts: async (params, signal) =>
     (await api.get(root + "/counts", { params, signal })).data,
+  summary: async (params, signal) =>
+    (await api.get(root + "/summary", { params, signal })).data,
   get: async (id, signal) => (await api.get(root + "/" + id, { signal })).data,
   create: async (body, signal) => (await api.post(root, body, { signal })).data,
   update: async (id, body, signal) =>
@@ -16,7 +18,20 @@ export const leadApi: LeadApi = {
     await api.delete(root + "/" + id, { data: { expectedRevision }, signal });
   },
   convert: async (id, body, signal) =>
-    (await api.post(root + "/" + id + "/conversion", body, { signal })).data,
+    (await api.post(root + "/" + id + "/convert", body, { signal })).data,
   owners: async (params, signal) =>
     (await api.get(root + "/owner-options", { params, signal })).data,
+  bulkAssign: async (body, signal) =>
+    (await api.post(root + "/bulk-assign", body, { signal })).data,
+  importPreview: async (body, signal) =>
+    (await api.post(root + "/import/preview", body, { signal })).data,
+  importLeads: async (body, signal) =>
+    (await api.post(root + "/import", body, { signal })).data,
+  exportCsv: async (params, signal) =>
+    (await api.get(root + "/export", { params, signal, responseType: "blob" }))
+      .data,
+  history: async (id, signal) =>
+    (await api.get(root + "/" + id + "/history", { signal })).data,
+  addNote: async (id, body, signal) =>
+    (await api.post(root + "/" + id + "/notes", body, { signal })).data,
 };

@@ -10,7 +10,7 @@ export interface PermissionDefinition {
   moduleKey: string;
 }
 
-export const PERMISSION_REGISTRY_VERSION = '1.2.0';
+export const PERMISSION_REGISTRY_VERSION = '1.3.0';
 
 export const CRM_PHASE_1_1_PERMISSIONS: PermissionDefinition[] = [
   ...(
@@ -56,6 +56,8 @@ export const CRM_PHASE_1_2_PERMISSIONS: PermissionDefinition[] = [
   "delete",
   "assign",
   "convert",
+  "import",
+  "export",
   "access.own",
   "access.assigned",
   "access.tenant",

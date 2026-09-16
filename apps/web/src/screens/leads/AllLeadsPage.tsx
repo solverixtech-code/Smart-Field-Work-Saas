@@ -25,6 +25,7 @@ import { DataTable, ColumnDef } from "../../components/ui/DataTable";
 import { RowActionsMenu } from "../../components/ui/RowActionsMenu";
 import {
   useCrm,
+  useCrmMutation,
   useCrmQuery,
   useDebouncedSearch,
 } from "../../features/crm/CrmContext";
@@ -55,6 +56,7 @@ export default function AllLeadsPage({
   const navigate = useNavigate(),
     location = useLocation();
   const { can, readOnly } = useCrm();
+  const mutation = useCrmMutation();
   const [search, setSearch] = useState(""),
     [priority, setPriority] = useState(""),
     [status, setStatus] = useState(""),
@@ -62,7 +64,6 @@ export default function AllLeadsPage({
     [page, setPage] = useState(1);
   const query = useDebouncedSearch(search);
   useEffect(() => setPage(1), [location.pathname]);
-  const unavailable = viewMode === "follow-up" || viewMode === "lost";
   const filters: LeadQuery = {
     search: query,
     priority: priority ? (priority as LeadPriority) : undefined,
@@ -74,26 +75,42 @@ export default function AllLeadsPage({
       ? { unassigned: "true" }
       : viewMode === "hot"
         ? { hot: "true" }
+        : viewMode === "follow-up"
+          ? { followUp: "pending" }
         : viewMode === "converted"
           ? { status: "CONVERTED" }
+          : viewMode === "lost"
+            ? { status: "DISQUALIFIED", disqualificationReason: "LOST" }
           : viewMode === "not-interested"
-            ? { status: "DISQUALIFIED" }
+            ? { status: "DISQUALIFIED", disqualificationReason: "NOT_INTERESTED" }
             : viewMode === "duplicates"
               ? { status: "DUPLICATE" }
               : {};
   const result = useCrmQuery(
     JSON.stringify(["leads", viewMode, filters, page]),
     (service, signal) =>
-      unavailable
-        ? Promise.resolve(undefined)
-        : service.leads.list(
-            { ...filters, ...category, page, limit: 25 },
-            signal,
-          ),
+      service.leads.list({ ...filters, ...category, page, limit: 25 }, signal),
   );
   const counts = useCrmQuery("lead-workspace-counts", (service, signal) =>
-    service.leads.counts({}, signal),
+    service.leads.summary({}, signal),
   );
+  const updateStatus = async (
+    lead: LeadDto,
+    status: Exclude<LeadStatus, "CONVERTED">,
+    disqualificationReason?: "LOST" | "NOT_INTERESTED" | null,
+  ) => {
+    const saved = await mutation.run((service, signal) =>
+      service.leads.update(
+        lead.id,
+        { expectedRevision: lead.revision, status, disqualificationReason },
+        signal,
+      ),
+    );
+    if (saved) {
+      result.reload();
+      counts.reload();
+    }
+  };
   const metric = (n?: number) =>
     n === undefined ? "Unavailable" : n.toLocaleString();
   const byStatus = (s: LeadStatus) =>
@@ -121,7 +138,7 @@ export default function AllLeadsPage({
       count: byStatus("CONVERTED"),
       icon: CheckCircle2,
     },
-    { id: "lost", label: "Lost Leads", icon: XCircle },
+    { id: "lost", label: "Lost Leads", count: byStatus("DISQUALIFIED"), icon: XCircle },
     {
       id: "not-interested",
       label: "Disqualified",
@@ -146,7 +163,7 @@ export default function AllLeadsPage({
             className="font-extrabold text-[#0D1F3D]"
             onClick={() => navigate("/admin/leads/" + l.id)}
           >
-            {l.name}
+            {l.leadCode} / {l.name}
           </Button>
           <p className="text-xs text-slate-500">{l.source || "No source"}</p>
         </div>
@@ -180,14 +197,14 @@ export default function AllLeadsPage({
     },
     {
       header: "Estimated Value",
-      cell: () => (
-        <span
-          className="text-xs text-slate-500"
-          title="Opportunity values are not available in this phase"
-        >
-          Unavailable
-        </span>
-      ),
+      cell: (l) =>
+        l.estimatedValue == null ? (
+          <span className="text-xs text-slate-500">Not set</span>
+        ) : (
+          <span className="font-bold text-emerald-700">
+            ₹{l.estimatedValue.toLocaleString("en-IN")}
+          </span>
+        ),
     },
     {
       header: "Assigned Executive",
@@ -216,9 +233,19 @@ export default function AllLeadsPage({
     },
     {
       header: "Next Follow-up",
-      cell: () => (
-        <span className="text-xs text-slate-500">Scheduling unavailable</span>
-      ),
+      cell: (l) =>
+        l.nextFollowUpAt ? (
+          <div>
+            <p className="font-bold text-slate-900">
+              {new Date(l.nextFollowUpAt).toLocaleString()}
+            </p>
+            <p className="text-xs text-slate-500">
+              {l.nextActionNote || "No action note"}
+            </p>
+          </div>
+        ) : (
+          <span className="text-xs text-slate-500">Not scheduled</span>
+        ),
     },
     {
       header: "Actions",
@@ -254,6 +281,44 @@ export default function AllLeadsPage({
                   },
                 ]
               : []),
+            ...(can("crm.leads.update") &&
+            !readOnly &&
+            l.status === "OPEN"
+              ? [
+                  {
+                    label: "Mark Qualified",
+                    icon: CheckCircle2,
+                    onClick: () => updateStatus(l, "QUALIFIED"),
+                  },
+                ]
+              : []),
+            ...(can("crm.leads.convert") &&
+            !readOnly &&
+            l.status === "QUALIFIED"
+              ? [
+                  {
+                    label: "Convert Lead",
+                    icon: CheckCircle2,
+                    onClick: () => navigate("/admin/leads/" + l.id),
+                  },
+                ]
+              : []),
+            ...(can("crm.leads.update") &&
+            !readOnly &&
+            ["OPEN", "QUALIFIED"].includes(l.status)
+              ? [
+                  {
+                    label: "Disqualify",
+                    icon: XCircle,
+                    onClick: () => updateStatus(l, "DISQUALIFIED", "LOST"),
+                  },
+                  {
+                    label: "Mark Duplicate",
+                    icon: Copy,
+                    onClick: () => updateStatus(l, "DUPLICATE"),
+                  },
+                ]
+              : []),
           ]}
         />
       ),
@@ -272,8 +337,8 @@ export default function AllLeadsPage({
           <Button
             variant="outline"
             size="sm"
-            disabled
-            title="Import is unavailable in this phase"
+            disabled={readOnly || !can("crm.leads.import")}
+            onClick={() => navigate("/admin/leads/import")}
           >
             <Upload className="mr-1.5 h-4 w-4 text-blue-600" />
             Import Leads
@@ -281,8 +346,8 @@ export default function AllLeadsPage({
           <Button
             variant="outline"
             size="sm"
-            disabled
-            title="Export is unavailable in this phase"
+            disabled={readOnly || !can("crm.leads.export")}
+            onClick={() => navigate("/admin/leads/export")}
           >
             <Download className="mr-1.5 h-4 w-4 text-emerald-600" />
             Export Data
@@ -290,8 +355,8 @@ export default function AllLeadsPage({
           <Button
             variant="outline"
             size="sm"
-            disabled
-            title="Bulk assignment is unavailable in this phase"
+            disabled={readOnly || !can("crm.leads.assign")}
+            onClick={() => navigate("/admin/leads/bulk-assign")}
           >
             <UserCheck className="mr-1.5 h-4 w-4" />
             Bulk Assign
@@ -326,8 +391,8 @@ export default function AllLeadsPage({
         />
         <KpiCard
           title="Pending Follow-ups"
-          value="Unavailable"
-          subValue="Scheduling is a later phase"
+          value={metric(counts.data?.pendingFollowUps)}
+          subValue="Due follow-ups"
           icon={Clock}
           iconBgColor="bg-amber-500/10"
           iconTextColor="text-amber-600"
@@ -432,15 +497,7 @@ export default function AllLeadsPage({
           />
         )}
       </div>
-      {unavailable ? (
-        <Card variant="panel">
-          <p role="status">
-            {viewMode === "lost"
-              ? "Lost opportunity outcomes are unavailable until the Opportunity phase. Lead closure is available under Disqualified."
-              : "Follow-up scheduling is unavailable in this phase."}
-          </p>
-        </Card>
-      ) : result.error ? (
+      {result.error ? (
         <CrmFailure error={result.error} retry={result.reload} />
       ) : (
         <DataTable

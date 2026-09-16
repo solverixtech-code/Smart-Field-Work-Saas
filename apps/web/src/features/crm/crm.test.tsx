@@ -11,7 +11,7 @@ import { CrmRequestScope, crmError } from "./crm.state";
 import { AccountForm } from "./CrmForms";
 import AllLeadsPage from "../../screens/leads/AllLeadsPage";
 import { LeadForm, LeadConversionModal, LeadAssignment } from "./LeadForms";
-import type { LeadDto } from "./lead.types";
+import type { LeadCounts, LeadDto } from "./lead.types";
 import AllBusinessesPage from "../../screens/businesses/AllBusinessesPage";
 import type { AccountDto, CrmService } from "./crm.types";
 (
@@ -37,6 +37,8 @@ vi.mock("../../store", () => ({
             "crm.leads.assign",
             "crm.leads.convert",
             "crm.leads.delete",
+            "crm.leads.import",
+            "crm.leads.export",
             "crm.leads.access.tenant",
             "crm.businesses.view",
             "crm.businesses.update",
@@ -80,6 +82,7 @@ function service(): CrmService {
     leads: {
       list: vi.fn(rejected),
       counts: vi.fn(rejected),
+      summary: vi.fn(rejected),
       get: vi.fn(rejected),
       create: vi.fn(rejected),
       update: vi.fn(rejected),
@@ -87,6 +90,12 @@ function service(): CrmService {
       remove: vi.fn(rejected),
       convert: vi.fn(rejected),
       owners: vi.fn(rejected),
+      bulkAssign: vi.fn(rejected),
+      importPreview: vi.fn(rejected),
+      importLeads: vi.fn(rejected),
+      exportCsv: vi.fn(rejected),
+      history: vi.fn(rejected),
+      addNote: vi.fn(rejected),
     },
     accounts: vi.fn(rejected),
     account: vi.fn(rejected),
@@ -409,8 +418,28 @@ describe("CRM frontend production flow", () => {
 const lead: LeadDto = {
   id: "lead-a",
   tenantId: "tenant-a",
+  leadCode: "LD-000001",
   name: "Real lead",
   kind: "BUSINESS",
+  businessName: "Real lead",
+  contactName: "Real buyer",
+  phone: "+919876543210",
+  email: "buyer@example.com",
+  website: null,
+  addressLine1: null,
+  addressLine2: null,
+  city: null,
+  state: null,
+  postalCode: null,
+  countryCode: null,
+  description: null,
+  sourceValueId: null,
+  estimatedValue: null,
+  expectedClosingDate: null,
+  nextFollowUpAt: null,
+  nextActionNote: null,
+  requirementNote: null,
+  disqualificationReason: null,
   status: "QUALIFIED",
   priority: "HIGH",
   revision: 2,
@@ -430,13 +459,16 @@ const lead: LeadDto = {
 };
 function leadService() {
   const api = service();
-  vi.mocked(api.leads.counts).mockResolvedValue({
+  const counts: LeadCounts = {
     total: 97,
     unassigned: 12,
+    pendingFollowUps: 3,
     lifecycle: [{ status: "QUALIFIED", count: 97 }],
     priorities: [{ priority: "HIGH", count: 97 }],
     sources: [],
-  });
+  };
+  vi.mocked(api.leads.counts).mockResolvedValue(counts);
+  vi.mocked(api.leads.summary).mockResolvedValue(counts);
   vi.mocked(api.leads.owners).mockResolvedValue({
     items: [],
     total: 0,
@@ -496,11 +528,9 @@ describe("Lead frontend production flows", () => {
     ])
       expect(host.textContent).toContain(text);
     expect(host.textContent).toContain("97");
-    expect(
-      host.querySelector<HTMLButtonElement>(
-        'button[title="Import is unavailable in this phase"]',
-      )?.disabled,
-    ).toBe(true);
+    expect(host.textContent).toContain("Import Leads");
+    expect(host.textContent).toContain("Export Data");
+    expect(host.textContent).toContain("Bulk Assign");
   });
   it.each([400, 401, 403, 404, 409, 412, 422, 429, 500])(
     "renders Lead API %s without fixture fallback",
@@ -676,14 +706,23 @@ describe("Lead frontend production flows", () => {
       expect.any(AbortSignal),
     );
   });
-  it("does not query a fabricated follow-up or opportunity lifecycle", async () => {
+  it("queries the real follow-up filter instead of a fabricated lifecycle", async () => {
     const api = leadService();
+    vi.mocked(api.leads.list).mockResolvedValue({
+      items: [],
+      total: 0,
+      totalPages: 0,
+      page: 1,
+      limit: 25,
+    });
     await act(async () =>
       root.render(view(api, <AllLeadsPage viewMode="follow-up" />)),
     );
     await flush();
-    expect(api.leads.list).not.toHaveBeenCalled();
-    expect(host.textContent).toContain("Follow-up scheduling is unavailable");
+    expect(api.leads.list).toHaveBeenCalledWith(
+      expect.objectContaining({ followUp: "pending" }),
+      expect.any(AbortSignal),
+    );
   });
   it("keeps every converted route free of fixture imports and raw transport", () => {
     for (const file of [

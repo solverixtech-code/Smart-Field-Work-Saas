@@ -5,6 +5,7 @@ import {
   UnprocessableEntityException,
 } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
+import { z } from "zod";
 import { RequestPrincipal } from "../common/security/request-principal.interface";
 import { payloadHash } from "../platform/subscriptions/subscription-contract";
 import { crmId, revisionCommand, ownerQuery } from "./crm-contract";
@@ -19,6 +20,7 @@ import * as dto from "./lead-contract";
 const data = (v: Partial<dto.LeadInput>) => ({
   kind: v.kind,
   name: v.name,
+  businessName: v.businessName,
   contactName: v.contactName,
   phone: v.phone,
   email: v.email,
@@ -30,6 +32,12 @@ const data = (v: Partial<dto.LeadInput>) => ({
   postalCode: v.postalCode,
   countryCode: v.countryCode,
   description: v.description,
+  estimatedValue: v.estimatedValue,
+  expectedClosingDate: v.expectedClosingDate,
+  nextFollowUpAt: v.nextFollowUpAt,
+  nextActionNote: v.nextActionNote,
+  requirementNote: v.requirementNote,
+  disqualificationReason: v.disqualificationReason,
   sourceValueId: v.sourceValueId,
   priority: v.priority,
   accountId: v.accountId,
@@ -52,6 +60,13 @@ const mutable = (row: LeadRow) => {
 };
 const revision = (row: LeadRow, expected: number) => {
   if (row.revision !== expected) crmConflict("CRM_STALE_REVISION");
+};
+const iso = (value: Date | string | null | undefined) =>
+  value ? new Date(value).toISOString() : null;
+const csvCell = (value: unknown) => {
+  const raw = value == null ? "" : String(value);
+  const safe = /^[=+\-@]/.test(raw) ? "'" + raw : raw;
+  return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 };
 
 @Injectable()
@@ -80,10 +95,15 @@ export class LeadService {
     const hotFilter: Prisma.LeadWhereInput = q.hot
       ? { priority: { in: ["HIGH", "URGENT"] } }
       : {};
+    const followUpFilter: Prisma.LeadWhereInput =
+      q.followUp === "pending"
+        ? { nextFollowUpAt: { not: null, lte: new Date() } }
+        : {};
     return {
       AND: [
         leadScope(p),
         hotFilter,
+        followUpFilter,
         {
           status: q.status,
           priority: q.priority,
@@ -91,6 +111,7 @@ export class LeadService {
           ownerMembershipId: q.ownerMembershipId,
           assignedMembershipId: q.assignedMembershipId,
           accountId: q.accountId,
+          disqualificationReason: q.disqualificationReason,
         },
         ...(q.unassigned
           ? [
@@ -116,6 +137,12 @@ export class LeadService {
                   {
                     email: { contains: q.search, mode: "insensitive" as const },
                   },
+                  {
+                    leadCode: {
+                      contains: q.search,
+                      mode: "insensitive" as const,
+                    },
+                  },
                   ...(normalized ? [{ phone: { contains: normalized } }] : []),
                   ...(crmId.safeParse(q.search).success
                     ? [{ id: q.search }]
@@ -139,6 +166,11 @@ export class LeadService {
     );
     return rows.map(({ ownerMembership, assignedMembership, ...row }) => ({
       ...row,
+      estimatedValue:
+        row.estimatedValue == null ? null : Number(row.estimatedValue),
+      expectedClosingDate: iso(row.expectedClosingDate),
+      nextFollowUpAt: iso(row.nextFollowUpAt),
+      convertedAt: iso(row.convertedAt),
       source: row.sourceValueId
         ? (sources.get(row.sourceValueId)?.name ?? null)
         : null,
@@ -153,6 +185,40 @@ export class LeadService {
           }
         : null,
     }));
+  }
+  private async leadCode(tx: Prisma.TransactionClient, tenantId: string) {
+    const count = await tx.lead.count({ where: { tenantId } });
+    for (let n = count + 1; n < count + 10000; n++) {
+      const code = "LD-" + String(n).padStart(6, "0");
+      const exists = await tx.lead.findUnique({
+        where: { tenantId_leadCode: { tenantId, leadCode: code } },
+        select: { id: true },
+      });
+      if (!exists) return code;
+    }
+    throw new UnprocessableEntityException("CRM_LEAD_CODE_EXHAUSTED");
+  }
+  private recordHistory(
+    tx: Prisma.TransactionClient,
+    p: CrmPolicy,
+    leadId: string,
+    eventType: string,
+    message: string,
+    note?: string | null,
+    metadata?: Prisma.InputJsonValue,
+  ) {
+    return tx.leadHistory.create({
+      data: {
+        tenantId: p.scope.tenantId,
+        leadId,
+        eventType,
+        message,
+        note,
+        actorMembershipId: p.scope.membershipId,
+        metadata,
+      },
+      select: { id: true },
+    });
   }
   async list(actor: RequestPrincipal, query: unknown) {
     const q = dto.leadQuery.parse(query);
@@ -188,6 +254,11 @@ export class LeadService {
       const unassigned = await tx.lead.count({
         where: { AND: [where, { assignedMembershipId: null }] },
       });
+      const pendingFollowUps = await tx.lead.count({
+        where: {
+          AND: [where, { nextFollowUpAt: { not: null, lte: new Date() } }],
+        },
+      });
       const sources = await tx.lead.groupBy({
         by: ["sourceValueId"],
         where,
@@ -203,6 +274,7 @@ export class LeadService {
       return {
         total: lifecycle.reduce((n, r) => n + r._count.id, 0),
         unassigned,
+        pendingFollowUps,
         lifecycle: lifecycle.map((r) => ({
           status: r.status,
           count: r._count.id,
@@ -270,9 +342,16 @@ export class LeadService {
         await this.repo.owner(tx, p, v.assignedMembershipId);
       await this.repo.master(tx, p, v.sourceValueId, "lead_source");
       await this.links(tx, p, v.accountId ?? null, v.contactId ?? null);
+      const kind = v.kind ?? "BUSINESS";
       const row = await tx.lead.create({
         data: {
-          ...data(v),
+          ...data({
+            ...v,
+            kind,
+            businessName:
+              v.businessName ?? (kind === "BUSINESS" ? v.name : null),
+          }),
+          leadCode: await this.leadCode(tx, p.scope.tenantId),
           name: v.name,
           ownerMembershipId: owner,
           assignedMembershipId: v.assignedMembershipId,
@@ -281,6 +360,9 @@ export class LeadService {
           updatedByMembershipId: p.scope.membershipId,
         },
         select: leadSelect,
+      });
+      await this.recordHistory(tx, p, row.id, "created", "Lead created", null, {
+        revisionAfter: 1,
       });
       await this.repo.audit(tx, p, "lead.created", "Lead", row.id, {
         revisionAfter: 1,
@@ -332,10 +414,28 @@ export class LeadService {
       if (v.sourceValueId !== undefined)
         await this.repo.master(tx, p, v.sourceValueId, "lead_source");
       await this.change(tx, p, row, { ...data(v), status: v.status });
+      const changedFields = Object.keys(v).filter(
+        (k) => k !== "expectedRevision",
+      );
+      const eventType =
+        v.status === "QUALIFIED"
+          ? "qualified"
+          : v.status === "DISQUALIFIED"
+            ? "disqualified"
+            : v.status === "DUPLICATE"
+              ? "duplicate_marked"
+              : "updated";
+      await this.recordHistory(tx, p, id, eventType, "Lead updated", null, {
+        revisionBefore: row.revision,
+        revisionAfter: row.revision + 1,
+        changedFields,
+        lifecycleBefore: row.status,
+        lifecycleAfter: v.status ?? row.status,
+      });
       await this.repo.audit(tx, p, "lead.updated", "Lead", id, {
         revisionBefore: row.revision,
         revisionAfter: row.revision + 1,
-        changedFields: Object.keys(v).filter((k) => k !== "expectedRevision"),
+        changedFields,
         lifecycle: v.status ?? row.status,
       });
       return (await this.project(tx, p, [await this.row(tx, p, id)]))[0];
@@ -357,6 +457,25 @@ export class LeadService {
         ownerMembershipId: v.ownerMembershipId,
         assignedMembershipId: v.assignedMembershipId,
       });
+      await this.recordHistory(
+        tx,
+        p,
+        id,
+        row.assignedMembershipId ? "reassigned" : "assigned",
+        row.assignedMembershipId ? "Lead reassigned" : "Lead assigned",
+        null,
+        {
+          revisionBefore: row.revision,
+          revisionAfter: row.revision + 1,
+          ownerBefore: row.ownerMembershipId,
+          ownerAfter: v.ownerMembershipId ?? row.ownerMembershipId,
+          assignedBefore: row.assignedMembershipId,
+          assignedAfter:
+            v.assignedMembershipId === undefined
+              ? row.assignedMembershipId
+              : v.assignedMembershipId,
+        },
+      );
       await this.repo.audit(tx, p, "lead.assigned", "Lead", id, {
         revisionBefore: row.revision,
         revisionAfter: row.revision + 1,
@@ -381,6 +500,10 @@ export class LeadService {
       revision(row, v.expectedRevision);
       if (row.status === "CONVERTED") crmConflict("CRM_LEAD_IMMUTABLE");
       await this.change(tx, p, row, { deletedAt: new Date() });
+      await this.recordHistory(tx, p, id, "deleted", "Lead deleted", null, {
+        revisionBefore: row.revision,
+        revisionAfter: row.revision + 1,
+      });
       await this.repo.audit(tx, p, "lead.deleted", "Lead", id, {
         revisionBefore: row.revision,
         revisionAfter: row.revision + 1,
@@ -423,6 +546,386 @@ export class LeadService {
         total,
         q,
       );
+    });
+  }
+  async bulkAssign(actor: RequestPrincipal, body: unknown) {
+    const v = dto.bulkAssignLead.parse(body);
+    if (new Set(v.leadIds).size !== v.leadIds.length)
+      throw new UnprocessableEntityException("CRM_LEAD_DUPLICATE_SELECTION");
+    return this.repo.run(actor, true, async (tx, p) => {
+      requireLead(p, "assign");
+      if (v.assignedMembershipId)
+        await this.repo.owner(tx, p, v.assignedMembershipId);
+      const results: Array<{ id: string; revision: number }> = [];
+      // Bulk assignment is atomic: every selected lead must be visible, mutable and valid.
+      for (const leadId of v.leadIds) {
+        const row = await this.row(tx, p, leadId, true);
+        mutable(row);
+        await this.change(tx, p, row, {
+          assignedMembershipId: v.assignedMembershipId,
+        });
+        await this.recordHistory(
+          tx,
+          p,
+          leadId,
+          row.assignedMembershipId ? "reassigned" : "assigned",
+          row.assignedMembershipId ? "Lead reassigned" : "Lead assigned",
+          v.reason ?? null,
+          {
+            bulk: true,
+            revisionBefore: row.revision,
+            revisionAfter: row.revision + 1,
+            assignedBefore: row.assignedMembershipId,
+            assignedAfter: v.assignedMembershipId,
+          },
+        );
+        await this.repo.audit(tx, p, "lead.assigned", "Lead", leadId, {
+          revisionBefore: row.revision,
+          revisionAfter: row.revision + 1,
+          ownerBefore: row.ownerMembershipId,
+          ownerAfter: row.ownerMembershipId,
+          assignedBefore: row.assignedMembershipId,
+          assignedAfter: v.assignedMembershipId,
+        });
+        results.push({ id: leadId, revision: row.revision + 1 });
+      }
+      return {
+        mode: "atomic" as const,
+        requested: v.leadIds.length,
+        assigned: results.length,
+        results,
+      };
+    });
+  }
+  private parseCsv(csv: string) {
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let cell = "";
+    let quoted = false;
+    for (let i = 0; i < csv.length; i++) {
+      const char = csv[i];
+      const next = csv[i + 1];
+      if (char === '"' && quoted && next === '"') {
+        cell += '"';
+        i++;
+      } else if (char === '"') {
+        quoted = !quoted;
+      } else if (char === "," && !quoted) {
+        row.push(cell.trim());
+        cell = "";
+      } else if ((char === "\n" || char === "\r") && !quoted) {
+        if (char === "\r" && next === "\n") i++;
+        row.push(cell.trim());
+        if (row.some(Boolean)) rows.push(row);
+        row = [];
+        cell = "";
+      } else {
+        cell += char;
+      }
+    }
+    row.push(cell.trim());
+    if (row.some(Boolean)) rows.push(row);
+    if (rows.length < 2) throw new UnprocessableEntityException("CRM_CSV_EMPTY");
+    if (rows.length - 1 > 250)
+      throw new UnprocessableEntityException("CRM_CSV_ROW_LIMIT");
+    const headers = rows[0].map((h) =>
+      h.trim().toLowerCase().replace(/[\s_-]+/g, ""),
+    );
+    return rows.slice(1).map((values, index) => {
+      const record = new Map<string, string>();
+      headers.forEach((header, i) => record.set(header, values[i]?.trim() ?? ""));
+      return { rowNumber: index + 2, record };
+    });
+  }
+  private importInput(
+    record: Map<string, string>,
+    defaultSourceValueId?: string | null,
+  ) {
+    const rawKind = (record.get("leadtype") || record.get("kind") || "BUSINESS")
+      .trim()
+      .toUpperCase();
+    const kind = rawKind === "INDIVIDUAL" ? "INDIVIDUAL" : "BUSINESS";
+    const businessName = record.get("businessname") || record.get("company");
+    const contactName = record.get("contactname") || record.get("contact");
+    const priority = (
+      record.get("priority") || "MEDIUM"
+    ).toUpperCase() as dto.LeadInput["priority"];
+    const expectedClosingDate = record.get("expectedclosingdate");
+    const nextFollowUpAt = record.get("nextfollowupat");
+    const estimatedValue = record.get("estimatedvalue");
+    return {
+      kind,
+      name:
+        kind === "INDIVIDUAL"
+          ? contactName || businessName || "Imported lead"
+          : businessName || contactName || "Imported lead",
+      businessName: businessName || null,
+      contactName: contactName || null,
+      phone: record.get("phone") || null,
+      email: record.get("email") || null,
+      website: record.get("website") || null,
+      city: record.get("city") || null,
+      state: record.get("state") || null,
+      postalCode: record.get("postalcode") || null,
+      countryCode: record.get("countrycode") || null,
+      priority,
+      sourceValueId: record.get("sourcevalueid") || defaultSourceValueId || null,
+      estimatedValue: estimatedValue ? Number(estimatedValue) : null,
+      expectedClosingDate: expectedClosingDate
+        ? new Date(expectedClosingDate)
+        : null,
+      nextFollowUpAt: nextFollowUpAt ? new Date(nextFollowUpAt) : null,
+      nextActionNote: record.get("nextactionnote") || null,
+      requirementNote: record.get("requirementnote") || null,
+    };
+  }
+  private async importRows(
+    tx: Prisma.TransactionClient,
+    p: CrmPolicy,
+    input: z.infer<typeof dto.importPreview>,
+  ) {
+    await this.repo.master(tx, p, input.defaultSourceValueId, "lead_source");
+    const parsed = this.parseCsv(input.csv);
+    const rows: Array<{
+      rowNumber: number;
+      status: "READY" | "DUPLICATE" | "REJECTED";
+      errors: string[];
+      data?: z.infer<typeof dto.createLead>;
+    }> = [];
+    for (const row of parsed) {
+      const candidate = this.importInput(row.record, input.defaultSourceValueId);
+      const parsedCandidate = dto.createLead.safeParse(candidate);
+      if (!parsedCandidate.success) {
+        rows.push({
+          rowNumber: row.rowNumber,
+          status: "REJECTED",
+          errors: parsedCandidate.error.issues.map((i) => i.message),
+        });
+        continue;
+      }
+      const duplicate = await tx.lead.findFirst({
+        where: {
+          tenantId: p.scope.tenantId,
+          deletedAt: null,
+          OR: [
+            ...(parsedCandidate.data.phone
+              ? [{ phone: parsedCandidate.data.phone }]
+              : []),
+            ...(parsedCandidate.data.email
+              ? [{ email: parsedCandidate.data.email }]
+              : []),
+          ],
+        },
+        select: { id: true },
+      });
+      if (duplicate) {
+        rows.push({
+          rowNumber: row.rowNumber,
+          status:
+            input.duplicatePolicy === "SKIP" ? "DUPLICATE" : "REJECTED",
+          errors:
+            input.duplicatePolicy === "SKIP"
+              ? []
+              : ["Duplicate phone or email"],
+          data: parsedCandidate.data,
+        });
+        continue;
+      }
+      rows.push({
+        rowNumber: row.rowNumber,
+        status: "READY",
+        errors: [],
+        data: parsedCandidate.data,
+      });
+    }
+    return rows;
+  }
+  async importPreview(actor: RequestPrincipal, body: unknown) {
+    const input = dto.importPreview.parse(body);
+    return this.repo.run(actor, false, async (tx, p) => {
+      requireLead(p, "import");
+      const rows = await this.importRows(tx, p, input);
+      return {
+        totalRows: rows.length,
+        readyRows: rows.filter((r) => r.status === "READY").length,
+        duplicateRows: rows.filter((r) => r.status === "DUPLICATE").length,
+        rejectedRows: rows.filter((r) => r.status === "REJECTED").length,
+        rows: rows.map(({ data: _data, ...row }) => row),
+      };
+    });
+  }
+  async import(actor: RequestPrincipal, body: unknown) {
+    const input = dto.importLeads.parse(body);
+    return this.repo.run(actor, true, async (tx, p) => {
+      requireLead(p, "import");
+      requireLead(p, "create");
+      const rows = await this.importRows(tx, p, input);
+      const created: string[] = [];
+      for (const row of rows) {
+        if (row.status !== "READY" || !row.data) continue;
+        const owner = p.scope.membershipId;
+        const leadData = {
+          ...row.data,
+          kind: row.data.kind ?? "BUSINESS",
+          businessName:
+            row.data.businessName ??
+            ((row.data.kind ?? "BUSINESS") === "BUSINESS"
+              ? row.data.name
+              : null),
+        };
+        const createdRow = await tx.lead.create({
+          data: {
+            ...data(leadData),
+            name: leadData.name,
+            kind: leadData.kind,
+            leadCode: await this.leadCode(tx, p.scope.tenantId),
+            tenantId: p.scope.tenantId,
+            ownerMembershipId: owner,
+            createdByMembershipId: owner,
+            updatedByMembershipId: owner,
+          },
+          select: leadSelect,
+        });
+        created.push(createdRow.id);
+        await this.recordHistory(
+          tx,
+          p,
+          createdRow.id,
+          "created",
+          "Lead imported",
+          null,
+          { rowNumber: row.rowNumber },
+        );
+        await this.repo.audit(tx, p, "lead.created", "Lead", createdRow.id, {
+          revisionAfter: 1,
+          ownerMembershipId: owner,
+          assignedAfter: null,
+          lifecycle: createdRow.status,
+        });
+      }
+      return {
+        totalRows: rows.length,
+        created: created.length,
+        skipped: rows.filter((r) => r.status === "DUPLICATE").length,
+        rejected: rows.filter((r) => r.status === "REJECTED").length,
+        createdIds: created,
+        rows: rows.map(({ data: _data, ...row }) => row),
+      };
+    });
+  }
+  async exportCsv(actor: RequestPrincipal, query: unknown) {
+    const q = dto.exportQuery.parse(query);
+    return this.repo.run(actor, false, async (tx, p) => {
+      requireLead(p, "export");
+      const rows = await tx.lead.findMany({
+        where: this.where(p, q),
+        select: leadSelect,
+        take: q.maxRows,
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      });
+      const projected = await this.project(tx, p, rows);
+      const header = [
+        "Lead Code",
+        "Lead Type",
+        "Business Name",
+        "Contact Name",
+        "Phone",
+        "Email",
+        "Priority",
+        "Lifecycle",
+        "Source",
+        "Owner",
+        "Assignee",
+        "Estimated Value",
+        "Expected Closing Date",
+        "Next Follow-up At",
+        "Next Action Note",
+        "City",
+        "State",
+        "Created At",
+      ];
+      const body = projected.map((lead) =>
+        [
+          lead.leadCode,
+          lead.kind,
+          lead.businessName,
+          lead.contactName,
+          lead.phone,
+          lead.email,
+          lead.priority,
+          lead.status,
+          lead.source,
+          lead.owner.displayName,
+          lead.assignee?.displayName,
+          lead.estimatedValue,
+          lead.expectedClosingDate,
+          lead.nextFollowUpAt,
+          lead.nextActionNote,
+          lead.city,
+          lead.state,
+          lead.createdAt,
+        ].map(csvCell).join(","),
+      );
+      return [header.map(csvCell).join(","), ...body].join("\r\n") + "\r\n";
+    });
+  }
+  async history(actor: RequestPrincipal, id: string) {
+    crmId.parse(id);
+    return this.repo.run(actor, false, async (tx, p) => {
+      requireLead(p, "view");
+      await this.row(tx, p, id);
+      const items = await tx.leadHistory.findMany({
+        where: { tenantId: p.scope.tenantId, leadId: id },
+        select: {
+          id: true,
+          eventType: true,
+          message: true,
+          note: true,
+          metadata: true,
+          createdAt: true,
+          actorMembership: {
+            select: {
+              id: true,
+              designation: true,
+              user: { select: { fullName: true, avatarUrl: true } },
+            },
+          },
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        take: 100,
+      });
+      return {
+        items: items.map(({ actorMembership, ...item }) => ({
+          ...item,
+          createdAt: item.createdAt.toISOString(),
+          actor: {
+            id: actorMembership.id,
+            displayName: actorMembership.user.fullName,
+            avatarUrl: actorMembership.user.avatarUrl,
+            role: actorMembership.designation,
+          },
+        })),
+      };
+    });
+  }
+  async note(actor: RequestPrincipal, id: string, body: unknown) {
+    crmId.parse(id);
+    const v = dto.createLeadNote.parse(body);
+    return this.repo.run(actor, true, async (tx, p) => {
+      requireLead(p, "update");
+      await this.row(tx, p, id, true);
+      const event = await tx.leadHistory.create({
+        data: {
+          tenantId: p.scope.tenantId,
+          leadId: id,
+          eventType: "note",
+          message: "Note added",
+          note: v.note,
+          actorMembershipId: p.scope.membershipId,
+        },
+        select: { id: true, createdAt: true },
+      });
+      return { id: event.id, createdAt: event.createdAt.toISOString() };
     });
   }
   private targetPermissions(p: CrmPolicy, v: dto.ConversionCommand) {
@@ -526,6 +1029,13 @@ export class LeadService {
           updatedAt: convertedAt,
         },
         select: { id: true },
+      });
+      await this.recordHistory(tx, p, id, "converted", "Lead converted", null, {
+        revisionBefore: row.revision,
+        revisionAfter: row.revision + 1,
+        accountId,
+        contactId,
+        conversionCommandId: command.id,
       });
       await this.repo.audit(tx, p, "lead.converted", "Lead", id, {
         revisionBefore: row.revision,

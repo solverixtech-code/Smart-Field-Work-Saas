@@ -1,7 +1,5 @@
-import React from 'react';
-import { MapPin, Clock, CheckCircle2, Camera, Plus } from 'lucide-react';
+import { MapPin, Camera, Plus } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
-import { mockLeadVisits } from '../leadsData';
 
 export function LeadVisitsTab() {
   return (
@@ -13,72 +11,28 @@ export function LeadVisitsTab() {
             <span>Field Executive Geotagged Visit Logs</span>
           </h3>
           <p className="text-xs font-medium text-slate-500">
-            GPS verified check-ins, site meeting outcomes, and geotagged client office photos.
+            Visit scheduling, GPS check-ins, and site photos belong to the field activity workflow. This tab shows no sample visits.
           </p>
         </div>
 
-        <Button variant="accent" size="sm" className="font-bold flex items-center gap-1.5 shadow-xs">
+        <Button variant="accent" size="sm" disabled className="font-bold flex items-center gap-1.5 shadow-xs">
           <Plus className="h-4 w-4" /> Schedule New Visit
         </Button>
       </div>
 
-      <div className="space-y-4">
-        {mockLeadVisits.map((visit) => (
-          <div key={visit.id} className="rounded-sm border border-slate-200 bg-slate-50/50 p-5 space-y-3 text-xs">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
-              <div className="flex items-center gap-3">
-                <img
-                  src={visit.executiveAvatar}
-                  alt={visit.executiveName}
-                  className="h-8 w-8 rounded-full object-cover border border-slate-200"
-                />
-                <div>
-                  <p className="font-extrabold text-[#0D1F3D] text-sm">{visit.executiveName}</p>
-                  <p className="text-[10px] text-slate-500 font-medium">Checked in at: {visit.checkInTime}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="rounded-sm bg-emerald-50 text-emerald-600 border border-emerald-200 px-2.5 py-0.5 font-extrabold text-[10px]">
-                  {visit.status}
-                </span>
-                <span className="rounded-sm bg-slate-100 text-slate-700 px-2 py-0.5 font-bold text-[10px]">
-                  ⏱️ {visit.durationMinutes} Mins
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-2 font-semibold text-slate-700">
-              <p className="flex items-center gap-1.5 text-slate-600 font-bold">
-                <MapPin className="h-3.5 w-3.5 text-rose-600" /> {visit.location}
-              </p>
-              <div className="p-3 rounded-sm bg-white border border-slate-200/80 space-y-1">
-                <span className="text-[10px] text-slate-400 font-bold block uppercase">Purpose & Outcome</span>
-                <p className="text-slate-800 leading-relaxed font-bold">{visit.purpose}</p>
-                <p className="text-slate-600 leading-snug">{visit.outcome}</p>
-              </div>
-            </div>
-
-            {/* Site Photos */}
-            {visit.photos.length > 0 && (
-              <div className="space-y-1.5 pt-2">
-                <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-                  <Camera className="h-3.5 w-3.5 text-blue-600" /> Geotagged Site Photos ({visit.photos.length})
-                </span>
-                <div className="flex items-center gap-3">
-                  {visit.photos.map((photo, i) => (
-                    <img
-                      key={i}
-                      src={photo}
-                      alt="Site Visit"
-                      className="h-20 w-28 rounded-sm object-cover border border-slate-200 shadow-xs hover:opacity-95 transition-opacity"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+      <div className="rounded-sm border border-dashed border-slate-300 bg-slate-50/70 p-6 text-center space-y-4">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white border border-slate-200 shadow-xs">
+          <MapPin className="h-5 w-5 text-slate-500" />
+        </div>
+        <div>
+          <h4 className="text-sm font-extrabold text-[#0D1F3D]">No visit logs yet</h4>
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Real geotagged check-ins, outcomes, and photos will appear after the visit module is connected.
+          </p>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-sm border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-700">
+          <Camera className="h-3.5 w-3.5" /> Geotagged photos planned
+        </span>
       </div>
     </div>
   );
