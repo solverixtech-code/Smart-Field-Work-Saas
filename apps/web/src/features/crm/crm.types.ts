@@ -1,3 +1,4 @@
+import type { LeadApi } from "./lead.types";
 export type CrmStatus = "ACTIVE" | "INACTIVE" | "BLOCKED";
 export interface Page<T> {
   items: T[];
@@ -7,6 +8,8 @@ export interface Page<T> {
   totalPages: number;
 }
 export interface OwnerOption {
+  avatarUrl?: string | null;
+  role?: string | null;
   id: string;
   displayName: string;
 }
@@ -80,6 +83,7 @@ export interface MasterOption {
 }
 export type MasterCode = "business_type" | "lead_source" | "contact_role";
 export interface CrmService {
+  leads: LeadApi;
   accounts(query: ListQuery, signal: AbortSignal): Promise<Page<AccountDto>>;
   account(id: string, signal: AbortSignal): Promise<AccountDto>;
   createAccount(body: AccountInput, signal: AbortSignal): Promise<AccountDto>;
@@ -94,8 +98,8 @@ export interface CrmService {
     signal: AbortSignal,
   ): Promise<void>;
   contacts(
-    accountId: string,
-    query: ListQuery,
+    accountId: string | null,
+    query: ListQuery & { standalone?: "true" },
     signal: AbortSignal,
   ): Promise<Page<ContactDto>>;
   contact(id: string, signal: AbortSignal): Promise<ContactDto>;

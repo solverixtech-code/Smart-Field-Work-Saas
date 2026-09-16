@@ -23,6 +23,11 @@ import {
 } from "./crm-select";
 
 interface CrmAuditMetadata {
+  lifecycle?: string;
+  assignedBefore?: string | null;
+  assignedAfter?: string | null;
+  conversionCommandId?: string;
+  contactId?: string | null;
   revisionBefore?: number;
   revisionAfter?: number;
   changedFields?: string[];
@@ -44,7 +49,12 @@ type CrmAuditAction =
   | "contact.created"
   | "contact.updated"
   | "contact.deleted"
-  | "contact.owner.changed";
+  | "contact.owner.changed"
+  | "lead.created"
+  | "lead.updated"
+  | "lead.deleted"
+  | "lead.assigned"
+  | "lead.converted";
 
 export const crmConflict = (code: string): never => {
   throw new ConflictException({
@@ -128,6 +138,12 @@ export class CrmRepository {
           "CRM_PRIMARY_CONTACT_REQUIRED_CHANGE",
           "CRM_ACCOUNT_DELETED",
           "CRM_SOFT_DELETE_ONLY",
+          "CRM_LEAD_IMMUTABLE",
+          "CRM_LEAD_TRANSITION_INVALID",
+          "CRM_LEAD_LINK_MISMATCH",
+          "CRM_CONVERSION_IMMUTABLE",
+          "CRM_CONVERSION_INCONSISTENT",
+          "CRM_TARGET_HAS_LEADS",
         ].find((code) => error.message.includes(code));
         if (match) crmConflict(match);
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -212,7 +228,7 @@ export class CrmRepository {
     tx: Prisma.TransactionClient,
     p: CrmPolicy,
     action: CrmAuditAction,
-    entityType: "Account" | "Contact",
+    entityType: "Account" | "Contact" | "Lead",
     id: string,
     metadata: CrmAuditMetadata,
   ) {

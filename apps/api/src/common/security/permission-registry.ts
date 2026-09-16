@@ -10,7 +10,7 @@ export interface PermissionDefinition {
   moduleKey: string;
 }
 
-export const PERMISSION_REGISTRY_VERSION = '1.1.0';
+export const PERMISSION_REGISTRY_VERSION = '1.2.0';
 
 export const CRM_PHASE_1_1_PERMISSIONS: PermissionDefinition[] = [
   ...(
@@ -51,7 +51,25 @@ export const CRM_PHASE_1_1_PERMISSIONS: PermissionDefinition[] = [
     moduleKey: 'crm_contacts',
   })),
 ];
+export const CRM_PHASE_1_2_PERMISSIONS: PermissionDefinition[] = [
+  "update",
+  "delete",
+  "assign",
+  "convert",
+  "access.own",
+  "access.assigned",
+  "access.tenant",
+].map((action) => ({
+  code: "crm.leads." + action,
+  scope: PermissionScope.TENANT,
+  domain: "crm",
+  resource: "leads",
+  action,
+  description: "Lead " + action + " access",
+  moduleKey: "crm_leads",
+}));
 export const PERMISSION_REGISTRY: PermissionDefinition[] = [
+  ...CRM_PHASE_1_2_PERMISSIONS,
   ...CRM_PHASE_1_1_PERMISSIONS,
   { code: 'platform.operations.jobs.view', scope: PermissionScope.PLATFORM, domain: 'platform', resource: 'jobs', action: 'view', description: 'View durable job status and attempt history', moduleKey: 'platform_operations' },
   { code: 'platform.operations.jobs.retry', scope: PermissionScope.PLATFORM, domain: 'platform', resource: 'jobs', action: 'retry', description: 'Retry a dead job with a recorded reason', moduleKey: 'platform_operations' },

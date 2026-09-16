@@ -1,3 +1,4 @@
+import { LeadDeferred } from './features/crm/LeadForms';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -65,9 +66,6 @@ import AllLeadsPage from './screens/leads/AllLeadsPage';
 import AddLeadPage from './screens/leads/AddLeadPage';
 import EditLeadPage from './screens/leads/EditLeadPage';
 import LeadDetailsPage from './screens/leads/LeadDetailsPage';
-import BulkAssignLeadsPage from './screens/leads/BulkAssignLeadsPage';
-import LeadImportPage from './screens/leads/LeadImportPage';
-import LeadExportPage from './screens/leads/LeadExportPage';
 
 import SalesPipelinePage from './screens/sales/SalesPipelinePage';
 import SalesStageViewPage from './screens/sales/SalesStageViewPage';
@@ -417,11 +415,12 @@ export default function AppRouter() {
 
             {/* Leads Management Routes (Screens 33 to 53) */}
             <Route element={<PermissionRoute permission="crm.leads.view" />}>
+              <Route element={<CrmBoundary />}>
               <Route path="/admin/leads" element={<AllLeadsPage viewMode="all" />} />
               <Route path="/admin/leads/create" element={<AddLeadPage />} />
-              <Route path="/admin/leads/bulk-assign" element={<BulkAssignLeadsPage />} />
-              <Route path="/admin/leads/import" element={<LeadImportPage />} />
-              <Route path="/admin/leads/export" element={<LeadExportPage />} />
+              <Route path="/admin/leads/bulk-assign" element={<LeadDeferred title="Lead operation unavailable" />} />
+              <Route path="/admin/leads/import" element={<LeadDeferred title="Lead operation unavailable" />} />
+              <Route path="/admin/leads/export" element={<LeadDeferred title="Lead operation unavailable" />} />
               <Route path="/admin/leads/unassigned" element={<AllLeadsPage viewMode="unassigned" />} />
               <Route path="/admin/leads/hot" element={<AllLeadsPage viewMode="hot" />} />
               <Route path="/admin/leads/follow-up" element={<AllLeadsPage viewMode="follow-up" />} />
@@ -438,6 +437,7 @@ export default function AppRouter() {
               <Route path="/admin/leads/:leadId/communications" element={<LeadDetailsPage />} />
               <Route path="/admin/leads/:leadId/payments" element={<LeadDetailsPage />} />
               <Route path="/admin/leads/:leadId/assignment" element={<LeadDetailsPage />} />
+              </Route>
             </Route>
 
             {/* Sales Pipeline Routes (Screens 105 to 113) */}

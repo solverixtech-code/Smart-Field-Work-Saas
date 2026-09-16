@@ -75,15 +75,17 @@ export function CrmLookup({
   onChange,
   disabled = false,
   compact = false,
+  emptyLabel,
 }: {
   id: string;
   label: string;
-  kind: MasterCode | "owner";
+  kind: MasterCode | "owner" | "lead-owner";
   value?: string | null;
   currentLabel?: string | null;
   onChange: (id: string) => void;
   disabled?: boolean;
   compact?: boolean;
+  emptyLabel?: string;
 }) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -91,16 +93,18 @@ export function CrmLookup({
   const result = useCrmQuery(
     `${kind}:${query}:${page}`,
     async (service, signal) => {
-      if (kind === "owner") {
-        const response = await service.owners(
-          { search: query, page, limit: 25 },
-          signal,
-        );
+      if (kind === "owner" || kind === "lead-owner") {
+        const response = await (
+          kind === "lead-owner" ? service.leads.owners : service.owners
+        )({ search: query, page, limit: 25 }, signal);
         return {
           ...response,
           items: response.items.map((r) => ({
             value: r.id,
             label: r.displayName,
+            avatar: r.avatarUrl ?? undefined,
+            avatarFallback: kind === "lead-owner",
+            sublabel: r.role ?? undefined,
           })),
         };
       }
@@ -146,7 +150,13 @@ export function CrmLookup({
         id={id}
         label={label}
         value={value ?? ""}
-        options={[...selected, ...options]}
+        options={[
+          ...(kind === "lead-owner"
+            ? [{ value: "", label: emptyLabel ?? "Unassigned" }]
+            : []),
+          ...selected,
+          ...options,
+        ]}
         disabled={disabled || result.loading}
         placeholder={
           result.loading

@@ -1,3 +1,5 @@
+import { LeadService } from "./lead.service";
+import { LeadController } from "./lead.controller";
 import { Module } from "@nestjs/common";
 import { PersistenceModule } from "../persistence/persistence.module";
 import { MasterCoreModule } from "../platform/masters/master-core.module";
@@ -6,7 +8,7 @@ import { CrmRepository } from "./crm.repository";
 import { CrmService } from "./crm.service";
 @Module({
   imports: [PersistenceModule, MasterCoreModule],
-  controllers: [CrmController],
-  providers: [CrmRepository, CrmService],
+  controllers: [CrmController, LeadController],
+  providers: [CrmRepository, CrmService, LeadService],
 })
 export class CrmModule {}

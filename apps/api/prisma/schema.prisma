@@ -614,6 +614,7 @@ model MasterDefinition {
   @@index([moduleCode])
 }
 model MasterValue {
+  leadSources Lead[] @relation("LeadSource")
   crmBusinessTypes Account[] @relation("AccountBusinessType")
   crmSources Account[] @relation("AccountSource")
   crmContactRoles Contact[] @relation("ContactRole")
@@ -817,6 +818,8 @@ enum PlatformAssignmentStatus {
 }
 
 model Tenant {
+  crmLeads Lead[]
+  leadConversions LeadConversionCommand[]
   crmAccounts Account[]
   crmContacts Contact[]
   privateMedia MediaAsset[]
@@ -918,6 +921,12 @@ model TenantBranding {
 }
 
 model TenantMembership {
+  lead0 Lead[] @relation("LeadOwner")
+  lead1 Lead[] @relation("LeadAssignee")
+  lead2 Lead[] @relation("LeadCreator")
+  lead3 Lead[] @relation("LeadUpdater")
+  lead4 Lead[] @relation("LeadConverter")
+  leadConversionCommands LeadConversionCommand[]
   ownedAccounts Account[] @relation("AccountOwner")
   createdAccounts Account[] @relation("AccountCreator")
   updatedAccounts Account[] @relation("AccountUpdater")
@@ -1506,6 +1515,9 @@ enum CrmRecordStatus {
 }
 
 model Account {
+  currentLeads Lead[] @relation("LeadAccount")
+  convertedLeads Lead[] @relation("LeadConvertedAccount")
+  leadConversionCommands LeadConversionCommand[]
   id String @id @default(uuid())
   tenantId String
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
@@ -1543,6 +1555,9 @@ model Account {
 }
 
 model Contact {
+  currentLeads Lead[] @relation("LeadContact")
+  convertedLeads Lead[] @relation("LeadConvertedContact")
+  leadConversionCommands LeadConversionCommand[]
   id String @id @default(uuid())
   tenantId String
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
@@ -1568,4 +1583,99 @@ model Contact {
   @@unique([id, tenantId])
   @@index([tenantId, accountId, deletedAt, createdAt, id])
   @@index([tenantId, ownerMembershipId, deletedAt])
+}
+
+
+enum LeadLifecycle {
+  OPEN
+  QUALIFIED
+  CONVERTED
+  DISQUALIFIED
+  DUPLICATE
+}
+enum LeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+enum LeadKind {
+  BUSINESS
+  INDIVIDUAL
+}
+model Lead {
+  id String @id @default(uuid())
+  tenantId String
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  kind LeadKind @default(BUSINESS)
+  name String
+  contactName String?
+  phone String?
+  email String?
+  website String?
+  addressLine1 String?
+  addressLine2 String?
+  city String?
+  state String?
+  postalCode String?
+  countryCode String?
+  description String?
+  sourceValueId String?
+  sourceValue MasterValue? @relation("LeadSource", fields: [sourceValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  status LeadLifecycle @default(OPEN)
+  priority LeadPriority @default(MEDIUM)
+  ownerMembershipId String
+  ownerMembership TenantMembership @relation("LeadOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  assignedMembershipId String?
+  assignedMembership TenantMembership? @relation("LeadAssignee", fields: [assignedMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  accountId String?
+  account Account? @relation("LeadAccount", fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  contactId String?
+  contact Contact? @relation("LeadContact", fields: [contactId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  convertedAccountId String?
+  convertedAccount Account? @relation("LeadConvertedAccount", fields: [convertedAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  convertedContactId String?
+  convertedContact Contact? @relation("LeadConvertedContact", fields: [convertedContactId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  convertedAt DateTime?
+  convertedByMembershipId String?
+  convertedByMembership TenantMembership? @relation("LeadConverter", fields: [convertedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  revision Int @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  createdByMembershipId String
+  createdByMembership TenantMembership @relation("LeadCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  updatedByMembershipId String
+  updatedByMembership TenantMembership @relation("LeadUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  conversion LeadConversionCommand?
+  @@unique([id, tenantId])
+  @@index([tenantId, deletedAt, createdAt, id])
+  @@index([tenantId, ownerMembershipId, deletedAt])
+  @@index([tenantId, assignedMembershipId, deletedAt])
+  @@index([tenantId, status, priority, deletedAt])
+  @@index([tenantId, accountId])
+  @@index([tenantId, contactId])
+  @@index([tenantId, convertedAccountId])
+  @@index([tenantId, convertedContactId])
+}
+model LeadConversionCommand {
+  id String @id @default(uuid())
+  tenantId String
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  leadId String
+  lead Lead @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  idempotencyKey String
+  payloadHash String
+  resultRevision Int
+  accountId String?
+  account Account? @relation(fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  contactId String?
+  contact Contact? @relation(fields: [contactId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  actorMembershipId String
+  actorMembership TenantMembership @relation(fields: [actorMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  @@unique([id, tenantId])
+  @@unique([leadId, tenantId])
+  @@unique([tenantId, leadId, idempotencyKey])
 }
