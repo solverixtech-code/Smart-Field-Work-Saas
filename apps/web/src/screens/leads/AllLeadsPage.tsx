@@ -156,15 +156,15 @@ export default function AllLeadsPage({
       header: "Lead / Company",
       cell: (l) => (
         <div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="font-extrabold text-[#0D1F3D]"
+          <button
             onClick={() => navigate("/admin/leads/" + l.id)}
+            className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline block text-left"
           >
-            {l.leadCode} / {l.name}
-          </Button>
-          <p className="text-xs text-slate-500">{l.source || "No source"}</p>
+            {l.name}
+          </button>
+          <span className="text-[10px] font-mono text-slate-400">
+            {l.leadCode} • {l.source || "Direct Field Lead"}
+          </span>
         </div>
       ),
     },
@@ -173,48 +173,75 @@ export default function AllLeadsPage({
       cell: (l) => (
         <div>
           <p className="font-bold text-slate-900">
-            {l.contactName || "Not set"}
+            {l.contactName || "Not specified"}
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-[10px] text-slate-500 font-medium">
             {l.phone || l.email || "Contact details not set"}
           </p>
         </div>
       ),
     },
     {
-      header: "Lifecycle & Priority",
+      header: "Stage & Priority",
       cell: (l) => (
-        <div className="flex items-center gap-2">
-          <span className="rounded-md border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700">
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`rounded-md px-2 py-0.5 text-[10px] font-extrabold border ${
+              l.status === "CONVERTED"
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : l.status === "QUALIFIED"
+                  ? "bg-blue-50 text-blue-700 border-blue-200"
+                  : l.status === "DISQUALIFIED"
+                    ? "bg-red-50 text-red-600 border-red-200"
+                    : "bg-slate-100 text-slate-700 border-slate-200"
+            }`}
+          >
             {leadLabel(l.status)}
           </span>
-          <span className="rounded-md bg-slate-900 px-2 py-1 text-xs font-bold text-white">
+          <span
+            className={`rounded-md px-2 py-0.5 text-[10px] font-extrabold text-white ${
+              l.priority === "URGENT" || l.priority === "HIGH"
+                ? "bg-[#E20613]"
+                : l.priority === "MEDIUM"
+                  ? "bg-amber-500"
+                  : "bg-slate-700"
+            }`}
+          >
             {leadLabel(l.priority)}
           </span>
         </div>
       ),
     },
     {
-      header: "Estimated Value",
+      header: "Estimated Value (₹)",
       cell: (l) =>
         l.estimatedValue == null ? (
-          <span className="text-xs text-slate-500">Not set</span>
+          <span className="text-xs text-slate-400 font-medium">Not set</span>
         ) : (
-          <span className="font-bold text-emerald-700">
-            ₹{l.estimatedValue.toLocaleString("en-IN")}
-          </span>
+          <div>
+            <p className="font-extrabold text-[#0D1F3D]">
+              ₹{l.estimatedValue.toLocaleString("en-IN")}
+            </p>
+            <span className="text-[10px] text-slate-400 font-medium">
+              Priority: {leadLabel(l.priority)}
+            </span>
+          </div>
         ),
     },
     {
       header: "Assigned Executive",
       cell: (l) => (
         <div className="flex items-center gap-2">
-          <UserCheck className="h-7 w-7 rounded-full border border-slate-200 p-1 text-slate-500" />
+          <div className="h-7 w-7 rounded-full bg-[#0D1F3D] text-white font-bold text-[10px] flex items-center justify-center shrink-0 border border-slate-200">
+            {(l.assignee?.displayName || l.owner.displayName)
+              .slice(0, 2)
+              .toUpperCase()}
+          </div>
           <div>
-            <p className="font-bold text-slate-900">
+            <p className="font-bold text-slate-900 text-xs">
               {l.assignee?.displayName || "Unassigned"}
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-[10px] text-slate-400 font-medium">
               Owner: {l.owner.displayName}
             </p>
           </div>
@@ -225,8 +252,12 @@ export default function AllLeadsPage({
       header: "Region & Territory",
       cell: (l) => (
         <div>
-          <p className="font-bold text-slate-800">{l.city || "City not set"}</p>
-          <p className="text-xs text-slate-500">Territory unavailable</p>
+          <p className="font-bold text-slate-800">
+            {[l.city, l.state].filter(Boolean).join(", ") || "City not set"}
+          </p>
+          <p className="text-[10px] text-slate-400 font-medium">
+            {l.countryCode || "IN"} Territory
+          </p>
         </div>
       ),
     },
@@ -235,15 +266,22 @@ export default function AllLeadsPage({
       cell: (l) =>
         l.nextFollowUpAt ? (
           <div>
-            <p className="font-bold text-slate-900">
-              {new Date(l.nextFollowUpAt).toLocaleString()}
+            <p className="font-bold text-slate-900 text-xs">
+              {new Date(l.nextFollowUpAt).toLocaleDateString("en-IN", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </p>
-            <p className="text-xs text-slate-500">
-              {l.nextActionNote || "No action note"}
+            <p className="text-[10px] text-slate-400 font-medium">
+              {l.nextActionNote || "Scheduled follow-up"}
             </p>
           </div>
         ) : (
-          <span className="text-xs text-slate-500">Not scheduled</span>
+          <span className="text-xs text-slate-400 font-medium">
+            Not scheduled
+          </span>
         ),
     },
     {

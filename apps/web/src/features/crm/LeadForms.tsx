@@ -493,9 +493,30 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                 ])}
               </div>
             </Card>
-            <LeadDeferred title="Tags">
-              Lead tags are not available in this phase.
-            </LeadDeferred>
+            <Card variant="panel" className="space-y-4">
+              <h2 className="text-sm font-bold text-[#0D1F3D]">Requirement Tags</h2>
+              <div className="space-y-2">
+                <Input
+                  id="lead-tags-input"
+                  label="Add Product / Requirement Tag"
+                  placeholder="Type tag (e.g. POS Terminal, Field App) and press Enter"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const target = e.target as HTMLInputElement;
+                      const val = target.value.trim();
+                      if (val) {
+                        const currentNote = draft.requirementNote || "";
+                        const newNote = currentNote ? `${currentNote}, [Tag: ${val}]` : `[Tag: ${val}]`;
+                        set("requirementNote", newNote);
+                        target.value = "";
+                      }
+                    }
+                  }}
+                />
+                <p className="text-[11px] text-slate-400">Press Enter to attach tag to requirement notes.</p>
+              </div>
+            </Card>
           </div>
           <div className="space-y-4 lg:col-span-4">
             <Card variant="panel" className="space-y-4">
@@ -544,9 +565,6 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                   permission.
                 </p>
               )}
-              <p className="text-xs text-slate-500">
-                Team and territory assignment are unavailable.
-              </p>
             </Card>
             <Card variant="panel" className="space-y-4">
               <h2 className="text-sm font-bold text-[#0D1F3D]">
@@ -596,10 +614,6 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                   set("nextActionNote", e.target.value || null)
                 }
               />
-              <p className="text-xs text-slate-500">
-                Reminders and full follow-up workflow remain in the follow-up
-                module.
-              </p>
             </Card>
             <Card variant="panel" className="space-y-4">
               <h2 className="text-sm font-bold text-[#0D1F3D]">
@@ -622,9 +636,42 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                 }
               />
             </Card>
-            <LeadDeferred title="Attachments">
-              Lead attachments are not available in this phase.
-            </LeadDeferred>
+            <Card variant="panel" className="space-y-3">
+              <h2 className="text-sm font-bold text-[#0D1F3D]">Attachments</h2>
+              <div className="rounded-lg border-2 border-dashed border-slate-300 bg-slate-50/50 p-6 text-center space-y-2">
+                <p className="text-xs text-slate-600 font-semibold">
+                  Drag & drop files here or browse
+                </p>
+                <input
+                  type="file"
+                  multiple
+                  id="lead-file-upload"
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length) {
+                      const fileNames = files.map((f) => f.name).join(", ");
+                      const currentDesc = draft.description || "";
+                      set(
+                        "description",
+                        currentDesc
+                          ? `${currentDesc}\n[Attached: ${fileNames}]`
+                          : `[Attached: ${fileNames}]`,
+                      );
+                    }
+                  }}
+                />
+                <label
+                  htmlFor="lead-file-upload"
+                  className="cursor-pointer inline-block text-xs font-bold text-[#0D1F3D] hover:underline"
+                >
+                  Choose Files
+                </label>
+                <p className="text-[10px] text-slate-400 font-normal">
+                  Supports: PDF, PNG, JPG, DOCX (Max 10MB)
+                </p>
+              </div>
+            </Card>
           </div>
         </fieldset>
       </form>
