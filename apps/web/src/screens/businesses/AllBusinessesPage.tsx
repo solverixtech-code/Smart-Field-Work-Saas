@@ -424,17 +424,13 @@ export default function AllBusinessesPage() {
                 ? "No businesses match these filters."
                 : "No businesses yet."
             }
-            pagination={
-              result.data
-                ? {
-                    currentPage: result.data.page,
-                    totalPages: result.data.totalPages,
-                    totalEntries: result.data.total,
-                    pageSize: result.data.limit,
-                    onPageChange: setCurrentPage,
-                  }
-                : undefined
-            }
+            pagination={{
+              currentPage: result.data?.page ?? currentPage,
+              totalPages: result.data?.totalPages ?? 1,
+              totalEntries: result.data?.total ?? 0,
+              pageSize: result.data?.limit ?? 25,
+              onPageChange: setCurrentPage,
+            }}
           />
         )}
       </div>
