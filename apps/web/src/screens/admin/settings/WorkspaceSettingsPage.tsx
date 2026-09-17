@@ -1777,6 +1777,7 @@ export function WorkspaceSettingsPage() {
       /* ignore */
     }
 
+    setCustomizerImage('');
     setCustomizerOpen(false);
     toast.success('Sidebar logo & brand parameters published live!');
   };
@@ -2043,6 +2044,7 @@ export function WorkspaceSettingsPage() {
       <SidebarLogoCustomizerModal
         isOpen={customizerOpen}
         imageUrl={customizerImage || form.logoUrl}
+        collapsedLogoUrl={form.collapsedLogoUrl}
         initialSettings={{
           showLogoInSidebar: form.showLogoInSidebar,
           sidebarLogoHeight: form.sidebarLogoHeight,
@@ -2051,7 +2053,10 @@ export function WorkspaceSettingsPage() {
           sidebarLogoRadius: form.sidebarLogoRadius,
           sidebarLogoAlign: form.sidebarLogoAlign,
         }}
-        onClose={() => setCustomizerOpen(false)}
+        onClose={() => {
+          setCustomizerOpen(false);
+          setCustomizerImage('');
+        }}
         onApply={handleCustomizerApply}
       />
 
@@ -2124,7 +2129,7 @@ export function WorkspaceSettingsPage() {
               onTriggerLogoUpload={handleTriggerLogoUpload}
               onRemoveLogo={handleRemoveLogo}
               onOpenCustomizer={() => {
-                setCustomizerImage(form.logoUrl);
+                setCustomizerImage('');
                 setCustomizerOpen(true);
               }}
             />
