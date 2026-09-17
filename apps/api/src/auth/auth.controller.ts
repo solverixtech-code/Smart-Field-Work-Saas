@@ -94,6 +94,8 @@ export class AuthController {
       body?.emailOrCode ||
       body?.email ||
       body?.employeeCode ||
+      body?.mobile ||
+      body?.phone ||
       ''
     ).toString().trim();
 
