@@ -41,6 +41,7 @@ import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
 import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
+import { Checkbox } from '../../components/ui/Checkbox';
 import {
   Eye,
   Edit,
@@ -179,7 +180,7 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
       {/* BREADCRUMB & HEADER BAR */}
       <div className="space-y-1">
-        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+        <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold">
           <span className="hover:text-purple-600 cursor-pointer" onClick={() => navigate('/admin/dashboard')}>
             Dashboard
           </span>
@@ -188,13 +189,13 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
             Sales Pipeline
           </span>
           <span>/</span>
-          <span className="text-[#0D1F3D] font-bold">{metadata.title}</span>
+          <span className="text-[#0D1F3D] font-extrabold">{metadata.title}</span>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <div>
-            <h1 className="text-2xl font-bold text-[#0D1F3D]">{metadata.title}</h1>
-            <p className="text-xs font-normal text-slate-500">{metadata.description}</p>
+            <h1 className="text-2xl font-extrabold text-[#0D1F3D]">{metadata.title}</h1>
+            <p className="text-xs font-medium text-slate-600">{metadata.description}</p>
           </div>
 
           <div className="flex items-center gap-2.5">
@@ -238,9 +239,9 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
               className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between"
             >
               <div>
-                <span className="text-xs font-semibold text-slate-500 block">{kpi.label}</span>
+                <span className="text-xs font-extrabold text-[#0D1F3D] block">{kpi.label}</span>
                 <span className="text-xl font-extrabold text-[#0D1F3D]">{kpi.value}</span>
-                <span className="text-xs font-semibold text-emerald-600 block mt-0.5">
+                <span className="text-xs font-bold text-emerald-700 block mt-0.5">
                   {kpi.subtext}
                 </span>
               </div>
@@ -378,13 +379,11 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-extrabold text-[#0D1F3D]">
                 <th className="py-3 px-3 w-10 text-center">
-                  <input
-                    type="checkbox"
-                    onChange={handleSelectAll}
+                  <Checkbox
+                    onChange={(e) => handleSelectAll(e as any)}
                     checked={
                       filteredDeals.length > 0 && selectedRows.length === filteredDeals.length
                     }
-                    className="rounded-xs border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
                   />
                 </th>
                 <th className="py-3 px-3">Prospect Name / Business</th>
@@ -411,11 +410,9 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
                   >
                     {/* Checkbox */}
                     <td className="py-3 px-3 text-center">
-                      <input
-                        type="checkbox"
+                      <Checkbox
                         checked={isChecked}
                         onChange={() => handleToggleRow(deal.id)}
-                        className="rounded-xs border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
                       />
                     </td>
 

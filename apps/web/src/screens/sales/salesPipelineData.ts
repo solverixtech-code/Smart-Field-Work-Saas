@@ -85,10 +85,10 @@ export interface StageRouteMetadata {
 export const stageRouteMetadataMap: Record<string, StageRouteMetadata> = {
   prospects: {
     key: 'prospects',
-    title: 'New Prospects',
-    description: 'New prospects added from various sources and unassigned leads',
+    title: 'New Deals',
+    description: 'Newly converted deals and qualified sales opportunities',
     kpis: [
-      { label: 'Total New Prospects', value: 156, subtext: '18% vs last 7 days', icon: 'Users', color: 'text-purple-600 bg-purple-50' },
+      { label: 'Total New Deals', value: 156, subtext: '18% vs last 7 days', icon: 'Users', color: 'text-purple-600 bg-purple-50' },
       { label: 'Added Today', value: 28, subtext: '24% vs yesterday', icon: 'Building2', color: 'text-amber-600 bg-amber-50' },
       { label: 'From Nearby', value: 62, subtext: '39.7% of total', icon: 'MapPin', color: 'text-purple-600 bg-purple-50' },
       { label: 'From Import', value: 48, subtext: '30.8% of total', icon: 'Globe', color: 'text-blue-600 bg-blue-50' },
@@ -97,7 +97,7 @@ export const stageRouteMetadataMap: Record<string, StageRouteMetadata> = {
   },
   contacted: {
     key: 'contacted',
-    title: 'Contacted Leads',
+    title: 'Contacted Deals',
     description: 'First touch telephonic and in-person discussions logged',
     kpis: [
       { label: 'Total Contacted', value: 78, subtext: '18% vs last week', icon: 'Phone', color: 'text-blue-600 bg-blue-50' },
@@ -120,7 +120,7 @@ export const stageRouteMetadataMap: Record<string, StageRouteMetadata> = {
   interested: {
     key: 'interested',
     title: 'Interested Prospects',
-    description: 'Warm leads evaluating proposals and commercial terms',
+    description: 'Warm deals evaluating proposals and commercial terms',
     kpis: [
       { label: 'Interested Deals', value: 34, subtext: 'Commercial intent', icon: 'Flame', color: 'text-amber-600 bg-amber-50' },
       { label: 'Quotations Sent', value: 28, subtext: '₹1.84 Cr total value', icon: 'FileText', color: 'text-blue-600 bg-blue-50' },
@@ -152,10 +152,10 @@ export const stageRouteMetadataMap: Record<string, StageRouteMetadata> = {
   },
   won: {
     key: 'won',
-    title: 'Won Sales',
+    title: 'Won Deals',
     description: 'Successfully closed contracts and converted accounts',
     kpis: [
-      { label: 'Total Won Sales', value: 26, subtext: '30% vs last week', icon: 'Trophy', color: 'text-emerald-600 bg-emerald-50' },
+      { label: 'Total Won Deals', value: 26, subtext: '30% vs last week', icon: 'Trophy', color: 'text-emerald-600 bg-emerald-50' },
       { label: 'Closed Revenue', value: '₹18.90 Lakhs', subtext: 'Realized ARR', icon: 'DollarSign', color: 'text-purple-600 bg-purple-50' },
       { label: 'Avg Closure Time', value: '11 Days', subtext: 'Fast onboarding', icon: 'Clock', color: 'text-blue-600 bg-blue-50' },
       { label: 'Activation Rate', value: '96%', subtext: 'Live on platform', icon: 'Check', color: 'text-emerald-600 bg-emerald-50' },
@@ -163,10 +163,10 @@ export const stageRouteMetadataMap: Record<string, StageRouteMetadata> = {
   },
   lost: {
     key: 'lost',
-    title: 'Lost Sales',
-    description: 'Unconverted leads and dropped opportunities with loss reason audit',
+    title: 'Lost Deals',
+    description: 'Unconverted deal opportunities with loss reason audit',
     kpis: [
-      { label: 'Total Lost Opportunities', value: 14, subtext: 'Audited deals', icon: 'XCircle', color: 'text-red-600 bg-red-50' },
+      { label: 'Total Lost Deals', value: 14, subtext: 'Audited deals', icon: 'XCircle', color: 'text-red-600 bg-red-50' },
       { label: 'Lost Value', value: '₹7.60 Lakhs', subtext: 'Potential revenue lost', icon: 'DollarSign', color: 'text-slate-600 bg-slate-100' },
       { label: 'Top Reason', value: 'Price Budget', subtext: '42% of lost deals', icon: 'AlertTriangle', color: 'text-amber-600 bg-amber-50' },
       { label: 'Re-nurture Eligible', value: 9, subtext: 'Eligible for 60d callback', icon: 'RotateCcw', color: 'text-blue-600 bg-blue-50' },
