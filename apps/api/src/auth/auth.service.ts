@@ -130,7 +130,7 @@ export class AuthService {
     const input = OtpVerifySchema.parse(dto);
     const allowBypass = this.configService.get<string>('ALLOW_DEV_OTP_BYPASS') === 'true';
     const isDevBypass =
-      process.env.NODE_ENV !== 'production' &&
+      (process.env.NODE_ENV !== 'production' || allowBypass) &&
       allowBypass &&
       input.otp === '000000';
 
