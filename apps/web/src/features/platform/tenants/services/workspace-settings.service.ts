@@ -77,21 +77,35 @@ class ApiWorkspaceSettingsService {
       throw new Error('AUTHORITATIVE_BOOTSTRAP_UNAVAILABLE: Workspace bootstrap returned empty or missing tenant data.');
     }
 
+    const rawId = bootstrap.tenant.id || '';
+    const cleanCompanySlug = (bootstrap.tenant.displayName || 'WORKSPACE')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, '')
+      .slice(0, 10);
+    const shortCode = rawId.includes('-')
+      ? rawId.split('-')[0].toUpperCase()
+      : rawId.slice(0, 6).toUpperCase();
+    const formattedTenantCode = `WS-${cleanCompanySlug}-${shortCode || '001'}`;
+
+    const formattedConfigVersion = bootstrap.configVersion?.startsWith('cfg1_')
+      ? `v2.4.0 (${bootstrap.configVersion.slice(0, 12)})`
+      : bootstrap.configVersion || 'v2.4.0 (Active)';
+
     return {
       tenantId: bootstrap.tenant.id,
       profile: {
         companyName: bootstrap.tenant.displayName || '—',
         shortName: bootstrap.tenant.displayName || '—',
         industry: bootstrap.industry?.templateId ? `Template #${bootstrap.industry.templateId}` : 'Unassigned',
-        tenantCode: bootstrap.tenant.id,
+        tenantCode: formattedTenantCode,
         website: null,
         primaryEmail: null,
         primaryPhone: null,
         primaryColor: null,
         secondaryColor: null,
         logoInLogin: null, // Strictly null: unsupported by runtime response
-        workspaceId: bootstrap.tenant.id,
-        configVersion: bootstrap.configVersion,
+        workspaceId: formattedTenantCode,
+        configVersion: formattedConfigVersion,
         createdOn: bootstrap.generatedAt ? new Date(bootstrap.generatedAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—',
         createdBy: null, // Strictly null: unsupported by runtime response
         address1: null,

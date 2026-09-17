@@ -101,7 +101,7 @@ function ProfileTab({ settings }: TabProps) {
             <Input label="Company Name" value={p.companyName || 'Not Configured'} disabled readOnly />
             <Input label="Industry" value={p.industry || 'Not Configured'} disabled readOnly />
             <div>
-              <label className="text-xs font-semibold text-[#0B2E6B] block mb-1.5">Tenant Code / ID</label>
+              <label className="text-xs font-semibold text-[#0B2E6B] block mb-1.5">Tenant Workspace Code</label>
               <div className="flex rounded-sm border border-slate-200 bg-slate-100 overflow-hidden h-10">
                 <input type="text" value={p.tenantCode} disabled readOnly className="flex-1 px-3 text-xs font-mono font-bold text-slate-700 bg-slate-100 cursor-not-allowed focus:outline-none" />
               </div>
@@ -473,7 +473,7 @@ export function WorkspaceSettingsPage() {
           </div>
           <h1 className="text-2xl font-extrabold text-[#0D1F3D] tracking-tight mt-1">Workspace Settings</h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Authoritative server-issued configuration for tenant <strong className="text-slate-800">{settings.profile.companyName}</strong> ({settings.tenantId}).
+            Authoritative server-issued configuration for tenant <strong className="text-slate-800">{settings.profile.companyName}</strong> ({settings.profile.tenantCode}).
           </p>
         </div>
 
