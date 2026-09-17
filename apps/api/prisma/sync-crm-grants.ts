@@ -10,7 +10,7 @@ export async function syncCrmAdministratorGrants(prisma: PrismaClient) {
   let added = 0;
   let cursor: string | undefined;
   const crmPermissions = PERMISSION_REGISTRY.filter(
-    (p) => p.scope === "TENANT" && p.code.startsWith("crm."),
+    (p) => p.scope === "TENANT",
   );
   while (true) {
     const roles = await prisma.tenantRole.findMany({

@@ -231,8 +231,9 @@ export async function syncRbac(client?: PrismaClient) {
 
       const activeRole = tenantRole;
 
-      // Safe guard: Do NOT rewrite grants if customized (permissionsVersion > 1) and not brand new
-      if (!isNewRole && activeRole.permissionsVersion > 1) {
+      // Safe guard: Do NOT rewrite non-admin grants if customized (permissionsVersion > 1) and not brand new.
+      // Workspace Administrator (tenant_admin) must always inherit all TENANT-scoped permissions.
+      if (roleCode !== 'tenant_admin' && !isNewRole && activeRole.permissionsVersion > 1) {
         continue;
       }
 
