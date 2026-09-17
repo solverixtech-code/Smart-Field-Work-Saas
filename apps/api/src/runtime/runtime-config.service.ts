@@ -179,7 +179,7 @@ export class RuntimeConfigService {
           "[]")
     )
       throw new ServiceUnavailableException("RUNTIME_CONFIG_SOURCE_INVALID");
-    const epochRows = await tx.runtimeConfigEpoch.findMany({
+    let epochRows = await tx.runtimeConfigEpoch.findMany({
       where: {
         OR: [
           { scope: "SYSTEM" },
@@ -197,6 +197,42 @@ export class RuntimeConfigService {
       select: { id: true, scope: true, version: true },
       orderBy: { scope: "asc" },
     });
+
+    if (epochRows.length !== (assignment ? 3 : 2)) {
+      const hasSystemEpoch = epochRows.some((r) => r.scope === "SYSTEM");
+      const hasTenantEpoch = epochRows.some((r) => r.scope === "TENANT");
+
+      if (!hasSystemEpoch) {
+        let sys = await tx.runtimeConfigEpoch.findFirst({
+          where: { scope: "SYSTEM" },
+        });
+        if (!sys) {
+          sys = await tx.runtimeConfigEpoch.create({
+            data: { scope: "SYSTEM", version: BigInt(1) },
+          });
+        }
+        epochRows.push({ id: sys.id, scope: sys.scope, version: sys.version });
+      }
+
+      if (!hasTenantEpoch && principal.tenantId) {
+        let ten = await tx.runtimeConfigEpoch.findUnique({
+          where: { tenantId: principal.tenantId },
+        });
+        if (!ten) {
+          ten = await tx.runtimeConfigEpoch.create({
+            data: {
+              scope: "TENANT",
+              tenantId: principal.tenantId,
+              version: BigInt(1),
+            },
+          });
+        }
+        epochRows.push({ id: ten.id, scope: ten.scope, version: ten.version });
+      }
+
+      epochRows.sort((a, b) => a.scope.localeCompare(b.scope));
+    }
+
     if (epochRows.length !== (assignment ? 3 : 2))
       throw new ServiceUnavailableException("RUNTIME_CONFIG_SOURCE_INVALID");
     const commercial = await readEffectiveModules(tx, principal.tenantId, () =>
