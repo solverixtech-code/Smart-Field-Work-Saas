@@ -449,8 +449,8 @@ export function SidebarLogoCustomizerModal({
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-3.5 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0D1F3D] text-[#00C2A8] shadow-xs">
-                  <Sparkles className="h-5 w-5" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#0D1F3D] text-white shadow-xs">
+                  <Sparkles className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <h2 className="text-base font-extrabold text-[#0D1F3D] tracking-tight">
@@ -485,7 +485,7 @@ export function SidebarLogoCustomizerModal({
                       : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
                   }`}
                 >
-                  <Maximize2 className="h-3.5 w-3.5 text-[#00C2A8]" />
+                  <Maximize2 className={`h-3.5 w-3.5 ${activeTab === "expanded" ? "text-white" : "text-slate-400"}`} />
                   Expanded Sidebar Logo (295px)
                 </button>
                 <button
@@ -500,10 +500,10 @@ export function SidebarLogoCustomizerModal({
                       : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
                   }`}
                 >
-                  <Minimize2 className="h-3.5 w-3.5 text-[#00C2A8]" />
+                  <Minimize2 className={`h-3.5 w-3.5 ${activeTab === "collapsed" ? "text-white" : "text-slate-400"}`} />
                   Collapsed Sidebar Icon (80px)
                   {useCustomCollapsedLogo && (
-                    <span className="h-2 w-2 rounded-full bg-[#00C2A8]" title="Custom Collapsed Icon Set" />
+                    <span className={`h-2 w-2 rounded-full ${activeTab === "collapsed" ? "bg-indigo-300" : "bg-indigo-600"}`} title="Custom Collapsed Icon Set" />
                   )}
                 </button>
               </div>
