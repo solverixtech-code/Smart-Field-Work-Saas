@@ -1669,6 +1669,7 @@ export function WorkspaceSettingsPage() {
     country: '',
     pincode: '',
     logoUrl: '',
+    collapsedLogoUrl: '',
     showLogoInSidebar: true,
     showLogoInLogin: true,
     sidebarLogoHeight: 42,
@@ -1704,6 +1705,7 @@ export function WorkspaceSettingsPage() {
         country: settings.profile.country || '',
         pincode: settings.profile.pincode || '',
         logoUrl: storedBranding?.logoUrl ?? ((settings.profile as any).logoUrl || ''),
+        collapsedLogoUrl: storedBranding?.collapsedLogoUrl || '',
         showLogoInSidebar: storedBranding?.showLogoInSidebar ?? true,
         showLogoInLogin: storedBranding?.showLogoInLogin ?? true,
         sidebarLogoHeight: storedBranding?.sidebarLogoHeight ?? 42,
@@ -1741,6 +1743,7 @@ export function WorkspaceSettingsPage() {
 
   const handleCustomizerApply = (brandingSettings: {
     logoUrl: string;
+    collapsedLogoUrl?: string;
     showLogoInSidebar: boolean;
     sidebarLogoHeight: number;
     sidebarLogoObjectFit: 'contain' | 'cover';
@@ -1750,6 +1753,7 @@ export function WorkspaceSettingsPage() {
     setForm((prev) => ({
       ...prev,
       logoUrl: brandingSettings.logoUrl,
+      collapsedLogoUrl: brandingSettings.collapsedLogoUrl || '',
       showLogoInSidebar: brandingSettings.showLogoInSidebar,
       sidebarLogoHeight: brandingSettings.sidebarLogoHeight,
       sidebarLogoObjectFit: brandingSettings.sidebarLogoObjectFit,
@@ -1769,7 +1773,7 @@ export function WorkspaceSettingsPage() {
     }
 
     setCustomizerOpen(false);
-    toast.success('Sidebar logo branding applied and published live!');
+    toast.success('Sidebar logo & brand parameters published live!');
   };
 
   const handleRemoveLogo = () => {

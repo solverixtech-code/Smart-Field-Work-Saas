@@ -872,6 +872,7 @@ export default function AppShell() {
 
   const [branding, setBranding] = useState<{
     logoUrl?: string;
+    collapsedLogoUrl?: string;
     showLogoInSidebar: boolean;
     sidebarLogoHeight: number;
     sidebarLogoObjectFit: "contain" | "cover";
@@ -879,6 +880,7 @@ export default function AppShell() {
     sidebarLogoRadius: number;
   }>({
     logoUrl: "",
+    collapsedLogoUrl: "",
     showLogoInSidebar: true,
     sidebarLogoHeight: 42,
     sidebarLogoObjectFit: "contain",
@@ -894,6 +896,7 @@ export default function AppShell() {
         const parsed = JSON.parse(stored);
         setBranding({
           logoUrl: parsed.logoUrl || "",
+          collapsedLogoUrl: parsed.collapsedLogoUrl || "",
           showLogoInSidebar: parsed.showLogoInSidebar ?? true,
           sidebarLogoHeight: parsed.sidebarLogoHeight ?? 42,
           sidebarLogoObjectFit: parsed.sidebarLogoObjectFit ?? "contain",
@@ -908,6 +911,7 @@ export default function AppShell() {
     const bootstrapLogo = (runtimeBootstrap?.tenant as any)?.logoUrl || (tenant as any)?.logoUrl || "";
     setBranding({
       logoUrl: bootstrapLogo,
+      collapsedLogoUrl: "",
       showLogoInSidebar: true,
       sidebarLogoHeight: 42,
       sidebarLogoObjectFit: "contain",
@@ -923,7 +927,8 @@ export default function AppShell() {
   }, [loadBranding]);
 
   const hasCustomLogo = Boolean(branding.logoUrl && branding.logoUrl.trim() !== "");
-  const canRenderCustomLogoInSidebar = hasCustomLogo && branding.showLogoInSidebar;
+  const hasCollapsedLogo = Boolean(branding.collapsedLogoUrl && branding.collapsedLogoUrl.trim() !== "");
+  const canRenderCustomLogoInSidebar = (hasCustomLogo || hasCollapsedLogo) && branding.showLogoInSidebar;
 
   useEffect(() => {
     if (!authzLoaded && !authzLoading) {
@@ -987,7 +992,7 @@ export default function AppShell() {
           {showBigLogo ? (
             <>
               <NavLink to="/admin/dashboard" className="flex items-center max-w-[220px]">
-                {canRenderCustomLogoInSidebar ? (
+                {canRenderCustomLogoInSidebar && branding.logoUrl ? (
                   <div
                     className="flex items-center justify-center transition-all duration-200"
                     style={{
@@ -1048,13 +1053,13 @@ export default function AppShell() {
                   }}
                 >
                   <img
-                    src={branding.logoUrl}
+                    src={branding.collapsedLogoUrl || branding.logoUrl}
                     alt="Company Logo"
                     style={{
-                      height: `${Math.min(branding.sidebarLogoHeight, 40)}px`,
+                      height: branding.collapsedLogoUrl ? "38px" : `${Math.min(branding.sidebarLogoHeight, 40)}px`,
                       maxHeight: "44px",
                       maxWidth: "48px",
-                      objectFit: branding.sidebarLogoObjectFit,
+                      objectFit: branding.collapsedLogoUrl ? "contain" : branding.sidebarLogoObjectFit,
                     }}
                     onError={(e) => {
                       (e.currentTarget as HTMLElement).style.display = "none";
