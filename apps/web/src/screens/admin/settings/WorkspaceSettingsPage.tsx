@@ -24,6 +24,49 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { Select } from '../../../components/ui/Select';
+
+const COUNTRY_OPTIONS = [
+  { value: 'India', label: 'India' },
+  { value: 'United States', label: 'United States' },
+  { value: 'United Arab Emirates', label: 'United Arab Emirates' },
+  { value: 'United Kingdom', label: 'United Kingdom' },
+  { value: 'Singapore', label: 'Singapore' },
+  { value: 'Australia', label: 'Australia' },
+  { value: 'Germany', label: 'Germany' },
+  { value: 'Canada', label: 'Canada' },
+  { value: 'Other', label: 'Other' },
+];
+
+const STATE_OPTIONS = [
+  { value: 'Maharashtra', label: 'Maharashtra' },
+  { value: 'Delhi', label: 'Delhi' },
+  { value: 'Karnataka', label: 'Karnataka' },
+  { value: 'Tamil Nadu', label: 'Tamil Nadu' },
+  { value: 'Gujarat', label: 'Gujarat' },
+  { value: 'Rajasthan', label: 'Rajasthan' },
+  { value: 'Uttar Pradesh', label: 'Uttar Pradesh' },
+  { value: 'Telangana', label: 'Telangana' },
+  { value: 'West Bengal', label: 'West Bengal' },
+  { value: 'Haryana', label: 'Haryana' },
+  { value: 'California', label: 'California' },
+  { value: 'New York', label: 'New York' },
+  { value: 'London', label: 'London' },
+  { value: 'Dubai', label: 'Dubai' },
+  { value: 'Other', label: 'Other' },
+];
+
+const INDUSTRY_OPTIONS = [
+  { value: 'Pharmaceuticals & Healthcare', label: 'Pharmaceuticals & Healthcare' },
+  { value: 'FMCG & Consumer Goods', label: 'FMCG & Consumer Goods' },
+  { value: 'Retail & Distribution', label: 'Retail & Distribution' },
+  { value: 'BFSI & Financial Services', label: 'BFSI & Financial Services' },
+  { value: 'Logistics & Supply Chain', label: 'Logistics & Supply Chain' },
+  { value: 'Telecom & Utilities', label: 'Telecom & Utilities' },
+  { value: 'Technology & Enterprise SaaS', label: 'Technology & Enterprise SaaS' },
+  { value: 'Manufacturing & Industrial', label: 'Manufacturing & Industrial' },
+  { value: 'Other', label: 'Other' },
+];
 
 // ─── Disabled Read-Only Toggle Switch ───
 function DisabledToggleSwitch({ checked, label, description }: { checked: boolean | null; label: string; description?: string }) {
@@ -142,12 +185,13 @@ function ProfileTab({ settings, isAdmin, form, onChange, onSave, saving }: Profi
               disabled={!isAdmin || saving}
               placeholder="Enter company name"
             />
-            <Input
+            <Select
               label="Industry"
               value={form.industry}
               onChange={(e) => onChange('industry', e.target.value)}
-              disabled={!isAdmin || saving}
-              placeholder="e.g. Healthcare / Retail"
+              searchable={true}
+              placeholder="Select industry..."
+              options={INDUSTRY_OPTIONS}
             />
             <div>
               <label className="text-xs font-semibold text-[#0B2E6B] block mb-1.5">Tenant Workspace Code</label>
@@ -169,13 +213,22 @@ function ProfileTab({ settings, isAdmin, form, onChange, onSave, saving }: Profi
               disabled={!isAdmin || saving}
               placeholder="contact@company.com"
             />
-            <Input
-              label="Primary Contact Phone"
-              value={form.primaryPhone}
-              onChange={(e) => onChange('primaryPhone', e.target.value)}
-              disabled={!isAdmin || saving}
-              placeholder="+91 98765 43210"
-            />
+            <div>
+              <label className="text-xs font-semibold text-[#0B2E6B] block mb-1.5">Primary Contact Phone</label>
+              <div className="flex rounded-sm border border-slate-200 bg-white overflow-hidden h-10 shadow-2xs">
+                <span className="inline-flex items-center px-3 bg-slate-50 border-r border-slate-200 text-xs font-bold text-slate-700">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  value={form.primaryPhone}
+                  onChange={(e) => onChange('primaryPhone', e.target.value)}
+                  disabled={!isAdmin || saving}
+                  placeholder="98765 43210"
+                  className="flex-1 px-3 text-xs font-semibold text-slate-800 bg-white focus:outline-none"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -194,20 +247,36 @@ function ProfileTab({ settings, isAdmin, form, onChange, onSave, saving }: Profi
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Primary Color"
-                value={form.primaryColor}
-                onChange={(e) => onChange('primaryColor', e.target.value)}
-                disabled={!isAdmin || saving}
-                placeholder="#0D1F3D"
-              />
-              <Input
-                label="Secondary Color"
-                value={form.secondaryColor}
-                onChange={(e) => onChange('secondaryColor', e.target.value)}
-                disabled={!isAdmin || saving}
-                placeholder="#E20613"
-              />
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#0B2E6B] block">Primary Color</label>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="h-10 w-10 rounded-sm border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
+                    style={{ backgroundColor: form.primaryColor || '#0D1F3D' }}
+                  />
+                  <Input
+                    value={form.primaryColor}
+                    onChange={(e) => onChange('primaryColor', e.target.value)}
+                    disabled={!isAdmin || saving}
+                    placeholder="#0D1F3D"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-[#0B2E6B] block">Secondary Color</label>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="h-10 w-10 rounded-sm border border-slate-200 shadow-2xs shrink-0 cursor-pointer"
+                    style={{ backgroundColor: form.secondaryColor || '#E20613' }}
+                  />
+                  <Input
+                    value={form.secondaryColor}
+                    onChange={(e) => onChange('secondaryColor', e.target.value)}
+                    disabled={!isAdmin || saving}
+                    placeholder="#E20613"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -286,19 +355,21 @@ function ProfileTab({ settings, isAdmin, form, onChange, onSave, saving }: Profi
             disabled={!isAdmin || saving}
             placeholder="City"
           />
-          <Input
-            label="State"
-            value={form.state}
+          <Select
+            label="State / Province *"
+            value={form.state || 'Maharashtra'}
             onChange={(e) => onChange('state', e.target.value)}
-            disabled={!isAdmin || saving}
-            placeholder="State / Region"
+            searchable={true}
+            placeholder="Search state..."
+            options={STATE_OPTIONS}
           />
-          <Input
-            label="Country"
-            value={form.country}
+          <Select
+            label="Country *"
+            value={form.country || 'India'}
             onChange={(e) => onChange('country', e.target.value)}
-            disabled={!isAdmin || saving}
-            placeholder="Country"
+            searchable={true}
+            placeholder="Search country..."
+            options={COUNTRY_OPTIONS}
           />
           <Input
             label="PIN Code"
