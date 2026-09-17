@@ -22,6 +22,8 @@ export class DeviceTokenService {
         where: { token: dto.token },
       });
 
+      const platform = (dto.platform as DevicePlatform) ?? DevicePlatform.ANDROID;
+
       if (existing) {
         return await this.prisma.devicePushToken.update({
           where: { token: dto.token },
@@ -29,7 +31,7 @@ export class DeviceTokenService {
             userId,
             membershipId: membershipId ?? existing.membershipId,
             tenantId,
-            platform: dto.platform,
+            platform,
             deviceModel: dto.deviceModel ?? existing.deviceModel,
             appVersion: dto.appVersion ?? existing.appVersion,
             isActive: true,
@@ -44,7 +46,7 @@ export class DeviceTokenService {
           userId,
           membershipId,
           tenantId,
-          platform: dto.platform,
+          platform,
           deviceModel: dto.deviceModel,
           appVersion: dto.appVersion,
           isActive: true,

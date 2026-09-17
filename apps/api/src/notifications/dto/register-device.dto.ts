@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { DevicePlatform } from '../notifications.contract';
 
 export class RegisterDeviceTokenDto {
@@ -11,13 +12,19 @@ export class RegisterDeviceTokenDto {
   @IsNotEmpty()
   token: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     enum: DevicePlatform,
-    description: 'Operating system / platform of the client device',
+    description: 'Operating system / platform of the client device (ANDROID, IOS, WEB)',
     example: DevicePlatform.ANDROID,
   })
+  @Transform(({ value }) =>
+    typeof value === 'string' && value.trim()
+      ? (value.trim().toUpperCase() as DevicePlatform)
+      : DevicePlatform.ANDROID,
+  )
   @IsEnum(DevicePlatform)
-  platform: DevicePlatform;
+  @IsOptional()
+  platform?: DevicePlatform = DevicePlatform.ANDROID;
 
   @ApiPropertyOptional({
     description: 'Device hardware model',
