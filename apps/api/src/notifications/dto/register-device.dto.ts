@@ -8,39 +8,89 @@ export class RegisterDeviceTokenDto {
     description: 'Firebase Cloud Messaging (FCM) device push registration token',
     example: 'dK3b8s9...xL7p',
   })
+  @Transform(({ value, obj }) => value || obj?.pushToken || obj?.token)
   @IsString()
   @IsNotEmpty()
   token: string;
+
+  @ApiPropertyOptional({
+    description: 'Alias for FCM device push registration token sent by mobile clients',
+  })
+  @IsString()
+  @IsOptional()
+  pushToken?: string;
 
   @ApiPropertyOptional({
     enum: DevicePlatform,
     description: 'Operating system / platform of the client device (ANDROID, IOS, WEB)',
     example: DevicePlatform.ANDROID,
   })
-  @Transform(({ value }) =>
-    typeof value === 'string' && value.trim()
-      ? (value.trim().toUpperCase() as DevicePlatform)
-      : DevicePlatform.ANDROID,
-  )
+  @Transform(({ value, obj }) => {
+    const raw = value || obj?.osName || obj?.platform;
+    if (typeof raw === 'string' && raw.trim()) {
+      const upper = raw.trim().toUpperCase();
+      if (upper.includes('ANDROID')) return DevicePlatform.ANDROID;
+      if (upper.includes('IOS') || upper.includes('APPLE')) return DevicePlatform.IOS;
+      if (upper.includes('WEB')) return DevicePlatform.WEB;
+    }
+    return DevicePlatform.ANDROID;
+  })
   @IsEnum(DevicePlatform)
   @IsOptional()
   platform?: DevicePlatform = DevicePlatform.ANDROID;
 
-  @ApiPropertyOptional({
-    description: 'Device hardware model',
-    example: 'Samsung Galaxy S23 Ultra',
-  })
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  deviceId?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  deviceName?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  model?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  manufacturer?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  osName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  osVersion?: string | number;
+
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   deviceModel?: string;
 
-  @ApiPropertyOptional({
-    description: 'Field executive or web application build version',
-    example: '2.4.0',
-  })
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   appVersion?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  buildNumber?: string | number;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  locale?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  timezone?: string;
 }
 
 export class UnregisterDeviceTokenDto {

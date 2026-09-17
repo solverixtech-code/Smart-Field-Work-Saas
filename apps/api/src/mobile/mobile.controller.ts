@@ -102,7 +102,25 @@ export class MobileController {
     @CurrentPrincipal() principal: RequestPrincipal,
     @Body() dto: RegisterDeviceTokenDto,
   ) {
-    if (!principal.tenantId) {
+    let tenantId = principal.tenantId;
+    let membershipId = principal.membershipId;
+
+    if (!tenantId || !membershipId) {
+      const activeMembership = await this.prisma.tenantMembership.findFirst({
+        where: {
+          userId: principal.userId,
+          status: 'ACTIVE',
+          tenant: { status: 'ACTIVE' },
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+      if (activeMembership) {
+        tenantId = activeMembership.tenantId;
+        membershipId = activeMembership.id;
+      }
+    }
+
+    if (!tenantId || !membershipId) {
       return {
         success: false,
         message: 'No active tenant workspace found for user',
@@ -111,8 +129,8 @@ export class MobileController {
 
     const result = await this.deviceTokenService.registerToken(
       principal.userId,
-      principal.membershipId,
-      principal.tenantId,
+      membershipId,
+      tenantId,
       dto,
     );
 
