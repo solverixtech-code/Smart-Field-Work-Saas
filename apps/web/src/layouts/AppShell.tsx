@@ -863,10 +863,48 @@ export default function AppShell() {
 
   const { user } = useAppSelector((s) => s.auth);
   const { platform, tenant, loaded: authzLoaded, loading: authzLoading } = useAppSelector((s) => s.authorization);
-  const { hasPermission: hasBootstrapPermission, hasModule } = useRuntimeBootstrap();
+  const { bootstrap: runtimeBootstrap, hasPermission: hasBootstrapPermission, hasModule } = useRuntimeBootstrap();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const tenantId = runtimeBootstrap?.tenant?.id || tenant?.id || "default";
+
+  const [branding, setBranding] = useState<{ logoUrl?: string; showLogoInSidebar: boolean }>({
+    logoUrl: "",
+    showLogoInSidebar: true,
+  });
+
+  const loadBranding = React.useCallback(() => {
+    try {
+      const key = `visiblo_workspace_branding_${tenantId}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setBranding({
+          logoUrl: parsed.logoUrl || "",
+          showLogoInSidebar: parsed.showLogoInSidebar ?? true,
+        });
+        return;
+      }
+    } catch {
+      /* ignore */
+    }
+    const bootstrapLogo = (runtimeBootstrap?.tenant as any)?.logoUrl || (tenant as any)?.logoUrl || "";
+    setBranding({
+      logoUrl: bootstrapLogo,
+      showLogoInSidebar: true,
+    });
+  }, [tenantId, runtimeBootstrap, tenant]);
+
+  useEffect(() => {
+    loadBranding();
+    window.addEventListener("workspace_branding_updated", loadBranding);
+    return () => window.removeEventListener("workspace_branding_updated", loadBranding);
+  }, [loadBranding]);
+
+  const hasCustomLogo = Boolean(branding.logoUrl && branding.logoUrl.trim() !== "");
+  const canRenderCustomLogoInSidebar = hasCustomLogo && branding.showLogoInSidebar;
 
   useEffect(() => {
     if (!authzLoaded && !authzLoading) {
@@ -929,16 +967,27 @@ export default function AppShell() {
         >
           {showBigLogo ? (
             <>
-              <NavLink to="/admin/dashboard" className="flex items-center">
-                <img
-                  src={bigLogo}
-                  alt="Smart Field Work Logo"
-                  style={{
-                    width: "240px",
-                    maxHeight: "64px",
-                    objectFit: "contain",
-                  }}
-                />
+              <NavLink to="/admin/dashboard" className="flex items-center max-w-[220px]">
+                {canRenderCustomLogoInSidebar ? (
+                  <img
+                    src={branding.logoUrl}
+                    alt={runtimeBootstrap?.tenant?.displayName || (tenant as any)?.companyName || "Company Logo"}
+                    className="max-h-12 max-w-[210px] object-contain"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <img
+                    src={bigLogo}
+                    alt="Smart Field Work Logo"
+                    style={{
+                      width: "240px",
+                      maxHeight: "64px",
+                      objectFit: "contain",
+                    }}
+                  />
+                )}
               </NavLink>
               <button
                 type="button"
@@ -956,11 +1005,22 @@ export default function AppShell() {
               className="flex items-center justify-center p-1 rounded-lg hover:bg-slate-100 transition duration-200"
               title="Expand Sidebar"
             >
-              <img
-                src={smallLogo}
-                alt="Smart Field Work Favicon"
-                style={{ width: "60px", height: "60px", objectFit: "contain" }}
-              />
+              {canRenderCustomLogoInSidebar ? (
+                <img
+                  src={branding.logoUrl}
+                  alt="Company Logo"
+                  className="h-10 w-10 object-contain rounded-md"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <img
+                  src={smallLogo}
+                  alt="Smart Field Work Favicon"
+                  style={{ width: "60px", height: "60px", objectFit: "contain" }}
+                />
+              )}
             </button>
           )}
         </div>

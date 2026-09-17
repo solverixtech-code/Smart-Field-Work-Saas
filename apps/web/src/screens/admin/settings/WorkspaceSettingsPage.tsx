@@ -33,6 +33,7 @@ import {
 import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
 import { Select } from "../../../components/ui/Select";
+import { Checkbox } from "../../../components/ui/Checkbox";
 
 const COUNTRY_OPTIONS = [
   { value: "India", label: "India" },
@@ -148,8 +149,10 @@ interface ProfileTabProps {
     country: string;
     pincode: string;
     logoUrl?: string;
+    showLogoInSidebar?: boolean;
+    showLogoInLogin?: boolean;
   };
-  onChange: (field: string, val: string) => void;
+  onChange: (field: string, val: any) => void;
   onSave: () => void;
   saving: boolean;
   onTriggerLogoUpload: () => void;
@@ -421,11 +424,29 @@ function ProfileTab({
           </div>
 
           <div className="space-y-3 border-t border-slate-100 pt-4">
-            <DisabledToggleSwitch
-              checked={p.logoInLogin}
-              label="Logo in Login"
-              description="Login logo branding configured by workspace theme"
-            />
+            <h4 className="text-xs font-bold text-[#0D1F3D]">Branding & Logo Preferences</h4>
+            <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-[#0D1F3D]">Show Logo in Sidebar Header</p>
+                <p className="text-[11px] text-slate-500">Render custom uploaded company logo at the top of main navigation sidebar</p>
+              </div>
+              <Checkbox
+                checked={form.showLogoInSidebar ?? true}
+                onChange={(val) => onChange("showLogoInSidebar", val)}
+                disabled={!isAdmin || saving}
+              />
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-[#0D1F3D]">Show Logo on Login Screen</p>
+                <p className="text-[11px] text-slate-500">Render custom logo on workspace authentication screens</p>
+              </div>
+              <Checkbox
+                checked={form.showLogoInLogin ?? true}
+                onChange={(val) => onChange("showLogoInLogin", val)}
+                disabled={!isAdmin || saving}
+              />
+            </div>
           </div>
         </div>
 
@@ -873,12 +894,23 @@ export function WorkspaceSettingsPage() {
     country: '',
     pincode: '',
     logoUrl: '',
+    showLogoInSidebar: true,
+    showLogoInLogin: true,
   });
 
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (settings?.profile) {
+      const tenantId = bootstrap?.tenant?.id || 'default';
+      let storedBranding: any = null;
+      try {
+        const raw = localStorage.getItem(`visiblo_workspace_branding_${tenantId}`);
+        if (raw) storedBranding = JSON.parse(raw);
+      } catch {
+        /* ignore */
+      }
+
       setForm({
         companyName: settings.profile.companyName || '',
         industry: normalizeIndustry(settings.profile.industry),
@@ -892,12 +924,14 @@ export function WorkspaceSettingsPage() {
         state: settings.profile.state || '',
         country: settings.profile.country || '',
         pincode: settings.profile.pincode || '',
-        logoUrl: (settings.profile as any).logoUrl || '',
+        logoUrl: storedBranding?.logoUrl ?? ((settings.profile as any).logoUrl || ''),
+        showLogoInSidebar: storedBranding?.showLogoInSidebar ?? true,
+        showLogoInLogin: storedBranding?.showLogoInLogin ?? true,
       });
     }
-  }, [settings]);
+  }, [settings, bootstrap?.tenant?.id]);
 
-  const handleFieldChange = (field: string, value: string) => {
+  const handleFieldChange = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -925,7 +959,24 @@ export function WorkspaceSettingsPage() {
     const reader = new FileReader();
     reader.onloadend = () => {
       const base64data = reader.result as string;
-      setForm((prev) => ({ ...prev, logoUrl: base64data }));
+      setForm((prev) => {
+        const next = { ...prev, logoUrl: base64data };
+        const tenantId = bootstrap?.tenant?.id || 'default';
+        try {
+          localStorage.setItem(
+            `visiblo_workspace_branding_${tenantId}`,
+            JSON.stringify({
+              logoUrl: next.logoUrl,
+              showLogoInSidebar: next.showLogoInSidebar,
+              showLogoInLogin: next.showLogoInLogin,
+            })
+          );
+          window.dispatchEvent(new Event('workspace_branding_updated'));
+        } catch {
+          /* ignore */
+        }
+        return next;
+      });
       setCropperOpen(false);
       toast.success('Company logo cropped successfully! Click "Save Workspace Changes" to publish.');
     };
@@ -933,7 +984,24 @@ export function WorkspaceSettingsPage() {
   };
 
   const handleRemoveLogo = () => {
-    setForm((prev) => ({ ...prev, logoUrl: '' }));
+    setForm((prev) => {
+      const next = { ...prev, logoUrl: '' };
+      const tenantId = bootstrap?.tenant?.id || 'default';
+      try {
+        localStorage.setItem(
+          `visiblo_workspace_branding_${tenantId}`,
+          JSON.stringify({
+            logoUrl: '',
+            showLogoInSidebar: next.showLogoInSidebar,
+            showLogoInLogin: next.showLogoInLogin,
+          })
+        );
+        window.dispatchEvent(new Event('workspace_branding_updated'));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
     if (fileInputRef.current) fileInputRef.current.value = '';
     toast.info('Logo removed.');
   };
@@ -946,6 +1014,21 @@ export function WorkspaceSettingsPage() {
 
     try {
       setSaving(true);
+      const tenantId = bootstrap?.tenant?.id || 'default';
+      try {
+        localStorage.setItem(
+          `visiblo_workspace_branding_${tenantId}`,
+          JSON.stringify({
+            logoUrl: form.logoUrl || '',
+            showLogoInSidebar: form.showLogoInSidebar ?? true,
+            showLogoInLogin: form.showLogoInLogin ?? true,
+          })
+        );
+        window.dispatchEvent(new Event('workspace_branding_updated'));
+      } catch {
+        /* ignore */
+      }
+
       await api.patch('/tenant/runtime/settings', {
         companyName: form.companyName,
         website: form.website,
