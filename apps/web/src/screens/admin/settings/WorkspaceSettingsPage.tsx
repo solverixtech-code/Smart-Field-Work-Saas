@@ -29,6 +29,7 @@ import {
   Trash2,
   Camera,
   Image as ImageIcon,
+  Edit3,
 } from "lucide-react";
 import { Button } from "../../../components/ui/Button";
 import { Input } from "../../../components/ui/Input";
@@ -94,6 +95,99 @@ const INDUSTRY_OPTIONS = [
   { value: "Technology & Enterprise SaaS", label: "Technology & Enterprise SaaS" },
   { value: "Manufacturing & Industrial", label: "Manufacturing & Industrial" },
   { value: "Other", label: "Other" },
+];
+
+const TIMEZONE_OPTIONS = [
+  { value: "Asia/Kolkata", label: "Asia/Kolkata (IST +05:30)" },
+  { value: "UTC", label: "UTC (Coordinated Universal Time)" },
+  { value: "America/New_York", label: "America/New_York (EST -05:00)" },
+  { value: "Europe/London", label: "Europe/London (GMT +00:00)" },
+  { value: "Asia/Dubai", label: "Asia/Dubai (GST +04:00)" },
+  { value: "Asia/Singapore", label: "Asia/Singapore (SGT +08:00)" },
+  { value: "Australia/Sydney", label: "Australia/Sydney (AEST +10:00)" },
+];
+
+const DATE_FORMAT_OPTIONS = [
+  { value: "DD/MM/YYYY", label: "DD/MM/YYYY (e.g. 17/09/2026)" },
+  { value: "MM/DD/YYYY", label: "MM/DD/YYYY (e.g. 09/17/2026)" },
+  { value: "YYYY-MM-DD", label: "YYYY-MM-DD (e.g. 2026-09-17)" },
+  { value: "DD MMM YYYY", label: "DD MMM YYYY (e.g. 17 Sep 2026)" },
+];
+
+const TIME_FORMAT_OPTIONS = [
+  { value: "12-Hour", label: "12-Hour Format (hh:mm A)" },
+  { value: "24-Hour", label: "24-Hour Format (HH:mm)" },
+];
+
+const LANGUAGE_OPTIONS = [
+  { value: "en-US", label: "English (US)" },
+  { value: "en-GB", label: "English (UK)" },
+  { value: "hi-IN", label: "Hindi (हिंदी)" },
+  { value: "es-ES", label: "Spanish (Español)" },
+  { value: "ar-AE", label: "Arabic (العربية)" },
+];
+
+const WEEK_START_OPTIONS = [
+  { value: "Monday", label: "Monday" },
+  { value: "Sunday", label: "Sunday" },
+  { value: "Saturday", label: "Saturday" },
+];
+
+const NUMBER_FORMAT_OPTIONS = [
+  { value: "lakhs", label: "1,23,456.78 (Indian Lakhs / Crores)" },
+  { value: "standard", label: "123,456.78 (International Standard)" },
+  { value: "european", label: "123.456,78 (European Standard)" },
+];
+
+const CURRENCY_OPTIONS = [
+  { value: "INR", label: "INR (₹ - Indian Rupee)" },
+  { value: "USD", label: "USD ($ - US Dollar)" },
+  { value: "EUR", label: "EUR (€ - Euro)" },
+  { value: "AED", label: "AED (AED - UAE Dirham)" },
+  { value: "GBP", label: "GBP (£ - British Pound)" },
+];
+
+const FY_START_OPTIONS = [
+  { value: "April", label: "April (Apr 1 - Mar 31)" },
+  { value: "January", label: "January (Jan 1 - Dec 31)" },
+  { value: "July", label: "July (Jul 1 - Jun 30)" },
+  { value: "October", label: "October (Oct 1 - Sep 30)" },
+];
+
+const LANDING_PAGE_OPTIONS = [
+  { value: "/admin/dashboard", label: "Executive Dashboard" },
+  { value: "/admin/dashboard/sales", label: "Sales Performance Dashboard" },
+  { value: "/admin/dashboard/field", label: "Field Activity Map" },
+  { value: "/admin/leads/automation", label: "Lead Automation Center" },
+  { value: "/admin/executives", label: "Field Executive List" },
+];
+
+const SESSION_TIMEOUT_OPTIONS = [
+  { value: "30", label: "30 Minutes" },
+  { value: "60", label: "1 Hour (Recommended)" },
+  { value: "240", label: "4 Hours" },
+  { value: "480", label: "8 Hours" },
+  { value: "never", label: "Never (Keep Logged In)" },
+];
+
+const PASSWORD_LENGTH_OPTIONS = [
+  { value: "8", label: "8 Characters (Minimum)" },
+  { value: "10", label: "10 Characters (Recommended)" },
+  { value: "12", label: "12 Characters (Strict)" },
+  { value: "14", label: "14 Characters (Enterprise)" },
+];
+
+const PASSWORD_EXPIRY_OPTIONS = [
+  { value: "90", label: "90 Days" },
+  { value: "180", label: "180 Days" },
+  { value: "365", label: "365 Days" },
+  { value: "never", label: "Never Expire" },
+];
+
+const MAX_ATTEMPTS_OPTIONS = [
+  { value: "3", label: "3 Failed Attempts (Lock Account)" },
+  { value: "5", label: "5 Failed Attempts (Recommended)" },
+  { value: "10", label: "10 Failed Attempts" },
 ];
 
 // ─── Disabled Read-Only Toggle Switch ───
@@ -579,56 +673,140 @@ function ProfileTab({
 }
 
 // ─── Tab: Localization ───
-function LocalizationTab({ settings }: { settings: WorkspaceSettings }) {
-  const loc = settings.localization;
+function LocalizationTab({
+  data,
+  isAdmin,
+  onSave,
+}: {
+  data: {
+    timezone: string;
+    dateFormat: string;
+    timeFormat: string;
+    language: string;
+    weekStart: string;
+    numberFormat: string;
+  };
+  isAdmin: boolean;
+  onSave: (updated: any) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState(data);
+
+  useEffect(() => {
+    setForm(data);
+  }, [data]);
+
+  const handleSave = () => {
+    onSave(form);
+    setIsEditing(false);
+  };
 
   return (
     <div className="space-y-6">
       <ApiExposureNotice
         title="Localization Settings"
         message="Regional preferences and date/time formatting standards across your workspace."
+        isAdmin={isAdmin}
       />
 
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-          <Languages className="h-4 w-4 text-indigo-600 shrink-0" />
-          <div>
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">
-              Localization Settings
-            </h3>
-            <p className="text-[11px] text-slate-500 font-medium">
-              Authoritative regional preferences issued by server runtime
-              bootstrap.
-            </p>
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Languages className="h-4 w-4 text-indigo-600 shrink-0" />
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+                Localization Settings
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Authoritative regional preferences and formatting standards.
+              </p>
+            </div>
           </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              {isEditing ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setForm(data);
+                      setIsEditing(false);
+                    }}
+                    className="font-bold text-xs border-slate-300"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    onClick={handleSave}
+                    className="gap-1.5 font-bold text-xs shadow-2xs"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="gap-1.5 font-bold text-xs text-slate-700 border-slate-300 hover:bg-slate-50"
+                >
+                  <Edit3 className="h-3.5 w-3.5 text-indigo-600" />
+                  Edit Settings
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Input label="Timezone" value={loc.timezone} disabled readOnly />
-          <Input label="Date Format" value={loc.dateFormat} disabled readOnly />
-          <Input
-            label="Time Format"
-            value={loc.timeFormat || "Not Configured"}
-            disabled
-            readOnly
+          <Select
+            label="Timezone *"
+            value={form.timezone}
+            onChange={(e) => setForm({ ...form, timezone: e.target.value })}
+            disabled={!isEditing}
+            searchable={true}
+            options={TIMEZONE_OPTIONS}
           />
-          <Input
-            label="Primary Language"
-            value={loc.language}
-            disabled
-            readOnly
+          <Select
+            label="Date Format *"
+            value={form.dateFormat}
+            onChange={(e) => setForm({ ...form, dateFormat: e.target.value })}
+            disabled={!isEditing}
+            searchable={true}
+            options={DATE_FORMAT_OPTIONS}
           />
-          <Input
-            label="Week Start Day"
-            value={loc.weekStart}
-            disabled
-            readOnly
+          <Select
+            label="Time Format *"
+            value={form.timeFormat}
+            onChange={(e) => setForm({ ...form, timeFormat: e.target.value })}
+            disabled={!isEditing}
+            options={TIME_FORMAT_OPTIONS}
           />
-          <Input
-            label="Number Format"
-            value={loc.numberFormat || "Not Configured"}
-            disabled
-            readOnly
+          <Select
+            label="Primary Language *"
+            value={form.language}
+            onChange={(e) => setForm({ ...form, language: e.target.value })}
+            disabled={!isEditing}
+            searchable={true}
+            options={LANGUAGE_OPTIONS}
+          />
+          <Select
+            label="Week Start Day *"
+            value={form.weekStart}
+            onChange={(e) => setForm({ ...form, weekStart: e.target.value })}
+            disabled={!isEditing}
+            options={WEEK_START_OPTIONS}
+          />
+          <Select
+            label="Number Format *"
+            value={form.numberFormat}
+            onChange={(e) => setForm({ ...form, numberFormat: e.target.value })}
+            disabled={!isEditing}
+            options={NUMBER_FORMAT_OPTIONS}
           />
         </div>
       </div>
@@ -637,49 +815,148 @@ function LocalizationTab({ settings }: { settings: WorkspaceSettings }) {
 }
 
 // ─── Tab: Business & Financial ───
-function BusinessFinancialTab({ settings }: { settings: WorkspaceSettings }) {
-  const bf = settings.financial;
+function BusinessFinancialTab({
+  data,
+  isAdmin,
+  onSave,
+}: {
+  data: {
+    currency: string;
+    fyStart: string;
+    gstNumber: string;
+    panNumber: string;
+    billingAddress: string;
+    autoInvoice: boolean;
+  };
+  isAdmin: boolean;
+  onSave: (updated: any) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState(data);
+
+  useEffect(() => {
+    setForm(data);
+  }, [data]);
+
+  const handleSave = () => {
+    onSave(form);
+    setIsEditing(false);
+  };
 
   return (
     <div className="space-y-6">
       <ApiExposureNotice
         title="Financial & Tax Settings"
         message="Currency standards, tax details, and financial year defaults for billing."
+        isAdmin={isAdmin}
       />
 
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-          <Banknote className="h-4 w-4 text-indigo-600 shrink-0" />
-          <div>
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">
-              Financial Settings
-            </h3>
-            <p className="text-[11px] text-slate-500 font-medium">
-              Authoritative currency and financial defaults for your workspace.
-            </p>
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Banknote className="h-4 w-4 text-indigo-600 shrink-0" />
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+                Financial & Tax Settings
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Currency standards, tax IDs, and billing options.
+              </p>
+            </div>
           </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              {isEditing ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setForm(data);
+                      setIsEditing(false);
+                    }}
+                    className="font-bold text-xs border-slate-300"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    onClick={handleSave}
+                    className="gap-1.5 font-bold text-xs shadow-2xs"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="gap-1.5 font-bold text-xs text-slate-700 border-slate-300 hover:bg-slate-50"
+                >
+                  <Edit3 className="h-3.5 w-3.5 text-indigo-600" />
+                  Edit Settings
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Input label="Currency" value={bf.currency} disabled readOnly />
-          <Input
-            label="Financial Year Start"
-            value={bf.fyStart}
-            disabled
-            readOnly
+          <Select
+            label="Currency *"
+            value={form.currency}
+            onChange={(e) => setForm({ ...form, currency: e.target.value })}
+            disabled={!isEditing}
+            searchable={true}
+            options={CURRENCY_OPTIONS}
+          />
+          <Select
+            label="Financial Year Start *"
+            value={form.fyStart}
+            onChange={(e) => setForm({ ...form, fyStart: e.target.value })}
+            disabled={!isEditing}
+            options={FY_START_OPTIONS}
           />
           <Input
             label="GST / Tax ID"
-            value={bf.gstNumber || "Not Configured"}
-            disabled
-            readOnly
+            value={form.gstNumber}
+            onChange={(e) => setForm({ ...form, gstNumber: e.target.value })}
+            disabled={!isEditing}
+            placeholder="e.g. 27AAAAA0000A1Z5"
           />
           <Input
             label="PAN Number"
-            value={bf.panNumber || "Not Configured"}
-            disabled
-            readOnly
+            value={form.panNumber}
+            onChange={(e) => setForm({ ...form, panNumber: e.target.value })}
+            disabled={!isEditing}
+            placeholder="e.g. ABCDE1234F"
           />
+          <div className="sm:col-span-2">
+            <Input
+              label="Billing Address"
+              value={form.billingAddress}
+              onChange={(e) => setForm({ ...form, billingAddress: e.target.value })}
+              disabled={!isEditing}
+              placeholder="Registered organization billing address"
+            />
+          </div>
+        </div>
+
+        <div className="border-t border-slate-100 pt-4">
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Auto-Generate Monthly Invoices</p>
+              <p className="text-[11px] text-slate-500">Automatically generate tax invoice copies on recurring billing cycles</p>
+            </div>
+            <Checkbox
+              checked={form.autoInvoice}
+              onChange={(val) => setForm({ ...form, autoInvoice: val })}
+              disabled={!isEditing}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -687,43 +964,170 @@ function BusinessFinancialTab({ settings }: { settings: WorkspaceSettings }) {
 }
 
 // ─── Tab: Preferences ───
-function PreferencesTab() {
+function PreferencesTab({
+  data,
+  isAdmin,
+  onSave,
+}: {
+  data: {
+    defaultLandingPage: string;
+    sessionTimeout: string;
+    emailNotifications: boolean;
+    pushNotifications: boolean;
+    dailyDigest: boolean;
+    showMapView: boolean;
+    compactTable: boolean;
+  };
+  isAdmin: boolean;
+  onSave: (updated: any) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState(data);
+
+  useEffect(() => {
+    setForm(data);
+  }, [data]);
+
+  const handleSave = () => {
+    onSave(form);
+    setIsEditing(false);
+  };
+
   return (
     <div className="space-y-6">
       <ApiExposureNotice
         title="Workspace Preferences"
-        message="General workspace preferences and user notification defaults are governed by system defaults."
+        message="General workspace preferences and user notification defaults."
+        isAdmin={isAdmin}
       />
 
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-          <Settings className="h-4 w-4 text-indigo-600 shrink-0" />
-          <div>
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">
-              Workspace Preferences
-            </h3>
-            <p className="text-[11px] text-slate-500 font-medium">
-              System notification and interface preferences.
-            </p>
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-indigo-600 shrink-0" />
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+                Workspace Preferences
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium">
+                System notification and interface options.
+              </p>
+            </div>
           </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              {isEditing ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setForm(data);
+                      setIsEditing(false);
+                    }}
+                    className="font-bold text-xs border-slate-300"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    onClick={handleSave}
+                    className="gap-1.5 font-bold text-xs shadow-2xs"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="gap-1.5 font-bold text-xs text-slate-700 border-slate-300 hover:bg-slate-50"
+                >
+                  <Edit3 className="h-3.5 w-3.5 text-indigo-600" />
+                  Edit Settings
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="space-y-3">
-          <DisabledToggleSwitch
-            checked={true}
-            label="Email Notifications"
-            description="System transactional alerts active"
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2">
+          <Select
+            label="Default Landing Page *"
+            value={form.defaultLandingPage}
+            onChange={(e) => setForm({ ...form, defaultLandingPage: e.target.value })}
+            disabled={!isEditing}
+            options={LANDING_PAGE_OPTIONS}
           />
-          <DisabledToggleSwitch
-            checked={true}
-            label="Push Notifications"
-            description="FCM push notification service active"
+          <Select
+            label="Session Timeout *"
+            value={form.sessionTimeout}
+            onChange={(e) => setForm({ ...form, sessionTimeout: e.target.value })}
+            disabled={!isEditing}
+            options={SESSION_TIMEOUT_OPTIONS}
           />
-          <DisabledToggleSwitch
-            checked={false}
-            label="Compact Table Mode"
-            description="Standard comfortable grid view"
-          />
+        </div>
+
+        <div className="space-y-3 border-t border-slate-100 pt-4">
+          <h4 className="text-xs font-bold text-[#0D1F3D]">Notification & Interface Controls</h4>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Email Notifications</p>
+              <p className="text-[11px] text-slate-500">Send system transactional alerts and daily reports via email</p>
+            </div>
+            <Checkbox
+              checked={form.emailNotifications}
+              onChange={(val) => setForm({ ...form, emailNotifications: val })}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Mobile Push Notifications</p>
+              <p className="text-[11px] text-slate-500">Enable real-time FCM push notifications to field devices</p>
+            </div>
+            <Checkbox
+              checked={form.pushNotifications}
+              onChange={(val) => setForm({ ...form, pushNotifications: val })}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Daily Executive Digest</p>
+              <p className="text-[11px] text-slate-500">Dispatch automated 9:00 AM summary metrics digest</p>
+            </div>
+            <Checkbox
+              checked={form.dailyDigest}
+              onChange={(val) => setForm({ ...form, dailyDigest: val })}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Default Map View</p>
+              <p className="text-[11px] text-slate-500">Show live GPS map on field executive dashboard</p>
+            </div>
+            <Checkbox
+              checked={form.showMapView}
+              onChange={(val) => setForm({ ...form, showMapView: val })}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Compact Table Mode</p>
+              <p className="text-[11px] text-slate-500">Use compact table cell padding across data grids</p>
+            </div>
+            <Checkbox
+              checked={form.compactTable}
+              onChange={(val) => setForm({ ...form, compactTable: val })}
+              disabled={!isEditing}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -731,38 +1135,166 @@ function PreferencesTab() {
 }
 
 // ─── Tab: Policies & Security ───
-function PoliciesSecurityTab() {
+function PoliciesSecurityTab({
+  data,
+  isAdmin,
+  onSave,
+}: {
+  data: {
+    enforce2FA: boolean;
+    passwordMinLength: string;
+    passwordExpiry: string;
+    maxLoginAttempts: string;
+    ipWhitelist: boolean;
+    geoFenceAttendance: boolean;
+    forceLogoutOnInactivity: boolean;
+  };
+  isAdmin: boolean;
+  onSave: (updated: any) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState(data);
+
+  useEffect(() => {
+    setForm(data);
+  }, [data]);
+
+  const handleSave = () => {
+    onSave(form);
+    setIsEditing(false);
+  };
+
   return (
     <div className="space-y-6">
       <ApiExposureNotice
         title="Security & Governance Policies"
-        message="Authentication security, password policies, 2FA, and geofencing parameters are governed by platform security standards."
+        message="Authentication security, password policies, 2FA, and geofencing parameters."
+        isAdmin={isAdmin}
       />
 
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-          <Shield className="h-4 w-4 text-indigo-600 shrink-0" />
-          <div>
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">
-              Security Policies
-            </h3>
-            <p className="text-[11px] text-slate-500 font-medium">
-              Platform security engine status.
-            </p>
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Shield className="h-4 w-4 text-indigo-600 shrink-0" />
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+                Security Policies
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Authentication, password policy, and geofencing rules.
+              </p>
+            </div>
           </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              {isEditing ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setForm(data);
+                      setIsEditing(false);
+                    }}
+                    className="font-bold text-xs border-slate-300"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    onClick={handleSave}
+                    className="gap-1.5 font-bold text-xs shadow-2xs"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="gap-1.5 font-bold text-xs text-slate-700 border-slate-300 hover:bg-slate-50"
+                >
+                  <Edit3 className="h-3.5 w-3.5 text-indigo-600" />
+                  Edit Settings
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="space-y-3">
-          <DisabledToggleSwitch
-            checked={true}
-            label="Enforce Two-Factor Authentication"
-            description="Managed by platform security policy"
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-2">
+          <Select
+            label="Min Password Length *"
+            value={form.passwordMinLength}
+            onChange={(e) => setForm({ ...form, passwordMinLength: e.target.value })}
+            disabled={!isEditing}
+            options={PASSWORD_LENGTH_OPTIONS}
           />
-          <DisabledToggleSwitch
-            checked={true}
-            label="Geofence Attendance Check-in"
-            description="Managed by field policy module"
+          <Select
+            label="Password Expiry *"
+            value={form.passwordExpiry}
+            onChange={(e) => setForm({ ...form, passwordExpiry: e.target.value })}
+            disabled={!isEditing}
+            options={PASSWORD_EXPIRY_OPTIONS}
           />
+          <Select
+            label="Max Login Attempts *"
+            value={form.maxLoginAttempts}
+            onChange={(e) => setForm({ ...form, maxLoginAttempts: e.target.value })}
+            disabled={!isEditing}
+            options={MAX_ATTEMPTS_OPTIONS}
+          />
+        </div>
+
+        <div className="space-y-3 border-t border-slate-100 pt-4">
+          <h4 className="text-xs font-bold text-[#0D1F3D]">Access & Compliance Rules</h4>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Enforce Two-Factor Authentication (2FA)</p>
+              <p className="text-[11px] text-slate-500">Require 2FA OTP code for all admin and manager logins</p>
+            </div>
+            <Checkbox
+              checked={form.enforce2FA}
+              onChange={(val) => setForm({ ...form, enforce2FA: val })}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Geofence Mobile Attendance Check-in</p>
+              <p className="text-[11px] text-slate-500">Restrict punch-in actions to assigned customer geofence radii</p>
+            </div>
+            <Checkbox
+              checked={form.geoFenceAttendance}
+              onChange={(val) => setForm({ ...form, geoFenceAttendance: val })}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">IP Whitelisting Restriction</p>
+              <p className="text-[11px] text-slate-500">Restrict admin console access to corporate static IP addresses</p>
+            </div>
+            <Checkbox
+              checked={form.ipWhitelist}
+              onChange={(val) => setForm({ ...form, ipWhitelist: val })}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Auto-Logout Inactive Sessions</p>
+              <p className="text-[11px] text-slate-500">Terminate idle web browser sessions after 15 minutes of inactivity</p>
+            </div>
+            <Checkbox
+              checked={form.forceLogoutOnInactivity}
+              onChange={(val) => setForm({ ...form, forceLogoutOnInactivity: val })}
+              disabled={!isEditing}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -770,25 +1302,156 @@ function PoliciesSecurityTab() {
 }
 
 // ─── Tab: Integrations ───
-function IntegrationsTab() {
+function IntegrationsTab({
+  data,
+  isAdmin,
+  onSave,
+}: {
+  data: {
+    googleMapsApiKey: string;
+    fcmServerKey: string;
+    whatsappWebhookUrl: string;
+    enableWebhooks: boolean;
+    enableMetaLeadsSync: boolean;
+    enableIndiamartSync: boolean;
+  };
+  isAdmin: boolean;
+  onSave: (updated: any) => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState(data);
+
+  useEffect(() => {
+    setForm(data);
+  }, [data]);
+
+  const handleSave = () => {
+    onSave(form);
+    setIsEditing(false);
+  };
+
   return (
     <div className="space-y-6">
       <ApiExposureNotice
-        title="Integrations Catalog"
-        message="Integration connectors and API integrations are managed via platform administration."
+        title="Integrations Catalog & API Keys"
+        message="Manage API keys, webhooks, and third-party CRM lead sync connectors."
+        isAdmin={isAdmin}
       />
 
-      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-4">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-          <Plug className="h-4 w-4 text-indigo-600 shrink-0" />
-          <div>
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Integrations Catalog</h3>
-            <p className="text-[11px] text-slate-500 font-medium">Platform connectors overview.</p>
+      <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Plug className="h-4 w-4 text-indigo-600 shrink-0" />
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">
+                Integrations & API Keys
+              </h3>
+              <p className="text-[11px] text-slate-500 font-medium">
+                Google Maps, FCM push, webhooks, and lead ads sync.
+              </p>
+            </div>
           </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              {isEditing ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setForm(data);
+                      setIsEditing(false);
+                    }}
+                    className="font-bold text-xs border-slate-300"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    onClick={handleSave}
+                    className="gap-1.5 font-bold text-xs shadow-2xs"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                  className="gap-1.5 font-bold text-xs text-slate-700 border-slate-300 hover:bg-slate-50"
+                >
+                  <Edit3 className="h-3.5 w-3.5 text-indigo-600" />
+                  Edit Settings
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="p-4 rounded-sm bg-slate-50 border border-slate-200 text-center text-xs text-slate-600 font-medium">
-          Integrations catalog and key management are active and configured by system administrators.
+        <div className="space-y-4">
+          <Input
+            label="Google Maps API Key"
+            type="password"
+            value={form.googleMapsApiKey}
+            onChange={(e) => setForm({ ...form, googleMapsApiKey: e.target.value })}
+            disabled={!isEditing}
+            placeholder="AIzaSy..."
+          />
+          <Input
+            label="Firebase FCM Push Key"
+            type="password"
+            value={form.fcmServerKey}
+            onChange={(e) => setForm({ ...form, fcmServerKey: e.target.value })}
+            disabled={!isEditing}
+            placeholder="AAAA..."
+          />
+          <Input
+            label="WhatsApp Business Webhook URL"
+            value={form.whatsappWebhookUrl}
+            onChange={(e) => setForm({ ...form, whatsappWebhookUrl: e.target.value })}
+            disabled={!isEditing}
+            placeholder="https://api.yourdomain.com/webhooks/whatsapp"
+          />
+        </div>
+
+        <div className="space-y-3 border-t border-slate-100 pt-4">
+          <h4 className="text-xs font-bold text-[#0D1F3D]">Automated Lead Connectors</h4>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Enable Real-time Webhook Callbacks</p>
+              <p className="text-[11px] text-slate-500">Dispatch lead events to registered external webhook URLs</p>
+            </div>
+            <Checkbox
+              checked={form.enableWebhooks}
+              onChange={(val) => setForm({ ...form, enableWebhooks: val })}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Sync Facebook & Instagram Lead Ads</p>
+              <p className="text-[11px] text-slate-500">Capture meta lead form submissions directly into Sales Pipeline</p>
+            </div>
+            <Checkbox
+              checked={form.enableMetaLeadsSync}
+              onChange={(val) => setForm({ ...form, enableMetaLeadsSync: val })}
+              disabled={!isEditing}
+            />
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
+            <div className="space-y-0.5">
+              <p className="text-xs font-bold text-[#0D1F3D]">Sync IndiaMART Buyer Enquiries</p>
+              <p className="text-[11px] text-slate-500">Auto-pull B2B buyer leads from IndiaMART CRM API</p>
+            </div>
+            <Checkbox
+              checked={form.enableIndiamartSync}
+              onChange={(val) => setForm({ ...form, enableIndiamartSync: val })}
+              disabled={!isEditing}
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -1101,6 +1764,131 @@ export function WorkspaceSettingsPage() {
     );
   }
 
+  // Tab Form States
+  const [localizationForm, setLocalizationForm] = useState({
+    timezone: 'Asia/Kolkata',
+    dateFormat: 'DD/MM/YYYY',
+    timeFormat: '12-Hour',
+    language: 'en-US',
+    weekStart: 'Monday',
+    numberFormat: 'lakhs',
+  });
+
+  const [financialForm, setFinancialForm] = useState({
+    currency: 'INR',
+    fyStart: 'April',
+    gstNumber: '27AAAAA0000A1Z5',
+    panNumber: 'ABCDE1234F',
+    billingAddress: 'Suite 402, Apex Towers, Andheri East, Mumbai 400069',
+    autoInvoice: true,
+  });
+
+  const [preferencesForm, setPreferencesForm] = useState({
+    defaultLandingPage: '/admin/dashboard',
+    sessionTimeout: '60',
+    emailNotifications: true,
+    pushNotifications: true,
+    dailyDigest: true,
+    showMapView: true,
+    compactTable: false,
+  });
+
+  const [securityForm, setSecurityForm] = useState({
+    enforce2FA: false,
+    passwordMinLength: '8',
+    passwordExpiry: 'never',
+    maxLoginAttempts: '5',
+    ipWhitelist: false,
+    geoFenceAttendance: true,
+    forceLogoutOnInactivity: false,
+  });
+
+  const [integrationsForm, setIntegrationsForm] = useState({
+    googleMapsApiKey: '••••••••••••••••••••••••••••••••',
+    fcmServerKey: '••••••••••••••••••••••••••••••••',
+    whatsappWebhookUrl: 'https://api.visiblo.com/webhooks/whatsapp',
+    enableWebhooks: true,
+    enableMetaLeadsSync: true,
+    enableIndiamartSync: true,
+  });
+
+  const saveFullSettings = (key: string, data: any) => {
+    try {
+      const tenantId = bootstrap?.tenant?.id || 'default';
+      const storageKey = `visiblo_workspace_full_settings_${tenantId}`;
+      const existing = localStorage.getItem(storageKey);
+      const parsed = existing ? JSON.parse(existing) : {};
+      parsed[key] = data;
+      localStorage.setItem(storageKey, JSON.stringify(parsed));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  useEffect(() => {
+    const tId = bootstrap?.tenant?.id || 'default';
+    try {
+      const raw = localStorage.getItem(`visiblo_workspace_full_settings_${tId}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.localization) setLocalizationForm(parsed.localization);
+        if (parsed.financial) setFinancialForm(parsed.financial);
+        if (parsed.preferences) setPreferencesForm(parsed.preferences);
+        if (parsed.security) setSecurityForm(parsed.security);
+        if (parsed.integrations) setIntegrationsForm(parsed.integrations);
+      } else if (settings) {
+        if (settings.localization) {
+          setLocalizationForm((prev) => ({
+            ...prev,
+            timezone: settings.localization.timezone || 'Asia/Kolkata',
+            dateFormat: settings.localization.dateFormat || 'DD/MM/YYYY',
+            language: settings.localization.language || 'en-US',
+            weekStart: settings.localization.weekStart || 'Monday',
+          }));
+        }
+        if (settings.financial) {
+          setFinancialForm((prev) => ({
+            ...prev,
+            currency: settings.financial.currency || 'INR',
+            fyStart: settings.financial.fyStart || 'April',
+          }));
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [settings, bootstrap?.tenant?.id]);
+
+  const handleSaveLocalization = (updated: typeof localizationForm) => {
+    setLocalizationForm(updated);
+    saveFullSettings('localization', updated);
+    toast.success('Localization settings updated successfully!');
+  };
+
+  const handleSaveFinancial = (updated: typeof financialForm) => {
+    setFinancialForm(updated);
+    saveFullSettings('financial', updated);
+    toast.success('Business & financial settings updated successfully!');
+  };
+
+  const handleSavePreferences = (updated: typeof preferencesForm) => {
+    setPreferencesForm(updated);
+    saveFullSettings('preferences', updated);
+    toast.success('Workspace preferences updated successfully!');
+  };
+
+  const handleSaveSecurity = (updated: typeof securityForm) => {
+    setSecurityForm(updated);
+    saveFullSettings('security', updated);
+    toast.success('Security & governance policies updated successfully!');
+  };
+
+  const handleSaveIntegrations = (updated: typeof integrationsForm) => {
+    setIntegrationsForm(updated);
+    saveFullSettings('integrations', updated);
+    toast.success('Integration settings updated successfully!');
+  };
+
   return (
     <div className="space-y-6 font-sans text-slate-800 pb-16">
       {/* Hidden File Input for Logo Upload */}
@@ -1191,11 +1979,41 @@ export function WorkspaceSettingsPage() {
               onRemoveLogo={handleRemoveLogo}
             />
           )}
-          {activeTab === 'localization' && <LocalizationTab settings={settings} />}
-          {activeTab === 'business-financial' && <BusinessFinancialTab settings={settings} />}
-          {activeTab === 'preferences' && <PreferencesTab />}
-          {activeTab === 'policies-security' && <PoliciesSecurityTab />}
-          {activeTab === 'integrations' && <IntegrationsTab />}
+          {activeTab === 'localization' && (
+            <LocalizationTab
+              data={localizationForm}
+              isAdmin={isAdmin}
+              onSave={handleSaveLocalization}
+            />
+          )}
+          {activeTab === 'business-financial' && (
+            <BusinessFinancialTab
+              data={financialForm}
+              isAdmin={isAdmin}
+              onSave={handleSaveFinancial}
+            />
+          )}
+          {activeTab === 'preferences' && (
+            <PreferencesTab
+              data={preferencesForm}
+              isAdmin={isAdmin}
+              onSave={handleSavePreferences}
+            />
+          )}
+          {activeTab === 'policies-security' && (
+            <PoliciesSecurityTab
+              data={securityForm}
+              isAdmin={isAdmin}
+              onSave={handleSaveSecurity}
+            />
+          )}
+          {activeTab === 'integrations' && (
+            <IntegrationsTab
+              data={integrationsForm}
+              isAdmin={isAdmin}
+              onSave={handleSaveIntegrations}
+            />
+          )}
         </div>
 
         <RightSidebar settings={settings} />
