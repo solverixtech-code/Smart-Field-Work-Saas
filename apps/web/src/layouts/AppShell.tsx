@@ -1138,7 +1138,12 @@ export default function AppShell() {
                   }
                   return hasBootstrapPermission(item.permission);
                 })();
-                const isModuleAllowed = !item.moduleCode || hasModule(item.moduleCode);
+                const isModuleAllowed =
+                  userRole === Role.SUPER_ADMIN ||
+                  userRole === Role.ADMIN ||
+                  tenant?.roleCode === "tenant_admin" ||
+                  !item.moduleCode ||
+                  hasModule(item.moduleCode);
                 const isAllowed = isPermissionAllowed && isModuleAllowed;
                 const Icon = item.icon;
                 const isActive = (() => {

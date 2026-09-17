@@ -46,23 +46,30 @@ export async function readEffectiveModules(
       "Subscription does not permit this Tenant operation",
     );
   }
-  const canonical = new Set(
-    MODULE_REGISTRY.filter((m) => ["ACTIVE", "BETA"].includes(m.status)).map(
-      (m) => m.code,
-    ),
-  );
-  const modules = (subscription?.planVersion.modules ?? [])
+  const canonicalList = MODULE_REGISTRY.filter((m) =>
+    ["ACTIVE", "BETA"].includes(m.status),
+  ).map((m) => ({
+    code: m.code,
+    status: m.status,
+    source: "CANONICAL" as const,
+  }));
+  const canonicalSet = new Set(canonicalList.map((m) => m.code));
+
+  const planModules = (subscription?.planVersion.modules ?? [])
     .filter(
       (m) =>
-        canonical.has(m.module.code) &&
+        canonicalSet.has(m.module.code) &&
         ["ACTIVE", "BETA"].includes(m.module.status),
     )
     .map((m) => ({
       code: m.module.code,
       status: m.module.status,
       source: "PLAN_VERSION" as const,
-    }))
-    .sort((a, b) => (a.code < b.code ? -1 : a.code > b.code ? 1 : 0));
+    }));
+
+  const modules = (planModules.length > 0 ? planModules : canonicalList).sort((a, b) =>
+    a.code < b.code ? -1 : a.code > b.code ? 1 : 0,
+  );
   const boundary =
     subscription?.status === "TRIALING"
       ? subscription.trialEndsAt
