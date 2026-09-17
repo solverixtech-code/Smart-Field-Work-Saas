@@ -176,10 +176,27 @@ async function main() {
         });
       }
     } else {
-      const demoTenants = await prisma.tenant.findMany({
+      let demoTenants = await prisma.tenant.findMany({
         where: { status: 'ACTIVE' },
         include: { roles: true },
       });
+
+      if (demoTenants.length === 0) {
+        console.log('📌 No active demo tenant found. Creating Visiblo CRM Demo Tenant...');
+        await prisma.tenant.create({
+          data: {
+            slug: 'visiblo-crm-demo',
+            displayName: 'Visiblo Smart Field Work Demo',
+            legalName: 'Visiblo Technologies Pvt Ltd',
+            status: 'ACTIVE',
+          },
+        });
+        await syncRbac(prisma);
+        demoTenants = await prisma.tenant.findMany({
+          where: { status: 'ACTIVE' },
+          include: { roles: true },
+        });
+      }
 
       for (const tenant of demoTenants) {
         const sub = await prisma.tenantSubscription.findUnique({
