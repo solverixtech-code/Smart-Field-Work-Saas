@@ -118,7 +118,7 @@ export class RequestPrincipalService {
       }
     }
 
-    if (!membershipId && platformRoleCodes.length === 0) {
+    if (!membershipId) {
       const activeMembership = await this.prisma.tenantMembership.findFirst({
         where: {
           userId: user.id,
