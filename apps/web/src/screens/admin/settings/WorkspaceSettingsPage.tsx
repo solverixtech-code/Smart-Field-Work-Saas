@@ -249,6 +249,7 @@ interface ProfileTabProps {
     sidebarLogoObjectFit?: "contain" | "cover";
     sidebarLogoBg?: string;
     sidebarLogoRadius?: number;
+    sidebarLogoAlign?: "left" | "center" | "right";
   };
   onChange: (field: string, val: any) => void;
   onSave: () => void;
@@ -1676,6 +1677,7 @@ export function WorkspaceSettingsPage() {
     sidebarLogoObjectFit: 'contain' as 'contain' | 'cover',
     sidebarLogoBg: 'transparent',
     sidebarLogoRadius: 6,
+    sidebarLogoAlign: 'left' as 'left' | 'center' | 'right',
   });
 
   const [saving, setSaving] = useState(false);
@@ -1712,6 +1714,7 @@ export function WorkspaceSettingsPage() {
         sidebarLogoObjectFit: storedBranding?.sidebarLogoObjectFit ?? 'contain',
         sidebarLogoBg: storedBranding?.sidebarLogoBg ?? 'transparent',
         sidebarLogoRadius: storedBranding?.sidebarLogoRadius ?? 6,
+        sidebarLogoAlign: storedBranding?.sidebarLogoAlign ?? 'left',
       });
     }
   }, [settings, bootstrap?.tenant?.id]);
@@ -1749,6 +1752,7 @@ export function WorkspaceSettingsPage() {
     sidebarLogoObjectFit: 'contain' | 'cover';
     sidebarLogoBg: string;
     sidebarLogoRadius: number;
+    sidebarLogoAlign: 'left' | 'center' | 'right';
   }) => {
     setForm((prev) => ({
       ...prev,
@@ -1759,6 +1763,7 @@ export function WorkspaceSettingsPage() {
       sidebarLogoObjectFit: brandingSettings.sidebarLogoObjectFit,
       sidebarLogoBg: brandingSettings.sidebarLogoBg,
       sidebarLogoRadius: brandingSettings.sidebarLogoRadius,
+      sidebarLogoAlign: brandingSettings.sidebarLogoAlign,
     }));
 
     const tenantId = bootstrap?.tenant?.id || 'default';
@@ -2044,6 +2049,7 @@ export function WorkspaceSettingsPage() {
           sidebarLogoObjectFit: form.sidebarLogoObjectFit,
           sidebarLogoBg: form.sidebarLogoBg,
           sidebarLogoRadius: form.sidebarLogoRadius,
+          sidebarLogoAlign: form.sidebarLogoAlign,
         }}
         onClose={() => setCustomizerOpen(false)}
         onApply={handleCustomizerApply}
