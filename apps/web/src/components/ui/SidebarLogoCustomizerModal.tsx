@@ -23,6 +23,9 @@ import {
   User,
   CheckCircle2,
   Minimize2,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
 } from "lucide-react";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
@@ -37,6 +40,7 @@ export interface SidebarLogoCustomizerModalProps {
     sidebarLogoObjectFit?: "contain" | "cover";
     sidebarLogoBg?: string;
     sidebarLogoRadius?: number;
+    sidebarLogoAlign?: "left" | "center" | "right";
   };
   onClose: () => void;
   onApply: (settings: {
@@ -47,6 +51,7 @@ export interface SidebarLogoCustomizerModalProps {
     sidebarLogoObjectFit: "contain" | "cover";
     sidebarLogoBg: string;
     sidebarLogoRadius: number;
+    sidebarLogoAlign: "left" | "center" | "right";
   }) => void;
 }
 
@@ -122,6 +127,12 @@ const RADIUS_OPTIONS = [
   { id: "pill", label: "Pill", value: 9999 },
 ];
 
+const ALIGN_OPTIONS: { id: "left" | "center" | "right"; label: string; icon: any }[] = [
+  { id: "left", label: "Left", icon: AlignLeft },
+  { id: "center", label: "Center", icon: AlignCenter },
+  { id: "right", label: "Right", icon: AlignRight },
+];
+
 const ASPECT_RATIO_OPTIONS = [
   { id: "free", label: "Free / Auto", value: undefined },
   { id: "square", label: "1:1 Square", value: 1 },
@@ -190,6 +201,9 @@ export function SidebarLogoCustomizerModal({
   const [logoRadius, setLogoRadius] = useState(
     initialSettings?.sidebarLogoRadius ?? 6
   );
+  const [logoAlign, setLogoAlign] = useState<"left" | "center" | "right">(
+    initialSettings?.sidebarLogoAlign ?? "left"
+  );
   const [previewMode, setPreviewMode] = useState<"expanded" | "collapsed">(
     "expanded"
   );
@@ -217,6 +231,7 @@ export function SidebarLogoCustomizerModal({
       setLogoFit(initialSettings?.sidebarLogoObjectFit ?? "contain");
       setLogoBg(initialSettings?.sidebarLogoBg ?? "transparent");
       setLogoRadius(initialSettings?.sidebarLogoRadius ?? 6);
+      setLogoAlign(initialSettings?.sidebarLogoAlign ?? "left");
       setActiveTab("expanded");
       setPreviewMode("expanded");
     }
@@ -325,6 +340,7 @@ export function SidebarLogoCustomizerModal({
     setLogoFit("contain");
     setLogoBg("transparent");
     setLogoRadius(6);
+    setLogoAlign("left");
   };
 
   const handleConfirmSave = async () => {
@@ -360,6 +376,7 @@ export function SidebarLogoCustomizerModal({
         sidebarLogoObjectFit: logoFit,
         sidebarLogoBg: logoBg,
         sidebarLogoRadius: logoRadius,
+        sidebarLogoAlign: logoAlign,
       });
     } catch {
       onApply({
@@ -370,10 +387,17 @@ export function SidebarLogoCustomizerModal({
         sidebarLogoObjectFit: logoFit,
         sidebarLogoBg: logoBg,
         sidebarLogoRadius: logoRadius,
+        sidebarLogoAlign: logoAlign,
       });
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const getAlignJustifyClass = (align: "left" | "center" | "right") => {
+    if (align === "center") return "justify-center";
+    if (align === "right") return "justify-end";
+    return "justify-start";
   };
 
   return (
@@ -774,7 +798,7 @@ export function SidebarLogoCustomizerModal({
                           previewMode === "expanded" ? (
                             croppedPreviewUrl ? (
                               <div
-                                className="flex items-center justify-center transition-all"
+                                className={`flex items-center w-full transition-all ${getAlignJustifyClass(logoAlign)}`}
                                 style={{
                                   backgroundColor: logoBg,
                                   borderRadius: `${logoRadius}px`,
@@ -852,7 +876,7 @@ export function SidebarLogoCustomizerModal({
                         )}
 
                         {previewMode === "expanded" && (
-                          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-50 text-slate-400 border border-slate-200">
+                          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-50 text-slate-400 border border-slate-200 shrink-0 ml-1">
                             <ChevronLeft className="h-4 w-4" />
                           </div>
                         )}
@@ -962,6 +986,33 @@ export function SidebarLogoCustomizerModal({
                       onChange={(e) => setLogoHeight(Number(e.target.value))}
                       className="w-full accent-[#0D1F3D] cursor-pointer h-2 bg-slate-200 rounded-lg"
                     />
+                  </div>
+
+                  {/* Logo Alignment Feature */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[#0D1F3D] block">
+                      Logo Alignment
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {ALIGN_OPTIONS.map((opt) => {
+                        const Icon = opt.icon;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setLogoAlign(opt.id)}
+                            className={`flex items-center justify-center gap-1.5 py-1.5 px-3 rounded border text-xs font-semibold transition ${
+                              logoAlign === opt.id
+                                ? "border-[#0D1F3D] bg-[#0D1F3D] text-white shadow-2xs"
+                                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
                   {/* Logo Container Background Options */}

@@ -878,6 +878,7 @@ export default function AppShell() {
     sidebarLogoObjectFit: "contain" | "cover";
     sidebarLogoBg: string;
     sidebarLogoRadius: number;
+    sidebarLogoAlign?: "left" | "center" | "right";
   }>({
     logoUrl: "",
     collapsedLogoUrl: "",
@@ -886,6 +887,7 @@ export default function AppShell() {
     sidebarLogoObjectFit: "contain",
     sidebarLogoBg: "transparent",
     sidebarLogoRadius: 6,
+    sidebarLogoAlign: "left",
   });
 
   const loadBranding = React.useCallback(() => {
@@ -902,6 +904,7 @@ export default function AppShell() {
           sidebarLogoObjectFit: parsed.sidebarLogoObjectFit ?? "contain",
           sidebarLogoBg: parsed.sidebarLogoBg ?? "transparent",
           sidebarLogoRadius: parsed.sidebarLogoRadius ?? 6,
+          sidebarLogoAlign: parsed.sidebarLogoAlign ?? "left",
         });
         return;
       }
@@ -917,6 +920,7 @@ export default function AppShell() {
       sidebarLogoObjectFit: "contain",
       sidebarLogoBg: "transparent",
       sidebarLogoRadius: 6,
+      sidebarLogoAlign: "left",
     });
   }, [tenantId, runtimeBootstrap, tenant]);
 
@@ -991,10 +995,25 @@ export default function AppShell() {
         >
           {showBigLogo ? (
             <>
-              <NavLink to="/admin/dashboard" className="flex items-center max-w-[220px]">
+              <NavLink
+                to="/admin/dashboard"
+                className={`flex items-center w-full max-w-[220px] ${
+                  branding.sidebarLogoAlign === "center"
+                    ? "justify-center"
+                    : branding.sidebarLogoAlign === "right"
+                    ? "justify-end"
+                    : "justify-start"
+                }`}
+              >
                 {canRenderCustomLogoInSidebar && branding.logoUrl ? (
                   <div
-                    className="flex items-center justify-center transition-all duration-200"
+                    className={`flex items-center w-full transition-all duration-200 ${
+                      branding.sidebarLogoAlign === "center"
+                        ? "justify-center"
+                        : branding.sidebarLogoAlign === "right"
+                        ? "justify-end"
+                        : "justify-start"
+                    }`}
                     style={{
                       backgroundColor: branding.sidebarLogoBg,
                       borderRadius: `${branding.sidebarLogoRadius}px`,
