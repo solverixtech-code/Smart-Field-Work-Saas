@@ -110,6 +110,13 @@ function service(): CrmService {
     primary: vi.fn(rejected),
     owners: vi.fn(rejected),
     masters: vi.fn(rejected),
+    deals: vi.fn(rejected),
+    dealSummary: vi.fn(rejected),
+    deal: vi.fn(rejected),
+    createDeal: vi.fn(rejected),
+    updateDeal: vi.fn(rejected),
+    updateDealStage: vi.fn(rejected),
+    deleteDeal: vi.fn(rejected),
   };
 }
 function failure(status: number) {

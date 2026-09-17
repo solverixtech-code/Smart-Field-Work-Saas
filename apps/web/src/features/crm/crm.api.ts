@@ -49,4 +49,20 @@ export const crmApi: CrmService = {
     (await api.get(`${root}/owner-options`, { params, signal })).data,
   masters: async (code, params, signal) =>
     (await api.get(`/tenant/masters/${code}/values`, { params, signal })).data,
+
+  deals: async (params, signal) =>
+    (await api.get(`${root}/deals`, { params, signal })).data,
+  dealSummary: async (signal) =>
+    (await api.get(`${root}/deals/summary`, { signal })).data,
+  deal: async (id, signal) =>
+    (await api.get(`${root}/deals/${id}`, { signal })).data,
+  createDeal: async (body, signal) =>
+    (await api.post(`${root}/deals`, body, { signal })).data,
+  updateDeal: async (id, body, signal) =>
+    (await api.patch(`${root}/deals/${id}`, body, { signal })).data,
+  updateDealStage: async (id, body, signal) =>
+    (await api.patch(`${root}/deals/${id}/stage`, body, { signal })).data,
+  deleteDeal: async (id, signal) => {
+    await api.delete(`${root}/deals/${id}`, { signal });
+  },
 };

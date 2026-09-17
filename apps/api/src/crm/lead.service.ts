@@ -1015,6 +1015,55 @@ export class LeadService {
         convertedAt,
         convertedByMembershipId: p.scope.membershipId,
       });
+
+      // Automatically create a Sales Pipeline Deal (Opportunity) for converted lead
+      let dealId: string | null = null;
+      const existingDeal = await tx.opportunity.findUnique({
+        where: { leadId_tenantId: { leadId: id, tenantId: p.scope.tenantId } },
+        select: { id: true },
+      });
+      if (!existingDeal) {
+        const newStageMaster = await tx.masterValue.findFirst({
+          where: {
+            tenantId: p.scope.tenantId,
+            definition: { code: "deal_stage" },
+            code: "new",
+          },
+          select: { id: true },
+        });
+        const dealCount = await tx.opportunity.count({
+          where: { tenantId: p.scope.tenantId },
+        });
+        const dealCode = `DEAL-${(dealCount + 1001).toString()}`;
+        const dealTitle =
+          v.deal?.title || row.businessName || row.name || row.contactName || "New Deal";
+        const dealAmount = v.deal?.amount ?? row.estimatedValue ?? 0;
+
+        const newDeal = await tx.opportunity.create({
+          data: {
+            tenantId: p.scope.tenantId,
+            dealCode,
+            title: dealTitle,
+            amount: dealAmount,
+            stage: "new",
+            stageValueId: newStageMaster?.id ?? null,
+            priority: row.priority ?? "MEDIUM",
+            sourceValueId: row.sourceValueId,
+            leadId: id,
+            accountId,
+            contactId,
+            assignedMembershipId: row.assignedMembershipId,
+            ownerMembershipId: row.ownerMembershipId || p.scope.membershipId,
+            expectedClosingDate: row.expectedClosingDate,
+            description: row.requirementNote || row.description,
+          },
+          select: { id: true },
+        });
+        dealId = newDeal.id;
+      } else {
+        dealId = existingDeal.id;
+      }
+
       const command = await tx.leadConversionCommand.create({
         data: {
           tenantId: p.scope.tenantId,
@@ -1035,6 +1084,7 @@ export class LeadService {
         revisionAfter: row.revision + 1,
         accountId,
         contactId,
+        dealId,
         conversionCommandId: command.id,
       });
       await this.repo.audit(tx, p, "lead.converted", "Lead", id, {
@@ -1042,6 +1092,7 @@ export class LeadService {
         revisionAfter: row.revision + 1,
         accountId,
         contactId,
+        dealId,
         conversionCommandId: command.id,
       });
       return {
@@ -1050,6 +1101,7 @@ export class LeadService {
         revision: row.revision + 1,
         accountId,
         contactId,
+        dealId,
         convertedAt,
       };
     });

@@ -621,6 +621,8 @@ model MasterValue {
   crmBusinessTypes Account[] @relation("AccountBusinessType")
   crmSources Account[] @relation("AccountSource")
   crmContactRoles Contact[] @relation("ContactRole")
+  opportunityStages Opportunity[] @relation("OpportunityStage")
+  opportunitySources Opportunity[] @relation("OpportunitySource")
   legacyReconciliation MasterLegacyReconciliation?
   id String @id @default(uuid())
   definitionId String
@@ -829,6 +831,7 @@ model Tenant {
   leadConversions LeadConversionCommand[]
   crmAccounts Account[]
   crmContacts Contact[]
+  crmOpportunities Opportunity[]
   privateMedia MediaAsset[]
   backgroundJobs BackgroundJob[]
   runtimeConfigEpoch RuntimeConfigEpoch?
@@ -941,7 +944,9 @@ model TenantMembership {
   ownedContacts Contact[] @relation("ContactOwner")
   createdContacts Contact[] @relation("ContactCreator")
   updatedContacts Contact[] @relation("ContactUpdater")
-  privateMediaCreated MediaAsset[]
+  ownedOpportunities Opportunity[] @relation("OpportunityOwner")
+  assignedOpportunities Opportunity[] @relation("OpportunityAssignee")
+  privateMedia MediaAsset[]
   provisioningOwnership TenantProvisioning[]
   devicePushTokens DevicePushToken[]
   id                    String                 @id @default(uuid())
@@ -1558,6 +1563,7 @@ model Account {
   updatedByMembershipId String
   updatedByMembership TenantMembership @relation("AccountUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
   contacts Contact[]
+  opportunities Opportunity[]
   @@unique([id, tenantId])
   @@index([tenantId, deletedAt, createdAt, id])
   @@index([tenantId, ownerMembershipId, deletedAt])
@@ -1589,6 +1595,7 @@ model Contact {
   createdByMembership TenantMembership @relation("ContactCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
   updatedByMembershipId String
   updatedByMembership TenantMembership @relation("ContactUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  opportunities Opportunity[]
   @@unique([id, tenantId])
   @@index([tenantId, accountId, deletedAt, createdAt, id])
   @@index([tenantId, ownerMembershipId, deletedAt])
@@ -1666,6 +1673,7 @@ model Lead {
   updatedByMembership TenantMembership @relation("LeadUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
   histories LeadHistory[]
   conversion LeadConversionCommand?
+  opportunity Opportunity?
   @@unique([id, tenantId])
   @@unique([tenantId, leadCode])
   @@index([tenantId, deletedAt, createdAt, id])
@@ -1714,6 +1722,50 @@ model LeadConversionCommand {
   @@unique([id, tenantId])
   @@unique([leadId, tenantId])
   @@unique([tenantId, leadId, idempotencyKey])
+}
+
+// ─── Opportunity / Deal Model (Sales Pipeline) ─────────────────────────────────
+model Opportunity {
+  id                    String            @id @default(uuid())
+  tenantId              String
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  dealCode              String
+  title                 String
+  amount                Decimal           @default(0) @db.Decimal(14, 2)
+  stageValueId          String?
+  stageValue            MasterValue?      @relation("OpportunityStage", fields: [stageValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  stage                 String            @default("new")
+  priority              LeadPriority      @default(MEDIUM)
+  sourceValueId         String?
+  sourceValue           MasterValue?      @relation("OpportunitySource", fields: [sourceValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  
+  leadId                String?
+  lead                  Lead?             @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
+  accountId             String?
+  account               Account?          @relation(fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  contactId             String?
+  contact               Contact?          @relation(fields: [contactId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
+  
+  assignedMembershipId  String?
+  assignedMembership    TenantMembership? @relation("OpportunityAssignee", fields: [assignedMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  ownerMembershipId     String
+  ownerMembership       TenantMembership  @relation("OpportunityOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  
+  expectedClosingDate   DateTime?
+  closedAt              DateTime?
+  lostReason            String?
+  description           String?
+  
+  revision              Int               @default(1)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  deletedAt             DateTime?
+
+  @@unique([id, tenantId])
+  @@unique([tenantId, dealCode])
+  @@unique([leadId, tenantId])
+  @@index([tenantId, deletedAt, stage])
+  @@index([tenantId, assignedMembershipId])
 }
 
 // ─── Push Notification Device Tokens ──────────────────────────────────────────
