@@ -54,6 +54,30 @@ import {
 } from "../../components/ui";
 import { DateRangePicker } from "../../components/ui/DateRangePicker";
 
+function AndroidIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9997.9993-.9997c.5516 0 .9998.4486.9998.9997s-.4482.9997-.9998.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9997.9993-.9997c.5516 0 .9998.4486.9998.9997s-.4482.9997-.9998.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 0 0-.1522-.5676.416.416 0 0 0-.5676.1522l-2.0223 3.503C15.59 8.2396 13.8533 7.844 12 7.844c-1.8533 0-3.59.3956-5.1367 1.1058L4.841 5.4468a.416.416 0 0 0-.5676-.1522.416.416 0 0 0-.1522.5676l1.9973 3.4592C3.1256 10.988 1.1625 13.7844 1 17.0667h22c-.1625-3.2823-2.1256-6.0787-5.1185-7.7453" />
+    </svg>
+  );
+}
+
+function AppleIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+    >
+      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.34c.67-.82 1.12-1.96.99-3.1-.96.04-2.13.64-2.82 1.44-.61.71-1.15 1.87-.99 2.99 1.07.08 2.15-.51 2.82-1.33z" />
+    </svg>
+  );
+}
+
 type PageKind = "center" | "create" | "push" | "alerts" | "templates";
 type NoticeType =
   "Announcement" | "Alert" | "Reminder" | "Promotion" | "Update" | "Other";
@@ -1744,7 +1768,7 @@ export function PushNotificationsPage() {
       header: "Platform",
       cell: (row) => (
         <span
-          className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${
+          className={`inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-[10px] font-extrabold ${
             row.platform === "ANDROID"
               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
               : row.platform === "IOS"
@@ -1752,7 +1776,10 @@ export function PushNotificationsPage() {
                 : "bg-purple-50 text-purple-700 border-purple-200"
           }`}
         >
-          {row.platform}
+          {row.platform === "ANDROID" && <AndroidIcon className="h-3 w-3 text-emerald-600" />}
+          {row.platform === "IOS" && <AppleIcon className="h-3 w-3 text-blue-600" />}
+          {row.platform === "BOTH" && <Layers className="h-3 w-3 text-purple-600" />}
+          {row.platform === "IOS" ? "iOS" : row.platform === "ANDROID" ? "Android" : row.platform}
         </span>
       ),
     },
@@ -1858,13 +1885,16 @@ export function PushNotificationsPage() {
                     key={p}
                     type="button"
                     onClick={() => setPlatform(p)}
-                    className={`p-2.5 rounded-sm border font-bold text-xs capitalize transition-all cursor-pointer ${
+                    className={`p-2.5 rounded-sm border font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 ${
                       platform === p
-                        ? "border-[#E20613] bg-red-50/50 text-[#0D1F3D]"
-                        : "border-slate-200 text-slate-600 bg-white"
+                        ? "border-[#E20613] bg-red-50/50 text-[#0D1F3D] shadow-xs"
+                        : "border-slate-200 text-slate-600 bg-white hover:bg-slate-50"
                     }`}
                   >
-                    {p === "both" ? "Both" : p}
+                    {p === "android" && <AndroidIcon className="h-4 w-4 text-emerald-600" />}
+                    {p === "ios" && <AppleIcon className="h-4 w-4 text-slate-800" />}
+                    {p === "both" && <Layers className="h-4 w-4 text-purple-600" />}
+                    <span>{p === "both" ? "Both" : p === "ios" ? "iOS" : "Android"}</span>
                   </button>
                 ))}
               </div>
