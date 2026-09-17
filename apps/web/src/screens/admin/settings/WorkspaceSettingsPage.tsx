@@ -64,24 +64,34 @@ const STATE_OPTIONS = [
   { value: "Other", label: "Other" },
 ];
 
+const INDUSTRY_CODE_MAP: Record<string, string> = {
+  PHARMA: "Pharmaceuticals & Healthcare",
+  FMCG: "FMCG & Consumer Goods",
+  RETAIL: "Retail & Distribution",
+  BFSI: "BFSI & Financial Services",
+  LOGISTICS: "Logistics & Supply Chain",
+  TELECOM: "Telecom & Utilities",
+  SAAS: "Technology & Enterprise SaaS",
+  MANUFACTURING: "Manufacturing & Industrial",
+  OTHER: "Other",
+};
+
+export function normalizeIndustry(value?: string | null): string {
+  if (!value || value === 'Unassigned') return '';
+  const upper = value.toUpperCase().trim();
+  if (INDUSTRY_CODE_MAP[upper]) return INDUSTRY_CODE_MAP[upper];
+  return value;
+}
+
 const INDUSTRY_OPTIONS = [
-  { value: "PHARMA", label: "Pharmaceuticals & Healthcare" },
   { value: "Pharmaceuticals & Healthcare", label: "Pharmaceuticals & Healthcare" },
-  { value: "FMCG", label: "FMCG & Consumer Goods" },
   { value: "FMCG & Consumer Goods", label: "FMCG & Consumer Goods" },
-  { value: "RETAIL", label: "Retail & Distribution" },
   { value: "Retail & Distribution", label: "Retail & Distribution" },
-  { value: "BFSI", label: "BFSI & Financial Services" },
   { value: "BFSI & Financial Services", label: "BFSI & Financial Services" },
-  { value: "LOGISTICS", label: "Logistics & Supply Chain" },
   { value: "Logistics & Supply Chain", label: "Logistics & Supply Chain" },
-  { value: "TELECOM", label: "Telecom & Utilities" },
   { value: "Telecom & Utilities", label: "Telecom & Utilities" },
-  { value: "SAAS", label: "Technology & Enterprise SaaS" },
   { value: "Technology & Enterprise SaaS", label: "Technology & Enterprise SaaS" },
-  { value: "MANUFACTURING", label: "Manufacturing & Industrial" },
   { value: "Manufacturing & Industrial", label: "Manufacturing & Industrial" },
-  { value: "OTHER", label: "Other" },
   { value: "Other", label: "Other" },
 ];
 
@@ -871,7 +881,7 @@ export function WorkspaceSettingsPage() {
     if (settings?.profile) {
       setForm({
         companyName: settings.profile.companyName || '',
-        industry: settings.profile.industry === 'Unassigned' ? '' : settings.profile.industry || '',
+        industry: normalizeIndustry(settings.profile.industry),
         website: settings.profile.website || '',
         primaryEmail: settings.profile.primaryEmail || '',
         primaryPhone: settings.profile.primaryPhone || '',
