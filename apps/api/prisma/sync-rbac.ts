@@ -166,8 +166,15 @@ export async function syncRbac(client?: PrismaClient) {
       await prisma.$transaction(async (tx) => {
         if (missingPermIds.length > 0) {
           for (const permissionId of missingPermIds) {
-            await tx.platformRolePermission.create({
-              data: {
+            await tx.platformRolePermission.upsert({
+              where: {
+                platformRoleId_permissionId: {
+                  platformRoleId: platformRole.id,
+                  permissionId,
+                },
+              },
+              update: {},
+              create: {
                 platformRoleId: platformRole.id,
                 permissionId,
               },
@@ -260,8 +267,15 @@ export async function syncRbac(client?: PrismaClient) {
         const roleId = activeRole.id;
         await prisma.$transaction(async (tx) => {
           for (const permissionId of missingPermIds) {
-            await tx.tenantRolePermission.create({
-              data: {
+            await tx.tenantRolePermission.upsert({
+              where: {
+                tenantRoleId_permissionId: {
+                  tenantRoleId: roleId,
+                  permissionId,
+                },
+              },
+              update: {},
+              create: {
                 tenantRoleId: roleId,
                 permissionId,
               },
