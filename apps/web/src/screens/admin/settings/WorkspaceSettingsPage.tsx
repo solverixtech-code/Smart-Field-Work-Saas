@@ -151,29 +151,28 @@ function ProfileTab({ settings }: TabProps) {
             </div>
           </div>
 
-          <div className="space-y-3 text-xs">
-            <div>
-              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Workspace ID</span>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="font-mono font-extrabold text-[#0D1F3D] text-xs bg-slate-50 border border-slate-200 px-2 py-1 rounded-sm">{p.workspaceId}</span>
-                <button type="button" onClick={() => { navigator.clipboard.writeText(p.workspaceId); toast.success('Workspace ID copied'); }} className="text-slate-400 hover:text-indigo-600 transition-colors"><Copy className="h-3.5 w-3.5" /></button>
+          <div className="space-y-3.5 text-xs">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="space-y-1 min-w-0 flex-1 pr-3">
+                <span className="text-xs font-semibold text-slate-500 block">Configuration Version</span>
+                <span
+                  title={p.configVersion}
+                  className="font-mono font-bold text-[#0D1F3D] text-xs inline-block max-w-[220px] sm:max-w-[280px] truncate bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-sm"
+                >
+                  {p.configVersion}
+                </span>
               </div>
+              <span className="inline-flex shrink-0 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                Active Bootstrap
+              </span>
             </div>
 
-            <div className="flex items-center justify-between border-t border-slate-100 pt-2">
-              <div>
-                <span className="text-xs font-semibold text-slate-500 block mb-0.5">Configuration Version</span>
-                <span className="font-mono font-extrabold text-[#0D1F3D] text-sm">{p.configVersion}</span>
-              </div>
-              <span className="inline-flex rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Active Bootstrap</span>
-            </div>
-
-            <div className="border-t border-slate-100 pt-2 space-y-1">
+            <div className="border-b border-slate-100 pb-3 space-y-1">
               <span className="text-xs font-semibold text-slate-500 block">Bootstrap Generated At</span>
               <span className="font-extrabold text-[#0D1F3D] text-xs">{p.createdOn}</span>
             </div>
 
-            <div className="border-t border-slate-100 pt-2">
+            <div className="pt-0.5">
               <span className="text-xs font-semibold text-slate-500 block mb-1">Created By</span>
               <span className="font-bold text-slate-500 text-xs">{p.createdBy || 'Not Available / Pending API Exposure'}</span>
             </div>
