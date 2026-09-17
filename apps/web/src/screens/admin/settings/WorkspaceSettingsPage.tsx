@@ -351,11 +351,25 @@ function ProfileTab({
           <div className="md:col-span-4 flex flex-col items-center justify-center p-4 border border-slate-200 rounded-sm bg-slate-50/50 space-y-3">
             <div className="flex h-28 w-full items-center justify-center rounded-sm bg-white border border-slate-200 p-2 shadow-xs overflow-hidden">
               {form.logoUrl ? (
-                <img
-                  src={form.logoUrl}
-                  alt="Company Logo"
-                  className="max-h-full max-w-full object-contain"
-                />
+                <div
+                  className="flex items-center justify-center transition-all duration-200"
+                  style={{
+                    backgroundColor: form.sidebarLogoBg || "transparent",
+                    borderRadius: `${form.sidebarLogoRadius ?? 6}px`,
+                    padding: form.sidebarLogoBg && form.sidebarLogoBg !== "transparent" ? "4px 8px" : "0px",
+                  }}
+                >
+                  <img
+                    src={form.logoUrl}
+                    alt="Company Logo"
+                    style={{
+                      height: `${form.sidebarLogoHeight || 42}px`,
+                      maxHeight: "80px",
+                      maxWidth: "220px",
+                      objectFit: form.sidebarLogoObjectFit || "contain",
+                    }}
+                  />
+                </div>
               ) : (
                 <div className="text-center">
                   <p className="font-extrabold text-[#0D1F3D] text-sm tracking-tight">
@@ -407,8 +421,87 @@ function ProfileTab({
                 )}
               </div>
             )}
+
+            {form.logoUrl && isAdmin && (
+              <div className="w-full space-y-2.5 pt-3 border-t border-slate-200/80">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-[#0D1F3D]">Logo Height / Size</span>
+                    <span className="font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 text-[11px]">
+                      {form.sidebarLogoHeight || 42}px
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="20"
+                    max="64"
+                    step="2"
+                    value={form.sidebarLogoHeight || 42}
+                    onChange={(e) => {
+                      const newH = Number(e.target.value);
+                      onChange("sidebarLogoHeight", newH);
+                      const tCode = settings?.profile?.tenantCode || "default";
+                      try {
+                        const raw = localStorage.getItem(`visiblo_workspace_branding_${tCode}`);
+                        const existing = raw ? JSON.parse(raw) : {};
+                        existing.sidebarLogoHeight = newH;
+                        localStorage.setItem(`visiblo_workspace_branding_${tCode}`, JSON.stringify(existing));
+                        window.dispatchEvent(new Event("workspace_branding_updated"));
+                      } catch {
+                        /* ignore */
+                      }
+                    }}
+                    disabled={saving}
+                    className="w-full accent-indigo-600 cursor-pointer h-2 bg-slate-200 rounded-lg"
+                  />
+                  <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold px-0.5">
+                    <span>20px</span>
+                    <span>42px (Standard)</span>
+                    <span>64px</span>
+                  </div>
+                </div>
+
+                {/* Quick Height Presets */}
+                <div className="space-y-1">
+                  <span className="text-[11px] font-bold text-[#0D1F3D] block">Quick Height Presets</span>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[
+                      { label: "Small", val: 32 },
+                      { label: "Medium", val: 42 },
+                      { label: "Large", val: 54 },
+                    ].map((preset) => (
+                      <button
+                        key={preset.val}
+                        type="button"
+                        onClick={() => {
+                          onChange("sidebarLogoHeight", preset.val);
+                          const tCode = settings?.profile?.tenantCode || "default";
+                          try {
+                            const raw = localStorage.getItem(`visiblo_workspace_branding_${tCode}`);
+                            const existing = raw ? JSON.parse(raw) : {};
+                            existing.sidebarLogoHeight = preset.val;
+                            localStorage.setItem(`visiblo_workspace_branding_${tCode}`, JSON.stringify(existing));
+                            window.dispatchEvent(new Event("workspace_branding_updated"));
+                          } catch {
+                            /* ignore */
+                          }
+                        }}
+                        className={`py-1 text-[11px] font-bold rounded border text-center transition ${
+                          (form.sidebarLogoHeight || 42) === preset.val
+                            ? "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-2xs"
+                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {preset.label} ({preset.val}px)
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <span className="text-[10px] text-slate-500 font-medium text-center">
-              Upload logo file to launch live sidebar preview and resizing tool.
+              Adjust logo size live with slider or click Preview & Scale for custom backgrounds.
             </span>
           </div>
 
