@@ -1264,12 +1264,8 @@ export function NotificationCenterPage() {
 export function CreateNotificationPage() {
   const navigate = useNavigate();
   const [noticeType, setNoticeType] = useState<NoticeType>("Announcement");
-  const [targetAudienceCategory, setTargetAudienceCategory] =
-    useState<string>("ALL_EXECUTIVES");
-  const [selectedRole, setSelectedRole] = useState<string>("FIELD_EXECUTIVE");
-  const [selectedExec, setSelectedExec] = useState("all_executives");
-  const [selectedCustomer, setSelectedCustomer] =
-    useState("apex_electronics");
+  const [selectedExec, setSelectedExec] = useState("rahul_verma");
+  const [selectedCustomer, setSelectedCustomer] = useState("apex_electronics");
   const [selectedTeam, setSelectedTeam] = useState("mumbai_west");
 
   const [title, setTitle] = useState("");
@@ -1309,15 +1305,7 @@ export function CreateNotificationPage() {
                   ? "PROMOTION"
                   : "SYSTEM_UPDATE",
         priority: "NORMAL",
-        audienceType: targetAudienceCategory,
-        targetRoles:
-          targetAudienceCategory === "SPECIFIC_ROLES"
-            ? [selectedRole]
-            : undefined,
-        targetMembershipIds:
-          targetAudienceCategory === "SPECIFIC_EXECUTIVES"
-            ? [selectedExec]
-            : undefined,
+        audienceType: "ALL_EXECUTIVES",
         scheduledAt: !sendNow && scheduleDate ? scheduleDate : undefined,
       });
 
@@ -1417,154 +1405,41 @@ export function CreateNotificationPage() {
             <h3 className="text-sm font-extrabold text-[#0D1F3D]">
               Audience Target Selection
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <Select
-                label="Send To / Target Group *"
-                value={targetAudienceCategory}
-                onChange={(e) => setTargetAudienceCategory(e.target.value)}
+                label="Send To *"
+                value="all"
                 options={[
-                  {
-                    value: "ALL_EXECUTIVES",
-                    label: "All Field Executives & Employees (Organization-Wide)",
-                    sublabel: "326 Active Field Executives",
-                  },
-                  {
-                    value: "ALL_MANAGERS",
-                    label: "All Managers & Team Leaders",
-                    sublabel: "45 Area Managers & Leads",
-                  },
-                  {
-                    value: "SPECIFIC_ROLES",
-                    label: "Filter by Employee Role",
-                    sublabel: "Target specific designations",
-                  },
-                  {
-                    value: "SPECIFIC_EXECUTIVES",
-                    label: "Specific Field Executives (Selected Employees Only)",
-                    sublabel: "Select individual employee profiles",
-                  },
-                  {
-                    value: "SPECIFIC_TERRITORIES",
-                    label: "Filter by Territory / Team Zone",
-                    sublabel: "Target sales zones or branches",
-                  },
-                  {
-                    value: "CUSTOMERS",
-                    label: "Customers & Merchants Only",
-                    sublabel: "External accounts & business leads",
-                  },
-                  {
-                    value: "ALL_USERS",
-                    label: "All Workspace Users & Clients",
-                    sublabel: "Full workspace broadcast",
-                  },
+                  { value: "all", label: "All Platform Users" },
+                  { value: "custom", label: "Custom Targeted Audience" },
                 ]}
                 searchable={true}
               />
-
-              {targetAudienceCategory === "SPECIFIC_ROLES" && (
-                <Select
-                  label="Select Employee Designation / Role *"
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  options={[
-                    {
-                      value: "FIELD_EXECUTIVE",
-                      label: "Field Executives (Sales & Operations)",
-                      sublabel: "326 Active Reps",
-                    },
-                    {
-                      value: "TEAM_LEAD",
-                      label: "Team Leaders (Field Operations)",
-                      sublabel: "28 Team Leads",
-                    },
-                    {
-                      value: "REGIONAL_MANAGER",
-                      label: "Regional Sales Managers",
-                      sublabel: "17 Managers",
-                    },
-                    {
-                      value: "TERRITORY_HEAD",
-                      label: "Territory Heads & Directors",
-                      sublabel: "8 Directors",
-                    },
-                  ]}
-                  searchable={true}
-                />
-              )}
-
-              {targetAudienceCategory === "SPECIFIC_EXECUTIVES" && (
-                <Select
-                  label="Select Executive / Employee *"
-                  value={selectedExec}
-                  onChange={(e) => setSelectedExec(e.target.value)}
-                  options={executiveSelectOptions}
-                  searchable={true}
-                  placeholder="Search executive by name or code..."
-                />
-              )}
-
-              {targetAudienceCategory === "SPECIFIC_TERRITORIES" && (
-                <Select
-                  label="Select Territory / Team Zone *"
-                  value={selectedTeam}
-                  onChange={(e) => setSelectedTeam(e.target.value)}
-                  options={teamTerritorySelectOptions}
-                  searchable={true}
-                  placeholder="Search territory..."
-                />
-              )}
-
-              {targetAudienceCategory === "CUSTOMERS" && (
-                <Select
-                  label="Select Customer / Merchant *"
-                  value={selectedCustomer}
-                  onChange={(e) => setSelectedCustomer(e.target.value)}
-                  options={customerSelectOptions}
-                  searchable={true}
-                  placeholder="Search merchant..."
-                />
-              )}
+              <Select
+                label="Executive Target *"
+                value={selectedExec}
+                onChange={(e) => setSelectedExec(e.target.value)}
+                options={executiveSelectOptions}
+                searchable={true}
+                placeholder="Search executive..."
+              />
+              <Select
+                label="Customer / Merchant *"
+                value={selectedCustomer}
+                onChange={(e) => setSelectedCustomer(e.target.value)}
+                options={customerSelectOptions}
+                searchable={true}
+                placeholder="Search merchant..."
+              />
+              <Select
+                label="Teams / Territories *"
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value)}
+                options={teamTerritorySelectOptions}
+                searchable={true}
+                placeholder="Search territory..."
+              />
             </div>
-
-            {/* Target Audience Summary Banner */}
-            {targetAudienceCategory === "ALL_EXECUTIVES" && (
-              <div className="rounded-md border border-emerald-200 bg-emerald-50/50 p-3.5 flex items-start gap-3">
-                <div className="p-2 rounded-full bg-emerald-100 text-emerald-700 shrink-0 mt-0.5">
-                  <Users className="h-4 w-4" />
-                </div>
-                <div className="space-y-0.5 text-left">
-                  <p className="text-xs font-extrabold text-[#0D1F3D] flex items-center gap-2">
-                    Targeting: All Active Field Executives & Employees
-                    <span className="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">
-                      326 Members
-                    </span>
-                  </p>
-                  <p className="text-xs text-slate-600 font-medium">
-                    Broadcast will be delivered directly to all 326 field executives across all territories and operational zones via Push Notification & In-App Feed.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {targetAudienceCategory === "ALL_MANAGERS" && (
-              <div className="rounded-md border border-blue-200 bg-blue-50/50 p-3.5 flex items-start gap-3">
-                <div className="p-2 rounded-full bg-blue-100 text-blue-700 shrink-0 mt-0.5">
-                  <Shield className="h-4 w-4" />
-                </div>
-                <div className="space-y-0.5 text-left">
-                  <p className="text-xs font-extrabold text-[#0D1F3D] flex items-center gap-2">
-                    Targeting: All Regional Managers & Team Leaders
-                    <span className="text-[10px] font-mono bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">
-                      45 Managers
-                    </span>
-                  </p>
-                  <p className="text-xs text-slate-600 font-medium">
-                    Broadcast will be delivered to all regional managers, area leads, and team supervisors.
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Message Content */}
