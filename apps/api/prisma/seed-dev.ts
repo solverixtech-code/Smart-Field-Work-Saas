@@ -58,11 +58,32 @@ async function main() {
       mobile: '+919876543213',
     },
     {
-      employeeCode: 'VIS-FO-001',
+      employeeCode: 'VIS-FE-001',
       fullName: 'Vikram Singh',
       email: 'vikram.singh@visibloai.com',
-      role: Role.FINANCE_OPS,
+      role: Role.FIELD_EXECUTIVE,
       mobile: '+919876543214',
+    },
+    {
+      employeeCode: 'VIS-FE-002',
+      fullName: 'Rahul Sharma',
+      email: 'rahul.sharma@visibloai.com',
+      role: Role.FIELD_EXECUTIVE,
+      mobile: '+919876543216',
+    },
+    {
+      employeeCode: 'VIS-FE-003',
+      fullName: 'Deepak Patel',
+      email: 'deepak.patel@visibloai.com',
+      role: Role.FIELD_EXECUTIVE,
+      mobile: '+919876543217',
+    },
+    {
+      employeeCode: 'VIS-FO-001',
+      fullName: 'Sunita Patel',
+      email: 'sunita.patel@visibloai.com',
+      role: Role.FINANCE_OPS,
+      mobile: '+919876543218',
     },
     {
       employeeCode: 'VIS-SP-001',
@@ -119,6 +140,7 @@ async function main() {
     const user = await prisma.user.upsert({
       where: { email: u.email },
       update: {
+        employeeCode: u.employeeCode,
         fullName: u.fullName,
         role: u.role,
         mobile: u.mobile,
@@ -154,20 +176,61 @@ async function main() {
         });
       }
     } else {
-      const demoTenant = await prisma.tenant.findFirst({
+      const demoTenants = await prisma.tenant.findMany({
         where: { status: 'ACTIVE' },
         include: { roles: true },
       });
-      if (demoTenant) {
-        const roleCodeMap: Record<string, string> = {
-          SUPER_ADMIN: 'tenant_admin',
-          ADMIN: 'tenant_admin',
-          SALES_MANAGER: 'sales_manager',
-          TEAM_LEADER: 'team_leader',
-          FINANCE_OPS: 'finance_ops',
-          SUPPORT: 'support',
-        };
-        const targetCode = roleCodeMap[u.role] || 'tenant_admin';
+
+      for (const tenant of demoTenants) {
+        const sub = await prisma.tenantSubscription.findUnique({
+          where: { tenantId: tenant.id },
+        });
+        if (sub && sub.seatQuantity < 500) {
+          const nextRevision = sub.revision + 1;
+          await prisma.$transaction(async (tx) => {
+            await tx.subscriptionChange.create({
+              data: {
+                subscriptionId: sub.id,
+                tenantId: tenant.id,
+                idempotencyKey: `seed-seats-${sub.id}-${Date.now()}`,
+                payloadHash: 'seed-hash',
+                kind: 'ADD_SEATS',
+                reason: 'Dev Seed Seat Increase',
+                fromPlanVersionId: sub.planVersionId,
+                toPlanVersionId: sub.planVersionId,
+                fromStatus: sub.status,
+                toStatus: sub.status,
+                status: 'APPLIED',
+                effectiveAt: new Date(),
+                appliedAt: new Date(),
+                actorUserId: user.id,
+                revision: nextRevision,
+                requestData: {},
+                result: {},
+              },
+            });
+            await tx.tenantSubscription.update({
+              where: { id: sub.id },
+              data: {
+                seatQuantity: 500,
+                revision: nextRevision,
+              },
+            });
+          });
+        }
+      }
+      const roleCodeMap: Record<string, string> = {
+        SUPER_ADMIN: 'tenant_admin',
+        ADMIN: 'tenant_admin',
+        SALES_MANAGER: 'sales_manager',
+        TEAM_LEADER: 'team_leader',
+        FIELD_EXECUTIVE: 'field_executive',
+        FINANCE_OPS: 'finance_ops',
+        SUPPORT: 'support',
+      };
+      const targetCode = roleCodeMap[u.role] || 'field_executive';
+
+      for (const demoTenant of demoTenants) {
         const tenantRole =
           demoTenant.roles.find((r) => r.code === targetCode) ||
           demoTenant.roles.find((r) => r.code === 'tenant_admin');

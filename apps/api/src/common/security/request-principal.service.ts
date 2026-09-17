@@ -87,7 +87,7 @@ export class RequestPrincipalService {
 
     const platformRoleCodes = platformAssignments.map((pa) => pa.platformRole.code);
 
-    // 4. Resolve selected TenantMembership if set
+    // 4. Resolve selected TenantMembership if set (with fallback to first active membership)
     let tenantId: string | null = null;
     let membershipId: string | null = null;
     let tenantRoleCode: string | null = null;
@@ -115,6 +115,29 @@ export class RequestPrincipalService {
         tenantRoleCode = membership.tenantRole?.code ?? null;
         tenantRoleVersion = membership.tenantRole?.permissionsVersion ?? 1;
         dataScope = membership.dataScope ?? user.dataScope;
+      }
+    }
+
+    if (!membershipId && platformRoleCodes.length === 0) {
+      const activeMembership = await this.prisma.tenantMembership.findFirst({
+        where: {
+          userId: user.id,
+          status: TenantMembershipStatus.ACTIVE,
+          tenant: { status: TenantStatus.ACTIVE },
+        },
+        include: {
+          tenant: true,
+          tenantRole: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (activeMembership) {
+        tenantId = activeMembership.tenantId;
+        membershipId = activeMembership.id;
+        tenantRoleCode = activeMembership.tenantRole?.code ?? null;
+        tenantRoleVersion = activeMembership.tenantRole?.permissionsVersion ?? 1;
+        dataScope = activeMembership.dataScope ?? user.dataScope;
       }
     }
 
