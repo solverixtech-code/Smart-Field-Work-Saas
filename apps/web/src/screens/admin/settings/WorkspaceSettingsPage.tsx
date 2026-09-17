@@ -1857,52 +1857,6 @@ export function WorkspaceSettingsPage() {
     toast.info('Refreshed settings from authoritative server bootstrap');
   };
 
-  const setTab = (tab: string) => {
-    setSearchParams({ tab });
-  };
-
-  const tabs = [
-    { id: 'profile', label: 'Workspace Profile' },
-    { id: 'localization', label: 'Localization' },
-    { id: 'business-financial', label: 'Business & Financial' },
-    { id: 'preferences', label: 'Preferences' },
-    { id: 'policies-security', label: 'Policies & Security' },
-    { id: 'integrations', label: 'Integrations' },
-  ];
-
-  if (loading) {
-    return (
-      <div className="p-12 text-center text-slate-500 font-sans">
-        <div className="inline-block animate-spin h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full mb-2" />
-        <p className="text-xs font-semibold">Loading authoritative workspace settings from server bootstrap...</p>
-      </div>
-    );
-  }
-
-  if (bootstrapError || !settings) {
-    return (
-      <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 text-center font-sans space-y-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
-          <AlertCircle className="h-7 w-7" />
-        </div>
-        <div>
-          <h2 className="text-xl font-extrabold text-[#0D1F3D]">Workspace Settings Unavailable</h2>
-          <p className="text-xs text-slate-500 font-medium mt-1 max-w-md mx-auto">
-            {bootstrapError || 'Failed to load authoritative workspace configuration.'}
-          </p>
-        </div>
-        <Button
-          variant="accent"
-          size="sm"
-          onClick={handleReset}
-          className="font-bold px-6 shadow-xs bg-indigo-600 hover:bg-indigo-700 text-white"
-        >
-          Retry Loading Settings
-        </Button>
-      </div>
-    );
-  }
-
   // Tab Form States
   const [localizationForm, setLocalizationForm] = useState({
     timezone: 'Asia/Kolkata',
@@ -1997,6 +1951,52 @@ export function WorkspaceSettingsPage() {
       /* ignore */
     }
   }, [settings, bootstrap?.tenant?.id]);
+
+  const setTab = (tab: string) => {
+    setSearchParams({ tab });
+  };
+
+  const tabs = [
+    { id: 'profile', label: 'Workspace Profile' },
+    { id: 'localization', label: 'Localization' },
+    { id: 'business-financial', label: 'Business & Financial' },
+    { id: 'preferences', label: 'Preferences' },
+    { id: 'policies-security', label: 'Policies & Security' },
+    { id: 'integrations', label: 'Integrations' },
+  ];
+
+  if (loading) {
+    return (
+      <div className="p-12 text-center text-slate-500 font-sans">
+        <div className="inline-block animate-spin h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full mb-2" />
+        <p className="text-xs font-semibold">Loading authoritative workspace settings from server bootstrap...</p>
+      </div>
+    );
+  }
+
+  if (bootstrapError || !settings) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 text-center font-sans space-y-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+          <AlertCircle className="h-7 w-7" />
+        </div>
+        <div>
+          <h2 className="text-xl font-extrabold text-[#0D1F3D]">Workspace Settings Unavailable</h2>
+          <p className="text-xs text-slate-500 font-medium mt-1 max-w-md mx-auto">
+            {bootstrapError || 'Failed to load authoritative workspace configuration.'}
+          </p>
+        </div>
+        <Button
+          variant="accent"
+          size="sm"
+          onClick={handleReset}
+          className="font-bold px-6 shadow-xs bg-indigo-600 hover:bg-indigo-700 text-white"
+        >
+          Retry Loading Settings
+        </Button>
+      </div>
+    );
+  }
 
   const handleSaveLocalization = (updated: typeof localizationForm) => {
     setLocalizationForm(updated);
