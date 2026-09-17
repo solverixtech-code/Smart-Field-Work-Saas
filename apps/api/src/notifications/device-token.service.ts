@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../persistence/prisma.service';
 import { RegisterDeviceTokenDto } from './dto/register-device.dto';
+import { DevicePlatform } from './notifications.contract';
 
 @Injectable()
 export class DeviceTokenService {
