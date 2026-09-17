@@ -1334,29 +1334,29 @@ export function CreateNotificationPage() {
         {/* Main Compose Form (8 Cols) */}
         <div className="lg:col-span-8 space-y-4">
           {/* Stepper Bar */}
-          <div className="flex items-center justify-between rounded-sm border border-slate-200 bg-white p-4 shadow-xs text-xs font-bold">
-            <span className="text-[#E20613] flex items-center gap-1.5">
-              <span className="h-5 w-5 rounded-full bg-red-100 text-[#E20613] flex items-center justify-center text-[10px]">
+          <div className="flex items-center justify-between rounded-md border border-slate-200 bg-white p-3.5 shadow-xs text-xs font-semibold">
+            <span className="text-[#0D1F3D] font-bold flex items-center gap-2">
+              <span className="h-5 w-5 rounded-full bg-[#0D1F3D] text-white flex items-center justify-center text-[11px] font-bold">
                 1
-              </span>{" "}
+              </span>
               Compose
             </span>
-            <span className="text-slate-400 flex items-center gap-1.5">
-              <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">
+            <span className="text-slate-700 font-semibold flex items-center gap-2">
+              <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center text-[11px] font-semibold">
                 2
-              </span>{" "}
+              </span>
               Audience
             </span>
-            <span className="text-slate-400 flex items-center gap-1.5">
-              <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">
+            <span className="text-slate-700 font-semibold flex items-center gap-2">
+              <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center text-[11px] font-semibold">
                 3
-              </span>{" "}
+              </span>
               Delivery
             </span>
-            <span className="text-slate-400 flex items-center gap-1.5">
-              <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">
+            <span className="text-slate-700 font-semibold flex items-center gap-2">
+              <span className="h-5 w-5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center text-[11px] font-semibold">
                 4
-              </span>{" "}
+              </span>
               Review
             </span>
           </div>
