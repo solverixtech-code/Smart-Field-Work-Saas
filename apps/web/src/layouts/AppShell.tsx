@@ -879,7 +879,7 @@ export default function AppShell() {
     sidebarLogoBg: string;
     sidebarLogoRadius: number;
     sidebarLogoAlign?: "left" | "center" | "right";
-    applyBgToHeader?: boolean;
+    sidebarHeaderBg?: string;
   }>({
     logoUrl: "",
     collapsedLogoUrl: "",
@@ -889,7 +889,7 @@ export default function AppShell() {
     sidebarLogoBg: "transparent",
     sidebarLogoRadius: 6,
     sidebarLogoAlign: "left",
-    applyBgToHeader: false,
+    sidebarHeaderBg: "transparent",
   });
 
   const loadBranding = React.useCallback(() => {
@@ -907,7 +907,7 @@ export default function AppShell() {
           sidebarLogoBg: parsed.sidebarLogoBg ?? "transparent",
           sidebarLogoRadius: parsed.sidebarLogoRadius ?? 6,
           sidebarLogoAlign: parsed.sidebarLogoAlign ?? "left",
-          applyBgToHeader: parsed.applyBgToHeader ?? false,
+          sidebarHeaderBg: parsed.sidebarHeaderBg ?? "transparent",
         });
         return;
       }
@@ -924,7 +924,7 @@ export default function AppShell() {
       sidebarLogoBg: "transparent",
       sidebarLogoRadius: 6,
       sidebarLogoAlign: "left",
-      applyBgToHeader: false,
+      sidebarHeaderBg: "transparent",
     });
   }, [tenantId, runtimeBootstrap, tenant]);
 
@@ -997,10 +997,7 @@ export default function AppShell() {
             showBigLogo ? "justify-between px-4" : "justify-center px-2"
           }`}
           style={{
-            backgroundColor:
-              branding.applyBgToHeader && branding.sidebarLogoBg !== "transparent"
-                ? branding.sidebarLogoBg
-                : "transparent",
+            backgroundColor: branding.sidebarHeaderBg || "transparent",
           }}
         >
           {showBigLogo ? (
@@ -1025,12 +1022,9 @@ export default function AppShell() {
                         : "justify-start"
                     }`}
                     style={{
-                      backgroundColor: branding.applyBgToHeader ? "transparent" : branding.sidebarLogoBg,
+                      backgroundColor: branding.sidebarLogoBg,
                       borderRadius: `${branding.sidebarLogoRadius}px`,
-                      padding:
-                        !branding.applyBgToHeader && branding.sidebarLogoBg !== "transparent"
-                          ? "4px 8px"
-                          : "0px",
+                      padding: branding.sidebarLogoBg !== "transparent" ? "4px 8px" : "0px",
                     }}
                   >
                     <img
@@ -1079,12 +1073,9 @@ export default function AppShell() {
                 <div
                   className="flex items-center justify-center transition-all duration-200"
                   style={{
-                    backgroundColor: branding.applyBgToHeader ? "transparent" : branding.sidebarLogoBg,
+                    backgroundColor: branding.sidebarLogoBg,
                     borderRadius: `${branding.sidebarLogoRadius}px`,
-                    padding:
-                      !branding.applyBgToHeader && branding.sidebarLogoBg !== "transparent"
-                        ? "2px 4px"
-                        : "0px",
+                    padding: branding.sidebarLogoBg !== "transparent" ? "2px 4px" : "0px",
                   }}
                 >
                   <img

@@ -41,7 +41,7 @@ export interface SidebarLogoCustomizerModalProps {
     sidebarLogoBg?: string;
     sidebarLogoRadius?: number;
     sidebarLogoAlign?: "left" | "center" | "right";
-    applyBgToHeader?: boolean;
+    sidebarHeaderBg?: string;
   };
   onClose: () => void;
   onApply: (settings: {
@@ -53,7 +53,7 @@ export interface SidebarLogoCustomizerModalProps {
     sidebarLogoBg: string;
     sidebarLogoRadius: number;
     sidebarLogoAlign: "left" | "center" | "right";
-    applyBgToHeader: boolean;
+    sidebarHeaderBg: string;
   }) => void;
 }
 
@@ -120,6 +120,14 @@ const BG_OPTIONS = [
   { id: "white", label: "White Card", value: "#ffffff", border: "border-slate-200 shadow-2xs" },
   { id: "slate", label: "Slate Soft", value: "#f1f5f9", border: "border-slate-200" },
   { id: "navy", label: "Dark Navy", value: "#0d1f3d", border: "border-[#0d1f3d]" },
+];
+
+const HEADER_BG_PRESETS = [
+  { id: "transparent", label: "Transparent", value: "transparent", border: "border-slate-300" },
+  { id: "white", label: "White", value: "#ffffff", border: "border-slate-200 shadow-2xs" },
+  { id: "light", label: "Light Gray", value: "#f8fafc", border: "border-slate-200" },
+  { id: "navy", label: "Dark Navy", value: "#0d1f3d", border: "border-[#0d1f3d]" },
+  { id: "blue", label: "Deep Blue", value: "#0b2e6b", border: "border-[#0b2e6b]" },
 ];
 
 const RADIUS_OPTIONS = [
@@ -206,8 +214,8 @@ export function SidebarLogoCustomizerModal({
   const [logoAlign, setLogoAlign] = useState<"left" | "center" | "right">(
     initialSettings?.sidebarLogoAlign ?? "left"
   );
-  const [applyBgToHeader, setApplyBgToHeader] = useState<boolean>(
-    initialSettings?.applyBgToHeader ?? false
+  const [headerBg, setHeaderBg] = useState<string>(
+    initialSettings?.sidebarHeaderBg ?? "transparent"
   );
   const [previewMode, setPreviewMode] = useState<"expanded" | "collapsed">(
     "expanded"
@@ -237,7 +245,7 @@ export function SidebarLogoCustomizerModal({
       setLogoBg(initialSettings?.sidebarLogoBg ?? "transparent");
       setLogoRadius(initialSettings?.sidebarLogoRadius ?? 6);
       setLogoAlign(initialSettings?.sidebarLogoAlign ?? "left");
-      setApplyBgToHeader(initialSettings?.applyBgToHeader ?? false);
+      setHeaderBg(initialSettings?.sidebarHeaderBg ?? "transparent");
       setActiveTab("expanded");
       setPreviewMode("expanded");
     }
@@ -347,7 +355,7 @@ export function SidebarLogoCustomizerModal({
     setLogoBg("transparent");
     setLogoRadius(6);
     setLogoAlign("left");
-    setApplyBgToHeader(false);
+    setHeaderBg("transparent");
   };
 
   const handleConfirmSave = async () => {
@@ -384,7 +392,7 @@ export function SidebarLogoCustomizerModal({
         sidebarLogoBg: logoBg,
         sidebarLogoRadius: logoRadius,
         sidebarLogoAlign: logoAlign,
-        applyBgToHeader,
+        sidebarHeaderBg: headerBg,
       });
     } catch {
       onApply({
@@ -396,7 +404,7 @@ export function SidebarLogoCustomizerModal({
         sidebarLogoBg: logoBg,
         sidebarLogoRadius: logoRadius,
         sidebarLogoAlign: logoAlign,
-        applyBgToHeader,
+        sidebarHeaderBg: headerBg,
       });
     } finally {
       setIsProcessing(false);
@@ -803,8 +811,7 @@ export function SidebarLogoCustomizerModal({
                             : "justify-center px-1.5"
                         }`}
                         style={{
-                          backgroundColor:
-                            applyBgToHeader && logoBg !== "transparent" ? logoBg : "transparent",
+                          backgroundColor: headerBg,
                         }}
                       >
                         {showLogoInSidebar ? (
@@ -813,9 +820,9 @@ export function SidebarLogoCustomizerModal({
                               <div
                                 className={`flex items-center w-full transition-all ${getAlignJustifyClass(logoAlign)}`}
                                 style={{
-                                  backgroundColor: applyBgToHeader ? "transparent" : logoBg,
+                                  backgroundColor: logoBg,
                                   borderRadius: `${logoRadius}px`,
-                                  padding: !applyBgToHeader && logoBg !== "transparent" ? "3px 6px" : "0px",
+                                  padding: logoBg !== "transparent" ? "3px 6px" : "0px",
                                 }}
                               >
                                 <img
@@ -838,9 +845,9 @@ export function SidebarLogoCustomizerModal({
                               <div
                                 className="flex items-center justify-center transition-all"
                                 style={{
-                                  backgroundColor: applyBgToHeader ? "transparent" : logoBg,
+                                  backgroundColor: logoBg,
                                   borderRadius: `${logoRadius}px`,
-                                  padding: !applyBgToHeader && logoBg !== "transparent" ? "2px 4px" : "0px",
+                                  padding: logoBg !== "transparent" ? "2px 4px" : "0px",
                                 }}
                               >
                                 <img
@@ -857,9 +864,9 @@ export function SidebarLogoCustomizerModal({
                               <div
                                 className="flex items-center justify-center transition-all"
                                 style={{
-                                  backgroundColor: applyBgToHeader ? "transparent" : logoBg,
+                                  backgroundColor: logoBg,
                                   borderRadius: `${logoRadius}px`,
-                                  padding: !applyBgToHeader && logoBg !== "transparent" ? "2px 4px" : "0px",
+                                  padding: logoBg !== "transparent" ? "2px 4px" : "0px",
                                 }}
                               >
                                 <img
@@ -1028,30 +1035,11 @@ export function SidebarLogoCustomizerModal({
                     </div>
                   </div>
 
-                  {/* Logo & Header Background Fill Color Picker */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-[#0D1F3D] block">
-                        Background Fill & Color Picker
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={logoBg === "transparent" ? "#ffffff" : logoBg}
-                          onChange={(e) => setLogoBg(e.target.value)}
-                          className="h-6 w-6 rounded cursor-pointer border border-slate-300 p-0 overflow-hidden bg-white shadow-2xs"
-                          title="Pick Custom Color"
-                        />
-                        <input
-                          type="text"
-                          value={logoBg}
-                          onChange={(e) => setLogoBg(e.target.value)}
-                          placeholder="#0D1F3D or transparent"
-                          className="w-28 px-2 py-0.5 text-xs font-mono font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded focus:outline-none focus:border-[#0D1F3D]"
-                        />
-                      </div>
-                    </div>
-
+                  {/* Logo Card Background Fill */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-[#0D1F3D] block">
+                      Logo Card Fill
+                    </label>
                     <div className="grid grid-cols-4 gap-1.5">
                       {BG_OPTIONS.map((opt) => (
                         <button
@@ -1077,21 +1065,61 @@ export function SidebarLogoCustomizerModal({
                         </button>
                       ))}
                     </div>
+                  </div>
 
-                    {/* Apply Color to Entire Sidebar Header Toggle */}
-                    <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between mt-2">
-                      <div className="space-y-0.5 pr-2">
-                        <p className="text-xs font-semibold text-[#0D1F3D]">
-                          Apply Color to Entire Sidebar Header
-                        </p>
+                  {/* Sidebar Header Background Color Picker */}
+                  <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-xs font-bold text-[#0D1F3D] block">
+                          Sidebar Header Background Color
+                        </label>
                         <p className="text-[10px] text-slate-500">
-                          Fill the entire 80px top sidebar header with selected color instead of just logo card
+                          Applies custom background color to top 80px sidebar header
                         </p>
                       </div>
-                      <Checkbox
-                        checked={applyBgToHeader}
-                        onChange={setApplyBgToHeader}
-                      />
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={headerBg === "transparent" ? "#ffffff" : headerBg}
+                          onChange={(e) => setHeaderBg(e.target.value)}
+                          className="h-6 w-6 rounded cursor-pointer border border-slate-300 p-0 overflow-hidden bg-white shadow-2xs"
+                          title="Pick Header Custom Color"
+                        />
+                        <input
+                          type="text"
+                          value={headerBg}
+                          onChange={(e) => setHeaderBg(e.target.value)}
+                          placeholder="#ffffff or transparent"
+                          className="w-28 px-2 py-0.5 text-xs font-mono font-bold text-slate-800 bg-white border border-slate-300 rounded focus:outline-none focus:border-[#0D1F3D]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-1.5 pt-1">
+                      {HEADER_BG_PRESETS.map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setHeaderBg(opt.value)}
+                          className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded border text-center transition ${
+                            headerBg === opt.value
+                              ? "border-[#0D1F3D] bg-white font-semibold ring-1 ring-[#0D1F3D]/30"
+                              : "border-slate-200 bg-white/70 hover:bg-white text-slate-600"
+                          }`}
+                        >
+                          <div
+                            className={`h-3 w-3 rounded-full border ${opt.border}`}
+                            style={{
+                              backgroundColor:
+                                opt.value === "transparent" ? "#ffffff" : opt.value,
+                            }}
+                          />
+                          <span className="text-[9px] font-semibold truncate">
+                            {opt.label}
+                          </span>
+                        </button>
+                      ))}
                     </div>
                   </div>
 

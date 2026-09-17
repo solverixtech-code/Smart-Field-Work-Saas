@@ -250,7 +250,7 @@ interface ProfileTabProps {
     sidebarLogoBg?: string;
     sidebarLogoRadius?: number;
     sidebarLogoAlign?: "left" | "center" | "right";
-    applyBgToHeader?: boolean;
+    sidebarHeaderBg?: string;
   };
   onChange: (field: string, val: any) => void;
   onSave: () => void;
@@ -1679,7 +1679,7 @@ export function WorkspaceSettingsPage() {
     sidebarLogoBg: 'transparent',
     sidebarLogoRadius: 6,
     sidebarLogoAlign: 'left' as 'left' | 'center' | 'right',
-    applyBgToHeader: false,
+    sidebarHeaderBg: 'transparent',
   });
 
   const [saving, setSaving] = useState(false);
@@ -1717,7 +1717,7 @@ export function WorkspaceSettingsPage() {
         sidebarLogoBg: storedBranding?.sidebarLogoBg ?? 'transparent',
         sidebarLogoRadius: storedBranding?.sidebarLogoRadius ?? 6,
         sidebarLogoAlign: storedBranding?.sidebarLogoAlign ?? 'left',
-        applyBgToHeader: storedBranding?.applyBgToHeader ?? false,
+        sidebarHeaderBg: storedBranding?.sidebarHeaderBg ?? 'transparent',
       });
     }
   }, [settings, bootstrap?.tenant?.id]);
@@ -1756,7 +1756,7 @@ export function WorkspaceSettingsPage() {
     sidebarLogoBg: string;
     sidebarLogoRadius: number;
     sidebarLogoAlign: 'left' | 'center' | 'right';
-    applyBgToHeader: boolean;
+    sidebarHeaderBg: string;
   }) => {
     setForm((prev) => ({
       ...prev,
@@ -1768,7 +1768,7 @@ export function WorkspaceSettingsPage() {
       sidebarLogoBg: brandingSettings.sidebarLogoBg,
       sidebarLogoRadius: brandingSettings.sidebarLogoRadius,
       sidebarLogoAlign: brandingSettings.sidebarLogoAlign,
-      applyBgToHeader: brandingSettings.applyBgToHeader,
+      sidebarHeaderBg: brandingSettings.sidebarHeaderBg,
     }));
 
     const tenantId = bootstrap?.tenant?.id || 'default';
@@ -2057,7 +2057,7 @@ export function WorkspaceSettingsPage() {
           sidebarLogoBg: form.sidebarLogoBg,
           sidebarLogoRadius: form.sidebarLogoRadius,
           sidebarLogoAlign: form.sidebarLogoAlign,
-          applyBgToHeader: form.applyBgToHeader,
+          sidebarHeaderBg: form.sidebarHeaderBg,
         }}
         onClose={() => {
           setCustomizerOpen(false);
