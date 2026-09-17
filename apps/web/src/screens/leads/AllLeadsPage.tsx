@@ -525,7 +525,6 @@ export default function AllLeadsPage({
           />
         </div>
         <Select
-          native
           id="lead-region"
           placeholder="All Regions"
           options={[
@@ -538,7 +537,6 @@ export default function AllLeadsPage({
           ]}
         />
         <Select
-          native
           id="lead-priority"
           placeholder="All Priorities"
           options={leadPriorities}
@@ -549,7 +547,6 @@ export default function AllLeadsPage({
           }}
         />
         <Select
-          native
           id="lead-status"
           placeholder="All Lifecycle States"
           disabled={Boolean(category.status)}

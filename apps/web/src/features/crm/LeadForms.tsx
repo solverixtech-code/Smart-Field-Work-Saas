@@ -520,7 +520,6 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                 )}
 
                 <Select
-                  native
                   id="lead-form-priority"
                   label="Priority Level"
                   value={draft.priority}
@@ -532,7 +531,6 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                 />
 
                 <Select
-                  native
                   id="lead-form-status"
                   label="Lifecycle Status"
                   value={status}
@@ -546,7 +544,6 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
 
                 {status === "DISQUALIFIED" && (
                   <Select
-                    native
                     id="lead-disqualification-reason"
                     label="Disqualification Reason"
                     value={draft.disqualificationReason ?? ""}
@@ -1079,7 +1076,6 @@ export function LeadConversionModal({
           {business && (
             <>
               <Select
-                native
                 id="convert-account-mode"
                 label="Business"
                 value={accountMode}
@@ -1122,7 +1118,6 @@ export function LeadConversionModal({
             </>
           )}
           <Select
-            native
             id="convert-contact-mode"
             label="Contact"
             value={contactMode}

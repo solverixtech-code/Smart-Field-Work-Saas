@@ -53,7 +53,6 @@ export function ContactFields({
         onChange={(e) => onChange({ ...value, email: e.target.value || null })}
       />
       <Select
-        native
         id="contact-status"
         label="Status"
         value={value.status ?? "ACTIVE"}
@@ -267,7 +266,6 @@ export function AccountForm({ initial }: { initial?: AccountDto }) {
               }
             />
             <Select
-              native
               id="business-status"
               label="Status"
               options={statuses}
