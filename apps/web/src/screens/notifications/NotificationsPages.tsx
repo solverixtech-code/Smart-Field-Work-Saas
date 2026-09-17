@@ -215,42 +215,42 @@ const executiveSelectOptions = [
   {
     value: "all_executives",
     label: "All Field Executives",
-    sublabel: "326 Active Field Sales Reps",
+    sublabel: "Active Field Sales & Support Pool",
     avatar:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80",
   },
   {
     value: "rahul_verma",
     label: "Rahul Verma",
-    sublabel: "FE-1001 • Mumbai North Zone",
+    sublabel: "VIS-FE-001 • Mumbai North Zone (Field Sales Exec)",
     avatar:
       "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
   },
   {
     value: "priya_mehta",
     label: "Priya Mehta",
-    sublabel: "FE-1002 • Western Suburbs Zone",
+    sublabel: "VIS-ADM-001 • Workspace Administrator",
     avatar:
       "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
   },
   {
     value: "sanjay_yadav",
     label: "Sanjay Yadav",
-    sublabel: "TL-1003 • Eastern Suburbs (Team Leader)",
+    sublabel: "VIS-TL-001 • Eastern Suburbs (Team Leader)",
     avatar:
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
   },
   {
     value: "karan_patil",
     label: "Karan Patil",
-    sublabel: "FE-1009 • Thane Team",
+    sublabel: "VIS-FE-002 • Thane Team (Field Executive)",
     avatar:
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
   },
   {
-    value: "neha_deshpande",
-    label: "Neha Deshpande",
-    sublabel: "FE-1014 • Pune Team",
+    value: "amit_sharma",
+    label: "Amit Sharma",
+    sublabel: "VIS-SA-001 • Platform Super Admin",
     avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150",
   },
 ];
