@@ -987,6 +987,62 @@ export function SidebarLogoCustomizerModal({
                     </div>
                   </div>
 
+                  {/* Sidebar Header Background Color Picker (Top Priority Control) */}
+                  <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <label className="text-xs font-bold text-[#0D1F3D] block">
+                          Sidebar Header Background Color
+                        </label>
+                        <p className="text-[10px] text-slate-500">
+                          Applies custom background color to top 80px sidebar header
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="color"
+                          value={headerBg === "transparent" ? "#ffffff" : headerBg}
+                          onChange={(e) => setHeaderBg(e.target.value)}
+                          className="h-6 w-6 rounded cursor-pointer border border-slate-300 p-0 overflow-hidden bg-white shadow-2xs"
+                          title="Pick Header Custom Color"
+                        />
+                        <input
+                          type="text"
+                          value={headerBg}
+                          onChange={(e) => setHeaderBg(e.target.value)}
+                          placeholder="#ffffff or transparent"
+                          className="w-28 px-2 py-0.5 text-xs font-mono font-bold text-slate-800 bg-white border border-slate-300 rounded focus:outline-none focus:border-[#0D1F3D]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-1.5 pt-1">
+                      {HEADER_BG_PRESETS.map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setHeaderBg(opt.value)}
+                          className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded border text-center transition ${
+                            headerBg === opt.value
+                              ? "border-[#0D1F3D] bg-white font-semibold ring-1 ring-[#0D1F3D]/30"
+                              : "border-slate-200 bg-white/70 hover:bg-white text-slate-600"
+                          }`}
+                        >
+                          <div
+                            className={`h-3 w-3 rounded-full border ${opt.border}`}
+                            style={{
+                              backgroundColor:
+                                opt.value === "transparent" ? "#ffffff" : opt.value,
+                            }}
+                          />
+                          <span className="text-[9px] font-semibold truncate">
+                            {opt.label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Sidebar Logo Height Slider */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
@@ -1060,62 +1116,6 @@ export function SidebarLogoCustomizerModal({
                             }}
                           />
                           <span className="text-[10px] font-semibold text-slate-700 truncate">
-                            {opt.label}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Sidebar Header Background Color Picker */}
-                  <div className="space-y-2 p-3 rounded-lg bg-slate-50 border border-slate-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <label className="text-xs font-bold text-[#0D1F3D] block">
-                          Sidebar Header Background Color
-                        </label>
-                        <p className="text-[10px] text-slate-500">
-                          Applies custom background color to top 80px sidebar header
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="color"
-                          value={headerBg === "transparent" ? "#ffffff" : headerBg}
-                          onChange={(e) => setHeaderBg(e.target.value)}
-                          className="h-6 w-6 rounded cursor-pointer border border-slate-300 p-0 overflow-hidden bg-white shadow-2xs"
-                          title="Pick Header Custom Color"
-                        />
-                        <input
-                          type="text"
-                          value={headerBg}
-                          onChange={(e) => setHeaderBg(e.target.value)}
-                          placeholder="#ffffff or transparent"
-                          className="w-28 px-2 py-0.5 text-xs font-mono font-bold text-slate-800 bg-white border border-slate-300 rounded focus:outline-none focus:border-[#0D1F3D]"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-5 gap-1.5 pt-1">
-                      {HEADER_BG_PRESETS.map((opt) => (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => setHeaderBg(opt.value)}
-                          className={`flex items-center justify-center gap-1 py-1 px-1.5 rounded border text-center transition ${
-                            headerBg === opt.value
-                              ? "border-[#0D1F3D] bg-white font-semibold ring-1 ring-[#0D1F3D]/30"
-                              : "border-slate-200 bg-white/70 hover:bg-white text-slate-600"
-                          }`}
-                        >
-                          <div
-                            className={`h-3 w-3 rounded-full border ${opt.border}`}
-                            style={{
-                              backgroundColor:
-                                opt.value === "transparent" ? "#ffffff" : opt.value,
-                            }}
-                          />
-                          <span className="text-[9px] font-semibold truncate">
                             {opt.label}
                           </span>
                         </button>
