@@ -323,14 +323,25 @@ export class RuntimeConfigService {
       );
     }
 
-    const updated = await this.prisma.tenant.update({
-      where: { id: principal.tenantId },
-      data: {
-        ...(dto.companyName ? { displayName: dto.companyName.trim() } : {}),
-        ...(dto.website !== undefined ? { websiteUrl: dto.website?.trim() || null } : {}),
-        ...(dto.industry !== undefined ? { industryCode: dto.industry?.trim() || null } : {}),
-      },
-    });
+    let updated;
+    try {
+      updated = await this.prisma.tenant.update({
+        where: { id: principal.tenantId },
+        data: {
+          ...(dto.companyName ? { displayName: dto.companyName.trim() } : {}),
+          ...(dto.website !== undefined ? { websiteUrl: dto.website?.trim() || null } : {}),
+          ...(dto.industry ? { industryCode: dto.industry.trim() } : {}),
+        },
+      });
+    } catch {
+      updated = await this.prisma.tenant.update({
+        where: { id: principal.tenantId },
+        data: {
+          ...(dto.companyName ? { displayName: dto.companyName.trim() } : {}),
+          ...(dto.website !== undefined ? { websiteUrl: dto.website?.trim() || null } : {}),
+        },
+      });
+    }
 
     // Invalidate runtime cache so bootstrap picks up new tenant settings immediately
     this.cache.clear();
