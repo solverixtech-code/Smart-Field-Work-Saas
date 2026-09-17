@@ -65,20 +65,23 @@ const STATE_OPTIONS = [
 ];
 
 const INDUSTRY_OPTIONS = [
-  {
-    value: "Pharmaceuticals & Healthcare",
-    label: "Pharmaceuticals & Healthcare",
-  },
+  { value: "PHARMA", label: "Pharmaceuticals & Healthcare" },
+  { value: "Pharmaceuticals & Healthcare", label: "Pharmaceuticals & Healthcare" },
+  { value: "FMCG", label: "FMCG & Consumer Goods" },
   { value: "FMCG & Consumer Goods", label: "FMCG & Consumer Goods" },
+  { value: "RETAIL", label: "Retail & Distribution" },
   { value: "Retail & Distribution", label: "Retail & Distribution" },
+  { value: "BFSI", label: "BFSI & Financial Services" },
   { value: "BFSI & Financial Services", label: "BFSI & Financial Services" },
+  { value: "LOGISTICS", label: "Logistics & Supply Chain" },
   { value: "Logistics & Supply Chain", label: "Logistics & Supply Chain" },
+  { value: "TELECOM", label: "Telecom & Utilities" },
   { value: "Telecom & Utilities", label: "Telecom & Utilities" },
-  {
-    value: "Technology & Enterprise SaaS",
-    label: "Technology & Enterprise SaaS",
-  },
+  { value: "SAAS", label: "Technology & Enterprise SaaS" },
+  { value: "Technology & Enterprise SaaS", label: "Technology & Enterprise SaaS" },
+  { value: "MANUFACTURING", label: "Manufacturing & Industrial" },
   { value: "Manufacturing & Industrial", label: "Manufacturing & Industrial" },
+  { value: "OTHER", label: "Other" },
   { value: "Other", label: "Other" },
 ];
 

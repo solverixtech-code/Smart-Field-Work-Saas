@@ -117,7 +117,7 @@ export class RuntimeConfigService {
         status: true,
         tenantRole: { select: { tenantId: true } },
         user: { select: { status: true } },
-        tenant: { select: { id: true, displayName: true, status: true } },
+        tenant: { select: { id: true, displayName: true, status: true, industryCode: true, websiteUrl: true } },
       },
     });
     if (
@@ -328,6 +328,7 @@ export class RuntimeConfigService {
       data: {
         ...(dto.companyName ? { displayName: dto.companyName.trim() } : {}),
         ...(dto.website !== undefined ? { websiteUrl: dto.website?.trim() || null } : {}),
+        ...(dto.industry !== undefined ? { industryCode: dto.industry?.trim() || null } : {}),
       },
     });
 

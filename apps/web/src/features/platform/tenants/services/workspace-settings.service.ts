@@ -96,9 +96,9 @@ class ApiWorkspaceSettingsService {
       profile: {
         companyName: bootstrap.tenant.displayName || '—',
         shortName: bootstrap.tenant.displayName || '—',
-        industry: bootstrap.industry?.templateId ? `Template #${bootstrap.industry.templateId}` : 'Unassigned',
+        industry: (bootstrap.tenant as any)?.industryCode || (bootstrap.industry?.templateId ? `Template #${bootstrap.industry.templateId}` : 'Unassigned'),
         tenantCode: formattedTenantCode,
-        website: null,
+        website: (bootstrap.tenant as any)?.websiteUrl || null,
         primaryEmail: null,
         primaryPhone: null,
         primaryColor: null,
