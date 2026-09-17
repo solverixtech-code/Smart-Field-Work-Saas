@@ -859,12 +859,19 @@ export function SidebarLogoCustomizerModal({
                       </div>
 
                       {/* Mini Sidebar Navigation Menu Items matching AppShell 100% */}
-                      <div className="p-2.5 space-y-3 min-h-[170px]">
+                      <div className={`p-2.5 space-y-4 min-h-[180px] ${previewMode === "collapsed" ? "px-1 text-center" : ""}`}>
                         <div>
                           {previewMode === "expanded" && (
                             <p className="px-3 text-[11px] font-medium text-slate-400 pt-1 pb-1">Main</p>
                           )}
-                          <div className="flex items-center gap-2.5 px-3 py-2 rounded-sm bg-[#0D1F3D] text-white text-[13px] font-semibold shadow-xs">
+                          <div
+                            className={`flex items-center rounded-sm py-2 transition-all ${
+                              previewMode === "expanded"
+                                ? "px-3 gap-3 justify-start bg-[#0D1F3D] text-white text-[13px] font-semibold shadow-xs"
+                                : "w-11 h-9 mx-auto justify-center px-0 bg-[#0D1F3D] text-white shadow-xs font-semibold"
+                            }`}
+                            title="Dashboard"
+                          >
                             <LayoutDashboard className="h-4.5 w-4.5 shrink-0 text-white" />
                             {previewMode === "expanded" && <span className="truncate">Dashboard</span>}
                           </div>
@@ -875,8 +882,15 @@ export function SidebarLogoCustomizerModal({
                             <p className="px-3 text-[11px] font-medium text-slate-400 pt-1 pb-1">Sales & Field</p>
                           )}
                           <div className="space-y-1">
-                            <div className="flex items-center justify-between px-3 py-2 rounded-sm text-slate-600 hover:bg-slate-100/80 text-[13px] font-medium">
-                              <div className="flex items-center gap-3 min-w-0">
+                            <div
+                              className={`flex items-center rounded-sm py-2 text-slate-600 hover:bg-slate-100/80 transition-all ${
+                                previewMode === "expanded"
+                                  ? "px-3 gap-3 justify-between text-[13px] font-medium"
+                                  : "w-11 h-9 mx-auto justify-center px-0 text-slate-400"
+                              }`}
+                              title="Sales Pipeline"
+                            >
+                              <div className={`flex items-center ${previewMode === "expanded" ? "gap-3 min-w-0" : "justify-center"}`}>
                                 <TrendingUp className="h-4.5 w-4.5 shrink-0 text-slate-400" />
                                 {previewMode === "expanded" && <span className="truncate">Sales Pipeline</span>}
                               </div>
@@ -886,8 +900,16 @@ export function SidebarLogoCustomizerModal({
                                 </span>
                               )}
                             </div>
-                            <div className="flex items-center justify-between px-3 py-2 rounded-sm text-slate-600 hover:bg-slate-100/80 text-[13px] font-medium">
-                              <div className="flex items-center gap-3 min-w-0">
+
+                            <div
+                              className={`flex items-center rounded-sm py-2 text-slate-600 hover:bg-slate-100/80 transition-all ${
+                                previewMode === "expanded"
+                                  ? "px-3 gap-3 justify-between text-[13px] font-medium"
+                                  : "w-11 h-9 mx-auto justify-center px-0 text-slate-400"
+                              }`}
+                              title="Leads Management"
+                            >
+                              <div className={`flex items-center ${previewMode === "expanded" ? "gap-3 min-w-0" : "justify-center"}`}>
                                 <UserPlus className="h-4.5 w-4.5 shrink-0 text-slate-400" />
                                 {previewMode === "expanded" && <span className="truncate">Leads Management</span>}
                               </div>
@@ -902,8 +924,8 @@ export function SidebarLogoCustomizerModal({
                       </div>
 
                       {/* Mini Sidebar Bottom Profile Card matching AppShell 100% */}
-                      <div className="p-2 border-t border-slate-100 bg-slate-50/70 flex items-center justify-between">
-                        <div className="flex items-center gap-2 min-w-0">
+                      <div className={`p-2 border-t border-slate-100 bg-slate-50/70 flex items-center ${previewMode === "expanded" ? "justify-between" : "justify-center"}`}>
+                        <div className={`flex items-center ${previewMode === "expanded" ? "gap-2 min-w-0" : "justify-center"}`}>
                           <div className="h-7 w-7 rounded-full bg-[#0D1F3D] text-white flex items-center justify-center font-semibold text-[10px] shrink-0">
                             AD
                           </div>
