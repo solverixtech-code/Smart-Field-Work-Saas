@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import { motion, AnimatePresence } from "framer-motion";
 import * as Portal from "@radix-ui/react-portal";
@@ -141,6 +141,9 @@ export function SidebarLogoCustomizerModal({
   const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string>(imageUrl);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Timer ref for debouncing canvas live preview rendering during crop dragging
+  const previewTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Sidebar Styling State
   const [showLogoInSidebar, setShowLogoInSidebar] = useState(
     initialSettings?.showLogoInSidebar ?? true
@@ -177,6 +180,14 @@ export function SidebarLogoCustomizerModal({
     }
   }, [isOpen, imageUrl, initialSettings]);
 
+  useEffect(() => {
+    return () => {
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
+      }
+    };
+  }, []);
+
   const onCropChange = useCallback((newCrop: { x: number; y: number }) => {
     setCrop(newCrop);
   }, []);
@@ -186,14 +197,22 @@ export function SidebarLogoCustomizerModal({
   }, []);
 
   const onCropCompleteCallback = useCallback(
-    async (_croppedArea: Area, pixelCrop: Area) => {
+    (_croppedArea: Area, pixelCrop: Area) => {
       setCroppedAreaPixels(pixelCrop);
-      try {
-        const livePreview = await getCroppedImgDataUrl(imageUrl, pixelCrop, rotation);
-        setCroppedPreviewUrl(livePreview);
-      } catch {
-        /* ignore */
+
+      // Debounce base64 canvas decoding to keep mouse dragging at 60fps buttery smooth
+      if (previewTimerRef.current) {
+        clearTimeout(previewTimerRef.current);
       }
+
+      previewTimerRef.current = setTimeout(async () => {
+        try {
+          const livePreview = await getCroppedImgDataUrl(imageUrl, pixelCrop, rotation);
+          setCroppedPreviewUrl(livePreview);
+        } catch {
+          /* ignore */
+        }
+      }, 150);
     },
     [imageUrl, rotation]
   );
@@ -246,13 +265,13 @@ export function SidebarLogoCustomizerModal({
     <Portal.Root>
       <AnimatePresence>
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 font-sans">
-          {/* Backdrop Blur */}
+          {/* Backdrop without blur for maximum performance */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-900/60"
           />
 
           {/* Modal Container */}
