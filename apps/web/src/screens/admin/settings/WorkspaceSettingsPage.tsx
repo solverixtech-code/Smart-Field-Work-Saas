@@ -7,7 +7,7 @@ import {
   workspaceSettingsService,
   WorkspaceSettings,
 } from "../../../features/platform/tenants/services/workspace-settings.service";
-import { ImageCropperModal } from "../../../components/ui/ImageCropperModal";
+import { SidebarLogoCustomizerModal } from "../../../components/ui/SidebarLogoCustomizerModal";
 import {
   Building2,
   Globe,
@@ -245,12 +245,17 @@ interface ProfileTabProps {
     logoUrl?: string;
     showLogoInSidebar?: boolean;
     showLogoInLogin?: boolean;
+    sidebarLogoHeight?: number;
+    sidebarLogoObjectFit?: "contain" | "cover";
+    sidebarLogoBg?: string;
+    sidebarLogoRadius?: number;
   };
   onChange: (field: string, val: any) => void;
   onSave: () => void;
   saving: boolean;
   onTriggerLogoUpload: () => void;
   onRemoveLogo: () => void;
+  onOpenCustomizer?: () => void;
 }
 
 // ─── Api Exposure Callout Banner ───
@@ -305,6 +310,7 @@ function ProfileTab({
   saving,
   onTriggerLogoUpload,
   onRemoveLogo,
+  onOpenCustomizer,
 }: ProfileTabProps) {
   const p = settings.profile;
 
@@ -363,7 +369,7 @@ function ProfileTab({
             </div>
 
             {isAdmin && (
-              <div className="flex items-center gap-2 w-full">
+              <div className="flex flex-wrap items-center justify-center gap-2 w-full">
                 <Button
                   type="button"
                   variant="outline"
@@ -374,6 +380,19 @@ function ProfileTab({
                   <Upload className="h-3.5 w-3.5 text-indigo-600" />
                   {form.logoUrl ? "Change Logo" : "Upload Logo"}
                 </Button>
+                {form.logoUrl && onOpenCustomizer && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={onOpenCustomizer}
+                    className="gap-1.5 font-bold text-xs shadow-2xs border-slate-300 hover:bg-white text-slate-700"
+                    title="Preview & Scale Sidebar Logo"
+                  >
+                    <Sliders className="h-3.5 w-3.5 text-indigo-600" />
+                    Preview & Scale
+                  </Button>
+                )}
                 {form.logoUrl && (
                   <Button
                     type="button"
@@ -389,7 +408,7 @@ function ProfileTab({
               </div>
             )}
             <span className="text-[10px] text-slate-500 font-medium text-center">
-              Supports PNG, JPG, WebP. Cropped via ImageCropperModal.
+              Upload logo file to launch live sidebar preview and resizing tool.
             </span>
           </div>
 
@@ -1537,10 +1556,10 @@ export function WorkspaceSettingsPage() {
     );
   }, [bootstrap]);
 
-  // Logo & Cropper State
+  // Logo & Customizer Modal State
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [cropperOpen, setCropperOpen] = useState(false);
-  const [tempCropperImage, setTempCropperImage] = useState<string>('');
+  const [customizerOpen, setCustomizerOpen] = useState(false);
+  const [customizerImage, setCustomizerImage] = useState<string>('');
 
   // Editable Form State
   const [form, setForm] = useState({
@@ -1559,6 +1578,10 @@ export function WorkspaceSettingsPage() {
     logoUrl: '',
     showLogoInSidebar: true,
     showLogoInLogin: true,
+    sidebarLogoHeight: 42,
+    sidebarLogoObjectFit: 'contain' as 'contain' | 'cover',
+    sidebarLogoBg: 'transparent',
+    sidebarLogoRadius: 6,
   });
 
   const [saving, setSaving] = useState(false);
@@ -1590,6 +1613,10 @@ export function WorkspaceSettingsPage() {
         logoUrl: storedBranding?.logoUrl ?? ((settings.profile as any).logoUrl || ''),
         showLogoInSidebar: storedBranding?.showLogoInSidebar ?? true,
         showLogoInLogin: storedBranding?.showLogoInLogin ?? true,
+        sidebarLogoHeight: storedBranding?.sidebarLogoHeight ?? 42,
+        sidebarLogoObjectFit: storedBranding?.sidebarLogoObjectFit ?? 'contain',
+        sidebarLogoBg: storedBranding?.sidebarLogoBg ?? 'transparent',
+        sidebarLogoRadius: storedBranding?.sidebarLogoRadius ?? 6,
       });
     }
   }, [settings, bootstrap?.tenant?.id]);
@@ -1611,39 +1638,45 @@ export function WorkspaceSettingsPage() {
       }
       const reader = new FileReader();
       reader.onload = () => {
-        setTempCropperImage(reader.result as string);
-        setCropperOpen(true);
+        const dataUrl = reader.result as string;
+        setCustomizerImage(dataUrl);
+        setCustomizerOpen(true);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleCropComplete = (croppedBlob: Blob) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64data = reader.result as string;
-      setForm((prev) => {
-        const next = { ...prev, logoUrl: base64data };
-        const tenantId = bootstrap?.tenant?.id || 'default';
-        try {
-          localStorage.setItem(
-            `visiblo_workspace_branding_${tenantId}`,
-            JSON.stringify({
-              logoUrl: next.logoUrl,
-              showLogoInSidebar: next.showLogoInSidebar,
-              showLogoInLogin: next.showLogoInLogin,
-            })
-          );
-          window.dispatchEvent(new Event('workspace_branding_updated'));
-        } catch {
-          /* ignore */
-        }
-        return next;
-      });
-      setCropperOpen(false);
-      toast.success('Company logo cropped successfully! Click "Save Workspace Changes" to publish.');
-    };
-    reader.readAsDataURL(croppedBlob);
+  const handleCustomizerApply = (brandingSettings: {
+    logoUrl: string;
+    showLogoInSidebar: boolean;
+    sidebarLogoHeight: number;
+    sidebarLogoObjectFit: 'contain' | 'cover';
+    sidebarLogoBg: string;
+    sidebarLogoRadius: number;
+  }) => {
+    setForm((prev) => ({
+      ...prev,
+      logoUrl: brandingSettings.logoUrl,
+      showLogoInSidebar: brandingSettings.showLogoInSidebar,
+      sidebarLogoHeight: brandingSettings.sidebarLogoHeight,
+      sidebarLogoObjectFit: brandingSettings.sidebarLogoObjectFit,
+      sidebarLogoBg: brandingSettings.sidebarLogoBg,
+      sidebarLogoRadius: brandingSettings.sidebarLogoRadius,
+    }));
+
+    const tenantId = bootstrap?.tenant?.id || 'default';
+    try {
+      localStorage.setItem(
+        `visiblo_workspace_branding_${tenantId}`,
+        JSON.stringify(brandingSettings)
+      );
+      window.dispatchEvent(new Event('workspace_branding_updated'));
+    } catch {
+      /* ignore */
+    }
+
+    setCustomizerOpen(false);
+    toast.success('Sidebar logo branding applied and published live!');
   };
 
   const handleRemoveLogo = () => {
@@ -1657,6 +1690,10 @@ export function WorkspaceSettingsPage() {
             logoUrl: '',
             showLogoInSidebar: next.showLogoInSidebar,
             showLogoInLogin: next.showLogoInLogin,
+            sidebarLogoHeight: next.sidebarLogoHeight,
+            sidebarLogoObjectFit: next.sidebarLogoObjectFit,
+            sidebarLogoBg: next.sidebarLogoBg,
+            sidebarLogoRadius: next.sidebarLogoRadius,
           })
         );
         window.dispatchEvent(new Event('workspace_branding_updated'));
@@ -1900,13 +1937,19 @@ export function WorkspaceSettingsPage() {
         className="hidden"
       />
 
-      {/* Image Cropper Modal */}
-      <ImageCropperModal
-        isOpen={cropperOpen}
-        imageUrl={tempCropperImage}
-        title="Crop Company Logo"
-        onClose={() => setCropperOpen(false)}
-        onCropComplete={handleCropComplete}
+      {/* Sidebar Logo Live Customizer Modal */}
+      <SidebarLogoCustomizerModal
+        isOpen={customizerOpen}
+        imageUrl={customizerImage || form.logoUrl}
+        initialSettings={{
+          showLogoInSidebar: form.showLogoInSidebar,
+          sidebarLogoHeight: form.sidebarLogoHeight,
+          sidebarLogoObjectFit: form.sidebarLogoObjectFit,
+          sidebarLogoBg: form.sidebarLogoBg,
+          sidebarLogoRadius: form.sidebarLogoRadius,
+        }}
+        onClose={() => setCustomizerOpen(false)}
+        onApply={handleCustomizerApply}
       />
 
       {/* Header */}
@@ -1977,6 +2020,10 @@ export function WorkspaceSettingsPage() {
               saving={saving}
               onTriggerLogoUpload={handleTriggerLogoUpload}
               onRemoveLogo={handleRemoveLogo}
+              onOpenCustomizer={() => {
+                setCustomizerImage(form.logoUrl);
+                setCustomizerOpen(true);
+              }}
             />
           )}
           {activeTab === 'localization' && (

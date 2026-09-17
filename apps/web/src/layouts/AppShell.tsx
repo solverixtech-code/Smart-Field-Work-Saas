@@ -870,9 +870,20 @@ export default function AppShell() {
 
   const tenantId = runtimeBootstrap?.tenant?.id || tenant?.id || "default";
 
-  const [branding, setBranding] = useState<{ logoUrl?: string; showLogoInSidebar: boolean }>({
+  const [branding, setBranding] = useState<{
+    logoUrl?: string;
+    showLogoInSidebar: boolean;
+    sidebarLogoHeight: number;
+    sidebarLogoObjectFit: "contain" | "cover";
+    sidebarLogoBg: string;
+    sidebarLogoRadius: number;
+  }>({
     logoUrl: "",
     showLogoInSidebar: true,
+    sidebarLogoHeight: 42,
+    sidebarLogoObjectFit: "contain",
+    sidebarLogoBg: "transparent",
+    sidebarLogoRadius: 6,
   });
 
   const loadBranding = React.useCallback(() => {
@@ -884,6 +895,10 @@ export default function AppShell() {
         setBranding({
           logoUrl: parsed.logoUrl || "",
           showLogoInSidebar: parsed.showLogoInSidebar ?? true,
+          sidebarLogoHeight: parsed.sidebarLogoHeight ?? 42,
+          sidebarLogoObjectFit: parsed.sidebarLogoObjectFit ?? "contain",
+          sidebarLogoBg: parsed.sidebarLogoBg ?? "transparent",
+          sidebarLogoRadius: parsed.sidebarLogoRadius ?? 6,
         });
         return;
       }
@@ -894,6 +909,10 @@ export default function AppShell() {
     setBranding({
       logoUrl: bootstrapLogo,
       showLogoInSidebar: true,
+      sidebarLogoHeight: 42,
+      sidebarLogoObjectFit: "contain",
+      sidebarLogoBg: "transparent",
+      sidebarLogoRadius: 6,
     });
   }, [tenantId, runtimeBootstrap, tenant]);
 
@@ -969,14 +988,28 @@ export default function AppShell() {
             <>
               <NavLink to="/admin/dashboard" className="flex items-center max-w-[220px]">
                 {canRenderCustomLogoInSidebar ? (
-                  <img
-                    src={branding.logoUrl}
-                    alt={runtimeBootstrap?.tenant?.displayName || (tenant as any)?.companyName || "Company Logo"}
-                    className="max-h-12 max-w-[210px] object-contain"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLElement).style.display = "none";
+                  <div
+                    className="flex items-center justify-center transition-all duration-200"
+                    style={{
+                      backgroundColor: branding.sidebarLogoBg,
+                      borderRadius: `${branding.sidebarLogoRadius}px`,
+                      padding: branding.sidebarLogoBg !== "transparent" ? "4px 8px" : "0px",
                     }}
-                  />
+                  >
+                    <img
+                      src={branding.logoUrl}
+                      alt={runtimeBootstrap?.tenant?.displayName || (tenant as any)?.companyName || "Company Logo"}
+                      style={{
+                        height: `${branding.sidebarLogoHeight}px`,
+                        maxHeight: "56px",
+                        maxWidth: "210px",
+                        objectFit: branding.sidebarLogoObjectFit,
+                      }}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = "none";
+                      }}
+                    />
+                  </div>
                 ) : (
                   <img
                     src={bigLogo}
@@ -1006,14 +1039,28 @@ export default function AppShell() {
               title="Expand Sidebar"
             >
               {canRenderCustomLogoInSidebar ? (
-                <img
-                  src={branding.logoUrl}
-                  alt="Company Logo"
-                  className="h-10 w-10 object-contain rounded-md"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = "none";
+                <div
+                  className="flex items-center justify-center transition-all duration-200"
+                  style={{
+                    backgroundColor: branding.sidebarLogoBg,
+                    borderRadius: `${branding.sidebarLogoRadius}px`,
+                    padding: branding.sidebarLogoBg !== "transparent" ? "2px 4px" : "0px",
                   }}
-                />
+                >
+                  <img
+                    src={branding.logoUrl}
+                    alt="Company Logo"
+                    style={{
+                      height: `${Math.min(branding.sidebarLogoHeight, 40)}px`,
+                      maxHeight: "44px",
+                      maxWidth: "48px",
+                      objectFit: branding.sidebarLogoObjectFit,
+                    }}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
+                  />
+                </div>
               ) : (
                 <img
                   src={smallLogo}
