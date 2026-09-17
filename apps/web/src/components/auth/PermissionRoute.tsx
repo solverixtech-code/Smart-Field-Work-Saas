@@ -13,7 +13,7 @@ export interface PermissionRouteProps {
 export function PermissionRoute({ permission, children }: PermissionRouteProps) {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const { platform, tenant, loaded, loading } = useAppSelector((state) => state.authorization);
 
   useEffect(() => {
@@ -22,12 +22,21 @@ export function PermissionRoute({ permission, children }: PermissionRouteProps) 
     }
   }, [isAuthenticated, loaded, loading, dispatch]);
 
+  const userRole = user?.role;
+  const isSuperOrAdmin =
+    userRole === 'SUPER_ADMIN' ||
+    userRole === 'ADMIN' ||
+    userRole === 'PLATFORM_SUPER_ADMIN' ||
+    tenant?.roleCode === 'tenant_admin' ||
+    platform?.roleCodes?.includes('PLATFORM_SUPER_ADMIN');
+
   const isPlatformScope = permission.startsWith('platform.');
   const permissionsList = isPlatformScope
     ? platform?.permissions
     : tenant?.permissions;
 
-  const hasAccess = loaded && permissionsList?.includes(permission);
+  const hasAccess =
+    loaded && (isSuperOrAdmin || Boolean(permissionsList?.includes(permission)));
 
   if (loading || (!loaded && isAuthenticated)) {
     return (
