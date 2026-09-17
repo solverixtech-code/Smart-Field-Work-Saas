@@ -6,6 +6,7 @@ export function createCorsOptions(
 ): CorsOptions {
   const allowedList = [
     frontendUrl,
+    "https://preeminent-dieffenbachia-fc721e.netlify.app",
     "http://localhost:3000",
     "http://localhost:5173",
     "http://127.0.0.1:3000",
@@ -18,6 +19,7 @@ export function createCorsOptions(
       if (!origin) return callback(null, true);
       const allowed =
         allowedList.includes(origin) ||
+        /^https:\/\/.*\.netlify\.app$/.test(origin) ||
         /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+):?\d*$/.test(
           origin,
         );
@@ -33,6 +35,9 @@ export function createCorsOptions(
       "Accept",
       "Origin",
       "X-Correlation-Id",
+      "X-Tenant-Id",
+      "X-Session-Id",
+      "If-None-Match",
     ],
     exposedHeaders: ["X-Request-Id", "X-Correlation-Id"],
   };
