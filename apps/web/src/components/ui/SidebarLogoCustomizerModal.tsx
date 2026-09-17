@@ -222,6 +222,7 @@ export function SidebarLogoCustomizerModal({
     "expanded"
   );
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
+  const [isLogoSelected, setIsLogoSelected] = useState(false);
 
   const handleCornerDrag = useCallback(
     (e: React.MouseEvent, corner: "tl" | "tr" | "bl" | "br") => {
@@ -826,15 +827,22 @@ export function SidebarLogoCustomizerModal({
                   </div>
 
                   {/* Mock Sidebar Canvas matching AppShell 100% */}
-                  <div className="flex justify-center bg-slate-100 p-4 rounded-lg border border-slate-200">
+                  <div
+                    className="flex justify-center bg-slate-100 p-6 rounded-lg border border-slate-200 select-none"
+                    onClick={() => setIsLogoSelected(false)}
+                  >
                     <div
-                      className={`bg-white border border-slate-200 rounded-lg shadow-md transition-all duration-300 overflow-hidden flex flex-col justify-between ${
+                      className={`bg-white border border-slate-200 rounded-lg shadow-md transition-all duration-300 relative flex flex-col justify-between ${
                         previewMode === "expanded" ? "w-[275px]" : "w-[80px]"
                       }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsLogoSelected(false);
+                      }}
                     >
                       {/* Mini Sidebar Brand Header - 80px (h-20) Height */}
                       <div
-                        className={`flex h-20 items-center border-b border-slate-100 transition-all ${
+                        className={`flex h-20 items-center border-b border-slate-100 transition-all relative overflow-visible z-20 ${
                           previewMode === "expanded"
                             ? "justify-between px-3"
                             : "justify-center px-1.5"
@@ -850,10 +858,14 @@ export function SidebarLogoCustomizerModal({
                                 className={`flex items-center w-full transition-all ${getAlignJustifyClass(logoAlign)}`}
                               >
                                 <div
-                                  className={`relative group transition-all duration-150 rounded border-2 border-dashed ${
-                                    isDraggingLogo
-                                      ? "border-sky-500 ring-2 ring-sky-300/50 bg-sky-500/10"
-                                      : "border-sky-400/80 hover:border-sky-500 hover:bg-sky-500/5"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setIsLogoSelected(true);
+                                  }}
+                                  className={`relative group transition-all duration-150 rounded cursor-pointer ${
+                                    isLogoSelected || isDraggingLogo
+                                      ? "border-2 border-sky-500 ring-2 ring-sky-300/50 bg-sky-500/10 shadow-sm"
+                                      : "border-2 border-transparent hover:border-sky-400/60 hover:bg-sky-500/5"
                                   }`}
                                   style={{
                                     backgroundColor: logoBg,
@@ -861,33 +873,39 @@ export function SidebarLogoCustomizerModal({
                                     padding: logoBg !== "transparent" ? "3px 6px" : "2px",
                                   }}
                                 >
-                                  {/* Canva Floating Dimension Badge */}
-                                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#0D1F3D] text-white px-2 py-0.5 rounded text-[10px] font-mono font-bold shadow-md flex items-center gap-1 z-30 opacity-90 group-hover:opacity-100 pointer-events-none whitespace-nowrap">
-                                    <Sparkles className="h-2.5 w-2.5 text-sky-400" />
-                                    <span>{logoHeight}px</span>
-                                  </div>
+                                  {/* Canva Floating Dimension Badge (Floats OUTSIDE above image with z-50) */}
+                                  {(isLogoSelected || isDraggingLogo) && (
+                                    <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-[#0D1F3D] text-white px-2.5 py-0.5 rounded text-[10px] font-mono font-bold shadow-xl border border-sky-400/40 flex items-center gap-1 z-50 whitespace-nowrap animate-in fade-in duration-150 pointer-events-none">
+                                      <Sparkles className="h-2.5 w-2.5 text-sky-400" />
+                                      <span>Height: {logoHeight}px</span>
+                                    </div>
+                                  )}
 
-                                  {/* Canva Corner Handles for Drag Resizing */}
-                                  <div
-                                    onMouseDown={(e) => handleCornerDrag(e, "tl")}
-                                    className="absolute -top-1.5 -left-1.5 h-3.5 w-3.5 rounded-full bg-white border-2 border-sky-500 shadow-md cursor-nwse-resize z-30 hover:scale-125 transition-transform"
-                                    title="Drag corner to resize image (Canva style)"
-                                  />
-                                  <div
-                                    onMouseDown={(e) => handleCornerDrag(e, "tr")}
-                                    className="absolute -top-1.5 -right-1.5 h-3.5 w-3.5 rounded-full bg-white border-2 border-sky-500 shadow-md cursor-nesw-resize z-30 hover:scale-125 transition-transform"
-                                    title="Drag corner to resize image (Canva style)"
-                                  />
-                                  <div
-                                    onMouseDown={(e) => handleCornerDrag(e, "bl")}
-                                    className="absolute -bottom-1.5 -left-1.5 h-3.5 w-3.5 rounded-full bg-white border-2 border-sky-500 shadow-md cursor-nesw-resize z-30 hover:scale-125 transition-transform"
-                                    title="Drag corner to resize image (Canva style)"
-                                  />
-                                  <div
-                                    onMouseDown={(e) => handleCornerDrag(e, "br")}
-                                    className="absolute -bottom-1.5 -right-1.5 h-3.5 w-3.5 rounded-full bg-white border-2 border-sky-500 shadow-md cursor-nwse-resize z-30 hover:scale-125 transition-transform"
-                                    title="Drag corner to resize image (Canva style)"
-                                  />
+                                  {/* Canva Corner Handles for Drag Resizing (z-50 high priority) */}
+                                  {(isLogoSelected || isDraggingLogo) && (
+                                    <>
+                                      <div
+                                        onMouseDown={(e) => handleCornerDrag(e, "tl")}
+                                        className="absolute -top-2 -left-2 h-4 w-4 rounded-full bg-white border-2 border-sky-500 shadow-lg cursor-nwse-resize z-50 hover:scale-125 transition-transform"
+                                        title="Drag corner to scale image height"
+                                      />
+                                      <div
+                                        onMouseDown={(e) => handleCornerDrag(e, "tr")}
+                                        className="absolute -top-2 -right-2 h-4 w-4 rounded-full bg-white border-2 border-sky-500 shadow-lg cursor-nesw-resize z-50 hover:scale-125 transition-transform"
+                                        title="Drag corner to scale image height"
+                                      />
+                                      <div
+                                        onMouseDown={(e) => handleCornerDrag(e, "bl")}
+                                        className="absolute -bottom-2 -left-2 h-4 w-4 rounded-full bg-white border-2 border-sky-500 shadow-lg cursor-nesw-resize z-50 hover:scale-125 transition-transform"
+                                        title="Drag corner to scale image height"
+                                      />
+                                      <div
+                                        onMouseDown={(e) => handleCornerDrag(e, "br")}
+                                        className="absolute -bottom-2 -right-2 h-4 w-4 rounded-full bg-white border-2 border-sky-500 shadow-lg cursor-nwse-resize z-50 hover:scale-125 transition-transform"
+                                        title="Drag corner to scale image height"
+                                      />
+                                    </>
+                                  )}
 
                                   <img
                                     src={croppedPreviewUrl}
