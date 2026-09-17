@@ -396,7 +396,7 @@ export default function SalesPipelinePage() {
           <div className="grid grid-cols-2 gap-2.5 text-xs font-semibold pt-1">
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-              <span className="text-slate-600">New Leads</span>
+              <span className="text-slate-600">New Deals</span>
               <span className="font-extrabold text-[#0D1F3D] ml-auto">24%</span>
             </div>
             <div className="flex items-center gap-2">
@@ -487,7 +487,7 @@ export default function SalesPipelinePage() {
                 <td className="py-2.5 px-3 font-extrabold text-[#0D1F3D]">FreshMart Grocery</td>
                 <td className="py-2.5 px-3">
                   <span className="rounded-full bg-blue-50 text-blue-700 px-2.5 py-0.5 text-[10px] font-extrabold border border-blue-200/60">
-                    New Lead
+                    New Deal
                   </span>
                 </td>
                 <td className="py-2.5 px-3 font-medium text-slate-600">Amit Verma</td>
