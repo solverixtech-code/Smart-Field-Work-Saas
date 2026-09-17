@@ -1037,7 +1037,7 @@ export function LeadConversionModal({
       maxWidth="max-w-2xl"
     >
       <form
-        className="space-y-5 text-left font-sans"
+        className="flex flex-col h-[620px] max-h-[80vh] text-left font-sans"
         onSubmit={async (e) => {
           e.preventDefault();
           if (disabled) return;
@@ -1049,229 +1049,234 @@ export function LeadConversionModal({
           if (result) onSaved();
         }}
       >
-        {/* CUSTOM TOP-LEVEL MODAL HEADER */}
-        <div className="flex items-start gap-3.5 border-b border-slate-100 pb-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/80 shadow-2xs shrink-0 mt-0.5">
-            <Sparkles className="h-6 w-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-extrabold text-[#0D1F3D]">
-                Convert Lead to Business & Sales Deal
-              </h2>
-              <span className="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold">
-                Qualified Lead
-              </span>
+        {/* FIXED MODAL HEADER */}
+        <div className="shrink-0 space-y-3 pb-3 border-b border-slate-100">
+          <div className="flex items-start gap-3.5">
+            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 border border-emerald-200/80 shadow-2xs shrink-0 mt-0.5">
+              <Sparkles className="h-6 w-6" />
             </div>
-            <p className="text-xs font-semibold text-slate-500 mt-0.5">
-              Transform this qualified lead into an active Business Account, Contact, and Sales Pipeline Deal.
-            </p>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-extrabold text-[#0D1F3D]">
+                  Convert Lead to Business & Sales Deal
+                </h2>
+                <span className="rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold">
+                  Qualified Lead
+                </span>
+              </div>
+              <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                Transform this qualified lead into an active Business Account, Contact, and Sales Pipeline Deal.
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* LEAD SUMMARY PREVIEW CARD */}
-        <div className="rounded-md border border-slate-200/90 bg-slate-50/70 p-3.5 space-y-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-purple-600" />
+          {/* LEAD SUMMARY PREVIEW CARD */}
+          <div className="rounded-md border border-slate-200/90 bg-slate-50/70 p-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-purple-600" />
+                <span className="text-xs font-extrabold text-[#0D1F3D]">
+                  {lead.name}
+                </span>
+                <span className="text-[10px] font-mono text-slate-400 font-bold">
+                  ({lead.leadCode})
+                </span>
+              </div>
               <span className="text-xs font-extrabold text-[#0D1F3D]">
-                {lead.name}
-              </span>
-              <span className="text-[10px] font-mono text-slate-400 font-bold">
-                ({lead.leadCode})
+                Est. Value: ₹{Number(lead.estimatedValue || 0).toLocaleString("en-IN")}
               </span>
             </div>
-            <span className="text-xs font-extrabold text-[#0D1F3D]">
-              Est. Value: ₹{Number(lead.estimatedValue || 0).toLocaleString("en-IN")}
-            </span>
-          </div>
 
-          <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-600 font-medium pt-1 border-t border-slate-200/60">
-            {lead.phone && (
-              <span>📞 <strong className="font-mono text-slate-800">{lead.phone}</strong></span>
-            )}
-            {lead.email && <span>✉ {lead.email}</span>}
-            {lead.city && <span>📍 {lead.city}</span>}
+            <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-600 font-medium pt-1 border-t border-slate-200/60">
+              {lead.phone && (
+                <span>📞 <strong className="font-mono text-slate-800">{lead.phone}</strong></span>
+              )}
+              {lead.email && <span>✉ {lead.email}</span>}
+              {lead.city && <span>📍 {lead.city}</span>}
+            </div>
           </div>
         </div>
 
-        {mutation.error && <CrmFailure error={mutation.error} />}
-        {mutation.error && (
-          <Button
-            type="button"
-            variant="outline"
-            disabled={recheck.pending}
-            onClick={async () => {
-              const current = await recheck.run((s, signal) =>
-                s.leads.get(lead.id, signal),
-              );
-              if (current?.status === "CONVERTED") {
-                onSaved();
-                return;
-              }
-              if (current) {
-                setRevision(current.revision);
-                setSubmitted(undefined);
-                setKey(crypto.randomUUID());
-                mutation.clearError();
-              }
-            }}
-          >
-            Reload current revision and review choices
-          </Button>
-        )}
-        {recheck.error && <CrmFailure error={recheck.error} />}
+        {/* SCROLLABLE FORM BODY WITH ZERO LAYOUT SHIFT */}
+        <div className="flex-1 overflow-y-auto pr-1 py-3 space-y-4 min-h-0">
+          {mutation.error && <CrmFailure error={mutation.error} />}
+          {mutation.error && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={recheck.pending}
+              onClick={async () => {
+                const current = await recheck.run((s, signal) =>
+                  s.leads.get(lead.id, signal),
+                );
+                if (current?.status === "CONVERTED") {
+                  onSaved();
+                  return;
+                }
+                if (current) {
+                  setRevision(current.revision);
+                  setSubmitted(undefined);
+                  setKey(crypto.randomUUID());
+                  mutation.clearError();
+                }
+              }}
+            >
+              Reload current revision and review choices
+            </Button>
+          )}
+          {recheck.error && <CrmFailure error={recheck.error} />}
 
-        <fieldset
-          disabled={Boolean(submitted) || disabled}
-          className="space-y-4"
-        >
-          {/* SECTION 1: BUSINESS ACCOUNT SETUP */}
-          {business && (
+          <fieldset
+            disabled={Boolean(submitted) || disabled}
+            className="space-y-4"
+          >
+            {/* SECTION 1: BUSINESS ACCOUNT SETUP */}
+            {business && (
+              <div className="space-y-3 rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-extrabold text-[#0D1F3D] flex items-center gap-1.5">
+                    <Building2 className="h-4 w-4 text-purple-600" />
+                    <span>1. Business Account Setup</span>
+                  </label>
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-md">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountMode("create");
+                        if (contactMode === "link") setContactMode("none");
+                        setContactId("");
+                      }}
+                      className={`px-3 py-1 text-xs font-bold rounded-sm transition ${
+                        accountMode === "create"
+                          ? "bg-white text-[#0D1F3D] shadow-2xs"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      + Create New Business
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAccountMode("link");
+                        setContactId("");
+                      }}
+                      className={`px-3 py-1 text-xs font-bold rounded-sm transition ${
+                        accountMode === "link"
+                          ? "bg-white text-[#0D1F3D] shadow-2xs"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      🔗 Link Existing Business
+                    </button>
+                  </div>
+                </div>
+
+                {accountMode === "create" ? (
+                  <Input
+                    id="convert-account-name"
+                    label="Official Business Name *"
+                    required
+                    value={accountName}
+                    maxLength={200}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    placeholder="Enter business name..."
+                  />
+                ) : (
+                  <LeadRecordLookup
+                    kind="account"
+                    id="convert-account"
+                    value={accountId}
+                    onChange={(id) => {
+                      setAccountId(id);
+                      setContactId("");
+                    }}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* SECTION 2: CONTACT PERSON SETUP */}
             <div className="space-y-3 rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <label className="text-xs font-extrabold text-[#0D1F3D] flex items-center gap-1.5">
-                  <Building2 className="h-4 w-4 text-purple-600" />
-                  <span>1. Business Account Setup</span>
+                  <UserCheck className="h-4 w-4 text-purple-600" />
+                  <span>2. Contact Person Setup</span>
                 </label>
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-md">
+                  {business && (
+                    <button
+                      type="button"
+                      onClick={() => setContactMode("none")}
+                      className={`px-3 py-1 text-xs font-bold rounded-sm transition ${
+                        contactMode === "none"
+                          ? "bg-white text-[#0D1F3D] shadow-2xs"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      No Contact
+                    </button>
+                  )}
                   <button
                     type="button"
-                    onClick={() => {
-                      setAccountMode("create");
-                      if (contactMode === "link") setContactMode("none");
-                      setContactId("");
-                    }}
+                    onClick={() => setContactMode("create")}
                     className={`px-3 py-1 text-xs font-bold rounded-sm transition ${
-                      accountMode === "create"
+                      contactMode === "create"
                         ? "bg-white text-[#0D1F3D] shadow-2xs"
                         : "text-slate-500 hover:text-slate-800"
                     }`}
                   >
-                    + Create New Business
+                    + Create Contact
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAccountMode("link");
-                      setContactId("");
-                    }}
-                    className={`px-3 py-1 text-xs font-bold rounded-sm transition ${
-                      accountMode === "link"
-                        ? "bg-white text-[#0D1F3D] shadow-2xs"
-                        : "text-slate-500 hover:text-slate-800"
-                    }`}
-                  >
-                    🔗 Link Existing Business
-                  </button>
+                  {!(business && accountMode === "create") && (
+                    <button
+                      type="button"
+                      onClick={() => setContactMode("link")}
+                      className={`px-3 py-1 text-xs font-bold rounded-sm transition ${
+                        contactMode === "link"
+                          ? "bg-white text-[#0D1F3D] shadow-2xs"
+                          : "text-slate-500 hover:text-slate-800"
+                      }`}
+                    >
+                      🔗 Link Existing
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {accountMode === "create" ? (
-                <Input
-                  id="convert-account-name"
-                  label="Official Business Name *"
-                  required
-                  value={accountName}
-                  maxLength={200}
-                  onChange={(e) => setAccountName(e.target.value)}
-                  placeholder="Enter business name..."
-                />
-              ) : (
+              {contactMode === "create" && (
+                <ContactFields value={person} onChange={setPerson} />
+              )}
+              {contactMode === "link" && (
                 <LeadRecordLookup
-                  kind="account"
-                  id="convert-account"
-                  value={accountId}
-                  onChange={(id) => {
-                    setAccountId(id);
-                    setContactId("");
-                  }}
+                  kind="contact"
+                  id="convert-contact"
+                  accountId={business ? accountId : null}
+                  value={contactId}
+                  onChange={setContactId}
                 />
               )}
             </div>
-          )}
 
-          {/* SECTION 2: CONTACT PERSON SETUP */}
-          <div className="space-y-3 rounded-md border border-slate-200 bg-white p-4 shadow-2xs">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <label className="text-xs font-extrabold text-[#0D1F3D] flex items-center gap-1.5">
-                <UserCheck className="h-4 w-4 text-purple-600" />
-                <span>2. Contact Person Setup</span>
-              </label>
-              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-md">
-                {business && (
-                  <button
-                    type="button"
-                    onClick={() => setContactMode("none")}
-                    className={`px-3 py-1 text-xs font-bold rounded-sm transition ${
-                      contactMode === "none"
-                        ? "bg-white text-[#0D1F3D] shadow-2xs"
-                        : "text-slate-500 hover:text-slate-800"
-                    }`}
-                  >
-                    No Contact
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setContactMode("create")}
-                  className={`px-3 py-1 text-xs font-bold rounded-sm transition ${
-                    contactMode === "create"
-                      ? "bg-white text-[#0D1F3D] shadow-2xs"
-                      : "text-slate-500 hover:text-slate-800"
-                  }`}
-                >
-                  + Create Contact
-                </button>
-                {!(business && accountMode === "create") && (
-                  <button
-                    type="button"
-                    onClick={() => setContactMode("link")}
-                    className={`px-3 py-1 text-xs font-bold rounded-sm transition ${
-                      contactMode === "link"
-                        ? "bg-white text-[#0D1F3D] shadow-2xs"
-                        : "text-slate-500 hover:text-slate-800"
-                    }`}
-                  >
-                    🔗 Link Existing
-                  </button>
-                )}
+            {/* SECTION 3: AUTOMATED SALES PIPELINE DEAL CREATION BANNER */}
+            <div className="rounded-md border border-purple-200 bg-purple-50/60 p-3.5 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-xs font-extrabold text-[#0D1F3D]">
+                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                  <span>Automated Sales Pipeline Deal Creation</span>
+                </div>
+                <span className="rounded-full bg-purple-100 text-purple-700 px-2 py-0.5 text-[10px] font-extrabold border border-purple-200">
+                  Stage: New Deals
+                </span>
               </div>
+              <p className="text-xs font-semibold text-slate-600">
+                Upon conversion, a new deal titled <strong className="text-[#0D1F3D]">"{accountName || lead.name}"</strong> with an estimated value of <strong className="text-purple-700 font-extrabold">₹{Number(lead.estimatedValue || 0).toLocaleString("en-IN")}</strong> will automatically be created and tracked in your Sales Pipeline Kanban board.
+              </p>
             </div>
+          </fieldset>
+        </div>
 
-            {contactMode === "create" && (
-              <ContactFields value={person} onChange={setPerson} />
-            )}
-            {contactMode === "link" && (
-              <LeadRecordLookup
-                kind="contact"
-                id="convert-contact"
-                accountId={business ? accountId : null}
-                value={contactId}
-                onChange={setContactId}
-              />
-            )}
-          </div>
-
-          {/* SECTION 3: AUTOMATED SALES PIPELINE DEAL CREATION BANNER */}
-          <div className="rounded-md border border-purple-200 bg-purple-50/60 p-3.5 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-extrabold text-[#0D1F3D]">
-                <TrendingUp className="h-4 w-4 text-purple-600" />
-                <span>Automated Sales Pipeline Deal Creation</span>
-              </div>
-              <span className="rounded-full bg-purple-100 text-purple-700 px-2 py-0.5 text-[10px] font-extrabold border border-purple-200">
-                Stage: New Deals
-              </span>
-            </div>
-            <p className="text-xs font-semibold text-slate-600">
-              Upon conversion, a new deal titled <strong className="text-[#0D1F3D]">"{accountName || lead.name}"</strong> with an estimated value of <strong className="text-purple-700 font-extrabold">₹{Number(lead.estimatedValue || 0).toLocaleString("en-IN")}</strong> will automatically be created and tracked in your Sales Pipeline Kanban board.
-            </p>
-          </div>
-        </fieldset>
-
-        {/* FOOTER ACTIONS */}
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+        {/* FIXED FOOTER ACTIONS */}
+        <div className="shrink-0 pt-3 border-t border-slate-100 flex items-center justify-end gap-3 bg-white">
           <Button
             type="button"
             variant="outline"

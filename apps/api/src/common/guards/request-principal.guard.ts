@@ -13,6 +13,7 @@ export class RequestPrincipalGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+    if (request.method === 'OPTIONS') return true;
     const payload = request.user; // Set by JwtAuthGuard
 
     if (!payload) {
