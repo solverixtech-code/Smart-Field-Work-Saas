@@ -53,6 +53,7 @@ import {
   type ColumnDef,
 } from "../../components/ui";
 import { DateRangePicker } from "../../components/ui/DateRangePicker";
+import { RegisterDeviceTokenModal } from "../../components/notifications/RegisterDeviceTokenModal";
 
 function AndroidIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
@@ -1711,6 +1712,7 @@ export function PushNotificationsPage() {
   const [overview, setOverview] = useState<NotificationOverview | null>(null);
   const [tokensData, setTokensData] = useState<PushTokenRecord[]>([]);
   const [tokensLoading, setTokensLoading] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   const loadPushData = async () => {
     try {
@@ -1762,22 +1764,6 @@ export function PushNotificationsPage() {
       );
     } finally {
       setSendingPush(false);
-    }
-  };
-
-  const handleRegisterDemoDevice = async () => {
-    try {
-      const simToken = `fcm_${Math.random().toString(36).slice(2, 12)}_${Date.now()}`;
-      await notificationApi.registerDeviceToken({
-        token: simToken,
-        platform: "ANDROID",
-        deviceModel: "Google Pixel 8 Pro",
-        appVersion: "2.4.0",
-      });
-      toast.success("Test device token registered successfully!");
-      loadPushData();
-    } catch (err: any) {
-      toast.error("Could not register device token.");
     }
   };
 
@@ -1967,10 +1953,10 @@ export function PushNotificationsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleRegisterDemoDevice}
+                onClick={() => setIsRegisterModalOpen(true)}
                 className="w-full font-bold"
               >
-                + Register Demo Device Token
+                + Register Device Token
               </Button>
             </div>
           </div>
@@ -2041,14 +2027,24 @@ export function PushNotificationsPage() {
               Real-time register of active Android, iOS, and Web push tokens receiving broadcasts.
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={loadPushData}
-            className="font-bold text-xs"
-          >
-            <RotateCcw className="h-3.5 w-3.5 mr-1" /> Refresh Devices
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsRegisterModalOpen(true)}
+              className="font-bold text-xs"
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" /> Register Device Token
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadPushData}
+              className="font-bold text-xs"
+            >
+              <RotateCcw className="h-3.5 w-3.5 mr-1" /> Refresh Devices
+            </Button>
+          </div>
         </div>
 
         {tokensLoading ? (
@@ -2065,10 +2061,10 @@ export function PushNotificationsPage() {
             <Button
               variant="accent"
               size="sm"
-              onClick={handleRegisterDemoDevice}
+              onClick={() => setIsRegisterModalOpen(true)}
               className="mt-2 text-xs font-bold"
             >
-              + Register Demo Device Token Now
+              + Register Device Token Now
             </Button>
           </div>
         ) : (
@@ -2080,6 +2076,12 @@ export function PushNotificationsPage() {
           />
         )}
       </div>
+
+      <RegisterDeviceTokenModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+        onSuccess={loadPushData}
+      />
     </div>
   );
 }
