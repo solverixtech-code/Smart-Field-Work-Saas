@@ -26,6 +26,7 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  Sliders,
 } from "lucide-react";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
@@ -219,6 +220,34 @@ export function SidebarLogoCustomizerModal({
   );
   const [previewMode, setPreviewMode] = useState<"expanded" | "collapsed">(
     "expanded"
+  );
+  const [isDraggingLogo, setIsDraggingLogo] = useState(false);
+
+  const handleCornerDrag = useCallback(
+    (e: React.MouseEvent, corner: "tl" | "tr" | "bl" | "br") => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingLogo(true);
+      const startY = e.clientY;
+      const startHeight = logoHeight;
+
+      const onMouseMove = (moveEvent: MouseEvent) => {
+        const deltaY = moveEvent.clientY - startY;
+        const multiplier = corner === "bl" || corner === "br" ? 1 : -1;
+        const newHeight = Math.max(20, Math.min(64, startHeight + deltaY * multiplier));
+        setLogoHeight(Math.round(newHeight));
+      };
+
+      const onMouseUp = () => {
+        setIsDraggingLogo(false);
+        window.removeEventListener("mousemove", onMouseMove);
+        window.removeEventListener("mouseup", onMouseUp);
+      };
+
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+    },
+    [logoHeight]
   );
 
   useEffect(() => {
@@ -819,22 +848,59 @@ export function SidebarLogoCustomizerModal({
                             croppedPreviewUrl ? (
                               <div
                                 className={`flex items-center w-full transition-all ${getAlignJustifyClass(logoAlign)}`}
-                                style={{
-                                  backgroundColor: logoBg,
-                                  borderRadius: `${logoRadius}px`,
-                                  padding: logoBg !== "transparent" ? "3px 6px" : "0px",
-                                }}
                               >
-                                <img
-                                  src={croppedPreviewUrl}
-                                  alt="Expanded Logo Preview"
+                                <div
+                                  className={`relative group transition-all duration-150 rounded border-2 border-dashed ${
+                                    isDraggingLogo
+                                      ? "border-sky-500 ring-2 ring-sky-300/50 bg-sky-500/10"
+                                      : "border-sky-400/80 hover:border-sky-500 hover:bg-sky-500/5"
+                                  }`}
                                   style={{
-                                    height: `${Math.min(logoHeight, 52)}px`,
-                                    maxHeight: "56px",
-                                    maxWidth: "190px",
-                                    objectFit: logoFit,
+                                    backgroundColor: logoBg,
+                                    borderRadius: `${logoRadius}px`,
+                                    padding: logoBg !== "transparent" ? "3px 6px" : "2px",
                                   }}
-                                />
+                                >
+                                  {/* Canva Floating Dimension Badge */}
+                                  <div className="absolute -top-7 left-1/2 -translate-x-1/2 bg-[#0D1F3D] text-white px-2 py-0.5 rounded text-[10px] font-mono font-bold shadow-md flex items-center gap-1 z-30 opacity-90 group-hover:opacity-100 pointer-events-none whitespace-nowrap">
+                                    <Sparkles className="h-2.5 w-2.5 text-sky-400" />
+                                    <span>{logoHeight}px</span>
+                                  </div>
+
+                                  {/* Canva Corner Handles for Drag Resizing */}
+                                  <div
+                                    onMouseDown={(e) => handleCornerDrag(e, "tl")}
+                                    className="absolute -top-1.5 -left-1.5 h-3.5 w-3.5 rounded-full bg-white border-2 border-sky-500 shadow-md cursor-nwse-resize z-30 hover:scale-125 transition-transform"
+                                    title="Drag corner to resize image (Canva style)"
+                                  />
+                                  <div
+                                    onMouseDown={(e) => handleCornerDrag(e, "tr")}
+                                    className="absolute -top-1.5 -right-1.5 h-3.5 w-3.5 rounded-full bg-white border-2 border-sky-500 shadow-md cursor-nesw-resize z-30 hover:scale-125 transition-transform"
+                                    title="Drag corner to resize image (Canva style)"
+                                  />
+                                  <div
+                                    onMouseDown={(e) => handleCornerDrag(e, "bl")}
+                                    className="absolute -bottom-1.5 -left-1.5 h-3.5 w-3.5 rounded-full bg-white border-2 border-sky-500 shadow-md cursor-nesw-resize z-30 hover:scale-125 transition-transform"
+                                    title="Drag corner to resize image (Canva style)"
+                                  />
+                                  <div
+                                    onMouseDown={(e) => handleCornerDrag(e, "br")}
+                                    className="absolute -bottom-1.5 -right-1.5 h-3.5 w-3.5 rounded-full bg-white border-2 border-sky-500 shadow-md cursor-nwse-resize z-30 hover:scale-125 transition-transform"
+                                    title="Drag corner to resize image (Canva style)"
+                                  />
+
+                                  <img
+                                    src={croppedPreviewUrl}
+                                    alt="Expanded Logo Preview"
+                                    style={{
+                                      height: `${logoHeight}px`,
+                                      maxHeight: "58px",
+                                      maxWidth: "190px",
+                                      objectFit: logoFit,
+                                    }}
+                                    className="pointer-events-none select-none"
+                                  />
+                                </div>
                               </div>
                             ) : (
                               <span className="text-xs font-semibold text-slate-700">Default Logo</span>
