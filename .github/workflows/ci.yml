@@ -1,4 +1,4 @@
-name: Phase 0.5 Commercial Engine CI Pipeline
+name: Phase 0.5 Commercial Engine CI/CD Pipeline
 
 on:
   push:
@@ -6,17 +6,88 @@ on:
   pull_request:
     branches: [ main ]
 
-jobs:
-  build-and-test:
-    name: Build, Lint & E2E Proof Verification
-    runs-on: ubuntu-latest
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
-    env:
-      DATABASE_URL: postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public
-      TEST_DATABASE_URL: postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public
-      JWT_ACCESS_SECRET: ci-only-access-secret-at-least-32-characters
-      JWT_REFRESH_SECRET: ci-only-refresh-secret-at-least-32-characters
-      REDIS_ENABLED: 'false'
+env:
+  DATABASE_URL: postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public
+  TEST_DATABASE_URL: postgresql://postgres:123456@127.0.0.1:5432/visiblo_crm_test?schema=public
+  JWT_ACCESS_SECRET: ci-only-access-secret-at-least-32-characters
+  JWT_REFRESH_SECRET: ci-only-refresh-secret-at-least-32-characters
+  REDIS_ENABLED: 'false'
+  CI: 'true'
+
+jobs:
+  # =========================================================
+  # JOB 1: Fast Static Verification (Schema & TypeScript)
+  # =========================================================
+  fast-checks:
+    name: Fast Schema & Typecheck Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Restore Turbo & Build Cache
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Validate Prisma Schema & Generate Client
+        run: |
+          npx prisma validate --schema=apps/api/prisma/schema.prisma
+          npx prisma generate --schema=apps/api/prisma/schema.prisma
+
+      - name: Parallel Typecheck (API & Web)
+        run: |
+          (cd apps/api && npx tsc --noEmit) &
+          (cd apps/web && npx tsc --noEmit) &
+          wait
+
+  # =========================================================
+  # JOB 2: Frontend CI (Web Build & Unit Tests)
+  # =========================================================
+  web-ci:
+    name: Web Frontend Build & Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Run Web Unit Tests
+        run: cd apps/web && npm test
+
+      - name: Build Web Workspace
+        run: cd apps/web && npm run build
+
+  # =========================================================
+  # JOB 3: Backend CI (API Build, Migrations, RBAC & E2E)
+  # =========================================================
+  api-ci:
+    name: API Backend Build, Unit & E2E Tests
+    runs-on: ubuntu-latest
 
     services:
       postgres:
@@ -29,16 +100,16 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js 20.x
-        uses: actions/setup-node@v3
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -46,35 +117,58 @@ jobs:
       - name: Install workspace dependencies
         run: npm ci
 
-      - name: Validate Prisma Schema
-        run: npx prisma validate --schema=apps/api/prisma/schema.prisma
-
-      - name: Apply DB Migrations on Test DB
-        run: npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
-
-      - name: Generate Prisma Client
-        run: npx prisma generate --schema=apps/api/prisma/schema.prisma
+      - name: Generate Prisma Client & Apply Migrations
+        run: |
+          npx prisma generate --schema=apps/api/prisma/schema.prisma
+          npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma
 
       - name: Seed System RBAC Templates
         run: cd apps/api && npm run db:sync:rbac
 
-      - name: TypeScript Check (API)
-        run: cd apps/api && npx tsc --noEmit
-
-      - name: TypeScript Check (Web)
-        run: cd apps/web && npx tsc --noEmit
-
       - name: Build API Workspace
         run: cd apps/api && npm run build
-
-      - name: Build Web Workspace
-        run: cd apps/web && npm run build
-
-      - name: Run Web Frontend Unit Tests
-        run: cd apps/web && npm test
 
       - name: Run API Unit Tests
         run: cd apps/api && npm test -- --runInBand
 
       - name: Run API E2E Integration Suite
         run: cd apps/api && npm run test:e2e -- --runInBand
+
+  # =========================================================
+  # JOB 4: Continuous Deployment (CD Production Release)
+  # =========================================================
+  deploy:
+    name: Automated Deployment (CD Release)
+    needs: [fast-checks, web-ci, api-ci]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Package Production Artifacts
+        run: |
+          npx prisma generate --schema=apps/api/prisma/schema.prisma
+          cd apps/api && npm run build
+          cd ../web && npm run build
+          echo "✅ Production artifacts successfully built and packaged."
+
+      - name: Trigger Production Deployment Hook
+        env:
+          DEPLOY_WEBHOOK_URL: ${{ secrets.DEPLOY_WEBHOOK_URL }}
+        run: |
+          if [ -n "$DEPLOY_WEBHOOK_URL" ]; then
+            echo "🚀 Dispatching deployment webhook..."
+            curl -X POST -H "Content-Type: application/json" -d '{"event":"push","branch":"main"}' "$DEPLOY_WEBHOOK_URL"
+          else
+            echo "ℹ️ DEPLOY_WEBHOOK_URL secret not set. Artifact production build verified successfully."
+          fi
