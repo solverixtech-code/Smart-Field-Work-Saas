@@ -1291,6 +1291,40 @@ export function CreateNotificationPage() {
   const [selectedExec, setSelectedExec] = useState("rahul_verma");
   const [selectedCustomer, setSelectedCustomer] = useState("apex_electronics");
   const [selectedTeam, setSelectedTeam] = useState("mumbai_west");
+  const [liveExecOptions, setLiveExecOptions] = useState(executiveSelectOptions);
+
+  useEffect(() => {
+    async function loadRealEmployees() {
+      try {
+        const overview = await notificationApi.getPushTokens();
+        if (overview?.tokens && overview.tokens.length > 0) {
+          const dynamicOptions = [
+            {
+              value: "all_executives",
+              label: "All Field Executives",
+              sublabel: `${overview.tokens.length} Active FCM Push Devices Registered`,
+              avatar:
+                "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&auto=format&fit=crop&q=80",
+            },
+            ...overview.tokens.map((t) => ({
+              value: t.id,
+              label: t.user?.name || "Active Field Executive",
+              sublabel: `${t.user?.email || t.maskedToken} • ${t.platform} (${t.deviceModel || 'Mobile Device'})`,
+              avatar:
+                "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
+            })),
+          ];
+          setLiveExecOptions(dynamicOptions);
+          if (overview.tokens[0]?.id) {
+            setSelectedExec(overview.tokens[0].id);
+          }
+        }
+      } catch {
+        // Retain seed user fallback options
+      }
+    }
+    loadRealEmployees();
+  }, []);
 
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -1443,7 +1477,7 @@ export function CreateNotificationPage() {
                 label="Executive Target *"
                 value={selectedExec}
                 onChange={(e) => setSelectedExec(e.target.value)}
-                options={executiveSelectOptions}
+                options={liveExecOptions}
                 searchable={true}
                 placeholder="Search executive..."
               />
