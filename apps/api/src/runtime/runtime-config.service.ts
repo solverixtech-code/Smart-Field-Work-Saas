@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   Optional,
@@ -284,5 +285,59 @@ export class RuntimeConfigService {
         definitions,
       },
     });
+  }
+
+  async updateWorkspaceSettings(
+    principal: RequestPrincipal,
+    dto: {
+      companyName?: string;
+      website?: string;
+      primaryEmail?: string;
+      primaryPhone?: string;
+      industry?: string;
+      primaryColor?: string;
+      secondaryColor?: string;
+      timezone?: string;
+      currency?: string;
+    },
+  ) {
+    if (!principal.tenantId) {
+      throw new BadRequestException("Tenant context required");
+    }
+
+    const roles = [
+      ...(principal.platformRoleCodes || []),
+      ...(principal.tenantRoleCode ? [principal.tenantRoleCode] : []),
+    ];
+    const isOwnerOrAdmin = roles.some((r) =>
+      ["TENANT_ADMIN", "SUPER_ADMIN", "OWNER", "ADMIN"].includes(r.toUpperCase()),
+    );
+    const perms = principal.permissions || principal.tenantPermissions || [];
+    if (
+      !isOwnerOrAdmin &&
+      !perms.includes("crm.workspace.manage") &&
+      !perms.includes("platform.tenant.manage")
+    ) {
+      throw new ForbiddenException(
+        "Only Workspace Administrators can update workspace settings.",
+      );
+    }
+
+    const updated = await this.prisma.tenant.update({
+      where: { id: principal.tenantId },
+      data: {
+        ...(dto.companyName ? { displayName: dto.companyName.trim() } : {}),
+        ...(dto.website !== undefined ? { websiteUrl: dto.website?.trim() || null } : {}),
+      },
+    });
+
+    // Invalidate runtime cache so bootstrap picks up new tenant settings immediately
+    this.cache.clear();
+
+    return {
+      success: true,
+      message: "Workspace settings updated successfully",
+      tenant: updated,
+    };
   }
 }

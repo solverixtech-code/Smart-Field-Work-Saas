@@ -1,4 +1,4 @@
-import { Controller, Get, Headers, Query, Res } from "@nestjs/common";
+import { Body, Controller, Get, Headers, Patch, Query, Res } from "@nestjs/common";
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -67,5 +67,24 @@ export class RuntimeController {
       return;
     }
     return result;
+  }
+
+  @Patch("settings")
+  @ApiOperation({ summary: "Update workspace profile and tenant settings (Admin Only)" })
+  async updateSettings(
+    @CurrentPrincipal() principal: RequestPrincipal,
+    @Body() dto: {
+      companyName?: string;
+      website?: string;
+      primaryEmail?: string;
+      primaryPhone?: string;
+      industry?: string;
+      primaryColor?: string;
+      secondaryColor?: string;
+      timezone?: string;
+      currency?: string;
+    },
+  ) {
+    return this.runtime.updateWorkspaceSettings(principal, dto);
   }
 }

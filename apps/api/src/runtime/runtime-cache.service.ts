@@ -71,4 +71,8 @@ export class RuntimeConfigCache {
     }
     this.entries.set(key, { expiresAt, value: parsed });
   }
+
+  clear(): void {
+    this.entries.clear();
+  }
 }

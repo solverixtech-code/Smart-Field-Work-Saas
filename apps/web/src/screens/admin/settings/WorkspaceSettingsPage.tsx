@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { api } from '../../../common/api';
 import { useRuntimeBootstrap } from '../../../features/runtime/context/RuntimeBootstrapContext';
 import { workspaceSettingsService, WorkspaceSettings } from '../../../features/platform/tenants/services/workspace-settings.service';
 import {
@@ -18,6 +19,8 @@ import {
   Copy,
   AlertCircle,
   RotateCcw,
+  Save,
+  CheckCircle2,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -28,15 +31,14 @@ function DisabledToggleSwitch({ checked, label, description }: { checked: boolea
   const isChecked = Boolean(checked);
 
   return (
-    <div className="flex items-center justify-between opacity-70">
+    <div className="flex items-center justify-between opacity-80">
       <div>
         <span className="font-extrabold text-[#0D1F3D] text-xs">{label}</span>
         {description && <p className="text-[10px] text-slate-500 font-medium">{description}</p>}
-        {!isValueKnown && <p className="text-[9px] text-amber-600 font-semibold mt-0.5">Not Configured / Pending API Exposure</p>}
       </div>
       <div
         className={`relative inline-flex h-5 w-9 shrink-0 cursor-not-allowed rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${
-          isChecked ? 'bg-indigo-400' : 'bg-slate-300'
+          isChecked ? 'bg-indigo-600' : 'bg-slate-300'
         }`}
       >
         <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition duration-200 ${isChecked ? 'translate-x-4' : 'translate-x-0'}`} />
@@ -45,41 +47,76 @@ function DisabledToggleSwitch({ checked, label, description }: { checked: boolea
   );
 }
 
-interface TabProps {
+interface ProfileTabProps {
   settings: WorkspaceSettings;
+  isAdmin: boolean;
+  form: {
+    companyName: string;
+    industry: string;
+    website: string;
+    primaryEmail: string;
+    primaryPhone: string;
+    primaryColor: string;
+    secondaryColor: string;
+    address1: string;
+    city: string;
+    state: string;
+    country: string;
+    pincode: string;
+  };
+  onChange: (field: string, val: string) => void;
+  onSave: () => void;
+  saving: boolean;
 }
 
 // ─── Api Exposure Callout Banner ───
-function ApiExposureNotice({ title, message }: { title?: string; message?: string }) {
+function ApiExposureNotice({ title, message, isAdmin }: { title?: string; message?: string; isAdmin?: boolean }) {
   return (
     <div className="rounded-sm border border-slate-200 bg-blue-50/50 p-4 space-y-1 shadow-xs">
-      <div className="flex items-center gap-2 text-[#0D1F3D] font-extrabold text-xs">
-        <Lock className="h-4 w-4 text-indigo-600 shrink-0" />
-        <span>{title || 'Workspace System Parameters'}</span>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-[#0D1F3D] font-extrabold text-xs">
+          {isAdmin ? <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" /> : <Lock className="h-4 w-4 text-indigo-600 shrink-0" />}
+          <span>{title || (isAdmin ? 'Admin Edit Mode Enabled' : 'Workspace System Parameters')}</span>
+        </div>
+        {isAdmin && (
+          <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-800 border border-emerald-300">
+            Admin Access
+          </span>
+        )}
       </div>
       <p className="text-xs text-slate-600 font-medium leading-relaxed">
-        {message || 'Workspace settings and core tenant parameters are authoritatively managed by your organization system defaults. To request updates to company details, branding, or security policies, contact your Super Admin.'}
+        {message || (isAdmin
+          ? 'As an Administrator, you can update your company profile, industry details, contact information, and branding themes below. Click "Save Workspace Changes" to publish updates.'
+          : 'Workspace settings are managed by your organization Administrator. Contact your Super Admin to request updates.')}
       </p>
     </div>
   );
 }
 
 // ─── Tab: Workspace Profile ───
-function ProfileTab({ settings }: TabProps) {
+function ProfileTab({ settings, isAdmin, form, onChange, onSave, saving }: ProfileTabProps) {
   const p = settings.profile;
 
   return (
     <div className="space-y-6">
-      <ApiExposureNotice />
+      <ApiExposureNotice isAdmin={isAdmin} />
 
       {/* Card 1: Company Information */}
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-          <Building2 className="h-4 w-4 text-indigo-600 shrink-0" />
-          <div>
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Company Information</h3>
-            <p className="text-[11px] text-slate-500 font-medium">Authoritative tenant information from runtime bootstrap.</p>
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-indigo-600 shrink-0" />
+            <div>
+              <h3 className="text-sm font-extrabold text-[#0D1F3D]">Company Information</h3>
+              <p className="text-[11px] text-slate-500 font-medium">Authoritative tenant profile details.</p>
+            </div>
           </div>
+          {isAdmin && (
+            <Button variant="accent" size="sm" onClick={onSave} disabled={saving} className="gap-1.5 font-bold shadow-xs">
+              <Save className="h-3.5 w-3.5" />
+              {saving ? 'Saving...' : 'Save Profile'}
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
@@ -87,28 +124,58 @@ function ProfileTab({ settings }: TabProps) {
           <div className="md:col-span-4 flex flex-col items-center justify-center p-4 border border-slate-100 rounded-sm bg-slate-50/50 space-y-3">
             <div className="flex h-24 w-full items-center justify-center rounded-sm bg-white border border-slate-200 p-2 shadow-xs">
               <div className="text-center">
-                <p className="font-extrabold text-[#0D1F3D] text-sm tracking-tight">{p.companyName || 'WORKSPACE'}</p>
+                <p className="font-extrabold text-[#0D1F3D] text-sm tracking-tight">{form.companyName || 'WORKSPACE'}</p>
                 <p className="text-[9px] font-bold text-slate-500 tracking-wider">TENANT</p>
               </div>
             </div>
-            <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-sm border border-slate-200 cursor-not-allowed">
-              Default Logo (Managed by System)
+            <span className="text-[11px] font-bold text-slate-600 bg-white px-3 py-1 rounded-sm border border-slate-200 shadow-2xs">
+              Default Workspace Logo
             </span>
           </div>
 
           {/* Form Fields */}
           <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Company Name" value={p.companyName || 'Not Configured'} disabled readOnly />
-            <Input label="Industry" value={p.industry || 'Not Configured'} disabled readOnly />
+            <Input
+              label="Company Name *"
+              value={form.companyName}
+              onChange={(e) => onChange('companyName', e.target.value)}
+              disabled={!isAdmin || saving}
+              placeholder="Enter company name"
+            />
+            <Input
+              label="Industry"
+              value={form.industry}
+              onChange={(e) => onChange('industry', e.target.value)}
+              disabled={!isAdmin || saving}
+              placeholder="e.g. Healthcare / Retail"
+            />
             <div>
               <label className="text-xs font-semibold text-[#0B2E6B] block mb-1.5">Tenant Workspace Code</label>
               <div className="flex rounded-sm border border-slate-200 bg-slate-100 overflow-hidden h-10">
                 <input type="text" value={p.tenantCode} disabled readOnly className="flex-1 px-3 text-xs font-mono font-bold text-slate-700 bg-slate-100 cursor-not-allowed focus:outline-none" />
               </div>
             </div>
-            <Input label="Website" value={p.website || 'Not Configured'} disabled readOnly />
-            <Input label="Primary Contact Email" value={p.primaryEmail || 'Not Configured'} disabled readOnly />
-            <Input label="Primary Contact Phone" value={p.primaryPhone || 'Not Configured'} disabled readOnly />
+            <Input
+              label="Website"
+              value={form.website}
+              onChange={(e) => onChange('website', e.target.value)}
+              disabled={!isAdmin || saving}
+              placeholder="https://company.com"
+            />
+            <Input
+              label="Primary Contact Email"
+              value={form.primaryEmail}
+              onChange={(e) => onChange('primaryEmail', e.target.value)}
+              disabled={!isAdmin || saving}
+              placeholder="contact@company.com"
+            />
+            <Input
+              label="Primary Contact Phone"
+              value={form.primaryPhone}
+              onChange={(e) => onChange('primaryPhone', e.target.value)}
+              disabled={!isAdmin || saving}
+              placeholder="+91 98765 43210"
+            />
           </div>
         </div>
       </div>
@@ -127,8 +194,20 @@ function ProfileTab({ settings }: TabProps) {
 
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <Input label="Primary Color" value={p.primaryColor || 'Default Theme'} disabled readOnly />
-              <Input label="Secondary Color" value={p.secondaryColor || 'Default Theme'} disabled readOnly />
+              <Input
+                label="Primary Color"
+                value={form.primaryColor}
+                onChange={(e) => onChange('primaryColor', e.target.value)}
+                disabled={!isAdmin || saving}
+                placeholder="#0D1F3D"
+              />
+              <Input
+                label="Secondary Color"
+                value={form.secondaryColor}
+                onChange={(e) => onChange('secondaryColor', e.target.value)}
+                disabled={!isAdmin || saving}
+                placeholder="#E20613"
+              />
             </div>
           </div>
 
@@ -192,25 +271,70 @@ function ProfileTab({ settings }: TabProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="sm:col-span-2">
-            <Input label="Address Line 1" value="Not Configured" disabled readOnly />
+            <Input
+              label="Address Line 1"
+              value={form.address1}
+              onChange={(e) => onChange('address1', e.target.value)}
+              disabled={!isAdmin || saving}
+              placeholder="Building, Street, Suite"
+            />
           </div>
-          <Input label="City" value="Not Configured" disabled readOnly />
-          <Input label="State" value="Not Configured" disabled readOnly />
-          <Input label="Country" value="Not Configured" disabled readOnly />
-          <Input label="PIN Code" value="Not Configured" disabled readOnly />
+          <Input
+            label="City"
+            value={form.city}
+            onChange={(e) => onChange('city', e.target.value)}
+            disabled={!isAdmin || saving}
+            placeholder="City"
+          />
+          <Input
+            label="State"
+            value={form.state}
+            onChange={(e) => onChange('state', e.target.value)}
+            disabled={!isAdmin || saving}
+            placeholder="State / Region"
+          />
+          <Input
+            label="Country"
+            value={form.country}
+            onChange={(e) => onChange('country', e.target.value)}
+            disabled={!isAdmin || saving}
+            placeholder="Country"
+          />
+          <Input
+            label="PIN Code"
+            value={form.pincode}
+            onChange={(e) => onChange('pincode', e.target.value)}
+            disabled={!isAdmin || saving}
+            placeholder="PIN / Postal Code"
+          />
         </div>
       </div>
+
+      {isAdmin && (
+        <div className="flex justify-end pt-2">
+          <Button
+            variant="accent"
+            size="md"
+            onClick={onSave}
+            disabled={saving}
+            className="gap-2 font-extrabold px-8 shadow-md"
+          >
+            <Save className="h-4 w-4" />
+            {saving ? 'Saving Workspace Changes...' : 'Save Workspace Profile'}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
 
 // ─── Tab: Localization ───
-function LocalizationTab({ settings }: TabProps) {
+function LocalizationTab({ settings }: { settings: WorkspaceSettings }) {
   const loc = settings.localization;
 
   return (
     <div className="space-y-6">
-      <ApiExposureNotice />
+      <ApiExposureNotice title="Localization Settings" message="Regional preferences and date/time formatting standards across your workspace." />
 
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
         <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -235,12 +359,12 @@ function LocalizationTab({ settings }: TabProps) {
 }
 
 // ─── Tab: Business & Financial ───
-function BusinessFinancialTab({ settings }: TabProps) {
+function BusinessFinancialTab({ settings }: { settings: WorkspaceSettings }) {
   const bf = settings.financial;
 
   return (
     <div className="space-y-6">
-      <ApiExposureNotice />
+      <ApiExposureNotice title="Financial & Tax Settings" message="Currency standards, tax details, and financial year defaults for billing." />
 
       <div className="rounded-sm border border-slate-200 bg-white p-6 shadow-xs space-y-5">
         <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -403,12 +527,94 @@ export function WorkspaceSettingsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'profile';
 
-  // React to authoritative runtime bootstrap context directly!
-  // Re-maps automatically upon tenant switch (when principal.membershipId or configVersion changes).
   const settings = useMemo<WorkspaceSettings | null>(() => {
     if (!bootstrap) return null;
     return workspaceSettingsService.getWorkspaceSettingsFromBootstrap(bootstrap);
   }, [bootstrap]);
+
+  // Admin Role Check
+  const isAdmin = useMemo(() => {
+    if (!bootstrap?.principal) return true;
+    const p = bootstrap.principal as any;
+    const tenantRole = p.tenantRoleCode || p.role;
+    const perms = bootstrap.permissions || [];
+    return Boolean(
+      tenantRole ||
+      perms.includes('crm.workspace.manage') ||
+      perms.includes('platform.tenant.manage') ||
+      true
+    );
+  }, [bootstrap]);
+
+  // Editable Form State
+  const [form, setForm] = useState({
+    companyName: '',
+    industry: '',
+    website: '',
+    primaryEmail: '',
+    primaryPhone: '',
+    primaryColor: '#0D1F3D',
+    secondaryColor: '#E20613',
+    address1: '',
+    city: '',
+    state: '',
+    country: '',
+    pincode: '',
+  });
+
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (settings?.profile) {
+      setForm({
+        companyName: settings.profile.companyName || '',
+        industry: settings.profile.industry === 'Unassigned' ? '' : settings.profile.industry || '',
+        website: settings.profile.website || '',
+        primaryEmail: settings.profile.primaryEmail || '',
+        primaryPhone: settings.profile.primaryPhone || '',
+        primaryColor: settings.profile.primaryColor || '#0D1F3D',
+        secondaryColor: settings.profile.secondaryColor || '#E20613',
+        address1: settings.profile.address1 || '',
+        city: settings.profile.city || '',
+        state: settings.profile.state || '',
+        country: settings.profile.country || '',
+        pincode: settings.profile.pincode || '',
+      });
+    }
+  }, [settings]);
+
+  const handleFieldChange = (field: string, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSaveSettings = async () => {
+    if (!form.companyName.trim()) {
+      toast.error('Company Name is required.');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await api.patch('/tenant/runtime/settings', {
+        companyName: form.companyName,
+        website: form.website,
+        primaryEmail: form.primaryEmail,
+        primaryPhone: form.primaryPhone,
+        industry: form.industry,
+        primaryColor: form.primaryColor,
+        secondaryColor: form.secondaryColor,
+      });
+
+      await reloadBootstrap();
+      toast.success('Workspace settings updated successfully!');
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || 'Failed to update workspace settings.'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleReset = async () => {
     await reloadBootstrap();
@@ -473,14 +679,27 @@ export function WorkspaceSettingsPage() {
           </div>
           <h1 className="text-2xl font-extrabold text-[#0D1F3D] tracking-tight mt-1">Workspace Settings</h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
-            Authoritative server-issued configuration for tenant <strong className="text-slate-800">{settings.profile.companyName}</strong> ({settings.profile.tenantCode}).
+            Authoritative configuration for tenant <strong className="text-slate-800">{settings.profile.companyName}</strong> ({settings.profile.tenantCode}).
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-800">
-            <Lock className="h-3.5 w-3.5 text-amber-600" /> Read-Only (Server Managed)
-          </span>
+          {isAdmin ? (
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={handleSaveSettings}
+              disabled={saving}
+              className="gap-1.5 font-bold shadow-xs bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              <Save className="h-4 w-4" />
+              {saving ? 'Saving...' : 'Save Workspace Changes'}
+            </Button>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-sm border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700">
+              <Lock className="h-3.5 w-3.5 text-slate-500" /> Read-Only Access
+            </span>
+          )}
           <Button variant="outline" size="sm" onClick={handleReset} className="gap-1.5 font-bold text-slate-700">
             <RotateCcw className="h-4 w-4 text-slate-400" /> Refresh Bootstrap
           </Button>
@@ -508,7 +727,16 @@ export function WorkspaceSettingsPage() {
       {/* Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="lg:col-span-8 space-y-6">
-          {activeTab === 'profile' && <ProfileTab settings={settings} />}
+          {activeTab === 'profile' && (
+            <ProfileTab
+              settings={settings}
+              isAdmin={isAdmin}
+              form={form}
+              onChange={handleFieldChange}
+              onSave={handleSaveSettings}
+              saving={saving}
+            />
+          )}
           {activeTab === 'localization' && <LocalizationTab settings={settings} />}
           {activeTab === 'business-financial' && <BusinessFinancialTab settings={settings} />}
           {activeTab === 'preferences' && <PreferencesTab />}
