@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as admin from 'firebase-admin';
 
 export interface PushMessagePayload {
   title: string;
@@ -21,7 +22,7 @@ export interface PushDispatchResult {
 @Injectable()
 export class FcmPushService implements OnModuleInit {
   private readonly logger = new Logger(FcmPushService.name);
-  private firebaseApp: any = null;
+  private firebaseApp: admin.app.App | null = null;
   private isSimulationMode = true;
 
   constructor(private readonly configService: ConfigService) {}
@@ -44,15 +45,21 @@ export class FcmPushService implements OnModuleInit {
     }
 
     try {
+      privateKey = privateKey.trim();
+      if (
+        (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+        (privateKey.startsWith("'") && privateKey.endsWith("'"))
+      ) {
+        privateKey = privateKey.slice(1, -1);
+      }
+      privateKey = privateKey.trim();
+
       // Unescape newlines if privateKey was passed in env as single-line string with \n
       if (privateKey.includes('\\n')) {
         privateKey = privateKey.replace(/\\n/g, '\n');
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const admin = require('firebase-admin');
-      
-      if (admin.apps && admin.apps.length > 0) {
+      if (admin.apps && admin.apps.length > 0 && admin.apps[0]) {
         this.firebaseApp = admin.apps[0];
       } else {
         this.firebaseApp = admin.initializeApp({
