@@ -49,10 +49,8 @@ export class FcmPushService implements OnModuleInit {
         privateKey = privateKey.replace(/\\n/g, '\n');
       }
 
-      // Dynamic import to support environments where firebase-admin is optional
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const adminModule: any = await import('firebase-admin');
-      const admin: any = adminModule.credential ? adminModule : (adminModule.default || adminModule);
+      const admin = require('firebase-admin');
       
       if (admin.apps && admin.apps.length > 0) {
         this.firebaseApp = admin.apps[0];
