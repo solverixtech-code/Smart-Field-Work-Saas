@@ -8,5 +8,6 @@ import { RuntimeController } from "./runtime.controller";
   imports: [MasterCoreModule],
   providers: [RuntimeClock, RuntimeConfigCache, RuntimeConfigService],
   controllers: [RuntimeController],
+  exports: [RuntimeConfigService],
 })
 export class RuntimeModule {}
