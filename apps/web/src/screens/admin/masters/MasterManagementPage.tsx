@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
   Info,
@@ -34,338 +34,245 @@ import {
   ShoppingBag,
   Zap,
   Lightbulb,
-  Lock,
-  Sparkles,
-  Layers,
 } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
 import { DataTable } from '../../../components/ui/DataTable';
 import { Checkbox } from '../../../components/ui/Checkbox';
 import {
-  masterService,
-  EffectiveMasterDefinition,
-  EffectiveMasterValue,
-} from '../../../features/platform/masters/services/master.service';
+  masterCategories,
+  initialMasterRecords,
+  MasterRecordItem,
+  MasterCategoryConfig,
+} from './systemMastersData';
 
-// Icon mapping for master definitions / modules
-const categoryIconMap: Record<string, React.ElementType> = {
-  DESIGNATION: Users,
-  DEPARTMENT: Building2,
-  CONTACT_ROLE: UserCheck,
-  LEAVE_TYPE: Calendar,
-  LEAD_STAGE: TrendingUp,
-  LEAD_STATUS: TrendingUp,
-  LEAD_SOURCE: Briefcase,
-  LOST_REASON: AlertTriangle,
-  LEAD_RATING: Flame,
-  TERRITORY: MapPin,
-  VISIT_TYPE: Navigation,
-  VISIT_REASON: CalendarX,
-  EXPENSE_CATEGORY: Briefcase,
-  BUSINESS_TYPE: Store,
-  BUSINESS_SCALE: TrendingUp,
-  MARKET_HUB: ShoppingBag,
-  INCENTIVE_TYPE: Percent,
-  ALLOWANCE_TYPE: DollarSign,
-  DEDUCTION_TYPE: CreditCard,
-  SUBSCRIPTION_PLAN: Zap,
-};
+const domainGroups = [
+  'HR & Personnel',
+  'Sales & Pipeline',
+  'Demos & Follow-ups',
+  'Operations & Field',
+  'Business & Merchants',
+  'Payroll & Subscriptions',
+] as const;
 
 export default function MasterManagementPage() {
-  const [definitions, setDefinitions] = useState<EffectiveMasterDefinition[]>([]);
-  const [activeDefinitionCode, setActiveDefinitionCode] = useState<string>('');
-  const [values, setValues] = useState<EffectiveMasterValue[]>([]);
-  const [loadingDefs, setLoadingDefs] = useState(true);
-  const [loadingValues, setLoadingValues] = useState(false);
+  const [activeCategoryId, setActiveCategoryId] = useState<string>('designation');
+  const [recordsByCategory, setRecordsByCategory] = useState<Record<string, MasterRecordItem[]>>(initialMasterRecords);
 
-  // Category search
+  // Category Sidebar Search State
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
 
-  // Values filter
+  // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
-  const [provenanceFilter, setProvenanceFilter] = useState<'ALL' | 'SYSTEM' | 'INDUSTRY' | 'TENANT'>('ALL');
   const [activityFilter, setActivityFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [statusTypeFilter, setStatusTypeFilter] = useState<'all' | 'system_default' | 'custom'>('all');
 
-  // Add / Edit Modal
+  // Add / Edit Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [editingValue, setEditingValue] = useState<EffectiveMasterValue | null>(null);
+  const [editingRowId, setEditingRowId] = useState<string | null>(null);
 
   // Form State
+  const [formName, setFormName] = useState('');
   const [formCode, setFormCode] = useState('');
-  const [formLabel, setFormLabel] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formColor, setFormColor] = useState('#0D1F3D');
-  const [formDisplayOrder, setFormDisplayOrder] = useState<number>(1);
+  const [formSortOrder, setFormSortOrder] = useState<number>(1);
   const [formIsActive, setFormIsActive] = useState(true);
-  const [saving, setSaving] = useState(false);
 
-  // Delete Confirm Modal State
-  const [deleteTarget, setDeleteTarget] = useState<EffectiveMasterValue | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  // Delete Dialog State
+  const [deleteTarget, setDeleteTarget] = useState<MasterRecordItem | null>(null);
 
-  useEffect(() => {
-    loadDefinitions();
-  }, []);
+  const activeCategoryConfig = useMemo<MasterCategoryConfig>(() => {
+    return masterCategories.find((c) => c.id === activeCategoryId) || masterCategories[0];
+  }, [activeCategoryId]);
 
-  const loadDefinitions = async () => {
-    setLoadingDefs(true);
-    try {
-      const defs = await masterService.getEffectiveDefinitions();
-      const safeDefs = Array.isArray(defs) ? defs : [];
-      setDefinitions(safeDefs);
-      if (safeDefs.length > 0) {
-        const initial = safeDefs[0].code;
-        setActiveDefinitionCode(initial);
-        loadValues(initial);
-      }
-    } catch {
-      toast.error('Failed to load master definitions from backend');
-    } finally {
-      setLoadingDefs(false);
-    }
+  const currentCategoryRecords = useMemo<MasterRecordItem[]>(() => {
+    return recordsByCategory[activeCategoryId] || [];
+  }, [recordsByCategory, activeCategoryId]);
+
+  // Filtered & Sorted Rows
+  const filteredRows = useMemo(() => {
+    return currentCategoryRecords
+      .filter((row) => {
+        const search = searchTerm.trim().toLowerCase();
+        const matchesSearch =
+          search.length === 0 ||
+          row.name.toLowerCase().includes(search) ||
+          row.code.toLowerCase().includes(search) ||
+          (row.description && row.description.toLowerCase().includes(search));
+
+        const matchesActivity =
+          activityFilter === 'all' ||
+          (activityFilter === 'active' ? row.isActive : !row.isActive);
+
+        const matchesStatusType =
+          statusTypeFilter === 'all' ||
+          (statusTypeFilter === 'system_default' ? row.isSystemDefault : !row.isSystemDefault);
+
+        return matchesSearch && matchesActivity && matchesStatusType;
+      })
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }, [currentCategoryRecords, searchTerm, activityFilter, statusTypeFilter]);
+
+  // Summary Stats
+  const stats = useMemo(() => {
+    const total = currentCategoryRecords.length;
+    const active = currentCategoryRecords.filter((r) => r.isActive).length;
+    const inactive = total - active;
+    const systemDefault = currentCategoryRecords.filter((r) => r.isSystemDefault).length;
+    return { total, active, inactive, systemDefault };
+  }, [currentCategoryRecords]);
+
+  // Icon mapping for 18 categories
+  const categoryIconMap: Record<string, React.ElementType> = {
+    designation: Users,
+    team: Building2,
+    contact_role: UserCheck,
+    leave_type: Calendar,
+    lead_stage: TrendingUp,
+    lead_source: Share2Icon,
+    lost_reason: AlertTriangle,
+    lead_rating: Flame,
+    territory: MapPin,
+    visit_type: Navigation,
+    visit_reason: CalendarX,
+    expense_category: Briefcase,
+    business_type: Store,
+    business_scale: TrendingUp,
+    market_hub: ShoppingBag,
+    incentive_type: Percent,
+    allowance_type: DollarSign,
+    deduction_type: CreditCard,
+    subscription_plan: Zap,
   };
 
-  const loadValues = async (code: string) => {
-    if (!code) return;
-    setLoadingValues(true);
-    try {
-      const res = await masterService.getEffectiveValues(code);
-      const safeValues = Array.isArray(res) ? res : [];
-      setValues(safeValues);
-    } catch {
-      toast.error(`Failed to load values for ${code}`);
-    } finally {
-      setLoadingValues(false);
-    }
-  };
+  // Helper dummy icon fallback
+  function Share2Icon(props: any) {
+    return <Briefcase {...props} />;
+  }
 
-  const activeDefinition = useMemo(() => {
-    return definitions.find((d) => d.code === activeDefinitionCode) || null;
-  }, [definitions, activeDefinitionCode]);
-
-  const handleSelectDefinition = (code: string) => {
-    setActiveDefinitionCode(code);
-    setSearchTerm('');
-    setProvenanceFilter('ALL');
-    setActivityFilter('all');
-    loadValues(code);
-  };
-
-  const handleOpenAdd = () => {
-    if (activeDefinition && !activeDefinition.allowTenantCreate) {
-      toast.error('This master category does not permit tenant additions');
-      return;
-    }
+  // Handlers
+  const handleOpenAddModal = () => {
     setModalMode('add');
-    setEditingValue(null);
-    setFormCode('');
-    setFormLabel('');
+    setEditingRowId(null);
+    setFormName('');
+    setFormCode(`${activeCategoryConfig.defaultCodePrefix}_${Date.now().toString().slice(-4)}`);
     setFormDescription('');
     setFormColor('#0D1F3D');
-    setFormDisplayOrder((Array.isArray(values) ? values.length : 0) + 1);
+    setFormSortOrder(currentCategoryRecords.length + 1);
     setFormIsActive(true);
     setModalOpen(true);
   };
 
-  const handleOpenEdit = (item: EffectiveMasterValue) => {
-    if (item.provenance === 'SYSTEM' && activeDefinition?.systemValuePolicy === 'LOCKED_IDENTITY') {
-      toast.error('System identity is locked and cannot be edited');
-      return;
-    }
+  const handleOpenEditModal = (row: MasterRecordItem) => {
     setModalMode('edit');
-    setEditingValue(item);
-    setFormCode(item.code);
-    setFormLabel(item.overrideLabel || item.label);
-    setFormDescription((item.metadata?.description as string) || '');
-    setFormColor((item.metadata?.color as string) || '#0D1F3D');
-    setFormDisplayOrder(item.displayOrder);
-    setFormIsActive(item.isActive);
+    setEditingRowId(row.id);
+    setFormName(row.name);
+    setFormCode(row.code);
+    setFormDescription(row.description || '');
+    setFormColor(row.displayColor || '#0D1F3D');
+    setFormSortOrder(row.sortOrder);
+    setFormIsActive(row.isActive);
     setModalOpen(true);
   };
 
-  const handleToggleActive = async (item: EffectiveMasterValue) => {
-    const updatedStatus = !item.isActive;
-    try {
-      if (item.provenance === 'TENANT') {
-        await masterService.updateTenantValue(item.id, { isActive: updatedStatus });
-      } else {
-        await masterService.setTenantOverride(item.originId || item.id, { isHidden: !updatedStatus });
-      }
-      toast.success(updatedStatus ? 'Master record activated' : 'Master record deactivated');
-      loadValues(activeDefinitionCode);
-    } catch {
-      toast.error('Failed to update record status');
-    }
-  };
-
-  const handleDeleteRequest = (item: EffectiveMasterValue) => {
-    if (item.provenance === 'SYSTEM') {
-      toast.error('System default records cannot be deleted. Deactivate them instead.');
-      return;
-    }
-    setDeleteTarget(item);
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteTarget) return;
-    setDeleting(true);
-    try {
-      if (deleteTarget.provenance === 'TENANT') {
-        await masterService.updateTenantValue(deleteTarget.id, { isActive: false });
-      } else if (deleteTarget.isOverridden) {
-        await masterService.removeTenantOverride(deleteTarget.originId || deleteTarget.id);
-      } else {
-        await masterService.setTenantOverride(deleteTarget.originId || deleteTarget.id, { isHidden: true });
-      }
-      toast.success('Master record deleted');
-      setDeleteTarget(null);
-      loadValues(activeDefinitionCode);
-    } catch {
-      toast.error('Failed to delete master record');
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeDefinitionCode) return;
-
-    if (!formLabel.trim()) {
-      toast.error('Label is required');
+  const handleSaveRecord = () => {
+    if (!formName.trim()) {
+      toast.error('Please enter a record name');
       return;
     }
 
-    setSaving(true);
-    try {
-      const metadata = {
+    if (modalMode === 'add') {
+      const newRecord: MasterRecordItem = {
+        id: `${activeCategoryId}-${Date.now()}`,
+        category: activeCategoryId,
+        name: formName.trim(),
+        code: formCode.trim() || `${activeCategoryConfig.defaultCodePrefix}_${Date.now().toString().slice(-4)}`,
         description: formDescription.trim(),
-        color: formColor,
+        displayColor: formColor,
+        sortOrder: Number(formSortOrder || 1),
+        isActive: formIsActive,
+        isSystemDefault: false,
       };
 
-      if (modalMode === 'add') {
-        const generatedCode =
-          formCode.trim().toUpperCase() ||
-          formLabel.trim().toUpperCase().replace(/[^A-Z0-9_]+/g, '_');
+      setRecordsByCategory((prev) => ({
+        ...prev,
+        [activeCategoryId]: [...(prev[activeCategoryId] || []), newRecord],
+      }));
 
-        await masterService.createTenantValue(activeDefinitionCode, {
-          code: generatedCode,
-          label: formLabel.trim(),
-          displayOrder: formDisplayOrder,
-          metadata,
-        });
-        toast.success('Master value created successfully');
-      } else if (editingValue) {
-        if (editingValue.provenance === 'TENANT') {
-          await masterService.updateTenantValue(editingValue.id, {
-            label: formLabel.trim(),
-            displayOrder: formDisplayOrder,
-            isActive: formIsActive,
-            metadata,
-          });
-        } else {
-          await masterService.setTenantOverride(editingValue.originId || editingValue.id, {
-            overrideLabel: formLabel.trim(),
-            displayOrder: formDisplayOrder,
-          });
-        }
-        toast.success('Master value updated successfully');
-      }
-      setModalOpen(false);
-      loadValues(activeDefinitionCode);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to save master value');
-    } finally {
-      setSaving(false);
+      toast.success(`${activeCategoryConfig.name} record created`);
+    } else if (editingRowId) {
+      setRecordsByCategory((prev) => ({
+        ...prev,
+        [activeCategoryId]: (prev[activeCategoryId] || []).map((row) =>
+          row.id === editingRowId
+            ? {
+                ...row,
+                name: formName.trim(),
+                code: formCode.trim(),
+                description: formDescription.trim(),
+                displayColor: formColor,
+                sortOrder: Number(formSortOrder || 1),
+                isActive: formIsActive,
+              }
+            : row
+        ),
+      }));
+
+      toast.success(`${activeCategoryConfig.name} record updated`);
     }
+
+    setModalOpen(false);
+  };
+
+  const handleToggleActive = (row: MasterRecordItem) => {
+    const updatedStatus = !row.isActive;
+    setRecordsByCategory((prev) => ({
+      ...prev,
+      [activeCategoryId]: (prev[activeCategoryId] || []).map((r) =>
+        r.id === row.id ? { ...r, isActive: updatedStatus } : r
+      ),
+    }));
+
+    toast.success(updatedStatus ? 'Master activated' : 'Master deactivated');
+  };
+
+  const handleDeleteRequest = (row: MasterRecordItem) => {
+    if (row.isSystemDefault) {
+      toast.error('System default masters cannot be deleted.');
+      return;
+    }
+    setDeleteTarget(row);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+
+    setRecordsByCategory((prev) => ({
+      ...prev,
+      [activeCategoryId]: (prev[activeCategoryId] || []).filter((r) => r.id !== deleteTarget.id),
+    }));
+
+    toast.success('Master record deleted');
+    setDeleteTarget(null);
   };
 
   const handleResetFilters = () => {
     setSearchTerm('');
     setActivityFilter('all');
-    setProvenanceFilter('ALL');
-  };
-
-  // Group definitions by moduleCode or domain
-  const definitionsList = useMemo(() => Array.isArray(definitions) ? definitions : [], [definitions]);
-  const valuesList = useMemo(() => Array.isArray(values) ? values : [], [values]);
-
-  const filteredDefinitions = useMemo(() => {
-    return definitionsList.filter(
-      (d) =>
-        d.name.toLowerCase().includes(categorySearchQuery.toLowerCase().trim()) ||
-        d.code.toLowerCase().includes(categorySearchQuery.toLowerCase().trim()) ||
-        (d.description && d.description.toLowerCase().includes(categorySearchQuery.toLowerCase().trim()))
-    );
-  }, [definitionsList, categorySearchQuery]);
-
-  const filteredValues = useMemo(() => {
-    return valuesList
-      .filter((v) => {
-        const search = searchTerm.trim().toLowerCase();
-        const matchSearch =
-          search.length === 0 ||
-          v.label.toLowerCase().includes(search) ||
-          v.code.toLowerCase().includes(search) ||
-          ((v.metadata?.description as string) || '').toLowerCase().includes(search);
-
-        const matchProvenance =
-          provenanceFilter === 'ALL' || v.provenance === provenanceFilter;
-
-        const matchActivity =
-          activityFilter === 'all' ||
-          (activityFilter === 'active' ? v.isActive : !v.isActive);
-
-        return matchSearch && matchProvenance && matchActivity;
-      })
-      .sort((a, b) => a.displayOrder - b.displayOrder);
-  }, [valuesList, searchTerm, provenanceFilter, activityFilter]);
-
-  // Summary stats
-  const stats = useMemo(() => {
-    const total = valuesList.length;
-    const active = valuesList.filter((r) => r.isActive).length;
-    const inactive = total - active;
-    const systemProtected = valuesList.filter((r) => r.provenance === 'SYSTEM').length;
-    return { total, active, inactive, systemProtected };
-  }, [valuesList]);
-
-  const getProvenanceBadge = (item: EffectiveMasterValue) => {
-    switch (item.provenance) {
-      case 'SYSTEM':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-sm bg-purple-50 px-2 py-0.5 text-[10px] font-extrabold text-purple-700 border border-purple-200">
-            <Lock className="h-2.5 w-2.5" /> SYSTEM
-          </span>
-        );
-      case 'INDUSTRY':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-sm bg-amber-50 px-2 py-0.5 text-[10px] font-extrabold text-amber-700 border border-amber-200">
-            <Sparkles className="h-2.5 w-2.5" /> INDUSTRY
-          </span>
-        );
-      case 'TENANT':
-        return (
-          <span className="inline-flex items-center gap-1 rounded-sm bg-emerald-50 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700 border border-emerald-200">
-            TENANT
-          </span>
-        );
-      default:
-        return null;
-    }
+    setStatusTypeFilter('all');
   };
 
   return (
-    <div className="space-y-4 font-sans text-slate-800 pb-16">
-      {/* 1. Page Header */}
+    <div className="space-y-4 font-sans pb-10">
+      {/* PAGE HEADER */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-[#0D1F3D]">System Masters</h1>
             <span className="rounded-sm bg-[#0D1F3D]/10 text-[#0D1F3D] px-2.5 py-0.5 text-xs font-bold">
-              {definitionsList.length} Categories
+              {masterCategories.length} Categories
             </span>
           </div>
           <p className="text-xs font-normal text-slate-500 mt-0.5">
@@ -378,56 +285,34 @@ export default function MasterManagementPage() {
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => activeDefinitionCode && loadValues(activeDefinitionCode)}
-            className="flex items-center gap-1.5 font-bold rounded-sm text-slate-700"
+            onClick={() => toast.success('Audit log downloaded for master records')}
+            className="flex items-center gap-1.5 font-bold rounded-sm"
           >
-            <RotateCcw className="h-3.5 w-3.5" /> Refresh
+            <FileText className="h-4 w-4 text-slate-600" /> Audit Log
           </Button>
 
           <Button
             type="button"
             variant="accent"
             size="sm"
-            onClick={handleOpenAdd}
-            disabled={activeDefinition ? !activeDefinition.allowTenantCreate : false}
-            className="flex items-center gap-1.5 font-bold shadow-xs rounded-sm bg-[#0D1F3D] hover:bg-[#1A365D] text-white disabled:opacity-50"
+            onClick={handleOpenAddModal}
+            className="flex items-center gap-1.5 font-bold shadow-xs rounded-sm"
           >
-            <Plus className="h-4 w-4" /> Add Record
+            <Plus className="h-4 w-4" /> {activeCategoryConfig.addLabel}
           </Button>
         </div>
       </div>
 
-      {/* 2. Authority & Precedence Banner */}
-      <div className="rounded-sm border border-slate-200 bg-slate-50/70 p-3 flex items-center justify-between gap-4 text-xs shadow-xs">
-        <div className="flex items-center gap-2 text-slate-700">
-          <Info className="h-4 w-4 text-indigo-600 shrink-0" />
-          <span className="font-medium">
-            Resolution Precedence: <strong>TENANT OVERRIDE</strong> → <strong>INDUSTRY TEMPLATE</strong> → <strong>SYSTEM PLATFORM</strong>.
-          </span>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-sm border border-purple-200">
-            SYSTEM
-          </span>
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-sm border border-amber-200">
-            INDUSTRY
-          </span>
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-sm border border-emerald-200">
-            TENANT
-          </span>
-        </div>
-      </div>
-
-      {/* 3. Two-Column Workspace Layout */}
+      {/* TWO-COLUMN WORKSPACE LAYOUT */}
       <div className="flex flex-col lg:flex-row gap-4 items-start">
         {/* LEFT COLUMN: CATEGORIES SIDEBAR */}
         <div className="w-full lg:w-[280px] xl:w-[300px] shrink-0 space-y-3">
           <div className="rounded-sm border border-slate-200 bg-white p-3 shadow-xs space-y-2.5">
             <div className="pb-2 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-xs font-bold text-[#0D1F3D]">
+              <h3 className="text-xs font-semibold text-[#0D1F3D]">
                 Master Categories
               </h3>
-              <span className="text-[11px] font-semibold text-slate-500">{filteredDefinitions.length} Available</span>
+              <span className="text-[11px] font-medium text-slate-500">{masterCategories.length} Configured</span>
             </div>
 
             {/* Category Searchbar */}
@@ -451,95 +336,104 @@ export default function MasterManagementPage() {
               )}
             </div>
 
-            {/* Category Navigation List */}
-            <nav className="space-y-1 max-h-[580px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
-              {loadingDefs ? (
-                <div className="py-8 text-center text-xs text-slate-500 font-medium">
-                  <div className="inline-block animate-spin h-5 w-5 border-2 border-indigo-600 border-t-transparent rounded-full mb-2" />
-                  <p>Loading master categories...</p>
-                </div>
-              ) : filteredDefinitions.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400 font-medium">
-                  No matching categories.
-                </div>
-              ) : (
-                filteredDefinitions.map((cat) => {
-                  const isActive = cat.code === activeDefinitionCode;
-                  const Icon = categoryIconMap[cat.code] || Tag;
+            <nav className="space-y-3 max-h-[640px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-200">
+              {domainGroups.map((groupName) => {
+                const groupCategories = masterCategories.filter(
+                  (c) =>
+                    c.group === groupName &&
+                    (c.name.toLowerCase().includes(categorySearchQuery.toLowerCase().trim()) ||
+                      c.description.toLowerCase().includes(categorySearchQuery.toLowerCase().trim()))
+                );
+                if (groupCategories.length === 0) return null;
 
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => handleSelectDefinition(cat.code)}
-                      className={`flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-left text-xs font-semibold transition-all cursor-pointer ${
-                        isActive
-                          ? 'bg-[#0D1F3D] text-white shadow-xs font-semibold'
-                          : 'text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D]'
-                      }`}
-                    >
-                      <Icon
-                        className={`h-3.5 w-3.5 shrink-0 ${
-                          isActive ? 'text-white' : 'text-slate-400'
-                        }`}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <span className="block truncate font-bold text-xs">{cat.name}</span>
-                        <span className={`block truncate text-[9px] font-mono ${isActive ? 'text-slate-300' : 'text-slate-400'}`}>
-                          {cat.code}
-                        </span>
-                      </div>
-                      {cat.moduleCode && (
-                        <span
-                          className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold font-mono ${
-                            isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {cat.moduleCode}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })
-              )}
+                return (
+                  <div key={groupName} className="space-y-1">
+                    <p className="px-2 text-[11px] font-medium text-slate-500">
+                      {groupName}
+                    </p>
+                    <div className="space-y-0.5">
+                      {groupCategories.map((cat) => {
+                        const isActive = cat.id === activeCategoryId;
+                        const Icon = categoryIconMap[cat.id] || Tag;
+                        const catCount = (recordsByCategory[cat.id] || []).length;
+
+                        return (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveCategoryId(cat.id);
+                              setSearchTerm('');
+                              setActivityFilter('all');
+                              setStatusTypeFilter('all');
+                            }}
+                            className={`flex w-full items-center gap-2.5 rounded-sm px-3 py-2 text-left text-xs font-semibold transition-all cursor-pointer ${
+                              isActive
+                                ? 'bg-[#0D1F3D] text-white shadow-xs font-semibold'
+                                : 'text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D]'
+                            }`}
+                          >
+                            <Icon
+                              className={`h-3.5 w-3.5 shrink-0 ${
+                                isActive ? 'text-white' : 'text-slate-400'
+                              }`}
+                            />
+                            <span className="flex-1 truncate">{cat.name}</span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                              }`}
+                            >
+                              {catCount}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </nav>
           </div>
 
           {/* Help Card */}
           <div className="rounded-sm border border-slate-200 bg-slate-50/70 p-3.5 shadow-xs space-y-2">
             <div className="flex items-center gap-2 text-[#0D1F3D]">
-              <BookOpen className="h-4 w-4 text-indigo-600" />
-              <h3 className="text-xs font-bold">Master Data Governance</h3>
+              <BookOpen className="h-4 w-4 text-[#E20613]" />
+              <h3 className="text-xs font-semibold">Master Data Help</h3>
             </div>
             <p className="text-[11px] font-normal leading-relaxed text-slate-500">
-              System masters govern dropdown menus throughout CRM Lead Management, Field Operations, and Financial Rules.
+              System masters populate dropdown menus throughout CRM Lead Management, Field Visits, and Payroll.
             </p>
+            <Button
+              variant="outline"
+              size="sm"
+              fullWidth
+              onClick={() => toast.success('Documentation guide for Master Data Management')}
+              className="text-xs font-semibold rounded-sm"
+            >
+              Learn More
+            </Button>
           </div>
         </div>
 
         {/* RIGHT COLUMN: MAIN CONTENT PANEL */}
         <div className="flex-1 min-w-0 space-y-3">
-          {/* Top Panel Header & Search Toolbar */}
+          {/* Card Header & Search Toolbar Container */}
           <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
               <div>
                 <div className="flex items-center gap-2">
-                  {activeDefinition?.moduleCode && (
-                    <span className="rounded-sm bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 border border-slate-200 font-mono">
-                      {activeDefinition.moduleCode}
-                    </span>
-                  )}
-                  <h2 className="text-lg font-bold text-[#0D1F3D]">
-                    {activeDefinition?.name || 'Select a Category'}
-                  </h2>
+                  <span className="rounded-sm bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-600 border border-slate-200">
+                    {activeCategoryConfig.group}
+                  </span>
+                  <h2 className="text-lg font-bold text-[#0D1F3D]">{activeCategoryConfig.name}</h2>
                 </div>
-                <p className="text-xs font-normal text-slate-500 mt-1">
-                  {activeDefinition?.description || 'Authoritative effective master values from backend resolution.'}
-                </p>
+                <p className="text-xs font-normal text-slate-500 mt-1">{activeCategoryConfig.description}</p>
               </div>
             </div>
 
-            {/* Toolbar: Search & Inline Filters */}
+            {/* Toolbar: Search & Filters */}
             <div className="flex flex-wrap items-center justify-between gap-3">
               {/* Search Bar */}
               <div className="relative flex-1 min-w-[240px]">
@@ -548,35 +442,34 @@ export default function MasterManagementPage() {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder={`Search ${activeDefinition?.name || 'master values'}...`}
-                  className="w-full rounded-sm border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
+                  placeholder={activeCategoryConfig.searchPlaceholder}
+                  className="w-full rounded-sm border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
                 />
               </div>
 
               {/* Inline Filters */}
               <div className="flex flex-wrap items-center gap-2.5">
                 <select
-                  value={provenanceFilter}
-                  onChange={(e) => setProvenanceFilter(e.target.value as any)}
-                  className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none cursor-pointer"
-                >
-                  <option value="ALL">All Provenances</option>
-                  <option value="SYSTEM">System Only</option>
-                  <option value="INDUSTRY">Industry Only</option>
-                  <option value="TENANT">Tenant Only</option>
-                </select>
-
-                <select
                   value={activityFilter}
                   onChange={(e) => setActivityFilter(e.target.value as any)}
-                  className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none cursor-pointer"
+                  className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
                 >
                   <option value="all">All Activity</option>
                   <option value="active">Active Only</option>
                   <option value="inactive">Inactive Only</option>
                 </select>
 
-                {(searchTerm || activityFilter !== 'all' || provenanceFilter !== 'ALL') && (
+                <select
+                  value={statusTypeFilter}
+                  onChange={(e) => setStatusTypeFilter(e.target.value as any)}
+                  className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
+                >
+                  <option value="all">All Master Types</option>
+                  <option value="system_default">System Default</option>
+                  <option value="custom">Custom Masters</option>
+                </select>
+
+                {(searchTerm || activityFilter !== 'all' || statusTypeFilter !== 'all') && (
                   <Button
                     type="button"
                     variant="outline"
@@ -591,7 +484,7 @@ export default function MasterManagementPage() {
             </div>
           </div>
 
-          {/* Stats KPI Cards Row */}
+          {/* Stats Cards Row */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <div className="rounded-sm border border-slate-200 bg-white p-3 shadow-xs flex items-center gap-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D]/10 text-[#0D1F3D]">
@@ -628,45 +521,37 @@ export default function MasterManagementPage() {
                 <Settings2 className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-[11px] font-medium text-slate-500">System Protected</p>
-                <p className="text-lg font-extrabold text-purple-600">{stats.systemProtected}</p>
+                <p className="text-[11px] font-medium text-slate-500">System Default</p>
+                <p className="text-lg font-extrabold text-purple-600">{stats.systemDefault}</p>
               </div>
             </div>
           </div>
 
-          {/* Datatable */}
+          {/* Master Records Data Table */}
           <DataTable
             columns={[
               {
-                header: 'Master Label & Code',
-                cell: (row) => {
-                  const colorTag = (row.metadata?.color as string) || '#0D1F3D';
-                  return (
-                    <div className="flex items-center gap-2.5">
+                header: 'Master Name & Code',
+                cell: (row) => (
+                  <div className="flex items-center gap-2.5">
+                    {row.displayColor && (
                       <span
-                        className="h-3.5 w-3.5 rounded-full shrink-0 border border-slate-200 shadow-xs"
-                        style={{ backgroundColor: colorTag }}
+                        className="h-3 w-3 rounded-full shrink-0 border border-slate-200"
+                        style={{ backgroundColor: row.displayColor }}
                       />
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <p className="font-bold text-[#0D1F3D]">{row.label}</p>
-                          {row.isOverridden && (
-                            <span className="text-[9px] font-extrabold text-amber-700 bg-amber-100 px-1.5 py-0.2 rounded-xs border border-amber-200">
-                              Overridden
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[10px] font-mono text-slate-400 font-semibold">{row.code}</p>
-                      </div>
+                    )}
+                    <div>
+                      <p className="font-bold text-[#0D1F3D]">{row.name}</p>
+                      <p className="text-[10px] font-mono text-slate-400">{row.code}</p>
                     </div>
-                  );
-                },
+                  </div>
+                ),
               },
               {
                 header: 'Description',
                 cell: (row) => (
-                  <span className="text-xs font-normal text-slate-600 max-w-[280px] truncate block">
-                    {(row.metadata?.description as string) || '—'}
+                  <span className="text-xs font-normal text-slate-600 max-w-[320px] truncate block">
+                    {row.description || '—'}
                   </span>
                 ),
               },
@@ -675,13 +560,22 @@ export default function MasterManagementPage() {
                 align: 'center',
                 cell: (row) => (
                   <span className="rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600 border border-slate-200 font-mono">
-                    #{row.displayOrder}
+                    #{row.sortOrder}
                   </span>
                 ),
               },
               {
-                header: 'Provenance',
-                cell: (row) => getProvenanceBadge(row),
+                header: 'Type',
+                cell: (row) =>
+                  row.isSystemDefault ? (
+                    <span className="inline-flex items-center gap-1 rounded-sm bg-purple-50 px-2.5 py-0.5 text-xs font-medium text-purple-700 border border-purple-200/80">
+                      <Tag className="h-3 w-3" /> System Default
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-sm bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 border border-slate-200">
+                      Custom
+                    </span>
+                  ),
               },
               {
                 header: 'Status',
@@ -689,10 +583,10 @@ export default function MasterManagementPage() {
                   <button
                     type="button"
                     onClick={() => handleToggleActive(row)}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold transition-all cursor-pointer border ${
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium transition-all cursor-pointer border ${
                       row.isActive
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                        : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
+                        : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
                     }`}
                   >
                     {row.isActive ? (
@@ -711,8 +605,8 @@ export default function MasterManagementPage() {
                   <div className="flex items-center justify-end gap-1">
                     <button
                       type="button"
-                      onClick={() => handleOpenEdit(row)}
-                      className="p-1.5 rounded-sm text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs"
+                      onClick={() => handleOpenEditModal(row)}
+                      className="p-1.5 rounded-sm text-slate-600 hover:bg-slate-100 hover:text-[#0D1F3D] transition-colors border border-slate-200 shadow-xs cursor-pointer"
                       title="Edit Master Record"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
@@ -721,13 +615,13 @@ export default function MasterManagementPage() {
                     <button
                       type="button"
                       onClick={() => handleDeleteRequest(row)}
-                      disabled={row.provenance === 'SYSTEM'}
+                      disabled={row.isSystemDefault}
                       className={`p-1.5 rounded-sm transition-colors border shadow-xs ${
-                        row.provenance === 'SYSTEM'
+                        row.isSystemDefault
                           ? 'border-slate-100 text-slate-300 cursor-not-allowed'
-                          : 'text-rose-600 border-slate-200 hover:bg-rose-50 hover:border-rose-200'
+                          : 'text-rose-600 border-slate-200 hover:bg-rose-50 hover:border-rose-200 cursor-pointer'
                       }`}
-                      title={row.provenance === 'SYSTEM' ? 'System Default Cannot Be Deleted' : 'Delete Record'}
+                      title={row.isSystemDefault ? 'System Default Cannot Be Deleted' : 'Delete Record'}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -735,7 +629,7 @@ export default function MasterManagementPage() {
                 ),
               },
             ]}
-            data={filteredValues}
+            data={filteredRows}
             keyExtractor={(row) => row.id}
             density="relaxed"
             emptyMessage="No Master Records Found"
@@ -745,157 +639,144 @@ export default function MasterManagementPage() {
           <div className="flex items-center gap-2.5 rounded-sm border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-900 shadow-xs">
             <Lightbulb className="h-4 w-4 text-amber-600 shrink-0" />
             <p className="font-medium">
-              Note: System default masters cannot be permanently deleted from origin, but tenant overrides or deactivations can be applied cleanly.
+              Note: System default masters cannot be deleted but can be deactivated. Custom masters can be added or modified freely.
             </p>
           </div>
         </div>
       </div>
 
       {/* ADD / EDIT MASTER RECORD MODAL */}
-      {modalOpen && (
-        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} maxWidth="max-w-md">
-          <div className="space-y-4 font-sans text-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-[#0D1F3D]">
-                  {modalMode === 'add'
-                    ? `Add ${activeDefinition?.name || 'Master Record'}`
-                    : `Edit Master Record — ${formLabel || formCode}`}
-                </h3>
-                <p className="text-xs font-normal text-slate-500 mt-0.5">
-                  Category: <span className="font-bold text-[#0D1F3D]">{activeDefinition?.name}</span> ({activeDefinitionCode})
-                </p>
-              </div>
-              <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                <X className="h-4 w-4" />
-              </button>
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} maxWidth="max-w-md">
+        <div className="space-y-4 font-sans text-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="text-base font-bold text-[#0D1F3D]">
+                {modalMode === 'add' ? activeCategoryConfig.addTitle : activeCategoryConfig.editTitle}
+              </h3>
+              <p className="text-xs font-normal text-slate-500 mt-0.5">
+                Category: <span className="font-bold text-[#0D1F3D]">{activeCategoryConfig.name}</span>
+              </p>
+            </div>
+            <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-slate-600 cursor-pointer">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="space-y-3.5">
+            <div>
+              <label className="font-bold text-slate-800 block mb-1">Master Record Name *</label>
+              <input
+                type="text"
+                value={formName}
+                onChange={(e) => setFormName(e.target.value)}
+                placeholder="e.g. Senior Field Executive"
+                className="w-full rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
+              />
             </div>
 
-            <form onSubmit={handleFormSubmit} className="space-y-3.5">
-              <div>
-                <label className="font-bold text-slate-800 block mb-1">
-                  Master Record Label <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formLabel}
-                  onChange={(e) => setFormLabel(e.target.value)}
-                  placeholder="e.g. Senior Representative"
-                  className="w-full rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
-                  required
-                />
-              </div>
+            <div>
+              <label className="font-bold text-slate-800 block mb-1">System Code Key *</label>
+              <input
+                type="text"
+                value={formCode}
+                onChange={(e) => setFormCode(e.target.value)}
+                placeholder="e.g. SR_FIELD_EXEC"
+                className="w-full rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-mono font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
+              />
+            </div>
 
-              {modalMode === 'add' && (
-                <div>
-                  <label className="font-bold text-slate-800 block mb-1">System Code Key (Optional)</label>
+            <div>
+              <label className="font-bold text-slate-800 block mb-1">Description</label>
+              <textarea
+                rows={2}
+                value={formDescription}
+                onChange={(e) => setFormDescription(e.target.value)}
+                placeholder="Brief summary of how this master is used..."
+                className="w-full rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-normal text-[#0D1F3D] focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">Display Color Tag</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={formColor}
+                    onChange={(e) => setFormColor(e.target.value)}
+                    className="h-8 w-8 rounded-sm border border-slate-200 cursor-pointer p-0.5"
+                  />
                   <input
                     type="text"
-                    value={formCode}
-                    onChange={(e) => setFormCode(e.target.value.toUpperCase())}
-                    placeholder="e.g. SR_REP (auto-derived if blank)"
-                    className="w-full rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-mono font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
+                    value={formColor}
+                    onChange={(e) => setFormColor(e.target.value)}
+                    className="w-full rounded-sm border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-mono font-semibold text-[#0D1F3D]"
                   />
                 </div>
-              )}
+              </div>
 
               <div>
-                <label className="font-bold text-slate-800 block mb-1">Description</label>
-                <textarea
-                  rows={2}
-                  value={formDescription}
-                  onChange={(e) => setFormDescription(e.target.value)}
-                  placeholder="Brief summary of how this master is used..."
-                  className="w-full rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-normal text-[#0D1F3D] focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
+                <label className="font-bold text-slate-800 block mb-1">Sort Order</label>
+                <input
+                  type="number"
+                  value={formSortOrder}
+                  onChange={(e) => setFormSortOrder(Number(e.target.value))}
+                  className="w-full rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
                 />
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-slate-800 block mb-1">Display Color Tag</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={formColor}
-                      onChange={(e) => setFormColor(e.target.value)}
-                      className="h-8 w-8 rounded-sm border border-slate-200 cursor-pointer p-0.5"
-                    />
-                    <input
-                      type="text"
-                      value={formColor}
-                      onChange={(e) => setFormColor(e.target.value)}
-                      className="w-full rounded-sm border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 text-xs font-mono font-semibold text-[#0D1F3D]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="font-bold text-slate-800 block mb-1">Display Sort Order</label>
-                  <input
-                    type="number"
-                    value={formDisplayOrder}
-                    onChange={(e) => setFormDisplayOrder(Number(e.target.value))}
-                    className="w-full rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
-                    min={1}
-                  />
-                </div>
+            <div className="rounded-sm border border-slate-200 bg-slate-50 p-3.5 flex items-center justify-between">
+              <div>
+                <p className="font-extrabold text-[#0D1F3D] text-xs">Active Status</p>
+                <p className="text-[11px] text-slate-500 font-medium">Active masters appear in application dropdown menus.</p>
               </div>
-
-              <div className="rounded-sm border border-slate-200 bg-slate-50 p-3 flex items-center justify-between">
-                <div>
-                  <p className="font-extrabold text-[#0D1F3D] text-xs">Active Status</p>
-                  <p className="text-[11px] text-slate-500 font-medium">Active masters appear in application dropdown menus.</p>
-                </div>
-                <Checkbox
-                  checked={formIsActive}
-                  onChange={(checked) => setFormIsActive(checked)}
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-                <Button variant="outline" size="sm" type="button" onClick={() => setModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button variant="accent" size="sm" type="submit" disabled={saving} className="font-bold shadow-xs px-6 bg-[#0D1F3D] hover:bg-[#1A365D] text-white">
-                  {saving ? 'Saving...' : modalMode === 'add' ? 'Create Record' : 'Save Changes'}
-                </Button>
-              </div>
-            </form>
+              <Checkbox
+                checked={formIsActive}
+                onChange={(checked) => setFormIsActive(checked)}
+              />
+            </div>
           </div>
-        </Modal>
-      )}
+
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+            <Button variant="outline" size="sm" onClick={() => setModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="accent" size="sm" onClick={handleSaveRecord} className="font-bold shadow-xs px-6">
+              {modalMode === 'add' ? 'Create Record' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* CONFIRM DELETE DIALOG */}
-      {deleteTarget && (
-        <Modal isOpen={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="max-w-sm">
-          <div className="space-y-4 font-sans text-xs">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-rose-50 text-rose-600 border border-rose-200">
-                <ShieldAlert className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-[#0D1F3D]">Delete Master Record?</h3>
-                <p className="text-xs text-slate-500 font-normal mt-1">
-                  Are you sure you want to delete <span className="font-bold text-rose-700">{deleteTarget.label}</span>? This action cannot be undone.
-                </p>
-              </div>
+      <Modal isOpen={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="max-w-sm">
+        <div className="space-y-4 font-sans text-xs">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-rose-50 text-rose-600 border border-rose-200">
+              <ShieldAlert className="h-5 w-5" />
             </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-              <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={confirmDelete}
-                disabled={deleting}
-                className="bg-rose-600 hover:bg-rose-700 text-white font-bold h-9 px-4 rounded-sm text-xs shadow-xs"
-              >
-                {deleting ? 'Deleting...' : 'Delete Record'}
-              </Button>
+            <div>
+              <h3 className="text-base font-bold text-[#0D1F3D]">Delete Master Record?</h3>
+              <p className="text-xs text-slate-500 font-normal mt-1">
+                Are you sure you want to delete <span className="font-bold text-rose-700">{deleteTarget?.name}</span>? This action cannot be undone.
+              </p>
             </div>
           </div>
-        </Modal>
-      )}
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-bold h-9 px-4 rounded-sm text-xs shadow-xs"
+            >
+              Delete Record
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
