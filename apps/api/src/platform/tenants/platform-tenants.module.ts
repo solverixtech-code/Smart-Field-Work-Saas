@@ -8,10 +8,11 @@ import { PlatformRoleService } from './platform-role.service';
 import { BackfillPlatformRolesService } from './backfill-platform-roles.service';
 import { IdentityCompatibilityService } from './identity-compatibility.service';
 import { PlatformTenantsController } from './platform-tenants.controller';
+import { TenantRolesController } from './tenant-roles.controller';
 
 @Module({
   imports: [PersistenceModule],
-  controllers: [PlatformTenantsController],
+  controllers: [PlatformTenantsController, TenantRolesController],
   providers: [
     TenantService,
     TenantMembershipService,

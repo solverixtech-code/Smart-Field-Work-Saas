@@ -41,6 +41,7 @@ import { PlatformAccessGuard } from './features/platform/auth/guards/PlatformAcc
 import { WorkspaceSettingsGuard } from './layouts/WorkspaceSettingsGuard';
 import { PlatformPlaceholderPage } from './screens/platform/PlatformPlaceholderPage';
 import { PlatformRolesPage } from './screens/platform/PlatformRolesPage';
+import { TenantRolesPage } from './screens/roles/TenantRolesPage';
 import { ModulesFeaturesPage } from './screens/platform/modules/ModulesFeaturesPage';
 import { ModuleDetailPage } from './screens/platform/modules/ModuleDetailPage';
 import { EditModulePage } from './screens/platform/modules/EditModulePage';
@@ -518,6 +519,10 @@ export default function AppRouter() {
                 <Route path="/admin/settings/workspace" element={<WorkspaceSettingsPage />} />
               </Route>
             </Route>
+
+            {/* Tenant Roles & Permissions (RBAC) */}
+            <Route path="/admin/roles-permissions" element={<TenantRolesPage />} />
+            <Route path="/admin/roles" element={<Navigate to="/admin/roles-permissions" replace />} />
           </Route>
         </Route>
 
@@ -571,7 +576,7 @@ export default function AppRouter() {
                 <Route path="/platform/industries" element={<IndustryManagementPage />} />
               </Route>
               <Route path="/platform/users" element={<PlatformPlaceholderPage title="Platform Operators" />} />
-              <Route path="/platform/roles" element={<PlatformRolesPage />} />
+              <Route path="/platform/roles" element={<TenantRolesPage />} />
               <Route element={<PlatformAccessGuard requiredPermission="platform.audit.view" />}>
                 <Route path="/platform/audit" element={<AuditLogsPage />} />
               </Route>

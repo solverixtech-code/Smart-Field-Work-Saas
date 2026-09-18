@@ -52,6 +52,7 @@ import {
   ClipboardCopy,
   Send,
   Lock,
+  ShieldCheck,
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
@@ -576,6 +577,13 @@ const navCategories: NavCategory[] = [
         to: "/admin/settings/workspace",
         permission: "system.settings.manage",
         badge: "Settings",
+      },
+      {
+        label: "Roles & Permissions",
+        icon: ShieldCheck,
+        to: "/admin/roles-permissions",
+        permission: "tenant.roles.view",
+        badge: "RBAC",
       },
       {
         label: "Real-time Activity",

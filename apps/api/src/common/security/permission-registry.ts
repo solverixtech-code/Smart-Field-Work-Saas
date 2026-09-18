@@ -647,6 +647,24 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
     description: 'Manage workspace configuration settings',
     moduleKey: 'system_settings',
   },
+  {
+    code: 'tenant.roles.view',
+    scope: PermissionScope.TENANT,
+    domain: 'tenant',
+    resource: 'roles',
+    action: 'view',
+    description: 'View tenant roles, permissions matrix, and assigned users',
+    moduleKey: 'tenant_roles',
+  },
+  {
+    code: 'tenant.roles.manage',
+    scope: PermissionScope.TENANT,
+    domain: 'tenant',
+    resource: 'roles',
+    action: 'manage',
+    description: 'Create, edit, duplicate, and manage tenant roles and permission grants',
+    moduleKey: 'tenant_roles',
+  },
 ];
 
 // ─── DEFAULT BUILT-IN ROLE GRANTS ─────────────────────────────────────────────
