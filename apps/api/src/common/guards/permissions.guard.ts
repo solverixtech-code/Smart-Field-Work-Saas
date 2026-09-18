@@ -35,9 +35,14 @@ export class PermissionsGuard implements CanActivate {
     const hasAll = requiredPermissions.every((perm) => {
       const isPlatformScope = perm.startsWith('platform.');
       if (isPlatformScope) {
-        return principal.platformPermissions?.includes(perm);
+        return (
+          principal.platformRoleCodes?.includes('PLATFORM_SUPER_ADMIN') ||
+          principal.platformPermissions?.includes(perm)
+        );
       } else {
         return (
+          principal.tenantRoleCode === 'tenant_admin' ||
+          principal.platformRoleCodes?.includes('PLATFORM_SUPER_ADMIN') ||
           principal.tenantPermissions?.includes(perm) ||
           principal.permissions?.includes(perm)
         );

@@ -28,7 +28,7 @@ export interface PipelineStageConfig {
 }
 
 export const pipelineStagesList: PipelineStageConfig[] = [
-  { id: 'new', routeKey: 'prospects', title: 'New Leads', subtitle: 'Newly created prospects & leads', color: '#3B82F6', badgeBg: 'bg-[#0D1F3D]/10', badgeText: 'text-[#0D1F3D]', badgeBorder: 'border-[#0D1F3D]/20', count: 58 },
+  { id: 'new', routeKey: 'prospects', title: 'New Deals', subtitle: 'Newly converted deals & opportunities', color: '#3B82F6', badgeBg: 'bg-[#0D1F3D]/10', badgeText: 'text-[#0D1F3D]', badgeBorder: 'border-[#0D1F3D]/20', count: 58 },
   { id: 'contacted', routeKey: 'contacted', title: 'Contacted', subtitle: 'First touch completed', color: '#F59E0B', badgeBg: 'bg-emerald-50', badgeText: 'text-emerald-700', badgeBorder: 'border-emerald-200', count: 67 },
   { id: 'demo', routeKey: 'demo', title: 'Demo Scheduled', subtitle: 'Product demo confirmed', color: '#8B5CF6', badgeBg: 'bg-emerald-50', badgeText: 'text-emerald-700', badgeBorder: 'border-emerald-200', count: 42 },
   { id: 'negotiation', routeKey: 'negotiation', title: 'Negotiation', subtitle: 'Commercial proposal under discussion', color: '#D97706', badgeBg: 'bg-amber-50', badgeText: 'text-amber-700', badgeBorder: 'border-amber-200', count: 39 },
@@ -37,11 +37,11 @@ export const pipelineStagesList: PipelineStageConfig[] = [
 ];
 
 export const mockPipelineDeals: PipelineDealCard[] = [
-  // New Leads
-  { id: 'dl-101', businessName: 'FreshMart Grocery', category: 'Grocery Store', city: 'Bhiwandi, Maharashtra', amount: 25000, date: '24 May 2025', executiveName: 'Amit Verma', executiveAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80', stage: 'new', stageLabel: 'New Lead', priority: 'High', phone: '+91 96540 88990', email: 'freshgreen@gmail.com', source: 'Nearby' },
-  { id: 'dl-102', businessName: 'Sharma Medical Store', category: 'Pharmacy & Medical', city: 'Andheri East, Mumbai', amount: 18000, date: '24 May 2025', executiveName: 'Neha Sharma', executiveAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', stage: 'new', stageLabel: 'New Lead', priority: 'Medium', phone: '+91 98765 43210', email: 'info@sharmamedical.com', source: 'Referral' },
-  { id: 'dl-103', businessName: 'Patel Electronics', category: 'Consumer Electronics', city: 'Jogeshwari, Mumbai', amount: 42000, date: '23 May 2025', executiveName: 'Vijay Patel', executiveAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', stage: 'new', stageLabel: 'New Lead', priority: 'High', phone: '+91 98200 11223', email: 'patel.electronics@gmail.com', source: 'Import' },
-  { id: 'dl-104', businessName: 'City Care Pharmacy', category: 'Pharmacy', city: 'Goregaon East, Mumbai', amount: 31000, date: '22 May 2025', executiveName: 'Rahul Gupta', executiveAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', stage: 'new', stageLabel: 'New Lead', priority: 'Low', phone: '+91 91670 33445', email: 'citycarepharmacy@gmail.com', source: 'Nearby' },
+  // New Deals
+  { id: 'dl-101', businessName: 'FreshMart Grocery', category: 'Grocery Store', city: 'Bhiwandi, Maharashtra', amount: 25000, date: '24 May 2025', executiveName: 'Amit Verma', executiveAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80', stage: 'new', stageLabel: 'New Deal', priority: 'High', phone: '+91 96540 88990', email: 'freshgreen@gmail.com', source: 'Nearby' },
+  { id: 'dl-102', businessName: 'Sharma Medical Store', category: 'Pharmacy & Medical', city: 'Andheri East, Mumbai', amount: 18000, date: '24 May 2025', executiveName: 'Neha Sharma', executiveAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80', stage: 'new', stageLabel: 'New Deal', priority: 'Medium', phone: '+91 98765 43210', email: 'info@sharmamedical.com', source: 'Referral' },
+  { id: 'dl-103', businessName: 'Patel Electronics', category: 'Consumer Electronics', city: 'Jogeshwari, Mumbai', amount: 42000, date: '23 May 2025', executiveName: 'Vijay Patel', executiveAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80', stage: 'new', stageLabel: 'New Deal', priority: 'High', phone: '+91 98200 11223', email: 'patel.electronics@gmail.com', source: 'Import' },
+  { id: 'dl-104', businessName: 'City Care Pharmacy', category: 'Pharmacy', city: 'Goregaon East, Mumbai', amount: 31000, date: '22 May 2025', executiveName: 'Rahul Gupta', executiveAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', stage: 'new', stageLabel: 'New Deal', priority: 'Low', phone: '+91 91670 33445', email: 'citycarepharmacy@gmail.com', source: 'Nearby' },
 
   // Contacted
   { id: 'dl-201', businessName: 'Royal Bakers', category: 'Bakery & Confectionery', city: 'Chakala, Mumbai', amount: 32000, date: '24 May 2025', executiveName: 'Rahul Gupta', executiveAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80', stage: 'contacted', stageLabel: 'Contacted', priority: 'High', phone: '+91 98210 66778', email: 'royalbakers@gmail.com', source: 'Field Scouting' },
@@ -85,10 +85,10 @@ export interface StageRouteMetadata {
 export const stageRouteMetadataMap: Record<string, StageRouteMetadata> = {
   prospects: {
     key: 'prospects',
-    title: 'New Prospects',
-    description: 'New prospects added from various sources and unassigned leads',
+    title: 'New Deals',
+    description: 'Newly converted deals and qualified sales opportunities',
     kpis: [
-      { label: 'Total New Prospects', value: 156, subtext: '18% vs last 7 days', icon: 'Users', color: 'text-purple-600 bg-purple-50' },
+      { label: 'Total New Deals', value: 156, subtext: '18% vs last 7 days', icon: 'Users', color: 'text-purple-600 bg-purple-50' },
       { label: 'Added Today', value: 28, subtext: '24% vs yesterday', icon: 'Building2', color: 'text-amber-600 bg-amber-50' },
       { label: 'From Nearby', value: 62, subtext: '39.7% of total', icon: 'MapPin', color: 'text-purple-600 bg-purple-50' },
       { label: 'From Import', value: 48, subtext: '30.8% of total', icon: 'Globe', color: 'text-blue-600 bg-blue-50' },
@@ -97,7 +97,7 @@ export const stageRouteMetadataMap: Record<string, StageRouteMetadata> = {
   },
   contacted: {
     key: 'contacted',
-    title: 'Contacted Leads',
+    title: 'Contacted Deals',
     description: 'First touch telephonic and in-person discussions logged',
     kpis: [
       { label: 'Total Contacted', value: 78, subtext: '18% vs last week', icon: 'Phone', color: 'text-blue-600 bg-blue-50' },
@@ -120,7 +120,7 @@ export const stageRouteMetadataMap: Record<string, StageRouteMetadata> = {
   interested: {
     key: 'interested',
     title: 'Interested Prospects',
-    description: 'Warm leads evaluating proposals and commercial terms',
+    description: 'Warm deals evaluating proposals and commercial terms',
     kpis: [
       { label: 'Interested Deals', value: 34, subtext: 'Commercial intent', icon: 'Flame', color: 'text-amber-600 bg-amber-50' },
       { label: 'Quotations Sent', value: 28, subtext: '₹1.84 Cr total value', icon: 'FileText', color: 'text-blue-600 bg-blue-50' },
@@ -152,10 +152,10 @@ export const stageRouteMetadataMap: Record<string, StageRouteMetadata> = {
   },
   won: {
     key: 'won',
-    title: 'Won Sales',
+    title: 'Won Deals',
     description: 'Successfully closed contracts and converted accounts',
     kpis: [
-      { label: 'Total Won Sales', value: 26, subtext: '30% vs last week', icon: 'Trophy', color: 'text-emerald-600 bg-emerald-50' },
+      { label: 'Total Won Deals', value: 26, subtext: '30% vs last week', icon: 'Trophy', color: 'text-emerald-600 bg-emerald-50' },
       { label: 'Closed Revenue', value: '₹18.90 Lakhs', subtext: 'Realized ARR', icon: 'DollarSign', color: 'text-purple-600 bg-purple-50' },
       { label: 'Avg Closure Time', value: '11 Days', subtext: 'Fast onboarding', icon: 'Clock', color: 'text-blue-600 bg-blue-50' },
       { label: 'Activation Rate', value: '96%', subtext: 'Live on platform', icon: 'Check', color: 'text-emerald-600 bg-emerald-50' },
@@ -163,10 +163,10 @@ export const stageRouteMetadataMap: Record<string, StageRouteMetadata> = {
   },
   lost: {
     key: 'lost',
-    title: 'Lost Sales',
-    description: 'Unconverted leads and dropped opportunities with loss reason audit',
+    title: 'Lost Deals',
+    description: 'Unconverted deal opportunities with loss reason audit',
     kpis: [
-      { label: 'Total Lost Opportunities', value: 14, subtext: 'Audited deals', icon: 'XCircle', color: 'text-red-600 bg-red-50' },
+      { label: 'Total Lost Deals', value: 14, subtext: 'Audited deals', icon: 'XCircle', color: 'text-red-600 bg-red-50' },
       { label: 'Lost Value', value: '₹7.60 Lakhs', subtext: 'Potential revenue lost', icon: 'DollarSign', color: 'text-slate-600 bg-slate-100' },
       { label: 'Top Reason', value: 'Price Budget', subtext: '42% of lost deals', icon: 'AlertTriangle', color: 'text-amber-600 bg-amber-50' },
       { label: 'Re-nurture Eligible', value: 9, subtext: 'Eligible for 60d callback', icon: 'RotateCcw', color: 'text-blue-600 bg-blue-50' },

@@ -1,0 +1,12 @@
+[build]
+  command = "npx turbo run build --filter=web..."
+  publish = "apps/web/dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+  VITE_API_URL = "https://api.smartfieldwork.com"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

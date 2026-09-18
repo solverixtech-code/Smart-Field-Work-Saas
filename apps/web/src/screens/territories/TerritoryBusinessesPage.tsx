@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Search,
@@ -15,32 +15,33 @@ import {
   Map,
   PieChart,
   Calendar,
-} from 'lucide-react';
-import { Button } from '../../components/ui/Button';
-import { Checkbox } from '../../components/ui/Checkbox';
-import { MapKpiCard } from '../../components/maps/MapKpiCard';
-import { InteractiveMap } from '../../components/maps/InteractiveMap';
+} from "lucide-react";
+import { Button } from "../../components/ui/Button";
+import { Checkbox } from "../../components/ui/Checkbox";
+import { MapKpiCard } from "../../components/maps/MapKpiCard";
+import { InteractiveMap } from "../../components/maps/InteractiveMap";
 import {
   mockTerritoriesList,
   mockTerritoryBusinesses,
   TerritoryBusiness,
-} from './territoriesData';
+} from "./territoriesData";
 
 export default function TerritoryBusinessesPage() {
   const { territoryId } = useParams();
   const navigate = useNavigate();
 
   const territory =
-    mockTerritoriesList.find((t) => t.id === territoryId || t.code === territoryId) ||
-    mockTerritoriesList[0];
+    mockTerritoriesList.find(
+      (t) => t.id === territoryId || t.code === territoryId,
+    ) || mockTerritoriesList[0];
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [businessTypeFilter, setBusinessTypeFilter] = useState('All');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [assignedToFilter, setAssignedToFilter] = useState('All');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [businessTypeFilter, setBusinessTypeFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [assignedToFilter, setAssignedToFilter] = useState("All");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [activeBusinessId, setActiveBusinessId] = useState<string>(
-    mockTerritoryBusinesses[0]?.id || ''
+    mockTerritoryBusinesses[0]?.id || "",
   );
 
   const activeBusiness =
@@ -53,8 +54,9 @@ export default function TerritoryBusinessesPage() {
       b.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.businessType.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === 'All' || b.status === statusFilter;
-    const matchesAssigned = assignedToFilter === 'All' || b.assignedToName === assignedToFilter;
+    const matchesStatus = statusFilter === "All" || b.status === statusFilter;
+    const matchesAssigned =
+      assignedToFilter === "All" || b.assignedToName === assignedToFilter;
 
     return matchesSearch && matchesStatus && matchesAssigned;
   });
@@ -88,7 +90,9 @@ export default function TerritoryBusinessesPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Territory Businesses</h1>
+            <h1 className="text-2xl font-extrabold text-[#0D1F3D]">
+              Territory Businesses
+            </h1>
             <p className="text-xs font-semibold text-slate-500 mt-0.5">
               View and manage all businesses in {territory.name} territory
             </p>
@@ -98,7 +102,7 @@ export default function TerritoryBusinessesPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Exporting business list...')}
+              onClick={() => toast.info("Exporting business list...")}
               className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
             >
               <Download className="h-3.5 w-3.5" /> Export
@@ -107,7 +111,7 @@ export default function TerritoryBusinessesPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Import Businesses template...')}
+              onClick={() => toast.info("Import Businesses template...")}
               className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
             >
               <Upload className="h-3.5 w-3.5" /> Import
@@ -116,7 +120,9 @@ export default function TerritoryBusinessesPage() {
             <Button
               variant="accent"
               size="sm"
-              onClick={() => navigate(`/admin/businesses/create?territoryId=${territory.id}`)}
+              onClick={() =>
+                navigate(`/admin/businesses/create?territoryId=${territory.id}`)
+              }
               className="bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
               <Plus className="h-4 w-4" /> Add Business
@@ -128,7 +134,9 @@ export default function TerritoryBusinessesPage() {
         <div className="flex flex-wrap items-center gap-6 pt-1 text-xs font-semibold text-slate-600">
           <div className="flex items-center gap-2">
             <Map className="h-4 w-4 text-blue-600" />
-            <span className="font-extrabold text-[#0D1F3D]">{territory.name}</span>
+            <span className="font-extrabold text-[#0D1F3D]">
+              {territory.name}
+            </span>
             <span className="font-mono text-slate-400">({territory.code})</span>
             <span className="text-slate-500">{territory.regionArea}</span>
           </div>
@@ -139,22 +147,34 @@ export default function TerritoryBusinessesPage() {
               alt={territory.managerName}
               className="h-6 w-6 rounded-full object-cover border border-slate-200"
             />
-            <span className="font-extrabold text-[#0D1F3D]">{territory.managerName}</span>
+            <span className="font-extrabold text-[#0D1F3D]">
+              {territory.managerName}
+            </span>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Total Businesses</span>
-            <span className="font-extrabold text-[#0D1F3D]">{territory.activeBusinessesCount}</span>
+            <span className="text-[10px] text-slate-400 block">
+              Total Businesses
+            </span>
+            <span className="font-extrabold text-[#0D1F3D]">
+              {territory.activeBusinessesCount}
+            </span>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Active Businesses</span>
+            <span className="text-[10px] text-slate-400 block">
+              Active Businesses
+            </span>
             <span className="font-extrabold text-emerald-600">142</span>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Coverage Area</span>
-            <span className="font-extrabold text-slate-700">{territory.areaKm2} km²</span>
+            <span className="text-[10px] text-slate-400 block">
+              Coverage Area
+            </span>
+            <span className="font-extrabold text-slate-700">
+              {territory.areaKm2} km²
+            </span>
           </div>
         </div>
       </div>
@@ -162,32 +182,48 @@ export default function TerritoryBusinessesPage() {
       {/* 5 Stat Cards Grid (Matching Territory Businesses Page.png) */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs text-left">
-          <span className="text-[10px] text-slate-400 font-bold block">Total Businesses</span>
+          <span className="text-[10px] text-slate-400 block">
+            Total Businesses
+          </span>
           <span className="text-xl font-extrabold text-[#0D1F3D]">168</span>
         </div>
 
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs text-left">
-          <span className="text-[10px] text-slate-400 font-bold block">Active Businesses</span>
+          <span className="text-[10px] text-slate-400 block">
+            Active Businesses
+          </span>
           <span className="text-xl font-extrabold text-emerald-600">142</span>
-          <span className="text-[10px] text-slate-400 font-bold block mt-0.5">84% of total</span>
+          <span className="text-[10px] text-slate-400 block mt-0.5">
+            84% of total
+          </span>
         </div>
 
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs text-left">
-          <span className="text-[10px] text-slate-400 font-bold block">New This Month</span>
+          <span className="text-[10px] text-slate-400 block">
+            New This Month
+          </span>
           <span className="text-xl font-extrabold text-amber-600">18</span>
-          <span className="text-[10px] text-slate-400 font-bold block mt-0.5">10.7% growth</span>
+          <span className="text-[10px] text-slate-400 block mt-0.5">
+            10.7% growth
+          </span>
         </div>
 
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs text-left">
-          <span className="text-[10px] text-slate-400 font-bold block">Visited This Month</span>
+          <span className="text-[10px] text-slate-400 block">
+            Visited This Month
+          </span>
           <span className="text-xl font-extrabold text-purple-600">116</span>
-          <span className="text-[10px] text-slate-400 font-bold block mt-0.5">69% coverage</span>
+          <span className="text-[10px] text-slate-400 block mt-0.5">
+            69% coverage
+          </span>
         </div>
 
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs text-left">
-          <span className="text-[10px] text-slate-400 font-bold block">Not Visited</span>
+          <span className="text-[10px] text-slate-400 block">Not Visited</span>
           <span className="text-xl font-extrabold text-red-600">52</span>
-          <span className="text-[10px] text-slate-400 font-bold block mt-0.5">31% remaining</span>
+          <span className="text-[10px] text-slate-400 block mt-0.5">
+            31% remaining
+          </span>
         </div>
       </div>
 
@@ -247,7 +283,7 @@ export default function TerritoryBusinessesPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Filters drawer opened')}
+              onClick={() => toast.info("Filters drawer opened")}
               className="text-xs font-bold border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1"
             >
               <Filter className="h-3.5 w-3.5 text-slate-500" /> More Filters
@@ -273,7 +309,9 @@ export default function TerritoryBusinessesPage() {
                         }
                         onChange={(checked) => {
                           if (checked) {
-                            setSelectedRows(filteredBusinesses.map((b) => b.id));
+                            setSelectedRows(
+                              filteredBusinesses.map((b) => b.id),
+                            );
                           } else {
                             setSelectedRows([]);
                           }
@@ -300,11 +338,14 @@ export default function TerritoryBusinessesPage() {
                         onClick={() => setActiveBusinessId(b.id)}
                         className={`cursor-pointer transition-all ${
                           isActive
-                            ? 'bg-red-50/60 font-bold border-l-4 border-l-[#E20613]'
-                            : 'hover:bg-slate-50/70'
+                            ? "bg-red-50/60 font-bold border-l-4 border-l-[#E20613]"
+                            : "hover:bg-slate-50/70"
                         }`}
                       >
-                        <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <td
+                          className="p-3 text-center"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <Checkbox
                             checked={isChecked}
                             onChange={() => handleToggleRow(b.id)}
@@ -312,7 +353,9 @@ export default function TerritoryBusinessesPage() {
                         </td>
                         <td className="p-3">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-extrabold text-[#0D1F3D]">{b.name}</span>
+                            <span className="font-extrabold text-[#0D1F3D]">
+                              {b.name}
+                            </span>
                             {b.badge && (
                               <span className="rounded-xs bg-lime-100 px-1.5 py-0.5 text-[9px] font-bold text-lime-800">
                                 {b.badge}
@@ -327,11 +370,17 @@ export default function TerritoryBusinessesPage() {
                         </td>
                         <td className="p-3">
                           <div>
-                            <span className="font-extrabold text-[#0D1F3D] block">{b.contactPerson}</span>
-                            <span className="text-[10px] text-slate-400 font-medium">{b.contactRole}</span>
+                            <span className="font-extrabold text-[#0D1F3D] block">
+                              {b.contactPerson}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              {b.contactRole}
+                            </span>
                           </div>
                         </td>
-                        <td className="p-3 font-mono text-slate-600">{b.phone}</td>
+                        <td className="p-3 font-mono text-slate-600">
+                          {b.phone}
+                        </td>
                         <td className="p-3">
                           <div className="flex items-center gap-2">
                             <img
@@ -342,19 +391,24 @@ export default function TerritoryBusinessesPage() {
                             <span>{b.assignedToName}</span>
                           </div>
                         </td>
-                        <td className="p-3 text-center text-slate-500 font-medium">{b.lastVisitDate}</td>
+                        <td className="p-3 text-center text-slate-500 font-medium">
+                          {b.lastVisitDate}
+                        </td>
                         <td className="p-3 text-center">
                           <span
                             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${
-                              b.status === 'Active'
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                : 'bg-red-50 text-red-700 border-red-200'
+                              b.status === "Active"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-red-50 text-red-700 border-red-200"
                             }`}
                           >
                             • {b.status}
                           </span>
                         </td>
-                        <td className="p-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <td
+                          className="p-3 text-center"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button className="p-1 rounded-sm text-slate-400 hover:bg-slate-100 hover:text-slate-700 cursor-pointer">
                             <MoreVertical className="h-4 w-4" />
                           </button>
@@ -367,7 +421,9 @@ export default function TerritoryBusinessesPage() {
             </div>
 
             <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/60 px-4 py-2.5 text-xs font-semibold text-slate-600">
-              <span>Showing 1 to {filteredBusinesses.length} of 168 businesses</span>
+              <span>
+                Showing 1 to {filteredBusinesses.length} of 168 businesses
+              </span>
               <div className="flex items-center gap-1">
                 <button className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-500">
                   <ChevronLeft className="h-3.5 w-3.5" />
@@ -391,8 +447,12 @@ export default function TerritoryBusinessesPage() {
           {/* Territory & Active Business Map Card */}
           <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-2 text-xs font-semibold">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-extrabold text-[#0D1F3D]">Selected Business Location</h3>
-              <span className="text-[10px] text-blue-600 font-bold">{activeBusiness.name}</span>
+              <h3 className="text-xs font-extrabold text-[#0D1F3D]">
+                Selected Business Location
+              </h3>
+              <span className="text-[10px] text-blue-600 font-bold">
+                {activeBusiness.name}
+              </span>
             </div>
 
             <div className="relative rounded-sm border border-slate-200 overflow-hidden h-[200px] shadow-inner">
@@ -406,15 +466,21 @@ export default function TerritoryBusinessesPage() {
                     id: activeBusiness.id,
                     name: activeBusiness.name,
                     category: activeBusiness.category,
-                    address: activeBusiness.address || activeBusiness.contactPerson,
-                    status: activeBusiness.visitStatus === 'Visited' ? 'Visited' : activeBusiness.visitStatus === 'Scheduled' ? 'Follow-up' : 'New Prospect',
-                    markerColor: 'green',
+                    address:
+                      activeBusiness.address || activeBusiness.contactPerson,
+                    status:
+                      activeBusiness.visitStatus === "Visited"
+                        ? "Visited"
+                        : activeBusiness.visitStatus === "Scheduled"
+                          ? "Follow-up"
+                          : "New Prospect",
+                    markerColor: "green",
                     contactPerson: activeBusiness.contactPerson,
                     phone: activeBusiness.phone,
                     lastVisitTime: activeBusiness.lastVisitDate,
                     lat: activeBusiness.lat || 19.118,
                     lng: activeBusiness.lng || 72.868,
-                    region: 'Andheri East',
+                    region: "Andheri East",
                   },
                 ]}
               />
@@ -435,8 +501,12 @@ export default function TerritoryBusinessesPage() {
 
             <div className="relative py-2 flex flex-col items-center justify-center">
               <div className="h-24 w-24 rounded-full border-8 border-blue-600 border-t-purple-600 border-r-emerald-500 border-b-amber-500 flex flex-col items-center justify-center shadow-inner">
-                <span className="text-lg font-extrabold text-[#0D1F3D]">168</span>
-                <span className="text-[9px] font-bold text-slate-400">Total</span>
+                <span className="text-lg font-extrabold text-[#0D1F3D]">
+                  168
+                </span>
+                <span className="text-[9px] font-bold text-slate-400">
+                  Total
+                </span>
               </div>
             </div>
 
@@ -449,19 +519,22 @@ export default function TerritoryBusinessesPage() {
               </div>
               <div className="flex justify-between">
                 <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-purple-600" /> Service
+                  <span className="h-2 w-2 rounded-full bg-purple-600" />{" "}
+                  Service
                 </span>
                 <span className="font-extrabold">26% (44)</span>
               </div>
               <div className="flex justify-between">
                 <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> Healthcare
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />{" "}
+                  Healthcare
                 </span>
                 <span className="font-extrabold">14% (24)</span>
               </div>
               <div className="flex justify-between">
                 <span className="flex items-center gap-1 font-medium">
-                  <span className="h-2 w-2 rounded-full bg-amber-500" /> Food & Beverage
+                  <span className="h-2 w-2 rounded-full bg-amber-500" /> Food &
+                  Beverage
                 </span>
                 <span className="font-extrabold">12% (20)</span>
               </div>

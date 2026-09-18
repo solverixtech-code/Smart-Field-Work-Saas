@@ -149,7 +149,6 @@ export default function LeadExportPage() {
 
         <div className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 text-xs font-semibold sm:grid-cols-2 xl:grid-cols-4">
           <Select
-            native
             label="Lifecycle"
             placeholder="All Lifecycle States"
             value={status}
@@ -157,7 +156,6 @@ export default function LeadExportPage() {
             options={leadStatuses}
           />
           <Select
-            native
             label="Priority"
             placeholder="All Priorities"
             value={priority}
@@ -173,7 +171,6 @@ export default function LeadExportPage() {
             onChange={setSourceValueId}
           />
           <Select
-            native
             label="Maximum Rows"
             value={maxRows}
             onChange={(event) => setMaxRows(event.target.value)}

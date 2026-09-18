@@ -530,19 +530,40 @@ export class LeadService {
         select: {
           id: true,
           designation: true,
-          user: { select: { fullName: true, avatarUrl: true } },
+          tenantRole: { select: { name: true, code: true } },
+          user: { select: { fullName: true, avatarUrl: true, role: true } },
         },
         skip: (q.page - 1) * q.limit,
         take: q.limit,
         orderBy: [{ user: { fullName: "asc" } }, { id: "asc" }],
       });
       return page(
-        rows.map((r) => ({
-          id: r.id,
-          displayName: r.user.fullName,
-          avatarUrl: r.user.avatarUrl,
-          role: r.designation,
-        })),
+        rows.map((r: any) => {
+          const role =
+            r.designation ||
+            r.tenantRole?.name ||
+            (r.user?.role === "SUPER_ADMIN"
+              ? "Senior Sales Manager"
+              : r.user?.role === "ADMIN"
+                ? "Area Operations Lead"
+                : r.user?.role === "SALES_MANAGER"
+                  ? "Sales Manager"
+                  : r.user?.role === "TEAM_LEADER"
+                    ? "Team Leader"
+                    : r.user?.role === "FIELD_EXECUTIVE"
+                      ? "Field Executive"
+                      : r.user?.role === "SUPPORT"
+                        ? "Regional Support Lead"
+                        : r.user?.role === "FINANCE_OPS"
+                          ? "Finance Operations Lead"
+                          : "Manager");
+          return {
+            id: r.id,
+            displayName: r.user.fullName,
+            avatarUrl: r.user.avatarUrl || null,
+            role,
+          };
+        }),
         total,
         q,
       );

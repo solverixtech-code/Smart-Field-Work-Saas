@@ -404,13 +404,22 @@ export class NotificationsService {
       });
       targetTokens = tokens.map((t) => t.token);
     } else {
-      const tokens = await this.prisma.devicePushToken.findMany({
+      let tokens = await this.prisma.devicePushToken.findMany({
         where: {
           tenantId,
           userId: currentUserId,
           isActive: true,
         },
       });
+
+      if (tokens.length === 0) {
+        tokens = await this.prisma.devicePushToken.findMany({
+          where: {
+            tenantId,
+            isActive: true,
+          },
+        });
+      }
       targetTokens = tokens.map((t) => t.token);
     }
 

@@ -92,8 +92,10 @@ export default function AllLeadsPage({
     (service, signal) =>
       service.leads.list({ ...filters, ...category, page, limit: 25 }, signal),
   );
-  const counts = useCrmQuery("lead-workspace-counts", (service, signal) =>
-    service.leads.summary({}, signal),
+  const counts = useCrmQuery(
+    JSON.stringify(["lead-workspace-counts", viewMode, filters]),
+    (service, signal) =>
+      service.leads.summary({ ...filters, ...category }, signal),
   );
   const updateStatus = async (
     lead: LeadDto,
@@ -436,8 +438,12 @@ export default function AllLeadsPage({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 sm:grid-cols-3">
         <KpiCard
           title="Total Leads"
-          value={metric(counts.data?.total)}
-          subValue="Within your access"
+          value={metric(result.data?.total ?? counts.data?.total)}
+          subValue={
+            viewMode !== "all" || query || priority || status || source
+              ? "Filtered leads count"
+              : "Within your access"
+          }
           icon={Target}
           iconBgColor="bg-[#0D1F3D]/10"
           iconTextColor="text-[#0D1F3D]"
@@ -525,7 +531,6 @@ export default function AllLeadsPage({
           />
         </div>
         <Select
-          native
           id="lead-region"
           placeholder="All Regions"
           options={[
@@ -538,7 +543,6 @@ export default function AllLeadsPage({
           ]}
         />
         <Select
-          native
           id="lead-priority"
           placeholder="All Priorities"
           options={leadPriorities}
@@ -549,7 +553,6 @@ export default function AllLeadsPage({
           }}
         />
         <Select
-          native
           id="lead-status"
           placeholder="All Lifecycle States"
           disabled={Boolean(category.status)}

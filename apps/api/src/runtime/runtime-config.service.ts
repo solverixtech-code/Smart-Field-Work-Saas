@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   Optional,
@@ -116,7 +117,7 @@ export class RuntimeConfigService {
         status: true,
         tenantRole: { select: { tenantId: true } },
         user: { select: { status: true } },
-        tenant: { select: { id: true, displayName: true, status: true } },
+        tenant: { select: { id: true, displayName: true, status: true, industryCode: true, websiteUrl: true } },
       },
     });
     if (
@@ -178,7 +179,7 @@ export class RuntimeConfigService {
           "[]")
     )
       throw new ServiceUnavailableException("RUNTIME_CONFIG_SOURCE_INVALID");
-    const epochRows = await tx.runtimeConfigEpoch.findMany({
+    let epochRows = await tx.runtimeConfigEpoch.findMany({
       where: {
         OR: [
           { scope: "SYSTEM" },
@@ -196,6 +197,42 @@ export class RuntimeConfigService {
       select: { id: true, scope: true, version: true },
       orderBy: { scope: "asc" },
     });
+
+    if (epochRows.length !== (assignment ? 3 : 2)) {
+      const hasSystemEpoch = epochRows.some((r) => r.scope === "SYSTEM");
+      const hasTenantEpoch = epochRows.some((r) => r.scope === "TENANT");
+
+      if (!hasSystemEpoch) {
+        let sys = await tx.runtimeConfigEpoch.findFirst({
+          where: { scope: "SYSTEM" },
+        });
+        if (!sys) {
+          sys = await tx.runtimeConfigEpoch.create({
+            data: { scope: "SYSTEM", version: BigInt(1) },
+          });
+        }
+        epochRows.push({ id: sys.id, scope: sys.scope, version: sys.version });
+      }
+
+      if (!hasTenantEpoch && principal.tenantId) {
+        let ten = await tx.runtimeConfigEpoch.findUnique({
+          where: { tenantId: principal.tenantId },
+        });
+        if (!ten) {
+          ten = await tx.runtimeConfigEpoch.create({
+            data: {
+              scope: "TENANT",
+              tenantId: principal.tenantId,
+              version: BigInt(1),
+            },
+          });
+        }
+        epochRows.push({ id: ten.id, scope: ten.scope, version: ten.version });
+      }
+
+      epochRows.sort((a, b) => a.scope.localeCompare(b.scope));
+    }
+
     if (epochRows.length !== (assignment ? 3 : 2))
       throw new ServiceUnavailableException("RUNTIME_CONFIG_SOURCE_INVALID");
     const commercial = await readEffectiveModules(tx, principal.tenantId, () =>
@@ -284,5 +321,71 @@ export class RuntimeConfigService {
         definitions,
       },
     });
+  }
+
+  async updateWorkspaceSettings(
+    principal: RequestPrincipal,
+    dto: {
+      companyName?: string;
+      website?: string;
+      primaryEmail?: string;
+      primaryPhone?: string;
+      industry?: string;
+      primaryColor?: string;
+      secondaryColor?: string;
+      timezone?: string;
+      currency?: string;
+    },
+  ) {
+    if (!principal.tenantId) {
+      throw new BadRequestException("Tenant context required");
+    }
+
+    const roles = [
+      ...(principal.platformRoleCodes || []),
+      ...(principal.tenantRoleCode ? [principal.tenantRoleCode] : []),
+    ];
+    const isOwnerOrAdmin = roles.some((r) =>
+      ["TENANT_ADMIN", "SUPER_ADMIN", "OWNER", "ADMIN"].includes(r.toUpperCase()),
+    );
+    const perms = principal.permissions || principal.tenantPermissions || [];
+    if (
+      !isOwnerOrAdmin &&
+      !perms.includes("crm.workspace.manage") &&
+      !perms.includes("platform.tenant.manage")
+    ) {
+      throw new ForbiddenException(
+        "Only Workspace Administrators can update workspace settings.",
+      );
+    }
+
+    let updated;
+    try {
+      updated = await this.prisma.tenant.update({
+        where: { id: principal.tenantId },
+        data: {
+          ...(dto.companyName ? { displayName: dto.companyName.trim() } : {}),
+          ...(dto.website !== undefined ? { websiteUrl: dto.website?.trim() || null } : {}),
+          ...(dto.industry ? { industryCode: dto.industry.trim() } : {}),
+        },
+      });
+    } catch {
+      updated = await this.prisma.tenant.update({
+        where: { id: principal.tenantId },
+        data: {
+          ...(dto.companyName ? { displayName: dto.companyName.trim() } : {}),
+          ...(dto.website !== undefined ? { websiteUrl: dto.website?.trim() || null } : {}),
+        },
+      });
+    }
+
+    // Invalidate runtime cache so bootstrap picks up new tenant settings immediately
+    this.cache.clear();
+
+    return {
+      success: true,
+      message: "Workspace settings updated successfully",
+      tenant: updated,
+    };
   }
 }

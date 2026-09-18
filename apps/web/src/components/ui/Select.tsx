@@ -173,7 +173,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
             disabled={disabled}
             onChange={onChange}
             aria-invalid={Boolean(error)}
-            className={`h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-60 ${className}`}
+            className={`h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-xs font-medium text-slate-800 focus:border-[#0D1F3D] focus:outline-none focus:ring-1 focus:ring-[#0D1F3D] disabled:bg-slate-50 disabled:text-slate-400 ${className}`}
           >
             <option value="">{placeholder}</option>
             {parsedOptions.map((option) => (
@@ -183,7 +183,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
             ))}
           </select>
           {error && (
-            <p role="alert" className="text-sm text-rose-700">
+            <p role="alert" className="text-xs font-medium text-rose-600">
               {error}
             </p>
           )}
@@ -222,7 +222,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
         {label && (
           <label
             htmlFor={id}
-            className="font-bold text-slate-700 text-xs block"
+            className="block text-xs font-semibold text-slate-700 mb-1"
           >
             {label}
           </label>
@@ -237,7 +237,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
           aria-invalid={Boolean(error)}
           disabled={disabled}
           onClick={() => setIsOpen((prev) => !prev)}
-          className={`w-full flex items-center justify-between rounded-sm border bg-white py-2.5 text-xs font-semibold text-[#0D1F3D] transition-all cursor-pointer h-10 shrink-0 ${
+          className={`w-full flex items-center justify-between rounded-md border bg-white py-2 text-xs font-medium text-slate-800 transition-all cursor-pointer h-10 shrink-0 ${
             leftIcon ? "pl-10 pr-9" : "px-3.5"
           } ${
             error
@@ -266,7 +266,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
             )}
             {selectedParsed.badge && (
               <span
-                className={`rounded-xs px-1.5 py-0.5 text-[9px] font-extrabold tracking-wide uppercase shrink-0 border ${
+                className={`rounded-xs px-1.5 py-0.5 text-[9px] font-bold tracking-wide uppercase shrink-0 border ${
                   selectedParsed.badge.variant === "purple"
                     ? "bg-purple-50 text-purple-700 border-purple-200"
                     : selectedParsed.badge.variant === "blue"
@@ -278,10 +278,10 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
               </span>
             )}
             <span
-              className={`truncate ${
+              className={`truncate text-xs ${
                 !selectedOption
-                  ? "text-slate-400 font-medium"
-                  : "text-[#0D1F3D] font-bold"
+                  ? "text-slate-400 font-normal"
+                  : "text-[#0D1F3D] font-medium"
               }`}
             >
               {selectedOption ? selectedParsed.cleanLabel : placeholder}
@@ -297,7 +297,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
 
         {/* Custom Dropdown Popover Listbox with Search Bar */}
         {isOpen && !disabled && (
-          <div className="absolute left-0 top-full mt-1 z-50 w-full min-w-[200px] rounded-sm border border-slate-200/90 bg-white p-1.5 shadow-xl animate-dropdown max-h-64 flex flex-col space-y-1 text-left">
+          <div className="absolute left-0 top-full mt-1 z-50 w-full min-w-[200px] rounded-md border border-slate-200 bg-white p-1.5 shadow-lg animate-dropdown max-h-64 flex flex-col space-y-1 text-left">
             {/* Search Bar on top of the dropdown card */}
             {searchable && (
               <div className="relative p-1 border-b border-slate-100 mb-0.5">
@@ -309,7 +309,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search options..."
                   aria-label={label ? "Search " + label : "Search options"}
-                  className="w-full rounded-sm border border-slate-200 bg-slate-50/80 pl-8 pr-3 py-1.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
+                  className="w-full rounded-md border border-slate-200 bg-slate-50/80 pl-8 pr-3 py-1.5 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-[#0D1F3D] focus:bg-white focus:outline-none"
                   onClick={(e) => e.stopPropagation()}
                 />
               </div>
@@ -331,10 +331,10 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                       aria-selected={isSelected}
                       type="button"
                       onClick={() => handleSelect(opt.value)}
-                      className={`flex w-full items-center justify-between rounded-sm px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
+                      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${
                         isSelected
-                          ? "bg-slate-100 text-[#0D1F3D] font-extrabold"
-                          : "text-slate-700 hover:bg-slate-50 hover:text-[#0D1F3D]"
+                          ? "bg-slate-100 text-[#0D1F3D] font-semibold"
+                          : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                       }`}
                     >
                       <div className="flex items-center gap-2.5 truncate">
@@ -352,7 +352,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                           <div className="flex items-center gap-2 truncate">
                             {parsed.badge && (
                               <span
-                                className={`rounded-xs px-1.5 py-0.2 text-[9px] font-extrabold tracking-wide uppercase shrink-0 border ${
+                                className={`rounded-xs px-1.5 py-0.2 text-[9px] font-bold tracking-wide uppercase shrink-0 border ${
                                   parsed.badge.variant === "purple"
                                     ? "bg-purple-50 text-purple-700 border-purple-200"
                                     : parsed.badge.variant === "blue"
@@ -363,12 +363,18 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
                                 {parsed.badge.text}
                               </span>
                             )}
-                            <span className="truncate font-bold text-[#0D1F3D]">
+                            <span
+                              className={`truncate text-xs ${
+                                isSelected
+                                  ? "font-semibold text-[#0D1F3D]"
+                                  : "font-medium text-slate-700"
+                              }`}
+                            >
                               {parsed.cleanLabel}
                             </span>
                           </div>
                           {opt.sublabel && (
-                            <span className="text-[10px] text-slate-400 block font-normal mt-0.5">
+                            <span className="text-[11px] text-slate-500 block font-normal mt-0.5">
                               {opt.sublabel}
                             </span>
                           )}

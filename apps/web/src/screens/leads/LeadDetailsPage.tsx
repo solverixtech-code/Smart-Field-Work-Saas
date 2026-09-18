@@ -284,7 +284,8 @@ function LeadDetailsContent() {
           onClose={() => setConverting(false)}
           onSaved={() => {
             setConverting(false);
-            result.reload();
+            toast.success(`Lead "${lead.name}" converted successfully! Sales deal created.`);
+            navigate('/admin/sales/pipeline');
           }}
         />
       )}

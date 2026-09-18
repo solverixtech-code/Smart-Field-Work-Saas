@@ -1,5 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { initializeApp, cert, getApps, App } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 
 export interface PushMessagePayload {
   title: string;
@@ -21,7 +23,7 @@ export interface PushDispatchResult {
 @Injectable()
 export class FcmPushService implements OnModuleInit {
   private readonly logger = new Logger(FcmPushService.name);
-  private firebaseApp: any = null;
+  private firebaseApp: App | null = null;
   private isSimulationMode = true;
 
   constructor(private readonly configService: ConfigService) {}
@@ -44,21 +46,26 @@ export class FcmPushService implements OnModuleInit {
     }
 
     try {
+      privateKey = privateKey.trim();
+      if (
+        (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+        (privateKey.startsWith("'") && privateKey.endsWith("'"))
+      ) {
+        privateKey = privateKey.slice(1, -1);
+      }
+      privateKey = privateKey.trim();
+
       // Unescape newlines if privateKey was passed in env as single-line string with \n
       if (privateKey.includes('\\n')) {
         privateKey = privateKey.replace(/\\n/g, '\n');
       }
 
-      // Dynamic import to support environments where firebase-admin is optional
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const adminModule: any = await import('firebase-admin');
-      const admin: any = adminModule.default || adminModule;
-      
-      if (admin.apps && admin.apps.length > 0) {
-        this.firebaseApp = admin.apps[0];
+      const apps = getApps();
+      if (apps.length > 0 && apps[0]) {
+        this.firebaseApp = apps[0];
       } else {
-        this.firebaseApp = admin.initializeApp({
-          credential: admin.credential.cert({
+        this.firebaseApp = initializeApp({
+          credential: cert({
             projectId,
             clientEmail,
             privateKey,
@@ -102,7 +109,7 @@ export class FcmPushService implements OnModuleInit {
 
     const uniqueTokens = Array.from(new Set(tokens.filter(Boolean)));
 
-    if (this.isSimulationMode) {
+    if (this.isSimulationMode || !this.firebaseApp) {
       this.logger.log(
         `[SIMULATION PUSH] Dispatched to ${uniqueTokens.length} device(s) | Title: "${payload.title}" | Action: ${payload.actionUrl ?? 'none'}`,
       );
@@ -131,10 +138,7 @@ export class FcmPushService implements OnModuleInit {
     for (let i = 0; i < uniqueTokens.length; i += CHUNK_SIZE) {
       const chunk = uniqueTokens.slice(i, i + CHUNK_SIZE);
       try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const adminModule: any = await import('firebase-admin');
-        const admin: any = adminModule.default || adminModule;
-        const messaging = admin.messaging(this.firebaseApp);
+        const messaging = getMessaging(this.firebaseApp);
 
         const dataPayload: Record<string, string> = {
           title: payload.title,
@@ -195,17 +199,23 @@ export class FcmPushService implements OnModuleInit {
             // If token is invalid or uninstalled, mark for deactivation
             if (
               errorCode === 'messaging/invalid-registration-token' ||
-              errorCode === 'messaging/registration-token-not-registered'
+              errorCode === 'messaging/registration-token-not-registered' ||
+              resp.error.message?.includes('not registered')
             ) {
               results.invalidTokens.push(currentToken);
             }
           }
         });
-      } catch (batchErr: any) {
-        this.logger.error(`Failed to send push batch: ${batchErr?.message}`);
-        results.failureCount += chunk.length;
-        chunk.forEach((t) => {
-          results.errors.push({ token: t, error: batchErr?.message || 'Batch send failed' });
+      } catch (err: any) {
+        this.logger.error(
+          `Failed to dispatch FCM push batch: ${err?.message}`,
+        );
+        chunk.forEach((tok) => {
+          results.failureCount++;
+          results.errors.push({
+            token: tok,
+            error: err?.message ?? 'Batch dispatch failed',
+          });
         });
       }
     }

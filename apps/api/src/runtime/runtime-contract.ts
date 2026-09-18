@@ -88,8 +88,13 @@ export const runtimeBootstrapSchema = z
       .object({ userId: id, membershipId: id, tenantId: id })
       .strict(),
     tenant: z
-      .object({ id, displayName: scalar, status: z.literal("ACTIVE") })
-      .strict(),
+      .object({
+        id,
+        displayName: scalar,
+        status: z.literal("ACTIVE"),
+        industryCode: z.string().nullable().optional(),
+        websiteUrl: z.string().nullable().optional(),
+      }),
     access: z
       .object({
         mode: z.enum(["FULL", "READ_ONLY"]),

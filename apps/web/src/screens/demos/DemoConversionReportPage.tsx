@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   TrendingUp,
   Download,
@@ -12,10 +12,10 @@ import {
   Users,
   ArrowRight,
   Filter,
-} from 'lucide-react';
-import { Button } from '../../components/ui/Button';
-import { DateRangePicker } from '../../components/ui/DateRangePicker';
-import { KpiCard } from '../../components/dashboard/KpiCard';
+} from "lucide-react";
+import { Button } from "../../components/ui/Button";
+import { DateRangePicker } from "../../components/ui/DateRangePicker";
+import { KpiCard } from "../../components/dashboard/KpiCard";
 
 export default function DemoConversionReportPage() {
   const navigate = useNavigate();
@@ -26,10 +26,12 @@ export default function DemoConversionReportPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
         <div>
           <h1 className="text-2xl font-extrabold text-[#0D1F3D] flex items-center gap-2">
-            Demo Conversion Report <TrendingUp className="h-6 w-6 text-emerald-600" />
+            Demo Conversion Report{" "}
+            <TrendingUp className="h-6 w-6 text-emerald-600" />
           </h1>
           <p className="text-xs font-semibold text-slate-500 mt-0.5">
-            Analyze demo-to-sale conversion rates, executive performance, and deal pipeline.
+            Analyze demo-to-sale conversion rates, executive performance, and
+            deal pipeline.
           </p>
         </div>
 
@@ -39,7 +41,9 @@ export default function DemoConversionReportPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Exporting conversion analytics report...')}
+            onClick={() =>
+              toast.info("Exporting conversion analytics report...")
+            }
             className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
           >
             <Download className="h-3.5 w-3.5" /> Export Report
@@ -99,33 +103,53 @@ export default function DemoConversionReportPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 text-center">
           <div className="p-3.5 rounded-sm bg-slate-50 border border-slate-200 space-y-1">
-            <span className="text-[10px] text-slate-400 font-bold block uppercase">1. Total Demos</span>
+            <span className="text-[10px] text-slate-400 block uppercase">
+              1. Total Demos
+            </span>
             <span className="text-xl font-extrabold text-[#0D1F3D]">128</span>
-            <span className="text-[10px] text-slate-400 font-normal block">100% initial pool</span>
+            <span className="text-[10px] text-slate-400 font-normal block">
+              100% initial pool
+            </span>
           </div>
 
           <div className="p-3.5 rounded-sm bg-blue-50 border border-blue-200 space-y-1">
-            <span className="text-[10px] text-blue-600 font-bold block uppercase">2. Completed Demos</span>
+            <span className="text-[10px] text-blue-600 font-bold block uppercase">
+              2. Completed Demos
+            </span>
             <span className="text-xl font-extrabold text-blue-700">78</span>
-            <span className="text-[10px] text-blue-600 font-normal block">60.9% completion</span>
+            <span className="text-[10px] text-blue-600 font-normal block">
+              60.9% completion
+            </span>
           </div>
 
           <div className="p-3.5 rounded-sm bg-purple-50 border border-purple-200 space-y-1">
-            <span className="text-[10px] text-purple-600 font-bold block uppercase">3. Interested Leads</span>
+            <span className="text-[10px] text-purple-600 font-bold block uppercase">
+              3. Interested Leads
+            </span>
             <span className="text-xl font-extrabold text-purple-700">52</span>
-            <span className="text-[10px] text-purple-600 font-normal block">66.7% of completed</span>
+            <span className="text-[10px] text-purple-600 font-normal block">
+              66.7% of completed
+            </span>
           </div>
 
           <div className="p-3.5 rounded-sm bg-amber-50 border border-amber-200 space-y-1">
-            <span className="text-[10px] text-amber-600 font-bold block uppercase">4. Proposals Sent</span>
+            <span className="text-[10px] text-amber-600 font-bold block uppercase">
+              4. Proposals Sent
+            </span>
             <span className="text-xl font-extrabold text-amber-700">38</span>
-            <span className="text-[10px] text-amber-600 font-normal block">73.0% of interested</span>
+            <span className="text-[10px] text-amber-600 font-normal block">
+              73.0% of interested
+            </span>
           </div>
 
           <div className="p-3.5 rounded-sm bg-emerald-50 border border-emerald-200 space-y-1">
-            <span className="text-[10px] text-emerald-600 font-bold block uppercase">5. Deals Closed Won</span>
+            <span className="text-[10px] text-emerald-600 font-bold block uppercase">
+              5. Deals Closed Won
+            </span>
             <span className="text-xl font-extrabold text-emerald-700">61</span>
-            <span className="text-[10px] text-emerald-600 font-normal block">47.6% net rate</span>
+            <span className="text-[10px] text-emerald-600 font-normal block">
+              47.6% net rate
+            </span>
           </div>
         </div>
       </div>
@@ -152,57 +176,77 @@ export default function DemoConversionReportPage() {
                 <tr className="hover:bg-slate-50">
                   <td className="p-3 font-bold text-[#0D1F3D]">Arjun Mehta</td>
                   <td className="p-3 text-center font-mono font-bold">28</td>
-                  <td className="p-3 text-center font-mono font-bold text-emerald-600">17</td>
+                  <td className="p-3 text-center font-mono font-bold text-emerald-600">
+                    17
+                  </td>
                   <td className="p-3 text-center">
                     <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">
                       60.7%
                     </span>
                   </td>
-                  <td className="p-3 text-right font-mono font-bold text-emerald-700">₹ 14,80,000</td>
+                  <td className="p-3 text-right font-mono font-bold text-emerald-700">
+                    ₹ 14,80,000
+                  </td>
                 </tr>
                 <tr className="hover:bg-slate-50">
                   <td className="p-3 font-bold text-[#0D1F3D]">Neha Sharma</td>
                   <td className="p-3 text-center font-mono font-bold">24</td>
-                  <td className="p-3 text-center font-mono font-bold text-emerald-600">13</td>
+                  <td className="p-3 text-center font-mono font-bold text-emerald-600">
+                    13
+                  </td>
                   <td className="p-3 text-center">
                     <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">
                       54.1%
                     </span>
                   </td>
-                  <td className="p-3 text-right font-mono font-bold text-emerald-700">₹ 11,20,000</td>
+                  <td className="p-3 text-right font-mono font-bold text-emerald-700">
+                    ₹ 11,20,000
+                  </td>
                 </tr>
                 <tr className="hover:bg-slate-50">
                   <td className="p-3 font-bold text-[#0D1F3D]">Pooja Yadav</td>
                   <td className="p-3 text-center font-mono font-bold">20</td>
-                  <td className="p-3 text-center font-mono font-bold text-emerald-600">10</td>
+                  <td className="p-3 text-center font-mono font-bold text-emerald-600">
+                    10
+                  </td>
                   <td className="p-3 text-center">
                     <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">
                       50.0%
                     </span>
                   </td>
-                  <td className="p-3 text-right font-mono font-bold text-emerald-700">₹ 9,40,000</td>
+                  <td className="p-3 text-right font-mono font-bold text-emerald-700">
+                    ₹ 9,40,000
+                  </td>
                 </tr>
                 <tr className="hover:bg-slate-50">
                   <td className="p-3 font-bold text-[#0D1F3D]">Rakesh Patel</td>
                   <td className="p-3 text-center font-mono font-bold">18</td>
-                  <td className="p-3 text-center font-mono font-bold text-emerald-600">8</td>
+                  <td className="p-3 text-center font-mono font-bold text-emerald-600">
+                    8
+                  </td>
                   <td className="p-3 text-center">
                     <span className="rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-[10px] font-bold border border-amber-200">
                       44.4%
                     </span>
                   </td>
-                  <td className="p-3 text-right font-mono font-bold text-emerald-700">₹ 7,50,000</td>
+                  <td className="p-3 text-right font-mono font-bold text-emerald-700">
+                    ₹ 7,50,000
+                  </td>
                 </tr>
                 <tr className="hover:bg-slate-50">
                   <td className="p-3 font-bold text-[#0D1F3D]">Kiran Jadhav</td>
                   <td className="p-3 text-center font-mono font-bold">16</td>
-                  <td className="p-3 text-center font-mono font-bold text-emerald-600">6</td>
+                  <td className="p-3 text-center font-mono font-bold text-emerald-600">
+                    6
+                  </td>
                   <td className="p-3 text-center">
                     <span className="rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-[10px] font-bold border border-amber-200">
                       37.5%
                     </span>
                   </td>
-                  <td className="p-3 text-right font-mono font-bold text-emerald-700">₹ 5,30,000</td>
+                  <td className="p-3 text-right font-mono font-bold text-emerald-700">
+                    ₹ 5,30,000
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -229,7 +273,9 @@ export default function DemoConversionReportPage() {
                 <span className="font-extrabold text-amber-600">41.2%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-600 font-medium">Walk-in / Trade Show</span>
+                <span className="text-slate-600 font-medium">
+                  Walk-in / Trade Show
+                </span>
                 <span className="font-extrabold text-slate-700">35.0%</span>
               </div>
             </div>

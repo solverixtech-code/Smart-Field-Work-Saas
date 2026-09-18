@@ -49,7 +49,9 @@ export class OpportunityService {
           { dealCode: { contains: v.search, mode: "insensitive" } },
           { account: { name: { contains: v.search, mode: "insensitive" } } },
           { lead: { name: { contains: v.search, mode: "insensitive" } } },
-          { lead: { businessName: { contains: v.search, mode: "insensitive" } } },
+          {
+            lead: { businessName: { contains: v.search, mode: "insensitive" } },
+          },
         ]
       : [];
 
@@ -136,14 +138,19 @@ export class OpportunityService {
         { code: "lost", name: "Lost", displayColor: "#EF4444" },
       ];
 
-      const stageSummaries = (masterStages.length ? masterStages : defaultStageKeys).map((mStage) => {
+      const stageSummaries = (
+        masterStages.length ? masterStages : defaultStageKeys
+      ).map((mStage) => {
         const stageDeals = deals.filter(
           (d) =>
             ("id" in mStage && d.stageValueId === mStage.id) ||
             d.stage?.toLowerCase() === mStage.code.toLowerCase(),
         );
         const count = stageDeals.length;
-        const value = stageDeals.reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+        const value = stageDeals.reduce(
+          (acc, curr) => acc + Number(curr.amount || 0),
+          0,
+        );
         return {
           id: "id" in mStage ? mStage.id : undefined,
           code: mStage.code,
@@ -155,7 +162,10 @@ export class OpportunityService {
       });
 
       const totalDeals = deals.length;
-      const totalPipelineValue = deals.reduce((sum, d) => sum + Number(d.amount || 0), 0);
+      const totalPipelineValue = deals.reduce(
+        (sum, d) => sum + Number(d.amount || 0),
+        0,
+      );
 
       return {
         totalDeals,
@@ -228,12 +238,19 @@ export class OpportunityService {
         select: opportunitySelect,
       });
 
-      await this.repo.audit(tx, p, "opportunity.created", "Opportunity", deal.id, {
-        dealCode: deal.dealCode,
-        title: deal.title,
-        amount: Number(deal.amount),
-        stage: deal.stage,
-      });
+      await this.repo.audit(
+        tx,
+        p,
+        "opportunity.created",
+        "Opportunity",
+        deal.id,
+        {
+          dealCode: deal.dealCode,
+          title: deal.title,
+          amount: Number(deal.amount),
+          stage: deal.stage,
+        },
+      );
 
       return deal;
     });
@@ -250,7 +267,8 @@ export class OpportunityService {
         where: { id, ...scope },
         select: opportunitySelect,
       });
-      if (!row) throw new NotFoundException(`Opportunity with ID ${id} not found`);
+      if (!row)
+        throw new NotFoundException(`Opportunity with ID ${id} not found`);
 
       dealRevision(row, v.expectedRevision);
 
@@ -275,7 +293,8 @@ export class OpportunityService {
           stage: v.stage ?? row.stage,
           stageValueId: stageValueId ?? row.stageValueId,
           priority: v.priority ?? row.priority,
-          sourceValueId: v.sourceValueId !== undefined ? v.sourceValueId : row.sourceValueId,
+          sourceValueId:
+            v.sourceValueId !== undefined ? v.sourceValueId : row.sourceValueId,
           leadId: v.leadId !== undefined ? v.leadId : row.leadId,
           accountId: v.accountId !== undefined ? v.accountId : row.accountId,
           contactId: v.contactId !== undefined ? v.contactId : row.contactId,
@@ -287,7 +306,8 @@ export class OpportunityService {
             v.expectedClosingDate !== undefined
               ? v.expectedClosingDate
               : row.expectedClosingDate,
-          description: v.description !== undefined ? v.description : row.description,
+          description:
+            v.description !== undefined ? v.description : row.description,
           revision: { increment: 1 },
         },
         select: opportunitySelect,
@@ -313,7 +333,8 @@ export class OpportunityService {
         where: { id, ...scope },
         select: opportunitySelect,
       });
-      if (!row) throw new NotFoundException(`Opportunity with ID ${id} not found`);
+      if (!row)
+        throw new NotFoundException(`Opportunity with ID ${id} not found`);
 
       dealRevision(row, v.expectedRevision);
 
@@ -339,18 +360,26 @@ export class OpportunityService {
           stage: v.stage,
           stageValueId: stageValueId ?? row.stageValueId,
           closedAt: closedAt ?? row.closedAt,
-          lostReason: v.lostReason !== undefined ? v.lostReason : row.lostReason,
+          lostReason:
+            v.lostReason !== undefined ? v.lostReason : row.lostReason,
           revision: { increment: 1 },
         },
         select: opportunitySelect,
       });
 
-      await this.repo.audit(tx, p, "opportunity.stage_changed", "Opportunity", id, {
-        stageBefore: row.stage,
-        stageAfter: updated.stage,
-        revisionBefore: row.revision,
-        revisionAfter: updated.revision,
-      });
+      await this.repo.audit(
+        tx,
+        p,
+        "opportunity.stage_changed",
+        "Opportunity",
+        id,
+        {
+          stageBefore: row.stage,
+          stageAfter: updated.stage,
+          revisionBefore: row.revision,
+          revisionAfter: updated.revision,
+        },
+      );
 
       return updated;
     });
@@ -366,7 +395,8 @@ export class OpportunityService {
         where: { id, ...scope },
         select: { id: true, dealCode: true },
       });
-      if (!row) throw new NotFoundException(`Opportunity with ID ${id} not found`);
+      if (!row)
+        throw new NotFoundException(`Opportunity with ID ${id} not found`);
 
       await tx.opportunity.delete({ where: { id } });
 

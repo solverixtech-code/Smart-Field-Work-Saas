@@ -166,8 +166,15 @@ export async function syncRbac(client?: PrismaClient) {
       await prisma.$transaction(async (tx) => {
         if (missingPermIds.length > 0) {
           for (const permissionId of missingPermIds) {
-            await tx.platformRolePermission.create({
-              data: {
+            await tx.platformRolePermission.upsert({
+              where: {
+                platformRoleId_permissionId: {
+                  platformRoleId: platformRole.id,
+                  permissionId,
+                },
+              },
+              update: {},
+              create: {
                 platformRoleId: platformRole.id,
                 permissionId,
               },
@@ -231,8 +238,9 @@ export async function syncRbac(client?: PrismaClient) {
 
       const activeRole = tenantRole;
 
-      // Safe guard: Do NOT rewrite grants if customized (permissionsVersion > 1) and not brand new
-      if (!isNewRole && activeRole.permissionsVersion > 1) {
+      // Safe guard: Do NOT rewrite non-admin grants if customized (permissionsVersion > 1) and not brand new.
+      // Workspace Administrator (tenant_admin) must always inherit all TENANT-scoped permissions.
+      if (roleCode !== 'tenant_admin' && !isNewRole && activeRole.permissionsVersion > 1) {
         continue;
       }
 
@@ -259,8 +267,15 @@ export async function syncRbac(client?: PrismaClient) {
         const roleId = activeRole.id;
         await prisma.$transaction(async (tx) => {
           for (const permissionId of missingPermIds) {
-            await tx.tenantRolePermission.create({
-              data: {
+            await tx.tenantRolePermission.upsert({
+              where: {
+                tenantRoleId_permissionId: {
+                  tenantRoleId: roleId,
+                  permissionId,
+                },
+              },
+              update: {},
+              create: {
                 tenantRoleId: roleId,
                 permissionId,
               },

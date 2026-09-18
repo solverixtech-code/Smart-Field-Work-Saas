@@ -31,6 +31,7 @@ import { AuditModule } from './audit/audit.module';
 import { MediaModule } from './media/media.module';
 import { OperationsModule } from './jobs/operations.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { MobileModule } from './mobile/mobile.module';
 
 @Module({
   controllers: [AppController],
@@ -79,6 +80,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     OperationsModule,
     CrmModule,
     NotificationsModule,
+    MobileModule,
   ],
   providers: [
     {
