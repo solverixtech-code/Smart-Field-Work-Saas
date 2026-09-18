@@ -69,6 +69,10 @@ export function TenantRolesPage() {
   const [loadingRoles, setLoadingRoles] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
+  // In-memory role detail cache for instantaneous 0ms role switching with ZERO blinking
+  const roleCacheRef = React.useRef<Record<string, RoleDetailResponse>>({});
+  const selectedRoleIdRef = React.useRef<string | null>(null);
+
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'synced' | 'customized' | 'default'>('all');
@@ -79,16 +83,6 @@ export function TenantRolesPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showNoticeBanner, setShowNoticeBanner] = useState(true);
-
-  // Collapsed modules state: matching reference screen
-  // Lead Management and Businesses & Contacts are expanded, others collapsed by default
-  const [collapsedModules, setCollapsedModules] = useState<Record<string, boolean>>({
-    teams: true,
-    reports: true,
-    platform_billing: true,
-    attendance_shifts: true,
-    payroll: true,
-  });
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -102,60 +96,77 @@ export function TenantRolesPage() {
   const [duplicateName, setDuplicateName] = useState('');
   const [isDuplicatingRole, setIsDuplicatingRole] = useState(false);
 
-  // Load roles list
-  const loadRoles = useCallback(async (selectId?: string) => {
-    try {
-      setLoadingRoles(true);
-      const res = await roleApi.listRoles({
-        q: searchQuery,
-        status: statusFilter,
-      });
+  // Instant zero-flicker role selection function - purely in-memory, ZERO blinking
+  const selectRole = useCallback((roleId: string, forceRefresh = false) => {
+    setSelectedRoleId(roleId);
+    selectedRoleIdRef.current = roleId;
 
-      setRoles(res.roles);
-      setStats(res.stats);
-      setCounts(res.counts);
-
-      // Select target role or default to first
-      const toSelect = selectId || selectedRoleId || (res.roles.length > 0 ? res.roles[0].id : null);
-      if (toSelect && (!selectedRoleId || selectId || !res.roles.some((r) => r.id === selectedRoleId))) {
-        const found = res.roles.find((r) => r.id === toSelect) || res.roles[0];
-        if (found) {
-          setSelectedRoleId(found.id);
-        }
-      }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to load roles from workspace');
-    } finally {
-      setLoadingRoles(false);
+    // If already cached, apply immediately (0ms delay) - ZERO BLINKING OR RE-RENDER
+    if (roleCacheRef.current[roleId] && !forceRefresh) {
+      const cached = roleCacheRef.current[roleId];
+      setSelectedRoleDetail(cached);
+      setCurrentGrants(new Set(cached.grantedPermissions));
+      setInitialGrants(new Set(cached.grantedPermissions));
+      return;
     }
-  }, [searchQuery, statusFilter, selectedRoleId]);
+
+    roleApi
+      .getRole(roleId)
+      .then((data) => {
+        roleCacheRef.current[roleId] = data;
+        if (selectedRoleIdRef.current === roleId) {
+          setSelectedRoleDetail(data);
+          setCurrentGrants(new Set(data.grantedPermissions));
+          setInitialGrants(new Set(data.grantedPermissions));
+        }
+      })
+      .catch((err: any) => {
+        toast.error(err?.response?.data?.message || 'Failed to load role details');
+      });
+  }, []);
+
+  // Load roles list and pre-cache details - does NOT depend on selectedRoleId to avoid re-rendering role directory
+  const loadRoles = useCallback(
+    async (selectId?: string) => {
+      try {
+        setLoadingRoles(true);
+        const res = await roleApi.listRoles({
+          q: searchQuery,
+          status: statusFilter,
+        });
+
+        setRoles(res.roles);
+        setStats(res.stats);
+        setCounts(res.counts);
+
+        const toSelect = selectId || selectedRoleIdRef.current || (res.roles.length > 0 ? res.roles[0].id : null);
+        if (toSelect) {
+          selectRole(toSelect);
+        }
+
+        // Prefetch ALL workspace roles in background so every role switch is 100% instantaneous in-memory
+        res.roles.forEach((r) => {
+          if (!roleCacheRef.current[r.id]) {
+            roleApi
+              .getRole(r.id)
+              .then((det) => {
+                roleCacheRef.current[r.id] = det;
+              })
+              .catch(() => {});
+          }
+        });
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message || 'Failed to load roles from workspace');
+      } finally {
+        setLoadingRoles(false);
+      }
+    },
+    [searchQuery, statusFilter, selectRole]
+  );
 
   useEffect(() => {
     loadRoles();
   }, [loadRoles]);
-
-  // Load selected role detail
-  const loadRoleDetail = useCallback(async (roleId: string) => {
-    try {
-      setLoadingDetail(true);
-      const data = await roleApi.getRole(roleId);
-      setSelectedRoleDetail(data);
-
-      const grantSet = new Set(data.grantedPermissions);
-      setCurrentGrants(grantSet);
-      setInitialGrants(new Set(data.grantedPermissions));
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to load role details');
-    } finally {
-      setLoadingDetail(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (selectedRoleId) {
-      loadRoleDetail(selectedRoleId);
-    }
-  }, [selectedRoleId, loadRoleDetail]);
 
   // Check if there are unsaved permission changes
   const hasUnsavedChanges = useMemo(() => {
@@ -200,14 +211,6 @@ export function TenantRolesPage() {
     });
   };
 
-  // Toggle collapse state of a module
-  const toggleModuleCollapse = (moduleKey: string) => {
-    setCollapsedModules((prev) => ({
-      ...prev,
-      [moduleKey]: !prev[moduleKey],
-    }));
-  };
-
   // Save permission grants
   const handleSaveChanges = async () => {
     if (!selectedRoleId) return;
@@ -247,7 +250,7 @@ export function TenantRolesPage() {
       await roleApi.syncTemplates();
       toast.success('Workspace roles successfully synchronized with templates!');
       if (selectedRoleId) {
-        await loadRoleDetail(selectedRoleId);
+        await selectRole(selectedRoleId, true);
       }
       await loadRoles();
     } catch (err: any) {
@@ -401,17 +404,6 @@ export function TenantRolesPage() {
             <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin text-[#4F46E5]' : ''}`} />
             Sync Templates
           </Button>
-
-          {/* Add Custom Role Button (Vibrant Indigo Theme) */}
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="gap-1.5 font-extrabold bg-[#4F46E5] hover:bg-[#4338CA] text-white border-0 shadow-xs rounded-lg"
-          >
-            <Plus className="h-4 w-4" />
-            Add Custom Role
-          </Button>
         </div>
       </div>
 
@@ -498,8 +490,8 @@ export function TenantRolesPage() {
 
       {/* Main 3-Column Workspace Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left Column: Role Directory (3 cols on lg, w-80) */}
-        <div className="lg:col-span-3 bg-white rounded-xl border border-slate-200/80 shadow-xs p-3.5 space-y-3">
+        {/* Left Column: Role Directory (Wider: 4 cols on lg/xl, 3 cols on 2xl) */}
+        <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3 bg-white rounded-xl border border-slate-200/80 shadow-xs p-4 space-y-3">
           <div className="flex items-center justify-between pb-1">
             <h2 className="text-xs font-extrabold text-slate-900">Role Directory</h2>
           </div>
@@ -579,10 +571,10 @@ export function TenantRolesPage() {
                     onClick={() => {
                       if (hasUnsavedChanges) {
                         if (window.confirm('You have unsaved changes. Discard and switch roles?')) {
-                          setSelectedRoleId(role.id);
+                          selectRole(role.id);
                         }
                       } else {
-                        setSelectedRoleId(role.id);
+                        selectRole(role.id);
                       }
                     }}
                     className={`p-3 rounded-xl border transition-all cursor-pointer text-left ${
@@ -637,10 +629,10 @@ export function TenantRolesPage() {
           </div>
         </div>
 
-        {/* Center Column: Role Details & Permissions Matrix (6 cols on lg) */}
-        <div className="lg:col-span-6 space-y-4">
+        {/* Center Column: Role Details & Permissions Matrix (8 cols on lg/xl, 7 cols on 2xl) */}
+        <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-7 space-y-4 min-h-[820px]">
           {loadingDetail && !selectedRoleDetail ? (
-            <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-xs text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-xs text-slate-400 min-h-[400px] flex items-center justify-center">
               Loading role details...
             </div>
           ) : selectedRoleDetail ? (
@@ -724,8 +716,8 @@ export function TenantRolesPage() {
                 </div>
               )}
 
-              {/* Module Permissions Matrix Table */}
-              <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+              {/* Module Permissions Matrix Table - Stable Fixed Container Height (Zero Layout Shift) */}
+              <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden min-h-[480px]">
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                   <h3 className="text-xs font-extrabold text-slate-900">Module Permissions</h3>
                   <span className="text-[11px] font-semibold text-slate-500">
@@ -737,136 +729,88 @@ export function TenantRolesPage() {
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/60 text-slate-600 font-extrabold text-[11px]">
-                        <th className="py-2.5 px-4 w-[28%] whitespace-nowrap">Module</th>
-                        <th className="py-2.5 px-4 w-[50%]">Actions</th>
-                        <th className="py-2.5 px-4 w-[22%] whitespace-nowrap">Record Scope</th>
+                        <th className="py-2.5 px-4 w-[22%] whitespace-nowrap min-w-[160px]">Module</th>
+                        <th className="py-2.5 px-4 w-[58%]">Actions</th>
+                        <th className="py-2.5 px-4 w-[20%] whitespace-nowrap min-w-[140px]">Record Scope</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {selectedRoleDetail.permissionModules.map((mod) => {
-                        const isCollapsed = Boolean(collapsedModules[mod.moduleKey]);
+                      {selectedRoleDetail.permissionModules.map((mod) => (
+                        <tr key={mod.moduleKey} className="hover:bg-slate-50/50 transition-colors">
+                          {/* Module Name - Clean without collapsible toggles */}
+                          <td className="py-3.5 px-4 align-top whitespace-nowrap">
+                            <div className="flex items-center gap-2 font-bold text-slate-900">
+                              {getModuleIcon(mod.moduleKey)}
+                              <span className="text-xs font-bold text-[#0D1F3D]">{mod.moduleName}</span>
+                            </div>
+                          </td>
 
-                        return (
-                          <tr key={mod.moduleKey} className="hover:bg-slate-50/50 transition-colors">
-                            {/* Module Name + Collapsible Toggle */}
-                            <td className="py-3 px-4 align-top whitespace-nowrap">
-                              <button
-                                type="button"
-                                onClick={() => toggleModuleCollapse(mod.moduleKey)}
-                                className="flex items-center gap-2 text-left hover:text-[#4F46E5] group cursor-pointer select-none"
-                              >
-                                <span className="text-slate-400 group-hover:text-[#4F46E5] transition-transform">
-                                  {isCollapsed ? (
-                                    <ChevronRight className="h-4 w-4" />
-                                  ) : (
-                                    <ChevronDown className="h-4 w-4" />
-                                  )}
-                                </span>
-                                <div className="flex items-center gap-1.5 font-bold text-slate-900">
-                                  {getModuleIcon(mod.moduleKey)}
-                                  <span className="text-xs">{mod.moduleName}</span>
-                                </div>
-                              </button>
-                            </td>
-
-                            {/* Actions Column: Aligned Grid or Compact Line */}
-                            <td className="py-3 px-4 align-top">
-                              {isCollapsed ? (
-                                /* Collapsed Row: Show primary actions compactly on a single line */
-                                <div className="flex items-center gap-4 flex-wrap">
-                                  {mod.actions.map((act) => {
-                                    const isGranted = currentGrants.has(act.code);
-                                    return (
-                                      <label
-                                        key={act.code}
-                                        className="flex items-center gap-1.5 cursor-pointer select-none group"
-                                      >
-                                        <button
-                                          type="button"
-                                          role="switch"
-                                          aria-checked={isGranted}
-                                          onClick={() => togglePermission(act.code)}
-                                          className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full transition-colors duration-150 ease-in-out focus:outline-none ${
-                                            isGranted ? 'bg-[#4F46E5]' : 'bg-slate-200'
-                                          }`}
-                                        >
-                                          <span
-                                            className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow-xs ring-0 transition duration-150 ease-in-out mt-0.5 ${
-                                              isGranted ? 'translate-x-3.5' : 'translate-x-0.5'
-                                            }`}
-                                          />
-                                        </button>
-                                        <span className={`text-[11px] font-semibold ${isGranted ? 'text-slate-800' : 'text-slate-500'}`}>
-                                          {act.label}
-                                        </span>
-                                      </label>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                /* Expanded Row: 4-column structured aligned CSS grid */
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2.5">
-                                  {mod.actions.map((act) => {
-                                    const isGranted = currentGrants.has(act.code);
-                                    return (
-                                      <label
-                                        key={act.code}
-                                        className="flex items-center gap-1.5 cursor-pointer select-none group min-w-0"
-                                      >
-                                        <button
-                                          type="button"
-                                          role="switch"
-                                          aria-checked={isGranted}
-                                          onClick={() => togglePermission(act.code)}
-                                          className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full transition-colors duration-150 ease-in-out focus:outline-none ${
-                                            isGranted ? 'bg-[#4F46E5]' : 'bg-slate-200'
-                                          }`}
-                                        >
-                                          <span
-                                            className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow-xs ring-0 transition duration-150 ease-in-out mt-0.5 ${
-                                              isGranted ? 'translate-x-3.5' : 'translate-x-0.5'
-                                            }`}
-                                          />
-                                        </button>
-                                        <span className={`text-[11px] font-semibold truncate ${isGranted ? 'text-slate-900' : 'text-slate-500'}`}>
-                                          {act.label}
-                                        </span>
-                                      </label>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </td>
-
-                            {/* Record Scope Column */}
-                            <td className="py-3 px-4 align-top">
-                              {mod.scopes.length > 0 ? (
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  {mod.scopes.map((sc) => {
-                                    const isGranted = currentGrants.has(sc.code);
-                                    return (
-                                      <button
-                                        key={sc.code}
-                                        type="button"
-                                        onClick={() => toggleScope(sc.code)}
-                                        className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold transition-colors border ${
-                                          isGranted
-                                            ? 'bg-[#EEF2FF] text-[#4F46E5] border-[#C7D2FE]'
-                                            : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'
+                          {/* Actions Column: Compact 4-Column Aligned CSS Grid with tight gaps */}
+                          <td className="py-3.5 px-4 align-top">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3.5 gap-y-2 w-fit max-w-[480px]">
+                              {mod.actions.map((act) => {
+                                const isGranted = currentGrants.has(act.code);
+                                return (
+                                  <label
+                                    key={act.code}
+                                    className="inline-flex items-center gap-1.5 cursor-pointer select-none group min-w-0 pr-1.5"
+                                  >
+                                    <button
+                                      type="button"
+                                      role="switch"
+                                      aria-checked={isGranted}
+                                      onClick={() => togglePermission(act.code)}
+                                      className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full transition-colors duration-150 ease-in-out focus:outline-none ${
+                                        isGranted ? 'bg-[#4F46E5]' : 'bg-slate-200'
+                                      }`}
+                                    >
+                                      <span
+                                        className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow-xs ring-0 transition duration-150 ease-in-out mt-0.5 ${
+                                          isGranted ? 'translate-x-3.5' : 'translate-x-0.5'
                                         }`}
-                                      >
-                                        {sc.label}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <span className="text-slate-300 font-bold">—</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
+                                      />
+                                    </button>
+                                    <span
+                                      className={`text-xs font-medium whitespace-nowrap ${
+                                        isGranted ? 'text-slate-900 font-semibold' : 'text-slate-500'
+                                      }`}
+                                    >
+                                      {act.label}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </td>
+
+                          {/* Record Scope Column */}
+                          <td className="py-3.5 px-4 align-top whitespace-nowrap">
+                            {mod.scopes.length > 0 ? (
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                {mod.scopes.map((sc) => {
+                                  const isGranted = currentGrants.has(sc.code);
+                                  return (
+                                    <button
+                                      key={sc.code}
+                                      type="button"
+                                      onClick={() => toggleScope(sc.code)}
+                                      className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors border ${
+                                        isGranted
+                                          ? 'bg-[#EEF2FF] text-[#4F46E5] border-[#C7D2FE]'
+                                          : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                                      }`}
+                                    >
+                                      {sc.label}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-slate-300 font-bold px-2">—</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -884,26 +828,26 @@ export function TenantRolesPage() {
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/60 text-slate-600 font-extrabold text-[11px]">
-                        <th className="py-2.5 px-4">Name</th>
-                        <th className="py-2.5 px-4">Email</th>
-                        <th className="py-2.5 px-4">Team</th>
-                        <th className="py-2.5 px-4">Role</th>
-                        <th className="py-2.5 px-4">Status</th>
-                        <th className="py-2.5 px-4">Added On</th>
-                        <th className="py-2.5 px-2 text-right"></th>
+                        <th className="py-2.5 px-4 whitespace-nowrap min-w-[160px]">Name</th>
+                        <th className="py-2.5 px-4 whitespace-nowrap min-w-[200px]">Email</th>
+                        <th className="py-2.5 px-4 whitespace-nowrap min-w-[140px]">Team</th>
+                        <th className="py-2.5 px-4 whitespace-nowrap min-w-[180px]">Role</th>
+                        <th className="py-2.5 px-4 whitespace-nowrap min-w-[110px]">Status</th>
+                        <th className="py-2.5 px-4 whitespace-nowrap min-w-[120px]">Added On</th>
+                        <th className="py-2.5 px-2 text-right w-10"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {selectedRoleDetail.assignedUsers.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="py-6 text-center text-xs text-slate-400 font-medium">
+                          <td colSpan={7} className="py-8 text-center text-xs text-slate-400 font-medium">
                             No users currently assigned to this role.
                           </td>
                         </tr>
                       ) : (
                         selectedRoleDetail.assignedUsers.map((user) => (
                           <tr key={user.membershipId} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="py-2.5 px-4">
+                            <td className="py-2.5 px-4 whitespace-nowrap">
                               <div className="flex items-center gap-2.5">
                                 {user.avatarUrl ? (
                                   <img
@@ -919,21 +863,21 @@ export function TenantRolesPage() {
                                 <span className="font-bold text-slate-900">{user.name}</span>
                               </div>
                             </td>
-                            <td className="py-2.5 px-4 text-slate-500 font-medium">{user.email}</td>
-                            <td className="py-2.5 px-4 text-slate-600 font-medium">{user.team}</td>
-                            <td className="py-2.5 px-4">
-                              <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold">
+                            <td className="py-2.5 px-4 text-slate-500 font-medium whitespace-nowrap">{user.email}</td>
+                            <td className="py-2.5 px-4 text-slate-600 font-medium whitespace-nowrap">{user.team}</td>
+                            <td className="py-2.5 px-4 whitespace-nowrap">
+                              <span className="inline-flex items-center whitespace-nowrap px-2.5 py-1 rounded-md bg-purple-50 text-purple-700 border border-purple-200 text-xs font-semibold">
                                 {user.role}
                               </span>
                             </td>
-                            <td className="py-2.5 px-4">
-                              <span className="inline-flex items-center gap-1.5 text-emerald-600 text-[11px] font-bold">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            <td className="py-2.5 px-4 whitespace-nowrap">
+                              <span className="inline-flex items-center gap-1.5 text-emerald-600 text-xs font-bold whitespace-nowrap">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
                                 {user.status}
                               </span>
                             </td>
-                            <td className="py-2.5 px-4 text-slate-500 text-[11px]">{user.addedOn}</td>
-                            <td className="py-2.5 px-2 text-right">
+                            <td className="py-2.5 px-4 text-slate-500 text-xs whitespace-nowrap">{user.addedOn}</td>
+                            <td className="py-2.5 px-2 text-right whitespace-nowrap">
                               <button
                                 type="button"
                                 onClick={() => toast.info(`Options for ${user.name}`)}
@@ -995,9 +939,9 @@ export function TenantRolesPage() {
           )}
         </div>
 
-        {/* Right Column: Access Logic Panel (3 cols on lg, w-80) */}
-        <div className="lg:col-span-3 space-y-4">
-          <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-4 space-y-4">
+        {/* Right Column: Access Logic Panel (2 cols on 2xl) */}
+        <div className="hidden 2xl:block 2xl:col-span-2 space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-3.5 space-y-3.5">
             <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
               <div className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-[#7C3AED]">
                 <Key className="h-3.5 w-3.5" />
