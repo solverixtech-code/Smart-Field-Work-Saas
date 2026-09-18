@@ -18,12 +18,14 @@ import {
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Checkbox } from "../../components/ui/Checkbox";
+import { Select, SelectOption } from "../../components/ui/Select";
 import { MapKpiCard } from "../../components/maps/MapKpiCard";
 import { InteractiveMap } from "../../components/maps/InteractiveMap";
 import {
   mockTerritoriesList,
   mockTerritoryBusinesses,
   TerritoryBusiness,
+  getEmployeeProfile,
 } from "./territoriesData";
 
 export default function TerritoryBusinessesPage() {
@@ -40,6 +42,26 @@ export default function TerritoryBusinessesPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [assignedToFilter, setAssignedToFilter] = useState("All");
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+
+  const assignedToOptions: SelectOption[] = React.useMemo(() => {
+    const names = Array.from(
+      new Set(mockTerritoryBusinesses.map((b) => b.assignedToName).filter(Boolean)),
+    );
+    const fallback = ['Arjun Mehta', 'Neha Sharma', 'Pooja Yadav', 'Vikram Singh'];
+    const unique = Array.from(new Set([...names, ...fallback]));
+    return [
+      { value: 'All', label: 'Assigned: All' },
+      ...unique.map((name) => {
+        const profile = getEmployeeProfile(name);
+        return {
+          value: name,
+          label: name,
+          sublabel: profile.sublabel,
+          avatar: profile.avatar,
+        };
+      }),
+    ];
+  }, []);
   const [activeBusinessId, setActiveBusinessId] = useState<string>(
     mockTerritoryBusinesses[0]?.id || "",
   );
@@ -230,53 +252,54 @@ export default function TerritoryBusinessesPage() {
       {/* Toolbar Filters */}
       <div className="rounded-sm border border-slate-200/90 bg-white p-3 shadow-xs space-y-3">
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-12 items-center">
-          <div className="relative lg:col-span-4">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+          <div className="relative lg:col-span-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search businesses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-sm border border-slate-200 bg-white pl-8 pr-3 py-1.5 text-xs text-slate-800 focus:border-[#0D1F3D] focus:outline-none"
+              className="w-full h-10 rounded-md border border-slate-200 bg-white pl-9 pr-3 text-xs font-medium text-slate-800 placeholder-slate-400 focus:border-[#0D1F3D] focus:outline-none transition-all"
             />
           </div>
 
           <div className="lg:col-span-2">
-            <select
+            <Select
+              searchable={false}
               value={businessTypeFilter}
               onChange={(e) => setBusinessTypeFilter(e.target.value)}
-              className="w-full rounded-sm border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0D1F3D]"
-            >
-              <option value="All">Type: All</option>
-              <option value="Electronics Store">Electronics</option>
-              <option value="Medical">Medical</option>
-              <option value="Supermarket">Supermarket</option>
-            </select>
+              placeholder="Type: All"
+              options={[
+                { value: "All", label: "Type: All" },
+                { value: "Electronics Store", label: "Electronics" },
+                { value: "Medical", label: "Medical" },
+                { value: "Supermarket", label: "Supermarket" },
+              ]}
+            />
           </div>
 
           <div className="lg:col-span-2">
-            <select
+            <Select
+              searchable={false}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full rounded-sm border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0D1F3D]"
-            >
-              <option value="All">Status: All</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+              placeholder="Status: All"
+              options={[
+                { value: "All", label: "Status: All" },
+                { value: "Active", label: "Active", badge: { text: "ACTIVE", variant: "emerald" } },
+                { value: "Inactive", label: "Inactive", badge: { text: "INACTIVE", variant: "slate" } },
+              ]}
+            />
           </div>
 
-          <div className="lg:col-span-2">
-            <select
+          <div className="lg:col-span-3">
+            <Select
+              searchable
               value={assignedToFilter}
               onChange={(e) => setAssignedToFilter(e.target.value)}
-              className="w-full rounded-sm border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0D1F3D]"
-            >
-              <option value="All">Assigned: All</option>
-              <option value="Arjun Mehta">Arjun Mehta</option>
-              <option value="Neha Sharma">Neha Sharma</option>
-              <option value="Pooja Yadav">Pooja Yadav</option>
-            </select>
+              placeholder="Assigned: All"
+              options={assignedToOptions}
+            />
           </div>
 
           <div className="lg:col-span-2 flex justify-end">
@@ -284,7 +307,7 @@ export default function TerritoryBusinessesPage() {
               variant="outline"
               size="sm"
               onClick={() => toast.info("Filters drawer opened")}
-              className="text-xs font-bold border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1"
+              className="h-10 text-xs font-bold border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1 rounded-md shrink-0"
             >
               <Filter className="h-3.5 w-3.5 text-slate-500" /> More Filters
             </Button>

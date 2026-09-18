@@ -26,10 +26,11 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
+import { Select, SelectOption } from '../../components/ui/Select';
 import { MapKpiCard } from '../../components/maps/MapKpiCard';
 import { crmApi } from '../../features/crm/crm.api';
 import type { TerritoryListSummary } from '../../features/crm/crm.types';
-import { mapTerritoryDtoToItem, TerritoryItem } from './territoriesData';
+import { mapTerritoryDtoToItem, TerritoryItem, getEmployeeProfile } from './territoriesData';
 
 export default function TerritoriesListPage() {
   const navigate = useNavigate();
@@ -50,6 +51,92 @@ export default function TerritoriesListPage() {
   const [performanceFilter, setPerformanceFilter] = useState('All');
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [managerOptions, setManagerOptions] = useState<SelectOption[]>([]);
+
+  useEffect(() => {
+    crmApi
+      .owners({ limit: 100 })
+      .then((res) => {
+        const items = res?.items || [];
+        const seen = new Set<string>();
+        const opts: SelectOption[] = [];
+
+        items.forEach((m) => {
+          if (!seen.has(m.displayName)) {
+            seen.add(m.displayName);
+            const profile = getEmployeeProfile(m.displayName, m.role, m.avatarUrl);
+            opts.push({
+              value: m.displayName,
+              label: m.displayName,
+              sublabel: profile.sublabel,
+              avatar: profile.avatar,
+            });
+          }
+        });
+
+        const fallbackManagers = ['Vikram Singh', 'Neha Sharma', 'Arjun Mehta', 'Pooja Yadav'];
+        fallbackManagers.forEach((name) => {
+          if (!seen.has(name)) {
+            seen.add(name);
+            const profile = getEmployeeProfile(name);
+            opts.push({
+              value: name,
+              label: name,
+              sublabel: profile.sublabel,
+              avatar: profile.avatar,
+            });
+          }
+        });
+
+        setManagerOptions(opts);
+      })
+      .catch(() => {
+        const fallbackManagers = ['Vikram Singh', 'Neha Sharma', 'Arjun Mehta', 'Pooja Yadav'];
+        setManagerOptions(
+          fallbackManagers.map((name) => {
+            const profile = getEmployeeProfile(name);
+            return {
+              value: name,
+              label: name,
+              sublabel: profile.sublabel,
+              avatar: profile.avatar,
+            };
+          }),
+        );
+      });
+  }, []);
+
+  useEffect(() => {
+    if (territories.length > 0) {
+      setManagerOptions((prev) => {
+        const seen = new Set(prev.map((o) => o.value));
+        const added: SelectOption[] = [];
+        territories.forEach((t) => {
+          if (t.managerName && t.managerName !== 'Unassigned' && !seen.has(t.managerName)) {
+            seen.add(t.managerName);
+            const profile = getEmployeeProfile(t.managerName, t.managerRole, t.managerAvatar);
+            added.push({
+              value: t.managerName,
+              label: t.managerName,
+              sublabel: profile.sublabel,
+              avatar: profile.avatar,
+            });
+          }
+        });
+        return added.length > 0 ? [...prev, ...added] : prev;
+      });
+    }
+  }, [territories]);
+
+  const regionOptions: SelectOption[] = React.useMemo(() => {
+    const baseRegions = ['Andheri East', 'Andheri West', 'Bandra', 'Ghatkopar', 'Thane'];
+    const territoryRegions = territories.map((t) => t.regionArea).filter(Boolean);
+    const unique = Array.from(new Set([...baseRegions, ...territoryRegions]));
+    return [
+      { value: 'All', label: 'Region: All' },
+      ...unique.map((r) => ({ value: r, label: r })),
+    ];
+  }, [territories]);
 
   const fetchTerritories = useCallback(async () => {
     try {
@@ -224,59 +311,55 @@ export default function TerritoriesListPage() {
       <div className="rounded-sm border border-slate-200/90 bg-white p-3 shadow-xs space-y-3">
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-12 items-center">
           {/* Search Input */}
-          <div className="relative lg:col-span-4">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+          <div className="relative lg:col-span-3">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search territories..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-sm border border-slate-200 bg-white pl-8 pr-3 py-1.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#0D1F3D] focus:outline-none"
+              className="w-full h-10 rounded-md border border-slate-200 bg-white pl-9 pr-3 text-xs font-medium text-[#0D1F3D] placeholder-slate-400 focus:border-[#0D1F3D] focus:outline-none transition-all"
             />
           </div>
 
           {/* Status Filter */}
           <div className="lg:col-span-2">
-            <select
+            <Select
+              searchable={false}
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full rounded-sm border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
-            >
-              <option value="All">Status: All</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
+              placeholder="Status: All"
+              options={[
+                { value: 'All', label: 'Status: All' },
+                { value: 'Active', label: 'Active', badge: { text: 'ACTIVE', variant: 'emerald' } },
+                { value: 'Inactive', label: 'Inactive', badge: { text: 'INACTIVE', variant: 'slate' } },
+              ]}
+            />
           </div>
 
           {/* Manager Filter */}
-          <div className="lg:col-span-2">
-            <select
+          <div className="lg:col-span-3">
+            <Select
+              searchable
               value={managerFilter}
               onChange={(e) => setManagerFilter(e.target.value)}
-              className="w-full rounded-sm border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
-            >
-              <option value="All">Manager: All</option>
-              <option value="Vikram Singh">Vikram Singh</option>
-              <option value="Neha Sharma">Neha Sharma</option>
-              <option value="Arjun Mehta">Arjun Mehta</option>
-              <option value="Pooja Yadav">Pooja Yadav</option>
-            </select>
+              placeholder="Manager: All"
+              options={[
+                { value: 'All', label: 'Manager: All' },
+                ...managerOptions,
+              ]}
+            />
           </div>
 
           {/* Region Filter */}
           <div className="lg:col-span-2">
-            <select
+            <Select
+              searchable
               value={regionFilter}
               onChange={(e) => setRegionFilter(e.target.value)}
-              className="w-full rounded-sm border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
-            >
-              <option value="All">Region: All</option>
-              <option value="Andheri East">Andheri East</option>
-              <option value="Andheri West">Andheri West</option>
-              <option value="Bandra">Bandra</option>
-              <option value="Ghatkopar">Ghatkopar</option>
-              <option value="Thane">Thane</option>
-            </select>
+              placeholder="Region: All"
+              options={regionOptions}
+            />
           </div>
 
           {/* Clear & Filters Buttons */}
@@ -285,7 +368,7 @@ export default function TerritoriesListPage() {
               variant="outline"
               size="sm"
               onClick={handleClearFilters}
-              className="text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-600 rounded-sm"
+              className="h-10 text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-600 rounded-md shrink-0"
             >
               Clear Filters
             </Button>
@@ -293,7 +376,7 @@ export default function TerritoriesListPage() {
               variant="outline"
               size="sm"
               onClick={() => toast.info('Advanced Filters drawer opened')}
-              className="text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-700 rounded-sm flex items-center gap-1"
+              className="h-10 text-xs font-bold border-slate-200 hover:bg-slate-50 text-slate-700 rounded-md flex items-center gap-1 shrink-0"
             >
               <Filter className="h-3.5 w-3.5 text-slate-500" /> Filters
             </Button>
