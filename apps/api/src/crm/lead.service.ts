@@ -990,8 +990,20 @@ export class LeadService {
         v.account?.mode === "link"
           ? v.account.id
           : v.account?.mode === "create"
-            ? (await this.crm.createAccountInTransaction(tx, p, v.account.data))
-                .id
+            ? (
+                await this.crm.createAccountInTransaction(tx, p, {
+                  website: row.website,
+                  addressLine1: row.addressLine1,
+                  addressLine2: row.addressLine2,
+                  city: row.city,
+                  state: row.state,
+                  postalCode: row.postalCode,
+                  countryCode: row.countryCode,
+                  sourceValueId: row.sourceValueId,
+                  description: row.requirementNote || row.description,
+                  ...v.account.data,
+                })
+              ).id
             : null;
       // Validate an existing Account before creating its Contact.
       if (accountId) await this.links(tx, p, accountId, null);
@@ -1001,6 +1013,8 @@ export class LeadService {
           : v.contact?.mode === "create"
             ? (
                 await this.crm.createContactInTransaction(tx, p, {
+                  phone: row.phone,
+                  email: row.email,
                   ...v.contact.data,
                   accountId,
                 })

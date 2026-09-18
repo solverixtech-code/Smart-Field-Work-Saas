@@ -102,15 +102,12 @@ export function LeadRecordLookup({
   accountId?: string | null;
   disabled?: boolean;
 }) {
-  const [search, setSearch] = useState(""),
-    [page, setPage] = useState(1);
-  const q = useDebouncedSearch(search);
   const result = useCrmQuery(
-    JSON.stringify(["lead-link", kind, accountId, q, page]),
+    JSON.stringify(["lead-link", kind, accountId]),
     async (service, signal) => {
       if (kind === "account") {
         const response = await service.accounts(
-          { search: q, page, limit: 25, status: "ACTIVE" },
+          { page: 1, limit: 100, status: "ACTIVE" },
           signal,
         );
         return {
@@ -134,9 +131,8 @@ export function LeadRecordLookup({
       const response = await service.contacts(
         accountId,
         {
-          search: q,
-          page,
-          limit: 25,
+          page: 1,
+          limit: 100,
           status: "ACTIVE",
           ...(accountId === null ? { standalone: "true" as const } : {}),
         },
@@ -155,21 +151,11 @@ export function LeadRecordLookup({
   const selected = result.data?.items.find((r) => r.id === value);
   return (
     <div className="space-y-2">
-      <Input
-        id={id + "-search"}
-        label={"Search " + kind}
-        value={search}
-        maxLength={200}
-        disabled={disabled}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(1);
-        }}
-      />
       <Select
         id={id}
         searchable
         label={kind === "account" ? "Linked Business" : "Linked Contact"}
+        placeholder={kind === "account" ? "Select business..." : "Select contact..."}
         value={value ?? ""}
         disabled={disabled || result.loading}
         options={[
@@ -186,9 +172,11 @@ export function LeadRecordLookup({
         onChange={(e) => onChange(e.target.value)}
       />
       {selected && (
-        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
-          <strong>{selected.name}</strong>
-          <p>{selected.summary || "Additional details not set"}</p>
+        <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs space-y-0.5">
+          <strong className="text-slate-900 font-bold">{selected.name}</strong>
+          {selected.summary && (
+            <p className="text-slate-600 font-medium">{selected.summary}</p>
+          )}
         </div>
       )}
       {result.error &&
@@ -980,6 +968,7 @@ export function LeadConversionModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const navigate = useNavigate();
   const { can, readOnly } = useCrm();
   const mutation = useCrmMutation();
   const [accountMode, setAccountMode] = useState<"create" | "link">(
@@ -990,24 +979,7 @@ export function LeadConversionModal({
   );
   const [accountId, setAccountId] = useState(lead.accountId ?? "");
   const [contactId, setContactId] = useState(lead.contactId ?? "");
-
-  // Rich Business draft populated automatically from Lead metadata
-  const [accountDraft, setAccountDraft] = useState({
-    name: lead.businessName || lead.name,
-    businessTypeValueId: null as string | null,
-    categoryLabel: "",
-    website: lead.website ?? "",
-    gstin: "",
-    addressLine1: lead.addressLine1 ?? "",
-    addressLine2: lead.addressLine2 ?? "",
-    city: lead.city ?? "",
-    state: lead.state ?? "",
-    postalCode: lead.postalCode ?? "",
-    countryCode: lead.countryCode ?? "IN",
-    description: lead.description ?? "",
-  });
-
-  const [showAdvancedBusiness, setShowAdvancedBusiness] = useState(false);
+  const [accountName, setAccountName] = useState(lead.businessName || lead.name);
 
   const [person, setPerson] = useState<ContactInput>({
     name: lead.contactName || lead.name,
@@ -1036,19 +1008,16 @@ export function LeadConversionModal({
               ? {
                   mode: "create" as const,
                   data: {
-                    name: accountDraft.name || lead.businessName || lead.name,
-                    businessTypeValueId: accountDraft.businessTypeValueId || null,
-                    categoryLabel: accountDraft.categoryLabel || null,
-                    website: accountDraft.website || null,
-                    gstin: accountDraft.gstin || null,
-                    addressLine1: accountDraft.addressLine1 || null,
-                    addressLine2: accountDraft.addressLine2 || null,
-                    city: accountDraft.city || null,
-                    state: accountDraft.state || null,
-                    postalCode: accountDraft.postalCode || null,
-                    countryCode: accountDraft.countryCode || "IN",
+                    name: accountName || lead.businessName || lead.name,
+                    website: lead.website || null,
+                    addressLine1: lead.addressLine1 || null,
+                    addressLine2: lead.addressLine2 || null,
+                    city: lead.city || null,
+                    state: lead.state || null,
+                    postalCode: lead.postalCode || null,
+                    countryCode: lead.countryCode || "IN",
                     sourceValueId: lead.sourceValueId || null,
-                    description: accountDraft.description || null,
+                    description: lead.requirementNote || lead.description || null,
                   },
                 }
               : { mode: "link" as const, id: accountId },
@@ -1071,10 +1040,10 @@ export function LeadConversionModal({
         if (!mutation.pending) onClose();
       }}
       title=""
-      maxWidth="max-w-3xl"
+      maxWidth="max-w-2xl"
     >
       <form
-        className="flex flex-col h-[640px] max-h-[85vh] text-left font-sans"
+        className="flex flex-col h-[620px] max-h-[80vh] text-left font-sans"
         onSubmit={async (e) => {
           e.preventDefault();
           if (disabled) return;
@@ -1083,7 +1052,12 @@ export function LeadConversionModal({
           const result = await mutation.run((s, signal) =>
             s.leads.convert(lead.id, command, signal),
           );
-          if (result) onSaved();
+          if (result) {
+            onSaved();
+            if (result.accountId) {
+              navigate(`/admin/businesses/${result.accountId}`);
+            }
+          }
         }}
       >
         {/* FIXED MODAL HEADER */}
@@ -1209,189 +1183,15 @@ export function LeadConversionModal({
                 </div>
 
                 {accountMode === "create" ? (
-                  <div className="space-y-3 pt-1">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div className="sm:col-span-2">
-                        <Input
-                          id="convert-account-name"
-                          label="Official Business Name *"
-                          required
-                          value={accountDraft.name}
-                          maxLength={200}
-                          onChange={(e) =>
-                            setAccountDraft({ ...accountDraft, name: e.target.value })
-                          }
-                          placeholder="Enter business name..."
-                        />
-                      </div>
-
-                      {can("system.masters.view") && (
-                        <CrmLookup
-                          id="convert-business-type"
-                          label="Business Type"
-                          kind="business_type"
-                          value={accountDraft.businessTypeValueId}
-                          onChange={(id) =>
-                            setAccountDraft({
-                              ...accountDraft,
-                              businessTypeValueId: id || null,
-                            })
-                          }
-                        />
-                      )}
-
-                      <Input
-                        id="convert-category-label"
-                        label="Industry / Category"
-                        value={accountDraft.categoryLabel}
-                        maxLength={200}
-                        onChange={(e) =>
-                          setAccountDraft({
-                            ...accountDraft,
-                            categoryLabel: e.target.value,
-                          })
-                        }
-                        placeholder="e.g. Logistics & Transport"
-                      />
-                    </div>
-
-                    {/* TOGGLE ADVANCED BUSINESS PROFILE */}
-                    <div className="pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setShowAdvancedBusiness(!showAdvancedBusiness)}
-                        className="flex items-center gap-1.5 text-xs font-extrabold text-purple-700 hover:text-purple-900 cursor-pointer bg-purple-50/70 border border-purple-200/80 px-3 py-1.5 rounded-md transition-colors"
-                      >
-                        {showAdvancedBusiness ? (
-                          <ChevronUp className="h-3.5 w-3.5" />
-                        ) : (
-                          <ChevronDown className="h-3.5 w-3.5" />
-                        )}
-                        <span>
-                          {showAdvancedBusiness
-                            ? "Hide Business Profile Details"
-                            : "Configure Location, Website, GSTIN & Details (Auto-filled from Lead)"}
-                        </span>
-                      </button>
-                    </div>
-
-                    {showAdvancedBusiness && (
-                      <div className="space-y-3 rounded-md border border-slate-200/90 bg-slate-50/60 p-3.5 mt-2">
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          <Input
-                            id="convert-website"
-                            label="Website URL"
-                            type="url"
-                            placeholder="https://www.example.com"
-                            maxLength={2048}
-                            value={accountDraft.website}
-                            onChange={(e) =>
-                              setAccountDraft({ ...accountDraft, website: e.target.value })
-                            }
-                          />
-                          <Input
-                            id="convert-gstin"
-                            label="GSTIN / Tax ID"
-                            placeholder="e.g. 29ABCDE1234F1ZH"
-                            maxLength={15}
-                            value={accountDraft.gstin}
-                            onChange={(e) =>
-                              setAccountDraft({
-                                ...accountDraft,
-                                gstin: e.target.value.toUpperCase(),
-                              })
-                            }
-                          />
-                          <Input
-                            id="convert-address1"
-                            label="Address Line 1"
-                            placeholder="Building, street, plot number"
-                            maxLength={200}
-                            value={accountDraft.addressLine1}
-                            onChange={(e) =>
-                              setAccountDraft({
-                                ...accountDraft,
-                                addressLine1: e.target.value,
-                              })
-                            }
-                          />
-                          <Input
-                            id="convert-address2"
-                            label="Address Line 2"
-                            placeholder="Area, landmark"
-                            maxLength={200}
-                            value={accountDraft.addressLine2}
-                            onChange={(e) =>
-                              setAccountDraft({
-                                ...accountDraft,
-                                addressLine2: e.target.value,
-                              })
-                            }
-                          />
-                          <Input
-                            id="convert-city"
-                            label="City"
-                            placeholder="e.g. Mumbai"
-                            maxLength={100}
-                            value={accountDraft.city}
-                            onChange={(e) =>
-                              setAccountDraft({ ...accountDraft, city: e.target.value })
-                            }
-                          />
-                          <Input
-                            id="convert-state"
-                            label="State"
-                            placeholder="e.g. Maharashtra"
-                            maxLength={100}
-                            value={accountDraft.state}
-                            onChange={(e) =>
-                              setAccountDraft({ ...accountDraft, state: e.target.value })
-                            }
-                          />
-                          <Input
-                            id="convert-postal"
-                            label="Postal Code"
-                            placeholder="e.g. 400001"
-                            maxLength={20}
-                            value={accountDraft.postalCode}
-                            onChange={(e) =>
-                              setAccountDraft({
-                                ...accountDraft,
-                                postalCode: e.target.value,
-                              })
-                            }
-                          />
-                          <Input
-                            id="convert-country"
-                            label="Country Code"
-                            placeholder="IN"
-                            maxLength={2}
-                            value={accountDraft.countryCode}
-                            onChange={(e) =>
-                              setAccountDraft({
-                                ...accountDraft,
-                                countryCode: e.target.value.toUpperCase(),
-                              })
-                            }
-                          />
-                        </div>
-                        <Textarea
-                          id="convert-description"
-                          label="Business Description / Notes"
-                          placeholder="Add company background or notes..."
-                          maxLength={2000}
-                          rows={2}
-                          value={accountDraft.description}
-                          onChange={(e) =>
-                            setAccountDraft({
-                              ...accountDraft,
-                              description: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                    )}
-                  </div>
+                  <Input
+                    id="convert-account-name"
+                    label="Official Business Name *"
+                    required
+                    value={accountName}
+                    maxLength={200}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    placeholder="Enter business name..."
+                  />
                 ) : (
                   <LeadRecordLookup
                     kind="account"
@@ -1480,7 +1280,7 @@ export function LeadConversionModal({
                 </span>
               </div>
               <p className="text-xs font-semibold text-slate-600">
-                Upon conversion, a new deal titled <strong className="text-[#0D1F3D]">"{accountDraft.name || lead.name}"</strong> with an estimated value of <strong className="text-purple-700 font-extrabold">₹{Number(lead.estimatedValue || 0).toLocaleString("en-IN")}</strong> will automatically be created and tracked in your Sales Pipeline Kanban board.
+                Upon conversion, a new deal titled <strong className="text-[#0D1F3D]">"{accountName || lead.name}"</strong> with an estimated value of <strong className="text-purple-700 font-extrabold">₹{Number(lead.estimatedValue || 0).toLocaleString("en-IN")}</strong> will automatically be created and tracked in your Sales Pipeline Kanban board.
               </p>
             </div>
           </fieldset>
