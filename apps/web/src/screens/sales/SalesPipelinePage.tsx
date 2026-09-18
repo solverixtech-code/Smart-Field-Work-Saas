@@ -56,7 +56,21 @@ export default function SalesPipelinePage() {
     s.masters("deal_stage", {}, signal),
   );
 
-  const deals = dealsResult.data?.items || [];
+  const [localDeals, setLocalDeals] = useState<DealDto[]>([]);
+
+  React.useEffect(() => {
+    const items = (dealsResult.data as { items?: DealDto[] } | undefined)?.items;
+    if (items) {
+      setLocalDeals(items);
+    }
+  }, [dealsResult.data]);
+
+  const deals: DealDto[] =
+    localDeals.length > 0
+      ? localDeals
+      : ((dealsResult.data as { items?: DealDto[] } | undefined)?.items || []);
+
+  const isInitialLoading = dealsResult.loading && !dealsResult.data && localDeals.length === 0;
   const summary = summaryResult.data;
 
   // Build active stages list combining default and tenant master values
@@ -75,10 +89,15 @@ export default function SalesPipelinePage() {
       ...defStage,
       id: matchedMaster?.id || defStage.id,
       title: matchedMaster?.name || defStage.title,
-      count: summaryStage?.count ?? deals.filter((d) => (d.stage || "").toLowerCase() === defStage.code).length,
+      count: deals.filter((d: DealDto) => (d.stage || "").toLowerCase() === defStage.code.toLowerCase()).length,
       value: summaryStage?.value ?? 0,
     };
   });
+
+  const topDeal = React.useMemo(() => {
+    if (deals.length === 0) return null;
+    return [...deals].sort((a: DealDto, b: DealDto) => Number(b.amount || 0) - Number(a.amount || 0))[0];
+  }, [deals]);
 
   const handleCardClick = (deal: DealDto) => {
     if (deal.leadId) {
@@ -110,6 +129,14 @@ export default function SalesPipelinePage() {
 
     const foundDeal = deals.find((d) => d.id === dealId);
     if (foundDeal && foundDeal.stage.toLowerCase() !== targetStageCode.toLowerCase()) {
+      const prevDeals = [...deals];
+      // 1. Instant optimistic update so card moves immediately with zero flicker:
+      setLocalDeals((curr) =>
+        curr.map((d) =>
+          d.id === foundDeal.id ? { ...d, stage: targetStageCode } : d,
+        ),
+      );
+
       const outcome = await mutation.run(async (s, signal) => {
         return s.updateDealStage(
           foundDeal.id,
@@ -125,13 +152,16 @@ export default function SalesPipelinePage() {
         toast.success(`Moved deal "${foundDeal.title}" to ${targetStageCode.toUpperCase()}`);
         dealsResult.reload();
         summaryResult.reload();
+      } else {
+        // Revert on failure
+        setLocalDeals(prevDeals);
       }
     }
     setDraggedDealId(null);
   };
 
   const totalDeals = summary?.totalDeals ?? deals.length;
-  const totalValue = summary?.totalPipelineValue ?? deals.reduce((sum, d) => sum + (d.amount || 0), 0);
+  const totalValue = summary?.totalPipelineValue ?? deals.reduce((sum: number, d: DealDto) => sum + (d.amount || 0), 0);
 
   return (
     <div className="space-y-5 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -310,21 +340,26 @@ export default function SalesPipelinePage() {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-extrabold text-[#0D1F3D]">Sales Pipeline Stages</h2>
-          <span className="text-xs font-semibold text-slate-500">
-            {stagesList.length} Active Stages • Drag deal cards to change stage
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-slate-500">
+              {stagesList.length} Active Stages • Drag deal cards to change stage
+            </span>
+            {dealsResult.loading && !isInitialLoading && (
+              <RefreshCw className="h-3 w-3 text-slate-400 animate-spin" />
+            )}
+          </div>
         </div>
 
-        {dealsResult.loading ? (
-          <div className="py-12 text-center text-xs font-semibold text-slate-500 bg-white rounded-md border border-slate-200">
+        {isInitialLoading ? (
+          <div className="min-h-[460px] flex flex-col items-center justify-center text-center text-xs font-semibold text-slate-500 bg-white rounded-md border border-slate-200">
             <div className="inline-block animate-spin h-6 w-6 border-2 border-[#0D1F3D] border-t-transparent rounded-full mb-2" />
             <p>Loading active deals from workspace...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3.5 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3.5 items-start min-h-[460px]">
             {stagesList.map((stg) => {
               const stageDeals = deals.filter(
-                (d) => (d.stage || "").toLowerCase() === stg.code.toLowerCase(),
+                (d: DealDto) => (d.stage || "").toLowerCase() === stg.code.toLowerCase(),
               );
               const isDragOver = dragOverStageId === stg.code;
 
@@ -364,7 +399,7 @@ export default function SalesPipelinePage() {
                         </span>
                       </div>
                     ) : (
-                      stageDeals.map((deal) => {
+                      stageDeals.map((deal: DealDto) => {
                         const isBeingDragged = draggedDealId === deal.id;
                         const businessName =
                           deal.account?.name ||
@@ -472,18 +507,18 @@ export default function SalesPipelinePage() {
             </span>
           </div>
 
-          {deals.length > 0 ? (
+          {topDeal ? (
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-50 text-purple-700 border border-purple-100 shrink-0">
                 <Building2 className="h-6 w-6" />
               </div>
               <div>
                 <h3 className="text-sm font-extrabold text-[#0D1F3D]">
-                  {deals[0].account?.name || deals[0].title}
+                  {topDeal.account?.name || topDeal.lead?.businessName || topDeal.title}
                 </h3>
-                <p className="text-xs font-semibold text-slate-400">{deals[0].dealCode}</p>
+                <p className="text-xs font-semibold text-slate-400">{topDeal.dealCode}</p>
                 <p className="text-base font-black text-purple-700 mt-0.5">
-                  ₹{Number(deals[0].amount || 0).toLocaleString("en-IN")}
+                  ₹{Number(topDeal.amount || 0).toLocaleString("en-IN")}
                 </p>
               </div>
             </div>
@@ -497,7 +532,7 @@ export default function SalesPipelinePage() {
             variant="accent"
             fullWidth
             size="sm"
-            onClick={() => deals[0]?.leadId ? navigate(`/admin/leads/${deals[0].leadId}`) : navigate("/admin/leads")}
+            onClick={() => topDeal?.leadId ? navigate(`/admin/leads/${topDeal.leadId}`) : navigate("/admin/leads")}
             className="font-bold shadow-xs bg-[#E20613] hover:bg-red-700 text-white rounded-md text-xs py-2"
           >
             View Opportunity Details
