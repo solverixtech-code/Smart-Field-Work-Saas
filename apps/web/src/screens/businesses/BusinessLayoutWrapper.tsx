@@ -55,7 +55,6 @@ export default function BusinessLayoutWrapper() {
   const navItems = [
     { label: 'Business Details', icon: Building2, path: `/admin/businesses/${business.id}` },
     { label: 'Contacts (12)', icon: Users, path: `/admin/businesses/${business.id}/contacts` },
-    { label: 'Google Profile', icon: Globe, path: `/admin/businesses/${business.id}/google-profile` },
     { label: 'Sales History', icon: ShoppingBag, path: `/admin/businesses/${business.id}/sales-history` },
     { label: 'Visit History', icon: Calendar, path: `/admin/businesses/${business.id}/visits` },
     { label: 'Subscription', icon: CreditCard, path: `/admin/businesses/${business.id}/subscription` },
@@ -138,7 +137,7 @@ export default function BusinessLayoutWrapper() {
       </div>
 
       {/* Active Tab View Outlet */}
-      <Outlet context={business} />
+      <Outlet context={{ business, reload: result.reload }} />
     </div>
   );
 }

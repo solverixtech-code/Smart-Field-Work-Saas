@@ -773,8 +773,6 @@ function getBreadcrumbTrail(pathname: string) {
     items.push({ label: "FitZone Gym", to: "/admin/businesses/BUS-10058242" });
     if (pathname.endsWith("/contacts")) {
       items.push({ label: "Business Contacts", to: pathname });
-    } else if (pathname.endsWith("/google-profile")) {
-      items.push({ label: "Google Business Profile", to: pathname });
     } else if (pathname.endsWith("/sales-history")) {
       items.push({ label: "Sales History", to: pathname });
     } else if (pathname.endsWith("/visits")) {

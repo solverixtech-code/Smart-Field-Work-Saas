@@ -139,7 +139,6 @@ import OverdueFollowUpsPage from './screens/followups/OverdueFollowUpsPage';
 import CompletedFollowUpsPage from './screens/followups/CompletedFollowUpsPage';
 import FollowUpDetailsPage from './screens/followups/FollowUpDetailsPage';
 import BusinessContactsPage from './screens/businesses/BusinessContactsPage';
-import BusinessGoogleProfilePage from './screens/businesses/BusinessGoogleProfilePage';
 import BusinessSalesHistoryPage from './screens/businesses/BusinessSalesHistoryPage';
 import BusinessVisitHistoryPage from './screens/businesses/BusinessVisitHistoryPage';
 import BusinessSubscriptionPage from './screens/businesses/BusinessSubscriptionPage';
@@ -466,7 +465,6 @@ export default function AppRouter() {
                 <Route path="/admin/businesses/:businessId" element={<BusinessLayoutWrapper />}>
                   <Route index element={<BusinessDetailsPage />} />
                   <Route path="contacts" element={<BusinessContactsPage />} />
-                  <Route path="google-profile" element={<BusinessGoogleProfilePage />} />
                   <Route path="sales-history" element={<BusinessSalesHistoryPage />} />
                   <Route path="visits" element={<BusinessVisitHistoryPage />} />
                   <Route path="subscription" element={<BusinessSubscriptionPage />} />

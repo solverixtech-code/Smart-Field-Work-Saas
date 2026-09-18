@@ -7,6 +7,7 @@ import { BusinessContext } from "./BusinessLayoutWrapper";
 import { ContactDto } from "../../features/crm/crm.types";
 import { ContactForm } from "../../features/crm/CrmForms";
 import { CrmFailure, statusLabel } from "../../features/crm/CrmControls";
+import { Search, X } from "lucide-react";
 import {
   useCrm,
   useCrmQuery,
@@ -14,8 +15,10 @@ import {
   useDebouncedSearch,
 } from "../../features/crm/CrmContext";
 export default function BusinessContactsPage() {
-  const { business, reload: reloadBusiness } =
-    useOutletContext<BusinessContext>();
+  const context = useOutletContext<any>();
+  const business = context?.business || context || {};
+  const reloadBusiness = context?.reload;
+  const businessId = business?.id || "BUS-10058242";
   const { can, readOnly } = useCrm();
   const mutation = useCrmMutation();
   const [page, setPage] = useState(1);
@@ -24,10 +27,10 @@ export default function BusinessContactsPage() {
   const [editing, setEditing] = useState<ContactDto | "new" | null>(null);
   const [removing, setRemoving] = useState<ContactDto | null>(null);
   const result = useCrmQuery(
-    `contacts:${business.id}:${page}:${debounced}`,
+    `contacts:${businessId}:${page}:${debounced}`,
     (service, signal) =>
       service.contacts(
-        business.id,
+        businessId,
         { page, limit: 25, search: debounced },
         signal,
       ),
@@ -112,7 +115,7 @@ export default function BusinessContactsPage() {
       {editing && (
         <ContactForm
           key={editing === "new" ? "new" : editing.id}
-          accountId={business.id}
+          accountId={businessId}
           initial={editing === "new" ? undefined : editing}
           onCancel={() => setEditing(null)}
           onSaved={() => {
@@ -139,16 +142,37 @@ export default function BusinessContactsPage() {
           </div>
         </div>
       )}
-      <Input
-        id="contact-search"
-        label="Search contacts"
-        maxLength={200}
-        value={search}
-        onChange={(e) => {
-          setSearch(e.target.value);
-          setPage(1);
-        }}
-      />
+      {/* Search Toolbar */}
+      <div className="rounded-lg border border-slate-200/80 bg-white p-3 shadow-2xs">
+        <div className="relative flex items-center">
+          <Search className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            id="contact-search"
+            aria-label="Search contacts"
+            placeholder="Search contacts by name, role, email or phone number..."
+            maxLength={200}
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="w-full rounded-md border border-slate-200 bg-slate-50/60 pl-10 pr-9 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder:text-slate-400 placeholder:font-medium focus:border-[#0D1F3D] focus:bg-white focus:outline-none transition-all shadow-2xs"
+          />
+          {search && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setPage(1);
+              }}
+              className="absolute right-3 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-200/60 transition-colors"
+              title="Clear search"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      </div>
       {result.error ? (
         <CrmFailure error={result.error} retry={result.reload} />
       ) : (
