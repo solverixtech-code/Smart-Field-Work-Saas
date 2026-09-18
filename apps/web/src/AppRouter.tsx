@@ -139,7 +139,6 @@ import OverdueFollowUpsPage from './screens/followups/OverdueFollowUpsPage';
 import CompletedFollowUpsPage from './screens/followups/CompletedFollowUpsPage';
 import FollowUpDetailsPage from './screens/followups/FollowUpDetailsPage';
 import BusinessContactsPage from './screens/businesses/BusinessContactsPage';
-import BusinessGoogleProfilePage from './screens/businesses/BusinessGoogleProfilePage';
 import BusinessSalesHistoryPage from './screens/businesses/BusinessSalesHistoryPage';
 import BusinessVisitHistoryPage from './screens/businesses/BusinessVisitHistoryPage';
 import BusinessSubscriptionPage from './screens/businesses/BusinessSubscriptionPage';
@@ -443,16 +442,18 @@ export default function AppRouter() {
             </Route>
 
             {/* Sales Pipeline Routes (Screens 105 to 113) */}
-            <Route element={<PermissionRoute permission="crm.pipeline.view" />}>
-              <Route path="/admin/sales/pipeline" element={<SalesPipelinePage />} />
-              <Route path="/admin/sales/prospects" element={<SalesStageViewPage stageKeyOverride="prospects" />} />
-              <Route path="/admin/sales/contacted" element={<SalesStageViewPage stageKeyOverride="contacted" />} />
-              <Route path="/admin/sales/demo" element={<SalesStageViewPage stageKeyOverride="demo" />} />
-              <Route path="/admin/sales/interested" element={<SalesStageViewPage stageKeyOverride="interested" />} />
-              <Route path="/admin/sales/negotiation" element={<SalesStageViewPage stageKeyOverride="negotiation" />} />
-              <Route path="/admin/sales/payment-pending" element={<SalesStageViewPage stageKeyOverride="payment-pending" />} />
-              <Route path="/admin/sales/won" element={<SalesStageViewPage stageKeyOverride="won" />} />
-              <Route path="/admin/sales/lost" element={<SalesStageViewPage stageKeyOverride="lost" />} />
+            <Route element={<PermissionRoute permission="crm.leads.view" />}>
+              <Route element={<CrmBoundary />}>
+                <Route path="/admin/sales/pipeline" element={<SalesPipelinePage />} />
+                <Route path="/admin/sales/prospects" element={<SalesStageViewPage stageKeyOverride="prospects" />} />
+                <Route path="/admin/sales/contacted" element={<SalesStageViewPage stageKeyOverride="contacted" />} />
+                <Route path="/admin/sales/demo" element={<SalesStageViewPage stageKeyOverride="demo" />} />
+                <Route path="/admin/sales/interested" element={<SalesStageViewPage stageKeyOverride="interested" />} />
+                <Route path="/admin/sales/negotiation" element={<SalesStageViewPage stageKeyOverride="negotiation" />} />
+                <Route path="/admin/sales/payment-pending" element={<SalesStageViewPage stageKeyOverride="payment-pending" />} />
+                <Route path="/admin/sales/won" element={<SalesStageViewPage stageKeyOverride="won" />} />
+                <Route path="/admin/sales/lost" element={<SalesStageViewPage stageKeyOverride="lost" />} />
+              </Route>
             </Route>
 
             {/* Business Database Management Routes (Screens 54 to 60) */}
@@ -464,7 +465,6 @@ export default function AppRouter() {
                 <Route path="/admin/businesses/:businessId" element={<BusinessLayoutWrapper />}>
                   <Route index element={<BusinessDetailsPage />} />
                   <Route path="contacts" element={<BusinessContactsPage />} />
-                  <Route path="google-profile" element={<BusinessGoogleProfilePage />} />
                   <Route path="sales-history" element={<BusinessSalesHistoryPage />} />
                   <Route path="visits" element={<BusinessVisitHistoryPage />} />
                   <Route path="subscription" element={<BusinessSubscriptionPage />} />

@@ -116,6 +116,12 @@ export const conversionCommand = revisionCommand
           .strict(),
       ])
       .optional(),
+    deal: z
+      .object({
+        title: z.string().trim().min(1).max(200).optional(),
+        amount: z.coerce.number().min(0).optional(),
+      })
+      .optional(),
   })
   .strict()
   .refine(

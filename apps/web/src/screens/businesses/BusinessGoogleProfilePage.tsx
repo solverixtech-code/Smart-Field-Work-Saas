@@ -101,7 +101,7 @@ export default function BusinessGoogleProfilePage() {
             <p className="text-xs text-slate-500">{profile.address}</p>
             <div className="flex items-center gap-3 pt-1 text-xs font-semibold text-slate-700">
               <span>📞 {profile.phone}</span>
-              <span className="text-slate-300">\|</span>
+              <span className="text-slate-300">|</span>
               <span className="flex items-center gap-1 text-emerald-600 font-bold">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" /> {profile.status}
               </span>

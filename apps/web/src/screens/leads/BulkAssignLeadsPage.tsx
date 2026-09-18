@@ -11,6 +11,7 @@ import {
   useCrmQuery,
 } from "../../features/crm/CrmContext";
 import { CrmFailure } from "../../features/crm/CrmControls";
+import { getEmployeeProfile } from "../territories/territoriesData";
 
 export default function BulkAssignLeadsPage() {
   const navigate = useNavigate();
@@ -29,12 +30,15 @@ export default function BulkAssignLeadsPage() {
   const rows = leads.data?.items ?? [];
   const ownerOptions = useMemo(
     () =>
-      (owners.data?.items ?? []).map((owner) => ({
-        value: owner.id,
-        label: owner.displayName,
-        sublabel: owner.role || "Active membership",
-        avatar: owner.avatarUrl || undefined,
-      })),
+      (owners.data?.items ?? []).map((owner) => {
+        const profile = getEmployeeProfile(owner.displayName, owner.role, owner.avatarUrl);
+        return {
+          value: owner.id,
+          label: owner.displayName,
+          sublabel: profile.sublabel,
+          avatar: profile.avatar,
+        };
+      }),
     [owners.data?.items],
   );
 

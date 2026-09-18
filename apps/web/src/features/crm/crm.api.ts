@@ -49,4 +49,58 @@ export const crmApi: CrmService = {
     (await api.get(`${root}/owner-options`, { params, signal })).data,
   masters: async (code, params, signal) =>
     (await api.get(`/tenant/masters/${code}/values`, { params, signal })).data,
+
+  deals: async (params, signal) =>
+    (await api.get(`${root}/deals`, { params, signal })).data,
+  dealSummary: async (signal) =>
+    (await api.get(`${root}/deals/summary`, { signal })).data,
+  deal: async (id, signal) =>
+    (await api.get(`${root}/deals/${id}`, { signal })).data,
+  createDeal: async (body, signal) =>
+    (await api.post(`${root}/deals`, body, { signal })).data,
+  updateDeal: async (id, body, signal) =>
+    (await api.patch(`${root}/deals/${id}`, body, { signal })).data,
+  updateDealStage: async (id, body, signal) =>
+    (await api.patch(`${root}/deals/${id}/stage`, body, { signal })).data,
+  deleteDeal: async (id, signal) => {
+    await api.delete(`${root}/deals/${id}`, { signal });
+  },
+
+  territories: async (params, signal) =>
+    (await api.get(`${root}/territories`, { params, signal })).data,
+  territory: async (id, signal) =>
+    (await api.get(`${root}/territories/${id}`, { signal })).data,
+  createTerritory: async (body, signal) =>
+    (await api.post(`${root}/territories`, body, { signal })).data,
+  updateTerritory: async (id, body, signal) =>
+    (await api.patch(`${root}/territories/${id}`, body, { signal })).data,
+  deleteTerritory: async (id, expectedRevision, signal) => {
+    await api.delete(`${root}/territories/${id}`, {
+      data: { expectedRevision },
+      signal,
+    });
+  },
+
+  territoryMembers: async (id, signal) =>
+    (await api.get(`${root}/territories/${id}/members`, { signal })).data,
+  assignTerritoryMember: async (id, body, signal) =>
+    (await api.post(`${root}/territories/${id}/members`, body, { signal })).data,
+  unassignTerritoryMember: async (id, membershipId, signal) => {
+    await api.delete(`${root}/territories/${id}/members/${membershipId}`, { signal });
+  },
+
+  territoryBusinesses: async (id, signal) =>
+    (await api.get(`${root}/territories/${id}/businesses`, { signal })).data,
+  assignTerritoryBusiness: async (id, accountId, signal) =>
+    (await api.post(`${root}/territories/${id}/businesses`, { accountId }, { signal })).data,
+  unassignTerritoryBusiness: async (id, accountId, signal) => {
+    await api.delete(`${root}/territories/${id}/businesses/${accountId}`, { signal });
+  },
+
+  territoryTargets: async (id, signal) =>
+    (await api.get(`${root}/territories/${id}/targets`, { signal })).data,
+  updateTerritoryTarget: async (id, body, signal) =>
+    (await api.put(`${root}/territories/${id}/targets`, body, { signal })).data,
+  territoryPerformance: async (id, signal) =>
+    (await api.get(`${root}/territories/${id}/performance`, { signal })).data,
 };

@@ -288,10 +288,10 @@ const navCategories: NavCategory[] = [
   {
     title: "Notifications",
     items: [
-      { label: "Notification Center", icon: Bell, to: "/admin/notifications", permission: "crm.notifications.view", badge: "1,248" },
+      { label: "Notification Center", icon: Bell, to: "/admin/notifications", permission: "crm.notifications.view" },
       { label: "Create Notification", icon: PlusCircle, to: "/admin/notifications/create", permission: "crm.notifications.view" },
       { label: "Push Notifications", icon: Send, to: "/admin/notifications/push", permission: "crm.notifications.view" },
-      { label: "Executive Alerts", icon: ShieldAlert, to: "/admin/notifications/executives", permission: "crm.notifications.view", badge: "28" },
+      { label: "Executive Alerts", icon: ShieldAlert, to: "/admin/notifications/executives", permission: "crm.notifications.view" },
       { label: "Notification Templates", icon: ClipboardCopy, to: "/admin/notifications/templates", permission: "crm.notifications.view" },
     ],
   },
@@ -773,8 +773,6 @@ function getBreadcrumbTrail(pathname: string) {
     items.push({ label: "FitZone Gym", to: "/admin/businesses/BUS-10058242" });
     if (pathname.endsWith("/contacts")) {
       items.push({ label: "Business Contacts", to: pathname });
-    } else if (pathname.endsWith("/google-profile")) {
-      items.push({ label: "Google Business Profile", to: pathname });
     } else if (pathname.endsWith("/sales-history")) {
       items.push({ label: "Sales History", to: pathname });
     } else if (pathname.endsWith("/visits")) {
@@ -863,10 +861,80 @@ export default function AppShell() {
 
   const { user } = useAppSelector((s) => s.auth);
   const { platform, tenant, loaded: authzLoaded, loading: authzLoading } = useAppSelector((s) => s.authorization);
-  const { hasPermission: hasBootstrapPermission, hasModule } = useRuntimeBootstrap();
+  const { bootstrap: runtimeBootstrap, hasPermission: hasBootstrapPermission, hasModule } = useRuntimeBootstrap();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const tenantId = runtimeBootstrap?.tenant?.id || tenant?.id || "default";
+
+  const [branding, setBranding] = useState<{
+    logoUrl?: string;
+    collapsedLogoUrl?: string;
+    showLogoInSidebar: boolean;
+    sidebarLogoHeight: number;
+    sidebarLogoObjectFit: "contain" | "cover";
+    sidebarLogoBg: string;
+    sidebarLogoRadius: number;
+    sidebarLogoAlign?: "left" | "center" | "right";
+    sidebarHeaderBg?: string;
+  }>({
+    logoUrl: "",
+    collapsedLogoUrl: "",
+    showLogoInSidebar: true,
+    sidebarLogoHeight: 42,
+    sidebarLogoObjectFit: "contain",
+    sidebarLogoBg: "transparent",
+    sidebarLogoRadius: 6,
+    sidebarLogoAlign: "left",
+    sidebarHeaderBg: "transparent",
+  });
+
+  const loadBranding = React.useCallback(() => {
+    try {
+      const key = `visiblo_workspace_branding_${tenantId}`;
+      const stored = localStorage.getItem(key);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        setBranding({
+          logoUrl: parsed.logoUrl || "",
+          collapsedLogoUrl: parsed.collapsedLogoUrl || "",
+          showLogoInSidebar: parsed.showLogoInSidebar ?? true,
+          sidebarLogoHeight: parsed.sidebarLogoHeight ?? 42,
+          sidebarLogoObjectFit: parsed.sidebarLogoObjectFit ?? "contain",
+          sidebarLogoBg: parsed.sidebarLogoBg ?? "transparent",
+          sidebarLogoRadius: parsed.sidebarLogoRadius ?? 6,
+          sidebarLogoAlign: parsed.sidebarLogoAlign ?? "left",
+          sidebarHeaderBg: parsed.sidebarHeaderBg ?? "transparent",
+        });
+        return;
+      }
+    } catch {
+      /* ignore */
+    }
+    const bootstrapLogo = (runtimeBootstrap?.tenant as any)?.logoUrl || (tenant as any)?.logoUrl || "";
+    setBranding({
+      logoUrl: bootstrapLogo,
+      collapsedLogoUrl: "",
+      showLogoInSidebar: true,
+      sidebarLogoHeight: 42,
+      sidebarLogoObjectFit: "contain",
+      sidebarLogoBg: "transparent",
+      sidebarLogoRadius: 6,
+      sidebarLogoAlign: "left",
+      sidebarHeaderBg: "transparent",
+    });
+  }, [tenantId, runtimeBootstrap, tenant]);
+
+  useEffect(() => {
+    loadBranding();
+    window.addEventListener("workspace_branding_updated", loadBranding);
+    return () => window.removeEventListener("workspace_branding_updated", loadBranding);
+  }, [loadBranding]);
+
+  const hasCustomLogo = Boolean(branding.logoUrl && branding.logoUrl.trim() !== "");
+  const hasCollapsedLogo = Boolean(branding.collapsedLogoUrl && branding.collapsedLogoUrl.trim() !== "");
+  const canRenderCustomLogoInSidebar = (hasCustomLogo || hasCollapsedLogo) && branding.showLogoInSidebar;
 
   useEffect(() => {
     if (!authzLoaded && !authzLoading) {
@@ -926,19 +994,62 @@ export default function AppShell() {
           className={`flex h-20 flex-none items-center border-b border-slate-100 transition-all duration-300 ${
             showBigLogo ? "justify-between px-4" : "justify-center px-2"
           }`}
+          style={{
+            backgroundColor: branding.sidebarHeaderBg || "transparent",
+          }}
         >
           {showBigLogo ? (
             <>
-              <NavLink to="/admin/dashboard" className="flex items-center">
-                <img
-                  src={bigLogo}
-                  alt="Smart Field Work Logo"
-                  style={{
-                    width: "240px",
-                    maxHeight: "64px",
-                    objectFit: "contain",
-                  }}
-                />
+              <NavLink
+                to="/admin/dashboard"
+                className={`flex items-center w-full max-w-[220px] ${
+                  branding.sidebarLogoAlign === "center"
+                    ? "justify-center"
+                    : branding.sidebarLogoAlign === "right"
+                    ? "justify-end"
+                    : "justify-start"
+                }`}
+              >
+                {canRenderCustomLogoInSidebar && branding.logoUrl ? (
+                  <div
+                    className={`flex items-center w-full transition-all duration-200 ${
+                      branding.sidebarLogoAlign === "center"
+                        ? "justify-center"
+                        : branding.sidebarLogoAlign === "right"
+                        ? "justify-end"
+                        : "justify-start"
+                    }`}
+                    style={{
+                      backgroundColor: branding.sidebarLogoBg,
+                      borderRadius: `${branding.sidebarLogoRadius}px`,
+                      padding: branding.sidebarLogoBg !== "transparent" ? "4px 8px" : "0px",
+                    }}
+                  >
+                    <img
+                      src={branding.logoUrl}
+                      alt={runtimeBootstrap?.tenant?.displayName || (tenant as any)?.companyName || "Company Logo"}
+                      style={{
+                        height: `${branding.sidebarLogoHeight}px`,
+                        maxHeight: "56px",
+                        maxWidth: "210px",
+                        objectFit: branding.sidebarLogoObjectFit,
+                      }}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLElement).style.display = "none";
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <img
+                    src={bigLogo}
+                    alt="Smart Field Work Logo"
+                    style={{
+                      width: "240px",
+                      maxHeight: "64px",
+                      objectFit: "contain",
+                    }}
+                  />
+                )}
               </NavLink>
               <button
                 type="button"
@@ -956,11 +1067,36 @@ export default function AppShell() {
               className="flex items-center justify-center p-1 rounded-lg hover:bg-slate-100 transition duration-200"
               title="Expand Sidebar"
             >
-              <img
-                src={smallLogo}
-                alt="Smart Field Work Favicon"
-                style={{ width: "60px", height: "60px", objectFit: "contain" }}
-              />
+              {canRenderCustomLogoInSidebar ? (
+                <div
+                  className="flex items-center justify-center transition-all duration-200"
+                  style={{
+                    backgroundColor: branding.sidebarLogoBg,
+                    borderRadius: `${branding.sidebarLogoRadius}px`,
+                    padding: branding.sidebarLogoBg !== "transparent" ? "2px 4px" : "0px",
+                  }}
+                >
+                  <img
+                    src={branding.collapsedLogoUrl || branding.logoUrl}
+                    alt="Company Logo"
+                    style={{
+                      height: branding.collapsedLogoUrl ? "38px" : `${Math.min(branding.sidebarLogoHeight, 40)}px`,
+                      maxHeight: "44px",
+                      maxWidth: "48px",
+                      objectFit: branding.collapsedLogoUrl ? "contain" : branding.sidebarLogoObjectFit,
+                    }}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none";
+                    }}
+                  />
+                </div>
+              ) : (
+                <img
+                  src={smallLogo}
+                  alt="Smart Field Work Favicon"
+                  style={{ width: "60px", height: "60px", objectFit: "contain" }}
+                />
+              )}
             </button>
           )}
         </div>
@@ -983,6 +1119,13 @@ export default function AppShell() {
               {cat.items.map((item) => {
                 const isPermissionAllowed = (() => {
                   if (!item.permission) return true;
+                  if (
+                    userRole === Role.SUPER_ADMIN ||
+                    userRole === Role.ADMIN ||
+                    tenant?.roleCode === "tenant_admin"
+                  ) {
+                    return true;
+                  }
                   const isPlatformScope = item.permission.startsWith("platform.");
                   const permissionsList = isPlatformScope
                     ? platform?.permissions
@@ -993,7 +1136,12 @@ export default function AppShell() {
                   }
                   return hasBootstrapPermission(item.permission);
                 })();
-                const isModuleAllowed = !item.moduleCode || hasModule(item.moduleCode);
+                const isModuleAllowed =
+                  userRole === Role.SUPER_ADMIN ||
+                  userRole === Role.ADMIN ||
+                  tenant?.roleCode === "tenant_admin" ||
+                  !item.moduleCode ||
+                  hasModule(item.moduleCode);
                 const isAllowed = isPermissionAllowed && isModuleAllowed;
                 const Icon = item.icon;
                 const isActive = (() => {

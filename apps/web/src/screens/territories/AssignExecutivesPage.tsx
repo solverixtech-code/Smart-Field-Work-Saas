@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -13,7 +13,9 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { mockTerritoriesList, mockTerritoryExecutives, TerritoryExecutive } from './territoriesData';
+import { Select, SelectOption } from '../../components/ui/Select';
+import { mockTerritoriesList, mockTerritoryExecutives, TerritoryExecutive, getEmployeeProfile } from './territoriesData';
+import { crmApi } from '../../features/crm/crm.api';
 
 export default function AssignExecutivesPage() {
   const { territoryId } = useParams();
@@ -24,34 +26,88 @@ export default function AssignExecutivesPage() {
     mockTerritoriesList[0];
 
   const [executives, setExecutives] = useState<TerritoryExecutive[]>(mockTerritoryExecutives);
+  const [availableMembers, setAvailableMembers] = useState<SelectOption[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [newExecName, setNewExecName] = useState('');
+  const [selectedMembershipId, setSelectedMembershipId] = useState('');
 
-  const handleUnassign = (id: string, name: string) => {
-    setExecutives(executives.filter((e) => e.id !== id));
-    toast.success(`Unassigned ${name} from ${territory.name}`);
+  const loadMembers = useCallback(async () => {
+    if (!territoryId) return;
+    try {
+      const data = await crmApi.territoryMembers(territoryId);
+      if (data && Array.isArray(data)) {
+        setExecutives(
+          data.map((m: any) => ({
+            id: m.id,
+            name: m.membership?.user?.fullName || 'Field Executive',
+            avatar:
+              m.membership?.user?.avatarUrl ||
+              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+            role: m.role || m.membership?.tenantRole?.name || 'Sales Executive',
+            phone: m.membership?.user?.phone || '+91 98765 00000',
+            team: territory.regionArea || 'Territory Field Team',
+            visitsCount: 0,
+            revenue: 0,
+            revenueFormatted: '₹ 0',
+            performancePercentage: 0,
+            status: 'On Field',
+          })),
+        );
+      }
+    } catch {
+      // fallback to mock
+    }
+  }, [territoryId, territory.regionArea]);
+
+  useEffect(() => {
+    loadMembers();
+    crmApi
+      .owners({ limit: 100 })
+      .then((res) => {
+        if (res && res.items) {
+          setAvailableMembers(
+            res.items.map((m) => {
+              const profile = getEmployeeProfile(m.displayName, m.role, m.avatarUrl);
+              return {
+                value: m.id,
+                label: m.displayName,
+                sublabel: profile.sublabel,
+                avatar: profile.avatar,
+              };
+            }),
+          );
+        }
+      })
+      .catch(() => {});
+  }, [loadMembers]);
+
+  const handleUnassign = async (id: string, name: string) => {
+    try {
+      if (territoryId) {
+        await crmApi.unassignTerritoryMember(territoryId, id);
+      }
+      setExecutives((prev) => prev.filter((e) => e.id !== id));
+      toast.success(`Unassigned ${name} from ${territory.name}`);
+    } catch (err: any) {
+      toast.error('Failed to unassign member');
+    }
   };
 
-  const handleAssignNew = () => {
-    if (!newExecName) return;
-    const newExec: TerritoryExecutive = {
-      id: `FE-${Math.floor(1000 + Math.random() * 9000)}`,
-      name: newExecName,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-      role: 'Sales Executive',
-      phone: '+91 98765 00000',
-      team: 'Mumbai Central',
-      visitsCount: 0,
-      revenue: 0,
-      revenueFormatted: '₹ 0',
-      performancePercentage: 0,
-      status: 'On Field',
-    };
-    setExecutives([...executives, newExec]);
-    setNewExecName('');
-    setShowAssignModal(false);
-    toast.success(`Assigned ${newExecName} to ${territory.name}`);
+  const handleAssignNew = async () => {
+    if (!selectedMembershipId || !territoryId) return;
+    const selectedObj = availableMembers.find((m) => m.value === selectedMembershipId);
+    try {
+      await crmApi.assignTerritoryMember(territoryId, {
+        membershipId: selectedMembershipId,
+        role: 'EXECUTIVE',
+      });
+      toast.success(`Assigned ${selectedObj?.label || 'Executive'} to ${territory.name}`);
+      setShowAssignModal(false);
+      setSelectedMembershipId('');
+      loadMembers();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to assign executive');
+    }
   };
 
   return (
@@ -165,16 +221,13 @@ export default function AssignExecutivesPage() {
 
             <div className="space-y-1">
               <label className="font-bold text-slate-700 block">Select Executive</label>
-              <select
-                value={newExecName}
-                onChange={(e) => setNewExecName(e.target.value)}
-                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-[#0D1F3D] focus:outline-none"
-              >
-                <option value="">Select executive</option>
-                <option value="Sanjay Yadav">Sanjay Yadav (FE-1010)</option>
-                <option value="Deepak Raul">Deepak Raul (FE-1011)</option>
-                <option value="Imran Shaikh">Imran Shaikh (FE-1012)</option>
-              </select>
+              <Select
+                searchable
+                options={availableMembers}
+                value={selectedMembershipId}
+                onChange={(e) => setSelectedMembershipId(e.target.value)}
+                placeholder="Search or select field executive..."
+              />
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">

@@ -28,6 +28,13 @@ interface CrmAuditMetadata {
   assignedAfter?: string | null;
   conversionCommandId?: string;
   contactId?: string | null;
+  dealId?: string | null;
+  dealCode?: string;
+  title?: string;
+  amount?: number | Prisma.Decimal;
+  stage?: string;
+  stageBefore?: string;
+  stageAfter?: string;
   revisionBefore?: number;
   revisionAfter?: number;
   changedFields?: string[];
@@ -54,7 +61,11 @@ type CrmAuditAction =
   | "lead.updated"
   | "lead.deleted"
   | "lead.assigned"
-  | "lead.converted";
+  | "lead.converted"
+  | "opportunity.created"
+  | "opportunity.updated"
+  | "opportunity.stage_changed"
+  | "opportunity.deleted";
 
 export const crmConflict = (code: string): never => {
   throw new ConflictException({
@@ -228,7 +239,7 @@ export class CrmRepository {
     tx: Prisma.TransactionClient,
     p: CrmPolicy,
     action: CrmAuditAction,
-    entityType: "Account" | "Contact" | "Lead",
+    entityType: "Account" | "Contact" | "Lead" | "Opportunity",
     id: string,
     metadata: CrmAuditMetadata,
   ) {

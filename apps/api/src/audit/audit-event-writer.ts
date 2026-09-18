@@ -18,6 +18,10 @@ const catalog = {
     "contact.updated",
     "contact.deleted",
     "contact.owner.changed",
+    "opportunity.created",
+    "opportunity.updated",
+    "opportunity.stage_changed",
+    "opportunity.deleted",
   ],
   AUTH: [
     "LOGIN_FAILURE",

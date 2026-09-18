@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -22,14 +22,27 @@ import {
   Building,
   BarChart2,
   MapPin,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { MapKpiCard } from '../../components/maps/MapKpiCard';
-import { mockTerritoriesList, TerritoryItem } from './territoriesData';
+import { crmApi } from '../../features/crm/crm.api';
+import type { TerritoryListSummary } from '../../features/crm/crm.types';
+import { mapTerritoryDtoToItem, TerritoryItem } from './territoriesData';
 
 export default function TerritoriesListPage() {
   const navigate = useNavigate();
+  const [territories, setTerritories] = useState<TerritoryItem[]>([]);
+  const [summary, setSummary] = useState<TerritoryListSummary>({
+    totalTerritories: 0,
+    activeTerritories: 0,
+    totalExecutives: 0,
+    totalTarget: 0,
+    totalRevenueAchieved: 0,
+    avgPerformancePercentage: 0,
+  });
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [managerFilter, setManagerFilter] = useState('All');
@@ -38,7 +51,36 @@ export default function TerritoriesListPage() {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
-  const filteredTerritories = mockTerritoriesList.filter((terr) => {
+  const fetchTerritories = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await crmApi.territories();
+      if (res && res.items) {
+        setTerritories(res.items.map(mapTerritoryDtoToItem));
+        if (res.summary) setSummary(res.summary);
+      }
+    } catch (err: any) {
+      toast.error('Failed to load territories from backend');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTerritories();
+  }, [fetchTerritories]);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await crmApi.deleteTerritory(id);
+      toast.success('Territory deleted successfully');
+      fetchTerritories();
+    } catch (err) {
+      toast.error('Failed to delete territory');
+    }
+  };
+
+  const filteredTerritories = territories.filter((terr) => {
     const matchesSearch =
       terr.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       terr.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -130,15 +172,15 @@ export default function TerritoriesListPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <MapKpiCard
           title="Total Territories"
-          value="12"
-          subValue="Active territories"
+          value={summary.totalTerritories ? String(summary.totalTerritories) : '0'}
+          subValue={`${summary.activeTerritories} active`}
           icon={MapPin}
           iconBgColor="bg-blue-50"
           iconTextColor="text-blue-600"
         />
         <MapKpiCard
           title="Total Executives"
-          value="128"
+          value={summary.totalExecutives ? String(summary.totalExecutives) : '0'}
           subValue="Across all territories"
           icon={Users}
           iconBgColor="bg-emerald-50"
@@ -146,7 +188,7 @@ export default function TerritoriesListPage() {
         />
         <MapKpiCard
           title="Target (This Month)"
-          value="₹ 95,00,000"
+          value={`₹ ${summary.totalTarget.toLocaleString('en-IN')}`}
           subValue="Total target"
           icon={Target}
           iconBgColor="bg-amber-50"
@@ -154,8 +196,8 @@ export default function TerritoriesListPage() {
         />
         <MapKpiCard
           title="Achieved (This Month)"
-          value="₹ 63,45,200"
-          subValue="66.8% of target"
+          value={`₹ ${summary.totalRevenueAchieved.toLocaleString('en-IN')}`}
+          subValue={`${summary.avgPerformancePercentage}% of target`}
           icon={ShoppingBag}
           iconBgColor="bg-purple-50"
           iconTextColor="text-purple-600"
@@ -170,7 +212,7 @@ export default function TerritoriesListPage() {
         />
         <MapKpiCard
           title="Avg. Performance"
-          value="72%"
+          value={`${summary.avgPerformancePercentage}%`}
           subValue="Across territories"
           icon={PieChart}
           iconBgColor="bg-rose-50"
@@ -489,6 +531,18 @@ export default function TerritoriesListPage() {
                             >
                               <Map className="h-3.5 w-3.5 text-blue-600" /> Territory Map
                             </button>
+
+                            <button
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                if (window.confirm(`Are you sure you want to delete "${terr.name}"?`)) {
+                                  handleDelete(terr.id);
+                                }
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-1.5 text-red-600 hover:bg-red-50 border-t border-slate-100 pt-1.5 font-bold"
+                            >
+                              <Trash2 className="h-3.5 w-3.5 text-red-500" /> Delete Territory
+                            </button>
                           </div>
                         )}
                       </td>
@@ -502,7 +556,7 @@ export default function TerritoriesListPage() {
 
         {/* Table Footer Pagination */}
         <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/60 px-4 py-2.5 text-xs font-semibold text-slate-600">
-          <span>Showing 1 to {filteredTerritories.length} of {mockTerritoriesList.length} territories</span>
+          <span>Showing 1 to {filteredTerritories.length} of {territories.length} territories</span>
 
           <div className="flex items-center gap-1">
             <button className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-500 hover:bg-slate-100 disabled:opacity-50">

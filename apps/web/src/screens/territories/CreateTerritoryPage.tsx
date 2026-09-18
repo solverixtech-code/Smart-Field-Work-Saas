@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -19,52 +19,91 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Select, SelectOption } from '../../components/ui/Select';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockTerritoriesList, mockTerritoryExecutives } from './territoriesData';
+import { crmApi } from '../../features/crm/crm.api';
+import { mockTerritoryExecutives, getEmployeeProfile } from './territoriesData';
 
 export default function CreateTerritoryPage() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [managerOptions, setManagerOptions] = useState<SelectOption[]>([]);
 
   // Form State
   const [territoryName, setTerritoryName] = useState('');
-  const [territoryCode, setTerritoryCode] = useState('T011');
+  const [territoryCode, setTerritoryCode] = useState('');
   const [regionArea, setRegionArea] = useState('');
   const [city, setCity] = useState('Mumbai');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
   const [color, setColor] = useState('#2563EB');
 
-  const [managerName, setManagerName] = useState('');
-  const [revenueTarget, setRevenueTarget] = useState('');
-  const [visitTarget, setVisitTarget] = useState('');
-  const [collectionTarget, setCollectionTarget] = useState('');
-  const [newBusinessTarget, setNewBusinessTarget] = useState('');
-  const [selectedExecutives, setSelectedExecutives] = useState<string[]>([]);
+  const [managerMembershipId, setManagerMembershipId] = useState('');
+  const [revenueTarget, setRevenueTarget] = useState('500000');
+  const [visitTarget, setVisitTarget] = useState('100');
+  const [collectionTarget, setCollectionTarget] = useState('300000');
+  const [newBusinessTarget, setNewBusinessTarget] = useState('20');
+  const [selectedExecutives, setSelectedExecutives] = useState<string[]>(['Arjun Mehta']);
   const [searchLocation, setSearchLocation] = useState('');
   const [notes, setNotes] = useState('');
 
-  const [boundaryPoints, setBoundaryPoints] = useState<[number, number][]>([
-    [19.16, 72.85],
-    [19.16, 72.9],
-    [19.11, 72.9],
-    [19.11, 72.85],
-  ]);
+  // Map Polygon Coordinates State
+  const [boundaryPoints, setBoundaryPoints] = useState<[number, number][]>([]);
   const [areaKm2, setAreaKm2] = useState<number>(18.45);
   const [perimeterKm, setPerimeterKm] = useState<number>(23.67);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    crmApi
+      .owners({ limit: 100 })
+      .then((res) => {
+        if (res && res.items) {
+          setManagerOptions(
+            res.items.map((m) => {
+              const profile = getEmployeeProfile(m.displayName, m.role, m.avatarUrl);
+              return {
+                value: m.id,
+                label: m.displayName,
+                sublabel: profile.sublabel,
+                avatar: profile.avatar,
+              };
+            }),
+          );
+        }
+      })
+      .catch(() => {
+        // graceful fallback if not available
+      });
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!territoryName.trim()) {
       toast.error('Please enter a Territory Name');
       return;
     }
 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      setIsSubmitting(true);
+      await crmApi.createTerritory({
+        name: territoryName.trim(),
+        code: territoryCode.trim() || undefined,
+        regionArea: regionArea.trim() || undefined,
+        city: city.trim() || undefined,
+        description: description.trim() || undefined,
+        status: status === 'Active' ? 'ACTIVE' : 'INACTIVE',
+        color,
+        managerMembershipId: managerMembershipId || undefined,
+        monthlyTarget: Number(revenueTarget) || 0,
+        areaKm2,
+        perimeterKm,
+        pathPoints: boundaryPoints,
+      });
+
       toast.success(`Territory "${territoryName}" created successfully!`);
       navigate('/admin/territories');
-    }, 600);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to create territory');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -235,33 +274,13 @@ export default function CreateTerritoryPage() {
             <div>
               <Select
                 searchable
-                value={managerName}
-                onChange={(e) => setManagerName(e.target.value)}
+                value={managerMembershipId}
+                onChange={(e) => setManagerMembershipId(e.target.value)}
                 placeholder="Search and select manager..."
-                options={[
+                options={managerOptions.length > 0 ? managerOptions : [
                   {
-                    value: 'Vikram Singh',
-                    label: 'Vikram Singh',
-                    sublabel: 'Sales Manager',
-                    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-                  },
-                  {
-                    value: 'Neha Sharma',
-                    label: 'Neha Sharma',
-                    sublabel: 'Sales Manager',
-                    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
-                  },
-                  {
-                    value: 'Arjun Mehta',
-                    label: 'Arjun Mehta',
-                    sublabel: 'Sales Manager',
-                    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
-                  },
-                  {
-                    value: 'Pooja Yadav',
-                    label: 'Pooja Yadav',
-                    sublabel: 'Team Leader',
-                    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
+                    value: '',
+                    label: 'No managers available',
                   },
                 ]}
               />
@@ -482,30 +501,30 @@ export default function CreateTerritoryPage() {
               Territory Summary
             </h3>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-              <div className="rounded-sm border border-slate-100 bg-slate-50 p-2.5 text-center">
-                <span className="text-[10px] text-slate-400 font-bold block">Area</span>
-                <span className="text-xs font-extrabold text-[#0D1F3D]">{areaKm2} km²</span>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              <div className="rounded-sm border border-slate-200/80 bg-slate-50/60 p-3 text-center">
+                <span className="text-xs font-semibold text-slate-500 block mb-1">Area</span>
+                <span className="text-sm font-extrabold text-[#0D1F3D] block">{areaKm2} km²</span>
               </div>
 
-              <div className="rounded-sm border border-slate-100 bg-slate-50 p-2.5 text-center">
-                <span className="text-[10px] text-slate-400 font-bold block">Perimeter</span>
-                <span className="text-xs font-extrabold text-[#0D1F3D]">{perimeterKm} km</span>
+              <div className="rounded-sm border border-slate-200/80 bg-slate-50/60 p-3 text-center">
+                <span className="text-xs font-semibold text-slate-500 block mb-1">Perimeter</span>
+                <span className="text-sm font-extrabold text-[#0D1F3D] block">{perimeterKm} km</span>
               </div>
 
-              <div className="rounded-sm border border-slate-100 bg-slate-50 p-2.5 text-center">
-                <span className="text-[10px] text-slate-400 font-bold block">Est. Businesses</span>
-                <span className="text-xs font-extrabold text-[#0D1F3D]">1,248</span>
+              <div className="rounded-sm border border-slate-200/80 bg-slate-50/60 p-3 text-center">
+                <span className="text-xs font-semibold text-slate-500 block mb-1">Est. Businesses</span>
+                <span className="text-sm font-extrabold text-[#0D1F3D] block">1,248</span>
               </div>
 
-              <div className="rounded-sm border border-slate-100 bg-slate-50 p-2.5 text-center">
-                <span className="text-[10px] text-slate-400 font-bold block">Est. Population</span>
-                <span className="text-xs font-extrabold text-[#0D1F3D]">3.2 Lakh</span>
+              <div className="rounded-sm border border-slate-200/80 bg-slate-50/60 p-3 text-center">
+                <span className="text-xs font-semibold text-slate-500 block mb-1">Est. Population</span>
+                <span className="text-sm font-extrabold text-[#0D1F3D] block">3.2 Lakh</span>
               </div>
 
-              <div className="rounded-sm border border-slate-100 bg-slate-50 p-2.5 text-center col-span-2 sm:col-span-1">
-                <span className="text-[10px] text-slate-400 font-bold block">Active Executives</span>
-                <span className="text-xs font-extrabold text-blue-600">
+              <div className="rounded-sm border border-slate-200/80 bg-slate-50/60 p-3 text-center col-span-2 sm:col-span-1">
+                <span className="text-xs font-semibold text-slate-500 block mb-1">Active Executives</span>
+                <span className="text-sm font-extrabold text-blue-600 block">
                   {selectedExecutives.length || 12}
                 </span>
               </div>

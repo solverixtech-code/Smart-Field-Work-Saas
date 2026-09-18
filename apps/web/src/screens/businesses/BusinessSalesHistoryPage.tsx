@@ -7,6 +7,7 @@ import {
   CreditCard,
   Search,
   Eye,
+  X,
 } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
 import { Button } from '../../components/ui/Button';
@@ -208,15 +209,24 @@ export default function BusinessSalesHistoryPage() {
       {/* Filter Bar */}
       <div className="rounded-md border border-slate-200/80 bg-white p-3 shadow-xs">
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3 text-xs font-semibold">
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <div className="relative flex items-center">
+            <Search className="absolute left-3.5 h-4 w-4 text-slate-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search Order / Invoice ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full rounded-md border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] focus:outline-none"
+              className="w-full rounded-md border border-slate-200 bg-slate-50/60 pl-10 pr-9 py-2 text-xs font-semibold text-[#0D1F3D] placeholder:text-slate-400 focus:border-[#0D1F3D] focus:bg-white focus:outline-none transition-all shadow-2xs"
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-200/60 transition-colors"
+                title="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
 
           <Select
