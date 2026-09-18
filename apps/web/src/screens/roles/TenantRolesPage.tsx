@@ -728,7 +728,7 @@ export function TenantRolesPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/60 text-slate-600 font-extrabold text-[11px]">
+                      <tr className="border-b border-slate-200/80 bg-slate-50/80 text-[#0D1F3D] font-extrabold text-xs">
                         <th className="py-2.5 px-4 w-[22%] whitespace-nowrap min-w-[160px]">Module</th>
                         <th className="py-2.5 px-4 w-[58%]">Actions</th>
                         <th className="py-2.5 px-4 w-[20%] whitespace-nowrap min-w-[140px]">Record Scope</th>
@@ -745,15 +745,15 @@ export function TenantRolesPage() {
                             </div>
                           </td>
 
-                          {/* Actions Column: Compact 4-Column Aligned CSS Grid with tight gaps */}
+                          {/* Actions Column: Clean flex wrap with comfortable 24px gap between actions - zero collision */}
                           <td className="py-3.5 px-4 align-top">
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3.5 gap-y-2 w-fit max-w-[480px]">
+                            <div className="flex items-center gap-x-6 gap-y-2.5 flex-wrap">
                               {mod.actions.map((act) => {
                                 const isGranted = currentGrants.has(act.code);
                                 return (
                                   <label
                                     key={act.code}
-                                    className="inline-flex items-center gap-1.5 cursor-pointer select-none group min-w-0 pr-1.5"
+                                    className="inline-flex items-center gap-2 cursor-pointer select-none py-0.5 group shrink-0"
                                   >
                                     <button
                                       type="button"
@@ -771,8 +771,8 @@ export function TenantRolesPage() {
                                       />
                                     </button>
                                     <span
-                                      className={`text-xs font-medium whitespace-nowrap ${
-                                        isGranted ? 'text-slate-900 font-semibold' : 'text-slate-500'
+                                      className={`text-xs whitespace-nowrap ${
+                                        isGranted ? 'text-slate-900 font-semibold' : 'text-slate-700 font-medium'
                                       }`}
                                     >
                                       {act.label}
@@ -783,7 +783,7 @@ export function TenantRolesPage() {
                             </div>
                           </td>
 
-                          {/* Record Scope Column */}
+                          {/* Record Scope Column: Refined Interactive Pill with Status Dot Indicator */}
                           <td className="py-3.5 px-4 align-top whitespace-nowrap">
                             {mod.scopes.length > 0 ? (
                               <div className="flex items-center gap-1.5 flex-wrap">
@@ -794,19 +794,24 @@ export function TenantRolesPage() {
                                       key={sc.code}
                                       type="button"
                                       onClick={() => toggleScope(sc.code)}
-                                      className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-colors border ${
+                                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs transition-all border cursor-pointer select-none ${
                                         isGranted
-                                          ? 'bg-[#EEF2FF] text-[#4F46E5] border-[#C7D2FE]'
-                                          : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                                          ? 'bg-[#EEF2FF] text-[#4338CA] border-[#C7D2FE] shadow-2xs font-bold hover:bg-[#E0E7FF]'
+                                          : 'bg-white text-slate-600 border-slate-200/90 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 font-medium'
                                       }`}
                                     >
+                                      <span
+                                        className={`h-1.5 w-1.5 rounded-full shrink-0 transition-colors ${
+                                          isGranted ? 'bg-[#4F46E5]' : 'bg-slate-300'
+                                        }`}
+                                      />
                                       {sc.label}
                                     </button>
                                   );
                                 })}
                               </div>
                             ) : (
-                              <span className="text-slate-300 font-bold px-2">—</span>
+                              <span className="text-slate-400 font-normal px-2">—</span>
                             )}
                           </td>
                         </tr>
@@ -827,7 +832,7 @@ export function TenantRolesPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="border-b border-slate-100 bg-slate-50/60 text-slate-600 font-extrabold text-[11px]">
+                      <tr className="border-b border-slate-200/80 bg-slate-50/80 text-[#0D1F3D] font-extrabold text-xs">
                         <th className="py-2.5 px-4 whitespace-nowrap min-w-[160px]">Name</th>
                         <th className="py-2.5 px-4 whitespace-nowrap min-w-[200px]">Email</th>
                         <th className="py-2.5 px-4 whitespace-nowrap min-w-[140px]">Team</th>
