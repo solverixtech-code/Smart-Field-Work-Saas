@@ -14,8 +14,6 @@ import {
   Tag,
   Clock,
   Info,
-  ChevronDown,
-  ChevronRight,
   ShieldCheck,
   Crown,
   Headphones,
@@ -48,7 +46,6 @@ export function TenantRolesPage() {
   const navigate = useNavigate();
 
   // State
-  const [activeTab, setActiveTab] = useState<'platform' | 'tenant' | 'preview'>('tenant');
   const [roles, setRoles] = useState<TenantRoleItem[]>([]);
   const [stats, setStats] = useState<RoleStats>({
     activeRoles: 0,
@@ -386,13 +383,6 @@ export function TenantRolesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Workspace Pill */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 shadow-2xs">
-            <span className="text-slate-400 font-normal">Workspace:</span>
-            <span className="font-extrabold text-slate-900">Mumbai Sales Ops</span>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400 ml-0.5" />
-          </div>
-
           {/* Sync Templates Button */}
           <Button
             variant="outline"
@@ -405,51 +395,6 @@ export function TenantRolesPage() {
             Sync Templates
           </Button>
         </div>
-      </div>
-
-      {/* Sub-tabs Navigation */}
-      <div className="flex items-center gap-6 border-b border-slate-200 text-xs font-bold">
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('platform');
-            toast.info('Platform Templates are managed via SaaS Plan. Showing Tenant workspace active roles.');
-          }}
-          className={`pb-3 transition-colors ${
-            activeTab === 'platform'
-              ? 'border-b-2 border-[#4F46E5] text-[#4F46E5] font-extrabold'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          Platform Templates
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('tenant')}
-          className={`pb-3 transition-colors ${
-            activeTab === 'tenant'
-              ? 'border-b-2 border-[#4F46E5] text-[#4F46E5] font-extrabold'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          Tenant Roles
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab('preview');
-            toast.info('Access Preview evaluates active session authorization tokens.');
-          }}
-          className={`pb-3 transition-colors ${
-            activeTab === 'preview'
-              ? 'border-b-2 border-[#4F46E5] text-[#4F46E5] font-extrabold'
-              : 'text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          Access Preview
-        </button>
       </div>
 
       {/* 4 KPI Stat Cards */}
