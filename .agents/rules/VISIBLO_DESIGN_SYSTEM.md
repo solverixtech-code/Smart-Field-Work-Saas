@@ -81,6 +81,12 @@ This document establishes the binding design system, component standards, typogr
    - Set fixed container height bounds (`min-h-[560px] flex flex-col justify-between`) and enforce fixed trigger/input heights (`h-10 min-h-[40px]`) so frames remain 100% rock-solid, fixed, and pixel-stable.
    - **Error Handling (Floating Toast Only)**: Always rely on floating Toast Notifications (e.g. `toast.error(...)`) for error alerts. Never inject dynamic inline error banner blocks that stretch container height or push down surrounding inputs/buttons. Use subtle input border highlighting (`border-rose-400 bg-rose-50/20`) for field-level feedback.
 
+5. **Zero Layout Shift on Board/List Drag-and-Drop & Background Reloads (STRICT BINDING RULE)**:
+   - When moving cards, switching stages (e.g. Sales Pipeline Kanban boards, sales cards, task boards, or lead statuses), NEVER unmount the board or replace the board with a small loading indicator/spinner during mutations or background reloads.
+   - Unmounting the board causes lower components (such as bottom analytics cards, "Top Active Deal", KPI summaries, charts) to shoot abruptly to the top of the viewport for a split second before snapping back down, creating an amateur, jarring, and broken user experience.
+   - **Optimistic UI Updates**: Card position, column stage, and stage count badges MUST update immediately on drop in local state (0ms delay).
+   - **In-Place Background Sync**: Only render a full container loading skeleton on initial page mount when no cached/previous data exists (`loading && !data`). During background mutations and query reloads (`reload()`), the board must remain fully mounted and stable in-place with fixed minimum container height (`min-h-[460px]`), displaying at most a subtle, non-disruptive inline refresh spinner in the section header that introduces zero layout shift.
+
 ---
 
 ## 5. Sidebar Navigation & Active States
