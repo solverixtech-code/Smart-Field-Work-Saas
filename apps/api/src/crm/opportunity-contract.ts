@@ -46,8 +46,10 @@ export const opportunityFilters = z.object({
 });
 
 export const opportunityQuery = masterPage
+  .omit({ limit: true })
   .merge(opportunityFilters)
   .extend({
+    limit: z.coerce.number().int().min(1).max(500).default(25),
     sortBy: z.enum(["title", "amount", "createdAt", "updatedAt"]).default("createdAt"),
     sortDirection: z.enum(["asc", "desc"]).default("desc"),
   });

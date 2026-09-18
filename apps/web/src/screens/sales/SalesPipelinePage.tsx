@@ -63,7 +63,10 @@ export default function SalesPipelinePage() {
   const masterValues = mastersResult.data?.items || [];
   const stagesList = defaultStages.map((defStage) => {
     const matchedMaster = masterValues.find(
-      (m) => m.name.toLowerCase() === defStage.code.toLowerCase(),
+      (m) =>
+        (m.code && m.code.toLowerCase() === defStage.code.toLowerCase()) ||
+        (m.name && m.name.toLowerCase() === defStage.code.toLowerCase()) ||
+        (m.name && m.name.toLowerCase() === defStage.title.toLowerCase()),
     );
     const summaryStage = summary?.stages.find(
       (s) => s.code.toLowerCase() === defStage.code.toLowerCase(),

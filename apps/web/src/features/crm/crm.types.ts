@@ -79,6 +79,8 @@ export interface ListQuery {
 export interface MasterOption {
   id: string;
   name: string;
+  code?: string;
+  displayColor?: string | null;
   selectable: boolean;
 }
 export type MasterCode = "business_type" | "lead_source" | "contact_role" | "deal_stage";
