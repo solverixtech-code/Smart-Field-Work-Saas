@@ -11,7 +11,7 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Select, SelectOption } from '../../components/ui/Select';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockTerritoriesList, mockTerritoryExecutives } from './territoriesData';
+import { mockTerritoriesList, mockTerritoryExecutives, getEmployeeProfile } from './territoriesData';
 import { crmApi } from '../../features/crm/crm.api';
 
 export default function EditTerritoryPage() {
@@ -59,12 +59,15 @@ export default function EditTerritoryPage() {
       .then((res) => {
         if (res && res.items) {
           setManagerOptions(
-            res.items.map((m) => ({
-              value: m.id,
-              label: m.displayName,
-              sublabel: m.role || 'Manager',
-              avatar: m.avatarUrl || undefined,
-            })),
+            res.items.map((m) => {
+              const profile = getEmployeeProfile(m.displayName, m.role, m.avatarUrl);
+              return {
+                value: m.id,
+                label: m.displayName,
+                sublabel: profile.sublabel,
+                avatar: profile.avatar,
+              };
+            }),
           );
         }
       })

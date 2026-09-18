@@ -13,9 +13,9 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { mockTerritoriesList, mockTerritoryExecutives, TerritoryExecutive } from './territoriesData';
+import { Select, SelectOption } from '../../components/ui/Select';
+import { mockTerritoriesList, mockTerritoryExecutives, TerritoryExecutive, getEmployeeProfile } from './territoriesData';
 import { crmApi } from '../../features/crm/crm.api';
-import type { SelectOption } from '../../components/ui/Select';
 
 export default function AssignExecutivesPage() {
   const { territoryId } = useParams();
@@ -66,11 +66,15 @@ export default function AssignExecutivesPage() {
       .then((res) => {
         if (res && res.items) {
           setAvailableMembers(
-            res.items.map((m) => ({
-              value: m.id,
-              label: m.displayName,
-              sublabel: m.role || 'Executive',
-            })),
+            res.items.map((m) => {
+              const profile = getEmployeeProfile(m.displayName, m.role, m.avatarUrl);
+              return {
+                value: m.id,
+                label: m.displayName,
+                sublabel: profile.sublabel,
+                avatar: profile.avatar,
+              };
+            }),
           );
         }
       })
@@ -217,18 +221,13 @@ export default function AssignExecutivesPage() {
 
             <div className="space-y-1">
               <label className="font-bold text-slate-700 block">Select Executive</label>
-              <select
+              <Select
+                searchable
+                options={availableMembers}
                 value={selectedMembershipId}
                 onChange={(e) => setSelectedMembershipId(e.target.value)}
-                className="w-full rounded-sm border border-slate-200 bg-white px-3 py-2 text-slate-800 focus:border-[#0D1F3D] focus:outline-none"
-              >
-                <option value="">Select executive...</option>
-                {availableMembers.map((m) => (
-                  <option key={m.value} value={m.value}>
-                    {m.label} ({m.sublabel})
-                  </option>
-                ))}
-              </select>
+                placeholder="Search or select field executive..."
+              />
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">

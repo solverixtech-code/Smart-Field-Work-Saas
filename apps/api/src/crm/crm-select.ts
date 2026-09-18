@@ -1,7 +1,9 @@
-﻿import { Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 export const ownerSelect = {
   id: true,
-  user: { select: { fullName: true } },
+  designation: true,
+  tenantRole: { select: { name: true, code: true } },
+  user: { select: { fullName: true, avatarUrl: true, role: true } },
 } satisfies Prisma.TenantMembershipSelect;
 export const accountSelect = {
   id: true,

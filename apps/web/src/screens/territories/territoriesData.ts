@@ -868,3 +868,148 @@ export const mockTerritoryExecutives: TerritoryExecutive[] = [
     status: 'In Transit',
   },
 ];
+
+// ─── KNOWN EMPLOYEE DIRECTORY & PROFILE RESOLVER ──────────────────────────────
+export interface EmployeeProfileInfo {
+  avatar: string;
+  designation: string;
+  team: string;
+  sublabel: string;
+}
+
+export const KNOWN_EMPLOYEE_PROFILES: Record<
+  string,
+  { avatar: string; designation: string; team: string }
+> = {
+  'Amit Sharma': {
+    avatar:
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=200',
+    designation: 'Senior Sales Manager',
+    team: 'Mumbai Central',
+  },
+  'Deepak Patel': {
+    avatar:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
+    designation: 'Territory Manager',
+    team: 'Mumbai Suburban',
+  },
+  'Neha Gupta': {
+    avatar:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
+    designation: 'Regional Area Manager',
+    team: 'Western Zone',
+  },
+  'Priya Mehta': {
+    avatar:
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
+    designation: 'Operations & Area Lead',
+    team: 'Mumbai Eastern',
+  },
+  'Ravi Kumar': {
+    avatar:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+    designation: 'Sales Manager',
+    team: 'Mumbai Central',
+  },
+  'Sneha Iyer': {
+    avatar:
+      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200',
+    designation: 'Team Leader',
+    team: 'Andheri Zone',
+  },
+  'Arjun Mehta': {
+    avatar:
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200',
+    designation: 'Senior Executive',
+    team: 'Mumbai Central',
+  },
+  'Neha Sharma': {
+    avatar:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
+    designation: 'Sales Executive',
+    team: 'Mumbai Central',
+  },
+  'Pooja Yadav': {
+    avatar:
+      'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
+    designation: 'Field Representative',
+    team: 'Mumbai Central',
+  },
+  'Rakesh Patel': {
+    avatar:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
+    designation: 'Sales Executive',
+    team: 'Mumbai Central',
+  },
+  'Kiran Jadhav': {
+    avatar:
+      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200',
+    designation: 'Field Representative',
+    team: 'Mumbai Central',
+  },
+  'Vikram Singh': {
+    avatar:
+      'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=200',
+    designation: 'Senior Field Executive',
+    team: 'Mumbai Central',
+  },
+  'Rahul Sharma': {
+    avatar:
+      'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=200',
+    designation: 'Field Executive',
+    team: 'Mumbai Central',
+  },
+  'Sunita Patel': {
+    avatar:
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+    designation: 'Finance Operations Lead',
+    team: 'Finance & Ops',
+  },
+  'Deepak Raul': {
+    avatar:
+      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=200',
+    designation: 'Sales Manager',
+    team: 'Borivali Zone',
+  },
+};
+
+const DEFAULT_AVATARS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
+  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=200',
+];
+
+export function getEmployeeProfile(
+  name: string,
+  rawRole?: string | null,
+  rawAvatar?: string | null,
+  defaultTeam = 'Mumbai Central'
+): EmployeeProfileInfo {
+  const cleanName = (name || '').trim();
+  const known = KNOWN_EMPLOYEE_PROFILES[cleanName];
+
+  let avatar = rawAvatar || known?.avatar;
+  if (!avatar) {
+    let hash = 0;
+    for (let i = 0; i < cleanName.length; i++) hash = (hash << 5) - hash + cleanName.charCodeAt(i);
+    const idx = Math.abs(hash) % DEFAULT_AVATARS.length;
+    avatar = DEFAULT_AVATARS[idx];
+  }
+
+  let designation = known?.designation;
+  if (!designation) {
+    if (rawRole && rawRole !== 'Manager' && rawRole !== 'Executive') {
+      designation = rawRole;
+    } else {
+      designation = rawRole || 'Field Executive';
+    }
+  }
+
+  const team = known?.team || defaultTeam;
+  const sublabel = `${designation} • ${team}`;
+
+  return { avatar, designation, team, sublabel };
+}

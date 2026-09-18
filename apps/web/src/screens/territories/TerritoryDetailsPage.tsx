@@ -208,28 +208,28 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               className="h-7 w-7 rounded-full object-cover border border-slate-200"
             />
             <div>
-              <span className="text-[10px] text-slate-400 font-bold block">Manager</span>
+              <span className="text-xs font-semibold text-slate-500 block">Manager</span>
               <span className="font-extrabold text-[#0D1F3D]">{territory.managerName}</span>
             </div>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Team Size</span>
+            <span className="text-xs font-semibold text-slate-500 block">Team Size</span>
             <span className="font-extrabold text-[#0D1F3D]">14 Executives</span>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Coverage Area</span>
-            <span className="font-extrabold text-slate-700">{territory.areaKm2} km²</span>
+            <span className="text-xs font-semibold text-slate-500 block">Coverage Area</span>
+            <span className="font-extrabold text-[#0D1F3D]">{territory.areaKm2} km²</span>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Total Businesses</span>
+            <span className="text-xs font-semibold text-slate-500 block">Total Businesses</span>
             <span className="font-extrabold text-[#0D1F3D]">168</span>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Active Businesses</span>
+            <span className="text-xs font-semibold text-slate-500 block">Active Businesses</span>
             <span className="font-extrabold text-emerald-600">142</span>
           </div>
         </div>
@@ -380,12 +380,12 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-xs space-y-3 text-xs font-semibold">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <h3 className="text-xs font-extrabold text-[#0D1F3D]">Top Executives (This Month)</h3>
-                  <span className="text-[10px] text-slate-400 font-bold">Top Performers</span>
+                  <span className="text-xs font-semibold text-slate-500">Top Performers</span>
                 </div>
 
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400">
+                    <tr className="border-b border-slate-200 text-xs font-bold text-slate-700">
                       <th className="py-2">Executive</th>
                       <th className="py-2 text-center">Visits</th>
                       <th className="py-2 text-right">Revenue (₹)</th>
@@ -431,7 +431,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 <div className="relative py-2 flex flex-col items-center justify-center">
                   <div className="h-28 w-28 rounded-full border-8 border-emerald-500 border-b-slate-100 border-l-emerald-500 flex flex-col items-center justify-center shadow-inner">
                     <span className="text-2xl font-extrabold text-[#0D1F3D]">67%</span>
-                    <span className="text-[9px] font-bold text-slate-400">Overall</span>
+                    <span className="text-xs font-semibold text-slate-500">Overall</span>
                   </div>
                 </div>
 
@@ -627,7 +627,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                   style={{ width: '93.3%' }}
                 />
               </div>
-              <div className="flex justify-between text-[10px] font-bold text-slate-400">
+              <div className="flex justify-between text-[11px] font-semibold text-slate-500">
                 <span>0%</span>
                 <span>50% Milestone</span>
                 <span>80% Base Goal</span>
@@ -909,11 +909,11 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 <h4 className="text-xs font-extrabold text-[#0D1F3D]">Territory Health Score</h4>
                 <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
                   <div>
-                    <span className="text-[10px] font-bold text-slate-400 block">Overall Territory Score</span>
+                    <span className="text-xs font-semibold text-slate-500 block">Overall Territory Score</span>
                     <span className="text-xl font-extrabold text-emerald-600">88.5 / 100</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-bold text-slate-400 block">Status</span>
+                    <span className="text-xs font-semibold text-slate-500 block">Status</span>
                     <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Optimal</span>
                   </div>
                 </div>
@@ -1174,7 +1174,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
               <div className="border-t border-slate-100 pt-2 flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 font-bold block">Assigned Executive</span>
+                  <span className="text-xs font-semibold text-slate-500 block">Assigned Executive</span>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <img
                       src={selectedBusiness.assignedToAvatar}
@@ -1185,7 +1185,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-slate-400 font-bold block">Last Visit</span>
+                  <span className="text-xs font-semibold text-slate-500 block">Last Visit</span>
                   <span className="font-extrabold text-slate-700">{selectedBusiness.lastVisitDate}</span>
                 </div>
               </div>
