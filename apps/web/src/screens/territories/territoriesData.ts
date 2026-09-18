@@ -1,3 +1,5 @@
+import type { TerritoryDto } from '../../features/crm/crm.types';
+
 export interface TerritoryHierarchy {
   country: string;
   state: string;
@@ -6,6 +8,68 @@ export interface TerritoryHierarchy {
   area: string;
   pincode: string;
   microTerritory?: string;
+}
+
+export function mapTerritoryDtoToItem(dto: TerritoryDto): TerritoryItem {
+  const latestTarget = dto.targets?.[0];
+  const monthlyTarget = Number(latestTarget?.monthlyTarget || 0);
+  const monthlyAchieved = Number(latestTarget?.monthlyAchieved || 0);
+  const performancePercentage =
+    monthlyTarget > 0 ? Math.min(100, Math.round((monthlyAchieved / monthlyTarget) * 100)) : 0;
+
+  return {
+    id: dto.id,
+    code: dto.code,
+    name: dto.name,
+    regionArea: dto.regionArea || (dto.city ? `${dto.city} – ${dto.name}` : dto.name),
+    city: dto.city || 'Mumbai',
+    managerName: dto.managerMembership?.user?.fullName || 'Unassigned',
+    managerAvatar:
+      dto.managerMembership?.user?.avatarUrl ||
+      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+    managerRole: dto.managerMembership?.tenantRole?.name || 'Manager',
+    executivesCount: dto._count?.members ?? (dto.members?.length || 0),
+    teamLeadsCount: 0,
+    monthlyTarget,
+    monthlyAchieved,
+    monthlyTargetFormatted: `₹ ${monthlyTarget.toLocaleString('en-IN')}`,
+    monthlyAchievedFormatted: `₹ ${monthlyAchieved.toLocaleString('en-IN')}`,
+    performancePercentage,
+    status: dto.status === 'ACTIVE' ? 'Active' : 'Inactive',
+    color: dto.color || '#2563EB',
+    description: dto.description || '',
+    createdOn: dto.createdAt
+      ? new Date(dto.createdAt).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })
+      : '',
+    lastUpdated: dto.updatedAt
+      ? new Date(dto.updatedAt).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })
+      : '',
+    createdBy: dto.createdByMembership?.user?.fullName || 'System',
+    areaKm2: Number(dto.areaKm2 || 0),
+    perimeterKm: Number(dto.perimeterKm || 0),
+    estBusinesses: dto.estBusinesses || (dto._count?.accounts || 0),
+    estPopulation: dto.estPopulation || '-',
+    activeBusinessesCount: dto._count?.accounts || 0,
+    totalVisitsThisMonth: 0,
+    pathPoints: dto.pathPoints || [],
+    hierarchy: {
+      country: dto.country || 'India',
+      state: dto.state || 'Maharashtra',
+      city: dto.city || 'Mumbai',
+      zone: dto.zone || '',
+      area: dto.area || dto.name,
+      microTerritory: dto.microTerritory || '',
+      pincode: dto.pincode || '',
+    },
+  };
 }
 
 export interface TerritoryItem {

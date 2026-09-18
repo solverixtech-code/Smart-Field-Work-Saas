@@ -8,11 +8,26 @@ import { LeadController } from "./lead.controller";
 import { LeadService } from "./lead.service";
 import { OpportunityController } from "./opportunity.controller";
 import { OpportunityService } from "./opportunity.service";
+import { TerritoryController } from "./territory.controller";
+import { TerritoryRepository } from "./territory.repository";
+import { TerritoryService } from "./territory.service";
 
 @Module({
   imports: [PersistenceModule, MasterCoreModule],
-  controllers: [CrmController, LeadController, OpportunityController],
-  providers: [CrmRepository, CrmService, LeadService, OpportunityService],
-  exports: [OpportunityService],
+  controllers: [
+    CrmController,
+    LeadController,
+    OpportunityController,
+    TerritoryController,
+  ],
+  providers: [
+    CrmRepository,
+    CrmService,
+    LeadService,
+    OpportunityService,
+    TerritoryRepository,
+    TerritoryService,
+  ],
+  exports: [OpportunityService, TerritoryService],
 })
 export class CrmModule {}

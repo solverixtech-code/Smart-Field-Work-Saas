@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -19,22 +19,24 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Select, SelectOption } from '../../components/ui/Select';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockTerritoriesList, mockTerritoryExecutives } from './territoriesData';
+import { crmApi } from '../../features/crm/crm.api';
+import { mockTerritoryExecutives } from './territoriesData';
 
 export default function CreateTerritoryPage() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [managerOptions, setManagerOptions] = useState<SelectOption[]>([]);
 
   // Form State
   const [territoryName, setTerritoryName] = useState('');
-  const [territoryCode, setTerritoryCode] = useState('T011');
+  const [territoryCode, setTerritoryCode] = useState('');
   const [regionArea, setRegionArea] = useState('');
   const [city, setCity] = useState('Mumbai');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
   const [color, setColor] = useState('#2563EB');
 
-  const [managerName, setManagerName] = useState('');
+  const [managerMembershipId, setManagerMembershipId] = useState('');
   const [revenueTarget, setRevenueTarget] = useState('');
   const [visitTarget, setVisitTarget] = useState('');
   const [collectionTarget, setCollectionTarget] = useState('');
@@ -52,19 +54,57 @@ export default function CreateTerritoryPage() {
   const [areaKm2, setAreaKm2] = useState<number>(18.45);
   const [perimeterKm, setPerimeterKm] = useState<number>(23.67);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    crmApi
+      .owners({ limit: 100 })
+      .then((res) => {
+        if (res && res.items) {
+          setManagerOptions(
+            res.items.map((m) => ({
+              value: m.id,
+              label: m.displayName,
+              sublabel: m.role || 'Manager',
+              avatar: m.avatarUrl || undefined,
+            })),
+          );
+        }
+      })
+      .catch(() => {
+        // graceful fallback if not available
+      });
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!territoryName.trim()) {
       toast.error('Please enter a Territory Name');
       return;
     }
 
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      setIsSubmitting(true);
+      await crmApi.createTerritory({
+        name: territoryName.trim(),
+        code: territoryCode.trim() || undefined,
+        regionArea: regionArea.trim() || undefined,
+        city: city.trim() || undefined,
+        description: description.trim() || undefined,
+        status: status === 'Active' ? 'ACTIVE' : 'INACTIVE',
+        color,
+        managerMembershipId: managerMembershipId || undefined,
+        monthlyTarget: Number(revenueTarget) || 0,
+        areaKm2,
+        perimeterKm,
+        pathPoints: boundaryPoints,
+      });
+
       toast.success(`Territory "${territoryName}" created successfully!`);
       navigate('/admin/territories');
-    }, 600);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to create territory');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -235,33 +275,13 @@ export default function CreateTerritoryPage() {
             <div>
               <Select
                 searchable
-                value={managerName}
-                onChange={(e) => setManagerName(e.target.value)}
+                value={managerMembershipId}
+                onChange={(e) => setManagerMembershipId(e.target.value)}
                 placeholder="Search and select manager..."
-                options={[
+                options={managerOptions.length > 0 ? managerOptions : [
                   {
-                    value: 'Vikram Singh',
-                    label: 'Vikram Singh',
-                    sublabel: 'Sales Manager',
-                    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-                  },
-                  {
-                    value: 'Neha Sharma',
-                    label: 'Neha Sharma',
-                    sublabel: 'Sales Manager',
-                    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
-                  },
-                  {
-                    value: 'Arjun Mehta',
-                    label: 'Arjun Mehta',
-                    sublabel: 'Sales Manager',
-                    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
-                  },
-                  {
-                    value: 'Pooja Yadav',
-                    label: 'Pooja Yadav',
-                    sublabel: 'Team Leader',
-                    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=200',
+                    value: '',
+                    label: 'No managers available',
                   },
                 ]}
               />

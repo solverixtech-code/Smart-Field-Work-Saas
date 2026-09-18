@@ -12,11 +12,14 @@ import { Button } from '../../components/ui/Button';
 import { Select, SelectOption } from '../../components/ui/Select';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import { mockTerritoriesList, mockTerritoryExecutives } from './territoriesData';
+import { crmApi } from '../../features/crm/crm.api';
 
 export default function EditTerritoryPage() {
   const { territoryId } = useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [revision, setRevision] = useState(1);
+  const [managerOptions, setManagerOptions] = useState<SelectOption[]>([]);
 
   const territory =
     mockTerritoriesList.find((t) => t.id === territoryId || t.code === territoryId) ||
@@ -31,7 +34,7 @@ export default function EditTerritoryPage() {
   const [status, setStatus] = useState(territory.status);
   const [color, setColor] = useState(territory.color);
 
-  const [managerName, setManagerName] = useState(territory.managerName);
+  const [managerMembershipId, setManagerMembershipId] = useState('');
   const [revenueTarget, setRevenueTarget] = useState('1400000');
   const [visitTarget, setVisitTarget] = useState('250');
   const [collectionTarget, setCollectionTarget] = useState('930000');
@@ -50,14 +53,76 @@ export default function EditTerritoryPage() {
     'High potential commercial area with good market reach and business density.',
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  React.useEffect(() => {
+    crmApi
+      .owners({ limit: 100 })
+      .then((res) => {
+        if (res && res.items) {
+          setManagerOptions(
+            res.items.map((m) => ({
+              value: m.id,
+              label: m.displayName,
+              sublabel: m.role || 'Manager',
+              avatar: m.avatarUrl || undefined,
+            })),
+          );
+        }
+      })
+      .catch(() => {});
+
+    if (territoryId) {
+      crmApi
+        .territory(territoryId)
+        .then((data) => {
+          if (data) {
+            setTerritoryName(data.name);
+            setTerritoryCode(data.code);
+            if (data.regionArea) setRegionArea(data.regionArea);
+            if (data.city) setCity(data.city);
+            if (data.description) setDescription(data.description);
+            setStatus(data.status === 'ACTIVE' ? 'Active' : 'Inactive');
+            if (data.color) setColor(data.color);
+            if (data.managerMembershipId) setManagerMembershipId(data.managerMembershipId);
+            setRevision(data.revision);
+            if (data.targets?.[0]?.monthlyTarget) {
+              setRevenueTarget(String(data.targets[0].monthlyTarget));
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  }, [territoryId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    if (!territoryName.trim()) {
+      toast.error('Please enter a Territory Name');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      if (territoryId) {
+        await crmApi.updateTerritory(territoryId, {
+          expectedRevision: revision,
+          name: territoryName.trim(),
+          code: territoryCode.trim() || undefined,
+          regionArea: regionArea.trim() || undefined,
+          city: city.trim() || undefined,
+          description: description.trim() || undefined,
+          status: status === 'Active' ? 'ACTIVE' : 'INACTIVE',
+          color,
+          managerMembershipId: managerMembershipId || undefined,
+          monthlyTarget: Number(revenueTarget) || 0,
+        });
+      }
       toast.success(`Territory "${territoryName}" updated successfully!`);
-      navigate(`/admin/territories/${territory.id}`);
-    }, 600);
+      navigate(`/admin/territories/${territoryId || territory.id}`);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to update territory');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -226,29 +291,19 @@ export default function EditTerritoryPage() {
 
             <Select
               searchable
-              value={managerName}
-              onChange={(e) => setManagerName(e.target.value)}
+              value={managerMembershipId}
+              onChange={(e) => setManagerMembershipId(e.target.value)}
               placeholder="Search and select manager..."
-              options={[
-                {
-                  value: 'Vikram Singh',
-                  label: 'Vikram Singh',
-                  sublabel: 'Sales Manager',
-                  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
-                },
-                {
-                  value: 'Neha Sharma',
-                  label: 'Neha Sharma',
-                  sublabel: 'Sales Manager',
-                  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=200',
-                },
-                {
-                  value: 'Arjun Mehta',
-                  label: 'Arjun Mehta',
-                  sublabel: 'Sales Manager',
-                  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
-                },
-              ]}
+              options={
+                managerOptions.length > 0
+                  ? managerOptions
+                  : [
+                      {
+                        value: '',
+                        label: 'No managers available',
+                      },
+                    ]
+              }
             />
           </div>
 

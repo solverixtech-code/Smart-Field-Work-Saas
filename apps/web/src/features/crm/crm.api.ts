@@ -65,4 +65,42 @@ export const crmApi: CrmService = {
   deleteDeal: async (id, signal) => {
     await api.delete(`${root}/deals/${id}`, { signal });
   },
+
+  territories: async (params, signal) =>
+    (await api.get(`${root}/territories`, { params, signal })).data,
+  territory: async (id, signal) =>
+    (await api.get(`${root}/territories/${id}`, { signal })).data,
+  createTerritory: async (body, signal) =>
+    (await api.post(`${root}/territories`, body, { signal })).data,
+  updateTerritory: async (id, body, signal) =>
+    (await api.patch(`${root}/territories/${id}`, body, { signal })).data,
+  deleteTerritory: async (id, expectedRevision, signal) => {
+    await api.delete(`${root}/territories/${id}`, {
+      data: { expectedRevision },
+      signal,
+    });
+  },
+
+  territoryMembers: async (id, signal) =>
+    (await api.get(`${root}/territories/${id}/members`, { signal })).data,
+  assignTerritoryMember: async (id, body, signal) =>
+    (await api.post(`${root}/territories/${id}/members`, body, { signal })).data,
+  unassignTerritoryMember: async (id, membershipId, signal) => {
+    await api.delete(`${root}/territories/${id}/members/${membershipId}`, { signal });
+  },
+
+  territoryBusinesses: async (id, signal) =>
+    (await api.get(`${root}/territories/${id}/businesses`, { signal })).data,
+  assignTerritoryBusiness: async (id, accountId, signal) =>
+    (await api.post(`${root}/territories/${id}/businesses`, { accountId }, { signal })).data,
+  unassignTerritoryBusiness: async (id, accountId, signal) => {
+    await api.delete(`${root}/territories/${id}/businesses/${accountId}`, { signal });
+  },
+
+  territoryTargets: async (id, signal) =>
+    (await api.get(`${root}/territories/${id}/targets`, { signal })).data,
+  updateTerritoryTarget: async (id, body, signal) =>
+    (await api.put(`${root}/territories/${id}/targets`, body, { signal })).data,
+  territoryPerformance: async (id, signal) =>
+    (await api.get(`${root}/territories/${id}/performance`, { signal })).data,
 };

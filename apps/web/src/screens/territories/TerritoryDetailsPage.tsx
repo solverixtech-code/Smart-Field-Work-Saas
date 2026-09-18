@@ -44,12 +44,31 @@ import {
   mockTerritoryExecutives,
   mockTerritoryBusinesses,
   TerritoryItem,
+  mapTerritoryDtoToItem,
 } from './territoriesData';
 import { mockBusinesses } from '../businesses/businessesData';
+import { crmApi } from '../../features/crm/crm.api';
 
 export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { initialTab?: string }) {
   const { territoryId } = useParams();
   const navigate = useNavigate();
+
+  const [liveTerritory, setLiveTerritory] = useState<TerritoryItem | null>(null);
+
+  React.useEffect(() => {
+    if (territoryId) {
+      crmApi
+        .territory(territoryId)
+        .then((data) => {
+          if (data) {
+            setLiveTerritory(mapTerritoryDtoToItem(data));
+          }
+        })
+        .catch(() => {
+          // graceful fallback
+        });
+    }
+  }, [territoryId]);
 
   // Active Tab State (No page jump - seamlessly renders under tab header)
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -112,6 +131,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   });
 
   const territory =
+    liveTerritory ||
     mockTerritoriesList.find((t) => t.id === territoryId || t.code === territoryId) ||
     mockTerritoriesList[0];
 

@@ -72,7 +72,25 @@ export const CRM_PHASE_1_2_PERMISSIONS: PermissionDefinition[] = [
   description: "Lead " + action + " action",
   moduleKey: "crm_leads",
 }));
+export const CRM_TERRITORY_PERMISSIONS: PermissionDefinition[] = [
+  "view",
+  "create",
+  "update",
+  "delete",
+  "assign",
+  "access.own",
+  "access.tenant",
+].map((action) => ({
+  code: "crm.territories." + action,
+  scope: PermissionScope.TENANT,
+  domain: "crm",
+  resource: "territories",
+  action,
+  description: "Territory " + action + " action",
+  moduleKey: "crm_territories",
+}));
 export const PERMISSION_REGISTRY: PermissionDefinition[] = [
+  ...CRM_TERRITORY_PERMISSIONS,
   ...CRM_PHASE_1_2_PERMISSIONS,
   ...CRM_PHASE_1_1_PERMISSIONS,
   { code: 'platform.operations.jobs.view', scope: PermissionScope.PLATFORM, domain: 'platform', resource: 'jobs', action: 'view', description: 'View durable job status and attempt history', moduleKey: 'platform_operations' },

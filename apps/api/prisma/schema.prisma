@@ -873,6 +873,10 @@ model Tenant {
   payrollPeriods   PayrollPeriod[]
   payslips         Payslip[]
   auditLogs        AuditLog[]
+  territories      Territory[]
+  territoryMembers TerritoryMember[]
+  territoryBoundaryPoints TerritoryBoundaryPoint[]
+  territoryTargets TerritoryTarget[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -950,6 +954,11 @@ model TenantMembership {
   privateMedia MediaAsset[]
   provisioningOwnership TenantProvisioning[]
   devicePushTokens DevicePushToken[]
+  managedTerritories Territory[] @relation("TerritoryManager")
+  createdTerritories Territory[] @relation("TerritoryCreator")
+  updatedTerritories Territory[] @relation("TerritoryUpdater")
+  territoryMemberships TerritoryMember[] @relation("TerritoryMemberMembership")
+  assignedTerritoryMemberships TerritoryMember[] @relation("TerritoryMemberAssigner")
   id                    String                 @id @default(uuid())
   tenantId              String
   tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -1565,9 +1574,12 @@ model Account {
   updatedByMembership TenantMembership @relation("AccountUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
   contacts Contact[]
   opportunities Opportunity[]
+  territoryId String?
+  territory Territory? @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
   @@unique([id, tenantId])
   @@index([tenantId, deletedAt, createdAt, id])
   @@index([tenantId, ownerMembershipId, deletedAt])
+  @@index([tenantId, territoryId, deletedAt])
 }
 
 model Contact {
@@ -1675,6 +1687,8 @@ model Lead {
   histories LeadHistory[]
   conversion LeadConversionCommand?
   opportunity Opportunity?
+  territoryId String?
+  territory Territory? @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
   @@unique([id, tenantId])
   @@unique([tenantId, leadCode])
   @@index([tenantId, deletedAt, createdAt, id])
@@ -1686,6 +1700,7 @@ model Lead {
   @@index([tenantId, contactId])
   @@index([tenantId, convertedAccountId])
   @@index([tenantId, convertedContactId])
+  @@index([tenantId, territoryId, deletedAt])
 }
 model LeadHistory {
   id String @id @default(uuid())
@@ -1863,4 +1878,112 @@ model NotificationTemplate {
   @@unique([tenantId, code])
   @@index([tenantId, category])
 }
+
+// ─── Territory Management ───────────────────────────────────────────────────
+model Territory {
+  id                    String            @id @default(uuid())
+  tenantId              String
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  code                  String
+  name                  String
+  regionArea            String?
+  city                  String?
+  country               String?           @default("India")
+  state                 String?           @default("Maharashtra")
+  zone                  String?
+  area                  String?
+  pincode               String?
+  microTerritory        String?
+  description           String?
+  color                 String            @default("#2563EB")
+  status                CrmRecordStatus   @default(ACTIVE)
+
+  managerMembershipId   String?
+  managerMembership     TenantMembership? @relation("TerritoryManager", fields: [managerMembershipId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
+
+  areaKm2               Decimal?          @db.Decimal(10, 2)
+  perimeterKm           Decimal?          @db.Decimal(10, 2)
+  estBusinesses         Int?              @default(0)
+  estPopulation         String?
+
+  revision              Int               @default(1)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  deletedAt             DateTime?
+
+  createdByMembershipId String
+  createdByMembership   TenantMembership  @relation("TerritoryCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  updatedByMembershipId String
+  updatedByMembership   TenantMembership  @relation("TerritoryUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  members               TerritoryMember[]
+  boundaryPoints        TerritoryBoundaryPoint[]
+  targets               TerritoryTarget[]
+  accounts              Account[]
+  leads                 Lead[]
+
+  @@unique([id, tenantId])
+  @@unique([tenantId, code])
+  @@index([tenantId, deletedAt, createdAt, id])
+  @@index([tenantId, managerMembershipId, deletedAt])
+  @@index([tenantId, status, deletedAt])
+  @@index([tenantId, city, deletedAt])
+}
+
+model TerritoryMember {
+  id                    String            @id @default(uuid())
+  tenantId              String
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  territoryId           String
+  territory             Territory         @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
+  membershipId          String
+  membership            TenantMembership  @relation("TerritoryMemberMembership", fields: [membershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  role                  String            @default("FIELD_EXECUTIVE")
+  assignedAt            DateTime          @default(now())
+  assignedByMembershipId String
+  assignedByMembership  TenantMembership  @relation("TerritoryMemberAssigner", fields: [assignedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([id, tenantId])
+  @@unique([territoryId, membershipId])
+  @@index([tenantId, territoryId])
+  @@index([tenantId, membershipId])
+}
+
+model TerritoryBoundaryPoint {
+  id                    String            @id @default(uuid())
+  tenantId              String
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  territoryId           String
+  territory             Territory         @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
+  sequence              Int
+  latitude              Float
+  longitude             Float
+
+  @@unique([territoryId, sequence])
+  @@index([tenantId, territoryId, sequence])
+}
+
+model TerritoryTarget {
+  id                    String            @id @default(uuid())
+  tenantId              String
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  territoryId           String
+  territory             Territory         @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
+  period                String
+  monthlyTarget         Decimal           @default(0) @db.Decimal(14, 2)
+  monthlyAchieved       Decimal           @default(0) @db.Decimal(14, 2)
+  visitTarget           Int               @default(0)
+  visitAchieved         Int               @default(0)
+  newBusinessTarget     Int               @default(0)
+  newBusinessAchieved   Int               @default(0)
+  collectionTarget      Decimal           @default(0) @db.Decimal(14, 2)
+  collectionAchieved    Decimal           @default(0) @db.Decimal(14, 2)
+  revision              Int               @default(1)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@unique([territoryId, period])
+  @@index([tenantId, territoryId, period])
+}
+
 

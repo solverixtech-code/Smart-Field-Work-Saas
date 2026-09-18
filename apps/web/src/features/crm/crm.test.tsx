@@ -117,6 +117,20 @@ function service(): CrmService {
     updateDeal: vi.fn(rejected),
     updateDealStage: vi.fn(rejected),
     deleteDeal: vi.fn(rejected),
+    territories: vi.fn(rejected),
+    territory: vi.fn(rejected),
+    createTerritory: vi.fn(rejected),
+    updateTerritory: vi.fn(rejected),
+    deleteTerritory: vi.fn(rejected),
+    territoryMembers: vi.fn(rejected),
+    assignTerritoryMember: vi.fn(rejected),
+    unassignTerritoryMember: vi.fn(rejected),
+    territoryBusinesses: vi.fn(rejected),
+    assignTerritoryBusiness: vi.fn(rejected),
+    unassignTerritoryBusiness: vi.fn(rejected),
+    territoryTargets: vi.fn(rejected),
+    updateTerritoryTarget: vi.fn(rejected),
+    territoryPerformance: vi.fn(rejected),
   };
 }
 function failure(status: number) {
