@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   RefreshCw,
@@ -14,24 +14,25 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
-} from 'lucide-react';
-import { Button } from '../../components/ui/Button';
-import { Checkbox } from '../../components/ui/Checkbox';
-import { MapKpiCard } from '../../components/maps/MapKpiCard';
-import { InteractiveMap } from '../../components/maps/InteractiveMap';
+} from "lucide-react";
+import { Button } from "../../components/ui/Button";
+import { Checkbox } from "../../components/ui/Checkbox";
+import { MapKpiCard } from "../../components/maps/MapKpiCard";
+import { InteractiveMap } from "../../components/maps/InteractiveMap";
 import {
   mockTerritoriesList,
   mockTerritoryBusinesses,
   mockTerritoryExecutives,
-} from './territoriesData';
+} from "./territoriesData";
 
 export default function TerritoryMapPage() {
   const { territoryId } = useParams();
   const navigate = useNavigate();
 
   const territory =
-    mockTerritoriesList.find((t) => t.id === territoryId || t.code === territoryId) ||
-    mockTerritoriesList[0];
+    mockTerritoriesList.find(
+      (t) => t.id === territoryId || t.code === territoryId,
+    ) || mockTerritoriesList[0];
 
   // Map Layers Toggle State
   const [showBoundary, setShowBoundary] = useState(true);
@@ -57,13 +58,16 @@ export default function TerritoryMapPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Territory Map</h1>
+              <h1 className="text-2xl font-extrabold text-[#0D1F3D]">
+                Territory Map
+              </h1>
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-bold text-emerald-700 border border-emerald-200">
                 • {territory.status}
               </span>
             </div>
             <p className="text-xs font-semibold text-slate-500 mt-0.5">
-              Visualize boundary, coverage and key points in {territory.name} territory
+              Visualize boundary, coverage and key points in {territory.name}{" "}
+              territory
             </p>
           </div>
 
@@ -71,7 +75,7 @@ export default function TerritoryMapPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.success('Territory map refreshed')}
+              onClick={() => toast.success("Territory map refreshed")}
               className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
             >
               <RefreshCw className="h-3.5 w-3.5" /> Refresh Map
@@ -80,7 +84,9 @@ export default function TerritoryMapPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/admin/territories/${territory.id}/edit`)}
+              onClick={() =>
+                navigate(`/admin/territories/${territory.id}/edit`)
+              }
               className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
             >
               <Edit className="h-3.5 w-3.5" /> Edit Boundary
@@ -89,7 +95,9 @@ export default function TerritoryMapPage() {
             <Button
               variant="accent"
               size="sm"
-              onClick={() => toast.success('Exporting Territory map PNG/PDF...')}
+              onClick={() =>
+                toast.success("Exporting Territory map PNG/PDF...")
+              }
               className="bg-red-600 hover:bg-red-700 text-white font-bold flex items-center gap-1.5 shadow-xs"
             >
               <Download className="h-3.5 w-3.5" /> Export Map
@@ -101,7 +109,9 @@ export default function TerritoryMapPage() {
         <div className="flex flex-wrap items-center gap-6 pt-1 text-xs font-semibold text-slate-600">
           <div className="flex items-center gap-2">
             <MapPin className="h-4 w-4 text-blue-600" />
-            <span className="font-extrabold text-[#0D1F3D]">{territory.name}</span>
+            <span className="font-extrabold text-[#0D1F3D]">
+              {territory.name}
+            </span>
             <span className="font-mono text-slate-400">({territory.code})</span>
             <span className="text-slate-500">{territory.regionArea}</span>
           </div>
@@ -113,34 +123,48 @@ export default function TerritoryMapPage() {
               className="h-6 w-6 rounded-full object-cover border border-slate-200"
             />
             <div>
-              <span className="text-[10px] text-slate-400 font-bold block">Manager</span>
-              <span className="font-extrabold text-[#0D1F3D]">{territory.managerName}</span>
+              <span className="text-[10px] text-slate-400 block">Manager</span>
+              <span className="font-extrabold text-[#0D1F3D]">
+                {territory.managerName}
+              </span>
             </div>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Coverage Area</span>
-            <span className="font-extrabold text-slate-700">{territory.areaKm2} km²</span>
+            <span className="text-[10px] text-slate-400 block">
+              Coverage Area
+            </span>
+            <span className="font-extrabold text-slate-700">
+              {territory.areaKm2} km²
+            </span>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Total Businesses</span>
+            <span className="text-[10px] text-slate-400 block">
+              Total Businesses
+            </span>
             <span className="font-extrabold text-[#0D1F3D]">168</span>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Active Businesses</span>
+            <span className="text-[10px] text-slate-400 block">
+              Active Businesses
+            </span>
             <span className="font-extrabold text-emerald-600">142</span>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Executives</span>
+            <span className="text-[10px] text-slate-400 block">Executives</span>
             <span className="font-extrabold text-blue-600">14</span>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
-            <span className="text-[10px] text-slate-400 font-bold block">Last Updated</span>
-            <span className="font-extrabold text-slate-700">{territory.lastUpdated}</span>
+            <span className="text-[10px] text-slate-400 block">
+              Last Updated
+            </span>
+            <span className="font-extrabold text-slate-700">
+              {territory.lastUpdated}
+            </span>
           </div>
         </div>
       </div>
@@ -163,7 +187,9 @@ export default function TerritoryMapPage() {
                   onChange={(val) => setShowBoundary(val)}
                   label={
                     <span className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                      <span className="text-blue-600 font-mono font-bold">---</span>
+                      <span className="text-blue-600 font-mono font-bold">
+                        ---
+                      </span>
                       <span>Territory Boundary</span>
                     </span>
                   }
@@ -271,21 +297,24 @@ export default function TerritoryMapPage() {
             <div className="space-y-1.5 text-slate-700 text-[11px]">
               <div className="flex justify-between items-center">
                 <span className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Active Businesses
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />{" "}
+                  Active Businesses
                 </span>
                 <span className="font-extrabold text-[#0D1F3D]">142</span>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Inactive Businesses
+                  <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />{" "}
+                  Inactive Businesses
                 </span>
                 <span className="font-extrabold text-[#0D1F3D]">26</span>
               </div>
 
               <div className="flex justify-between items-center">
                 <span className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Leads
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />{" "}
+                  Leads
                 </span>
                 <span className="font-extrabold text-[#0D1F3D]">98</span>
               </div>
@@ -322,7 +351,9 @@ export default function TerritoryMapPage() {
             <div className="space-y-1 text-slate-600 text-[11px]">
               <div className="flex justify-between">
                 <span>Territory Code :</span>
-                <span className="font-mono font-bold text-[#0D1F3D]">{territory.code}</span>
+                <span className="font-mono font-bold text-[#0D1F3D]">
+                  {territory.code}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Region / Area :</span>
@@ -330,7 +361,9 @@ export default function TerritoryMapPage() {
               </div>
               <div className="flex justify-between">
                 <span>Coverage Area :</span>
-                <span className="font-bold text-slate-800">{territory.areaKm2} km²</span>
+                <span className="font-bold text-slate-800">
+                  {territory.areaKm2} km²
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Created On :</span>
@@ -358,16 +391,16 @@ export default function TerritoryMapPage() {
         <div className="lg:col-span-8 flex flex-col">
           <div className="relative rounded-sm border border-slate-200/90 bg-white shadow-xs overflow-hidden flex-1 min-h-[580px]">
             <InteractiveMap
-              mode={showHeatmap ? 'visit-heatmap' : 'live-executives'}
+              mode={showHeatmap ? "visit-heatmap" : "live-executives"}
               executives={
                 showExecutives
                   ? mockTerritoryExecutives.map((exec, idx) => ({
                       id: exec.id,
                       name: exec.name,
                       avatar: exec.avatar,
-                      status: (exec.status as any) || 'On Field',
-                      currentLocation: 'Andheri East, Mumbai',
-                      lastUpdated: '10:25 AM',
+                      status: (exec.status as any) || "On Field",
+                      currentLocation: "Andheri East, Mumbai",
+                      lastUpdated: "10:25 AM",
                       batteryLevel: 85 - idx * 5,
                       lat: 19.115 + idx * 0.008,
                       lng: 72.86 + idx * 0.008,
@@ -385,15 +418,17 @@ export default function TerritoryMapPage() {
                       id: b.id,
                       name: b.name,
                       category: b.category,
-                      address: 'Andheri East, Mumbai',
-                      status: (b.status === 'Active' ? 'Visited' : 'New Prospect') as any,
-                      markerColor: b.status === 'Active' ? 'green' : 'purple',
+                      address: "Andheri East, Mumbai",
+                      status: (b.status === "Active"
+                        ? "Visited"
+                        : "New Prospect") as any,
+                      markerColor: b.status === "Active" ? "green" : "purple",
                       contactPerson: b.contactPerson,
                       phone: b.phone,
                       lastVisitTime: b.lastVisitDate,
                       lat: 19.11 + (idx % 4) * 0.01,
                       lng: 72.85 + (idx % 3) * 0.015,
-                      region: 'Mumbai – Andheri East',
+                      region: "Mumbai – Andheri East",
                     }))
                   : []
               }
@@ -404,7 +439,8 @@ export default function TerritoryMapPage() {
 
             {/* Map Polygon Stats Overlay Footer */}
             <div className="absolute bottom-3 right-3 z-20 rounded-sm border border-slate-200 bg-white/95 px-3 py-1.5 text-xs font-extrabold text-[#0D1F3D] shadow-md">
-              Area: {territory.areaKm2} km² &nbsp;|&nbsp; Perimeter: {territory.perimeterKm} km
+              Area: {territory.areaKm2} km² &nbsp;|&nbsp; Perimeter:{" "}
+              {territory.perimeterKm} km
             </div>
           </div>
         </div>

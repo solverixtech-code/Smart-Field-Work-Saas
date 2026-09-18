@@ -1,8 +1,8 @@
-import React from 'react';
-import { MapPin, Clock, CheckCircle2, Camera, Plus } from 'lucide-react';
-import { Button } from '../../../components/ui/Button';
-import { mockLeadVisits } from '../leadsData';
-import { toast } from 'sonner';
+import React from "react";
+import { MapPin, Clock, CheckCircle2, Camera, Plus } from "lucide-react";
+import { Button } from "../../../components/ui/Button";
+import { mockLeadVisits } from "../leadsData";
+import { toast } from "sonner";
 
 export function LeadVisitsTab() {
   return (
@@ -14,14 +14,15 @@ export function LeadVisitsTab() {
             <span>Field Executive Geotagged Visit Logs</span>
           </h3>
           <p className="text-xs font-medium text-slate-500">
-            GPS verified check-ins, site meeting outcomes, and geotagged client office photos.
+            GPS verified check-ins, site meeting outcomes, and geotagged client
+            office photos.
           </p>
         </div>
 
         <Button
           variant="accent"
           size="sm"
-          onClick={() => toast.info('Schedule Visit modal opened')}
+          onClick={() => toast.info("Schedule Visit modal opened")}
           className="font-bold flex items-center gap-1.5 shadow-xs"
         >
           <Plus className="h-4 w-4" /> Schedule New Visit
@@ -30,7 +31,10 @@ export function LeadVisitsTab() {
 
       <div className="space-y-4">
         {mockLeadVisits.map((visit) => (
-          <div key={visit.id} className="rounded-sm border border-slate-200 bg-slate-50/50 p-5 space-y-3 text-xs">
+          <div
+            key={visit.id}
+            className="rounded-sm border border-slate-200 bg-slate-50/50 p-5 space-y-3 text-xs"
+          >
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
               <div className="flex items-center gap-3">
                 <img
@@ -39,8 +43,12 @@ export function LeadVisitsTab() {
                   className="h-8 w-8 rounded-full object-cover border border-slate-200"
                 />
                 <div>
-                  <p className="font-extrabold text-[#0D1F3D] text-sm">{visit.executiveName}</p>
-                  <p className="text-[10px] text-slate-500 font-medium">Checked in at: {visit.checkInTime}</p>
+                  <p className="font-extrabold text-[#0D1F3D] text-sm">
+                    {visit.executiveName}
+                  </p>
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    Checked in at: {visit.checkInTime}
+                  </p>
                 </div>
               </div>
 
@@ -56,11 +64,16 @@ export function LeadVisitsTab() {
 
             <div className="space-y-2 font-semibold text-slate-700">
               <p className="flex items-center gap-1.5 text-slate-600 font-bold">
-                <MapPin className="h-3.5 w-3.5 text-rose-600" /> {visit.location}
+                <MapPin className="h-3.5 w-3.5 text-rose-600" />{" "}
+                {visit.location}
               </p>
               <div className="p-3 rounded-sm bg-white border border-slate-200/80 space-y-1">
-                <span className="text-[10px] text-slate-400 font-bold block uppercase">Purpose & Outcome</span>
-                <p className="text-slate-800 leading-relaxed font-bold">{visit.purpose}</p>
+                <span className="text-[10px] text-slate-400 block uppercase">
+                  Purpose & Outcome
+                </span>
+                <p className="text-slate-800 leading-relaxed font-bold">
+                  {visit.purpose}
+                </p>
                 <p className="text-slate-600 leading-snug">{visit.outcome}</p>
               </div>
             </div>
@@ -69,7 +82,8 @@ export function LeadVisitsTab() {
             {visit.photos.length > 0 && (
               <div className="space-y-1.5 pt-2">
                 <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-                  <Camera className="h-3.5 w-3.5 text-blue-600" /> Geotagged Site Photos ({visit.photos.length})
+                  <Camera className="h-3.5 w-3.5 text-blue-600" /> Geotagged
+                  Site Photos ({visit.photos.length})
                 </span>
                 <div className="flex items-center gap-3">
                   {visit.photos.map((photo, i) => (
