@@ -9,7 +9,6 @@ import {
   Search,
   Plus,
   RefreshCw,
-  SlidersHorizontal,
   MoreVertical,
   Globe,
   Tag,
@@ -17,23 +16,19 @@ import {
   Info,
   ChevronDown,
   ChevronRight,
-  Shield,
   ShieldCheck,
-  Building2,
-  Target,
-  BarChart3,
-  CreditCard,
   Crown,
   Headphones,
-  Sliders,
   Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  Lock,
   Copy,
   Trash2,
   X,
-  ExternalLink,
+  CreditCard,
+  Building2,
+  Target,
+  BarChart3,
+  Sliders,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -85,8 +80,13 @@ export function TenantRolesPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showNoticeBanner, setShowNoticeBanner] = useState(true);
 
-  // Collapsed modules state
+  // Collapsed modules state: matching reference screen
+  // Lead Management and Businesses & Contacts are expanded, others collapsed by default
   const [collapsedModules, setCollapsedModules] = useState<Record<string, boolean>>({
+    teams: true,
+    reports: true,
+    platform_billing: true,
+    attendance_shifts: true,
     payroll: true,
   });
 
@@ -198,6 +198,14 @@ export function TenantRolesPage() {
       }
       return next;
     });
+  };
+
+  // Toggle collapse state of a module
+  const toggleModuleCollapse = (moduleKey: string) => {
+    setCollapsedModules((prev) => ({
+      ...prev,
+      [moduleKey]: !prev[moduleKey],
+    }));
   };
 
   // Save permission grants
@@ -320,14 +328,14 @@ export function TenantRolesPage() {
     }
   };
 
-  // Role icon helper
+  // Role icon helper matching reference screen
   const getRoleIcon = (code: string) => {
     switch (code) {
       case 'tenant_admin':
         return <Crown className="h-4 w-4 text-amber-500" />;
       case 'sales_manager':
       case 'team_leader':
-        return <Users className="h-4 w-4 text-[#6366F1]" />;
+        return <Users className="h-4 w-4 text-[#4F46E5]" />;
       case 'field_executive':
         return <UserCheck className="h-4 w-4 text-sky-500" />;
       case 'support':
@@ -335,7 +343,29 @@ export function TenantRolesPage() {
       case 'finance_ops':
         return <CreditCard className="h-4 w-4 text-purple-500" />;
       default:
-        return <ShieldCheck className="h-4 w-4 text-indigo-500" />;
+        return <ShieldCheck className="h-4 w-4 text-[#4F46E5]" />;
+    }
+  };
+
+  // Module icon helper
+  const getModuleIcon = (key: string) => {
+    switch (key) {
+      case 'lead_management':
+        return <Target className="h-4 w-4 text-[#4F46E5]" />;
+      case 'businesses_contacts':
+        return <Building2 className="h-4 w-4 text-[#4F46E5]" />;
+      case 'teams':
+        return <Users className="h-4 w-4 text-[#4F46E5]" />;
+      case 'reports':
+        return <BarChart3 className="h-4 w-4 text-[#4F46E5]" />;
+      case 'platform_billing':
+        return <Sliders className="h-4 w-4 text-[#4F46E5]" />;
+      case 'attendance_shifts':
+        return <Clock className="h-4 w-4 text-[#4F46E5]" />;
+      case 'payroll':
+        return <CreditCard className="h-4 w-4 text-[#4F46E5]" />;
+      default:
+        return <ShieldCheck className="h-4 w-4 text-[#4F46E5]" />;
     }
   };
 
@@ -344,7 +374,7 @@ export function TenantRolesPage() {
       {/* Top Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200/80 pb-5">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D] tracking-tight">
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
             Roles & Permissions
           </h1>
           <p className="text-xs text-slate-500 font-medium mt-0.5">
@@ -354,9 +384,9 @@ export function TenantRolesPage() {
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Workspace Pill */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-sm border border-slate-200 bg-white text-xs font-semibold text-slate-700 shadow-2xs">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 shadow-2xs">
             <span className="text-slate-400 font-normal">Workspace:</span>
-            <span className="font-extrabold text-[#0D1F3D]">Mumbai Sales Ops</span>
+            <span className="font-extrabold text-slate-900">Mumbai Sales Ops</span>
             <ChevronDown className="h-3.5 w-3.5 text-slate-400 ml-0.5" />
           </div>
 
@@ -366,18 +396,18 @@ export function TenantRolesPage() {
             size="sm"
             onClick={handleSyncTemplates}
             disabled={isSyncing}
-            className="gap-2 font-bold text-slate-700"
+            className="gap-2 font-bold text-slate-700 hover:text-slate-900 hover:bg-slate-50 border-slate-200 rounded-lg"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin text-[#6366F1]' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin text-[#4F46E5]' : ''}`} />
             Sync Templates
           </Button>
 
-          {/* Add Custom Role Button */}
+          {/* Add Custom Role Button (Vibrant Indigo Theme) */}
           <Button
             variant="primary"
             size="sm"
             onClick={() => setIsCreateModalOpen(true)}
-            className="gap-1.5 font-extrabold bg-[#6366F1] hover:bg-[#4F46E5] text-white border-0 shadow-xs"
+            className="gap-1.5 font-extrabold bg-[#4F46E5] hover:bg-[#4338CA] text-white border-0 shadow-xs rounded-lg"
           >
             <Plus className="h-4 w-4" />
             Add Custom Role
@@ -395,7 +425,7 @@ export function TenantRolesPage() {
           }}
           className={`pb-3 transition-colors ${
             activeTab === 'platform'
-              ? 'border-b-2 border-[#6366F1] text-[#6366F1] font-extrabold'
+              ? 'border-b-2 border-[#4F46E5] text-[#4F46E5] font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -407,7 +437,7 @@ export function TenantRolesPage() {
           onClick={() => setActiveTab('tenant')}
           className={`pb-3 transition-colors ${
             activeTab === 'tenant'
-              ? 'border-b-2 border-[#6366F1] text-[#6366F1] font-extrabold'
+              ? 'border-b-2 border-[#4F46E5] text-[#4F46E5] font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -422,7 +452,7 @@ export function TenantRolesPage() {
           }}
           className={`pb-3 transition-colors ${
             activeTab === 'preview'
-              ? 'border-b-2 border-[#6366F1] text-[#6366F1] font-extrabold'
+              ? 'border-b-2 border-[#4F46E5] text-[#4F46E5] font-extrabold'
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -438,7 +468,7 @@ export function TenantRolesPage() {
           subValue={stats.breakdown}
           icon={Users}
           iconBgColor="bg-indigo-50"
-          iconTextColor="text-indigo-600"
+          iconTextColor="text-[#4F46E5]"
         />
         <KpiCard
           title="Synced Permissions"
@@ -469,9 +499,9 @@ export function TenantRolesPage() {
       {/* Main 3-Column Workspace Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left Column: Role Directory (3 cols on lg, w-80) */}
-        <div className="lg:col-span-3 bg-white rounded-sm border border-slate-200/90 shadow-2xs p-3.5 space-y-3">
+        <div className="lg:col-span-3 bg-white rounded-xl border border-slate-200/80 shadow-xs p-3.5 space-y-3">
           <div className="flex items-center justify-between pb-1">
-            <h2 className="text-xs font-extrabold text-[#0D1F3D]">Role Directory</h2>
+            <h2 className="text-xs font-extrabold text-slate-900">Role Directory</h2>
           </div>
 
           {/* Search Box */}
@@ -482,7 +512,7 @@ export function TenantRolesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search roles..."
-              className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-sm focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#6366F1]"
+              className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50/70 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
             />
           </div>
 
@@ -493,7 +523,7 @@ export function TenantRolesPage() {
               onClick={() => setStatusFilter('all')}
               className={`px-2.5 py-0.5 rounded-full text-[11px] font-extrabold transition-colors ${
                 statusFilter === 'all'
-                  ? 'bg-[#6366F1] text-white'
+                  ? 'bg-[#4F46E5] text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -504,7 +534,7 @@ export function TenantRolesPage() {
               onClick={() => setStatusFilter('synced')}
               className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-colors ${
                 statusFilter === 'synced'
-                  ? 'bg-emerald-600 text-white'
+                  ? 'bg-[#4F46E5] text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -515,7 +545,7 @@ export function TenantRolesPage() {
               onClick={() => setStatusFilter('customized')}
               className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-colors ${
                 statusFilter === 'customized'
-                  ? 'bg-purple-600 text-white'
+                  ? 'bg-[#4F46E5] text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -526,7 +556,7 @@ export function TenantRolesPage() {
               onClick={() => setStatusFilter('default')}
               className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-colors ${
                 statusFilter === 'default'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[#4F46E5] text-white shadow-2xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -555,19 +585,21 @@ export function TenantRolesPage() {
                         setSelectedRoleId(role.id);
                       }
                     }}
-                    className={`p-3 rounded-sm border transition-all cursor-pointer text-left ${
+                    className={`p-3 rounded-xl border transition-all cursor-pointer text-left ${
                       isSelected
                         ? 'border-[#6366F1] bg-[#F5F3FF] shadow-2xs'
-                        : 'border-slate-200/80 bg-white hover:bg-slate-50/80'
+                        : 'border-slate-200/80 bg-white hover:bg-slate-50/70'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-white border border-slate-200">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                          isSelected ? 'bg-white text-[#4F46E5] border-[#C7D2FE]' : 'bg-slate-50 border-slate-200'
+                        }`}>
                           {getRoleIcon(role.code)}
                         </div>
                         <div className="min-w-0">
-                          <h3 className="text-xs font-extrabold text-[#0D1F3D] truncate">
+                          <h3 className="text-xs font-extrabold text-slate-900 truncate">
                             {role.name}
                           </h3>
                           <p className="text-[11px] text-slate-500 font-medium truncate">
@@ -576,7 +608,7 @@ export function TenantRolesPage() {
                         </div>
                       </div>
 
-                      {/* Status Tag */}
+                      {/* Status Tag matching Reference UI */}
                       <span
                         className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
                           role.status === 'default'
@@ -608,23 +640,23 @@ export function TenantRolesPage() {
         {/* Center Column: Role Details & Permissions Matrix (6 cols on lg) */}
         <div className="lg:col-span-6 space-y-4">
           {loadingDetail && !selectedRoleDetail ? (
-            <div className="bg-white rounded-sm border border-slate-200 p-12 text-center text-xs text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-xs text-slate-400">
               Loading role details...
             </div>
           ) : selectedRoleDetail ? (
             <>
               {/* Role Header Banner Card */}
-              <div className="bg-white rounded-sm border border-slate-200/90 shadow-2xs p-4 space-y-3">
+              <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-4 space-y-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-[#EEF2FF] text-[#6366F1] border border-[#C7D2FE]">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#EEF2FF] text-[#4F46E5] border border-[#C7D2FE]">
                       {getRoleIcon(selectedRoleDetail.role.code)}
                     </div>
                     <div>
-                      <h2 className="text-base font-extrabold text-[#0D1F3D]">
+                      <h2 className="text-lg font-bold text-slate-900">
                         {selectedRoleDetail.role.name}
                       </h2>
-                      <span className="text-xs font-mono font-bold text-slate-500">
+                      <span className="text-xs font-mono font-medium text-slate-500">
                         Role Key: {selectedRoleDetail.role.code}
                       </span>
                     </div>
@@ -637,10 +669,10 @@ export function TenantRolesPage() {
                         setDuplicateName(`${selectedRoleDetail.role.name} (Copy)`);
                         setIsDuplicateModalOpen(true);
                       }}
-                      className="p-1.5 text-slate-400 hover:text-slate-700 rounded-sm border border-slate-200 bg-white"
+                      className="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg border border-slate-200 bg-white"
                       title="Duplicate Role"
                     >
-                      <Copy className="h-3.5 w-3.5" />
+                      <Copy className="h-4 w-4" />
                     </button>
                     {!selectedRoleDetail.role.isSystem && (
                       <button
@@ -649,10 +681,10 @@ export function TenantRolesPage() {
                           const roleItem = roles.find((r) => r.id === selectedRoleDetail.role.id);
                           if (roleItem) handleDeleteRole(roleItem);
                         }}
-                        className="p-1.5 text-rose-500 hover:text-rose-700 rounded-sm border border-rose-200 bg-white"
+                        className="p-1.5 text-rose-500 hover:text-rose-700 rounded-lg border border-rose-200 bg-white"
                         title="Delete Role"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     )}
                   </div>
@@ -660,24 +692,24 @@ export function TenantRolesPage() {
 
                 {/* Metadata Chips */}
                 <div className="flex items-center gap-2 flex-wrap text-xs pt-1">
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-blue-50 text-blue-800 border border-blue-200 font-semibold text-[11px]">
-                    <Globe className="h-3 w-3 text-blue-600" /> Scope: {selectedRoleDetail.role.scope}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-200 font-medium text-xs">
+                    <Globe className="h-3.5 w-3.5 text-sky-600" /> Scope: {selectedRoleDetail.role.scope}
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold text-[11px]">
-                    <Sparkles className="h-3 w-3 text-emerald-600" /> Module Entitlement: {selectedRoleDetail.role.moduleEntitlement}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium text-xs">
+                    <Sparkles className="h-3.5 w-3.5 text-emerald-600" /> Module Entitlement: {selectedRoleDetail.role.moduleEntitlement}
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-slate-100 text-slate-700 border border-slate-200 font-semibold text-[11px]">
-                    <Tag className="h-3 w-3 text-slate-500" /> Template Version: {selectedRoleDetail.role.templateVersion}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-medium text-xs">
+                    <Tag className="h-3.5 w-3.5 text-slate-500" /> Template Version: {selectedRoleDetail.role.templateVersion}
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-sm bg-slate-100 text-slate-700 border border-slate-200 font-semibold text-[11px]">
-                    <Clock className="h-3 w-3 text-slate-500" /> Last Updated: {selectedRoleDetail.role.lastUpdated}
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-medium text-xs">
+                    <Clock className="h-3.5 w-3.5 text-slate-500" /> Last Updated: {selectedRoleDetail.role.lastUpdated}
                   </span>
                 </div>
               </div>
 
-              {/* Informational Banner */}
+              {/* Informational Banner (Lavender Theme matching Reference Screen) */}
               {showNoticeBanner && (
-                <div className="flex items-center justify-between gap-3 px-3.5 py-2.5 bg-[#F5F3FF] border border-[#DDD6FE] rounded-sm text-xs font-medium text-[#5B21B6]">
+                <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#F5F3FF] border border-[#DDD6FE] rounded-lg text-xs font-medium text-[#6B21A8]">
                   <div className="flex items-center gap-2">
                     <Info className="h-4 w-4 text-[#7C3AED] shrink-0" />
                     <span>Customized grants are preserved during template sync.</span>
@@ -687,16 +719,16 @@ export function TenantRolesPage() {
                     onClick={() => setShowNoticeBanner(false)}
                     className="text-[#7C3AED] hover:text-[#5B21B6]"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
               )}
 
               {/* Module Permissions Matrix Table */}
-              <div className="bg-white rounded-sm border border-slate-200/90 shadow-2xs overflow-hidden">
-                <div className="p-3.5 border-b border-slate-200 flex items-center justify-between">
-                  <h3 className="text-xs font-extrabold text-[#0D1F3D]">Module Permissions</h3>
-                  <span className="text-[11px] font-semibold text-slate-400">
+              <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="text-xs font-extrabold text-slate-900">Module Permissions</h3>
+                  <span className="text-[11px] font-semibold text-slate-500">
                     {currentGrants.size} permissions enabled
                   </span>
                 </div>
@@ -704,60 +736,62 @@ export function TenantRolesPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-600 font-extrabold text-[11px]">
-                        <th className="py-2.5 px-4 w-1/4">Module</th>
-                        <th className="py-2.5 px-4 w-1/2">Actions</th>
-                        <th className="py-2.5 px-4 w-1/4">Record Scope</th>
+                      <tr className="border-b border-slate-100 bg-slate-50/60 text-slate-600 font-extrabold text-[11px]">
+                        <th className="py-2.5 px-4 w-[28%] whitespace-nowrap">Module</th>
+                        <th className="py-2.5 px-4 w-[50%]">Actions</th>
+                        <th className="py-2.5 px-4 w-[22%] whitespace-nowrap">Record Scope</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {selectedRoleDetail.permissionModules.map((mod) => {
-                        const isCollapsed = collapsedModules[mod.moduleKey];
-                        return (
-                          <React.Fragment key={mod.moduleKey}>
-                            <tr className="hover:bg-slate-50/60 transition-colors">
-                              {/* Module Name + Collapse Toggle */}
-                              <td className="py-3 px-4 font-bold text-[#0D1F3D] align-top">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setCollapsedModules((prev) => ({
-                                      ...prev,
-                                      [mod.moduleKey]: !prev[mod.moduleKey],
-                                    }))
-                                  }
-                                  className="flex items-center gap-2 hover:text-[#6366F1] transition-colors"
-                                >
-                                  {isCollapsed ? (
-                                    <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
-                                  ) : (
-                                    <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
-                                  )}
-                                  <span>{mod.moduleName}</span>
-                                </button>
-                              </td>
+                        const isCollapsed = Boolean(collapsedModules[mod.moduleKey]);
 
-                              {/* Action Toggles */}
-                              <td className="py-3 px-4 align-top">
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                        return (
+                          <tr key={mod.moduleKey} className="hover:bg-slate-50/50 transition-colors">
+                            {/* Module Name + Collapsible Toggle */}
+                            <td className="py-3 px-4 align-top whitespace-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => toggleModuleCollapse(mod.moduleKey)}
+                                className="flex items-center gap-2 text-left hover:text-[#4F46E5] group cursor-pointer select-none"
+                              >
+                                <span className="text-slate-400 group-hover:text-[#4F46E5] transition-transform">
+                                  {isCollapsed ? (
+                                    <ChevronRight className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronDown className="h-4 w-4" />
+                                  )}
+                                </span>
+                                <div className="flex items-center gap-1.5 font-bold text-slate-900">
+                                  {getModuleIcon(mod.moduleKey)}
+                                  <span className="text-xs">{mod.moduleName}</span>
+                                </div>
+                              </button>
+                            </td>
+
+                            {/* Actions Column: Aligned Grid or Compact Line */}
+                            <td className="py-3 px-4 align-top">
+                              {isCollapsed ? (
+                                /* Collapsed Row: Show primary actions compactly on a single line */
+                                <div className="flex items-center gap-4 flex-wrap">
                                   {mod.actions.map((act) => {
                                     const isGranted = currentGrants.has(act.code);
                                     return (
                                       <label
                                         key={act.code}
-                                        className="flex items-center gap-1.5 cursor-pointer select-none"
+                                        className="flex items-center gap-1.5 cursor-pointer select-none group"
                                       >
                                         <button
                                           type="button"
                                           role="switch"
                                           aria-checked={isGranted}
                                           onClick={() => togglePermission(act.code)}
-                                          className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
-                                            isGranted ? 'bg-[#6366F1]' : 'bg-slate-200'
+                                          className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full transition-colors duration-150 ease-in-out focus:outline-none ${
+                                            isGranted ? 'bg-[#4F46E5]' : 'bg-slate-200'
                                           }`}
                                         >
                                           <span
-                                            className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow-2xs ring-0 transition duration-200 ease-in-out mt-0.5 ${
+                                            className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow-xs ring-0 transition duration-150 ease-in-out mt-0.5 ${
                                               isGranted ? 'translate-x-3.5' : 'translate-x-0.5'
                                             }`}
                                           />
@@ -769,36 +803,68 @@ export function TenantRolesPage() {
                                     );
                                   })}
                                 </div>
-                              </td>
-
-                              {/* Record Scope Pills */}
-                              <td className="py-3 px-4 align-top">
-                                {mod.scopes.length > 0 ? (
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    {mod.scopes.map((sc) => {
-                                      const isGranted = currentGrants.has(sc.code);
-                                      return (
+                              ) : (
+                                /* Expanded Row: 4-column structured aligned CSS grid */
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2.5">
+                                  {mod.actions.map((act) => {
+                                    const isGranted = currentGrants.has(act.code);
+                                    return (
+                                      <label
+                                        key={act.code}
+                                        className="flex items-center gap-1.5 cursor-pointer select-none group min-w-0"
+                                      >
                                         <button
-                                          key={sc.code}
                                           type="button"
-                                          onClick={() => toggleScope(sc.code)}
-                                          className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold transition-colors border ${
-                                            isGranted
-                                              ? 'bg-[#EEF2FF] text-[#4F46E5] border-[#C7D2FE]'
-                                              : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'
+                                          role="switch"
+                                          aria-checked={isGranted}
+                                          onClick={() => togglePermission(act.code)}
+                                          className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer rounded-full transition-colors duration-150 ease-in-out focus:outline-none ${
+                                            isGranted ? 'bg-[#4F46E5]' : 'bg-slate-200'
                                           }`}
                                         >
-                                          {sc.label}
+                                          <span
+                                            className={`pointer-events-none inline-block h-3 w-3 transform rounded-full bg-white shadow-xs ring-0 transition duration-150 ease-in-out mt-0.5 ${
+                                              isGranted ? 'translate-x-3.5' : 'translate-x-0.5'
+                                            }`}
+                                          />
                                         </button>
-                                      );
-                                    })}
-                                  </div>
-                                ) : (
-                                  <span className="text-slate-300 font-bold">—</span>
-                                )}
-                              </td>
-                            </tr>
-                          </React.Fragment>
+                                        <span className={`text-[11px] font-semibold truncate ${isGranted ? 'text-slate-900' : 'text-slate-500'}`}>
+                                          {act.label}
+                                        </span>
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </td>
+
+                            {/* Record Scope Column */}
+                            <td className="py-3 px-4 align-top">
+                              {mod.scopes.length > 0 ? (
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  {mod.scopes.map((sc) => {
+                                    const isGranted = currentGrants.has(sc.code);
+                                    return (
+                                      <button
+                                        key={sc.code}
+                                        type="button"
+                                        onClick={() => toggleScope(sc.code)}
+                                        className={`px-2.5 py-0.5 rounded-md text-[10px] font-extrabold transition-colors border ${
+                                          isGranted
+                                            ? 'bg-[#EEF2FF] text-[#4F46E5] border-[#C7D2FE]'
+                                            : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'
+                                        }`}
+                                      >
+                                        {sc.label}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <span className="text-slate-300 font-bold">—</span>
+                              )}
+                            </td>
+                          </tr>
                         );
                       })}
                     </tbody>
@@ -807,9 +873,9 @@ export function TenantRolesPage() {
               </div>
 
               {/* Assigned Users Section */}
-              <div className="bg-white rounded-sm border border-slate-200/90 shadow-2xs overflow-hidden">
-                <div className="p-3.5 border-b border-slate-200 flex items-center justify-between">
-                  <h3 className="text-xs font-extrabold text-[#0D1F3D]">
+              <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                  <h3 className="text-xs font-extrabold text-slate-900">
                     Assigned Users ({selectedRoleDetail.assignedUsers.length})
                   </h3>
                 </div>
@@ -817,7 +883,7 @@ export function TenantRolesPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
-                      <tr className="border-b border-slate-200 bg-slate-50/70 text-slate-600 font-extrabold text-[11px]">
+                      <tr className="border-b border-slate-100 bg-slate-50/60 text-slate-600 font-extrabold text-[11px]">
                         <th className="py-2.5 px-4">Name</th>
                         <th className="py-2.5 px-4">Email</th>
                         <th className="py-2.5 px-4">Team</th>
@@ -836,7 +902,7 @@ export function TenantRolesPage() {
                         </tr>
                       ) : (
                         selectedRoleDetail.assignedUsers.map((user) => (
-                          <tr key={user.membershipId} className="hover:bg-slate-50/60 transition-colors">
+                          <tr key={user.membershipId} className="hover:bg-slate-50/50 transition-colors">
                             <td className="py-2.5 px-4">
                               <div className="flex items-center gap-2.5">
                                 {user.avatarUrl ? (
@@ -846,22 +912,22 @@ export function TenantRolesPage() {
                                     className="h-6 w-6 rounded-full object-cover border border-slate-200"
                                   />
                                 ) : (
-                                  <div className="h-6 w-6 rounded-full bg-indigo-100 text-[#6366F1] font-bold text-[10px] flex items-center justify-center border border-indigo-200">
+                                  <div className="h-6 w-6 rounded-full bg-indigo-50 text-[#4F46E5] font-bold text-[10px] flex items-center justify-center border border-indigo-200">
                                     {user.name.charAt(0)}
                                   </div>
                                 )}
-                                <span className="font-bold text-[#0D1F3D]">{user.name}</span>
+                                <span className="font-bold text-slate-900">{user.name}</span>
                               </div>
                             </td>
                             <td className="py-2.5 px-4 text-slate-500 font-medium">{user.email}</td>
-                            <td className="py-2.5 px-4 text-slate-600 font-semibold">{user.team}</td>
+                            <td className="py-2.5 px-4 text-slate-600 font-medium">{user.team}</td>
                             <td className="py-2.5 px-4">
-                              <span className="px-2 py-0.5 rounded-sm bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold">
+                              <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold">
                                 {user.role}
                               </span>
                             </td>
                             <td className="py-2.5 px-4">
-                              <span className="inline-flex items-center gap-1.5 text-emerald-700 text-[11px] font-bold">
+                              <span className="inline-flex items-center gap-1.5 text-emerald-600 text-[11px] font-bold">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                                 {user.status}
                               </span>
@@ -885,7 +951,7 @@ export function TenantRolesPage() {
               </div>
 
               {/* Bottom Sticky Action Bar */}
-              <div className="sticky bottom-4 z-10 bg-white/95 backdrop-blur-xs p-3 rounded-sm border border-slate-200 shadow-md flex items-center justify-between gap-3">
+              <div className="sticky bottom-4 z-10 bg-white/95 backdrop-blur-xs p-3 rounded-xl border border-slate-200 shadow-md flex items-center justify-between gap-3">
                 <Button
                   variant="outline"
                   size="sm"
@@ -893,7 +959,7 @@ export function TenantRolesPage() {
                     setDuplicateName(`${selectedRoleDetail.role.name} (Copy)`);
                     setIsDuplicateModalOpen(true);
                   }}
-                  className="gap-1.5 font-bold text-slate-700"
+                  className="gap-1.5 font-bold text-slate-700 border-slate-200 hover:bg-slate-50 rounded-lg"
                 >
                   <Copy className="h-3.5 w-3.5" />
                   Duplicate Role
@@ -905,7 +971,7 @@ export function TenantRolesPage() {
                     size="sm"
                     onClick={handleDiscardChanges}
                     disabled={!hasUnsavedChanges || isSaving}
-                    className="font-bold text-slate-600"
+                    className="font-bold text-slate-600 rounded-lg"
                   >
                     Discard
                   </Button>
@@ -914,7 +980,7 @@ export function TenantRolesPage() {
                     size="sm"
                     onClick={handleSaveChanges}
                     disabled={!hasUnsavedChanges || isSaving}
-                    className="gap-2 font-extrabold bg-[#6366F1] hover:bg-[#4F46E5] text-white border-0 shadow-xs"
+                    className="gap-2 font-extrabold bg-[#4F46E5] hover:bg-[#4338CA] text-white border-0 shadow-xs rounded-lg"
                   >
                     {isSaving && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                     Save Changes
@@ -923,7 +989,7 @@ export function TenantRolesPage() {
               </div>
             </>
           ) : (
-            <div className="bg-white rounded-sm border border-slate-200 p-12 text-center text-xs text-slate-400">
+            <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-xs text-slate-400">
               Select a role from directory to view and configure permissions.
             </div>
           )}
@@ -931,13 +997,13 @@ export function TenantRolesPage() {
 
         {/* Right Column: Access Logic Panel (3 cols on lg, w-80) */}
         <div className="lg:col-span-3 space-y-4">
-          <div className="bg-white rounded-sm border border-slate-200/90 shadow-2xs p-4 space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs p-4 space-y-4">
             <div className="flex items-center gap-2 pb-1 border-b border-slate-100">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-[#6366F1]">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-100 text-[#7C3AED]">
                 <Key className="h-3.5 w-3.5" />
               </div>
               <div>
-                <h3 className="text-xs font-extrabold text-[#0D1F3D]">Access Logic</h3>
+                <h3 className="text-xs font-extrabold text-slate-900">Access Logic</h3>
                 <p className="text-[10px] text-slate-400 font-medium">
                   How permissions are evaluated in Visiblo Smart Field Work.
                 </p>
@@ -951,7 +1017,7 @@ export function TenantRolesPage() {
                   1
                 </span>
                 <div className="space-y-0.5">
-                  <h4 className="text-xs font-extrabold text-[#0D1F3D]">
+                  <h4 className="text-xs font-extrabold text-slate-900">
                     Access = Module Entitlement + Permission + Record Scope
                   </h4>
                   <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
@@ -965,7 +1031,7 @@ export function TenantRolesPage() {
                   2
                 </span>
                 <div className="space-y-0.5">
-                  <h4 className="text-xs font-extrabold text-[#0D1F3D]">
+                  <h4 className="text-xs font-extrabold text-slate-900">
                     Tenant membership is authoritative
                   </h4>
                   <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
@@ -979,7 +1045,7 @@ export function TenantRolesPage() {
                   3
                 </span>
                 <div className="space-y-0.5">
-                  <h4 className="text-xs font-extrabold text-[#0D1F3D]">
+                  <h4 className="text-xs font-extrabold text-slate-900">
                     Out-of-scope records return hidden/not visible
                   </h4>
                   <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
@@ -993,7 +1059,7 @@ export function TenantRolesPage() {
                   4
                 </span>
                 <div className="space-y-0.5">
-                  <h4 className="text-xs font-extrabold text-[#0D1F3D]">
+                  <h4 className="text-xs font-extrabold text-slate-900">
                     Customized tenant grants do not overwrite template defaults
                   </h4>
                   <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
@@ -1005,7 +1071,7 @@ export function TenantRolesPage() {
 
             {/* Tip Box */}
             <div className="pt-2 border-t border-slate-100">
-              <div className="flex items-start gap-2 p-2.5 rounded-sm bg-[#F5F3FF] border border-[#DDD6FE] text-xs font-semibold text-[#5B21B6]">
+              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-[#F5F3FF] border border-[#DDD6FE] text-xs font-medium text-[#6B21A8]">
                 <Info className="h-4 w-4 text-[#7C3AED] shrink-0 mt-0.5" />
                 <span className="text-[11px] leading-relaxed">
                   Changes take effect immediately for assigned users.
@@ -1068,7 +1134,7 @@ export function TenantRolesPage() {
             <select
               value={newRoleBaseId}
               onChange={(e) => setNewRoleBaseId(e.target.value)}
-              className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-sm font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#6366F1]"
+              className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#4F46E5]"
             >
               <option value="">Start from Scratch (No initial permissions)</option>
               {roles.map((r) => (
@@ -1085,6 +1151,7 @@ export function TenantRolesPage() {
               variant="outline"
               size="sm"
               onClick={() => setIsCreateModalOpen(false)}
+              className="rounded-lg"
             >
               Cancel
             </Button>
@@ -1093,7 +1160,7 @@ export function TenantRolesPage() {
               variant="primary"
               size="sm"
               disabled={isCreatingRole}
-              className="bg-[#6366F1] hover:bg-[#4F46E5] text-white border-0 font-extrabold"
+              className="bg-[#4F46E5] hover:bg-[#4338CA] text-white border-0 font-extrabold rounded-lg"
             >
               {isCreatingRole ? 'Creating...' : 'Create Role'}
             </Button>
@@ -1132,6 +1199,7 @@ export function TenantRolesPage() {
               variant="outline"
               size="sm"
               onClick={() => setIsDuplicateModalOpen(false)}
+              className="rounded-lg"
             >
               Cancel
             </Button>
@@ -1140,7 +1208,7 @@ export function TenantRolesPage() {
               variant="primary"
               size="sm"
               disabled={isDuplicatingRole}
-              className="bg-[#6366F1] hover:bg-[#4F46E5] text-white border-0 font-extrabold"
+              className="bg-[#4F46E5] hover:bg-[#4338CA] text-white border-0 font-extrabold rounded-lg"
             >
               {isDuplicatingRole ? 'Duplicating...' : 'Duplicate Role'}
             </Button>

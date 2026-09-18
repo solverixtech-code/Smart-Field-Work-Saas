@@ -237,93 +237,101 @@ export class TenantRolesController {
       ],
     });
 
-    // Group permissions into modules
-    const modulesMap = new Map<string, {
-      moduleKey: string;
-      moduleName: string;
-      icon: string;
-      actions: Array<{ action: string; label: string; code: string; granted: boolean }>;
-      scopes: Array<{ scope: string; label: string; code: string; granted: boolean }>;
-    }>();
-
-    // Module categorization helper
-    const getModuleMeta = (moduleKey: string) => {
-      switch (moduleKey) {
-        case 'crm_leads':
-          return { key: 'lead_management', name: 'Lead Management', icon: 'Target' };
-        case 'crm_businesses':
-        case 'crm_contacts':
-          return { key: 'businesses_contacts', name: 'Businesses & Contacts', icon: 'Building2' };
-        case 'crm_territories':
-          return { key: 'territories', name: 'Territories', icon: 'Globe' };
-        case 'crm_teams':
-        case 'crm_executives':
-          return { key: 'teams', name: 'Teams', icon: 'Users' };
-        case 'crm_reports':
-        case 'crm_dashboard':
-        case 'crm_performance':
-        case 'crm_pipeline':
-        case 'crm_incentives':
-        case 'crm_targets':
-          return { key: 'reports', name: 'Reports', icon: 'BarChart3' };
-        case 'workforce_shifts':
-        case 'attendance_monitoring':
-        case 'attendance_self':
-          return { key: 'attendance_shifts', name: 'Attendance & Shifts', icon: 'Clock' };
-        case 'payroll_salary':
-        case 'payroll_runs':
-        case 'payroll_payslips':
-          return { key: 'payroll', name: 'Payroll', icon: 'CreditCard' };
-        case 'system':
-        case 'system_masters':
-        case 'system_settings':
-        case 'tenant_roles':
-        default:
-          return { key: 'platform_billing', name: 'Platform / Billing', icon: 'Sliders' };
-      }
-    };
-
-    for (const p of allPermissions) {
-      const code = p.code || `${p.moduleKey}.${p.action}`;
-      const isScope = p.action.startsWith('access.');
-      const meta = getModuleMeta(p.moduleKey);
-
-      if (!modulesMap.has(meta.key)) {
-        modulesMap.set(meta.key, {
-          moduleKey: meta.key,
-          moduleName: meta.name,
-          icon: meta.icon,
-          actions: [],
-          scopes: [],
-        });
-      }
-
-      const mod = modulesMap.get(meta.key)!;
-      const isGranted = grantedCodes.has(code);
-
-      if (isScope) {
-        const scopeType = p.action.replace('access.', '');
-        const label = scopeType.charAt(0).toUpperCase() + scopeType.slice(1);
-        if (!mod.scopes.some((s) => s.scope === scopeType)) {
-          mod.scopes.push({
-            scope: scopeType,
-            label,
-            code,
-            granted: isGranted,
-          });
-        }
-      } else {
-        const actionLabel = formatActionLabel(p.action);
-        if (!mod.actions.some((a) => a.action === p.action && a.code === code)) {
-          mod.actions.push({
-            action: p.action,
-            label: actionLabel,
-            code,
-            granted: isGranted,
-          });
-        }
-      }
-    }
+    // Define canonical modules in order matching the reference screen
+    const canonicalModules = [
+      {
+        moduleKey: 'lead_management',
+        moduleName: 'Lead Management',
+        icon: 'Target',
+        actions: [
+          { action: 'view', label: 'View', code: 'crm.leads.view', granted: grantedCodes.has('crm.leads.view') },
+          { action: 'create', label: 'Create', code: 'crm.leads.create', granted: grantedCodes.has('crm.leads.create') },
+          { action: 'update', label: 'Update', code: 'crm.leads.update', granted: grantedCodes.has('crm.leads.update') },
+          { action: 'delete', label: 'Delete', code: 'crm.leads.delete', granted: grantedCodes.has('crm.leads.delete') },
+          { action: 'assign', label: 'Assign', code: 'crm.leads.assign', granted: grantedCodes.has('crm.leads.assign') },
+          { action: 'convert', label: 'Convert', code: 'crm.leads.convert', granted: grantedCodes.has('crm.leads.convert') },
+          { action: 'import', label: 'Import', code: 'crm.leads.import', granted: grantedCodes.has('crm.leads.import') },
+          { action: 'export', label: 'Export', code: 'crm.leads.export', granted: grantedCodes.has('crm.leads.export') },
+        ],
+        scopes: [
+          { scope: 'own', label: 'Own', code: 'crm.leads.access.own', granted: grantedCodes.has('crm.leads.access.own') },
+          { scope: 'assigned', label: 'Assigned', code: 'crm.leads.access.assigned', granted: grantedCodes.has('crm.leads.access.assigned') },
+          { scope: 'tenant', label: 'Tenant', code: 'crm.leads.access.tenant', granted: grantedCodes.has('crm.leads.access.tenant') },
+        ],
+      },
+      {
+        moduleKey: 'businesses_contacts',
+        moduleName: 'Businesses & Contacts',
+        icon: 'Building2',
+        actions: [
+          { action: 'view', label: 'View', code: 'crm.businesses.view', granted: grantedCodes.has('crm.businesses.view') },
+          { action: 'create', label: 'Create', code: 'crm.businesses.create', granted: grantedCodes.has('crm.businesses.create') },
+          { action: 'update', label: 'Update', code: 'crm.businesses.update', granted: grantedCodes.has('crm.businesses.update') },
+          { action: 'delete', label: 'Delete', code: 'crm.businesses.delete', granted: grantedCodes.has('crm.businesses.delete') },
+          { action: 'assign', label: 'Assign', code: 'crm.businesses.assign', granted: grantedCodes.has('crm.businesses.assign') },
+        ],
+        scopes: [
+          { scope: 'own', label: 'Own', code: 'crm.businesses.access.own', granted: grantedCodes.has('crm.businesses.access.own') },
+          { scope: 'tenant', label: 'Tenant', code: 'crm.businesses.access.tenant', granted: grantedCodes.has('crm.businesses.access.tenant') },
+        ],
+      },
+      {
+        moduleKey: 'teams',
+        moduleName: 'Teams',
+        icon: 'Users',
+        actions: [
+          { action: 'view', label: 'View', code: 'crm.teams.view', granted: grantedCodes.has('crm.teams.view') },
+          { action: 'create', label: 'Create', code: 'crm.teams.create', granted: grantedCodes.has('crm.teams.create') },
+          { action: 'update', label: 'Update', code: 'crm.teams.update', granted: grantedCodes.has('crm.teams.update') },
+          { action: 'assign', label: 'Assign Members', code: 'crm.teams.assign', granted: grantedCodes.has('crm.teams.assign') },
+        ],
+        scopes: [],
+      },
+      {
+        moduleKey: 'reports',
+        moduleName: 'Reports',
+        icon: 'BarChart3',
+        actions: [
+          { action: 'dashboard', label: 'View Dashboards', code: 'crm.dashboard.view', granted: grantedCodes.has('crm.dashboard.view') },
+          { action: 'reports', label: 'Export Reports', code: 'crm.reports.view', granted: grantedCodes.has('crm.reports.view') },
+        ],
+        scopes: [],
+      },
+      {
+        moduleKey: 'platform_billing',
+        moduleName: 'Platform / Billing',
+        icon: 'Sliders',
+        actions: [
+          { action: 'settings', label: 'Manage Settings', code: 'system.settings.manage', granted: grantedCodes.has('system.settings.manage') },
+          { action: 'roles', label: 'Manage Roles', code: 'tenant.roles.manage', granted: grantedCodes.has('tenant.roles.manage') },
+          { action: 'masters', label: 'Audit Logs', code: 'system.masters.manage', granted: grantedCodes.has('system.masters.manage') },
+        ],
+        scopes: [],
+      },
+      {
+        moduleKey: 'attendance_shifts',
+        moduleName: 'Attendance & Shifts',
+        icon: 'Clock',
+        actions: [
+          { action: 'view_shifts', label: 'View Shifts', code: 'workforce.shifts.view', granted: grantedCodes.has('workforce.shifts.view') },
+          { action: 'create_shifts', label: 'Create Shifts', code: 'workforce.shifts.create', granted: grantedCodes.has('workforce.shifts.create') },
+          { action: 'self_punch', label: 'Self Punch', code: 'attendance.self.punch', granted: grantedCodes.has('attendance.self.punch') },
+          { action: 'monitoring', label: 'Monitor Punches', code: 'attendance.monitoring.view', granted: grantedCodes.has('attendance.monitoring.view') },
+        ],
+        scopes: [],
+      },
+      {
+        moduleKey: 'payroll',
+        moduleName: 'Payroll',
+        icon: 'CreditCard',
+        actions: [
+          { action: 'view', label: 'View Payslips', code: 'payroll.payslips.view', granted: grantedCodes.has('payroll.payslips.view') },
+          { action: 'manage', label: 'Manage Structure', code: 'payroll.salary_structure.manage', granted: grantedCodes.has('payroll.salary_structure.manage') },
+          { action: 'generate', label: 'Run Payroll', code: 'payroll.runs.generate', granted: grantedCodes.has('payroll.runs.generate') },
+        ],
+        scopes: [],
+      },
+    ];
 
     // Load assigned users for this role
     const memberships = await this.prisma.tenantMembership.findMany({
@@ -396,7 +404,7 @@ export class TenantRolesController {
         }),
       },
       grantedPermissions: Array.from(grantedCodes),
-      permissionModules: Array.from(modulesMap.values()),
+      permissionModules: canonicalModules,
       assignedUsers,
     };
   }
@@ -722,26 +730,105 @@ export class TenantRolesController {
 }
 
 /**
- * Format permission action name into clean title case for UI
+ * Format permission action name into clean title case for UI, providing context
+ * to prevent duplicate ambiguous "View" or "Manage" labels.
  */
-function formatActionLabel(action: string): string {
-  switch (action) {
-    case 'view': return 'View';
-    case 'create': return 'Create';
-    case 'update': return 'Update';
-    case 'delete': return 'Delete';
-    case 'assign': return 'Assign';
-    case 'convert': return 'Convert';
-    case 'import': return 'Import';
-    case 'export': return 'Export';
-    case 'manage': return 'Manage';
-    case 'punch': return 'Self Punch';
-    case 'generate': return 'Run Payroll';
-    case 'pay': return 'Pay Invoices';
+function formatPermissionActionLabel(
+  p: { code: string | null; moduleKey: string; action: string; description: string | null },
+  moduleGroupKey: string,
+): string {
+  const code = p.code || `${p.moduleKey}.${p.action}`;
+
+  // Direct code-level mappings matching Visiblo's Moodboard & Reference UI
+  switch (code) {
+    // Lead Management
+    case 'crm.leads.view': return 'View';
+    case 'crm.leads.create': return 'Create';
+    case 'crm.leads.update': return 'Update';
+    case 'crm.leads.delete': return 'Delete';
+    case 'crm.leads.assign': return 'Assign';
+    case 'crm.leads.convert': return 'Convert';
+    case 'crm.leads.import': return 'Import';
+    case 'crm.leads.export': return 'Export';
+    case 'crm.leads.manage': return 'Lead Pipelines';
+
+    // Businesses & Contacts
+    case 'crm.businesses.view': return 'View';
+    case 'crm.businesses.create': return 'Create';
+    case 'crm.businesses.update': return 'Update';
+    case 'crm.businesses.delete': return 'Delete';
+    case 'crm.businesses.assign': return 'Assign';
+    case 'crm.contacts.view': return 'View Contacts';
+    case 'crm.contacts.create': return 'Create Contacts';
+    case 'crm.contacts.update': return 'Update Contacts';
+    case 'crm.contacts.delete': return 'Delete Contacts';
+    case 'crm.contacts.assign': return 'Assign Contacts';
+
+    // Territories
+    case 'crm.territories.view': return 'View';
+    case 'crm.territories.create': return 'Create';
+    case 'crm.territories.update': return 'Update';
+    case 'crm.territories.delete': return 'Delete';
+    case 'crm.territories.assign': return 'Assign Manager';
+
+    // Teams & Executives
+    case 'crm.teams.view': return 'View';
+    case 'crm.teams.create': return 'Create';
+    case 'crm.teams.update': return 'Update';
+    case 'crm.teams.assign': return 'Assign Members';
+    case 'crm.executives.view': return 'View Executives';
+
+    // Reports & Analytics
+    case 'crm.reports.view': return 'View Reports';
+    case 'crm.dashboard.view': return 'View Dashboards';
+    case 'crm.performance.view': return 'View Performance';
+    case 'crm.pipeline.view': return 'View Pipeline';
+    case 'crm.incentives.view': return 'View Incentives';
+    case 'crm.targets.view': return 'View Targets';
+    case 'crm.categories.view': return 'View Categories';
+    case 'crm.customers.view': return 'View Customers';
+    case 'crm.demos.view': return 'View Demos';
+    case 'crm.followups.view': return 'View Follow-ups';
+    case 'crm.visits.view': return 'View Visits';
+    case 'crm.map.view': return 'View Maps';
+    case 'crm.notifications.view': return 'View Alerts';
+    case 'crm.notifications.create': return 'Create Alerts';
+    case 'crm.notifications.manage': return 'Manage Alerts';
+
+    // Attendance & Shifts
+    case 'workforce.shifts.view': return 'View Shifts';
+    case 'workforce.shifts.create': return 'Create Shifts';
+    case 'workforce.shifts.update': return 'Update Shifts';
+    case 'workforce.shifts.assign': return 'Assign Shifts';
+    case 'attendance.self.punch': return 'Self Punch';
+    case 'attendance.monitoring.view': return 'Monitor Punches';
+
+    // Payroll
+    case 'payroll.payslips.view': return 'View Payslips';
+    case 'payroll.salary_structure.view': return 'View Structure';
+    case 'payroll.salary_structure.manage': return 'Manage Structure';
+    case 'payroll.runs.generate': return 'Run Payroll';
+    case 'payroll.payslips.pay': return 'Pay Invoices';
+
+    // Platform / Workspace Settings
+    case 'system.settings.manage': return 'Workspace Settings';
+    case 'system.masters.view': return 'View Masters';
+    case 'system.masters.manage': return 'Manage Masters';
+    case 'tenant.roles.view': return 'View Roles';
+    case 'tenant.roles.manage': return 'Manage Roles';
+    case 'system.media.view': return 'View Media';
+    case 'system.media.manage': return 'Manage Media';
+
     default:
-      return action
-        .split('_')
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
+      if (p.action === 'view') return `View ${formatWord(p.moduleKey.replace(/^crm_|^system_/, ''))}`;
+      if (p.action === 'manage') return `Manage ${formatWord(p.moduleKey.replace(/^crm_|^system_/, ''))}`;
+      return formatWord(p.action);
   }
+}
+
+function formatWord(str: string): string {
+  return str
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
 }
