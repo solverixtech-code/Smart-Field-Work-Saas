@@ -102,12 +102,13 @@ export function LeadRecordLookup({
   accountId?: string | null;
   disabled?: boolean;
 }) {
+  const [page, setPage] = useState(1);
   const result = useCrmQuery(
-    JSON.stringify(["lead-link", kind, accountId]),
+    JSON.stringify(["lead-link", kind, accountId, page]),
     async (service, signal) => {
       if (kind === "account") {
         const response = await service.accounts(
-          { page: 1, limit: 100, status: "ACTIVE" },
+          { page, limit: 100, status: "ACTIVE" },
           signal,
         );
         return {
@@ -1054,9 +1055,6 @@ export function LeadConversionModal({
           );
           if (result) {
             onSaved();
-            if (result.accountId) {
-              navigate(`/admin/businesses/${result.accountId}`);
-            }
           }
         }}
       >

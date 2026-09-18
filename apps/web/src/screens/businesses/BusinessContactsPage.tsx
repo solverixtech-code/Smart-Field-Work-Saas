@@ -37,7 +37,7 @@ export default function BusinessContactsPage() {
     setRemoving(null);
     mutation.clearError();
     result.reload();
-    reloadBusiness();
+    reloadBusiness?.();
   }
   async function primary(contactId: string | null) {
     const saved = await mutation.run((service, signal) =>
