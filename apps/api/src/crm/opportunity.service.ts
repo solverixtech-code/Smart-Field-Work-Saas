@@ -29,6 +29,42 @@ function dealRevision(row: OpportunityRow, expectedRevision: number) {
   }
 }
 
+export function mapOpportunity(row: any) {
+  if (!row) return row;
+  const assigned = row.assignedMembership || row.lead?.assignedMembership;
+  const owner = row.ownerMembership || row.lead?.ownerMembership;
+
+  const mappedAssigned = assigned
+    ? {
+        id: assigned.id,
+        displayName: assigned.user?.fullName || assigned.displayName || "Unassigned",
+        avatarUrl: assigned.user?.avatarUrl ?? null,
+        role: assigned.tenantRole?.name || assigned.tenantRole?.code || assigned.user?.role || null,
+        designation: assigned.designation ?? null,
+        user: assigned.user,
+      }
+    : null;
+
+  const mappedOwner = owner
+    ? {
+        id: owner.id,
+        displayName: owner.user?.fullName || owner.displayName || "Unassigned",
+        avatarUrl: owner.user?.avatarUrl ?? null,
+        role: owner.tenantRole?.name || owner.tenantRole?.code || owner.user?.role || null,
+        designation: owner.designation ?? null,
+        user: owner.user,
+      }
+    : null;
+
+  return {
+    ...row,
+    assignedMembership: mappedAssigned,
+    ownerMembership: mappedOwner,
+    assignee: mappedAssigned,
+    owner: mappedOwner,
+  };
+}
+
 @Injectable()
 export class OpportunityService {
   constructor(private readonly repo: CrmRepository) {}
@@ -84,7 +120,7 @@ export class OpportunityService {
         tx.opportunity.count({ where }),
       ]);
 
-      return page(items, total, v);
+      return page(items.map(mapOpportunity), total, v);
     });
   }
 
@@ -189,7 +225,7 @@ export class OpportunityService {
       if (!deal) {
         throw new NotFoundException(`Opportunity with ID ${id} not found`);
       }
-      return deal;
+      return mapOpportunity(deal);
     });
   }
 
@@ -252,7 +288,7 @@ export class OpportunityService {
         },
       );
 
-      return deal;
+      return mapOpportunity(deal);
     });
   }
 
@@ -318,7 +354,7 @@ export class OpportunityService {
         revisionAfter: updated.revision,
       });
 
-      return updated;
+      return mapOpportunity(updated);
     });
   }
 
@@ -381,7 +417,7 @@ export class OpportunityService {
         },
       );
 
-      return updated;
+      return mapOpportunity(updated);
     });
   }
 

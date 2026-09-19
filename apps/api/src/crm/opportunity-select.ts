@@ -51,6 +51,8 @@ export const opportunitySelect = {
       contactName: true,
       phone: true,
       email: true,
+      assignedMembership: { select: ownerSelect },
+      ownerMembership: { select: ownerSelect },
     },
   },
   stageValue: {

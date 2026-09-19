@@ -407,10 +407,25 @@ export default function SalesPipelinePage() {
                           deal.lead?.name ||
                           deal.title;
                         const city = deal.account?.city || deal.lead?.phone || deal.dealCode;
+                        const assigned = deal.assignedMembership || (deal as any).lead?.assignedMembership;
+                        const owner = deal.ownerMembership || (deal as any).lead?.ownerMembership;
+                        const member = assigned || owner;
                         const execName =
-                          deal.assignedMembership?.displayName ||
-                          deal.ownerMembership?.displayName ||
+                          member?.displayName ||
+                          (member as any)?.user?.fullName ||
+                          (deal as any).assignee?.displayName ||
+                          (deal as any).owner?.displayName ||
+                          (deal as any).lead?.assignee?.displayName ||
+                          (deal as any).lead?.owner?.displayName ||
+                          (deal as any).lead?.assignedMembership?.user?.fullName ||
+                          (deal as any).lead?.ownerMembership?.user?.fullName ||
                           "Unassigned";
+
+                        const avatarUrl =
+                          member?.avatarUrl ||
+                          (member as any)?.user?.avatarUrl ||
+                          (deal as any).assignee?.avatarUrl ||
+                          (deal as any).lead?.assignee?.avatarUrl;
 
                         return (
                           <div
@@ -459,10 +474,18 @@ export default function SalesPipelinePage() {
 
                             <div className="flex items-center justify-between pt-1 border-t border-slate-100">
                               <div className="flex items-center gap-1.5">
-                                <div className="h-5 w-5 rounded-full bg-[#0D1F3D] text-white flex items-center justify-center text-[9px] font-bold">
-                                  {execName.slice(0, 1).toUpperCase()}
-                                </div>
-                                <span className="text-[10px] font-semibold text-slate-600 truncate max-w-[80px]">
+                                {avatarUrl ? (
+                                  <img
+                                    src={avatarUrl}
+                                    alt={execName}
+                                    className="h-5 w-5 rounded-full object-cover border border-slate-200"
+                                  />
+                                ) : (
+                                  <div className="h-5 w-5 rounded-full bg-[#0D1F3D] text-white flex items-center justify-center text-[9px] font-bold">
+                                    {execName.slice(0, 1).toUpperCase()}
+                                  </div>
+                                )}
+                                <span className="text-[10px] font-semibold text-slate-600 truncate max-w-[85px]">
                                   {execName}
                                 </span>
                               </div>
