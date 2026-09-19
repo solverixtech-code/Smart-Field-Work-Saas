@@ -1266,7 +1266,14 @@ export default function AppShell() {
                     onClick={(e) => {
                       if (!isAllowed) {
                         e.preventDefault();
+                        return;
                       }
+                      recordRecentSearch({
+                        label: item.label,
+                        category: cat.title,
+                        to: item.to,
+                        badge: item.badge,
+                      });
                     }}
                     title={!showBigLogo ? item.label : undefined}
                     className={`group relative flex items-center rounded-sm py-2 text-[13px] font-medium transition-all duration-150 ${
