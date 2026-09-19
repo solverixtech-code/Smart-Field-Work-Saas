@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -6,17 +6,15 @@ import {
   Edit,
   MoreVertical,
   CheckCircle2,
-  UserCheck,
-  Globe,
   ShoppingBag,
   Calendar,
   CreditCard,
-  MapPin,
   Users,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { mockBusinesses } from './businessesData';
 import { useCrm, useCrmQuery, useCrmMutation } from '../../features/crm/CrmContext';
+import { CrmFailure } from '../../features/crm/CrmControls';
+import type { AccountDto } from '../../features/crm/crm.types';
 
 export interface BusinessContext {
   business: any;
@@ -27,34 +25,68 @@ export default function BusinessLayoutWrapper() {
   const { businessId = '' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { can, readOnly } = useCrm();
+
+  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(`visiblo_biz_logo_${businessId}`);
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      setCustomLogoUrl(localStorage.getItem(`visiblo_biz_logo_${businessId}`));
+    } catch {
+      setCustomLogoUrl(null);
+    }
+    const handleLogoUpdate = (e: any) => {
+      if (e.detail?.businessId === businessId) {
+        setCustomLogoUrl(e.detail.logoUrl);
+      }
+    };
+    window.addEventListener('visiblo:business-logo-updated', handleLogoUpdate);
+    return () => window.removeEventListener('visiblo:business-logo-updated', handleLogoUpdate);
+  }, [businessId]);
 
   const result = useCrmQuery(`account:${businessId}`, (service, signal) =>
     service.account(businessId, signal),
   );
 
-  const mockItem = mockBusinesses.find((b) => b.id === businessId) || mockBusinesses[0];
-  const business = result.data
-    ? {
-        ...mockItem,
-        id: result.data.id,
-        name: result.data.name,
-        businessType: result.data.businessType || mockItem.businessType,
-        establishedYear: result.data.establishedYear || mockItem.establishedYear,
-        logoText: result.data.name ? result.data.name.substring(0, 2).toUpperCase() : mockItem.logoText,
-        logoBg: mockItem.logoBg,
-        status: (result.data.status as string) === 'ACTIVE' || (result.data.status as string) === 'Active' ? ('Active' as const) : ('Inactive' as const),
-        phone: result.data.primaryContact?.phone || mockItem.phone,
-        email: result.data.primaryContact?.email || mockItem.email,
-        description: result.data.description || mockItem.description,
-        address: result.data.addressLine1 || mockItem.address,
-        city: result.data.city || mockItem.city,
-        assignedToName: result.data.owner?.displayName || mockItem.assignedToName,
-      }
-    : mockItem;
+  if (result.error) {
+    return <CrmFailure error={result.error} retry={result.reload} />;
+  }
+
+  if (!result.data) {
+    return (
+      <div className="flex h-64 items-center justify-center rounded-md border border-slate-200 bg-white p-8">
+        <p role="status" className="text-sm font-semibold text-slate-500">Loading business...</p>
+      </div>
+    );
+  }
+
+  const raw = result.data;
+  const business = {
+    ...raw,
+    id: raw.id,
+    name: raw.name,
+    businessType: raw.businessType || 'General Business',
+    establishedYear: raw.establishedYear || 2022,
+    logoText: raw.name ? raw.name.slice(0, 2).toUpperCase() : 'BU',
+    logoBg: 'bg-blue-100 text-blue-800',
+    status: raw.status === 'ACTIVE' ? 'Active' : raw.status === 'BLOCKED' ? 'Blocked' : 'Inactive',
+    phone: raw.primaryContact?.phone || 'Not set',
+    email: raw.primaryContact?.email || 'Not set',
+    description: raw.description || 'No description provided.',
+    address: raw.addressLine1 || 'Address not set',
+    city: raw.city || 'Location not set',
+    assignedToName: raw.owner?.displayName || 'Unassigned',
+  };
 
   const navItems = [
     { label: 'Business Details', icon: Building2, path: `/admin/businesses/${business.id}` },
-    { label: 'Contacts (12)', icon: Users, path: `/admin/businesses/${business.id}/contacts` },
+    { label: 'Contacts', icon: Users, path: `/admin/businesses/${business.id}/contacts` },
     { label: 'Sales History', icon: ShoppingBag, path: `/admin/businesses/${business.id}/sales-history` },
     { label: 'Visit History', icon: Calendar, path: `/admin/businesses/${business.id}/visits` },
     { label: 'Subscription', icon: CreditCard, path: `/admin/businesses/${business.id}/subscription` },
@@ -65,11 +97,11 @@ export default function BusinessLayoutWrapper() {
       {/* Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-slate-200/80 bg-white p-4 shadow-xs">
         <div className="flex items-center gap-3">
-          {business.logoUrl ? (
+          {customLogoUrl ? (
             <img
-              src={business.logoUrl}
+              src={customLogoUrl}
               alt={business.name}
-              className="h-12 w-12 rounded-md object-cover border border-slate-200 shrink-0"
+              className="h-12 w-12 rounded-md object-cover border border-slate-200 shrink-0 shadow-2xs"
             />
           ) : (
             <div className={`flex h-12 w-12 items-center justify-center rounded-md font-bold text-sm shrink-0 ${business.logoBg}`}>
@@ -87,7 +119,7 @@ export default function BusinessLayoutWrapper() {
               </span>
             </div>
             <p className="text-xs text-slate-500 font-normal mt-0.5">
-              {business.businessType} • <span className="font-mono text-slate-400">ID: {business.id}</span> • Established in {business.establishedYear}
+              {business.businessType} • <span className="font-mono text-slate-400">ID: {business.id.startsWith('BIZ-') ? business.id : `BIZ-${business.id.replace(/-/g, '').slice(-6).toUpperCase()}`}</span> • Established in {business.establishedYear}
             </p>
           </div>
         </div>
@@ -101,14 +133,16 @@ export default function BusinessLayoutWrapper() {
           >
             <MoreVertical className="h-4 w-4" /> More Actions
           </Button>
-          <Button
-            variant="accent"
-            size="sm"
-            onClick={() => navigate(`/admin/businesses/${business.id}/edit`)}
-            className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm"
-          >
-            <Edit className="h-4 w-4" /> Edit Business
-          </Button>
+          {can('crm.businesses.update') && !readOnly && (
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={() => navigate(`/admin/businesses/${business.id}/edit`)}
+              className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm"
+            >
+              <Edit className="h-4 w-4" /> Edit Business
+            </Button>
+          )}
         </div>
       </div>
 

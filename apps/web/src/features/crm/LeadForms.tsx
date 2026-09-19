@@ -348,8 +348,15 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
             }}
             className="mt-2"
           >
-            Reload latest version
+            Reload current revision
           </Button>
+          {reviewed && current && (
+            <div className="mt-3 text-xs text-amber-950">
+              <p className="font-bold">Current saved values (revision {revision}) - your edits remain below:</p>
+              <p>Name: {current.name}</p>
+              <p>Status: {current.status}</p>
+            </div>
+          )}
         </Card>
       )}
 

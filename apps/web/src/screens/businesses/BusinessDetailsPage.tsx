@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -6,76 +6,368 @@ import {
   MapPin,
   FileText,
   Edit,
-  Phone,
-  Mail,
-  Globe,
+  CheckCircle2,
+  FileSpreadsheet,
+  ChevronRight,
   Upload,
   Plus,
-  ChevronRight,
+  Trash2,
+  Download,
+  Calendar,
   User,
-  CheckCircle2,
-  TrendingUp,
-  FileSpreadsheet,
-  Clock,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
+import { ImageCropperModal } from '../../components/ui/ImageCropperModal';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockBusinesses, BusinessItem } from './businessesData';
-import { BusinessContext } from './BusinessLayoutWrapper';
+import { useCrmQuery } from '../../features/crm/CrmContext';
+
+interface BusinessDetailsModel {
+  id: string;
+  name: string;
+  logoBg: string;
+  logoText: string;
+  logoUrl?: string;
+  businessType: string;
+  category: string;
+  city: string;
+  address: string;
+  addressLine1: string;
+  addressLine2: string;
+  state: string;
+  postalCode: string;
+  countryCode: string;
+  fullAddress: string;
+  contactPerson: string;
+  contactRole: string;
+  phone: string;
+  email: string;
+  source: string;
+  assignedToName: string;
+  assignedToRole: string;
+  assignedToAvatar?: string;
+  status: string;
+  lastActivity: string;
+  establishedYear: number | string;
+  employees: string;
+  annualRevenue: string;
+  gstin: string;
+  website: string;
+  totalLeads: number;
+  activeLeads: number;
+  convertedLeads: number;
+  wonLeads: number;
+  lostLeads: number;
+  followUpLeads: number;
+  serviceAreas: string[];
+  languages: string[];
+  businessHours: string;
+  description: string;
+}
+
+interface NoteItem {
+  id: string;
+  text: string;
+  author: string;
+  date: string;
+}
+
+interface DocItem {
+  id: string;
+  name: string;
+  size: string;
+  date: string;
+  type: string;
+  fileData?: string;
+}
 
 export default function BusinessDetailsPage() {
   const context = useOutletContext<any>();
   const navigate = useNavigate();
 
-  // Safely extract business from context (supports BusinessItem, BusinessContext { business: AccountDto }, or fallback mock data)
   const rawBusiness = context?.business || context;
-  const business: BusinessItem = {
-    id: rawBusiness?.id || mockBusinesses[0].id,
-    name: rawBusiness?.name || mockBusinesses[0].name,
-    logoBg: rawBusiness?.logoBg || 'bg-amber-100 text-amber-800',
-    logoText: rawBusiness?.logoText || (rawBusiness?.name ? rawBusiness.name.substring(0, 2).toUpperCase() : 'FZ'),
-    logoUrl: rawBusiness?.logoUrl || (rawBusiness?.id === 'BUS-10058242' ? mockBusinesses[0].logoUrl : undefined),
-    businessType: rawBusiness?.businessType || mockBusinesses[0].businessType,
-    category: rawBusiness?.categoryLabel || rawBusiness?.category || mockBusinesses[0].category,
-    city: rawBusiness?.city || mockBusinesses[0].city,
-    address: rawBusiness?.addressLine1 || rawBusiness?.address || mockBusinesses[0].address,
-    fullAddress: [
-      rawBusiness?.addressLine1,
-      rawBusiness?.addressLine2,
-      rawBusiness?.city,
-      rawBusiness?.state,
-      rawBusiness?.postalCode,
-      rawBusiness?.countryCode,
-    ].filter(Boolean).join(', ') || rawBusiness?.fullAddress || mockBusinesses[0].fullAddress,
-    contactPerson: rawBusiness?.primaryContact?.name || rawBusiness?.contactPerson || mockBusinesses[0].contactPerson,
-    contactRole: rawBusiness?.primaryContact?.role || rawBusiness?.contactRole || mockBusinesses[0].contactRole,
-    phone: rawBusiness?.primaryContact?.phone || rawBusiness?.phone || mockBusinesses[0].phone,
-    email: rawBusiness?.primaryContact?.email || rawBusiness?.email || mockBusinesses[0].email,
-    source: rawBusiness?.source || mockBusinesses[0].source,
-    assignedToName: rawBusiness?.owner?.displayName || rawBusiness?.assignedToName || mockBusinesses[0].assignedToName,
-    assignedToRole: rawBusiness?.assignedToRole || 'Sales Manager',
-    assignedToAvatar: rawBusiness?.assignedToAvatar || mockBusinesses[0].assignedToAvatar,
-    status: rawBusiness?.status === 'ACTIVE' || rawBusiness?.status === 'Active' ? 'Active' : rawBusiness?.status === 'Inactive' ? 'Inactive' : 'Active',
-    lastActivity: rawBusiness?.updatedAt ? new Date(rawBusiness.updatedAt).toLocaleString() : mockBusinesses[0].lastActivity,
-    establishedYear: rawBusiness?.establishedYear || mockBusinesses[0].establishedYear,
-    employees: rawBusiness?.employees || mockBusinesses[0].employees,
-    annualRevenue: rawBusiness?.annualRevenue || mockBusinesses[0].annualRevenue,
-    gstin: rawBusiness?.gstin || mockBusinesses[0].gstin,
-    website: rawBusiness?.website || mockBusinesses[0].website,
-    totalLeads: rawBusiness?.totalLeads ?? mockBusinesses[0].totalLeads,
-    activeLeads: rawBusiness?.activeLeads ?? mockBusinesses[0].activeLeads,
-    convertedLeads: rawBusiness?.convertedLeads ?? mockBusinesses[0].convertedLeads,
-    wonLeads: rawBusiness?.wonLeads ?? mockBusinesses[0].wonLeads,
-    lostLeads: rawBusiness?.lostLeads ?? mockBusinesses[0].lostLeads,
-    followUpLeads: rawBusiness?.followUpLeads ?? mockBusinesses[0].followUpLeads,
-    serviceAreas: rawBusiness?.serviceAreas || mockBusinesses[0].serviceAreas,
-    languages: rawBusiness?.languages || mockBusinesses[0].languages,
-    businessHours: rawBusiness?.businessHours || mockBusinesses[0].businessHours,
-    description: rawBusiness?.description || mockBusinesses[0].description,
+  const businessId = rawBusiness?.id || 'BUS-NEW';
+
+  // --- Dynamic Logo Management & Cropper ---
+  const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(`visiblo_biz_logo_${businessId}`);
+    } catch {
+      return null;
+    }
+  });
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [selectedImageSrc, setSelectedImageSrc] = useState<string>('');
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    try {
+      setCustomLogoUrl(localStorage.getItem(`visiblo_biz_logo_${businessId}`));
+    } catch {
+      setCustomLogoUrl(null);
+    }
+  }, [businessId]);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.item(0);
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file (PNG, JPG, SVG, WebP).');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('File size exceeds 10MB limit.');
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setSelectedImageSrc(objectUrl);
+    setCropperOpen(true);
+    e.target.value = '';
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setCustomLogoUrl(dataUrl);
+      try {
+        localStorage.setItem(`visiblo_biz_logo_${businessId}`, dataUrl);
+      } catch (err) {
+        console.warn('Could not save logo to localStorage:', err);
+      }
+      window.dispatchEvent(
+        new CustomEvent('visiblo:business-logo-updated', {
+          detail: { businessId, logoUrl: dataUrl },
+        }),
+      );
+      setCropperOpen(false);
+      toast.success('Business logo updated successfully!');
+    };
+    reader.readAsDataURL(croppedBlob);
+  };
+
+  const handleRemoveLogo = () => {
+    setCustomLogoUrl(null);
+    try {
+      localStorage.removeItem(`visiblo_biz_logo_${businessId}`);
+    } catch {}
+    window.dispatchEvent(
+      new CustomEvent('visiblo:business-logo-updated', {
+        detail: { businessId, logoUrl: null },
+      }),
+    );
+    toast.success('Business logo reset to default initials.');
+  };
+
+  // --- Dynamic Notes System ---
+  const [notes, setNotes] = useState<NoteItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(`visiblo_biz_notes_${businessId}`);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  const [isAddNoteOpen, setIsAddNoteOpen] = useState(false);
+  const [isViewNotesOpen, setIsViewNotesOpen] = useState(false);
+  const [newNoteText, setNewNoteText] = useState('');
+  const [newNoteAuthor, setNewNoteAuthor] = useState(rawBusiness?.owner?.displayName || 'Sales Manager');
+
+  const handleSaveNote = () => {
+    if (!newNoteText.trim()) {
+      toast.error('Please enter note text.');
+      return;
+    }
+    const created: NoteItem = {
+      id: 'note-' + Date.now(),
+      text: newNoteText.trim(),
+      author: newNoteAuthor.trim() || 'Executive',
+      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    };
+    const updated = [created, ...notes];
+    setNotes(updated);
+    try {
+      localStorage.setItem(`visiblo_biz_notes_${businessId}`, JSON.stringify(updated));
+    } catch {}
+    setNewNoteText('');
+    setIsAddNoteOpen(false);
+    toast.success('Note added successfully!');
+  };
+
+  const handleDeleteNote = (id: string) => {
+    const updated = notes.filter((n) => n.id !== id);
+    setNotes(updated);
+    try {
+      localStorage.setItem(`visiblo_biz_notes_${businessId}`, JSON.stringify(updated));
+    } catch {}
+    toast.success('Note deleted.');
+  };
+
+  // --- Dynamic Documents System ---
+  const [documents, setDocuments] = useState<DocItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(`visiblo_biz_docs_${businessId}`);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
+  const [isViewDocsOpen, setIsViewDocsOpen] = useState(false);
+  const docInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.item(0);
+    if (!file) return;
+
+    const sizeStr = file.size > 1024 * 1024
+      ? `${(file.size / (1024 * 1024)).toFixed(1)} MB`
+      : `${Math.round(file.size / 1024)} KB`;
+
+    const newDoc: DocItem = {
+      id: 'doc-' + Date.now(),
+      name: file.name,
+      size: sizeStr,
+      date: 'Today',
+      type: file.type || 'application/octet-stream',
+    };
+
+    const updated = [newDoc, ...documents];
+    setDocuments(updated);
+    try {
+      localStorage.setItem(`visiblo_biz_docs_${businessId}`, JSON.stringify(updated));
+    } catch {}
+    toast.success(`${file.name} uploaded successfully!`);
+    e.target.value = '';
+  };
+
+  const handleDeleteDoc = (id: string) => {
+    const updated = documents.filter((d) => d.id !== id);
+    setDocuments(updated);
+    try {
+      localStorage.setItem(`visiblo_biz_docs_${businessId}`, JSON.stringify(updated));
+    } catch {}
+    toast.success('Document deleted.');
+  };
+
+  // --- Real-time Opportunity Deals Fetch ---
+  const dealsQuery = useCrmQuery(
+    `account-deals:${businessId}`,
+    (service, signal) => service.deals({ limit: 50 }, signal),
+  );
+
+  const matchingDeals = (dealsQuery.data?.items ?? []).filter(
+    (d: any) =>
+      d.accountId === businessId ||
+      d.account?.id === businessId ||
+      d.lead?.businessName?.toLowerCase() === rawBusiness?.name?.toLowerCase(),
+  );
+
+  const wonDealsCount = matchingDeals.filter(
+    (d: any) => d.stage === 'CLOSED_WON' || d.stageValue?.code === 'closed_won',
+  ).length;
+
+  const lostDealsCount = matchingDeals.filter(
+    (d: any) => d.stage === 'CLOSED_LOST' || d.stageValue?.code === 'closed_lost',
+  ).length;
+
+  const activeDealsCount = matchingDeals.length - wonDealsCount - lostDealsCount;
+
+  // City-based Map Coordinates
+  const getCityCoordinates = (cityName?: string | null) => {
+    const norm = (cityName || '').toLowerCase();
+    if (norm.includes('bengaluru') || norm.includes('bangalore')) return { lat: 12.9716, lng: 77.5946 };
+    if (norm.includes('delhi') || norm.includes('ncr')) return { lat: 28.6139, lng: 77.2090 };
+    if (norm.includes('pune')) return { lat: 18.5204, lng: 73.8567 };
+    if (norm.includes('thane')) return { lat: 19.2183, lng: 72.9781 };
+    if (norm.includes('hyderabad')) return { lat: 17.3850, lng: 78.4867 };
+    return { lat: 19.0760, lng: 72.8777 }; // Mumbai default
+  };
+
+  const coords = getCityCoordinates(rawBusiness?.city);
+
+  const business: BusinessDetailsModel = {
+    id: businessId,
+    name: rawBusiness?.name || 'Business Account',
+    logoBg: 'bg-blue-100 text-blue-800',
+    logoText: rawBusiness?.name ? rawBusiness.name.slice(0, 2).toUpperCase() : 'BU',
+    logoUrl: customLogoUrl || rawBusiness?.logoUrl,
+    businessType: rawBusiness?.businessType || 'Commercial Business',
+    category: rawBusiness?.categoryLabel || rawBusiness?.category || 'Field Merchant',
+    city: rawBusiness?.city || 'Location not set',
+    address: rawBusiness?.addressLine1 || 'Address not specified',
+    addressLine1: rawBusiness?.addressLine1 || 'Not specified',
+    addressLine2: rawBusiness?.addressLine2 || (rawBusiness?.city ? `${rawBusiness.city} Central Zone` : 'Not specified'),
+    state: rawBusiness?.state || 'Maharashtra',
+    postalCode: rawBusiness?.postalCode || '400001',
+    countryCode: rawBusiness?.countryCode || 'India',
+    fullAddress:
+      [
+        rawBusiness?.addressLine1,
+        rawBusiness?.addressLine2,
+        rawBusiness?.city,
+        rawBusiness?.state,
+        rawBusiness?.postalCode,
+        rawBusiness?.countryCode,
+      ]
+        .filter(Boolean)
+        .join(', ') || 'Address not specified',
+    contactPerson: rawBusiness?.primaryContact?.name || 'Not assigned',
+    contactRole: rawBusiness?.primaryContact?.role || 'Primary Contact',
+    phone: rawBusiness?.primaryContact?.phone || 'Not set',
+    email: rawBusiness?.primaryContact?.email || 'Not set',
+    source: rawBusiness?.source || 'Direct Field',
+    assignedToName: rawBusiness?.owner?.displayName || 'Unassigned',
+    assignedToRole: rawBusiness?.owner?.role || 'Sales Manager',
+    assignedToAvatar: rawBusiness?.owner?.avatarUrl,
+    status:
+      rawBusiness?.status === 'ACTIVE' || rawBusiness?.status === 'Active'
+        ? 'Active'
+        : rawBusiness?.status === 'BLOCKED'
+        ? 'Blocked'
+        : 'Inactive',
+    lastActivity: rawBusiness?.updatedAt
+      ? new Date(rawBusiness.updatedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+      : '18 Sept 2026',
+    establishedYear: rawBusiness?.establishedYear || 2021,
+    employees: rawBusiness?.employees || '11-50',
+    annualRevenue: rawBusiness?.annualRevenue || '₹50L - ₹2 Cr',
+    gstin: rawBusiness?.gstin || '27AABCU9603R1ZM',
+    website: rawBusiness?.website || 'Not provided',
+    totalLeads: matchingDeals.length > 0 ? matchingDeals.length : (rawBusiness?.totalLeads ?? 2),
+    activeLeads: matchingDeals.length > 0 ? activeDealsCount : (rawBusiness?.activeLeads ?? 2),
+    convertedLeads: wonDealsCount,
+    wonLeads: wonDealsCount,
+    lostLeads: lostDealsCount,
+    followUpLeads: rawBusiness?.followUpLeads ?? 1,
+    serviceAreas: Array.isArray(rawBusiness?.serviceAreas)
+      ? rawBusiness.serviceAreas
+      : [rawBusiness?.city ? `${rawBusiness.city} & Surrounding Hubs` : 'Regional Territory'],
+    languages: Array.isArray(rawBusiness?.languages)
+      ? rawBusiness.languages
+      : ['English', 'Hindi', 'Regional'],
+    businessHours: rawBusiness?.businessHours || '09:00 AM - 07:00 PM (Mon - Sat)',
+    description: rawBusiness?.description || 'Registered commercial field work business account.',
   };
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 font-sans">
+      {/* Hidden File Inputs */}
+      <input
+        type="file"
+        ref={logoInputRef}
+        accept="image/*"
+        className="hidden"
+        onChange={handleLogoUpload}
+      />
+      <input
+        type="file"
+        ref={docInputRef}
+        className="hidden"
+        onChange={handleDocUpload}
+      />
+
       {/* LEFT COLUMN (8 COLS) */}
       <div className="space-y-4 lg:col-span-8">
         {/* Business Information Card */}
@@ -93,7 +385,7 @@ export default function BusinessDetailsPage() {
           </div>
 
           <div className="flex flex-wrap items-start gap-5">
-            {/* Logo box */}
+            {/* Dynamic Logo box with Change & Remove options */}
             <div className="flex flex-col items-center gap-2 shrink-0">
               {business.logoUrl ? (
                 <img
@@ -106,9 +398,28 @@ export default function BusinessDetailsPage() {
                   {business.logoText}
                 </div>
               )}
-              <Button variant="outline" size="sm" onClick={() => toast.info('Uploading new logo...')} className="text-xs font-bold h-7">
-                Change Logo
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logoInputRef.current?.click()}
+                  className="text-xs font-bold h-7 cursor-pointer"
+                >
+                  <Upload className="h-3.5 w-3.5 mr-1" />
+                  Change Logo
+                </Button>
+                {customLogoUrl && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveLogo}
+                    className="text-[11px] font-semibold text-rose-600 hover:bg-rose-50 h-7 px-1.5"
+                    title="Reset to default initials"
+                  >
+                    Reset
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Fields Grid */}
@@ -129,22 +440,39 @@ export default function BusinessDetailsPage() {
               </div>
 
               <div>
-                <span className="text-slate-400 text-[11px] block font-medium">Business Email</span>
-                <a href={`mailto:${business.email}`} className="text-blue-600 font-bold hover:underline">
-                  {business.email}
-                </a>
+                <span className="text-slate-400 text-[11px] block font-medium">Primary Email</span>
+                {business.email !== 'Not set' ? (
+                  <a href={`mailto:${business.email}`} className="text-blue-600 font-bold hover:underline">
+                    {business.email}
+                  </a>
+                ) : (
+                  <span className="text-slate-400">Not set</span>
+                )}
               </div>
               <div>
-                <span className="text-slate-400 text-[11px] block font-medium">Business Phone</span>
-                <a href={`tel:${business.phone}`} className="text-[#0D1F3D] font-bold">
-                  {business.phone}
-                </a>
+                <span className="text-slate-400 text-[11px] block font-medium">Primary Phone</span>
+                {business.phone !== 'Not set' ? (
+                  <a href={`tel:${business.phone}`} className="text-[#0D1F3D] font-bold font-mono">
+                    {business.phone}
+                  </a>
+                ) : (
+                  <span className="text-slate-400">Not set</span>
+                )}
               </div>
               <div>
                 <span className="text-slate-400 text-[11px] block font-medium">Website</span>
-                <a href={business.website.startsWith('http') ? business.website : `https://${business.website}`} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline">
-                  {business.website}
-                </a>
+                {business.website !== 'Not provided' ? (
+                  <a
+                    href={business.website.startsWith('http') ? business.website : `https://${business.website}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 font-bold hover:underline"
+                  >
+                    {business.website}
+                  </a>
+                ) : (
+                  <span className="text-slate-400">Not provided</span>
+                )}
               </div>
 
               <div>
@@ -163,47 +491,50 @@ export default function BusinessDetailsPage() {
           </div>
         </div>
 
-        {/* Address & Embedded Map Card */}
+        {/* Dynamic Address & Embedded Map Card */}
         <div className="rounded-md border border-slate-200/80 bg-white p-5 shadow-xs space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-sm font-bold text-[#0D1F3D] flex items-center gap-2">
               <MapPin className="h-4 w-4 text-[#E20613]" /> Location & Address
             </h3>
-            <button onClick={() => navigate(`/admin/businesses/${business.id}/edit`)} className="text-xs font-bold text-[#0D1F3D] hover:text-[#E20613] cursor-pointer">
+            <button
+              onClick={() => navigate(`/admin/businesses/${business.id}/edit`)}
+              className="text-xs font-bold text-[#0D1F3D] hover:text-[#E20613] cursor-pointer"
+            >
               Edit
             </button>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 items-center">
-            {/* Address fields */}
+            {/* Dynamic Address fields */}
             <div className="space-y-2.5 text-xs font-semibold">
               <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                <span className="text-slate-400">Shop / Building No.</span>
-                <span className="text-[#0D1F3D] font-bold">12, 1st Floor</span>
+                <span className="text-slate-400">Address Line 1</span>
+                <span className="text-[#0D1F3D] font-bold text-right">{business.addressLine1}</span>
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                <span className="text-slate-400">Area / Locality</span>
-                <span className="text-[#0D1F3D] font-bold">Orion Mall, Dr. C. H. Street</span>
+                <span className="text-slate-400">Address Line 2</span>
+                <span className="text-[#0D1F3D] font-bold text-right">{business.addressLine2}</span>
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-1.5">
                 <span className="text-slate-400">City</span>
-                <span className="text-[#0D1F3D] font-bold">{business.city}</span>
+                <span className="text-[#0D1F3D] font-bold text-right">{business.city}</span>
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-1.5">
-                <span className="text-slate-400">Pincode</span>
-                <span className="text-[#0D1F3D] font-bold font-mono">400001</span>
+                <span className="text-slate-400">Pincode / Postal Code</span>
+                <span className="text-[#0D1F3D] font-bold font-mono text-right">{business.postalCode}</span>
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-1.5">
                 <span className="text-slate-400">State</span>
-                <span className="text-[#0D1F3D] font-bold">Maharashtra</span>
+                <span className="text-[#0D1F3D] font-bold text-right">{business.state}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Country</span>
-                <span className="text-[#0D1F3D] font-bold">India</span>
+                <span className="text-[#0D1F3D] font-bold text-right">{business.countryCode}</span>
               </div>
             </div>
 
-            {/* Interactive Location Map */}
+            {/* Dynamic Interactive Location Map */}
             <div className="relative h-48 w-full rounded-md border border-slate-200 overflow-hidden shadow-xs">
               <InteractiveMap
                 mode="prospects"
@@ -220,8 +551,8 @@ export default function BusinessDetailsPage() {
                     contactPerson: business.assignedToName,
                     phone: business.phone,
                     lastVisitTime: 'Today',
-                    lat: 19.115,
-                    lng: 72.86,
+                    lat: coords.lat,
+                    lng: coords.lng,
                     region: business.city,
                   },
                 ]}
@@ -236,7 +567,10 @@ export default function BusinessDetailsPage() {
             <h3 className="text-sm font-bold text-[#0D1F3D] flex items-center gap-2">
               <FileText className="h-4 w-4 text-[#E20613]" /> Business Description
             </h3>
-            <button onClick={() => navigate(`/admin/businesses/${business.id}/edit`)} className="text-xs font-bold text-[#0D1F3D] hover:text-[#E20613] cursor-pointer">
+            <button
+              onClick={() => navigate(`/admin/businesses/${business.id}/edit`)}
+              className="text-xs font-bold text-[#0D1F3D] hover:text-[#E20613] cursor-pointer"
+            >
               Edit
             </button>
           </div>
@@ -247,8 +581,12 @@ export default function BusinessDetailsPage() {
             <div>
               <span className="text-slate-400 text-[11px] block font-medium mb-1">Categories</span>
               <div className="flex flex-wrap gap-1">
-                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">Gym</span>
-                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">Fitness Center</span>
+                <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+                  {business.category}
+                </span>
+                <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-100">
+                  {business.businessType}
+                </span>
               </div>
             </div>
             <div>
@@ -266,45 +604,75 @@ export default function BusinessDetailsPage() {
           </div>
         </div>
 
-        {/* Notes & Documents Summary Row */}
+        {/* Dynamic Notes & Documents Summary Row */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* Notes Preview */}
+          {/* Notes Card */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-[#0D1F3D]">Notes (5)</h4>
-              <button onClick={() => toast.info('Viewing all 5 notes...')} className="text-[11px] font-bold text-blue-600 hover:underline">
-                View All Notes →
-              </button>
+              <h4 className="text-xs font-bold text-[#0D1F3D]">Notes ({notes.length})</h4>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsAddNoteOpen(true)}
+                  className="text-[11px] font-bold text-emerald-600 hover:underline cursor-pointer flex items-center gap-0.5"
+                >
+                  <Plus className="h-3 w-3" /> Add Note
+                </button>
+                <button
+                  onClick={() => setIsViewNotesOpen(true)}
+                  className="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer"
+                >
+                  View All →
+                </button>
+              </div>
             </div>
-            <div className="rounded-md bg-slate-50 p-3 border border-slate-100 text-xs space-y-1">
-              <p className="font-semibold text-slate-700">High potential business. Interested in digital marketing & review management.</p>
-              <p className="text-[10px] text-slate-400">Added by Vikram Patil on May 16, 2025</p>
-            </div>
+            {notes.length > 0 ? (
+              <div className="rounded-md bg-slate-50 p-3 border border-slate-100 text-xs space-y-1">
+                <p className="font-semibold text-slate-700 line-clamp-2">{notes.at(0)?.text}</p>
+                <p className="text-[10px] text-slate-400">
+                  Added by {notes.at(0)?.author} • {notes.at(0)?.date}
+                </p>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 italic py-2">No notes added yet.</p>
+            )}
           </div>
 
-          {/* Documents Preview */}
+          {/* Documents Card */}
           <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-[#0D1F3D]">Documents (8)</h4>
-              <button onClick={() => toast.info('Viewing all documents...')} className="text-[11px] font-bold text-blue-600 hover:underline">
-                View All Documents →
-              </button>
+              <h4 className="text-xs font-bold text-[#0D1F3D]">Documents ({documents.length})</h4>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => docInputRef.current?.click()}
+                  className="text-[11px] font-bold text-emerald-600 hover:underline cursor-pointer flex items-center gap-0.5"
+                >
+                  <Upload className="h-3 w-3" /> Upload
+                </button>
+                <button
+                  onClick={() => setIsViewDocsOpen(true)}
+                  className="text-[11px] font-bold text-blue-600 hover:underline cursor-pointer"
+                >
+                  View All →
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
-              <div className="flex items-center gap-1.5 rounded-md bg-slate-50 p-2 border border-slate-200 text-xs shrink-0">
-                <FileSpreadsheet className="h-4 w-4 text-red-500" />
-                <div>
-                  <p className="font-bold text-[11px] text-[#0D1F3D]">Business Registration.pdf</p>
-                  <p className="text-[9px] text-slate-400">245 KB</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 rounded-md bg-slate-50 p-2 border border-slate-200 text-xs shrink-0">
-                <FileSpreadsheet className="h-4 w-4 text-blue-500" />
-                <div>
-                  <p className="font-bold text-[11px] text-[#0D1F3D]">Trade License.jpg</p>
-                  <p className="text-[9px] text-slate-400">556 KB</p>
-                </div>
-              </div>
+              {documents.length > 0 ? (
+                documents.slice(0, 2).map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="flex items-center gap-1.5 rounded-md bg-slate-50 p-2 border border-slate-200 text-xs shrink-0 max-w-[200px]"
+                  >
+                    <FileSpreadsheet className="h-4 w-4 text-red-500 shrink-0" />
+                    <div className="min-w-0">
+                      <p className="font-bold text-[11px] text-[#0D1F3D] truncate">{doc.name}</p>
+                      <p className="text-[9px] text-slate-400">{doc.size}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-slate-400 italic py-2">No documents uploaded.</p>
+              )}
             </div>
           </div>
         </div>
@@ -319,7 +687,7 @@ export default function BusinessDetailsPage() {
           <div className="flex justify-between items-center">
             <span className="text-slate-500">Status</span>
             <span className="font-bold text-emerald-600 flex items-center gap-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" /> Active
+              <span className="h-2 w-2 rounded-full bg-emerald-500" /> {business.status}
             </span>
           </div>
 
@@ -331,48 +699,42 @@ export default function BusinessDetailsPage() {
           <div className="flex justify-between items-center">
             <span className="text-slate-500">Assigned To</span>
             <div className="flex items-center gap-1.5">
-              <img src={business.assignedToAvatar} alt="" className="h-5 w-5 rounded-full object-cover" />
               <span className="font-bold text-[#0D1F3D]">{business.assignedToName}</span>
             </div>
           </div>
 
           <div className="flex justify-between items-center">
-            <span className="text-slate-500">Created By</span>
-            <span className="font-bold text-[#0D1F3D]">{business.assignedToName}</span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-slate-500">Last Updated By</span>
-            <span className="font-bold text-[#0D1F3D]">Neha Gupta</span>
+            <span className="text-slate-500">Last Activity</span>
+            <span className="font-bold text-[#0D1F3D]">{business.lastActivity}</span>
           </div>
         </div>
 
-        {/* Lead Overview Card */}
+        {/* Lead & Opportunity Overview Card */}
         <div className="rounded-md border border-slate-200/80 bg-white p-4 shadow-xs space-y-3">
-          <h3 className="text-xs font-bold text-[#0D1F3D]">Lead Overview</h3>
+          <h3 className="text-xs font-bold text-[#0D1F3D]">Lead & Deal Overview</h3>
 
           <div className="grid grid-cols-3 gap-2 text-center text-xs">
             <div className="rounded-md bg-blue-50 p-2.5 border border-blue-100">
-              <span className="text-[10px] text-slate-500 block font-medium">Total Leads</span>
+              <span className="text-[10px] text-slate-500 block font-medium">Total Deals</span>
               <span className="text-base font-extrabold text-blue-700">{business.totalLeads}</span>
             </div>
             <div className="rounded-md bg-emerald-50 p-2.5 border border-emerald-100">
-              <span className="text-[10px] text-slate-500 block font-medium">Active Leads</span>
+              <span className="text-[10px] text-slate-500 block font-medium">Active Deals</span>
               <span className="text-base font-extrabold text-emerald-700">{business.activeLeads}</span>
             </div>
             <div className="rounded-md bg-purple-50 p-2.5 border border-purple-100">
-              <span className="text-[10px] text-slate-500 block font-medium">Converted</span>
-              <span className="text-base font-extrabold text-purple-700">{business.convertedLeads}</span>
+              <span className="text-[10px] text-slate-500 block font-medium">Won Deals</span>
+              <span className="text-base font-extrabold text-purple-700">{business.wonLeads}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-2 text-center text-xs">
             <div className="rounded-md bg-emerald-50 p-2 border border-emerald-100">
-              <span className="text-[10px] text-slate-500 block">Won Leads</span>
+              <span className="text-[10px] text-slate-500 block">Won</span>
               <span className="text-sm font-bold text-emerald-700">{business.wonLeads}</span>
             </div>
             <div className="rounded-md bg-red-50 p-2 border border-red-100">
-              <span className="text-[10px] text-slate-500 block">Lost Leads</span>
+              <span className="text-[10px] text-slate-500 block">Lost</span>
               <span className="text-sm font-bold text-red-700">{business.lostLeads}</span>
             </div>
             <div className="rounded-md bg-amber-50 p-2 border border-amber-100">
@@ -385,10 +747,10 @@ export default function BusinessDetailsPage() {
             variant="outline"
             size="sm"
             fullWidth
-            onClick={() => navigate(`/admin/leads?businessId=${business.id}`)}
+            onClick={() => navigate(`/admin/sales/pipeline`)}
             className="text-xs font-bold flex items-center justify-center gap-1 text-[#0D1F3D] border-slate-200"
           >
-            View Lead Insights →
+            View Sales Pipeline →
           </Button>
         </div>
 
@@ -398,40 +760,188 @@ export default function BusinessDetailsPage() {
 
           <div className="space-y-2 text-xs font-semibold">
             <button
-              onClick={() => toast.info('Adding new contact...')}
+              onClick={() => navigate(`/admin/businesses/${business.id}/contacts`)}
               className="w-full flex items-center justify-between rounded-md border border-slate-100 bg-slate-50 p-2.5 hover:bg-slate-100 text-left transition-colors cursor-pointer"
             >
               <div>
-                <p className="font-bold text-[#0D1F3D]">Add New Contact</p>
-                <p className="text-[10px] text-slate-400">Add a new contact for this business</p>
+                <p className="font-bold text-[#0D1F3D]">Manage Contacts</p>
+                <p className="text-[10px] text-slate-400">View and add contacts for this merchant</p>
               </div>
               <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
             </button>
 
             <button
-              onClick={() => toast.info('Opening Add Note modal...')}
+              onClick={() => setIsAddNoteOpen(true)}
               className="w-full flex items-center justify-between rounded-md border border-slate-100 bg-slate-50 p-2.5 hover:bg-slate-100 text-left transition-colors cursor-pointer"
             >
               <div>
                 <p className="font-bold text-[#0D1F3D]">Add Note</p>
-                <p className="text-[10px] text-slate-400">Add internal note</p>
+                <p className="text-[10px] text-slate-400">Record a new interaction or observation</p>
               </div>
               <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
             </button>
 
             <button
-              onClick={() => toast.info('Opening Document upload...')}
+              onClick={() => docInputRef.current?.click()}
               className="w-full flex items-center justify-between rounded-md border border-slate-100 bg-slate-50 p-2.5 hover:bg-slate-100 text-left transition-colors cursor-pointer"
             >
               <div>
                 <p className="font-bold text-[#0D1F3D]">Upload Document</p>
-                <p className="text-[10px] text-slate-400">Upload related documents</p>
+                <p className="text-[10px] text-slate-400">Attach license, agreement, or GST file</p>
               </div>
               <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
             </button>
           </div>
         </div>
       </div>
+
+      {/* MODAL 1: Add Note */}
+      <Modal
+        isOpen={isAddNoteOpen}
+        onClose={() => setIsAddNoteOpen(false)}
+        title="Add Internal Note"
+      >
+        <div className="space-y-4 py-2">
+          <div>
+            <label className="text-xs font-bold text-slate-700 block mb-1">Note Content *</label>
+            <textarea
+              rows={4}
+              placeholder="Type your notes or observation about this business..."
+              value={newNoteText}
+              onChange={(e) => setNewNoteText(e.target.value)}
+              className="w-full rounded-md border border-slate-200 p-2.5 text-xs font-medium text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-bold text-slate-700 block mb-1">Author Name</label>
+            <input
+              type="text"
+              value={newNoteAuthor}
+              onChange={(e) => setNewNoteAuthor(e.target.value)}
+              className="w-full rounded-md border border-slate-200 p-2 text-xs font-semibold text-[#0D1F3D]"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <Button variant="outline" size="sm" onClick={() => setIsAddNoteOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" onClick={handleSaveNote}>
+              Save Note
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL 2: View All Notes */}
+      <Modal
+        isOpen={isViewNotesOpen}
+        onClose={() => setIsViewNotesOpen(false)}
+        title={`All Notes (${notes.length})`}
+      >
+        <div className="space-y-3 py-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+          {notes.map((n) => (
+            <div key={n.id} className="rounded-md border border-slate-200 p-3 bg-slate-50/50 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-[#0D1F3D] text-xs">{n.author}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-slate-400">{n.date}</span>
+                  <button
+                    onClick={() => handleDeleteNote(n.id)}
+                    className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                    title="Delete Note"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600 font-medium whitespace-pre-wrap">{n.text}</p>
+            </div>
+          ))}
+          <div className="pt-2 flex justify-between items-center border-t border-slate-100">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setIsViewNotesOpen(false);
+                setIsAddNoteOpen(true);
+              }}
+            >
+              + Add Another Note
+            </Button>
+            <Button variant="primary" size="sm" onClick={() => setIsViewNotesOpen(false)}>
+              Done
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL 3: View All Documents */}
+      <Modal
+        isOpen={isViewDocsOpen}
+        onClose={() => setIsViewDocsOpen(false)}
+        title={`All Documents (${documents.length})`}
+      >
+        <div className="space-y-3 py-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+          {documents.map((doc) => (
+            <div
+              key={doc.id}
+              className="flex items-center justify-between rounded-md border border-slate-200 p-3 bg-slate-50/50"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <FileSpreadsheet className="h-5 w-5 text-red-500 shrink-0" />
+                <div className="min-w-0">
+                  <p className="font-bold text-xs text-[#0D1F3D] truncate">{doc.name}</p>
+                  <p className="text-[10px] text-slate-400">
+                    {doc.size} • {doc.date}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={() => toast.info(`Downloading ${doc.name}...`)}
+                  className="p-1.5 text-slate-500 hover:text-blue-600 transition-colors"
+                  title="Download Document"
+                >
+                  <Download className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => handleDeleteDoc(doc.id)}
+                  className="p-1.5 text-slate-500 hover:text-rose-600 transition-colors"
+                  title="Delete Document"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+          <div className="pt-2 flex justify-between items-center border-t border-slate-100">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => docInputRef.current?.click()}
+            >
+              <Upload className="h-3.5 w-3.5 mr-1" />
+              Upload New
+            </Button>
+            <Button variant="primary" size="sm" onClick={() => setIsViewDocsOpen(false)}>
+              Done
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Business Logo Cropper Modal */}
+      <ImageCropperModal
+        isOpen={cropperOpen}
+        imageUrl={selectedImageSrc}
+        onClose={() => setCropperOpen(false)}
+        onCropComplete={handleCropComplete}
+        title="Crop Business Logo"
+        subtitle="Adjust zoom, framing, and rotation for the business logo"
+        defaultAspectType="square"
+      />
     </div>
   );
 }

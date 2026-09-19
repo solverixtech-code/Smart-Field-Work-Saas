@@ -24,6 +24,8 @@ type ImageCropperModalProps = {
   onClose: () => void;
   onCropComplete: (croppedBlob: Blob) => void | Promise<void>;
   title?: string;
+  subtitle?: string;
+  defaultAspectType?: 'circle' | 'square' | 'rect' | 'full';
 };
 
 const createImage = (url: string): Promise<HTMLImageElement> =>
@@ -165,13 +167,15 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
   onClose,
   onCropComplete,
   title = 'Crop Profile Photo',
+  subtitle = 'Select the best framing for this image',
+  defaultAspectType = 'circle',
 }) => {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [aspectType, setAspectType] = useState<'circle' | 'square' | 'rect' | 'full'>('circle');
+  const [aspectType, setAspectType] = useState<'circle' | 'square' | 'rect' | 'full'>(defaultAspectType);
   const [originalAspect, setOriginalAspect] = useState<number | undefined>(undefined);
 
   useEffect(() => {
@@ -179,6 +183,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setRotation(0);
+    setAspectType(defaultAspectType);
     setCroppedAreaPixels(null);
     createImage(imageUrl)
       .then((img) => {
@@ -187,7 +192,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
       .catch((err) => {
         console.error('Failed to load image for aspect ratio:', err);
       });
-  }, [imageUrl]);
+  }, [imageUrl, defaultAspectType]);
 
   const handleCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -263,7 +268,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
               <div className="mb-6 flex items-center justify-between">
                 <div>
                   <h2 className="text-2xl font-extrabold tracking-tight text-[#0B2E6B]">{title}</h2>
-                  <p className="text-[13px] text-slate-500 font-medium">Select the best framing for this profile</p>
+                  <p className="text-[13px] text-slate-500 font-medium">{subtitle}</p>
                 </div>
                 <button
                   type="button"
