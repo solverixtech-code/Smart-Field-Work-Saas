@@ -63,6 +63,7 @@ import { api } from "../common/api";
 import { Button } from "../components/ui/Button";
 import { Role, getUserRoleLabel } from "@visiblo/shared";
 import { HeaderNotificationBell } from "../components/notifications/HeaderNotificationBell";
+import { HeaderSearchBar, recordRecentSearch } from "../components/navigation/HeaderSearchBar";
 
 const bigLogo = "/assets/sfw-logo.png";
 const smallLogo = "/assets/sfw-icon.png";
@@ -1457,38 +1458,50 @@ export default function AppShell() {
         }`}
       >
         {/* Top Header */}
-        <header className="flex h-20 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-sm">
-          {/* Mandatory Left Header Breadcrumb Navigation */}
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-            <NavLink
-              to="/admin/dashboard"
-              className="flex items-center text-slate-400 hover:text-[#0D1F3D] transition-colors"
-            >
-              <Home className="h-4 w-4" />
-            </NavLink>
-            {getBreadcrumbTrail(location.pathname).map((crumb, idx, arr) => {
-              const isLast = idx === arr.length - 1;
-              return (
-                <React.Fragment key={crumb.to + idx}>
-                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" />
-                  {isLast ? (
-                    <span className="font-extrabold text-[#0D1F3D] bg-slate-100 px-2.5 py-1 rounded-sm border border-slate-200/60 shadow-xs">
-                      {crumb.label}
-                    </span>
-                  ) : (
-                    <NavLink
-                      to={crumb.to}
-                      className="hover:text-[#0D1F3D] hover:underline transition-colors font-semibold text-slate-600"
-                    >
-                      {crumb.label}
-                    </NavLink>
-                  )}
-                </React.Fragment>
-              );
-            })}
+        <header className="flex h-20 flex-shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 shadow-sm gap-4">
+          {/* Left Group: Breadcrumbs & Sidebar Search Bar */}
+          <div className="flex items-center gap-4 lg:gap-6 flex-1 min-w-0 mr-4">
+            {/* Mandatory Left Header Breadcrumb Navigation */}
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 flex-shrink-0">
+              <NavLink
+                to="/admin/dashboard"
+                className="flex items-center text-slate-400 hover:text-[#0D1F3D] transition-colors"
+              >
+                <Home className="h-4 w-4" />
+              </NavLink>
+              {getBreadcrumbTrail(location.pathname).map((crumb, idx, arr) => {
+                const isLast = idx === arr.length - 1;
+                return (
+                  <React.Fragment key={crumb.to + idx}>
+                    <ChevronRight className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" />
+                    {isLast ? (
+                      <span className="font-extrabold text-[#0D1F3D] bg-slate-100 px-2.5 py-1 rounded-sm border border-slate-200/60 shadow-xs">
+                        {crumb.label}
+                      </span>
+                    ) : (
+                      <NavLink
+                        to={crumb.to}
+                        className="hover:text-[#0D1F3D] hover:underline transition-colors font-semibold text-slate-600"
+                      >
+                        {crumb.label}
+                      </NavLink>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+
+            {/* Subtle Divider */}
+            <div className="h-5 w-[1px] bg-slate-200 flex-shrink-0 hidden md:block" />
+
+            {/* Search Bar on the Left */}
+            <div className="flex-1 max-w-[480px] lg:max-w-[540px] min-w-[280px]">
+              <HeaderSearchBar navCategories={navCategories} />
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Right Group: Notifications & User Profile */}
+          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
             <HeaderNotificationBell />
 
             {/* Header User Profile Avatar Card */}
