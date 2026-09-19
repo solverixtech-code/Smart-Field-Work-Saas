@@ -51,6 +51,19 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
 
   const existingBusiness = accountQuery.data;
 
+  React.useEffect(() => {
+    if (existingBusiness?.name && businessId) {
+      try {
+        sessionStorage.setItem(`visiblo_biz_name_${businessId}`, existingBusiness.name);
+      } catch {}
+      window.dispatchEvent(
+        new CustomEvent('visiblo:business-name-updated', {
+          detail: { businessId, name: existingBusiness.name },
+        }),
+      );
+    }
+  }, [businessId, existingBusiness?.name]);
+
   const territoryOptions = [
     {
       label: territoriesList.length > 0 ? '-- Select Territory (Optional) --' : '-- No Territories Created Yet --',

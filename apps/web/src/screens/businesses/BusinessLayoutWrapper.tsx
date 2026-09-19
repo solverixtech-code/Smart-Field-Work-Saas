@@ -54,6 +54,19 @@ export default function BusinessLayoutWrapper() {
     service.account(businessId, signal),
   );
 
+  useEffect(() => {
+    if (result.data?.name && businessId) {
+      try {
+        sessionStorage.setItem(`visiblo_biz_name_${businessId}`, result.data.name);
+      } catch {}
+      window.dispatchEvent(
+        new CustomEvent('visiblo:business-name-updated', {
+          detail: { businessId, name: result.data.name },
+        }),
+      );
+    }
+  }, [businessId, result.data?.name]);
+
   if (result.error) {
     return <CrmFailure error={result.error} retry={result.reload} />;
   }

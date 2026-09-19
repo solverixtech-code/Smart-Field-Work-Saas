@@ -608,6 +608,21 @@ const navCategories: NavCategory[] = [
   },
 ];
 
+function getBusinessBreadcrumbName(businessId?: string): string {
+  if (!businessId) return "Business Details";
+  try {
+    const cached =
+      sessionStorage.getItem(`visiblo_biz_name_${businessId}`) ||
+      localStorage.getItem(`visiblo_biz_name_${businessId}`);
+    if (cached) return cached;
+  } catch {}
+  if (businessId.startsWith("BIZ-") || (businessId.length <= 8 && !businessId.includes("-"))) {
+    return businessId;
+  }
+  const clean = businessId.replace(/-/g, "").toUpperCase();
+  return `BIZ-${clean.slice(-6)}`;
+}
+
 function getBreadcrumbTrail(pathname: string) {
   const items: { label: string; to: string }[] = [];
 
@@ -777,17 +792,32 @@ function getBreadcrumbTrail(pathname: string) {
   } else if (pathname === "/admin/businesses") {
     items.push({ label: "Businesses & Data", to: "/admin/businesses" });
     items.push({ label: "All Businesses", to: "/admin/businesses" });
+  } else if (pathname === "/admin/businesses/create" || pathname === "/admin/businesses/add") {
+    items.push({ label: "Businesses & Data", to: "/admin/businesses" });
+    items.push({ label: "Add Business", to: pathname });
   } else if (pathname.startsWith("/admin/businesses/")) {
     items.push({ label: "Businesses & Data", to: "/admin/businesses" });
-    items.push({ label: "FitZone Gym", to: "/admin/businesses/BUS-10058242" });
-    if (pathname.endsWith("/contacts")) {
-      items.push({ label: "Business Contacts", to: pathname });
-    } else if (pathname.endsWith("/sales-history")) {
-      items.push({ label: "Sales History", to: pathname });
-    } else if (pathname.endsWith("/visits")) {
-      items.push({ label: "Visit History", to: pathname });
-    } else if (pathname.endsWith("/subscription")) {
-      items.push({ label: "Business Subscription", to: pathname });
+    const parts = pathname.split("/");
+    const bizId = parts[3];
+    if (bizId === "create" || bizId === "add") {
+      items.push({ label: "Add Business", to: pathname });
+    } else if (bizId) {
+      const bizName = getBusinessBreadcrumbName(bizId);
+      const bizTo = `/admin/businesses/${bizId}`;
+      items.push({ label: bizName, to: bizTo });
+      if (pathname.endsWith("/edit")) {
+        items.push({ label: "Edit Business", to: pathname });
+      } else if (pathname.endsWith("/contacts")) {
+        items.push({ label: "Business Contacts", to: pathname });
+      } else if (pathname.endsWith("/sales-history")) {
+        items.push({ label: "Sales History", to: pathname });
+      } else if (pathname.endsWith("/visits")) {
+        items.push({ label: "Visit History", to: pathname });
+      } else if (pathname.endsWith("/subscription")) {
+        items.push({ label: "Business Subscription", to: pathname });
+      } else if (pathname.endsWith("/google-profile")) {
+        items.push({ label: "Google Profile", to: pathname });
+      }
     }
   } else if (pathname === "/admin/executives") {
     items.push({ label: "Field Operations", to: "/admin/executives" });
@@ -867,6 +897,13 @@ export default function AppShell() {
   const [isHovered, setIsHovered] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+  const [, setBizBreadcrumbVersion] = useState(0);
+
+  useEffect(() => {
+    const handleBizNameUpdate = () => setBizBreadcrumbVersion((v) => v + 1);
+    window.addEventListener("visiblo:business-name-updated", handleBizNameUpdate);
+    return () => window.removeEventListener("visiblo:business-name-updated", handleBizNameUpdate);
+  }, []);
 
   const { user } = useAppSelector((s) => s.auth);
   const { platform, tenant, loaded: authzLoaded, loading: authzLoading } = useAppSelector((s) => s.authorization);

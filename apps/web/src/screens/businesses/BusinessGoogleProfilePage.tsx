@@ -33,7 +33,8 @@ const insightsTrendData = [
 ];
 
 export default function BusinessGoogleProfilePage() {
-  const business = useOutletContext<BusinessItem>();
+  const context = useOutletContext<any>();
+  const business = context?.business || context || {};
   const [profile] = useState(mockGoogleProfile);
 
   return (
@@ -79,9 +80,17 @@ export default function BusinessGoogleProfilePage() {
       <div className="rounded-md border border-slate-200/80 bg-white p-5 shadow-xs space-y-4">
         <div className="flex flex-wrap items-start gap-5">
           {/* Logo / Thumbnail */}
-          <div className="flex h-20 w-20 items-center justify-center rounded-md bg-amber-100 font-bold text-amber-800 text-xl border border-amber-200 shrink-0">
-            FZ
-          </div>
+          {business.id && localStorage.getItem(`visiblo_biz_logo_${business.id}`) ? (
+            <img
+              src={localStorage.getItem(`visiblo_biz_logo_${business.id}`)!}
+              alt={business.name || 'Business'}
+              className="h-20 w-20 rounded-md object-cover border border-slate-200 shrink-0 shadow-2xs"
+            />
+          ) : (
+            <div className="flex h-20 w-20 items-center justify-center rounded-md bg-blue-100 font-bold text-blue-800 text-xl border border-blue-200 shrink-0">
+              {business.name ? business.name.slice(0, 2).toUpperCase() : 'BU'}
+            </div>
+          )}
 
           {/* Profile Basic Info */}
           <div className="space-y-1.5 flex-1 min-w-[240px]">

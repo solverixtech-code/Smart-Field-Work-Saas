@@ -118,6 +118,18 @@ export default function AllBusinessesPage() {
     },
   );
 
+  useEffect(() => {
+    if (result.data?.items) {
+      try {
+        result.data.items.forEach((item) => {
+          if (item.id && item.name) {
+            sessionStorage.setItem(`visiblo_biz_name_${item.id}`, item.name);
+          }
+        });
+      } catch {}
+    }
+  }, [result.data?.items]);
+
   const statusDistributionData = counts.data
     ? [
         { name: 'Active', value: counts.data.active, color: '#10B981' },

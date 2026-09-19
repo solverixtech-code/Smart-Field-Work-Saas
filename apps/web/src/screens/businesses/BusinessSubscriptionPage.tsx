@@ -26,7 +26,8 @@ interface HistoryItem {
 }
 
 export default function BusinessSubscriptionPage() {
-  const business = useOutletContext<BusinessItem>();
+  const context = useOutletContext<any>();
+  const business = context?.business || context || {};
   const [subscription] = useState(mockSubscription);
 
   const columns: ColumnDef<HistoryItem>[] = [

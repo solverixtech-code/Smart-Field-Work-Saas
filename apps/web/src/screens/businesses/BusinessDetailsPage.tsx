@@ -15,6 +15,8 @@ import {
   Download,
   Calendar,
   User,
+  Eye,
+  Copy,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
@@ -215,6 +217,8 @@ export default function BusinessDetailsPage() {
   });
 
   const [isViewDocsOpen, setIsViewDocsOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<DocItem | null>(null);
+  const [selectedNote, setSelectedNote] = useState<NoteItem | null>(null);
   const docInputRef = useRef<HTMLInputElement>(null);
 
   const handleDocUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -626,8 +630,17 @@ export default function BusinessDetailsPage() {
               </div>
             </div>
             {notes.length > 0 ? (
-              <div className="rounded-md bg-slate-50 p-3 border border-slate-100 text-xs space-y-1">
-                <p className="font-semibold text-slate-700 line-clamp-2">{notes.at(0)?.text}</p>
+              <div
+                onClick={() => setSelectedNote(notes.at(0) || null)}
+                className="rounded-md bg-slate-50 hover:bg-blue-50/40 p-3 border border-slate-100 hover:border-blue-200 text-xs space-y-1 cursor-pointer transition-all shadow-2xs group"
+                title="Click to view note details"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="font-semibold text-slate-700 line-clamp-2 group-hover:text-[#0D1F3D] transition-colors">
+                    {notes.at(0)?.text}
+                  </p>
+                  <Eye className="h-3.5 w-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0" />
+                </div>
                 <p className="text-[10px] text-slate-400">
                   Added by {notes.at(0)?.author} • {notes.at(0)?.date}
                 </p>
@@ -661,11 +674,15 @@ export default function BusinessDetailsPage() {
                 documents.slice(0, 2).map((doc) => (
                   <div
                     key={doc.id}
-                    className="flex items-center gap-1.5 rounded-md bg-slate-50 p-2 border border-slate-200 text-xs shrink-0 max-w-[200px]"
+                    onClick={() => setSelectedDoc(doc)}
+                    className="flex items-center gap-1.5 rounded-md bg-slate-50 hover:bg-blue-50/60 p-2 border border-slate-200 hover:border-blue-300 text-xs shrink-0 max-w-[200px] cursor-pointer transition-all shadow-2xs group"
+                    title="Click to preview document"
                   >
-                    <FileSpreadsheet className="h-4 w-4 text-red-500 shrink-0" />
+                    <FileSpreadsheet className="h-4 w-4 text-red-500 shrink-0 group-hover:scale-105 transition-transform" />
                     <div className="min-w-0">
-                      <p className="font-bold text-[11px] text-[#0D1F3D] truncate">{doc.name}</p>
+                      <p className="font-bold text-[11px] text-[#0D1F3D] group-hover:text-blue-600 truncate transition-colors">
+                        {doc.name}
+                      </p>
                       <p className="text-[9px] text-slate-400">{doc.size}</p>
                     </div>
                   </div>
@@ -848,8 +865,15 @@ export default function BusinessDetailsPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-slate-400">{n.date}</span>
                   <button
+                    onClick={() => setSelectedNote(n)}
+                    className="text-slate-400 hover:text-blue-600 transition-colors p-1 cursor-pointer"
+                    title="View Note Details"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </button>
+                  <button
                     onClick={() => handleDeleteNote(n.id)}
-                    className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                    className="text-slate-400 hover:text-rose-600 transition-colors p-1 cursor-pointer"
                     title="Delete Note"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -900,15 +924,22 @@ export default function BusinessDetailsPage() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button
+                  onClick={() => setSelectedDoc(doc)}
+                  className="p-1.5 text-slate-500 hover:text-blue-600 transition-colors cursor-pointer"
+                  title="Preview Document"
+                >
+                  <Eye className="h-4 w-4" />
+                </button>
+                <button
                   onClick={() => toast.info(`Downloading ${doc.name}...`)}
-                  className="p-1.5 text-slate-500 hover:text-blue-600 transition-colors"
+                  className="p-1.5 text-slate-500 hover:text-emerald-600 transition-colors cursor-pointer"
                   title="Download Document"
                 >
                   <Download className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => handleDeleteDoc(doc.id)}
-                  className="p-1.5 text-slate-500 hover:text-rose-600 transition-colors"
+                  className="p-1.5 text-slate-500 hover:text-rose-600 transition-colors cursor-pointer"
                   title="Delete Document"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -931,6 +962,207 @@ export default function BusinessDetailsPage() {
           </div>
         </div>
       </Modal>
+
+      {/* MODAL 4: Document Preview Viewer */}
+      {selectedDoc && (
+        <Modal
+          isOpen={Boolean(selectedDoc)}
+          onClose={() => setSelectedDoc(null)}
+          title={`Document Preview — ${selectedDoc.name}`}
+          maxWidth="max-w-2xl"
+        >
+          <div className="space-y-4 py-1 text-xs font-sans">
+            {/* Document Meta Header Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-md bg-slate-50 border border-slate-200 text-xs">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-red-100 text-red-700 shrink-0 font-bold">
+                  PDF
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#0D1F3D] text-xs truncate max-w-sm">{selectedDoc.name}</h4>
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    {selectedDoc.size} • Uploaded {selectedDoc.date} • Verified Document
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    toast.success(`Downloading ${selectedDoc.name}...`);
+                  }}
+                  className="text-xs font-bold"
+                >
+                  <Download className="h-3.5 w-3.5 mr-1 text-emerald-600" /> Download
+                </Button>
+              </div>
+            </div>
+
+            {/* Document High-Fidelity Viewer Frame */}
+            <div className="rounded-md border border-slate-200 bg-white p-6 shadow-inner space-y-4 max-h-[420px] overflow-y-auto custom-scrollbar">
+              {/* Document Header */}
+              <div className="flex justify-between items-start border-b border-slate-200 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-sm bg-[#0D1F3D] text-white flex items-center justify-center font-extrabold text-xs">
+                      SF
+                    </div>
+                    <span className="font-extrabold text-[#0D1F3D] text-sm tracking-tight">SMART FIELD WORK</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">Official Commercial Billing & Document</p>
+                </div>
+                <div className="text-right">
+                  <span className="inline-block rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-extrabold text-emerald-700 border border-emerald-200 uppercase tracking-wide">
+                    Verified Document
+                  </span>
+                  <p className="font-mono text-xs font-bold text-slate-800 mt-1">
+                    {selectedDoc.name.replace(/\.[^/.]+$/, '')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Billed To / Account Info */}
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Account / Client</span>
+                  <p className="font-bold text-[#0D1F3D] mt-0.5">{business.name || 'Account'}</p>
+                  <p className="text-slate-500 text-[11px]">{business.address || 'Address on file'}</p>
+                  <p className="text-slate-500 text-[11px]">{business.city || 'Location not set'}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Document Date</span>
+                  <p className="font-bold text-[#0D1F3D] mt-0.5">{selectedDoc.date === 'Today' ? new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : selectedDoc.date}</p>
+                  <p className="text-slate-500 text-[11px]">Ref: {business.id ? (business.id.startsWith('BIZ-') ? business.id : `BIZ-${business.id.replace(/-/g, '').slice(-6).toUpperCase()}`) : 'BIZ-NEW'}</p>
+                </div>
+              </div>
+
+              {/* Document Contents Mock Table */}
+              <div className="border border-slate-200 rounded-md overflow-hidden text-xs">
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-bold text-slate-600 uppercase">
+                    <tr>
+                      <th className="p-2.5">Description</th>
+                      <th className="p-2.5 text-center">Qty</th>
+                      <th className="p-2.5 text-right">Rate</th>
+                      <th className="p-2.5 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
+                    <tr>
+                      <td className="p-2.5">
+                        <p className="font-bold text-[#0D1F3D]">Enterprise Field Work SaaS Subscription</p>
+                        <p className="text-[10px] text-slate-400">Monthly field executive tracking & workflow automation</p>
+                      </td>
+                      <td className="p-2.5 text-center font-mono">1</td>
+                      <td className="p-2.5 text-right font-mono">₹ 14,999.00</td>
+                      <td className="p-2.5 text-right font-mono font-bold text-[#0D1F3D]">₹ 14,999.00</td>
+                    </tr>
+                    <tr className="bg-slate-50/50">
+                      <td colSpan={3} className="p-2 text-right font-semibold text-slate-500">GST (18%):</td>
+                      <td className="p-2 text-right font-mono font-bold text-slate-700">₹ 2,699.82</td>
+                    </tr>
+                    <tr className="bg-slate-100/60 font-bold">
+                      <td colSpan={3} className="p-2 text-right text-[#0D1F3D]">Grand Total:</td>
+                      <td className="p-2 text-right font-mono text-[#0D1F3D]">₹ 17,698.82</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Verification Footer */}
+              <div className="flex justify-between items-center pt-2 text-[10px] text-slate-400 border-t border-slate-100">
+                <span>Digitally verified by Smart Field Work Platform Security</span>
+                <span className="font-mono text-emerald-600 font-bold flex items-center gap-1">
+                  ✓ Validated Signature
+                </span>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  handleDeleteDoc(selectedDoc.id);
+                  setSelectedDoc(null);
+                }}
+                className="text-rose-600 border-rose-200 hover:bg-rose-50 font-semibold"
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete Document
+              </Button>
+              <Button variant="primary" size="sm" onClick={() => setSelectedDoc(null)}>
+                Close Preview
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* MODAL 5: Note Details Viewer */}
+      {selectedNote && (
+        <Modal
+          isOpen={Boolean(selectedNote)}
+          onClose={() => setSelectedNote(null)}
+          title="Note Details"
+          maxWidth="max-w-lg"
+        >
+          <div className="space-y-4 py-1 text-xs font-sans">
+            <div className="flex items-center justify-between p-3 rounded-md bg-blue-50/60 border border-blue-100">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0D1F3D] text-white font-bold text-xs shrink-0">
+                  {selectedNote.author ? selectedNote.author.slice(0, 2).toUpperCase() : 'NT'}
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#0D1F3D] text-xs">{selectedNote.author}</h4>
+                  <p className="text-[10px] text-slate-500">Added on {selectedNote.date}</p>
+                </div>
+              </div>
+              <span className="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800">
+                Internal Note
+              </span>
+            </div>
+
+            <div className="rounded-md border border-slate-200 bg-white p-4 space-y-2">
+              <span className="text-[10px] font-semibold text-slate-400 block uppercase tracking-wider">Note Content</span>
+              <p className="text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">
+                {selectedNote.text}
+              </p>
+            </div>
+
+            <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(selectedNote.text);
+                    toast.success('Note content copied to clipboard.');
+                  }}
+                  className="text-xs font-semibold"
+                >
+                  <Copy className="h-3.5 w-3.5 mr-1" /> Copy Text
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    handleDeleteNote(selectedNote.id);
+                    setSelectedNote(null);
+                  }}
+                  className="text-rose-600 border-rose-200 hover:bg-rose-50 text-xs font-semibold"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete
+                </Button>
+              </div>
+              <Button variant="primary" size="sm" onClick={() => setSelectedNote(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Business Logo Cropper Modal */}
       <ImageCropperModal
