@@ -357,10 +357,7 @@ export function GoogleMapPicker({
               <input
                 type="text"
                 value={currentAddress}
-                onChange={(e) => {
-                  setCurrentAddress(e.target.value);
-                  if (onAddressChange) onAddressChange(e.target.value);
-                }}
+                onChange={(e) => setCurrentAddress(e.target.value)}
                 placeholder="Search shop, building, street or landmark..."
                 className="w-full rounded-sm border border-slate-200 bg-white pl-8 pr-3 py-1.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#0D1F3D] focus:outline-none"
               />

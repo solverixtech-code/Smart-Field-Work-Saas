@@ -614,11 +614,7 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
             <div className="space-y-2 pt-2 border-t border-slate-100">
               <label className="font-extrabold text-[#0D1F3D] block text-xs">Interactive Location Pin Map</label>
               <GoogleMapPicker
-                address={
-                  formData.address1 || formData.city
-                    ? `${formData.address1 ? formData.address1 + ', ' : ''}${formData.city || ''}, ${formData.state || 'Maharashtra'}`
-                    : 'Mumbai, Maharashtra'
-                }
+                address={formData.address1 || (formData.city ? `${formData.city}, ${formData.state || 'Maharashtra'}` : 'Mumbai, Maharashtra')}
                 onAddressChange={(newAddr) => handleInputChange('address1', newAddr)}
                 height="h-[340px]"
                 showLocateMe
