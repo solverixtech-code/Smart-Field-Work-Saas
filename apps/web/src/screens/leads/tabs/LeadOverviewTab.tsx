@@ -36,83 +36,83 @@ export function LeadOverviewTab({ lead }: TabProps) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-slate-700">
             <div>
-              <span className="text-[11px] text-slate-400 block font-medium">Business / Company Name</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Business / Company Name</span>
               <p className="text-sm font-extrabold text-[#0D1F3D]">
                 {lead.businessName || lead.name}
               </p>
             </div>
 
             <div>
-              <span className="text-[11px] text-slate-400 block font-medium">Contact Person</span>
-              <p className="text-sm font-bold text-slate-900">
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Contact Person</span>
+              <p className="text-sm font-extrabold text-[#0D1F3D]">
                 {lead.contactName || 'Not specified'}
               </p>
             </div>
 
             <div>
-              <span className="text-[11px] text-slate-400 block font-medium">Official Email</span>
-              <p className="font-bold text-blue-600 flex items-center gap-1.5 mt-0.5">
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Official Email</span>
+              <p className="font-extrabold text-blue-600 flex items-center gap-1.5 mt-0.5">
                 <Mail className="h-3.5 w-3.5" /> {lead.email || 'Email not set'}
               </p>
             </div>
 
             <div>
-              <span className="text-[11px] text-slate-400 block font-medium">Phone Number</span>
-              <p className="font-bold text-[#0D1F3D] flex items-center gap-1.5 mt-0.5">
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Phone Number</span>
+              <p className="font-mono font-extrabold text-[#0D1F3D] flex items-center gap-1.5 mt-0.5">
                 <Phone className="h-3.5 w-3.5 text-[#E20613]" /> {lead.phone || 'Phone not set'}
               </p>
             </div>
 
             <div>
-              <span className="text-[11px] text-slate-400 block font-medium">Location / Address</span>
-              <p className="font-bold text-slate-800 flex items-center gap-1.5 mt-0.5">
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Location / Address</span>
+              <p className="font-extrabold text-slate-800 flex items-center gap-1.5 mt-0.5">
                 <MapPin className="h-3.5 w-3.5 text-purple-600" />
                 {[lead.addressLine1, lead.city, lead.state, lead.postalCode, lead.countryCode].filter(Boolean).join(', ') || 'Address not set'}
               </p>
             </div>
 
             <div>
-              <span className="text-[11px] text-slate-400 block font-medium">Lead Source</span>
-              <p className="font-bold text-slate-800">{lead.source || 'Direct Field Lead'}</p>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Lead Source</span>
+              <p className="font-extrabold text-slate-800">{lead.source || 'Direct Field Lead'}</p>
             </div>
 
             <div>
-              <span className="text-[11px] text-slate-400 block font-medium">Estimated Deal Value</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Estimated Deal Value</span>
               <p className="font-mono font-extrabold text-emerald-700 text-sm">
                 {lead.estimatedValue != null ? `₹${lead.estimatedValue.toLocaleString('en-IN')}` : 'Not specified'}
               </p>
             </div>
 
             <div>
-              <span className="text-[11px] text-slate-400 block font-medium">Expected Closing Date</span>
-              <p className="font-bold text-slate-800 flex items-center gap-1.5 mt-0.5">
-                <Calendar className="h-3.5 w-3.5 text-slate-500" />
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Expected Closing Date</span>
+              <p className="font-extrabold text-slate-800 flex items-center gap-1.5 mt-0.5">
+                <Calendar className="h-3.5 w-3.5 text-slate-600" />
                 {lead.expectedClosingDate ? new Date(lead.expectedClosingDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set'}
               </p>
             </div>
 
             <div>
-              <span className="text-[11px] text-slate-400 block font-medium">Next Follow-up</span>
-              <p className="font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Next Follow-up</span>
+              <p className="font-extrabold text-[#0D1F3D] flex items-center gap-1.5 mt-0.5">
                 <Clock className="h-3.5 w-3.5 text-amber-600" />
                 {lead.nextFollowUpAt ? new Date(lead.nextFollowUpAt).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Not scheduled'}
               </p>
             </div>
 
             <div>
-              <span className="text-[11px] text-slate-400 block font-medium">Next Action</span>
-              <p className="font-bold text-slate-800">{lead.nextActionNote || 'Follow-up with client'}</p>
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Next Action</span>
+              <p className="font-extrabold text-slate-800">{lead.nextActionNote || 'Follow-up with client'}</p>
             </div>
           </div>
         </div>
 
         {/* Requirements & Pain Points Card */}
-        <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-xs space-y-3 text-xs">
+        <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-3 text-xs">
           <h3 className="text-sm font-extrabold text-[#0D1F3D] flex items-center gap-2">
             <FileText className="h-4 w-4 text-purple-600" />
             <span>Requirement Notes & Scope</span>
           </h3>
-          <div className="rounded-sm bg-slate-50/70 p-4 border border-slate-100 font-semibold text-slate-700 leading-relaxed">
+          <div className="rounded-lg bg-slate-50/70 p-4 border border-slate-200/80 font-semibold text-slate-800 leading-relaxed">
             {lead.requirementNote || lead.description || 'Client is interested in product suite deployment. Field visit and demonstration required to finalize scope and commercial proposals.'}
           </div>
         </div>
@@ -121,13 +121,13 @@ export function LeadOverviewTab({ lead }: TabProps) {
       {/* Right 4 Cols: Executive Assignment & Territory Card */}
       <div className="space-y-4 lg:col-span-4">
         {/* Executive Assignment Card */}
-        <div className="rounded-sm border border-slate-200/80 bg-white p-6 shadow-xs space-y-4 text-xs">
+        <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-xs space-y-4 text-xs">
           <h3 className="text-sm font-extrabold text-[#0D1F3D] flex items-center gap-2">
             <User className="h-4 w-4 text-emerald-600" />
             <span>Assigned Sales Representative</span>
           </h3>
 
-          <div className="flex items-center gap-3 p-3 rounded-sm bg-slate-50 border border-slate-100">
+          <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50/80 border border-slate-200/80">
             <div className="h-10 w-10 rounded-full bg-[#0D1F3D] text-white font-extrabold text-sm flex items-center justify-center shrink-0 border-2 border-white ring-1 ring-slate-200">
               {(lead.assignee?.displayName || lead.owner.displayName).slice(0, 2).toUpperCase()}
             </div>
@@ -135,24 +135,24 @@ export function LeadOverviewTab({ lead }: TabProps) {
               <p className="font-extrabold text-[#0D1F3D] text-sm">
                 {lead.assignee?.displayName || 'Unassigned Executive'}
               </p>
-              <p className="text-[11px] font-semibold text-[#E20613]">
+              <p className="text-[11px] font-bold text-[#E20613]">
                 {lead.assignee ? 'Field Sales Executive' : 'Pending Assignment'}
               </p>
             </div>
           </div>
 
-          <div className="space-y-2 pt-2 border-t border-slate-100 font-semibold text-slate-600">
-            <div className="flex justify-between">
-              <span className="text-slate-400">Account Owner:</span>
-              <span className="font-bold text-[#0D1F3D]">{lead.owner.displayName}</span>
+          <div className="space-y-2.5 pt-2 border-t border-slate-100 font-semibold text-xs">
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 font-semibold">Account Owner:</span>
+              <span className="font-extrabold text-[#0D1F3D]">{lead.owner.displayName}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Territory:</span>
-              <span className="font-bold text-slate-800">{lead.city || 'Regional Territory'}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 font-semibold">Territory:</span>
+              <span className="font-extrabold text-slate-800">{lead.city || 'Regional Territory'}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Status:</span>
-              <span className="font-bold text-slate-800">{leadLabel(lead.status)}</span>
+            <div className="flex justify-between items-center">
+              <span className="text-slate-500 font-semibold">Status:</span>
+              <span className="font-extrabold text-slate-800">{leadLabel(lead.status)}</span>
             </div>
           </div>
         </div>

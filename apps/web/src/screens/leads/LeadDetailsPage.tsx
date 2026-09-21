@@ -208,15 +208,15 @@ function LeadDetailsContent() {
           {/* Right Estimated Value & Executive Details */}
           <div className="flex flex-col items-end gap-3 text-right">
             <div>
-              <span className="text-[11px] font-medium text-slate-400 block">Estimated Deal Value</span>
-              <p className="text-2xl font-extrabold text-emerald-600">
+              <span className="text-xs font-semibold text-slate-500 block mb-0.5">Estimated Deal Value</span>
+              <p className="text-2xl font-extrabold text-emerald-600 font-mono">
                 {lead.estimatedValue == null
                   ? 'Not set'
                   : `₹${lead.estimatedValue.toLocaleString('en-IN')}`}
               </p>
             </div>
 
-            <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 p-2.5 rounded-sm text-left text-xs font-semibold">
+            <div className="flex items-center gap-2.5 bg-slate-50/80 border border-slate-200/80 p-2.5 rounded-xl text-left text-xs font-semibold">
               <div className="h-8 w-8 rounded-full bg-[#0D1F3D] text-white font-extrabold text-xs flex items-center justify-center shrink-0 border border-slate-300">
                 {(lead.assignee?.displayName || lead.owner.displayName).slice(0, 2).toUpperCase()}
               </div>
@@ -224,8 +224,8 @@ function LeadDetailsContent() {
                 <p className="font-extrabold text-[#0D1F3D] text-xs">
                   {lead.assignee?.displayName || 'Unassigned Executive'}
                 </p>
-                <p className="text-[10px] text-slate-500 font-medium">
-                  Owner: {lead.owner.displayName}
+                <p className="text-[11px] text-slate-600 font-semibold">
+                  Owner: <span className="text-[#0D1F3D] font-extrabold">{lead.owner.displayName}</span>
                 </p>
               </div>
             </div>
@@ -234,7 +234,7 @@ function LeadDetailsContent() {
       </div>
 
       {/* 3. Navigation Sub-Tabs Bar */}
-      <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto text-xs font-bold scrollbar-none pb-0 bg-white px-2 rounded-sm shadow-xs">
+      <div className="flex items-center gap-1 border border-slate-200/80 overflow-x-auto text-xs font-bold scrollbar-none pb-0 bg-white p-1 rounded-xl shadow-2xs">
         {[
           { id: 'overview', label: 'Overview' },
           { id: 'timeline', label: 'Timeline' },
@@ -251,10 +251,10 @@ function LeadDetailsContent() {
               key={tab.id}
               type="button"
               onClick={() => handleTabChange(tab.id)}
-              className={`px-4 py-2.5 border-b-2 font-extrabold transition-all whitespace-nowrap cursor-pointer text-xs ${
+              className={`px-4 py-2 rounded-lg font-extrabold transition-all whitespace-nowrap cursor-pointer text-xs ${
                 isActive
-                  ? 'border-purple-600 text-purple-700 bg-transparent'
-                  : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/50'
+                  ? 'bg-[#0D1F3D] text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-[#0D1F3D] hover:bg-slate-100/60 font-semibold'
               }`}
             >
               {tab.label}

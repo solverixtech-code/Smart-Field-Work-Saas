@@ -26,134 +26,159 @@ async function main() {
   console.log('✅ System permissions, platform roles, tenant templates & canonical RBAC seeded.');
 
   // 3. Seed development demo users
-  const defaultPassword = await argon2.hash('Visiblo@2025');
+  const defaultPassword = await argon2.hash('Solverix@2025');
 
   const users = [
     {
-      employeeCode: 'VIS-SA-001',
+      employeeCode: 'SOL-SA-001',
       fullName: 'Amit Sharma',
-      email: 'amit.sharma@visibloai.com',
+      email: 'amit.sharma@solverixtech.com',
       role: Role.SUPER_ADMIN,
       mobile: '+919876543210',
     },
     {
-      employeeCode: 'VIS-ADM-001',
+      employeeCode: 'SOL-ADM-001',
       fullName: 'Priya Mehta',
-      email: 'priya.mehta@visibloai.com',
+      email: 'priya.mehta@solverixtech.com',
       role: Role.ADMIN,
       mobile: '+919876543211',
     },
     {
-      employeeCode: 'VIS-SM-001',
+      employeeCode: 'SOL-SM-001',
       fullName: 'Ravi Kumar',
-      email: 'ravi.kumar@visibloai.com',
+      email: 'ravi.kumar@solverixtech.com',
       role: Role.SALES_MANAGER,
       mobile: '+919876543212',
     },
     {
-      employeeCode: 'VIS-TL-001',
+      employeeCode: 'SOL-TL-001',
       fullName: 'Sneha Iyer',
-      email: 'sneha.iyer@visibloai.com',
+      email: 'sneha.iyer@solverixtech.com',
       role: Role.TEAM_LEADER,
       mobile: '+919876543213',
     },
     {
-      employeeCode: 'VIS-FE-001',
+      employeeCode: 'SOL-FE-001',
       fullName: 'Vikram Singh',
-      email: 'vikram.singh@visibloai.com',
+      email: 'vikram.singh@solverixtech.com',
       role: Role.FIELD_EXECUTIVE,
       mobile: '+919876543214',
     },
     {
-      employeeCode: 'VIS-FE-002',
+      employeeCode: 'SOL-FE-002',
       fullName: 'Rahul Sharma',
-      email: 'rahul.sharma@visibloai.com',
+      email: 'rahul.sharma@solverixtech.com',
       role: Role.FIELD_EXECUTIVE,
       mobile: '+919876543216',
     },
     {
-      employeeCode: 'VIS-FE-003',
+      employeeCode: 'SOL-FE-003',
       fullName: 'Deepak Patel',
-      email: 'deepak.patel@visibloai.com',
+      email: 'deepak.patel@solverixtech.com',
       role: Role.FIELD_EXECUTIVE,
       mobile: '+919876543217',
     },
     {
-      employeeCode: 'VIS-FO-001',
+      employeeCode: 'SOL-FO-001',
       fullName: 'Sunita Patel',
-      email: 'sunita.patel@visibloai.com',
+      email: 'sunita.patel@solverixtech.com',
       role: Role.FINANCE_OPS,
       mobile: '+919876543218',
     },
     {
-      employeeCode: 'VIS-SP-001',
+      employeeCode: 'SOL-SP-001',
       fullName: 'Neha Gupta',
-      email: 'neha.gupta@visibloai.com',
+      email: 'neha.gupta@solverixtech.com',
       role: Role.SUPPORT,
       mobile: '+919876543215',
     },
     {
       employeeCode: 'PLAT-SA-001',
       fullName: 'Sahibjit Singh',
-      email: 'platform.admin@smartfieldwork.com',
+      email: 'platform.admin@solverixtech.com',
       role: Role.PLATFORM_SUPER_ADMIN,
       mobile: '+919900000001',
     },
     {
       employeeCode: 'PLAT-OPS-001',
       fullName: 'Rajesh Operations',
-      email: 'platform.ops@smartfieldwork.com',
+      email: 'platform.ops@solverixtech.com',
       role: Role.PLATFORM_OPERATIONS_ADMIN,
       mobile: '+919900000002',
     },
     {
       employeeCode: 'PLAT-ONB-001',
       fullName: 'Neha Onboarding',
-      email: 'platform.onboarding@smartfieldwork.com',
+      email: 'platform.onboarding@solverixtech.com',
       role: Role.PLATFORM_ONBOARDING,
       mobile: '+919900000003',
     },
     {
       employeeCode: 'PLAT-SUP-001',
       fullName: 'Support Helpdesk',
-      email: 'platform.support@smartfieldwork.com',
+      email: 'platform.support@solverixtech.com',
       role: Role.PLATFORM_SUPPORT,
       mobile: '+919900000004',
     },
     {
       employeeCode: 'PLAT-BIL-001',
       fullName: 'Finance Billing',
-      email: 'platform.billing@smartfieldwork.com',
+      email: 'platform.billing@solverixtech.com',
       role: Role.PLATFORM_BILLING,
       mobile: '+919900000005',
     },
     {
       employeeCode: 'PLAT-AUD-001',
       fullName: 'Audit Compliance',
-      email: 'platform.auditor@smartfieldwork.com',
+      email: 'platform.auditor@solverixtech.com',
       role: Role.PLATFORM_AUDITOR,
       mobile: '+919900000006',
     },
   ];
 
   for (const u of users) {
-    const user = await prisma.user.upsert({
-      where: { email: u.email },
-      update: {
-        employeeCode: u.employeeCode,
-        fullName: u.fullName,
-        role: u.role,
-        mobile: u.mobile,
-      },
-      create: {
-        employeeCode: u.employeeCode,
-        fullName: u.fullName,
-        email: u.email,
-        passwordHash: defaultPassword,
-        role: u.role,
-        mobile: u.mobile,
-      },
+    const existingByCode = await prisma.user.findUnique({
+      where: { employeeCode: u.employeeCode },
     });
+    const existingByEmail = await prisma.user.findUnique({
+      where: { email: u.email },
+    });
+
+    let user;
+    if (existingByCode) {
+      user = await prisma.user.update({
+        where: { id: existingByCode.id },
+        data: {
+          fullName: u.fullName,
+          email: u.email,
+          role: u.role,
+          mobile: u.mobile,
+          passwordHash: defaultPassword,
+        },
+      });
+    } else if (existingByEmail) {
+      user = await prisma.user.update({
+        where: { id: existingByEmail.id },
+        data: {
+          employeeCode: u.employeeCode,
+          fullName: u.fullName,
+          role: u.role,
+          mobile: u.mobile,
+          passwordHash: defaultPassword,
+        },
+      });
+    } else {
+      user = await prisma.user.create({
+        data: {
+          employeeCode: u.employeeCode,
+          fullName: u.fullName,
+          email: u.email,
+          passwordHash: defaultPassword,
+          role: u.role,
+          mobile: u.mobile,
+        },
+      });
+    }
 
     if (String(u.role).startsWith('PLATFORM_')) {
       const platformRole = await prisma.platformRole.findUnique({
@@ -176,18 +201,34 @@ async function main() {
         });
       }
     } else {
+      // Reconcile/update legacy demo tenants if present
+      await prisma.tenant.updateMany({
+        where: {
+          OR: [
+            { slug: 'visiblo-crm-demo' },
+            { displayName: { contains: 'Visiblo' } },
+            { legalName: { contains: 'Visiblo' } },
+          ],
+        },
+        data: {
+          slug: 'solverix-tech-demo',
+          displayName: 'Solverix Smart Field Work',
+          legalName: 'Solverix Technologies Pvt. Ltd.',
+        },
+      });
+
       let demoTenants = await prisma.tenant.findMany({
         where: { status: 'ACTIVE' },
         include: { roles: true },
       });
 
       if (demoTenants.length === 0) {
-        console.log('📌 No active demo tenant found. Creating Visiblo CRM Demo Tenant...');
+        console.log('📌 No active demo tenant found. Creating Solverix Technologies Demo Tenant...');
         await prisma.tenant.create({
           data: {
-            slug: 'visiblo-crm-demo',
-            displayName: 'Visiblo Smart Field Work Demo',
-            legalName: 'Visiblo Technologies Pvt Ltd',
+            slug: 'solverix-tech-demo',
+            displayName: 'Solverix Smart Field Work',
+            legalName: 'Solverix Technologies Pvt. Ltd.',
             status: 'ACTIVE',
           },
         });
