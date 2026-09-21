@@ -106,8 +106,10 @@ describe('saved territory pages', () => {
     await act(async () => open!.click());
     await flush();
     const refreshed = document.querySelector('[role="dialog"]');
-    expect(refreshed?.textContent).toContain('ID member-1');
-    expect(refreshed?.textContent).toContain('ID member-2');
+    expect(refreshed?.textContent).toContain('Manager');
+    expect(refreshed?.textContent).toContain('Field Executive');
+    expect(refreshed?.textContent).not.toContain('member-11111111');
+    expect(refreshed?.textContent).not.toContain('member-22222222');
     expect(refreshed?.querySelectorAll('img').length).toBe(0);
     const save = [...(refreshed?.querySelectorAll('button') ?? [])].find((button) => button.textContent?.includes('Save Assignments'));
     expect(save?.disabled).toBe(true);
@@ -115,6 +117,34 @@ describe('saved territory pages', () => {
     expect(save?.disabled).toBe(false);
     await act(async () => save!.click());
     expect(apiMock.assignTerritoryMember).toHaveBeenCalledWith(territory.id, { membershipId: 'member-11111111' });
+  });
+
+  it('opens real assigned executive details without displaying the membership ID', async () => {
+    const membershipId = '37cc78b5-1095-4aa2-a765-b5733e03575e';
+    apiMock.territory.mockResolvedValue({
+      ...territory,
+      members: [{
+        id: 'assignment-1', membershipId, role: 'Field Executive',
+        assignedAt: '2026-09-20T00:00:00Z',
+        membership: {
+          id: membershipId, status: 'ACTIVE',
+          user: { fullName: 'Amit Sharma', avatarUrl: null, email: 'amit@example.com', mobile: '+919876543210' },
+          team: { id: 'team-1', name: 'West team' }, tenantRole: { name: 'Field Executive' },
+        },
+      }],
+    });
+    await renderPage(<TerritoryDetailsPage initialTab="Executives" />, '/admin/territories/saved-territory');
+    expect(host.textContent).toContain('Amit Sharma');
+    expect(host.textContent).not.toContain(membershipId);
+
+    const open = host.querySelector<HTMLButtonElement>('button[aria-label="View details for Amit Sharma"]');
+    expect(open).toBeTruthy();
+    await act(async () => open!.click());
+    const dialog = document.querySelector('[role="dialog"][aria-label="Dialog"], [role="dialog"][aria-labelledby]');
+    expect(dialog?.textContent).toContain('Executive details');
+    expect(dialog?.textContent).toContain('amit@example.com');
+    expect(dialog?.textContent).toContain('West team');
+    expect(dialog?.textContent).not.toContain(membershipId);
   });
 
   it('renders the date menu above the page and explains missing performance records', async () => {

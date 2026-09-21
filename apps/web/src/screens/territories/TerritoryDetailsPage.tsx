@@ -159,6 +159,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
   // Executives Tab State
   const [execSearchQuery, setExecSearchQuery] = useState('');
+  const [selectedExecutiveId, setSelectedExecutiveId] = useState<string | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedExecIds, setSelectedExecIds] = useState<string[]>([]);
   const [assignmentCandidates, setAssignmentCandidates] = useState<TerritoryExecutive[]>([]);
@@ -277,9 +278,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   const visibleAssignmentOptions = allAssignmentOptions.filter((candidate) =>
     candidate.name.toLowerCase().includes(assignmentSearch.trim().toLowerCase()),
   );
-  const duplicateNames = new Set(allAssignmentOptions
-    .filter((candidate, index, options) => options.some((other, otherIndex) => otherIndex !== index && other.name === candidate.name))
-    .map((candidate) => candidate.name));
+  const selectedExecutiveMember = territoryDto?.members?.find((member) => member.membershipId === selectedExecutiveId);
   const hasAssignmentChanges = selectedExecIds.length !== assignedMemberIds.size
     || selectedExecIds.some((id) => !assignedMemberIds.has(id));
 
@@ -658,10 +657,11 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                     {territoryExecutives.map((exec) => (
                       <tr key={exec.id} className="hover:bg-slate-50/50">
                         <td className="py-2.5">
-                          <div className="flex items-center gap-2">
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedExecutiveId(exec.id)}
+                            aria-label={`View details for ${exec.name}`} className="h-auto min-h-0 gap-2 px-1 py-1 text-left justify-start">
                             <Avatar name={exec.name} src={exec.avatar} sizeClassName="h-6 w-6" />
                             <span className="font-extrabold text-[#0D1F3D]">{exec.name}</span>
-                          </div>
+                          </Button>
                         </td>
                         <td className="py-2.5 text-center font-bold">{exec.visitsCount}</td>
                         <td className="py-2.5 text-right font-mono font-bold">{exec.revenueFormatted}</td>
@@ -759,13 +759,14 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 {filteredExecutives.map((exec) => (
                   <tr key={exec.id} className="hover:bg-slate-50">
                     <td className="p-3">
-                      <div className="flex items-center gap-2.5">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedExecutiveId(exec.id)}
+                        aria-label={`View details for ${exec.name}`} className="h-auto min-h-0 gap-2.5 px-1 py-1 text-left justify-start">
                         <Avatar name={exec.name} src={exec.avatar} sizeClassName="h-7 w-7" />
-                        <div>
+                        <span>
                           <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
-                          <span className="text-[10px] text-slate-400">{exec.id}</span>
-                        </div>
-                      </div>
+                          <span className="text-[10px] text-slate-500 block font-normal">{exec.role}</span>
+                        </span>
+                      </Button>
                     </td>
                     <td className="p-3 text-slate-600">{exec.team}</td>
                     <td className="p-3 text-center font-bold">{exec.visitsCount}</td>
@@ -936,8 +937,10 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                         <Avatar name={exec.name} src={exec.avatar} sizeClassName="h-8 w-8" />
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-[#0D1F3D] text-sm">{exec.name}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">({exec.id})</span>
+                            <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedExecutiveId(exec.id)}
+                              aria-label={`View details for ${exec.name}`} className="h-auto min-h-0 px-1 py-1 text-sm font-extrabold text-[#0D1F3D]">
+                              {exec.name}
+                            </Button>
                           </div>
                           <span className="text-[11px] text-slate-500 font-normal">{exec.team}</span>
                         </div>
@@ -1205,13 +1208,14 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 {territoryExecutives.map((exec) => (
                   <tr key={exec.id} className="hover:bg-slate-50">
                     <td className="p-3">
-                      <div className="flex items-center gap-2.5">
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedExecutiveId(exec.id)}
+                        aria-label={`View details for ${exec.name}`} className="h-auto min-h-0 gap-2.5 px-1 py-1 text-left justify-start">
                         <Avatar name={exec.name} src={exec.avatar} sizeClassName="h-7 w-7" />
-                        <div>
+                        <span>
                           <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">{exec.team}</span>
-                        </div>
-                      </div>
+                          <span className="text-[10px] text-slate-500 block font-normal">{exec.team}</span>
+                        </span>
+                      </Button>
                     </td>
                     <td className="p-3 text-center font-bold text-slate-700">{exec.visitsCount}</td>
                     <td className="p-3 text-center font-bold text-amber-700">—</td>
@@ -1777,6 +1781,59 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
         </div>
       )}
 
+      <Modal
+        isOpen={Boolean(selectedExecutiveMember)}
+        onClose={() => setSelectedExecutiveId(null)}
+        title="Executive details"
+        maxWidth="max-w-md"
+      >
+        {selectedExecutiveMember && (
+          <div className="space-y-4 text-sm">
+            <div className="flex items-center gap-3">
+              <Avatar
+                name={selectedExecutiveMember.membership?.user?.fullName ?? 'Unknown executive'}
+                src={selectedExecutiveMember.membership?.user?.avatarUrl}
+                sizeClassName="h-12 w-12"
+              />
+              <div>
+                <p className="font-bold text-[#0D1F3D]">{selectedExecutiveMember.membership?.user?.fullName ?? 'Unknown executive'}</p>
+                <p className="text-xs text-slate-600">{selectedExecutiveMember.membership?.tenantRole?.name ?? selectedExecutiveMember.role}</p>
+              </div>
+            </div>
+            <dl className="grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs text-slate-500">Team</dt>
+                <dd className="font-semibold text-slate-800">{selectedExecutiveMember.membership?.team?.name ?? 'Not assigned'}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">Status</dt>
+                <dd className="font-semibold text-slate-800">{selectedExecutiveMember.membership?.status ?? 'Unavailable'}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">Phone</dt>
+                <dd className="font-semibold text-slate-800">
+                  {selectedExecutiveMember.membership?.user?.mobile
+                    ? <a className="text-blue-700 hover:underline" href={`tel:${selectedExecutiveMember.membership.user.mobile}`}>{selectedExecutiveMember.membership.user.mobile}</a>
+                    : 'Not available'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">Email</dt>
+                <dd className="break-all font-semibold text-slate-800">
+                  {selectedExecutiveMember.membership?.user?.email
+                    ? <a className="text-blue-700 hover:underline" href={`mailto:${selectedExecutiveMember.membership.user.email}`}>{selectedExecutiveMember.membership.user.email}</a>
+                    : 'Not available'}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-slate-500">Assigned to territory</dt>
+                <dd className="font-semibold text-slate-800">{new Date(selectedExecutiveMember.assignedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</dd>
+              </div>
+            </dl>
+          </div>
+        )}
+      </Modal>
+
       {/* Modal for Assigning Executives */}
       <Modal
         isOpen={isAssignModalOpen}
@@ -1822,7 +1879,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                         <span className="min-w-0">
                           <span className="block truncate font-bold text-[#0D1F3D]">{exec.name}</span>
                           <span className="block truncate text-[11px] font-normal text-slate-600">
-                            {exec.role}{duplicateNames.has(exec.name) ? ` · ID ${exec.id.slice(0, 8)}` : ''}
+                            {exec.role}
                             {assignedMemberIds.has(exec.id) ? ' · Assigned' : ''}
                           </span>
                         </span>
@@ -2115,7 +2172,6 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                           </span>
                         </div>
                       </div>
-                      <span className="text-[10px] font-mono text-slate-400">{b.id}</span>
                     </div>
                   );
                 })}
