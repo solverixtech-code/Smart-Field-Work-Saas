@@ -22,9 +22,11 @@ export const Modal: React.FC<ModalProps> = ({
   const titleId = useId();
   const [rendered, setRendered] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [childrenCache, setChildrenCache] = useState<React.ReactNode>(children);
 
   useEffect(() => {
     if (isOpen) {
+      if (children) setChildrenCache(children);
       setRendered(true);
       const raf = requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
@@ -35,7 +37,7 @@ export const Modal: React.FC<ModalProps> = ({
       const timer = setTimeout(() => setRendered(false), 250);
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, children]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -87,6 +89,8 @@ export const Modal: React.FC<ModalProps> = ({
   }, [rendered, isOpen]);
   if (!rendered) return null;
 
+  const contentToRender = isOpen ? children : (children || childrenCache);
+
   return createPortal(
     <div
       className={`fixed inset-0 z-[99999] flex items-center justify-center p-4 overflow-y-auto transition-opacity duration-250 ease-out ${
@@ -107,7 +111,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-labelledby={title ? titleId : undefined}
         aria-label={title ? undefined : "Dialog"}
         tabIndex={-1}
-        className={`relative w-full ${maxWidth} rounded-xl bg-white p-6 shadow-sm space-y-5 my-8 z-10 transition-all duration-250 ease-out ${
+        className={`relative w-full ${maxWidth} rounded-xl bg-white p-6 shadow-sm space-y-5 my-8 z-10 transition-all duration-250 ease-out overflow-hidden ${
           visible
             ? "scale-100 translate-y-0 opacity-100"
             : "scale-95 translate-y-4 opacity-0"
@@ -133,7 +137,7 @@ export const Modal: React.FC<ModalProps> = ({
             </Button>
           </div>
         )}
-        {children}
+        {contentToRender}
       </div>
     </div>,
     document.body,

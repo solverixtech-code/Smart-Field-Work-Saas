@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { PhoneInput } from "../../components/ui/PhoneInput";
 import { Select } from "../../components/ui/Select";
 import { Textarea } from "../../components/ui/Textarea";
 import { Checkbox } from "../../components/ui/Checkbox";
@@ -39,16 +40,12 @@ export function ContactFields({
         value={value.name}
         onChange={(e) => onChange({ ...value, name: e.target.value })}
       />
-      <Input
+      <PhoneInput
         id="contact-phone"
         label="Mobile Number (with +91)"
-        type="tel"
-        maxLength={15}
-        leftAddon="🇮🇳 +91"
         placeholder="98765 43210"
-        value={phoneNum}
-        onChange={(e) => {
-          const val = e.target.value.replace(/[^\d\s]/g, "");
+        value={value.phone ?? ""}
+        onChange={(val) => {
           onChange({ ...value, phone: val ? `+91 ${val.trim()}` : null });
         }}
       />
