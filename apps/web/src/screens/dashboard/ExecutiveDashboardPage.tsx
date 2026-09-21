@@ -77,6 +77,193 @@ const realtimeActivities = [
 
 export default function ExecutiveDashboardPage() {
   const user = useAppSelector((s) => s.auth.user);
+  const tenant = useAppSelector((s) => s.authorization.tenant);
+  const roleCode = (user?.role as string) || tenant?.roleCode || '';
+
+  const isExecutiveRole =
+    roleCode === 'FIELD_EXECUTIVE' ||
+    roleCode === 'SALES_EXECUTIVE' ||
+    roleCode === 'EXECUTIVE' ||
+    roleCode === 'field_executive' ||
+    roleCode === 'executive' ||
+    roleCode === 'sales_executive';
+
+  // Mock executive daily schedule data
+  const executiveSchedule = [
+    { id: 'VIS-101', store: 'Sharma Electronics & Electricals', area: 'Andheri East, Mumbai', time: '10:00 AM', status: 'Completed', type: 'Sales Visit', priority: 'High' },
+    { id: 'VIS-102', store: 'Apex Telecom & Mobile Hub', area: 'Chakaala, Andheri East', time: '11:45 AM', status: 'In Progress', type: 'Product Demo', priority: 'Urgent' },
+    { id: 'VIS-103', store: 'Modern Hardwares & Tools', area: 'MIDC Zone 3, Andheri', time: '02:15 PM', status: 'Scheduled', type: 'Payment Collection', priority: 'Medium' },
+    { id: 'VIS-104', store: 'Metro Digital Superstore', area: 'Marol Naka, Mumbai', time: '04:00 PM', status: 'Scheduled', type: 'Follow-up Meeting', priority: 'High' },
+  ];
+
+  if (isExecutiveRole) {
+    return (
+      <div className="space-y-4 font-sans pb-12">
+        {/* Executive Page Header */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 border border-blue-100">
+                <Target className="h-3.5 w-3.5" /> Field Executive Workspace
+              </span>
+            </div>
+            <h1 className="text-2xl font-extrabold text-[#0D1F3D] mt-1.5">
+              Welcome back, {user?.fullName?.split(' ')[0] || 'Executive'}! 👋
+            </h1>
+            <p className="text-xs font-medium text-slate-600 mt-0.5">
+              Here is your active field route, assigned visits, and daily target progress for today.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <DateRangePicker />
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => toast.success('Punch in timestamp recorded (+91 96540 88990)')}
+              className="flex items-center gap-2 font-semibold shadow-xs"
+            >
+              <CheckCircle2 className="h-4 w-4" /> Duty Active (On Field)
+            </Button>
+          </div>
+        </div>
+
+        {/* Executive Target & Daily Metrics Grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KpiCard
+            title="Today's Visits"
+            value="4 Scheduled"
+            subValue="1 Completed • 1 In Progress"
+            icon={Store}
+            iconBgColor="bg-blue-50"
+            iconTextColor="text-blue-700"
+          />
+          <KpiCard
+            title="Follow-ups Due"
+            value="3 Follow-ups"
+            subValue="Scheduled for Today"
+            icon={CalendarClock}
+            iconBgColor="bg-amber-50"
+            iconTextColor="text-amber-700"
+          />
+          <KpiCard
+            title="Demos Scheduled"
+            value="2 Demos"
+            subValue="1 Demo Completed"
+            icon={Video}
+            iconBgColor="bg-purple-50"
+            iconTextColor="text-purple-700"
+          />
+          <KpiCard
+            title="Monthly Target Achieved"
+            value="78.5%"
+            subValue="₹1,88,400 / ₹2,40,000"
+            icon={Target}
+            iconBgColor="bg-emerald-50"
+            iconTextColor="text-emerald-700"
+          />
+        </div>
+
+        {/* Main Dual-Pane Section: Today's Beat Schedule & Route Map */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-stretch">
+          {/* Today's Beat Route & Visit Timeline (8 Cols) */}
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-8 space-y-4 flex flex-col justify-between">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-[#0D1F3D]">Today's Beat Schedule</h3>
+                <p className="text-xs text-slate-600">Chronological visit order for your assigned beat route</p>
+              </div>
+              <span className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                Andheri East Beat #4
+              </span>
+            </div>
+
+            <div className="space-y-3">
+              {executiveSchedule.map((item, idx) => (
+                <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-sm border border-slate-200 hover:border-slate-300 bg-white transition-all shadow-2xs">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0D1F3D] text-white font-mono text-xs font-bold shadow-xs">
+                      0{idx + 1}
+                    </div>
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold text-[#0D1F3D]">{item.store}</h4>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                          item.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          item.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                          'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
+                          {item.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 font-medium">{item.area}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">Slot: <span className="font-semibold text-slate-800">{item.time}</span> • Type: <span className="font-semibold text-slate-800">{item.type}</span></p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toast.info(`Opening directions to ${item.store}`)}
+                      className="text-xs font-semibold"
+                    >
+                      Navigate
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => toast.success(`Check-in dialog opened for ${item.store}`)}
+                      className="text-xs font-semibold"
+                    >
+                      {item.status === 'In Progress' ? 'Log Outcome' : 'Check-In'}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
+              <span>Total Distance Covered Today: <strong className="text-[#0D1F3D] font-bold">14.2 km</strong></span>
+              <Button variant="ghost" size="sm" onClick={() => toast.success('Daily route report downloaded')} className="text-xs font-bold text-[#0D1F3D]">
+                Download Beat Sheet
+              </Button>
+            </div>
+          </div>
+
+          {/* Beat Route Map Overview (4 Cols) */}
+          <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
+            <div>
+              <h3 className="text-base font-bold text-[#0D1F3D]">Route Map Preview</h3>
+              <p className="text-xs text-slate-600">Geofenced customer pins on your beat</p>
+            </div>
+
+            <div className="h-64 w-full rounded-sm border border-slate-200 bg-slate-100 relative overflow-hidden flex flex-col items-center justify-center p-4 text-center space-y-2">
+              <div className="absolute inset-0 bg-cover bg-center opacity-40" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=600&q=80')` }} />
+              <div className="relative z-10 bg-white/95 backdrop-blur-xs p-3 rounded-md border border-slate-200 shadow-sm max-w-[220px]">
+                <p className="text-xs font-extrabold text-[#0D1F3D]">Andheri East Beat #4</p>
+                <p className="text-[11px] font-medium text-slate-600">4 Active Customer Locations</p>
+                <div className="mt-2 text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold">
+                  Geofence Active (100m radius)
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2 text-xs font-medium text-slate-700">
+              <div className="flex justify-between items-center">
+                <span>Start Point:</span>
+                <span className="font-bold text-[#0D1F3D]">Andheri Hub Depot</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>End Point:</span>
+                <span className="font-bold text-[#0D1F3D]">Marol Naka Superstore</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 font-sans pb-12">

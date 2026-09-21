@@ -7,6 +7,9 @@ export const UserRoleSchema = z.enum([
   'ADMIN',
   'SALES_MANAGER',
   'TEAM_LEADER',
+  'FIELD_EXECUTIVE',
+  'SALES_EXECUTIVE',
+  'EXECUTIVE',
   'FINANCE_OPS',
   'SUPPORT',
 
@@ -25,6 +28,9 @@ export const Role = {
   ADMIN: 'ADMIN',
   SALES_MANAGER: 'SALES_MANAGER',
   TEAM_LEADER: 'TEAM_LEADER',
+  FIELD_EXECUTIVE: 'FIELD_EXECUTIVE',
+  SALES_EXECUTIVE: 'SALES_EXECUTIVE',
+  EXECUTIVE: 'EXECUTIVE',
   FINANCE_OPS: 'FINANCE_OPS',
   SUPPORT: 'SUPPORT',
 
@@ -45,6 +51,9 @@ export function getUserRoleLabel(role?: string | null): string {
     ADMIN: 'Admin / Owner',
     SALES_MANAGER: 'Sales Manager',
     TEAM_LEADER: 'Team Leader',
+    FIELD_EXECUTIVE: 'Field Executive',
+    SALES_EXECUTIVE: 'Sales Executive',
+    EXECUTIVE: 'Executive',
     FINANCE_OPS: 'Finance / Operations',
     SUPPORT: 'Support / Onboarding',
   };

@@ -608,6 +608,89 @@ const navCategories: NavCategory[] = [
   },
 ];
 
+const executiveNavCategories: NavCategory[] = [
+  {
+    title: "Main",
+    items: [
+      {
+        label: "My Dashboard",
+        icon: LayoutDashboard,
+        to: "/admin/dashboard",
+        permission: "crm.dashboard.view",
+      },
+    ],
+  },
+  {
+    title: "My Field Schedule",
+    items: [
+      {
+        label: "My Visits",
+        icon: MapPin,
+        to: "/admin/visits",
+        permission: "crm.visits.view",
+        moduleCode: "field_visits",
+        badge: "Today",
+      },
+      {
+        label: "My Follow-ups",
+        icon: RotateCcw,
+        to: "/admin/follow-ups",
+        permission: "crm.followups.view",
+      },
+      {
+        label: "My Demos",
+        icon: Monitor,
+        to: "/admin/demos",
+        permission: "crm.demos.view",
+        moduleCode: "demo_scheduler",
+      },
+    ],
+  },
+  {
+    title: "My Accounts & Beats",
+    items: [
+      {
+        label: "My Stores & Leads",
+        icon: Building2,
+        to: "/admin/businesses",
+        permission: "crm.businesses.view",
+        moduleCode: "core_crm",
+      },
+      {
+        label: "My Beat Map",
+        icon: Globe,
+        to: "/admin/map/territories",
+        permission: "crm.map.view",
+        moduleCode: "field_visits",
+      },
+    ],
+  },
+  {
+    title: "Target & Incentives",
+    items: [
+      {
+        label: "My Target & Payouts",
+        icon: Target,
+        to: "/admin/targets/executives",
+        permission: "crm.targets.view",
+      },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      { label: "My Profile", icon: User, to: "/admin/profile" },
+      { label: "Security & 2FA", icon: Shield, to: "/admin/profile/security" },
+      {
+        label: "Active Sessions",
+        icon: Monitor,
+        to: "/admin/profile/sessions",
+      },
+    ],
+  },
+];
+
+
 function getBusinessBreadcrumbName(businessId?: string): string {
   if (!businessId) return "Business Details";
   try {
@@ -1023,6 +1106,15 @@ export default function AppShell() {
   };
 
   const userRole = (user?.role as Role) || Role.SUPER_ADMIN;
+  const isExecutiveRole =
+    (userRole as string) === "FIELD_EXECUTIVE" ||
+    (userRole as string) === "SALES_EXECUTIVE" ||
+    (userRole as string) === "EXECUTIVE" ||
+    tenant?.roleCode === "field_executive" ||
+    tenant?.roleCode === "executive" ||
+    tenant?.roleCode === "sales_executive";
+
+  const displayedNavCategories = isExecutiveRole ? executiveNavCategories : navCategories;
   const showBigLogo = !collapsed || isHovered;
 
   return (
@@ -1155,7 +1247,7 @@ export default function AppShell() {
               : "scrollbar-none"
           }`}
         >
-          {navCategories.map((cat, idx) => (
+          {displayedNavCategories.map((cat, idx) => (
             <div key={idx} className="space-y-0.5">
               {showBigLogo && (
                 <p className="px-3 text-[11px] font-medium text-slate-400 pt-2 pb-1">
