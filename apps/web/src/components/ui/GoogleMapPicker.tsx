@@ -205,6 +205,90 @@ export function GoogleMapPicker({
   }, [currentLat, currentLng, currentRadius]);
 
   // Geolocation trigger using browser Geolocation API
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+
+  const performGeocoding = async (queryAddress: string) => {
+    const query = queryAddress.trim();
+    if (!query) {
+      toast.error('Please enter an address or landmark to search.');
+      return;
+    }
+
+    setIsSearchingAddress(true);
+    toast.info(`Searching map coordinates for "${query}"...`);
+
+    try {
+      let latFound: number | null = null;
+      let lngFound: number | null = null;
+      let resolvedAddress = query;
+
+      // 1. Try Mapbox Places Geocoding API first
+      const mapboxToken =
+        import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ||
+        'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.aA53nVisualised';
+
+      try {
+        const mbRes = await fetch(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${mapboxToken}&limit=1`
+        );
+        if (mbRes.ok) {
+          const mbData = await mbRes.json();
+          if (mbData && mbData.features && mbData.features.length > 0) {
+            const feat = mbData.features[0];
+            lngFound = Number(feat.center[0].toFixed(6));
+            latFound = Number(feat.center[1].toFixed(6));
+            resolvedAddress = feat.place_name || query;
+          }
+        }
+      } catch (e) {}
+
+      // 2. OpenStreetMap Nominatim Fallback if Mapbox API returns no features
+      if (latFound === null || lngFound === null) {
+        try {
+          const nomRes = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+            { headers: { 'User-Agent': 'SmartFieldWorkSaaS/1.0' } }
+          );
+          if (nomRes.ok) {
+            const nomData = await nomRes.json();
+            if (nomData && nomData.length > 0) {
+              latFound = Number(parseFloat(nomData[0].lat).toFixed(6));
+              lngFound = Number(parseFloat(nomData[0].lon).toFixed(6));
+              resolvedAddress = nomData[0].display_name || query;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (latFound !== null && lngFound !== null) {
+        setCurrentLat(latFound);
+        setCurrentLng(lngFound);
+        setCurrentAddress(resolvedAddress);
+        setGpsStatus(`Geocoded Location: ${latFound}° N, ${lngFound}° E`);
+
+        if (mapRef.current && markerRef.current) {
+          markerRef.current.setLngLat([lngFound, latFound]);
+          mapRef.current.flyTo({ center: [lngFound, latFound], zoom: 16, duration: 1000 });
+        }
+
+        if (onCoordinatesChange) {
+          onCoordinatesChange({ lat: latFound, lng: lngFound });
+        }
+        if (onAddressChange) {
+          onAddressChange(resolvedAddress);
+        }
+
+        toast.success(`Location pinned at coordinates (${latFound}, ${lngFound})!`);
+      } else {
+        toast.error(`No geographic location found for "${query}". Please check spelling or select map directly.`);
+      }
+    } catch (err) {
+      toast.error('Search request failed. Please check network connection.');
+    } finally {
+      setIsSearchingAddress(false);
+    }
+  };
+
   const handleLocateMe = () => {
     if (!navigator.geolocation) {
       toast.error('Geolocation is not supported by your browser.');
@@ -215,7 +299,7 @@ export function GoogleMapPicker({
     toast.info('Acquiring real-time GPS location via Mapbox...');
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const latitude = Number(position.coords.latitude.toFixed(6));
         const longitude = Number(position.coords.longitude.toFixed(6));
         const accuracy = Math.round(position.coords.accuracy);
@@ -229,6 +313,21 @@ export function GoogleMapPicker({
           onCoordinatesChange({ lat: latitude, lng: longitude });
         }
 
+        // Reverse geocode to get human-readable street address
+        try {
+          const nomRes = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            { headers: { 'User-Agent': 'SmartFieldWorkSaaS/1.0' } }
+          );
+          if (nomRes.ok) {
+            const nomData = await nomRes.json();
+            if (nomData && nomData.display_name) {
+              setCurrentAddress(nomData.display_name);
+              if (onAddressChange) onAddressChange(nomData.display_name);
+            }
+          }
+        } catch (e) {}
+
         toast.success(`Current GPS Location captured! (${latitude}, ${longitude})`);
       },
       (error) => {
@@ -241,10 +340,7 @@ export function GoogleMapPicker({
 
   const handleAddressSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (onAddressChange) {
-      onAddressChange(currentAddress);
-    }
-    toast.success('Map location updated for address search.');
+    performGeocoding(currentAddress);
   };
 
   // Fallback OpenStreetMap tile embed URL if WebGL context is disabled in certain browser sessions
@@ -273,9 +369,16 @@ export function GoogleMapPicker({
               type="submit"
               variant="outline"
               size="sm"
-              className="font-bold text-slate-700 border-slate-200 hover:bg-slate-100 rounded-sm h-8"
+              disabled={isSearchingAddress}
+              className="font-bold text-slate-700 border-slate-200 hover:bg-slate-100 rounded-sm h-8 shrink-0 flex items-center gap-1"
             >
-              Pin Address
+              {isSearchingAddress ? (
+                <>
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-[#0D1F3D]" /> Searching...
+                </>
+              ) : (
+                'Pin Address'
+              )}
             </Button>
           </form>
 
