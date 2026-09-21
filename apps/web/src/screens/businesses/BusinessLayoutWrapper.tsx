@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -10,6 +10,8 @@ import {
   Calendar,
   CreditCard,
   Users,
+  ChevronDown,
+  Copy,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { useCrm, useCrmQuery, useCrmMutation } from '../../features/crm/CrmContext';
@@ -26,6 +28,18 @@ export default function BusinessLayoutWrapper() {
   const navigate = useNavigate();
   const location = useLocation();
   const { can, readOnly } = useCrm();
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
+        setIsMoreOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const [customLogoUrl, setCustomLogoUrl] = useState<string | null>(() => {
     try {
@@ -138,14 +152,86 @@ export default function BusinessLayoutWrapper() {
         </div>
 
         <div className="flex items-center gap-2.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => toast.info('More business actions...')}
-            className="flex items-center gap-1.5 font-bold border-slate-200 text-slate-700 hover:bg-slate-50"
-          >
-            <MoreVertical className="h-4 w-4" /> More Actions
-          </Button>
+          <div className="relative inline-block" ref={moreRef}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMoreOpen(!isMoreOpen)}
+              className="flex items-center gap-1.5 font-bold border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer"
+            >
+              <MoreVertical className="h-4 w-4 text-slate-500" />
+              <span>More Actions</span>
+              <ChevronDown className={`h-3 w-3 text-slate-400 transition-transform ${isMoreOpen ? 'rotate-180' : ''}`} />
+            </Button>
+
+            {isMoreOpen && (
+              <div className="absolute right-0 top-full mt-1.5 z-[999] w-56 rounded-md border border-slate-200 bg-white p-1.5 shadow-xl space-y-0.5 animate-in fade-in zoom-in-95">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMoreOpen(false);
+                    navigate(`/admin/businesses/${business.id}/contacts`);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D] cursor-pointer transition-colors"
+                >
+                  <Users className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  <span>Manage Contacts</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMoreOpen(false);
+                    navigate(`/admin/visits/schedule`);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D] cursor-pointer transition-colors"
+                >
+                  <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  <span>Schedule Visit</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMoreOpen(false);
+                    navigate(`/admin/businesses/${business.id}/sales-history`);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D] cursor-pointer transition-colors"
+                >
+                  <ShoppingBag className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  <span>Sales History</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMoreOpen(false);
+                    navigate(`/admin/businesses/${business.id}/subscription`);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D] cursor-pointer transition-colors"
+                >
+                  <CreditCard className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  <span>Subscription Details</span>
+                </button>
+
+                <div className="my-1 border-t border-slate-100" />
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMoreOpen(false);
+                    navigator.clipboard.writeText(`${business.name} | Phone: ${business.phone} | Address: ${business.address}, ${business.city}`);
+                    toast.success('Business info copied to clipboard!');
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D] cursor-pointer transition-colors"
+                >
+                  <Copy className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  <span>Copy Business Details</span>
+                </button>
+              </div>
+            )}
+          </div>
+
           {can('crm.businesses.update') && !readOnly && (
             <Button
               variant="accent"
