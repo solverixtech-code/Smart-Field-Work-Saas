@@ -665,51 +665,55 @@ export default function AppRouter() {
 
             {/* Demo Management Routes (Screens 93 to 98) */}
             <Route element={<PermissionRoute permission="crm.demos.view" />}>
-              <Route path="/admin/demos" element={<AllDemosPage />} />
-              <Route path="/admin/demos/today" element={<DemosTodayPage />} />
-              <Route
-                path="/admin/demos/scheduled"
-                element={<ScheduledDemosPage />}
-              />
-              <Route
-                path="/admin/demos/completed"
-                element={<CompletedDemosPage />}
-              />
-              <Route
-                path="/admin/demos/conversions"
-                element={<DemoConversionReportPage />}
-              />
-              <Route
-                path="/admin/demos/:demoId"
-                element={<DemoDetailsPage />}
-              />
+              <Route element={<CrmBoundary />}>
+                <Route path="/admin/demos" element={<AllDemosPage />} />
+                <Route path="/admin/demos/today" element={<DemosTodayPage />} />
+                <Route
+                  path="/admin/demos/scheduled"
+                  element={<ScheduledDemosPage />}
+                />
+                <Route
+                  path="/admin/demos/completed"
+                  element={<CompletedDemosPage />}
+                />
+                <Route
+                  path="/admin/demos/conversions"
+                  element={<DemoConversionReportPage />}
+                />
+                <Route
+                  path="/admin/demos/:demoId"
+                  element={<DemoDetailsPage />}
+                />
+              </Route>
             </Route>
 
             {/* Follow-up Management Routes (Screens 99 to 104) */}
             <Route
               element={<PermissionRoute permission="crm.followups.view" />}
             >
-              <Route path="/admin/follow-ups" element={<AllFollowUpsPage />} />
-              <Route
-                path="/admin/follow-ups/today"
-                element={<TodayFollowUpsPage />}
-              />
-              <Route
-                path="/admin/follow-ups/upcoming"
-                element={<UpcomingFollowUpsPage />}
-              />
-              <Route
-                path="/admin/follow-ups/overdue"
-                element={<OverdueFollowUpsPage />}
-              />
-              <Route
-                path="/admin/follow-ups/completed"
-                element={<CompletedFollowUpsPage />}
-              />
-              <Route
-                path="/admin/follow-ups/:followupId"
-                element={<FollowUpDetailsPage />}
-              />
+              <Route element={<CrmBoundary />}>
+                <Route path="/admin/follow-ups" element={<AllFollowUpsPage />} />
+                <Route
+                  path="/admin/follow-ups/today"
+                  element={<TodayFollowUpsPage />}
+                />
+                <Route
+                  path="/admin/follow-ups/upcoming"
+                  element={<UpcomingFollowUpsPage />}
+                />
+                <Route
+                  path="/admin/follow-ups/overdue"
+                  element={<OverdueFollowUpsPage />}
+                />
+                <Route
+                  path="/admin/follow-ups/completed"
+                  element={<CompletedFollowUpsPage />}
+                />
+                <Route
+                  path="/admin/follow-ups/:followupId"
+                  element={<FollowUpDetailsPage />}
+                />
+              </Route>
             </Route>
 
             {/* Leads Management Routes (Screens 33 to 53) */}
@@ -883,112 +887,118 @@ export default function AppRouter() {
 
             {/* Visit Management Routes (Screens 61 to 70) */}
             <Route element={<PermissionRoute permission="crm.visits.view" />}>
-              <Route
-                path="/admin/visits"
-                element={<AllVisitsPage viewMode="all" />}
-              />
-              <Route
-                path="/admin/visits/schedule"
-                element={<ScheduleVisitPage />}
-              />
-              <Route
-                path="/admin/visits/today"
-                element={<AllVisitsPage viewMode="today" />}
-              />
-              <Route
-                path="/admin/visits/scheduled"
-                element={<AllVisitsPage viewMode="scheduled" />}
-              />
-              <Route
-                path="/admin/visits/completed"
-                element={<AllVisitsPage viewMode="completed" />}
-              />
-              <Route
-                path="/admin/visits/missed"
-                element={<AllVisitsPage viewMode="missed" />}
-              />
-              <Route
-                path="/admin/visits/verified"
-                element={<AllVisitsPage viewMode="verified" />}
-              />
-              <Route
-                path="/admin/visits/unverified"
-                element={<AllVisitsPage viewMode="unverified" />}
-              />
-              <Route
-                path="/admin/visits/gps-exceptions"
-                element={<GpsExceptionsPage />}
-              />
-              <Route
-                path="/admin/visits/gps-exceptions/:exceptionId"
-                element={<GpsExceptionDetailsPage />}
-              />
-              <Route
-                path="/admin/visits/:visitId"
-                element={<VisitDetailsPage />}
-              />
+              <Route element={<CrmBoundary />}>
+                <Route
+                  path="/admin/visits"
+                  element={<AllVisitsPage viewMode="all" />}
+                />
+                <Route
+                  path="/admin/visits/schedule"
+                  element={<ScheduleVisitPage />}
+                />
+                <Route
+                  path="/admin/visits/today"
+                  element={<AllVisitsPage viewMode="today" />}
+                />
+                <Route
+                  path="/admin/visits/scheduled"
+                  element={<AllVisitsPage viewMode="scheduled" />}
+                />
+                <Route
+                  path="/admin/visits/completed"
+                  element={<AllVisitsPage viewMode="completed" />}
+                />
+                <Route
+                  path="/admin/visits/missed"
+                  element={<AllVisitsPage viewMode="missed" />}
+                />
+                <Route
+                  path="/admin/visits/verified"
+                  element={<AllVisitsPage viewMode="verified" />}
+                />
+                <Route
+                  path="/admin/visits/unverified"
+                  element={<AllVisitsPage viewMode="unverified" />}
+                />
+                <Route
+                  path="/admin/visits/gps-exceptions"
+                  element={<GpsExceptionsPage />}
+                />
+                <Route
+                  path="/admin/visits/gps-exceptions/:exceptionId"
+                  element={<GpsExceptionDetailsPage />}
+                />
+                <Route
+                  path="/admin/visits/:visitId"
+                  element={<VisitDetailsPage />}
+                />
+              </Route>
             </Route>
 
             {/* Live Location & Maps Routes (Screens 71 to 77) */}
             <Route element={<PermissionRoute permission="crm.map.view" />}>
-              <Route path="/admin/map/live" element={<LiveFieldMapPage />} />
-              <Route
-                path="/admin/map/executives"
-                element={<ExecutiveLocationsPage />}
-              />
-              <Route
-                path="/admin/map/businesses"
-                element={<BusinessProspectMapPage />}
-              />
-              <Route path="/admin/map/visits" element={<VisitHeatmapPage />} />
-              <Route path="/admin/map/sales" element={<SalesHeatmapPage />} />
-              <Route
-                path="/admin/map/territories"
-                element={<TerritoryMapPage />}
-              />
-              <Route path="/admin/map/routes" element={<RoutePlaybackPage />} />
-              <Route
-                path="/admin/map/routes/:executiveId"
-                element={<RoutePlaybackPage />}
-              />
+              <Route element={<CrmBoundary />}>
+                <Route path="/admin/map/live" element={<LiveFieldMapPage />} />
+                <Route
+                  path="/admin/map/executives"
+                  element={<ExecutiveLocationsPage />}
+                />
+                <Route
+                  path="/admin/map/businesses"
+                  element={<BusinessProspectMapPage />}
+                />
+                <Route path="/admin/map/visits" element={<VisitHeatmapPage />} />
+                <Route path="/admin/map/sales" element={<SalesHeatmapPage />} />
+                <Route
+                  path="/admin/map/territories"
+                  element={<TerritoryMapPage />}
+                />
+                <Route path="/admin/map/routes" element={<RoutePlaybackPage />} />
+                <Route
+                  path="/admin/map/routes/:executiveId"
+                  element={<RoutePlaybackPage />}
+                />
+              </Route>
             </Route>
 
             {/* Territory Management Routes (Module 9, Screens 78 to 85) */}
             <Route
               element={<PermissionRoute permission="crm.territories.view" />}
             >
-              <Route
-                path="/admin/territories"
-                element={<TerritoriesListPage />}
-              />
-              <Route
-                path="/admin/territories/create"
-                element={<CreateTerritoryPage />}
-              />
-              <Route
-                path="/admin/territories/:territoryId"
-                element={<TerritoryDetailsPage initialTab="Overview" />}
-              />
-              <Route
-                path="/admin/territories/:territoryId/edit"
-                element={<EditTerritoryPage />}
-              />
-              <Route
-                path="/admin/territories/:territoryId/executives"
-                element={<TerritoryDetailsPage initialTab="Executives" />}
-              />
-              <Route
-                path="/admin/territories/:territoryId/businesses"
-                element={<TerritoryDetailsPage initialTab="Businesses" />}
-              />
-              <Route
-                path="/admin/territories/:territoryId/performance"
-                element={<TerritoryDetailsPage initialTab="Performance" />}
-              />
-              <Route
-                path="/admin/territories/:territoryId/map"
-                element={<TerritoryDetailsPage initialTab="Map" />}
-              />
+              <Route element={<CrmBoundary />}>
+                <Route
+                  path="/admin/territories"
+                  element={<TerritoriesListPage />}
+                />
+                <Route
+                  path="/admin/territories/create"
+                  element={<CreateTerritoryPage />}
+                />
+                <Route
+                  path="/admin/territories/:territoryId"
+                  element={<TerritoryDetailsPage initialTab="Overview" />}
+                />
+                <Route
+                  path="/admin/territories/:territoryId/edit"
+                  element={<EditTerritoryPage />}
+                />
+                <Route
+                  path="/admin/territories/:territoryId/executives"
+                  element={<TerritoryDetailsPage initialTab="Executives" />}
+                />
+                <Route
+                  path="/admin/territories/:territoryId/businesses"
+                  element={<TerritoryDetailsPage initialTab="Businesses" />}
+                />
+                <Route
+                  path="/admin/territories/:territoryId/performance"
+                  element={<TerritoryDetailsPage initialTab="Performance" />}
+                />
+                <Route
+                  path="/admin/territories/:territoryId/map"
+                  element={<TerritoryDetailsPage initialTab="Map" />}
+                />
+              </Route>
             </Route>
 
             {/* System Masters Management & Workspace Settings Route */}

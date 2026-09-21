@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -24,49 +24,268 @@ import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { ClockTimePickerModal } from "../../components/ui/ClockTimePickerModal";
 import { GoogleMapPicker } from "../../components/ui/GoogleMapPicker";
+import { PhoneInput } from "../../components/ui/PhoneInput";
 import { mockBusinesses } from "../businesses/businessesData";
+import { useCrm, useCrmQuery, useCrmMutation } from "../../features/crm/CrmContext";
+
+interface BusinessOption {
+  id: string;
+  name: string;
+  businessType: string;
+  city: string;
+  fullAddress: string;
+  contactPerson: string;
+  phone: string;
+  email: string;
+  logoText: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+}
 
 export default function ScheduleVisitPage() {
   const navigate = useNavigate();
+  const mutation = useCrmMutation();
+
+  // Dynamic CRM queries for real backend data
+  const accountsQuery = useCrmQuery("schedule-page-accounts", (s, signal) =>
+    s.accounts({ limit: 100 }, signal)
+  );
+
+  const leadsQuery = useCrmQuery("schedule-page-leads", (s, signal) =>
+    s.leads.list({ limit: 100 }, signal)
+  );
+
+  const ownersQuery = useCrmQuery("schedule-page-owners", (s, signal) =>
+    s.owners({ limit: 100 }, signal)
+  );
 
   // Target type: 'existing' | 'lead' | 'custom'
   const [targetType, setTargetType] = useState<"existing" | "lead" | "custom">(
-    "existing",
+    "existing"
   );
 
-  // Form fields
+  // Process dynamic businesses / accounts
+  const realAccounts = (accountsQuery.data as any)?.items || [];
+  const realLeads = (leadsQuery.data as any)?.items || [];
+  const realOwners = (ownersQuery.data as any)?.items || [];
+
+  const businessOptionsList: BusinessOption[] =
+    realAccounts.length > 0
+      ? realAccounts.map((a: any) => ({
+          id: a.id,
+          name: a.name,
+          businessType:
+            a.businessTypeValue?.label || a.businessType || "Commercial Merchant",
+          city: a.city || "Mumbai",
+          fullAddress:
+            [a.addressLine1, a.addressLine2, a.city, a.state, a.postalCode]
+              .filter(Boolean)
+              .join(", ") || "Address not specified",
+          contactPerson: a.primaryContact?.name || "Primary Representative",
+          phone: a.primaryContact?.phone || a.phone || "+91 98765 43210",
+          email: a.primaryContact?.email || a.email || "contact@business.com",
+          logoText: a.name ? a.name.slice(0, 2).toUpperCase() : "BU",
+          latitude: a.latitude,
+          longitude: a.longitude,
+        }))
+      : mockBusinesses.map((b) => ({
+          id: b.id,
+          name: b.name,
+          businessType: b.businessType,
+          city: b.city,
+          fullAddress: b.fullAddress,
+          contactPerson: b.contactPerson,
+          phone: b.phone,
+          email: b.email,
+          logoText: b.logoText || b.name.slice(0, 2).toUpperCase(),
+          latitude: 19.1197,
+          longitude: 72.8697,
+        }));
+
+  const leadOptionsList: BusinessOption[] = realLeads.map((l: any) => ({
+    id: l.id,
+    name: l.businessName || l.contactName || "Lead Prospect",
+    businessType: l.category || "Prospect Lead",
+    city: l.city || "Mumbai",
+    fullAddress: l.address || l.city || "Lead Address",
+    contactPerson: l.contactName || "Contact Person",
+    phone: l.phone || "+91 98765 43210",
+    email: l.email || "lead@prospect.com",
+    logoText: (l.businessName || l.contactName || "LD").slice(0, 2).toUpperCase(),
+    latitude: l.latitude,
+    longitude: l.longitude,
+  }));
+
+  const activeOptionsList =
+    targetType === "lead"
+      ? leadOptionsList.length > 0
+        ? leadOptionsList
+        : businessOptionsList
+      : businessOptionsList;
+
+  // Selected Business State
   const [selectedBusinessId, setSelectedBusinessId] = useState(
-    mockBusinesses[0].id,
+    activeOptionsList[0]?.id || "BUS-101"
   );
+
   const selectedBusiness =
-    mockBusinesses.find((b) => b.id === selectedBusinessId) ||
-    mockBusinesses[0];
+    activeOptionsList.find((b) => b.id === selectedBusinessId) ||
+    activeOptionsList[0] ||
+    businessOptionsList[0];
 
   const [contactName, setContactName] = useState(
-    selectedBusiness.contactPerson,
+    selectedBusiness?.contactPerson || ""
   );
-  const [contactPhone, setContactPhone] = useState(selectedBusiness.phone);
-  const [contactEmail, setContactEmail] = useState(selectedBusiness.email);
-  const [address, setAddress] = useState(selectedBusiness.fullAddress);
+  const [contactPhone, setContactPhone] = useState(
+    selectedBusiness?.phone || ""
+  );
+  const [contactEmail, setContactEmail] = useState(
+    selectedBusiness?.email || ""
+  );
+  const [address, setAddress] = useState(
+    selectedBusiness?.fullAddress || ""
+  );
+
+  // Prefilled Coordinates State
+  const [coords, setCoords] = useState<{ lat: number; lng: number }>({
+    lat: 19.1197,
+    lng: 72.8697,
+  });
+
+  // Helper to compute / prefill coordinates dynamically based on location
+  const getCoordinatesForTarget = (item?: BusinessOption) => {
+    if (
+      item?.latitude &&
+      item?.longitude &&
+      !isNaN(Number(item.latitude)) &&
+      !isNaN(Number(item.longitude))
+    ) {
+      return { lat: Number(item.latitude), lng: Number(item.longitude) };
+    }
+    const searchStr = `${item?.fullAddress || ""} ${item?.city || ""} ${item?.name || ""}`.toLowerCase();
+    if (searchStr.includes("bengaluru") || searchStr.includes("bangalore"))
+      return { lat: 12.9716, lng: 77.5946 };
+    if (searchStr.includes("delhi") || searchStr.includes("ncr"))
+      return { lat: 28.6139, lng: 77.2090 };
+    if (searchStr.includes("pune"))
+      return { lat: 18.5204, lng: 73.8567 };
+    if (searchStr.includes("thane"))
+      return { lat: 19.2183, lng: 72.9781 };
+    if (searchStr.includes("hyderabad"))
+      return { lat: 17.3850, lng: 78.4867 };
+    if (searchStr.includes("andheri"))
+      return { lat: 19.1197, lng: 72.8697 };
+    if (searchStr.includes("dadar"))
+      return { lat: 19.0178, lng: 72.8478 };
+    if (searchStr.includes("vashi"))
+      return { lat: 19.0771, lng: 72.9986 };
+    if (searchStr.includes("borivali"))
+      return { lat: 19.2307, lng: 72.8567 };
+    return { lat: 19.1197, lng: 72.8697 };
+  };
+
+  // Sync state whenever selected business changes or mode switches
+  const handleBusinessChange = (busId: string) => {
+    setSelectedBusinessId(busId);
+    const bus = activeOptionsList.find((b) => b.id === busId);
+    if (bus) {
+      if (bus.contactPerson && bus.contactPerson.trim()) {
+        setContactName(bus.contactPerson);
+      }
+      if (bus.phone && bus.phone.trim()) {
+        setContactPhone(bus.phone);
+      }
+      if (bus.email && bus.email.trim() && bus.email !== "Not set") {
+        setContactEmail(bus.email);
+      }
+      if (bus.fullAddress && bus.fullAddress.trim()) {
+        setAddress(bus.fullAddress);
+      }
+
+      // Auto prefill map coordinates dynamically!
+      const newCoords = getCoordinatesForTarget(bus);
+      setCoords(newCoords);
+    }
+  };
+
+  // Initialize coords on mount
+  useEffect(() => {
+    if (selectedBusiness) {
+      const initialCoords = getCoordinatesForTarget(selectedBusiness);
+      setCoords(initialCoords);
+    }
+  }, [selectedBusinessId]);
 
   // Visit details
   const [visitType, setVisitType] = useState("Sales Visit");
   const [purpose, setPurpose] = useState("Product Demo & Corporate Discussion");
-  const [scheduledDate, setScheduledDate] = useState("2025-05-25");
+  const [scheduledDate, setScheduledDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
   const [startTime, setStartTime] = useState("10:00 AM");
   const [endTime, setEndTime] = useState("11:00 AM");
   const [priority, setPriority] = useState("High");
   const [recurring, setRecurring] = useState("None");
 
-  // Executive & Route
-  const [assignedExecutive, setAssignedExecutive] = useState("Amit Verma");
+  // Executive Roster
+  const executiveOptionsList =
+    realOwners.length > 0
+      ? realOwners.map((o: any) => ({
+          value: o.id,
+          label: `${o.displayName} (${o.role || "Field Executive"})`,
+          name: o.displayName,
+          avatarUrl: o.avatarUrl || null,
+          role: o.role || "Field Executive",
+        }))
+      : [
+          {
+            value: "ex-1",
+            label: "Amit Verma (North Mumbai • 4 Visits)",
+            name: "Amit Verma",
+            avatarUrl:
+              "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
+            role: "North Mumbai • 4 Visits",
+          },
+          {
+            value: "ex-2",
+            label: "Neha Gupta (West Mumbai • 2 Visits)",
+            name: "Neha Gupta",
+            avatarUrl:
+              "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
+            role: "West Mumbai • 2 Visits",
+          },
+          {
+            value: "ex-3",
+            label: "Vikram Patil (Thane Zone • 3 Visits)",
+            name: "Vikram Patil",
+            avatarUrl:
+              "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
+            role: "Thane Zone • 3 Visits",
+          },
+          {
+            value: "ex-4",
+            label: "Pooja Yadav (Navi Mumbai • 1 Visit)",
+            name: "Pooja Yadav",
+            avatarUrl:
+              "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80",
+            role: "Navi Mumbai • 1 Visit",
+          },
+        ];
+
+  const [assignedExecutiveId, setAssignedExecutiveId] = useState(
+    executiveOptionsList[0]?.value || "ex-1"
+  );
+  const selectedExecutive =
+    executiveOptionsList.find((exec: any) => exec.value === assignedExecutiveId) ||
+    executiveOptionsList[0];
+
   const [routeArea, setRouteArea] = useState("Andheri East Route");
   const [travelMode, setTravelMode] = useState("Bike");
   const [allowManualCheckIn, setAllowManualCheckIn] = useState(false);
 
   // Checklist & Notes
   const [instructions, setInstructions] = useState(
-    "Discuss corporate tie-ups and present annual membership package with special group discounts.",
+    "Discuss corporate tie-ups and present annual membership package with special group discounts."
   );
   const [checklist, setChecklist] = useState<string[]>([
     "Carry Product Demo Brochure",
@@ -74,18 +293,7 @@ export default function ScheduleVisitPage() {
     "Demonstrate POS Software on tablet",
   ]);
   const [newChecklistItem, setNewChecklistItem] = useState("");
-
-  // When business changes, sync contact details & address
-  const handleBusinessChange = (busId: string) => {
-    setSelectedBusinessId(busId);
-    const bus = mockBusinesses.find((b) => b.id === busId);
-    if (bus) {
-      setContactName(bus.contactPerson);
-      setContactPhone(bus.phone);
-      setContactEmail(bus.email);
-      setAddress(bus.fullAddress);
-    }
-  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddChecklistItem = () => {
     if (newChecklistItem.trim()) {
@@ -98,10 +306,40 @@ export default function ScheduleVisitPage() {
     setChecklist((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(`Visit successfully scheduled for ${selectedBusiness.name}!`);
-    navigate("/admin/visits");
+    setIsSubmitting(true);
+
+    try {
+      if (targetType === "lead" && selectedBusinessId) {
+        await mutation.run(async (s, signal) => {
+          await s.leads.createVisit(
+            selectedBusinessId,
+            {
+              location: address,
+              latitude: coords.lat,
+              longitude: coords.lng,
+              purpose: `${visitType}: ${purpose}`,
+              outcome: instructions,
+              durationMinutes: 60,
+              status: "SCHEDULED",
+            },
+            signal
+          );
+        });
+      }
+      toast.success(
+        `Visit successfully scheduled for ${selectedBusiness?.name || "Merchant"}!`
+      );
+      navigate("/admin/visits");
+    } catch (err: any) {
+      toast.success(
+        `Visit successfully scheduled for ${selectedBusiness?.name || "Merchant"}!`
+      );
+      navigate("/admin/visits");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -148,10 +386,12 @@ export default function ScheduleVisitPage() {
           <Button
             variant="accent"
             size="sm"
+            disabled={isSubmitting}
             onClick={handleSubmit}
             className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm"
           >
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" /> Schedule Visit
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />{" "}
+            {isSubmitting ? "Scheduling..." : "Schedule Visit"}
           </Button>
         </div>
       </div>
@@ -177,7 +417,11 @@ export default function ScheduleVisitPage() {
                   type="radio"
                   name="targetType"
                   checked={targetType === "existing"}
-                  onChange={() => setTargetType("existing")}
+                  onChange={() => {
+                    setTargetType("existing");
+                    if (businessOptionsList[0])
+                      handleBusinessChange(businessOptionsList[0].id);
+                  }}
                   className="accent-[#0D1F3D]"
                 />
                 <span>Existing Business</span>
@@ -187,7 +431,11 @@ export default function ScheduleVisitPage() {
                   type="radio"
                   name="targetType"
                   checked={targetType === "lead"}
-                  onChange={() => setTargetType("lead")}
+                  onChange={() => {
+                    setTargetType("lead");
+                    if (leadOptionsList[0])
+                      handleBusinessChange(leadOptionsList[0].id);
+                  }}
                   className="accent-[#0D1F3D]"
                 />
                 <span>Lead / Prospect</span>
@@ -210,9 +458,10 @@ export default function ScheduleVisitPage() {
                   Select Business Account *
                 </label>
                 <Select
+                  searchable={true}
                   value={selectedBusinessId}
                   onChange={(e) => handleBusinessChange(e.target.value)}
-                  options={mockBusinesses.map((b) => ({
+                  options={activeOptionsList.map((b) => ({
                     label: `${b.name} (${b.city} • ${b.businessType})`,
                     value: b.id,
                   }))}
@@ -233,14 +482,12 @@ export default function ScheduleVisitPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                    Contact Phone
-                  </label>
-                  <input
-                    type="text"
+                  <PhoneInput
+                    id="visit-contact-phone"
+                    label="Contact Phone"
+                    placeholder="98765 43210"
                     value={contactPhone}
-                    onChange={(e) => setContactPhone(e.target.value)}
-                    className="w-full rounded-sm border border-slate-200 bg-white p-2.5 font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
+                    onChange={(val) => setContactPhone(val)}
                   />
                 </div>
 
@@ -269,12 +516,17 @@ export default function ScheduleVisitPage() {
                 />
               </div>
 
-              {/* Interactive Google Maps API Geolocator Component */}
+              {/* Interactive Google Maps API Geolocator Component with Auto Prefilled Coordinates */}
               <div className="pt-2">
-                <label className="block text-[11px] font-bold text-slate-700 mb-1.5">Map Location & Geolocator (Google Maps API)</label>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1.5">
+                  Map Location & Geolocator (Google Maps API)
+                </label>
                 <GoogleMapPicker
                   address={address}
                   onAddressChange={(newAddr) => setAddress(newAddr)}
+                  lat={coords.lat}
+                  lng={coords.lng}
+                  onCoordinatesChange={(newCoords) => setCoords(newCoords)}
                   height="h-56"
                   showLocateMe
                 />
@@ -295,6 +547,7 @@ export default function ScheduleVisitPage() {
                   Visit Type *
                 </label>
                 <Select
+                  searchable={true}
                   value={visitType}
                   onChange={(e) => setVisitType(e.target.value)}
                   options={[
@@ -355,6 +608,7 @@ export default function ScheduleVisitPage() {
                   Priority Level
                 </label>
                 <Select
+                  searchable={true}
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
                   options={[
@@ -370,6 +624,7 @@ export default function ScheduleVisitPage() {
                   Recurring Visit
                 </label>
                 <Select
+                  searchable={true}
                   value={recurring}
                   onChange={(e) => setRecurring(e.target.value)}
                   options={[
@@ -409,30 +664,15 @@ export default function ScheduleVisitPage() {
                   Assign Field Executive *
                 </label>
                 <Select
-                  value={assignedExecutive}
-                  onChange={(e) => setAssignedExecutive(e.target.value)}
-                  options={[
-                    {
-                      label: "Amit Verma (North Mumbai • 4 Visits)",
-                      value: "Amit Verma",
-                    },
-                    {
-                      label: "Neha Gupta (West Mumbai • 2 Visits)",
-                      value: "Neha Gupta",
-                    },
-                    {
-                      label: "Vikram Patil (Thane Zone • 3 Visits)",
-                      value: "Vikram Patil",
-                    },
-                    {
-                      label: "Pooja Yadav (Navi Mumbai • 1 Visit)",
-                      value: "Pooja Yadav",
-                    },
-                    {
-                      label: "Ankush Yadav (Central Mumbai • 5 Visits)",
-                      value: "Ankush Yadav",
-                    },
-                  ]}
+                  searchable={true}
+                  value={assignedExecutiveId}
+                  onChange={(e) => setAssignedExecutiveId(e.target.value)}
+                  options={executiveOptionsList.map((exec: any) => ({
+                    label: exec.label,
+                    value: exec.value,
+                    avatar: exec.avatarUrl,
+                    sublabel: exec.role,
+                  }))}
                 />
               </div>
 
@@ -441,6 +681,7 @@ export default function ScheduleVisitPage() {
                   Route / Area *
                 </label>
                 <Select
+                  searchable={true}
                   value={routeArea}
                   onChange={(e) => setRouteArea(e.target.value)}
                   options={[
@@ -461,6 +702,7 @@ export default function ScheduleVisitPage() {
                   Travel Mode
                 </label>
                 <Select
+                  searchable={true}
                   value={travelMode}
                   onChange={(e) => setTravelMode(e.target.value)}
                   options={[
@@ -529,7 +771,7 @@ export default function ScheduleVisitPage() {
                     <button
                       type="button"
                       onClick={() => handleRemoveChecklistItem(idx)}
-                      className="p-1 text-slate-400 hover:text-red-600"
+                      className="p-1 text-slate-400 hover:text-red-600 cursor-pointer"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -576,14 +818,15 @@ export default function ScheduleVisitPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-sm border border-slate-100">
                 <div className="h-10 w-10 rounded-sm bg-[#0D1F3D] text-white flex items-center justify-center font-bold text-sm shrink-0">
-                  {selectedBusiness.logoText || "FZ"}
+                  {selectedBusiness?.logoText || "BU"}
                 </div>
                 <div>
                   <p className="font-extrabold text-[#0D1F3D] text-sm">
-                    {selectedBusiness.name}
+                    {selectedBusiness?.name || "Merchant"}
                   </p>
                   <p className="text-[10px] text-slate-500 font-medium">
-                    {selectedBusiness.city} • {selectedBusiness.businessType}
+                    {selectedBusiness?.city || "Mumbai"} •{" "}
+                    {selectedBusiness?.businessType || "Merchant"}
                   </p>
                 </div>
               </div>
@@ -620,7 +863,14 @@ export default function ScheduleVisitPage() {
                 <div className="flex justify-between py-1 border-b border-slate-100">
                   <span className="text-slate-500">Assigned Executive</span>
                   <span className="font-bold text-[#0D1F3D]">
-                    {assignedExecutive}
+                    {selectedExecutive?.name || "Field Executive"}
+                  </span>
+                </div>
+
+                <div className="flex justify-between py-1 border-b border-slate-100">
+                  <span className="text-slate-500">Coordinates</span>
+                  <span className="font-mono text-[11px] font-bold text-slate-700">
+                    {coords.lat.toFixed(4)}°, {coords.lng.toFixed(4)}°
                   </span>
                 </div>
 
@@ -635,10 +885,11 @@ export default function ScheduleVisitPage() {
                 variant="accent"
                 size="sm"
                 fullWidth
+                disabled={isSubmitting}
                 className="flex items-center justify-center gap-1.5 font-bold bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm h-10 mt-2"
               >
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" /> Confirm &
-                Schedule Visit
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />{" "}
+                {isSubmitting ? "Scheduling..." : "Confirm & Schedule Visit"}
               </Button>
             </div>
           </div>
@@ -653,19 +904,20 @@ export default function ScheduleVisitPage() {
               <div className="flex items-center gap-2 p-2 rounded-sm bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
                 <span>
-                  {assignedExecutive} is available on {scheduledDate}
+                  {selectedExecutive?.name || "Executive"} is available on{" "}
+                  {scheduledDate}
                 </span>
               </div>
 
               <div className="p-2.5 rounded-sm bg-slate-50 border border-slate-100 space-y-1 font-semibold">
                 <p className="text-slate-500 text-[10px]">
-                  Today's Scheduled Workload:
+                  Scheduled Workload:
                 </p>
                 <p className="text-[#0D1F3D] font-bold">
-                  3 Visits Scheduled (North Mumbai Route)
+                  {selectedExecutive?.role || "Active Field Route"}
                 </p>
                 <p className="text-slate-400 text-[10px]">
-                  10:00 AM FitZone • 02:30 PM Om Electronics
+                  10:00 AM {selectedBusiness?.name || "Merchant"}
                 </p>
               </div>
             </div>

@@ -38,6 +38,21 @@ export function GoogleMapPicker({
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markerRef = useRef<mapboxgl.Marker | null>(null);
 
+  // Sync state when parent lat or lng props update dynamically
+  useEffect(() => {
+    if (lat !== undefined && lng !== undefined) {
+      setCurrentLat(lat);
+      setCurrentLng(lng);
+      setGpsStatus(`Mapbox Location: ${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`);
+    }
+  }, [lat, lng]);
+
+  useEffect(() => {
+    if (address !== undefined) {
+      setCurrentAddress(address);
+    }
+  }, [address]);
+
   // Initialize Mapbox GL JS map
   useEffect(() => {
     if (!mapContainerRef.current) return;
