@@ -103,9 +103,17 @@ export function LeadVisitsTab({ leadId }: { leadId: string }) {
             >
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-[#0D1F3D] text-white font-extrabold text-xs flex items-center justify-center border border-slate-300">
-                    {visit.executiveName.slice(0, 2).toUpperCase()}
-                  </div>
+                  {visit.executiveAvatar ? (
+                    <img
+                      src={visit.executiveAvatar}
+                      alt={visit.executiveName}
+                      className="h-8 w-8 rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 rounded-full bg-[#0D1F3D] text-white font-extrabold text-xs flex items-center justify-center border border-slate-300 shrink-0">
+                      {visit.executiveName.slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
                   <div>
                     <p className="font-extrabold text-[#0D1F3D] text-sm">
                       {visit.executiveName}

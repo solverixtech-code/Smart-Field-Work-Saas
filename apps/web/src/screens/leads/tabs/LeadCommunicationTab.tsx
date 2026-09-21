@@ -199,9 +199,17 @@ export function LeadCommunicationTab({ leadId }: { leadId: string }) {
               )}
 
               <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60">
-                <div className="h-5 w-5 rounded-full bg-[#0D1F3D] text-white font-extrabold text-[10px] flex items-center justify-center border border-slate-300">
-                  {comm.loggedByName.slice(0, 2).toUpperCase()}
-                </div>
+                {comm.loggedByAvatar ? (
+                  <img
+                    src={comm.loggedByAvatar}
+                    alt={comm.loggedByName}
+                    className="h-5 w-5 rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs"
+                  />
+                ) : (
+                  <div className="h-5 w-5 rounded-full bg-[#0D1F3D] text-white font-extrabold text-[10px] flex items-center justify-center border border-slate-300 shrink-0">
+                    {comm.loggedByName.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
                 <span className="text-[11px] font-extrabold text-slate-700">
                   Logged by {comm.loggedByName}
                 </span>

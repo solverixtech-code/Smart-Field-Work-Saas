@@ -215,9 +215,17 @@ function LeadDetailsContent() {
             </div>
 
             <div className="flex items-center gap-2.5 bg-slate-50/80 border border-slate-200/80 p-2.5 rounded-xl text-left text-xs font-semibold">
-              <div className="h-8 w-8 rounded-full bg-[#0D1F3D] text-white font-extrabold text-xs flex items-center justify-center shrink-0 border border-slate-300">
-                {(lead.assignee?.displayName || lead.owner.displayName).slice(0, 2).toUpperCase()}
-              </div>
+              {lead.assignee?.avatarUrl || lead.owner?.avatarUrl ? (
+                <img
+                  src={lead.assignee?.avatarUrl || lead.owner?.avatarUrl || undefined}
+                  alt={lead.assignee?.displayName || lead.owner.displayName}
+                  className="h-8 w-8 rounded-full object-cover border border-slate-300 shrink-0 shadow-2xs"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-full bg-[#0D1F3D] text-white font-extrabold text-xs flex items-center justify-center shrink-0 border border-slate-300">
+                  {(lead.assignee?.displayName || lead.owner.displayName).slice(0, 2).toUpperCase()}
+                </div>
+              )}
               <div>
                 <p className="font-extrabold text-[#0D1F3D] text-xs">
                   {lead.assignee?.displayName || 'Unassigned Executive'}

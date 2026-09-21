@@ -1146,7 +1146,7 @@ export class LeadService {
   async listVisits(actor: RequestPrincipal, leadId: string) {
     crmId.parse(leadId);
     return this.repo.run(actor, false, async (tx, p) => {
-      requireLead(p, "read");
+      requireLead(p, "view");
       await this.row(tx, p, leadId);
       return tx.leadVisit.findMany({
         where: { tenantId: p.scope.tenantId, leadId },
@@ -1192,7 +1192,7 @@ export class LeadService {
   async listFollowUps(actor: RequestPrincipal, leadId: string) {
     crmId.parse(leadId);
     return this.repo.run(actor, false, async (tx, p) => {
-      requireLead(p, "read");
+      requireLead(p, "view");
       await this.row(tx, p, leadId);
       return tx.leadFollowUp.findMany({
         where: { tenantId: p.scope.tenantId, leadId },
@@ -1264,7 +1264,7 @@ export class LeadService {
   async listDemos(actor: RequestPrincipal, leadId: string) {
     crmId.parse(leadId);
     return this.repo.run(actor, false, async (tx, p) => {
-      requireLead(p, "read");
+      requireLead(p, "view");
       await this.row(tx, p, leadId);
       return tx.leadDemo.findMany({
         where: { tenantId: p.scope.tenantId, leadId },
@@ -1308,7 +1308,7 @@ export class LeadService {
   async listCommunications(actor: RequestPrincipal, leadId: string) {
     crmId.parse(leadId);
     return this.repo.run(actor, false, async (tx, p) => {
-      requireLead(p, "read");
+      requireLead(p, "view");
       await this.row(tx, p, leadId);
       return tx.leadCommunication.findMany({
         where: { tenantId: p.scope.tenantId, leadId },

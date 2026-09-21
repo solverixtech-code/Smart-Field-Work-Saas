@@ -128,9 +128,17 @@ export function LeadDemosTab({ leadId }: { leadId: string }) {
                     Conducted By
                   </span>
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="h-6 w-6 rounded-full bg-[#0D1F3D] text-white font-extrabold text-[10px] flex items-center justify-center border border-slate-300">
-                      {demo.conductedByName.slice(0, 2).toUpperCase()}
-                    </div>
+                    {demo.conductedByAvatar ? (
+                      <img
+                        src={demo.conductedByAvatar}
+                        alt={demo.conductedByName}
+                        className="h-6 w-6 rounded-full object-cover border border-slate-200 shrink-0 shadow-2xs"
+                      />
+                    ) : (
+                      <div className="h-6 w-6 rounded-full bg-[#0D1F3D] text-white font-extrabold text-[10px] flex items-center justify-center border border-slate-300 shrink-0">
+                        {demo.conductedByName.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
                     <span className="font-extrabold text-[#0D1F3D]">
                       {demo.conductedByName}
                     </span>

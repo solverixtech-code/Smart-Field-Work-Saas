@@ -158,22 +158,8 @@ async function seedCrmLeads() {
             tenantId,
             leadId: lead.id,
             executiveMembershipId: membershipId,
-            executiveName: 'Rajesh Kumar',
-            location: `${lead.city || 'Mumbai'} Industrial Area - HQ Office`,
-            latitude: 19.076,
-            longitude: 72.8777,
-            purpose: 'Initial Requirements Gathering & Site Inspection',
-            outcome: 'Met with Operations VP. Client requested custom attendance geofencing demo for 3 branch offices.',
-            durationMinutes: 45,
-            status: 'COMPLETED',
-            checkInTime: new Date(Date.now() - 86400000 * 2),
-            checkOutTime: new Date(Date.now() - 86400000 * 2 + 2700000),
-          },
-          {
-            tenantId,
-            leadId: lead.id,
-            executiveMembershipId: membershipId,
             executiveName: 'Priya Sharma',
+            executiveAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
             location: `${lead.city || 'Mumbai'} Regional Distribution Center`,
             latitude: 19.082,
             longitude: 72.889,
@@ -183,6 +169,22 @@ async function seedCrmLeads() {
             status: 'COMPLETED',
             checkInTime: new Date(Date.now() - 86400000 * 5),
             checkOutTime: new Date(Date.now() - 86400000 * 5 + 3600000),
+          },
+          {
+            tenantId,
+            leadId: lead.id,
+            executiveMembershipId: membershipId,
+            executiveName: 'Rajesh Kumar',
+            executiveAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
+            location: `${lead.city || 'Mumbai'} Industrial Area - HQ Office`,
+            latitude: 19.076,
+            longitude: 72.8777,
+            purpose: 'Initial Requirements Gathering & Site Inspection',
+            outcome: 'Met with Operations VP. Client requested custom attendance geofencing demo for 3 branch offices.',
+            durationMinutes: 45,
+            status: 'COMPLETED',
+            checkInTime: new Date(Date.now() - 86400000 * 2),
+            checkOutTime: new Date(Date.now() - 86400000 * 2 + 2700000),
           },
         ],
       });
@@ -228,6 +230,7 @@ async function seedCrmLeads() {
             leadId: lead.id,
             conductedByMembershipId: membershipId,
             conductedByName: 'Vikram Malhotra',
+            conductedByAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80',
             demoTitle: 'Solverix Smart Field Work Platform Overview',
             demoDate: '2026-09-18',
             demoMode: 'Virtual Google Meet',
@@ -249,6 +252,7 @@ async function seedCrmLeads() {
             leadId: lead.id,
             loggedByMembershipId: membershipId,
             loggedByName: 'Rajesh Kumar',
+            loggedByAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
             channel: 'Call',
             direction: 'Outbound',
             subject: 'Discussed Enterprise Licensing & Deployment Timeline',
@@ -260,6 +264,7 @@ async function seedCrmLeads() {
             leadId: lead.id,
             loggedByMembershipId: membershipId,
             loggedByName: 'Priya Sharma',
+            loggedByAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
             channel: 'Email',
             direction: 'Outbound',
             subject: 'Sent Technical Architecture & Security Compliance Document',
@@ -271,7 +276,7 @@ async function seedCrmLeads() {
     }
   }
 
-  console.log('Seed completed successfully with dynamic sub-resources!');
+  console.log('Seed completed successfully with dynamic sub-resources & avatars!');
 }
 
 seedCrmLeads()
