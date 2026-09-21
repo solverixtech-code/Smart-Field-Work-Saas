@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useId } from 'react';
+import { createPortal } from 'react-dom';
 import { Calendar as CalendarIcon, ChevronDown, Check, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 
 export interface DateRange {
@@ -7,14 +8,28 @@ export interface DateRange {
   label: string;
 }
 
-const PRESETS: DateRange[] = [
-  { label: '14 May 2025 - 20 May 2025', startDate: '2025-05-14', endDate: '2025-05-20' },
-  { label: 'Today (20 May 2025)', startDate: '2025-05-20', endDate: '2025-05-20' },
-  { label: 'Yesterday (19 May 2025)', startDate: '2025-05-19', endDate: '2025-05-19' },
-  { label: 'Last 7 Days', startDate: '2025-05-14', endDate: '2025-05-20' },
-  { label: 'Last 30 Days', startDate: '2025-04-20', endDate: '2025-05-20' },
-  { label: 'This Month (May 2025)', startDate: '2025-05-01', endDate: '2025-05-31' },
-];
+const dateKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+const parseDate = (value: string) => {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+const createPresets = (today: Date): DateRange[] => {
+  const day = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const yesterday = new Date(day.getFullYear(), day.getMonth(), day.getDate() - 1);
+  const sevenDaysAgo = new Date(day.getFullYear(), day.getMonth(), day.getDate() - 6);
+  const thirtyDaysAgo = new Date(day.getFullYear(), day.getMonth(), day.getDate() - 29);
+  const monthStart = new Date(day.getFullYear(), day.getMonth(), 1);
+  const previousMonthStart = new Date(day.getFullYear(), day.getMonth() - 1, 1);
+  const previousMonthEnd = new Date(day.getFullYear(), day.getMonth(), 0);
+  return [
+    { label: 'Today', startDate: dateKey(day), endDate: dateKey(day) },
+    { label: 'Yesterday', startDate: dateKey(yesterday), endDate: dateKey(yesterday) },
+    { label: 'Last 7 days', startDate: dateKey(sevenDaysAgo), endDate: dateKey(day) },
+    { label: 'Last 30 days', startDate: dateKey(thirtyDaysAgo), endDate: dateKey(day) },
+    { label: 'This month', startDate: dateKey(monthStart), endDate: dateKey(day) },
+    { label: 'Last month', startDate: dateKey(previousMonthStart), endDate: dateKey(previousMonthEnd) },
+  ];
+};
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -22,8 +37,8 @@ const MONTH_NAMES = [
 ];
 
 function formatDateLabel(startStr: string, endStr: string): string {
-  const start = new Date(startStr);
-  const end = new Date(endStr);
+  const start = parseDate(startStr);
+  const end = parseDate(endStr);
   if (isNaN(start.getTime()) || isNaN(end.getTime())) return `${startStr} - ${endStr}`;
 
   const startDay = start.getDate();
@@ -54,28 +69,70 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<'presets' | 'custom'>('presets');
+  const [presets] = useState(() => createPresets(new Date()));
   const [selectedRange, setSelectedRange] = useState<DateRange>(
-    value || PRESETS[0],
+    value || presets[4],
   );
+  const displayedRange = value ?? selectedRange;
 
   // Custom date selection state
-  const [customStart, setCustomStart] = useState('2025-05-14');
-  const [customEnd, setCustomEnd] = useState('2025-05-20');
-  const [currentMonth, setCurrentMonth] = useState(4); // 0-indexed: 4 = May
-  const [currentYear, setCurrentYear] = useState(2025);
+  const [customStart, setCustomStart] = useState(displayedRange.startDate);
+  const [customEnd, setCustomEnd] = useState(displayedRange.endDate);
+  const [currentMonth, setCurrentMonth] = useState(() => parseDate(displayedRange.startDate).getMonth());
+  const [currentYear, setCurrentYear] = useState(() => parseDate(displayedRange.startDate).getFullYear());
 
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const popoverId = useId();
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 320 });
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const updatePosition = () => {
+      const trigger = triggerRef.current?.getBoundingClientRect();
+      if (!trigger) return;
+      const width = Math.min(320, window.innerWidth - 16);
+      const height = dropdownRef.current?.offsetHeight ?? 390;
+      const left = Math.max(8, Math.min(trigger.right - width, window.innerWidth - width - 8));
+      const below = trigger.bottom + 8;
+      const top = below + height > window.innerHeight - 8 && trigger.top > height + 8
+        ? trigger.top - height - 8
+        : Math.min(below, Math.max(8, window.innerHeight - height - 8));
+      setPosition({ top, left, width });
+    };
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isOpen, mode]);
 
   useEffect(() => {
+    if (!isOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (!dropdownRef.current?.contains(event.target as Node) && !triggerRef.current?.contains(event.target as Node)) {
         setIsOpen(false);
         setMode('presets');
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+        setMode('presets');
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [isOpen]);
 
   const handleSelectPreset = (preset: DateRange) => {
     setSelectedRange(preset);
@@ -87,7 +144,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     if (!customStart || !customEnd) return;
     let s = customStart;
     let e = customEnd;
-    if (new Date(s) > new Date(e)) {
+    if (parseDate(s) > parseDate(e)) {
       [s, e] = [e, s];
     }
     const newRange: DateRange = {
@@ -113,7 +170,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
       setCustomStart(clickedDate);
       setCustomEnd('');
     } else {
-      if (new Date(clickedDate) < new Date(customStart)) {
+      if (parseDate(clickedDate) < parseDate(customStart)) {
         setCustomEnd(customStart);
         setCustomStart(clickedDate);
       } else {
@@ -134,24 +191,44 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     const monthStr = String(currentMonth + 1).padStart(2, '0');
     const dayStr = String(day).padStart(2, '0');
     const dateStr = `${currentYear}-${monthStr}-${dayStr}`;
-    const target = new Date(dateStr);
-    return target >= new Date(customStart) && target <= new Date(customEnd);
+    const target = parseDate(dateStr);
+    return target >= parseDate(customStart) && target <= parseDate(customEnd);
   };
 
   return (
-    <div className="relative inline-block font-sans" ref={dropdownRef}>
+    <div className="relative inline-block font-sans">
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          if (!isOpen) {
+            setCustomStart(displayedRange.startDate);
+            setCustomEnd(displayedRange.endDate);
+            const start = parseDate(displayedRange.startDate);
+            setCurrentMonth(start.getMonth());
+            setCurrentYear(start.getFullYear());
+          }
+          setIsOpen(!isOpen);
+        }}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? popoverId : undefined}
         className="flex items-center gap-2.5 rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D] shadow-xs transition-all hover:bg-slate-50 focus:border-[#E20613] focus:outline-none"
       >
         <CalendarIcon className="h-4 w-4 text-[#E20613]" />
-        <span>{selectedRange.label}</span>
+        <span>{displayedRange.label}</span>
         <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded-sm border border-slate-200 bg-white p-3 shadow-xl">
+      {isOpen && createPortal(
+        <div
+          id={popoverId}
+          ref={dropdownRef}
+          role="dialog"
+          aria-label="Select date range"
+          className="fixed z-[1000] overflow-y-auto rounded-lg border border-slate-200 bg-white p-3 shadow-xl"
+          style={{ top: position.top, left: position.left, width: position.width, maxHeight: 'calc(100vh - 16px)' }}
+        >
           {mode === 'presets' ? (
             <div className="space-y-1">
               <div className="flex items-center justify-between px-2 py-1 border-b border-slate-100 pb-2">
@@ -159,6 +236,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                   Select Date Range
                 </span>
                 <button
+                  type="button"
                   onClick={() => setMode('custom')}
                   className="flex items-center gap-1 text-xs font-bold text-[#E20613] hover:underline cursor-pointer"
                 >
@@ -167,10 +245,11 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               </div>
 
               <div className="space-y-0.5 pt-1">
-                {PRESETS.map((preset) => {
-                  const isSelected = selectedRange.startDate === preset.startDate && selectedRange.endDate === preset.endDate;
+                {presets.map((preset) => {
+                  const isSelected = displayedRange.startDate === preset.startDate && displayedRange.endDate === preset.endDate;
                   return (
                     <button
+                      type="button"
                       key={preset.label}
                       onClick={() => handleSelectPreset(preset)}
                       className={`flex w-full items-center justify-between rounded-sm px-3 py-2 text-xs font-semibold transition-all cursor-pointer ${
@@ -186,6 +265,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 })}
 
                 <button
+                  type="button"
                   onClick={() => setMode('custom')}
                   className="flex w-full items-center justify-between rounded-sm px-3 py-2 text-xs font-bold text-[#E20613] bg-red-50/60 hover:bg-red-100/80 transition-all mt-1 cursor-pointer"
                 >
@@ -199,6 +279,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <button
+                  type="button"
                   onClick={() => setMode('presets')}
                   className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-800 cursor-pointer"
                 >
@@ -226,6 +307,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               {/* Month Navigation */}
               <div className="flex items-center justify-between px-1 border-t border-slate-100 pt-2">
                 <button
+                  type="button"
+                  aria-label="Previous month"
                   onClick={() => {
                     if (currentMonth === 0) {
                       setCurrentMonth(11);
@@ -242,6 +325,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
                   {MONTH_NAMES[currentMonth]} {currentYear}
                 </span>
                 <button
+                  type="button"
+                  aria-label="Next month"
                   onClick={() => {
                     if (currentMonth === 11) {
                       setCurrentMonth(0);
@@ -275,7 +360,9 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
                   return (
                     <button
+                      type="button"
                       key={day}
+                      aria-label={`${day} ${MONTH_NAMES[currentMonth]} ${currentYear}`}
                       onClick={() => handleDayClick(day)}
                       className={`h-7 w-7 rounded-sm text-xs font-bold transition-all cursor-pointer ${
                         selected
@@ -294,12 +381,14 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               {/* Action Buttons */}
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
+                  type="button"
                   onClick={() => setMode('presets')}
                   className="rounded-sm px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
                   onClick={handleApplyCustom}
                   className="rounded-sm bg-[#E20613] px-4 py-1.5 text-xs font-extrabold text-white shadow-xs hover:bg-[#c4040f] cursor-pointer"
                 >
@@ -308,7 +397,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               </div>
             </div>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

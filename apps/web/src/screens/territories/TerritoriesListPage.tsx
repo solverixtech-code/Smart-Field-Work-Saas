@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Avatar } from '../../components/ui/Avatar';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -473,11 +474,7 @@ export default function TerritoriesListPage() {
                       {/* Manager / Owner */}
                       <td className="p-3">
                         <div className="flex items-center gap-2">
-                          <img
-                            src={terr.managerAvatar}
-                            alt={terr.managerName}
-                            className="h-7 w-7 rounded-full object-cover border border-slate-200"
-                          />
+                          <Avatar name={terr.managerName} src={terr.managerAvatar} sizeClassName="h-7 w-7" />
                           <div>
                             <span className="font-extrabold text-[#0D1F3D] block text-xs">
                               {terr.managerName}

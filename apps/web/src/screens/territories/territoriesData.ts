@@ -24,9 +24,7 @@ export function mapTerritoryDtoToItem(dto: TerritoryDto): TerritoryItem {
     regionArea: dto.regionArea || (dto.city ? `${dto.city} – ${dto.name}` : dto.name),
     city: dto.city || '—',
     managerName: dto.managerMembership?.user?.fullName || 'Unassigned',
-    managerAvatar:
-      dto.managerMembership?.user?.avatarUrl ||
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+    managerAvatar: dto.managerMembership?.user?.avatarUrl || '',
     managerRole: dto.managerMembership?.tenantRole?.name || 'Manager',
     executivesCount: dto._count?.members ?? (dto.members?.length || 0),
     teamLeadsCount: 0,

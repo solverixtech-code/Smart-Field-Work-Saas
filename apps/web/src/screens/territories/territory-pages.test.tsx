@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
-import React from 'react';
-import { act } from 'react-dom/test-utils';
+import React, { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,6 +14,8 @@ const apiMock = vi.hoisted(() => ({
   territoryBusinesses: vi.fn(),
   territoryPerformance: vi.fn(),
   territoryMemberOptions: vi.fn(),
+  assignTerritoryMember: vi.fn(),
+  unassignTerritoryMember: vi.fn(),
   updateTerritory: vi.fn(),
   updateTerritoryTarget: vi.fn(),
 }));
@@ -63,6 +64,8 @@ beforeEach(() => {
     activeBusinessesCount: 0, leadsCount: 0, executivesCount: 0, periodTargets: [],
   });
   apiMock.territoryMemberOptions.mockResolvedValue({ items: [], total: 0, page: 1, limit: 100, totalPages: 0 });
+  apiMock.assignTerritoryMember.mockResolvedValue({});
+  apiMock.unassignTerritoryMember.mockResolvedValue(undefined);
   apiMock.updateTerritory.mockResolvedValue(territory);
   host = document.createElement('div');
   document.body.append(host);
@@ -81,6 +84,52 @@ describe('saved territory pages', () => {
     expect(host.textContent).not.toContain('Andheri East');
     expect(host.querySelector('[data-testid="territory-map"]')?.getAttribute('data-path'))
       .toBe(JSON.stringify(territory.pathPoints));
+    expect(host.textContent).toContain('No executives are assigned to this territory yet.');
+  });
+
+  it('shows a useful empty assignment state and distinguishes duplicate names', async () => {
+    await renderPage(<TerritoryDetailsPage initialTab="Executives" />, '/admin/territories/saved-territory');
+    const open = [...host.querySelectorAll('button')].find((button) => button.textContent?.includes('Assign Executives'));
+    await act(async () => open!.click());
+    await flush();
+    const dialog = document.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('No team members are available to assign.');
+
+    apiMock.territoryMemberOptions.mockResolvedValue({
+      items: [
+        { id: 'member-11111111', displayName: 'Amit Sharma', role: 'Manager', avatarUrl: null },
+        { id: 'member-22222222', displayName: 'Amit Sharma', role: 'Field Executive', avatarUrl: null },
+      ], total: 2, page: 1, limit: 100, totalPages: 1,
+    });
+    expect(dialog?.querySelector('[role="alert"]')).toBeNull();
+    await act(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); });
+    await act(async () => open!.click());
+    await flush();
+    const refreshed = document.querySelector('[role="dialog"]');
+    expect(refreshed?.textContent).toContain('ID member-1');
+    expect(refreshed?.textContent).toContain('ID member-2');
+    expect(refreshed?.querySelectorAll('img').length).toBe(0);
+    const save = [...(refreshed?.querySelectorAll('button') ?? [])].find((button) => button.textContent?.includes('Save Assignments'));
+    expect(save?.disabled).toBe(true);
+    await act(async () => (refreshed?.querySelector('input[type="checkbox"]') as HTMLInputElement)?.click());
+    expect(save?.disabled).toBe(false);
+    await act(async () => save!.click());
+    expect(apiMock.assignTerritoryMember).toHaveBeenCalledWith(territory.id, { membershipId: 'member-11111111' });
+  });
+
+  it('renders the date menu above the page and explains missing performance records', async () => {
+    await renderPage(<TerritoryDetailsPage initialTab="Performance" />, '/admin/territories/saved-territory');
+    expect(host.textContent).toContain('No performance periods have been recorded for this territory.');
+    const trigger = [...host.querySelectorAll('button')].find((button) => button.textContent?.includes('Current month'));
+    await act(async () => trigger!.click());
+    const menu = document.querySelector('[role="dialog"][aria-label="Select date range"]');
+    expect(menu?.parentElement).toBe(document.body);
+    expect(menu?.className).toContain('z-[1000]');
+    expect(menu?.textContent).not.toContain('May 2025');
+    const lastSevenDays = [...(menu?.querySelectorAll('button') ?? [])].find((button) => button.textContent?.includes('Last 7 days'));
+    await act(async () => lastSevenDays!.click());
+    expect(trigger?.textContent).toContain('Last 7 days');
+    expect(document.querySelector('[role="dialog"][aria-label="Select date range"]')).toBeNull();
   });
 
   it('does not replace boundary vertices when saving other territory fields', async () => {

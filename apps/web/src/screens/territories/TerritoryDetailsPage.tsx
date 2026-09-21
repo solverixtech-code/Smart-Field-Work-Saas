@@ -32,6 +32,8 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Avatar } from '../../components/ui/Avatar';
 import { Modal } from '../../components/ui/Modal';
 import { Select } from '../../components/ui/Select';
 import { Checkbox } from '../../components/ui/Checkbox';
@@ -160,6 +162,11 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedExecIds, setSelectedExecIds] = useState<string[]>([]);
   const [assignmentCandidates, setAssignmentCandidates] = useState<TerritoryExecutive[]>([]);
+  const [assignmentSearch, setAssignmentSearch] = useState('');
+  const [assignmentLoading, setAssignmentLoading] = useState(false);
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
+  const [assignmentRetry, setAssignmentRetry] = useState(0);
+  const [savingAssignments, setSavingAssignments] = useState(false);
 
   // Map Layers Toggle State
   const [showBoundary, setShowBoundary] = useState(true);
@@ -208,6 +215,9 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
     email: account.primaryContact?.email ?? '',
     annualRevenue: '',
   }));
+  const filteredBusinessCandidates = businessCandidates.filter((business) =>
+    `${business.name} ${business.contactPerson} ${business.city}`.toLowerCase().includes(linkSearchQuery.toLowerCase()),
+  );
 
   React.useEffect(() => {
     if (!isLinkBusinessModalOpen) return;
@@ -223,32 +233,78 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   React.useEffect(() => {
     if (!isAssignModalOpen) return;
     const controller = new AbortController();
-    crmApi.territoryMemberOptions({ limit: 100 }, controller.signal).then((page) => {
-      if (controller.signal.aborted) return;
-      setAssignmentCandidates(page.items.map((owner) => ({
-        id: owner.id, name: owner.displayName, avatar: owner.avatarUrl ?? '',
-        role: owner.role ?? '', phone: '', team: '—', visitsCount: 0,
+    setAssignmentLoading(true);
+    setAssignmentError(null);
+    const timer = window.setTimeout(() => {
+      crmApi.territoryMemberOptions({ limit: 100, search: assignmentSearch.trim() || undefined }, controller.signal)
+        .then((page) => {
+          if (controller.signal.aborted) return;
+          setAssignmentCandidates((current) => {
+            const options = new Map(current.map((candidate) => [candidate.id, candidate]));
+            for (const owner of page.items) {
+              options.set(owner.id, {
+                id: owner.id, name: owner.displayName, avatar: owner.avatarUrl ?? '',
+                role: owner.role ?? '', phone: '', team: '—', visitsCount: 0,
+                revenue: 0, revenueFormatted: '₹ 0', performancePercentage: 0, status: 'Offline',
+              });
+            }
+            return [...options.values()];
+          });
+        })
+        .catch((cause: unknown) => {
+          if (!controller.signal.aborted) setAssignmentError(crmError(cause).message);
+        })
+        .finally(() => { if (!controller.signal.aborted) setAssignmentLoading(false); });
+    }, assignmentSearch ? 250 : 0);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [isAssignModalOpen, assignmentSearch, assignmentRetry]);
+
+  const assignedMemberIds = new Set(territoryDto?.members?.map((member) => member.membershipId) ?? []);
+  const assignmentOptions = new Map(assignmentCandidates.map((candidate) => [candidate.id, candidate]));
+  for (const member of territoryDto?.members ?? []) {
+    if (!assignmentOptions.has(member.membershipId)) {
+      assignmentOptions.set(member.membershipId, {
+        id: member.membershipId,
+        name: member.membership?.user?.fullName ?? 'Unknown member',
+        avatar: member.membership?.user?.avatarUrl ?? '',
+        role: member.membership?.tenantRole?.name ?? member.role,
+        phone: '', team: member.membership?.team?.name ?? '—', visitsCount: 0,
         revenue: 0, revenueFormatted: '₹ 0', performancePercentage: 0, status: 'Offline',
-      })));
-    }).catch((cause: unknown) => {
-      if (!controller.signal.aborted) toast.error(crmError(cause).message);
-    });
-    return () => controller.abort();
-  }, [isAssignModalOpen]);
+      });
+    }
+  }
+  const allAssignmentOptions = [...assignmentOptions.values()];
+  const visibleAssignmentOptions = allAssignmentOptions.filter((candidate) =>
+    candidate.name.toLowerCase().includes(assignmentSearch.trim().toLowerCase()),
+  );
+  const duplicateNames = new Set(allAssignmentOptions
+    .filter((candidate, index, options) => options.some((other, otherIndex) => otherIndex !== index && other.name === candidate.name))
+    .map((candidate) => candidate.name));
+  const hasAssignmentChanges = selectedExecIds.length !== assignedMemberIds.size
+    || selectedExecIds.some((id) => !assignedMemberIds.has(id));
 
   const saveExecutiveAssignments = async () => {
-    if (!territoryDto) return;
+    if (!territoryDto || savingAssignments || !hasAssignmentChanges) return;
+    setSavingAssignments(true);
+    setAssignmentError(null);
     const existing = new Set(territoryDto.members?.map((member) => member.membershipId) ?? []);
     const selected = new Set(selectedExecIds);
     const changes = [
       ...[...selected].filter((id) => !existing.has(id)).map((id) => crmApi.assignTerritoryMember(territoryDto.id, { membershipId: id })),
       ...[...existing].filter((id) => !selected.has(id)).map((id) => crmApi.unassignTerritoryMember(territoryDto.id, id)),
     ];
-    const results = await Promise.allSettled(changes);
-    setIsAssignModalOpen(false);
-    setRefreshKey((value) => value + 1);
-    if (results.some((result) => result.status === 'rejected')) toast.error('Some assignments could not be saved. Review the current roster.');
-    else toast.success('Executive assignments updated successfully!');
+    try {
+      const results = await Promise.allSettled(changes);
+      setRefreshKey((value) => value + 1);
+      if (results.some((result) => result.status === 'rejected')) {
+        setAssignmentError('Some assignments could not be saved. Review the roster and try again.');
+      } else {
+        setIsAssignModalOpen(false);
+        toast.success('Executive assignments updated successfully!');
+      }
+    } finally {
+      setSavingAssignments(false);
+    }
   };
 
   const handleCreateBusiness = async (event: React.FormEvent) => {
@@ -348,6 +404,8 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
       e.team.toLowerCase().includes(execSearchQuery.toLowerCase()),
   );
   const selectedTarget = territoryDto?.targets?.find((target) => target.period === targetPeriodFilter);
+  const overviewTarget = territoryDto?.targets?.[0];
+  const activeBusinessTarget = overviewTarget?.activeBusinessTarget ?? 0;
   const targetAmount = Number(selectedTarget?.monthlyTarget ?? 0);
   const achievedAmount = Number(selectedTarget?.monthlyAchieved ?? 0);
   const targetProgress = targetAmount > 0 ? Math.min(100, Math.round(achievedAmount / targetAmount * 100)) : 0;
@@ -402,11 +460,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
         {/* Territory Manager & Stats Summary Pill Strip */}
         <div className="flex flex-wrap items-center gap-6 pt-1 text-xs font-semibold text-slate-600">
           <div className="flex items-center gap-2">
-            <img
-              src={territory.managerAvatar}
-              alt={territory.managerName}
-              className="h-7 w-7 rounded-full object-cover border border-slate-200"
-            />
+            <Avatar name={territory.managerName} src={territory.managerAvatar} sizeClassName="h-7 w-7" />
             <div>
               <span className="text-xs font-semibold text-slate-500 block">Manager</span>
               <span className="font-extrabold text-[#0D1F3D]">{territory.managerName}</span>
@@ -475,24 +529,24 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
             <MapKpiCard
               title="Revenue Target (Monthly)"
-              value={territory.monthlyTargetFormatted}
-              subValue="Set Target"
+              value={overviewTarget ? territory.monthlyTargetFormatted : '—'}
+              subValue={overviewTarget ? overviewTarget.period : 'No target set'}
               icon={Target}
               iconBgColor="bg-emerald-50"
               iconTextColor="text-emerald-600"
             />
             <MapKpiCard
               title="Revenue Achieved"
-              value={territory.monthlyAchievedFormatted}
-              subValue="66.8% of target"
+              value={overviewTarget ? territory.monthlyAchievedFormatted : '—'}
+              subValue={overviewTarget && Number(overviewTarget.monthlyTarget) > 0 ? `${territory.performancePercentage}% of target` : 'No target set'}
               icon={ShoppingBag}
               iconBgColor="bg-purple-50"
               iconTextColor="text-purple-600"
             />
             <MapKpiCard
               title="Business Target"
-              value="200"
-              subValue="Set Target"
+              value={activeBusinessTarget > 0 ? activeBusinessTarget : '—'}
+              subValue={activeBusinessTarget > 0 ? overviewTarget?.period ?? '' : 'No target set'}
               icon={Building}
               iconBgColor="bg-amber-50"
               iconTextColor="text-amber-600"
@@ -500,23 +554,23 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             <MapKpiCard
               title="Active Businesses"
               value={territory.activeBusinessesCount.toString()}
-              subValue="84% of target"
+              subValue={activeBusinessTarget > 0 ? `${Math.round(territory.activeBusinessesCount / activeBusinessTarget * 100)}% of target` : 'No target set'}
               icon={Building}
               iconBgColor="bg-blue-50"
               iconTextColor="text-blue-600"
             />
             <MapKpiCard
               title="Visits (This Month)"
-              value={territory.totalVisitsThisMonth.toString()}
-              subValue="Completed"
+              value={overviewTarget ? territory.totalVisitsThisMonth.toString() : '—'}
+              subValue={overviewTarget ? 'Completed' : 'No visit data'}
               icon={TrendingUp}
               iconBgColor="bg-teal-50"
               iconTextColor="text-teal-600"
             />
             <MapKpiCard
               title="Avg. Performance"
-              value={`${territory.performancePercentage}%`}
-              subValue="Across all metrics"
+              value={overviewTarget ? `${territory.performancePercentage}%` : '—'}
+              subValue={overviewTarget ? 'Across all metrics' : 'No target set'}
               icon={PieChart}
               iconBgColor="bg-rose-50"
               iconTextColor="text-rose-600"
@@ -554,7 +608,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                     <div className="pt-1">
                       <span className="text-slate-400 block mb-1">Description :</span>
                       <p className="text-[11px] text-slate-600 font-normal leading-relaxed">
-                        {territory.description}
+                        {territory.description || 'No description has been added.'}
                       </p>
                     </div>
                   </div>
@@ -569,6 +623,11 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                       territoryPath={territory.pathPoints}
                       compact
                     />
+                    {territory.pathPoints.length === 0 && (
+                      <div className="pointer-events-none absolute inset-x-2 top-2 z-20 rounded-lg bg-white/95 px-3 py-2 text-center text-[11px] font-semibold text-slate-700 shadow-sm">
+                        No boundary has been drawn for this territory.
+                      </div>
+                    )}
                     <div className="absolute bottom-2 right-2 z-20 rounded-sm bg-white/95 border border-slate-200 px-2.5 py-1 text-[10px] font-extrabold text-[#0D1F3D] shadow-sm">
                       Area: {territory.areaKm2} km² | Perimeter: {territory.perimeterKm} km
                     </div>
@@ -593,15 +652,14 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
+                    {territoryExecutives.length === 0 && (
+                      <tr><td colSpan={4} className="py-5 text-center text-xs text-slate-600">No executives are assigned to this territory yet.</td></tr>
+                    )}
                     {territoryExecutives.map((exec) => (
                       <tr key={exec.id} className="hover:bg-slate-50/50">
                         <td className="py-2.5">
                           <div className="flex items-center gap-2">
-                            <img
-                              src={exec.avatar}
-                              alt={exec.name}
-                              className="h-6 w-6 rounded-full object-cover border border-slate-200"
-                            />
+                            <Avatar name={exec.name} src={exec.avatar} sizeClassName="h-6 w-6" />
                             <span className="font-extrabold text-[#0D1F3D]">{exec.name}</span>
                           </div>
                         </td>
@@ -630,8 +688,8 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
                 <div className="relative py-2 flex flex-col items-center justify-center">
                   <div className="h-28 w-28 rounded-full border-8 border-emerald-500 border-b-slate-100 border-l-emerald-500 flex flex-col items-center justify-center shadow-inner">
-                    <span className="text-2xl font-extrabold text-[#0D1F3D]">{territory.performancePercentage}%</span>
-                    <span className="text-xs font-semibold text-slate-500">Overall</span>
+                    <span className="text-2xl font-extrabold text-[#0D1F3D]">{overviewTarget ? `${territory.performancePercentage}%` : '—'}</span>
+                    <span className="text-xs font-semibold text-slate-500">{overviewTarget ? 'Overall' : 'No target'}</span>
                   </div>
                 </div>
 
@@ -669,6 +727,9 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               size="sm"
               onClick={() => {
                 setSelectedExecIds(territoryDto?.members?.map((member) => member.membershipId) ?? []);
+                setAssignmentSearch('');
+                setAssignmentError(null);
+                setAssignmentCandidates([]);
                 setIsAssignModalOpen(true);
               }}
               className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] text-white"
@@ -690,11 +751,16 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
+                {filteredExecutives.length === 0 && (
+                  <tr><td colSpan={6} className="p-5 text-center text-xs text-slate-600">
+                    {execSearchQuery ? 'No executives match your search.' : 'No executives are assigned to this territory yet.'}
+                  </td></tr>
+                )}
                 {filteredExecutives.map((exec) => (
                   <tr key={exec.id} className="hover:bg-slate-50">
                     <td className="p-3">
                       <div className="flex items-center gap-2.5">
-                        <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                        <Avatar name={exec.name} src={exec.avatar} sizeClassName="h-7 w-7" />
                         <div>
                           <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
                           <span className="text-[10px] text-slate-400">{exec.id}</span>
@@ -847,6 +913,9 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             </div>
 
             <div className="space-y-4">
+              {territoryExecutives.length === 0 && (
+                <p className="py-4 text-center text-xs text-slate-600">No executives are assigned, so there are no individual targets to display.</p>
+              )}
               {territoryExecutives.map((exec) => {
                 const targetRev = 0;
                 const achievedRev = exec.revenue;
@@ -864,11 +933,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-2.5">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={exec.avatar}
-                          alt={exec.name}
-                          className="h-8 w-8 rounded-full object-cover border border-slate-200 shrink-0"
-                        />
+                        <Avatar name={exec.name} src={exec.avatar} sizeClassName="h-8 w-8" />
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-extrabold text-[#0D1F3D] text-sm">{exec.name}</span>
@@ -947,6 +1012,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-semibold">
+              {businessesList.length === 0 && <p className="col-span-full py-4 text-center text-xs text-slate-600">No businesses are assigned to this territory yet.</p>}
               {[...new Set(businessesList.map((business) => business.category))].map((category) => ({ category, target: '—', achieved: `${businessesList.filter((business) => business.category === category).length} businesses`, pct: 0, color: 'bg-slate-400' })).map((cat) => (
                 <div key={cat.category} className="rounded-sm bg-slate-50 border border-slate-200 p-3 space-y-2">
                   <div className="flex justify-between items-center">
@@ -1015,6 +1081,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
               {/* Bar Chart Visualization */}
               <div className="space-y-3 pt-2">
+                {!performance?.periodTargets?.length && <p className="py-4 text-center text-xs text-slate-600">No performance periods have been recorded for this territory.</p>}
                 {(performance?.periodTargets ?? []).map((period) => ({
                   month: period.period,
                   revenue: Number(period.monthlyAchieved),
@@ -1077,6 +1144,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               </div>
 
               <div className="space-y-3">
+                {businessesList.length === 0 && <p className="py-4 text-center text-xs text-slate-600">No business categories are available yet.</p>}
                 {[...new Set(businessesList.map((business) => business.category))].map((category) => ({
                   category,
                   share: businessesList.length ? Math.round(businessesList.filter((business) => business.category === category).length / businessesList.length * 100) : 0,
@@ -1131,11 +1199,14 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
+                {territoryExecutives.length === 0 && (
+                  <tr><td colSpan={7} className="p-5 text-center text-xs text-slate-600">No executives are assigned to this territory yet.</td></tr>
+                )}
                 {territoryExecutives.map((exec) => (
                   <tr key={exec.id} className="hover:bg-slate-50">
                     <td className="p-3">
                       <div className="flex items-center gap-2.5">
-                        <img src={exec.avatar} alt={exec.name} className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0" />
+                        <Avatar name={exec.name} src={exec.avatar} sizeClassName="h-7 w-7" />
                         <div>
                           <span className="font-extrabold text-[#0D1F3D] block">{exec.name}</span>
                           <span className="text-[10px] text-slate-400 font-normal">{exec.team}</span>
@@ -1172,7 +1243,6 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
           <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
             Territory Field Visits Log
           </h3>
-          <p className="text-xs text-slate-500">Visit history is not available for this territory.</p>
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 text-[11px]">
@@ -1184,17 +1254,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {([] as Array<{ time: string; exec: string; business: string; purpose: string; status: string }>).map((v, i) => (
-                <tr key={i} className="hover:bg-slate-50">
-                  <td className="p-2.5 font-mono text-slate-500">{v.time}</td>
-                  <td className="p-2.5 font-extrabold text-[#0D1F3D]">{v.exec}</td>
-                  <td className="p-2.5">{v.business}</td>
-                  <td className="p-2.5 text-slate-600">{v.purpose}</td>
-                  <td className="p-2.5 text-center">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">• {v.status}</span>
-                  </td>
-                </tr>
-              ))}
+              <tr><td colSpan={5} className="p-5 text-center text-xs text-slate-600">Visit history is not available for this territory.</td></tr>
             </tbody>
           </table>
         </div>
@@ -1249,6 +1309,13 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
+                  {filteredBusinesses.length === 0 && (
+                    <tr><td colSpan={5} className="p-5 text-center text-xs text-slate-600">
+                      {businessSearchQuery || selectedCategoryFilter !== 'All' || selectedBusinessStatus !== 'All'
+                        ? 'No businesses match the current filters.'
+                        : 'No businesses are assigned to this territory yet.'}
+                    </td></tr>
+                  )}
                   {filteredBusinesses.map((b) => {
                     const isSelected = selectedBusinessId === b.id;
                     return (
@@ -1282,11 +1349,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                         <td className="p-3 text-slate-600">{b.category}</td>
                         <td className="p-3">
                           <div className="flex items-center gap-2">
-                            <img
-                              src={b.assignedToAvatar}
-                              alt={b.assignedToName}
-                              className="h-5 w-5 rounded-full object-cover border border-slate-200 shrink-0"
-                            />
+                            <Avatar name={b.assignedToName} src={b.assignedToAvatar} sizeClassName="h-5 w-5" />
                             <span>{b.assignedToName}</span>
                           </div>
                         </td>
@@ -1317,11 +1380,14 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 <h3 className="text-xs font-extrabold text-[#0D1F3D]">
                   Business Details Preview
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                {businessesList.length > 0 && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                   {selectedBusiness.status}
-                </span>
+                </span>}
               </div>
 
+              {businessesList.length === 0 ? (
+                <p className="py-5 text-center text-xs text-slate-600">Assign a business to see its details here.</p>
+              ) : <>
               <div>
                 <div className="flex items-center gap-2">
                   <h4 className="font-extrabold text-sm text-[#0D1F3D]">{selectedBusiness.name}</h4>
@@ -1363,11 +1429,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 <div>
                   <span className="text-xs font-semibold text-slate-500 block">Assigned Executive</span>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <img
-                      src={selectedBusiness.assignedToAvatar}
-                      alt={selectedBusiness.assignedToName}
-                      className="h-5 w-5 rounded-full object-cover border border-slate-200"
-                    />
+                    <Avatar name={selectedBusiness.assignedToName} src={selectedBusiness.assignedToAvatar} sizeClassName="h-5 w-5" />
                     <span className="font-bold text-[#0D1F3D]">{selectedBusiness.assignedToName}</span>
                   </div>
                 </div>
@@ -1408,6 +1470,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                   prospects={[]}
                 />
               </div>
+              </>}
             </div>
           </div>
         </div>
@@ -1715,51 +1778,86 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
       )}
 
       {/* Modal for Assigning Executives */}
-      <Modal isOpen={isAssignModalOpen} onClose={() => setIsAssignModalOpen(false)} maxWidth="max-w-md">
+      <Modal
+        isOpen={isAssignModalOpen}
+        onClose={() => { if (!savingAssignments) setIsAssignModalOpen(false); }}
+        title={`Assign executives to ${territory.name}`}
+        maxWidth="max-w-lg"
+      >
         <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-            <h3 className="text-sm font-extrabold text-[#0D1F3D]">Assign Executives to {territory.name}</h3>
-            <button onClick={() => setIsAssignModalOpen(false)} className="p-1 text-slate-400 hover:text-slate-600">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {assignmentCandidates.map((exec) => {
+          <p className="text-xs text-slate-600">Choose the team members who should have this territory assigned.</p>
+          <Input
+            id="territory-member-search"
+            label="Search team members"
+            placeholder="Search by name"
+            value={assignmentSearch}
+            onChange={(event) => setAssignmentSearch(event.target.value)}
+            leftIcon={<Search className="h-4 w-4" />}
+            autoComplete="off"
+          />
+          <p className="text-xs font-semibold text-slate-600" aria-live="polite">
+            {selectedExecIds.length} selected · {assignedMemberIds.size} currently assigned
+          </p>
+          {assignmentError && (
+            <div role="alert" className="flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+              <span>{assignmentError}</span>
+              <Button type="button" variant="outline" size="sm" onClick={() => setAssignmentRetry((value) => value + 1)}>Refresh</Button>
+            </div>
+          )}
+          <div className="max-h-72 space-y-2 overflow-y-auto pr-1" aria-label="Available team members">
+            {visibleAssignmentOptions.map((exec) => {
               const isChecked = selectedExecIds.includes(exec.id);
               return (
-                <div key={exec.id} className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
-                  <div className="flex items-center gap-2">
-                    <img src={exec.avatar} alt={exec.name} className="h-6 w-6 rounded-full object-cover" />
-                    <span className="font-bold text-xs text-[#0D1F3D]">{exec.name}</span>
-                  </div>
+                <div key={exec.id} className={`rounded-lg border ${isChecked ? 'border-blue-200 bg-blue-50/50' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
                   <Checkbox
+                    className="w-full flex-row-reverse justify-between gap-3 px-3 py-2.5"
                     checked={isChecked}
-                    onChange={(val) => {
-                      if (val) {
-                        setSelectedExecIds([...selectedExecIds, exec.id]);
-                      } else {
-                        setSelectedExecIds(selectedExecIds.filter((id) => id !== exec.id));
-                      }
-                    }}
+                    disabled={savingAssignments}
+                    onChange={(checked) => setSelectedExecIds((current) => checked
+                      ? [...new Set([...current, exec.id])]
+                      : current.filter((id) => id !== exec.id))}
+                    label={
+                      <span className="flex min-w-0 items-center gap-2.5 text-left">
+                        <Avatar name={exec.name} src={exec.avatar} sizeClassName="h-8 w-8" />
+                        <span className="min-w-0">
+                          <span className="block truncate font-bold text-[#0D1F3D]">{exec.name}</span>
+                          <span className="block truncate text-[11px] font-normal text-slate-600">
+                            {exec.role}{duplicateNames.has(exec.name) ? ` · ID ${exec.id.slice(0, 8)}` : ''}
+                            {assignedMemberIds.has(exec.id) ? ' · Assigned' : ''}
+                          </span>
+                        </span>
+                      </span>
+                    }
                   />
                 </div>
               );
             })}
+            {assignmentLoading && <p role="status" className="py-5 text-center text-xs text-slate-600">Loading team members…</p>}
+            {!assignmentLoading && !assignmentError && visibleAssignmentOptions.length === 0 && (
+              <p className="py-5 text-center text-xs text-slate-600">
+                {assignmentSearch ? 'No team members match your search.' : 'No team members are available to assign.'}
+              </p>
+            )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-            <Button variant="outline" size="sm" onClick={() => setIsAssignModalOpen(false)}>
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-3">
+            <span className="text-[11px] text-slate-500">{hasAssignmentChanges ? 'Unsaved assignment changes' : 'Assignments are up to date'}</span>
+            <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" disabled={savingAssignments} onClick={() => setIsAssignModalOpen(false)}>
               Cancel
             </Button>
             <Button
+              type="button"
               variant="accent"
               size="sm"
               onClick={() => void saveExecutiveAssignments()}
+              disabled={!hasAssignmentChanges || assignmentLoading || Boolean(assignmentError)}
+              isLoading={savingAssignments}
               className="bg-[#0D1F3D] text-white"
             >
               Save Assignments
             </Button>
+            </div>
           </div>
         </div>
       </Modal>
@@ -1991,14 +2089,12 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
             {/* Business Selection List */}
             <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-sm divide-y divide-slate-100 bg-slate-50/50">
-              {businessCandidates
-                .filter(
-                  (b) =>
-                    b.name.toLowerCase().includes(linkSearchQuery.toLowerCase()) ||
-                    b.contactPerson.toLowerCase().includes(linkSearchQuery.toLowerCase()) ||
-                    b.city.toLowerCase().includes(linkSearchQuery.toLowerCase()),
-                )
-                .map((b) => {
+              {filteredBusinessCandidates.length === 0 && (
+                <p className="p-4 text-center text-xs text-slate-600">
+                  {linkSearchQuery ? 'No businesses match your search.' : 'No businesses are available to assign.'}
+                </p>
+              )}
+              {filteredBusinessCandidates.map((b) => {
                   const isSelected = selectedLinkBizId === b.id;
                   return (
                     <div
