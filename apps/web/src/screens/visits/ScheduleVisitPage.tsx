@@ -146,11 +146,12 @@ export default function ScheduleVisitPage() {
     selectedBusiness?.fullAddress || ""
   );
 
-  // Prefilled Coordinates State
+  // Prefilled Coordinates & Geofence Radius State
   const [coords, setCoords] = useState<{ lat: number; lng: number }>({
     lat: 19.1197,
     lng: 72.8697,
   });
+  const [radiusMeters, setRadiusMeters] = useState<number>(100);
 
   // Helper to compute / prefill coordinates dynamically based on location
   const getCoordinatesForTarget = (item?: BusinessOption) => {
@@ -208,13 +209,17 @@ export default function ScheduleVisitPage() {
     }
   };
 
-  // Initialize coords on mount
+  // Initialize coords and prefill address on mount or targetType / business changes
   useEffect(() => {
     if (selectedBusiness) {
+      if (selectedBusiness.fullAddress) setAddress(selectedBusiness.fullAddress);
+      if (selectedBusiness.contactPerson) setContactName(selectedBusiness.contactPerson);
+      if (selectedBusiness.phone) setContactPhone(selectedBusiness.phone);
+      if (selectedBusiness.email && selectedBusiness.email !== "Not set") setContactEmail(selectedBusiness.email);
       const initialCoords = getCoordinatesForTarget(selectedBusiness);
       setCoords(initialCoords);
     }
-  }, [selectedBusinessId]);
+  }, [selectedBusinessId, targetType]);
 
   // Visit details
   const [visitType, setVisitType] = useState("Sales Visit");
@@ -384,13 +389,13 @@ export default function ScheduleVisitPage() {
             <ArrowLeft className="h-4 w-4" /> Cancel
           </Button>
           <Button
-            variant="accent"
+            variant="primary"
             size="sm"
             disabled={isSubmitting}
             onClick={handleSubmit}
-            className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm"
+            className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-[#071326] text-white rounded-sm"
           >
-            <CheckCircle2 className="h-4 w-4 text-emerald-400" />{" "}
+            <CheckCircle2 className="h-4 w-4 text-white" />{" "}
             {isSubmitting ? "Scheduling..." : "Schedule Visit"}
           </Button>
         </div>
@@ -516,7 +521,7 @@ export default function ScheduleVisitPage() {
                 />
               </div>
 
-              {/* Interactive Google Maps API Geolocator Component with Auto Prefilled Coordinates */}
+              {/* Interactive Google Maps API Geolocator Component with Auto Prefilled Coordinates & Geofence Circle Overlay */}
               <div className="pt-2">
                 <label className="block text-[11px] font-bold text-slate-700 mb-1.5">
                   Map Location & Geolocator (Google Maps API)
@@ -527,6 +532,8 @@ export default function ScheduleVisitPage() {
                   lat={coords.lat}
                   lng={coords.lng}
                   onCoordinatesChange={(newCoords) => setCoords(newCoords)}
+                  radiusMeters={radiusMeters}
+                  onRadiusChange={(val) => setRadiusMeters(val)}
                   height="h-56"
                   showLocateMe
                 />
@@ -721,7 +728,7 @@ export default function ScheduleVisitPage() {
                   Allow Manual Check-in Override
                 </p>
                 <p className="text-[10px] text-slate-400">
-                  If checked, executive can submit check-in outside 100m radius
+                  If checked, executive can submit check-in outside {radiusMeters}m radius
                   as exception.
                 </p>
               </div>
@@ -868,6 +875,13 @@ export default function ScheduleVisitPage() {
                 </div>
 
                 <div className="flex justify-between py-1 border-b border-slate-100">
+                  <span className="text-slate-500">Geofence Radius</span>
+                  <span className="font-mono text-[11px] font-bold text-[#0D1F3D]">
+                    {radiusMeters} meters
+                  </span>
+                </div>
+
+                <div className="flex justify-between py-1 border-b border-slate-100">
                   <span className="text-slate-500">Coordinates</span>
                   <span className="font-mono text-[11px] font-bold text-slate-700">
                     {coords.lat.toFixed(4)}°, {coords.lng.toFixed(4)}°
@@ -882,13 +896,13 @@ export default function ScheduleVisitPage() {
 
               <Button
                 type="submit"
-                variant="accent"
+                variant="primary"
                 size="sm"
                 fullWidth
                 disabled={isSubmitting}
-                className="flex items-center justify-center gap-1.5 font-bold bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm h-10 mt-2"
+                className="flex items-center justify-center gap-1.5 font-bold bg-[#0D1F3D] hover:bg-[#071326] text-white rounded-sm h-10 mt-2"
               >
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />{" "}
+                <CheckCircle2 className="h-4 w-4 text-white" />{" "}
                 {isSubmitting ? "Scheduling..." : "Confirm & Schedule Visit"}
               </Button>
             </div>

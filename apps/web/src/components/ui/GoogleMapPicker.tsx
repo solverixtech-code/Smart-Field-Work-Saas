@@ -11,9 +11,38 @@ export interface GoogleMapPickerProps {
   lat?: number;
   lng?: number;
   onCoordinatesChange?: (coords: { lat: number; lng: number }) => void;
+  radiusMeters?: number;
+  onRadiusChange?: (radius: number) => void;
   readOnly?: boolean;
   height?: string;
   showLocateMe?: boolean;
+}
+
+// Helper to construct a GeoJSON Polygon circle for Mapbox GL JS
+function createGeoJSONCircle(center: [number, number], radiusInMeters: number, points = 64) {
+  const lng = center[0];
+  const lat = center[1];
+  const km = radiusInMeters / 1000;
+  const ret: [number, number][] = [];
+  const distanceX = km / (111.32 * Math.cos((lat * Math.PI) / 180));
+  const distanceY = km / 110.574;
+
+  for (let i = 0; i < points; i++) {
+    const theta = (i / points) * (2 * Math.PI);
+    const x = distanceX * Math.cos(theta);
+    const y = distanceY * Math.sin(theta);
+    ret.push([lng + x, lat + y]);
+  }
+  ret.push(ret[0]); // Close polygon loop
+
+  return {
+    type: 'Feature' as const,
+    geometry: {
+      type: 'Polygon' as const,
+      coordinates: [ret],
+    },
+    properties: {},
+  };
 }
 
 export function GoogleMapPicker({
@@ -22,6 +51,8 @@ export function GoogleMapPicker({
   lat = 19.119698,
   lng = 72.869701,
   onCoordinatesChange,
+  radiusMeters = 100,
+  onRadiusChange,
   readOnly = false,
   height = 'h-64',
   showLocateMe = true,
@@ -29,6 +60,7 @@ export function GoogleMapPicker({
   const [currentAddress, setCurrentAddress] = useState(address);
   const [currentLat, setCurrentLat] = useState(lat);
   const [currentLng, setCurrentLng] = useState(lng);
+  const [currentRadius, setCurrentRadius] = useState(radiusMeters);
   const [isLocating, setIsLocating] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<string | null>(
     `Mapbox GPS: ${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`,
@@ -53,6 +85,49 @@ export function GoogleMapPicker({
     }
   }, [address]);
 
+  useEffect(() => {
+    if (radiusMeters !== undefined) {
+      setCurrentRadius(radiusMeters);
+    }
+  }, [radiusMeters]);
+
+  // Helper to add or update geofence source and layers on Mapbox map
+  const updateGeofenceLayer = (map: mapboxgl.Map, centerLat: number, centerLng: number, radius: number) => {
+    const geojsonCircle = createGeoJSONCircle([centerLng, centerLat], radius);
+    const sourceId = 'geofence-radius-source';
+
+    const source = map.getSource(sourceId) as mapboxgl.GeoJSONSource | undefined;
+    if (source) {
+      source.setData(geojsonCircle);
+    } else {
+      map.addSource(sourceId, {
+        type: 'geojson',
+        data: geojsonCircle,
+      });
+
+      map.addLayer({
+        id: 'geofence-radius-fill',
+        type: 'fill',
+        source: sourceId,
+        paint: {
+          'fill-color': '#0D1F3D',
+          'fill-opacity': 0.18,
+        },
+      });
+
+      map.addLayer({
+        id: 'geofence-radius-outline',
+        type: 'line',
+        source: sourceId,
+        paint: {
+          'line-color': '#E20613',
+          'line-width': 2,
+          'line-dasharray': [2, 2],
+        },
+      });
+    }
+  };
+
   // Initialize Mapbox GL JS map
   useEffect(() => {
     if (!mapContainerRef.current) return;
@@ -75,6 +150,10 @@ export function GoogleMapPicker({
       })
         .setLngLat([currentLng, currentLat])
         .addTo(map);
+
+      map.on('load', () => {
+        updateGeofenceLayer(map, currentLat, currentLng, currentRadius);
+      });
 
       // Click anywhere on map to move pin marker
       map.on('click', (e) => {
@@ -113,13 +192,17 @@ export function GoogleMapPicker({
     }
   }, []);
 
-  // Update Mapbox marker position on coordinate changes
+  // Update Mapbox marker position & Geofence mask on coordinate or radius changes
   useEffect(() => {
     if (mapRef.current && markerRef.current) {
       markerRef.current.setLngLat([currentLng, currentLat]);
       mapRef.current.flyTo({ center: [currentLng, currentLat], zoom: 15, duration: 800 });
+
+      if (mapRef.current.isStyleLoaded()) {
+        updateGeofenceLayer(mapRef.current, currentLat, currentLng, currentRadius);
+      }
     }
-  }, [currentLat, currentLng]);
+  }, [currentLat, currentLng, currentRadius]);
 
   // Geolocation trigger using browser Geolocation API
   const handleLocateMe = () => {
@@ -199,19 +282,19 @@ export function GoogleMapPicker({
           {showLocateMe && (
             <Button
               type="button"
-              variant="accent"
+              variant="primary"
               size="sm"
               onClick={handleLocateMe}
               disabled={isLocating}
-              className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm h-8 shrink-0"
+              className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-[#071326] text-white rounded-sm h-8 shrink-0 border border-slate-700"
             >
               {isLocating ? (
                 <>
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" /> Locating...
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-white" /> Locating...
                 </>
               ) : (
                 <>
-                  <Crosshair className="h-3.5 w-3.5 text-emerald-400" /> Locate Me (GPS)
+                  <Crosshair className="h-3.5 w-3.5 text-white" /> Locate Me (GPS)
                 </>
               )}
             </Button>
@@ -219,9 +302,9 @@ export function GoogleMapPicker({
         </div>
       )}
 
-      {/* Lat & Lng Input Coordinates Bar */}
+      {/* Lat, Lng & Geofence Radius Bar */}
       {!readOnly && (
-        <div className="grid grid-cols-2 gap-2 text-[11px] font-semibold bg-white p-2 rounded-sm border border-slate-100">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] font-semibold bg-white p-2 rounded-sm border border-slate-100">
           <div className="flex items-center gap-1.5">
             <span className="text-slate-400 font-medium">Lat:</span>
             <input
@@ -250,6 +333,26 @@ export function GoogleMapPicker({
               }}
               className="w-full rounded-sm border border-slate-200 bg-slate-50 px-2 py-1 font-mono font-bold text-[#0D1F3D] focus:outline-none"
             />
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-slate-500 font-bold whitespace-nowrap">Radius:</span>
+            <div className="relative flex-1">
+              <input
+                type="number"
+                min="10"
+                max="5000"
+                step="10"
+                value={currentRadius}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10) || 100;
+                  setCurrentRadius(val);
+                  if (onRadiusChange) onRadiusChange(val);
+                }}
+                className="w-full rounded-sm border border-slate-200 bg-slate-50 pl-2 pr-6 py-1 font-mono font-bold text-[#0D1F3D] focus:outline-none"
+              />
+              <span className="absolute right-2 top-1 text-[10px] text-slate-400 font-bold">m</span>
+            </div>
           </div>
         </div>
       )}
@@ -280,13 +383,13 @@ export function GoogleMapPicker({
         {!readOnly && (
           <div className="absolute top-2 right-12 rounded-sm bg-blue-900/85 backdrop-blur-xs px-2 py-1 text-[10px] font-bold text-white shadow-xs flex items-center gap-1 z-10">
             <MapPin className="h-3 w-3 text-amber-300 animate-bounce" />
-            <span>Click map or drag marker to pin position</span>
+            <span>Click map or drag marker to pin position ({currentRadius}m geofence)</span>
           </div>
         )}
 
         <div className="absolute bottom-2 right-2 rounded-sm bg-white/90 backdrop-blur-xs px-2 py-0.5 text-[10px] font-extrabold text-[#0D1F3D] border border-slate-200 shadow-xs flex items-center gap-1 z-10">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          Mapbox GL JS Engine Active
+          Geofence Mask Active ({currentRadius}m)
         </div>
       </div>
     </div>
