@@ -254,7 +254,8 @@ export interface LeadApi {
   createVisit(id: string, body: Partial<LeadVisitDto>, signal?: AbortSignal): Promise<LeadVisitDto>;
   followUps(id: string, signal?: AbortSignal): Promise<LeadFollowUpDto[]>;
   createFollowUp(id: string, body: Partial<LeadFollowUpDto>, signal?: AbortSignal): Promise<LeadFollowUpDto>;
-  updateFollowUp(id: string, followUpId: string, body: { status: string; notes?: string }, signal?: AbortSignal): Promise<LeadFollowUpDto>;
+  updateFollowUp(id: string, followUpId: string, body: { status?: LeadFollowUpDto['status']; title?: string; scheduledDate?: string; scheduledTime?: string; assignedMembershipId?: string; notes?: string; replaceNotes?: string | null }, signal?: AbortSignal): Promise<LeadFollowUpDto>;
+  deleteFollowUp(id: string, followUpId: string, signal?: AbortSignal): Promise<void>;
   demos(id: string, signal?: AbortSignal): Promise<LeadDemoDto[]>;
   createDemo(id: string, body: Partial<LeadDemoDto>, signal?: AbortSignal): Promise<LeadDemoDto>;
   communications(id: string, signal?: AbortSignal): Promise<LeadCommunicationDto[]>;

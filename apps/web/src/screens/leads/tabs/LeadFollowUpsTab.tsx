@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Clock, Plus, CheckCircle2, Calendar } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Modal } from '../../../components/ui/Modal';
 import { DatePicker } from '../../../components/ui/DatePicker';
-import { useCrmQuery, useCrmMutation } from '../../../features/crm/CrmContext';
+import { useCrm, useCrmQuery, useCrmMutation } from '../../../features/crm/CrmContext';
 import { CrmFailure } from '../../../features/crm/CrmControls';
 import { LeadFollowUpDto } from '../../../features/crm/lead.types';
 import { toast } from 'sonner';
 
 export function LeadFollowUpsTab({ leadId }: { leadId: string }) {
+  const { can, readOnly } = useCrm();
+  const canUpdate = can('crm.leads.update') && !readOnly;
   const [showModal, setShowModal] = useState(false);
   const [title, setTitle] = useState('');
   const [scheduledDate, setScheduledDate] = useState(
@@ -89,14 +92,14 @@ export function LeadFollowUpsTab({ leadId }: { leadId: string }) {
           </p>
         </div>
 
-        <Button
+        {canUpdate && <Button
           variant="accent"
           size="sm"
           onClick={() => setShowModal(true)}
           className="font-bold flex items-center gap-1.5 shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm"
         >
           <Plus className="h-4 w-4" /> Add New Follow-up
-        </Button>
+        </Button>}
       </div>
 
       {query.loading && followUps.length === 0 ? (
@@ -121,7 +124,7 @@ export function LeadFollowUpsTab({ leadId }: { leadId: string }) {
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-[#0D1F3D] text-sm">{item.title}</span>
+                  {can('crm.followups.view') ? <Link to={`/admin/follow-ups/${item.id}`} className="font-extrabold text-[#0D1F3D] text-sm hover:underline">{item.title}</Link> : <span className="font-extrabold text-[#0D1F3D] text-sm">{item.title}</span>}
                   <span
                     className={`rounded-sm px-2 py-0.5 text-[10px] font-extrabold border ${
                       item.status === 'Pending'
@@ -146,7 +149,7 @@ export function LeadFollowUpsTab({ leadId }: { leadId: string }) {
                 )}
               </div>
 
-              {item.status === 'Pending' && (
+              {item.status === 'Pending' && canUpdate && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -161,6 +164,8 @@ export function LeadFollowUpsTab({ leadId }: { leadId: string }) {
           ))}
         </div>
       )}
+
+      {mutation.error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">{mutation.error.message}</p>}
 
       {/* Schedule Follow-up Modal */}
       {showModal && (

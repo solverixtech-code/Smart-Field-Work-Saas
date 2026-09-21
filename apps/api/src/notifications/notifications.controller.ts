@@ -124,8 +124,8 @@ export class NotificationsController {
   @Post('devices/unregister')
   @HttpCode(200)
   @ApiOperation({ summary: 'Deactivate FCM push token upon logout' })
-  async unregisterDevice(@Body() dto: UnregisterDeviceTokenDto) {
-    return this.deviceTokenService.unregisterToken(dto.token);
+  async unregisterDevice(@CurrentPrincipal() p: RequestPrincipal, @Body() dto: UnregisterDeviceTokenDto) {
+    return this.deviceTokenService.unregisterToken(dto.token, p.userId, p.tenantId!);
   }
 
   @Get('in-app')

@@ -1797,6 +1797,16 @@ model Opportunity {
 }
 
 // ─── Push Notification Device Tokens ──────────────────────────────────────────
+model PlatformNotificationSettings {
+  id                        String   @id
+  pushEnabled               Boolean  @default(false)
+  whatsappEnabled           Boolean  @default(false)
+  followUpAssignedPush      Boolean  @default(false)
+  followUpDuePush           Boolean  @default(false)
+  updatedById               String?
+  updatedAt                 DateTime @updatedAt
+}
+
 model DevicePushToken {
   id               String            @id @default(uuid())
   userId           String
@@ -1824,6 +1834,7 @@ model DevicePushToken {
 // ─── Notification Broadcast / Campaign Record ─────────────────────────────────
 model NotificationRecord {
   id               String            @id @default(uuid())
+  sourceKey        String?           @unique
   tenantId         String
   tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   title            String

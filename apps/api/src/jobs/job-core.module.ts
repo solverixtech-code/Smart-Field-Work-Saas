@@ -4,9 +4,10 @@ import { ObservabilityModule } from "../observability/observability.module";
 import { S3StorageProvider, StorageProvider } from "../media/storage-provider";
 import { JobService } from "./job.service";
 import { JobWorkerService } from "./job-worker.service";
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [PersistenceModule, ObservabilityModule],
+  imports: [PersistenceModule, ObservabilityModule, NotificationsModule],
   providers: [
     JobService,
     JobWorkerService,

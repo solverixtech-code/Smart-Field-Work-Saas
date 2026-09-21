@@ -125,6 +125,12 @@ const NAV_CATEGORIES: NavCategory[] = [
         permission: "platform.roles.view",
       },
       {
+        label: "Notification settings",
+        icon: Bell,
+        to: "/platform/notifications/settings",
+        permission: "platform.notifications.settings.view",
+      },
+      {
         label: "Audit Logs",
         icon: FileText,
         to: "/platform/audit",

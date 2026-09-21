@@ -143,8 +143,8 @@ export class MobileController {
   @Post('devices/unregister')
   @HttpCode(200)
   @ApiOperation({ summary: 'Unregister FCM push device token on logout' })
-  async unregisterDevice(@Body() dto: UnregisterDeviceTokenDto) {
-    await this.deviceTokenService.unregisterToken(dto.token);
+  async unregisterDevice(@CurrentPrincipal() principal: RequestPrincipal, @Body() dto: UnregisterDeviceTokenDto) {
+    await this.deviceTokenService.unregisterToken(dto.token, principal.userId);
     return {
       success: true,
       message: 'Push device token unregistered successfully',

@@ -97,6 +97,7 @@ const catalog = {
     "media.deleted",
   ],
   JOB: ["job.manual.retry"],
+  NOTIFICATION: ["notification.settings.changed"],
 } as const;
 const eventCategories = new Map<string, string>();
 for (const [category, events] of Object.entries(catalog))

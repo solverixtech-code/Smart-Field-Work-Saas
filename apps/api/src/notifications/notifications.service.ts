@@ -15,6 +15,7 @@ import {
 } from './dto/template.dto';
 import { SendTestPushDto } from './dto/test-push.dto';
 import { FcmPushService } from './fcm-push.service';
+import { NotificationChannel } from './notifications.contract';
 
 @Injectable()
 export class NotificationsService {
@@ -165,6 +166,7 @@ export class NotificationsService {
     targetAudience: string,
     targetRoles?: string[],
     targetMembershipIds?: string[],
+    targetTerritories?: string[],
   ): Promise<{ userId: string; membershipId: string }[]> {
     if (
       targetAudience === 'INDIVIDUAL' ||
@@ -181,11 +183,26 @@ export class NotificationsService {
         });
         return memberships.map((m) => ({ userId: m.userId, membershipId: m.id }));
       }
+      return [];
     }
 
     const where: Prisma.TenantMembershipWhereInput = {
       tenantId,
       status: 'ACTIVE',
+      ...(targetAudience === 'BY_ROLE' ? {
+        tenantRole: { code: { in: targetRoles?.length ? targetRoles : ['__NO_ROLE__'] } },
+      } : {}),
+      ...(targetAudience === 'BY_TERRITORY' ? {
+        territoryMemberships: { some: {
+          territory: {
+            tenantId, status: 'ACTIVE', deletedAt: null,
+            OR: [
+              { id: { in: targetTerritories?.length ? targetTerritories : ['__NO_TERRITORY__'] } },
+              { name: { in: targetTerritories?.length ? targetTerritories : ['__NO_TERRITORY__'] } },
+            ],
+          },
+        } },
+      } : {}),
     };
 
     const memberships = await this.prisma.tenantMembership.findMany({
@@ -204,6 +221,15 @@ export class NotificationsService {
     createdById: string,
     dto: CreateNotificationDto,
   ) {
+    if (dto.audienceType === 'CUSTOM') {
+      throw new BadRequestException('Custom audiences are not configured for notification delivery.');
+    }
+    if (dto.channels.includes(NotificationChannel.WHATSAPP)) {
+      throw new BadRequestException('WhatsApp Business API delivery is not configured.');
+    }
+    if (dto.channels.includes(NotificationChannel.PUSH) && !dto.channels.includes(NotificationChannel.IN_APP) && !await this.fcmPushService.isPushEnabled()) {
+      throw new BadRequestException('Mobile push notifications are disabled globally.');
+    }
     const isScheduled =
       dto.scheduledAt && new Date(dto.scheduledAt) > new Date();
 
@@ -212,6 +238,7 @@ export class NotificationsService {
       dto.audienceType,
       dto.targetRoles,
       dto.targetMembershipIds,
+      dto.targetTerritories,
     );
 
     const record = await this.prisma.notificationRecord.create({
@@ -266,26 +293,38 @@ export class NotificationsService {
       throw new NotFoundException('Notification not found');
     }
 
+    if (notification.status === 'SENT') {
+      return { success: true, delivered: notification.successCount, failed: notification.failureCount };
+    }
+
     try {
+      const pushEnabled = await this.fcmPushService.isPushEnabled();
       const users =
         preResolvedUsers ??
         (await this.resolveAudienceUsers(
           notification.tenantId,
           notification.targetAudience,
+          typeof notification.targetFilter === 'object' && notification.targetFilter !== null && !Array.isArray(notification.targetFilter)
+            ? Array.isArray(notification.targetFilter.roles) ? notification.targetFilter.roles.filter((role): role is string => typeof role === 'string') : [] : [],
+          typeof notification.targetFilter === 'object' && notification.targetFilter !== null && !Array.isArray(notification.targetFilter)
+            ? Array.isArray(notification.targetFilter.membershipIds) ? notification.targetFilter.membershipIds.filter((id): id is string => typeof id === 'string') : [] : [],
+          typeof notification.targetFilter === 'object' && notification.targetFilter !== null && !Array.isArray(notification.targetFilter)
+            ? Array.isArray(notification.targetFilter.territories) ? notification.targetFilter.territories.filter((id): id is string => typeof id === 'string') : [] : [],
         ));
 
       const userIds = users.map((u) => u.userId);
 
       // Find active device push tokens for these users in this workspace
-      const tokens = await this.prisma.devicePushToken.findMany({
+      const tokens = pushEnabled && notification.channels.includes('PUSH') ? await this.prisma.devicePushToken.findMany({
         where: {
           tenantId: notification.tenantId,
           userId: { in: userIds },
+          OR: users.map((user) => ({ userId: user.userId, membershipId: user.membershipId })),
           isActive: true,
         },
-      });
+      }) : [];
 
-      let delivered = 0;
+      const deliveredUsers = new Set<string>();
       let failed = 0;
 
       // 1. In-App delivery
@@ -303,10 +342,11 @@ export class NotificationsService {
             data: inAppLogs,
           });
         }
+        users.forEach((user) => deliveredUsers.add(user.userId));
       }
 
       // 2. FCM Push delivery
-      if (notification.channels.includes('PUSH')) {
+      if (notification.channels.includes('PUSH') && pushEnabled) {
         if (tokens.length > 0) {
           const actionUrl =
             (notification.dataPayload as any)?.actionUrl ?? undefined;
@@ -325,7 +365,6 @@ export class NotificationsService {
             },
           );
 
-          delivered += pushResult.successCount;
           failed += pushResult.failureCount;
 
           if (pushResult.invalidTokens.length > 0) {
@@ -336,6 +375,7 @@ export class NotificationsService {
 
           const pushLogs = tokens.map((t) => {
             const err = pushResult.errors.find((e) => e.token === t.token);
+            if (!err) deliveredUsers.add(t.userId);
             return {
               notificationId: notification.id,
               userId: t.userId,
@@ -352,17 +392,16 @@ export class NotificationsService {
               data: pushLogs,
             });
           }
-        } else {
-          delivered = users.length;
         }
-      } else {
-        delivered = users.length;
       }
+
+      const delivered = deliveredUsers.size;
 
       await this.prisma.notificationRecord.update({
         where: { id: notification.id },
         data: {
-          status: 'SENT',
+          status: notification.channels.includes('IN_APP') || (notification.channels.includes('PUSH') && pushEnabled)
+            ? 'SENT' : 'CANCELLED',
           sentAt: new Date(),
           successCount: delivered,
           failureCount: failed,
@@ -390,47 +429,42 @@ export class NotificationsService {
     currentUserId: string,
     dto: SendTestPushDto,
   ) {
+    if (!await this.fcmPushService.isPushEnabled()) {
+      throw new BadRequestException('Mobile push notifications are disabled globally.');
+    }
     let targetTokens: string[] = [];
 
     if (dto.fcmToken) {
-      targetTokens = [dto.fcmToken];
+      const registered = await this.prisma.devicePushToken.findFirst({
+        where: { tenantId, token: dto.fcmToken, isActive: true, membership: { is: { tenantId, status: 'ACTIVE' } } }, select: { token: true },
+      });
+      if (!registered) throw new BadRequestException('Register this device token in the current workspace before sending a test push.');
+      targetTokens = [registered.token];
     } else if (dto.targetMembershipId) {
       const tokens = await this.prisma.devicePushToken.findMany({
         where: {
           tenantId,
           membershipId: dto.targetMembershipId,
           isActive: true,
+          membership: { is: { tenantId, status: 'ACTIVE' } },
         },
       });
       targetTokens = tokens.map((t) => t.token);
     } else {
-      let tokens = await this.prisma.devicePushToken.findMany({
+      const tokens = await this.prisma.devicePushToken.findMany({
         where: {
           tenantId,
           userId: currentUserId,
           isActive: true,
+          membership: { is: { tenantId, status: 'ACTIVE' } },
         },
       });
 
-      if (tokens.length === 0) {
-        tokens = await this.prisma.devicePushToken.findMany({
-          where: {
-            tenantId,
-            isActive: true,
-          },
-        });
-      }
       targetTokens = tokens.map((t) => t.token);
     }
 
     if (targetTokens.length === 0) {
-      if (this.fcmPushService.isInSimulationMode) {
-        targetTokens = [`sim-fcm-token-${currentUserId.slice(0, 8)}`];
-      } else {
-        throw new BadRequestException(
-          'No active device tokens found. Please specify a valid FCM token or register a device.',
-        );
-      }
+      throw new BadRequestException('No active device tokens found for this target in the current workspace.');
     }
 
     const result = await this.fcmPushService.sendMulticast(targetTokens, {
@@ -451,6 +485,51 @@ export class NotificationsService {
       simulationMode: result.simulationMode,
       errors: result.errors,
     };
+  }
+
+  async sendFollowUpPush(input: {
+    tenantId: string;
+    followUpId: string;
+    membershipId: string;
+    actorUserId: string | null;
+    sourceKey: string;
+    title: string;
+    body: string;
+  }) {
+    const membership = await this.prisma.tenantMembership.findFirst({
+      where: { id: input.membershipId, tenantId: input.tenantId, status: 'ACTIVE' },
+      select: { userId: true },
+    });
+    if (!membership) return { skipped: true };
+    let record = await this.prisma.notificationRecord.findUnique({
+      where: { sourceKey: input.sourceKey }, select: { id: true, status: true },
+    });
+    if (record?.status === 'SENT') return { skipped: true };
+    if (!record) {
+      record = await this.prisma.notificationRecord.create({
+        data: {
+          tenantId: input.tenantId,
+          sourceKey: input.sourceKey,
+          createdById: input.actorUserId ?? membership.userId,
+          title: input.title,
+          description: input.body,
+          type: 'REMINDER',
+          channels: ['PUSH'],
+          targetAudience: 'SPECIFIC_EXECUTIVES',
+          targetFilter: { membershipIds: [input.membershipId] },
+          dataPayload: { actionUrl: `/admin/follow-ups/${input.followUpId}` },
+          priority: 'NORMAL',
+          status: 'SENDING',
+          totalRecipients: 1,
+        },
+        select: { id: true, status: true },
+      });
+    } else {
+      await this.prisma.notificationRecord.update({
+        where: { id: record.id }, data: { status: 'SENDING' },
+      });
+    }
+    return this.dispatchNotification(record.id, [{ userId: membership.userId, membershipId: input.membershipId }]);
   }
 
   /**

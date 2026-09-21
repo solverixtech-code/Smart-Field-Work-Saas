@@ -200,10 +200,15 @@ export const createLeadFollowUp = z
 
 export const updateLeadFollowUp = z
   .object({
-    status: z.enum(["Pending", "Completed", "Cancelled"]),
+    status: z.enum(["Pending", "Completed", "Cancelled"]).optional(),
+    title: z.string().trim().min(1).max(300).optional(),
+    scheduledDate: z.string().trim().min(1).max(50).optional(),
+    scheduledTime: z.string().trim().min(1).max(50).optional(),
+    assignedMembershipId: crmId.optional(),
     notes: z.string().trim().max(2000).optional(),
+    replaceNotes: z.string().trim().max(2000).nullable().optional(),
   })
-  .strict();
+  .strict().refine((value) => Object.keys(value).length > 0, 'Provide at least one follow-up change.');
 
 export const createLeadDemo = z
   .object({

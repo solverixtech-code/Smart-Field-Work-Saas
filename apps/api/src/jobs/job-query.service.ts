@@ -11,7 +11,7 @@ import {
 const querySchema = cursorWindowSchema
   .extend({
     tenantId: z.string().uuid().optional(),
-    type: z.literal("media.delete-object").optional(),
+    type: z.enum(["media.delete-object", "followup.push"]).optional(),
     status: z.enum(["PENDING", "RUNNING", "SUCCEEDED", "DEAD"]).optional(),
     correlationId: z.string().max(100).optional(),
   })

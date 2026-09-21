@@ -133,12 +133,9 @@ import CompletedDemosPage from "./screens/demos/CompletedDemosPage";
 import DemoDetailsPage from "./screens/demos/DemoDetailsPage";
 import DemoConversionReportPage from "./screens/demos/DemoConversionReportPage";
 
-import AllFollowUpsPage from "./screens/followups/AllFollowUpsPage";
-import TodayFollowUpsPage from "./screens/followups/TodayFollowUpsPage";
-import UpcomingFollowUpsPage from "./screens/followups/UpcomingFollowUpsPage";
-import OverdueFollowUpsPage from "./screens/followups/OverdueFollowUpsPage";
-import CompletedFollowUpsPage from "./screens/followups/CompletedFollowUpsPage";
-import FollowUpDetailsPage from "./screens/followups/FollowUpDetailsPage";
+import FollowUpsListPage from "./screens/followups/FollowUpsListPage";
+import FollowUpRecordPage from "./screens/followups/FollowUpRecordPage";
+import { NotificationChannelSettingsPage } from "./screens/platform/NotificationChannelSettingsPage";
 import BusinessContactsPage from "./screens/businesses/BusinessContactsPage";
 import BusinessSalesHistoryPage from "./screens/businesses/BusinessSalesHistoryPage";
 import BusinessVisitHistoryPage from "./screens/businesses/BusinessVisitHistoryPage";
@@ -692,26 +689,26 @@ export default function AppRouter() {
               element={<PermissionRoute permission="crm.followups.view" />}
             >
               <Route element={<CrmBoundary />}>
-                <Route path="/admin/follow-ups" element={<AllFollowUpsPage />} />
+                <Route path="/admin/follow-ups" element={<FollowUpsListPage view="all" />} />
                 <Route
                   path="/admin/follow-ups/today"
-                  element={<TodayFollowUpsPage />}
+                  element={<FollowUpsListPage view="today" />}
                 />
                 <Route
                   path="/admin/follow-ups/upcoming"
-                  element={<UpcomingFollowUpsPage />}
+                  element={<FollowUpsListPage view="upcoming" />}
                 />
                 <Route
                   path="/admin/follow-ups/overdue"
-                  element={<OverdueFollowUpsPage />}
+                  element={<FollowUpsListPage view="overdue" />}
                 />
                 <Route
                   path="/admin/follow-ups/completed"
-                  element={<CompletedFollowUpsPage />}
+                  element={<FollowUpsListPage view="completed" />}
                 />
                 <Route
                   path="/admin/follow-ups/:followupId"
-                  element={<FollowUpDetailsPage />}
+                  element={<FollowUpRecordPage />}
                 />
               </Route>
             </Route>
@@ -1195,6 +1192,9 @@ export default function AppRouter() {
                 element={<PlatformPlaceholderPage title="Platform Operators" />}
               />
               <Route path="/platform/roles" element={<TenantRolesPage />} />
+              <Route element={<PlatformAccessGuard requiredPermission="platform.notifications.settings.view" />}>
+                <Route path="/platform/notifications/settings" element={<NotificationChannelSettingsPage />} />
+              </Route>
               <Route
                 element={
                   <PlatformAccessGuard requiredPermission="platform.audit.view" />

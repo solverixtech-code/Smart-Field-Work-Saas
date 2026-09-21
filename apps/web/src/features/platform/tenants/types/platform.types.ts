@@ -29,7 +29,9 @@ export type PlatformPermission =
   | 'platform.subscriptions.manage'
   | 'platform.billing.view'
   | 'platform.users.manage'
-  | 'platform.audit.view';
+  | 'platform.audit.view'
+  | 'platform.notifications.settings.view'
+  | 'platform.notifications.settings.manage';
 
 export type TenantStatus =
   | 'Draft'

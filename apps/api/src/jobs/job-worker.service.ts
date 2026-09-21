@@ -12,8 +12,12 @@ import {
   JobService,
   JOB_TIMEOUT_MS,
   mediaDeletePayload,
+  followUpPushPayload,
+  jobMetricOperation,
   PermanentJobError,
 } from "./job.service";
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationSettingsService } from '../notifications/notification-settings.service';
 
 @Injectable()
 export class JobWorkerService {
@@ -24,7 +28,46 @@ export class JobWorkerService {
     private readonly storage: StorageProvider,
     private readonly metrics: MetricsService,
     private readonly logger: StructuredLogger,
+    private readonly notifications: NotificationsService,
+    private readonly notificationSettings: NotificationSettingsService,
   ) {}
+
+  private async deliverFollowUpPush(job: ClaimedJob) {
+    const payload = followUpPushPayload.safeParse(job.payload);
+    if (!payload.success || payload.data.tenantId !== job.tenantId) {
+      throw new PermanentJobError('JOB_PAYLOAD_INVALID');
+    }
+    const followUp = await this.prisma.leadFollowUp.findFirst({
+      where: {
+        id: payload.data.followUpId,
+        tenantId: payload.data.tenantId,
+        status: 'Pending',
+        updatedAt: new Date(payload.data.expectedUpdatedAt),
+        lead: { deletedAt: null },
+      },
+      select: {
+        id: true, assignedMembershipId: true, title: true,
+        scheduledDate: true, scheduledTime: true,
+        lead: { select: { name: true, businessName: true } },
+      },
+    });
+    const enabled = await this.notificationSettings.isFollowUpPushEnabled(payload.data.trigger);
+    if (followUp && enabled) {
+      const leadName = followUp.lead.businessName || followUp.lead.name;
+      await this.notifications.sendFollowUpPush({
+        tenantId: payload.data.tenantId,
+        followUpId: followUp.id,
+        membershipId: followUp.assignedMembershipId,
+        actorUserId: job.actorUserId,
+        sourceKey: `${payload.data.tenantId}:${followUp.id}:${payload.data.expectedUpdatedAt}:${payload.data.trigger}`,
+        title: payload.data.trigger === 'due' ? 'Follow-up due' : 'Follow-up assigned',
+        body: payload.data.trigger === 'due'
+          ? `${followUp.title} for ${leadName} is due now.`
+          : `${followUp.title} for ${leadName} is scheduled for ${followUp.scheduledDate} at ${followUp.scheduledTime}.`,
+      });
+    }
+    await this.jobs.succeed(job, async () => {});
+  }
   async tick(): Promise<boolean> {
     const [job] = await this.jobs.claim(this.workerId);
     if (!job) return false;
@@ -44,6 +87,11 @@ export class JobWorkerService {
       async () => {
         const start = performance.now();
         try {
+          if (job.type === 'followup.push') {
+            await this.deliverFollowUpPush(job);
+            this.logger.write('job.succeeded', { jobId: job.id, type: job.type });
+            return;
+          }
           const parsed = mediaDeletePayload.safeParse(job.payload);
           if (job.type !== "media.delete-object" || !parsed.success)
             throw new PermanentJobError("JOB_PAYLOAD_INVALID");
@@ -88,14 +136,14 @@ export class JobWorkerService {
           });
           this.logger.write("job.succeeded", {
             jobId: job.id,
-            type: "media.delete-object",
+            type: job.type,
           });
         } catch (error) {
           try {
             await this.jobs.fail(job, error);
           } catch {
             this.metrics.observe("jobs", {
-              operation: "media.delete-object",
+              operation: jobMetricOperation(job.type),
               outcome: "lease_lost",
             });
           }
@@ -113,7 +161,7 @@ export class JobWorkerService {
         } finally {
           this.metrics.observe(
             "job_duration_ms",
-            { operation: "media.delete-object" },
+            { operation: jobMetricOperation(job.type) },
             performance.now() - start,
           );
         }

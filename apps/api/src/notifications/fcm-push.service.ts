@@ -1,7 +1,8 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { initializeApp, cert, getApps, App } from 'firebase-admin/app';
 import { getMessaging } from 'firebase-admin/messaging';
+import { PrismaService } from '../persistence/prisma.service';
 
 export interface PushMessagePayload {
   title: string;
@@ -26,7 +27,17 @@ export class FcmPushService implements OnModuleInit {
   private firebaseApp: App | null = null;
   private isSimulationMode = true;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  async isPushEnabled(): Promise<boolean> {
+    const settings = await this.prisma.platformNotificationSettings.findUnique({
+      where: { id: 'global' }, select: { pushEnabled: true },
+    });
+    return settings?.pushEnabled ?? false;
+  }
 
   async onModuleInit() {
     await this.initializeFirebase();
@@ -107,20 +118,14 @@ export class FcmPushService implements OnModuleInit {
       };
     }
 
+    if (!await this.isPushEnabled()) {
+      throw new ServiceUnavailableException('Mobile push notifications are disabled globally.');
+    }
+
     const uniqueTokens = Array.from(new Set(tokens.filter(Boolean)));
 
     if (this.isSimulationMode || !this.firebaseApp) {
-      this.logger.log(
-        `[SIMULATION PUSH] Dispatched to ${uniqueTokens.length} device(s) | Title: "${payload.title}" | Action: ${payload.actionUrl ?? 'none'}`,
-      );
-      return {
-        successCount: uniqueTokens.length,
-        failureCount: 0,
-        invalidTokens: [],
-        simulationMode: true,
-        messageIds: uniqueTokens.map((_, i) => `sim-msg-${Date.now()}-${i + 1}`),
-        errors: [],
-      };
+      throw new ServiceUnavailableException('Firebase credentials are unavailable. No push was sent.');
     }
 
     // Real Firebase Admin SDK execution

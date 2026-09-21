@@ -11,14 +11,18 @@ import { OpportunityService } from "./opportunity.service";
 import { TerritoryController } from "./territory.controller";
 import { TerritoryRepository } from "./territory.repository";
 import { TerritoryService } from "./territory.service";
+import { FollowUpController } from "./follow-up.controller";
+import { FollowUpService } from "./follow-up.service";
+import { JobCoreModule } from '../jobs/job-core.module';
 
 @Module({
-  imports: [PersistenceModule, MasterCoreModule],
+  imports: [PersistenceModule, MasterCoreModule, JobCoreModule],
   controllers: [
     CrmController,
     LeadController,
     OpportunityController,
     TerritoryController,
+    FollowUpController,
   ],
   providers: [
     CrmRepository,
@@ -27,6 +31,7 @@ import { TerritoryService } from "./territory.service";
     OpportunityService,
     TerritoryRepository,
     TerritoryService,
+    FollowUpService,
   ],
   exports: [OpportunityService, TerritoryService],
 })

@@ -15,8 +15,19 @@ import { MetricsService } from "../observability/metrics.service";
 export const mediaDeletePayload = z
   .object({ assetId: z.string().uuid(), tenantId: z.string().uuid() })
   .strict();
-const registry = { "media.delete-object": mediaDeletePayload } as const;
+export const followUpPushPayload = z.object({
+  tenantId: z.string().uuid(),
+  followUpId: z.string().uuid(),
+  expectedUpdatedAt: z.string().datetime(),
+  trigger: z.enum(['assigned', 'due']),
+}).strict();
+const registry = {
+  "media.delete-object": mediaDeletePayload,
+  'followup.push': followUpPushPayload,
+} as const;
 export type JobType = keyof typeof registry;
+export const jobMetricOperation = (type: string) =>
+  type === 'followup.push' ? 'followup.push' as const : 'media.delete-object' as const;
 export const JOB_LEASE_MS = 60000;
 export const JOB_TIMEOUT_MS = 20000;
 export class PermanentJobError extends Error {
@@ -144,7 +155,7 @@ export class JobService {
     });
     for (let index = 0; index < claimed.length; index++)
       this.metrics.observe("jobs", {
-        operation: "media.delete-object",
+        operation: jobMetricOperation(claimed[index].type),
         outcome: "claimed",
       });
     return claimed;
@@ -179,7 +190,7 @@ export class JobService {
       });
     });
     this.metrics.observe("jobs", {
-      operation: "media.delete-object",
+      operation: jobMetricOperation(job.type),
       outcome: "success",
     });
   }
@@ -209,7 +220,7 @@ export class JobService {
       return terminal;
     });
     this.metrics.observe("jobs", {
-      operation: "media.delete-object",
+      operation: jobMetricOperation(job.type),
       outcome: dead ? "dead" : "retry",
     });
   }

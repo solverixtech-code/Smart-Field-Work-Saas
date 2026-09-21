@@ -33,6 +33,7 @@ export const METRIC_LABELS = {
     "download",
     "delete",
     "media.delete-object",
+    "followup.push",
     "provision",
     "owner",
     "tenant",

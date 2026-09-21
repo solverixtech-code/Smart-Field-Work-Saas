@@ -101,6 +101,7 @@ function service(): CrmService {
       followUps: vi.fn(rejected),
       createFollowUp: vi.fn(rejected),
       updateFollowUp: vi.fn(rejected),
+      deleteFollowUp: vi.fn(rejected),
       demos: vi.fn(rejected),
       createDemo: vi.fn(rejected),
       communications: vi.fn(rejected),

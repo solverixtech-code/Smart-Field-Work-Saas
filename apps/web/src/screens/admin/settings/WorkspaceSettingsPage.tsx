@@ -1087,7 +1087,6 @@ function PreferencesTab({
     defaultLandingPage: string;
     sessionTimeout: string;
     emailNotifications: boolean;
-    pushNotifications: boolean;
     dailyDigest: boolean;
     showMapView: boolean;
     compactTable: boolean;
@@ -1198,17 +1197,9 @@ function PreferencesTab({
               disabled={!isEditing}
             />
           </div>
-          <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
-            <div className="space-y-0.5">
-              <p className="text-xs font-bold text-[#0D1F3D]">Mobile Push Notifications</p>
-              <p className="text-[11px] text-slate-500">Enable real-time FCM push notifications to field devices</p>
-            </div>
-            <Checkbox
-              checked={form.pushNotifications}
-              onChange={(val) => setForm({ ...form, pushNotifications: val })}
-              disabled={!isEditing}
-            />
-          </div>
+          <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-600">
+            Mobile push delivery is controlled by platform administrators in Notification channel & trigger settings.
+          </p>
           <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
             <div className="space-y-0.5">
               <p className="text-xs font-bold text-[#0D1F3D]">Daily Executive Digest</p>
@@ -1423,7 +1414,6 @@ function IntegrationsTab({
 }: {
   data: {
     googleMapsApiKey: string;
-    fcmServerKey: string;
     whatsappWebhookUrl: string;
     enableWebhooks: boolean;
     enableMetaLeadsSync: boolean;
@@ -1461,7 +1451,7 @@ function IntegrationsTab({
                 Integrations & API Keys
               </h3>
               <p className="text-[11px] text-slate-500 font-medium">
-                Google Maps, FCM push, webhooks, and lead ads sync.
+                Google Maps, webhooks, and lead ads sync.
               </p>
             </div>
           </div>
@@ -1514,14 +1504,9 @@ function IntegrationsTab({
             disabled={!isEditing}
             placeholder="AIzaSy..."
           />
-          <Input
-            label="Firebase FCM Push Key"
-            type="password"
-            value={form.fcmServerKey}
-            onChange={(e) => setForm({ ...form, fcmServerKey: e.target.value })}
-            disabled={!isEditing}
-            placeholder="AAAA..."
-          />
+          <p className="rounded-sm border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-600">
+            Firebase credentials are configured on the API server. Push delivery is managed in the platform notification settings.
+          </p>
           <Input
             label="WhatsApp Business Webhook URL"
             value={form.whatsappWebhookUrl}
@@ -1886,7 +1871,6 @@ export function WorkspaceSettingsPage() {
     defaultLandingPage: '/admin/dashboard',
     sessionTimeout: '60',
     emailNotifications: true,
-    pushNotifications: true,
     dailyDigest: true,
     showMapView: true,
     compactTable: false,
@@ -1904,7 +1888,6 @@ export function WorkspaceSettingsPage() {
 
   const [integrationsForm, setIntegrationsForm] = useState({
     googleMapsApiKey: '••••••••••••••••••••••••••••••••',
-    fcmServerKey: '••••••••••••••••••••••••••••••••',
     whatsappWebhookUrl: 'https://api.visiblo.com/webhooks/whatsapp',
     enableWebhooks: true,
     enableMetaLeadsSync: true,

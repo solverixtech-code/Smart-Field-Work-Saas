@@ -44,6 +44,9 @@ export const leadApi: LeadApi = {
     (await api.post(root + "/" + id + "/follow-ups", body, { signal })).data,
   updateFollowUp: async (id, followUpId, body, signal) =>
     (await api.patch(root + "/" + id + "/follow-ups/" + followUpId, body, { signal })).data,
+  deleteFollowUp: async (id, followUpId, signal) => {
+    await api.delete(root + "/" + id + "/follow-ups/" + followUpId, { signal });
+  },
   demos: async (id, signal) =>
     (await api.get(root + "/" + id + "/demos", { signal })).data,
   createDemo: async (id, body, signal) =>

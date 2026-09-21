@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -14,6 +15,8 @@ import { CrmService } from "./crm.service";
 import { CrmPolicy } from "./crm-policy";
 import { leadScope, requireLead } from "./lead-policy";
 import { leadSelect, LeadRow, conversionSelect } from "./lead-select";
+import { parseFollowUpSchedule } from './follow-up-schedule';
+import { JobService } from '../jobs/job.service';
 
 import * as dto from "./lead-contract";
 
@@ -74,6 +77,7 @@ export class LeadService {
   constructor(
     private readonly repo: CrmRepository,
     private readonly crm: CrmService,
+    private readonly jobs: JobService,
   ) {}
   private async row(
     tx: Prisma.TransactionClient,
@@ -1201,6 +1205,54 @@ export class LeadService {
     });
   }
 
+  private async syncNextFollowUp(
+    tx: Prisma.TransactionClient, tenantId: string, leadId: string, timezone: string,
+  ) {
+    const pending = await tx.leadFollowUp.findMany({
+      where: { tenantId, leadId, status: 'Pending' },
+      select: { title: true, scheduledDate: true, scheduledTime: true },
+    });
+    const next = pending.flatMap((item) => {
+      try {
+        return [{ title: item.title, at: parseFollowUpSchedule(item.scheduledDate, item.scheduledTime, timezone) }];
+      } catch {
+        return [];
+      }
+    }).sort((a, b) => a.at.getTime() - b.at.getTime())[0];
+    await tx.lead.update({
+      where: { id_tenantId: { id: leadId, tenantId } },
+      data: { nextFollowUpAt: next?.at ?? null, nextActionNote: next?.title ?? null },
+    });
+  }
+
+  private async followUpTimezone(tx: Prisma.TransactionClient, tenantId: string) {
+    const settings = await tx.tenantSettings.findUnique({
+      where: { tenantId }, select: { timezone: true },
+    });
+    return settings?.timezone ?? 'Asia/Kolkata';
+  }
+
+  private async queueFollowUpPushes(
+    tx: Prisma.TransactionClient,
+    followUp: { id: string; tenantId: string; updatedAt: Date; scheduledDate: string; scheduledTime: string },
+    timezone: string,
+    notifyAssignment: boolean,
+  ) {
+    const key = `${followUp.id}:${followUp.updatedAt.getTime()}`;
+    const payload = {
+      tenantId: followUp.tenantId,
+      followUpId: followUp.id,
+      expectedUpdatedAt: followUp.updatedAt.toISOString(),
+    };
+    if (notifyAssignment) {
+      await this.jobs.enqueue(tx, 'followup.push', { ...payload, trigger: 'assigned' }, `${key}:assigned`);
+    }
+    await this.jobs.enqueue(
+      tx, 'followup.push', { ...payload, trigger: 'due' }, `${key}:due`,
+      parseFollowUpSchedule(followUp.scheduledDate, followUp.scheduledTime, timezone),
+    );
+  }
+
   async createFollowUp(actor: RequestPrincipal, leadId: string, body: unknown) {
     crmId.parse(leadId);
     const v = dto.createLeadFollowUp.parse(body);
@@ -1208,16 +1260,20 @@ export class LeadService {
       requireLead(p, "update");
       await this.row(tx, p, leadId, true);
       const assignedMembershipId = v.assignedMembershipId || p.scope.membershipId;
-      const membership = await tx.tenantMembership.findUnique({
-        where: { id: assignedMembershipId },
-        include: { user: { select: { fullName: true } } },
+      if (assignedMembershipId !== p.scope.membershipId) p.require('crm.leads.assign');
+      const membership = await tx.tenantMembership.findFirst({
+        where: { id: assignedMembershipId, tenantId: p.scope.tenantId, status: 'ACTIVE' },
+        select: { user: { select: { fullName: true } } },
       });
+      if (!membership) throw new BadRequestException('Select an active member of this workspace.');
+      const timezone = await this.followUpTimezone(tx, p.scope.tenantId);
+      parseFollowUpSchedule(v.scheduledDate, v.scheduledTime, timezone);
       const followUp = await tx.leadFollowUp.create({
         data: {
           tenantId: p.scope.tenantId,
           leadId,
           assignedMembershipId,
-          assignedToName: membership?.user.fullName || "Field Executive",
+          assignedToName: membership.user.fullName,
           title: v.title,
           scheduledDate: v.scheduledDate,
           scheduledTime: v.scheduledTime,
@@ -1225,14 +1281,9 @@ export class LeadService {
           status: "Pending",
         },
       });
-      const scheduledDateTime = new Date(`${v.scheduledDate}T10:00:00Z`);
-      if (!isNaN(scheduledDateTime.getTime())) {
-        await tx.lead.update({
-          where: { id_tenantId: { id: leadId, tenantId: p.scope.tenantId } },
-          data: { nextFollowUpAt: scheduledDateTime, nextActionNote: v.title },
-        });
-      }
+      await this.syncNextFollowUp(tx, p.scope.tenantId, leadId, timezone);
       await this.recordHistory(tx, p, leadId, "followup_scheduled", `Follow-up scheduled: ${v.title}`, v.notes || null);
+      await this.queueFollowUpPushes(tx, followUp, timezone, true);
       return followUp;
     });
   }
@@ -1248,16 +1299,57 @@ export class LeadService {
         where: { id: followUpId, leadId, tenantId: p.scope.tenantId },
       });
       if (!followUp) throw new NotFoundException("Follow-up not found");
+      const timezone = await this.followUpTimezone(tx, p.scope.tenantId);
+      const scheduledDate = v.scheduledDate ?? followUp.scheduledDate;
+      const scheduledTime = v.scheduledTime ?? followUp.scheduledTime;
+      parseFollowUpSchedule(scheduledDate, scheduledTime, timezone);
+      if (v.assignedMembershipId && v.assignedMembershipId !== followUp.assignedMembershipId) {
+        if (v.assignedMembershipId !== p.scope.membershipId) p.require('crm.leads.assign');
+      }
+      const assignee = v.assignedMembershipId
+        ? await tx.tenantMembership.findFirst({
+          where: { id: v.assignedMembershipId, tenantId: p.scope.tenantId, status: 'ACTIVE' },
+          select: { user: { select: { fullName: true } } },
+        }) : null;
+      if (v.assignedMembershipId && !assignee) throw new BadRequestException('Select an active member of this workspace.');
+      const status = v.status ?? followUp.status;
       const updated = await tx.leadFollowUp.update({
         where: { id: followUpId },
         data: {
-          status: v.status,
-          notes: v.notes ? `${followUp.notes ? followUp.notes + " | " : ""}${v.notes}` : followUp.notes,
-          completedAt: v.status === "Completed" ? new Date() : followUp.completedAt,
+          status,
+          title: v.title ?? followUp.title,
+          scheduledDate,
+          scheduledTime,
+          ...(v.assignedMembershipId ? { assignedMembershipId: v.assignedMembershipId, assignedToName: assignee?.user.fullName ?? followUp.assignedToName } : {}),
+          notes: v.replaceNotes !== undefined ? v.replaceNotes
+            : v.notes ? `${followUp.notes ? followUp.notes + ' | ' : ''}${v.notes}` : followUp.notes,
+          completedAt: status === 'Completed' ? followUp.completedAt ?? new Date() : null,
         },
       });
-      await this.recordHistory(tx, p, leadId, "followup_updated", `Follow-up updated to ${v.status}`, v.notes || null);
+      await this.syncNextFollowUp(tx, p.scope.tenantId, leadId, timezone);
+      await this.recordHistory(tx, p, leadId, "followup_updated", `Follow-up updated to ${status}`, v.notes || null);
+      if (status === 'Pending') {
+        await this.queueFollowUpPushes(tx, updated, timezone, Boolean(v.assignedMembershipId && v.assignedMembershipId !== followUp.assignedMembershipId));
+      }
       return updated;
+    });
+  }
+
+  async deleteFollowUp(actor: RequestPrincipal, leadId: string, followUpId: string) {
+    crmId.parse(leadId);
+    crmId.parse(followUpId);
+    return this.repo.run(actor, true, async (tx, p) => {
+      requireLead(p, 'update');
+      await this.row(tx, p, leadId, true);
+      const followUp = await tx.leadFollowUp.findFirst({
+        where: { id: followUpId, leadId, tenantId: p.scope.tenantId },
+        select: { id: true, title: true },
+      });
+      if (!followUp) throw new NotFoundException('Follow-up not found');
+      await tx.leadFollowUp.delete({ where: { id: followUpId } });
+      await this.syncNextFollowUp(tx, p.scope.tenantId, leadId, await this.followUpTimezone(tx, p.scope.tenantId));
+      await this.recordHistory(tx, p, leadId, 'followup_deleted', `Follow-up deleted: ${followUp.title}`, null);
+      return { deleted: true };
     });
   }
 

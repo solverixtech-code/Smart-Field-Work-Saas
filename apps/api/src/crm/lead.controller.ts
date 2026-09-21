@@ -188,6 +188,16 @@ export class LeadController {
     return this.leads.updateFollowUp(p, id, followUpId, v);
   }
 
+  @Delete(":id/follow-ups/:followUpId")
+  @RequirePermissions("crm.leads.update")
+  deleteFollowUp(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("id") id: string,
+    @Param("followUpId") followUpId: string,
+  ) {
+    return this.leads.deleteFollowUp(p, id, followUpId);
+  }
+
   @Get(":id/demos")
   @RequirePermissions("crm.leads.view")
   listDemos(@CurrentPrincipal() p: RequestPrincipal, @Param("id") id: string) {

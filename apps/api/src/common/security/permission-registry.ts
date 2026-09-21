@@ -95,6 +95,8 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
   ...CRM_PHASE_1_1_PERMISSIONS,
   { code: 'platform.operations.jobs.view', scope: PermissionScope.PLATFORM, domain: 'platform', resource: 'jobs', action: 'view', description: 'View durable job status and attempt history', moduleKey: 'platform_operations' },
   { code: 'platform.operations.jobs.retry', scope: PermissionScope.PLATFORM, domain: 'platform', resource: 'jobs', action: 'retry', description: 'Retry a dead job with a recorded reason', moduleKey: 'platform_operations' },
+  { code: 'platform.notifications.settings.view', scope: PermissionScope.PLATFORM, domain: 'platform', resource: 'notifications', action: 'view', description: 'View global notification delivery settings', moduleKey: 'platform_operations' },
+  { code: 'platform.notifications.settings.manage', scope: PermissionScope.PLATFORM, domain: 'platform', resource: 'notifications', action: 'manage', description: 'Manage global notification delivery channels and triggers', moduleKey: 'platform_operations' },
   { code: 'system.media.view', scope: PermissionScope.TENANT, domain: 'system', resource: 'media', action: 'view', description: 'Download private media in the selected Tenant', moduleKey: 'system' },
   { code: 'system.media.manage', scope: PermissionScope.TENANT, domain: 'system', resource: 'media', action: 'manage', description: 'Upload and delete private media in the selected Tenant', moduleKey: 'system' },
   // ─── PLATFORM SCOPE PERMISSIONS ────────────────────────────────────────────────
@@ -676,6 +678,8 @@ export const DEFAULT_PLATFORM_ROLE_GRANTS: Record<string, string[]> = {
   PLATFORM_OPERATIONS_ADMIN: [
     'platform.operations.jobs.view',
     'platform.operations.jobs.retry',
+    'platform.notifications.settings.view',
+    'platform.notifications.settings.manage',
     'platform.dashboard.view',
     'platform.tenants.view',
     'platform.tenants.create',

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../persistence/prisma.service';
 import { RegisterDeviceTokenDto } from './dto/register-device.dto';
 import { DevicePlatform } from './notifications.contract';
@@ -18,6 +18,11 @@ export class DeviceTokenService {
     tenantId: string,
     dto: RegisterDeviceTokenDto,
   ) {
+    if (!membershipId || !await this.prisma.tenantMembership.findFirst({
+      where: { id: membershipId, userId, tenantId, status: 'ACTIVE' }, select: { id: true },
+    })) {
+      throw new BadRequestException('An active workspace membership is required to register a device.');
+    }
     try {
       const existing = await this.prisma.devicePushToken.findUnique({
         where: { token: dto.token },
@@ -30,7 +35,7 @@ export class DeviceTokenService {
           where: { token: dto.token },
           data: {
             userId,
-            membershipId: membershipId ?? existing.membershipId,
+            membershipId,
             tenantId,
             platform,
             deviceModel: dto.deviceModel ?? existing.deviceModel,
@@ -63,15 +68,11 @@ export class DeviceTokenService {
   /**
    * Unregisters / deactivates a device push token
    */
-  async unregisterToken(token: string) {
-    try {
-      return await this.prisma.devicePushToken.updateMany({
-        where: { token },
-        data: { isActive: false },
-      });
-    } catch (err: any) {
-      this.logger.warn(`Could not deactivate token: ${err?.message}`);
-    }
+  async unregisterToken(token: string, userId: string, tenantId?: string) {
+    return this.prisma.devicePushToken.updateMany({
+      where: { token, userId, ...(tenantId ? { tenantId } : {}) },
+      data: { isActive: false },
+    });
   }
 
   /**
@@ -115,7 +116,6 @@ export class DeviceTokenService {
       inactiveTokens: totalTokens - activeTokens,
       tokens: tokensList.map((t) => ({
         id: t.id,
-        token: t.token,
         maskedToken: `${t.token.slice(0, 12)}...${t.token.slice(-8)}`,
         platform: t.platform,
         deviceModel: t.deviceModel ?? 'Unknown Device',
