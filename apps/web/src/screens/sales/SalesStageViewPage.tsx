@@ -38,6 +38,7 @@ import {
   RefreshCw,
   PhoneCall,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
@@ -47,8 +48,11 @@ import { Checkbox } from "../../components/ui/Checkbox";
 import { stageRouteMetadataMap } from "./salesPipelineData";
 import { useCrm, useCrmQuery, useCrmMutation } from "../../features/crm/CrmContext";
 import { DealDto } from "../../features/crm/crm.types";
+import { useDebouncedSearch } from "../../features/crm/CrmContext";
+import { CrmFailure } from "../../features/crm/CrmControls";
+import { useAppSelector } from "../../store";
 
-const iconComponentMap: Record<string, any> = {
+const iconComponentMap: Record<string, LucideIcon> = {
   Users,
   Building2,
   MapPin,
@@ -96,10 +100,13 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
   const stageCode = routeKeyToStageMap[activeStageKey] || "new";
 
   const { can, readOnly } = useCrm();
+  const roleCode = useAppSelector((state) => state.authorization.tenant?.roleCode);
+  const isFieldExecutive = ['field_executive', 'sales_executive', 'executive'].includes(roleCode?.toLowerCase() ?? '');
   const mutation = useCrmMutation();
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebouncedSearch(searchQuery);
   const [stageDate, setStageDate] = useState(new Date().toISOString().split("T")[0]);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -111,15 +118,16 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
   const [stageNotes, setStageNotes] = useState<string>("");
 
   // Query live deals for this stage
-  const dealsResult = useCrmQuery(`stage-deals-${stageCode}`, (s, signal) =>
-    s.deals({ stage: stageCode, search: searchQuery || undefined, page: currentPage, limit: 50 }, signal),
+  const dealsResult = useCrmQuery(JSON.stringify(['stage-deals', stageCode, debouncedSearch, currentPage]), (s, signal) =>
+    s.deals({ stage: stageCode, search: debouncedSearch || undefined, page: currentPage, limit: 50 }, signal),
   );
 
   const deals = dealsResult.data?.items || [];
   const totalCount = dealsResult.data?.total || 0;
+  const totalPages = dealsResult.data?.totalPages ?? 0;
 
-  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.checked) {
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
       setSelectedRows(deals.map((d) => d.id));
     } else {
       setSelectedRows([]);
@@ -190,18 +198,18 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
         <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
           <div>
             <h1 className="text-2xl font-extrabold text-[#0D1F3D]">{metadata.title}</h1>
-            <p className="text-xs font-medium text-slate-600">{metadata.description}</p>
+            <p className="text-xs font-medium text-slate-600">{isFieldExecutive ? 'Deals linked to leads assigned to you.' : metadata.description}</p>
           </div>
 
           <div className="flex items-center gap-2.5">
-            <Button
+            {!isFieldExecutive && <Button
               variant="outline"
               size="sm"
               onClick={() => toast.info(`Exporting ${metadata.title} CSV report...`)}
               className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
             >
               <Download className="h-3.5 w-3.5 text-emerald-600" /> Export
-            </Button>
+            </Button>}
 
             <Button
               variant="accent"
@@ -217,7 +225,7 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
       </div>
 
       {/* STAGE METRIC KPI CARDS */}
-      <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5">
+      {!isFieldExecutive && <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5">
         {metadata.kpis.map((kpi, idx) => {
           const IconComponent = iconComponentMap[kpi.icon] || Users;
           return (
@@ -242,13 +250,13 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
             </div>
           );
         })}
-      </div>
+      </div>}
 
       {/* FILTER TOOLBAR CONTAINER */}
       <div className="rounded-md border border-slate-200 bg-white p-3.5 shadow-xs space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-            <div className="w-40">
+            {!isFieldExecutive && <div className="w-40">
               <DatePicker
                 value={stageDate}
                 onChange={(d) => {
@@ -256,7 +264,7 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
                   toast.success(`Filtered for date ${d}`);
                 }}
               />
-            </div>
+            </div>}
           </div>
 
           <div className="flex items-center gap-2">
@@ -265,7 +273,7 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                 placeholder="Search by title, deal code, business..."
                 className="w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-purple-600 focus:outline-none"
               />
@@ -275,7 +283,7 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
 
         {/* PROSPECTS & DEALS DATA TABLE */}
         <div className="overflow-x-auto border-t border-slate-100 pt-2">
-          {dealsResult.loading ? (
+          {dealsResult.error ? <CrmFailure error={dealsResult.error} retry={dealsResult.reload} /> : dealsResult.loading ? (
             <div className="py-12 text-center text-xs font-semibold text-slate-500">
               <div className="inline-block animate-spin h-6 w-6 border-2 border-[#0D1F3D] border-t-transparent rounded-full mb-2" />
               <p>Loading deals for {metadata.title}...</p>
@@ -288,12 +296,12 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
             <table className="w-full text-left text-xs font-semibold text-slate-700">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-extrabold text-[#0D1F3D]">
-                  <th className="py-3 px-3 w-10 text-center">
+                  {!isFieldExecutive && <th className="py-3 px-3 w-10 text-center">
                     <Checkbox
-                      onChange={(e) => handleSelectAll(e as any)}
+                      onChange={(checked) => handleSelectAll(checked)}
                       checked={deals.length > 0 && selectedRows.length === deals.length}
                     />
-                  </th>
+                  </th>}
                   <th className="py-3 px-3">Deal Code / Business</th>
                   <th className="py-3 px-3">Contact Details</th>
                   <th className="py-3 px-3">Deal Amount</th>
@@ -326,12 +334,12 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
                         isChecked ? "bg-purple-50/30" : ""
                       }`}
                     >
-                      <td className="py-3 px-3 text-center">
+                      {!isFieldExecutive && <td className="py-3 px-3 text-center">
                         <Checkbox
                           checked={isChecked}
                           onChange={() => handleToggleRow(deal.id)}
                         />
-                      </td>
+                      </td>}
 
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-2.5">
@@ -404,11 +412,11 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
                               icon: Eye,
                               onClick: () => deal.leadId ? navigate(`/admin/leads/${deal.leadId}`) : null,
                             },
-                            {
+                            ...(!isFieldExecutive && can('crm.leads.update') ? [{
                               label: "Change Pipeline Stage",
                               icon: RefreshCw,
                               onClick: () => openChangeStageModal(deal),
-                            },
+                            }] : []),
                           ]}
                         />
                       </td>
@@ -419,6 +427,13 @@ export default function SalesStageViewPage({ stageKeyOverride }: SalesStageViewP
             </table>
           )}
         </div>
+        {totalPages > 1 && <div className="flex items-center justify-between gap-3 pt-3 text-xs text-slate-600">
+          <span>Page {currentPage} of {totalPages} · {totalCount} deals</span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setCurrentPage((page) => page - 1)}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => setCurrentPage((page) => page + 1)}>Next</Button>
+          </div>
+        </div>}
       </div>
 
       {/* CHANGE LEAD STAGE MODAL */}

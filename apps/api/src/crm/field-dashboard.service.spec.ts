@@ -28,6 +28,8 @@ function setup() {
     ]) },
     attendance: { findFirst: jest.fn().mockResolvedValue(null) },
     userShift: { findFirst: jest.fn().mockResolvedValue(null) },
+    punchLog: { findMany: jest.fn().mockResolvedValue([]) },
+    tenantMembership: { findFirst: jest.fn().mockResolvedValue({ user: { fullName: "Vikram Singh", avatarUrl: null } }) },
   };
   const policy = {
     scope: { tenantId: "tenant-a", membershipId: "member-a" }, require: jest.fn(),
@@ -54,6 +56,12 @@ describe("FieldDashboardService", () => {
     expect(tx.leadFollowUp.count).toHaveBeenCalledWith({ where: expect.objectContaining({
       tenantId: "tenant-a", assignedMembershipId: "member-a", status: "Pending",
     }) });
+    expect(tx.punchLog.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ tenantId: "tenant-a", tenantMembershipId: "member-a" }),
+    }));
+    expect(tx.attendance.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ date: new Date("2026-09-21T00:00:00.000Z") }),
+    }));
     expect(data.summary).toEqual(expect.objectContaining({ visitCount: 2, followUpsDue: 4,
       target: { amount: 200, achieved: 80, percentage: 40 } }));
   });

@@ -277,6 +277,7 @@ export default function AppRouter() {
                 path="/admin/dashboard"
                 element={<ExecutiveDashboardPage />}
               />
+              <Route path="/admin/my-route" element={<RoutePlaybackPage />} />
             </Route>
 
             {/* Sales Dashboard */}

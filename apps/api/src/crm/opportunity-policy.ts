@@ -1,8 +1,19 @@
 import { ForbiddenException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { CrmPolicy } from "./crm-policy";
+import { isFieldExecutive, leadScope } from "./lead-policy";
 
 export function requireOpportunity(p: CrmPolicy, action: string) {
+  if (isFieldExecutive(p)) {
+    if (action === "read") {
+      p.require("crm.pipeline.view");
+    } else if (!p.has(`crm.deals.${action}`) && !p.has(`crm.leads.${action}`)) {
+      throw new ForbiddenException("CRM_PERMISSION_REQUIRED");
+    }
+    if (!p.has("crm.leads.access.assigned"))
+      throw new ForbiddenException("CRM_SCOPE_REQUIRED");
+    return;
+  }
   // Check permission for crm.deals or crm.opportunities or crm.leads/general crm access
   // To ensure standard role policies pass:
   const allowed =
@@ -12,13 +23,16 @@ export function requireOpportunity(p: CrmPolicy, action: string) {
     p.has("crm.leads.read");
   if (!allowed) {
     // If explicit deal permission fails, check general tenant access
-    if (!p.has("crm.leads.access.tenant") && !p.has("crm.leads.access.own")) {
+    if (!p.has("crm.leads.access.tenant") && !p.has("crm.leads.access.own") && !p.has("crm.leads.access.assigned")) {
       throw new ForbiddenException("CRM_SCOPE_REQUIRED");
     }
   }
 }
 
 export function opportunityScope(p: CrmPolicy): Prisma.OpportunityWhereInput {
+  if (isFieldExecutive(p)) {
+    return { tenantId: p.scope.tenantId, lead: { is: leadScope(p) } };
+  }
   const or: Prisma.OpportunityWhereInput[] = [];
   if (p.has("crm.leads.access.own") || p.has("crm.deals.access.own")) {
     or.push({ ownerMembershipId: p.scope.membershipId });

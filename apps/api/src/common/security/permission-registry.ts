@@ -10,7 +10,7 @@ export interface PermissionDefinition {
   moduleKey: string;
 }
 
-export const PERMISSION_REGISTRY_VERSION = '1.4.0';
+export const PERMISSION_REGISTRY_VERSION = '1.5.0';
 
 export const CRM_PHASE_1_1_PERMISSIONS: PermissionDefinition[] = [
   ...(
@@ -803,8 +803,10 @@ export const DEFAULT_TENANT_ROLE_GRANTS: Record<string, string[]> = {
   field_executive: [
     'attendance.self.punch',
     'crm.dashboard.view',
+    'crm.pipeline.view',
     'crm.leads.view',
     'crm.leads.create',
+    'crm.leads.access.assigned',
     'crm.demos.view',
     'crm.followups.view',
     'crm.visits.view',

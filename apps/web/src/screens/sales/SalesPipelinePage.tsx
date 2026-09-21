@@ -19,6 +19,8 @@ import { DatePicker } from "../../components/ui/DatePicker";
 import { Select } from "../../components/ui/Select";
 import { useCrm, useCrmQuery, useCrmMutation } from "../../features/crm/CrmContext";
 import { DealDto } from "../../features/crm/crm.types";
+import { CrmFailure } from "../../features/crm/CrmControls";
+import { useAppSelector } from "../../store";
 
 const defaultStages = [
   { id: "new", code: "new", title: "New Deals", routeKey: "prospects", color: "#3B82F6", badgeBg: "bg-blue-50", badgeText: "text-blue-700", badgeBorder: "border-blue-200" },
@@ -32,6 +34,8 @@ const defaultStages = [
 export default function SalesPipelinePage() {
   const navigate = useNavigate();
   const { can, readOnly } = useCrm();
+  const roleCode = useAppSelector((state) => state.authorization.tenant?.roleCode);
+  const isFieldExecutive = ['field_executive', 'sales_executive', 'executive'].includes(roleCode?.toLowerCase() ?? '');
   const mutation = useCrmMutation();
 
   // Drag and Drop & Selection state
@@ -53,7 +57,8 @@ export default function SalesPipelinePage() {
     s.deals({ limit: 200 }, signal),
   );
   const mastersResult = useCrmQuery("deal-stage-masters", (s, signal) =>
-    s.masters("deal_stage", {}, signal),
+    can('system.masters.view') ? s.masters("deal_stage", {}, signal) :
+      Promise.resolve({ items: [], total: 0, page: 1, limit: 25, totalPages: 0 }),
   );
 
   const [localDeals, setLocalDeals] = useState<DealDto[]>([]);
@@ -89,7 +94,7 @@ export default function SalesPipelinePage() {
       ...defStage,
       id: matchedMaster?.id || defStage.id,
       title: matchedMaster?.name || defStage.title,
-      count: deals.filter((d: DealDto) => (d.stage || "").toLowerCase() === defStage.code.toLowerCase()).length,
+      count: summaryStage?.count ?? deals.filter((d: DealDto) => (d.stage || "").toLowerCase() === defStage.code.toLowerCase()).length,
       value: summaryStage?.value ?? 0,
     };
   });
@@ -189,7 +194,7 @@ export default function SalesPipelinePage() {
           <div>
             <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Sales Pipeline</h1>
             <p className="text-xs font-semibold text-slate-500">
-              Track active deal progress, revenue forecast, and stage conversions across your field team.
+              {isFieldExecutive ? 'Deals linked to leads assigned to you.' : 'Track active deal progress, revenue forecast, and stage conversions across your field team.'}
             </p>
           </div>
 
@@ -207,7 +212,7 @@ export default function SalesPipelinePage() {
               <RefreshCw className="h-3.5 w-3.5" /> Refresh
             </Button>
 
-            <div className="w-44">
+            {!isFieldExecutive && <div className="w-44">
               <DatePicker
                 value={pipelineDate}
                 onChange={(d) => {
@@ -215,9 +220,9 @@ export default function SalesPipelinePage() {
                   toast.success(`Pipeline filtered for ${d}`);
                 }}
               />
-            </div>
+            </div>}
 
-            <div className="w-40">
+            {!isFieldExecutive && <div className="w-40">
               <Select
                 value={selectedTeam}
                 onChange={(e) => setSelectedTeam(e.target.value)}
@@ -229,9 +234,9 @@ export default function SalesPipelinePage() {
                 ]}
                 searchable={false}
               />
-            </div>
+            </div>}
 
-            <div className="w-44">
+            {!isFieldExecutive && <div className="w-44">
               <Select
                 value={selectedExec}
                 onChange={(e) => setSelectedExec(e.target.value)}
@@ -243,7 +248,7 @@ export default function SalesPipelinePage() {
                 ]}
                 searchable={false}
               />
-            </div>
+            </div>}
 
             <Button
               variant="accent"
@@ -267,7 +272,7 @@ export default function SalesPipelinePage() {
               ₹{totalValue.toLocaleString("en-IN")}
             </span>
             <span className="text-[10px] font-extrabold text-emerald-600 flex items-center gap-1 mt-0.5">
-              ▲ Live Workspace Total
+              {isFieldExecutive ? 'Your assigned pipeline' : '▲ Live Workspace Total'}
             </span>
           </div>
           <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
@@ -342,7 +347,7 @@ export default function SalesPipelinePage() {
           <h2 className="text-sm font-extrabold text-[#0D1F3D]">Sales Pipeline Stages</h2>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-500">
-              {stagesList.length} Active Stages • Drag deal cards to change stage
+              {stagesList.length} Active Stages{!readOnly && can('crm.leads.update') ? ' • Drag deal cards to change stage' : ''}
             </span>
             {dealsResult.loading && !isInitialLoading && (
               <RefreshCw className="h-3 w-3 text-slate-400 animate-spin" />
@@ -350,7 +355,7 @@ export default function SalesPipelinePage() {
           </div>
         </div>
 
-        {isInitialLoading ? (
+        {dealsResult.error ? <CrmFailure error={dealsResult.error} retry={dealsResult.reload} /> : summaryResult.error ? <CrmFailure error={summaryResult.error} retry={summaryResult.reload} /> : isInitialLoading ? (
           <div className="min-h-[460px] flex flex-col items-center justify-center text-center text-xs font-semibold text-slate-500 bg-white rounded-md border border-slate-200">
             <div className="inline-block animate-spin h-6 w-6 border-2 border-[#0D1F3D] border-t-transparent rounded-full mb-2" />
             <p>Loading active deals from workspace...</p>
@@ -376,19 +381,20 @@ export default function SalesPipelinePage() {
                   }`}
                 >
                   {/* Column Header */}
-                  <div
+                  <button
+                    type="button"
                     onClick={() => navigate(`/admin/sales/${stg.routeKey}`)}
-                    className="flex items-center justify-between rounded-md bg-white p-2.5 border border-slate-200/90 shadow-2xs cursor-pointer hover:border-purple-300 transition"
+                    className="flex w-full items-center justify-between rounded-md bg-white p-2.5 border border-slate-200/90 shadow-2xs cursor-pointer hover:border-purple-300 transition text-left"
                   >
                     <span className="text-xs font-extrabold text-[#0D1F3D]">
                       {stg.title}{" "}
-                      <span className="text-slate-500 font-bold">({stageDeals.length})</span>
+                      <span className="text-slate-500 font-bold">({stg.count})</span>
                     </span>
                     <span
                       className="h-2.5 w-2.5 rounded-full"
                       style={{ backgroundColor: stg.color }}
                     />
-                  </div>
+                  </button>
 
                   {/* Column Card List */}
                   <div className="space-y-2.5 min-h-[280px]">
@@ -407,34 +413,21 @@ export default function SalesPipelinePage() {
                           deal.lead?.name ||
                           deal.title;
                         const city = deal.account?.city || deal.lead?.phone || deal.dealCode;
-                        const assigned = deal.assignedMembership || (deal as any).lead?.assignedMembership;
-                        const owner = deal.ownerMembership || (deal as any).lead?.ownerMembership;
+                        const assigned = deal.assignedMembership;
+                        const owner = deal.ownerMembership;
                         const member = assigned || owner;
-                        const execName =
-                          member?.displayName ||
-                          (member as any)?.user?.fullName ||
-                          (deal as any).assignee?.displayName ||
-                          (deal as any).owner?.displayName ||
-                          (deal as any).lead?.assignee?.displayName ||
-                          (deal as any).lead?.owner?.displayName ||
-                          (deal as any).lead?.assignedMembership?.user?.fullName ||
-                          (deal as any).lead?.ownerMembership?.user?.fullName ||
-                          "Unassigned";
-
-                        const avatarUrl =
-                          member?.avatarUrl ||
-                          (member as any)?.user?.avatarUrl ||
-                          (deal as any).assignee?.avatarUrl ||
-                          (deal as any).lead?.assignee?.avatarUrl;
+                        const execName = member?.displayName || "Unassigned";
+                        const avatarUrl = member?.avatarUrl;
 
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={deal.id}
-                            draggable
+                            draggable={!readOnly && can('crm.leads.update')}
                             onDragStart={(e) => handleDragStart(e, deal.id)}
                             onDragEnd={() => setDraggedDealId(null)}
                             onClick={() => handleCardClick(deal)}
-                            className={`rounded-md border border-slate-200/90 bg-white p-3 shadow-xs space-y-2.5 cursor-grab active:cursor-grabbing hover:border-purple-600 hover:shadow-md transition-all group ${
+                            className={`w-full text-left rounded-md border border-slate-200/90 bg-white p-3 shadow-xs space-y-2.5 cursor-pointer hover:border-purple-600 hover:shadow-md transition-all group ${
                               isBeingDragged
                                 ? "opacity-40 scale-95 border-dashed border-purple-500"
                                 : ""
@@ -496,7 +489,7 @@ export default function SalesPipelinePage() {
                                 {stg.title}
                               </span>
                             </div>
-                          </div>
+                          </button>
                         );
                       })
                     )}
@@ -507,7 +500,7 @@ export default function SalesPipelinePage() {
                     onClick={() => navigate(`/admin/sales/${stg.routeKey}`)}
                     className="w-full text-center text-xs font-bold text-slate-600 hover:text-purple-700 py-1.5 rounded-md hover:bg-white transition cursor-pointer"
                   >
-                    + View All ({stageDeals.length})
+                    + View All ({stg.count})
                   </button>
                 </div>
               );

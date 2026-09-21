@@ -22,6 +22,7 @@
     "db:report:tenant-ownership": "ts-node prisma/backfills/reconcile-tenant-ownership.ts",
     "db:sync:rbac": "ts-node prisma/sync-rbac.ts",
     "db:sync:field-dashboard": "ts-node -r dotenv/config prisma/sync-field-dashboard-permission.ts",
+    "db:sync:field-executive": "ts-node -r dotenv/config prisma/sync-field-dashboard-permission.ts",
     "db:reconcile:subscriptions": "ts-node prisma/backfills/reconcile-subscriptions.ts",
     "db:reconcile:industries": "ts-node prisma/backfills/reconcile-industries.ts",
     "db:reconcile:masters": "ts-node prisma/backfills/reconcile-masters.ts"

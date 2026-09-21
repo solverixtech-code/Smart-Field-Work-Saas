@@ -30,6 +30,7 @@ import {
   useDebouncedSearch,
 } from "../../features/crm/CrmContext";
 import { CrmFailure, CrmLookup } from "../../features/crm/CrmControls";
+import { useAppSelector } from "../../store";
 import {
   LeadDto,
   LeadPriority,
@@ -56,6 +57,8 @@ export default function AllLeadsPage({
   const navigate = useNavigate(),
     location = useLocation();
   const { can, readOnly } = useCrm();
+  const roleCode = useAppSelector((state) => state.authorization.tenant?.roleCode);
+  const isFieldExecutive = ['field_executive', 'sales_executive', 'executive'].includes(roleCode?.toLowerCase() ?? '');
   const mutation = useCrmMutation();
   const [search, setSearch] = useState(""),
     [priority, setPriority] = useState(""),
@@ -125,15 +128,15 @@ export default function AllLeadsPage({
         .reduce((n, r) => n + r.count, 0)
     : undefined;
   const tabs = [
-    { id: "all", label: "All Leads", count: counts.data?.total, icon: Target },
+    { id: "all", label: isFieldExecutive ? "My Leads" : "All Leads", count: counts.data?.total, icon: Target },
     { id: "hot", label: "Hot Leads", count: hot, icon: Flame },
     { id: "follow-up", label: "Follow-ups", icon: Clock },
-    {
+    ...(!isFieldExecutive ? [{
       id: "unassigned",
       label: "Unassigned",
       count: counts.data?.unassigned,
       icon: UserPlus,
-    },
+    }] : []),
     {
       id: "converted",
       label: "Converted",
@@ -391,13 +394,13 @@ export default function AllLeadsPage({
     <div className="space-y-3 font-sans pb-10">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D1F3D]">All Leads</h1>
+          <h1 className="text-2xl font-bold text-[#0D1F3D]">{isFieldExecutive ? 'My Leads' : 'All Leads'}</h1>
           <p className="text-xs text-slate-500">
-            Manage and track incoming leads within your access.
+            {isFieldExecutive ? 'Leads assigned to you in this workspace.' : 'Manage and track incoming leads within your access.'}
           </p>
         </div>
         <div className="flex flex-wrap gap-2.5">
-          <Button
+          {!isFieldExecutive && <Button
             variant="outline"
             size="sm"
             disabled={readOnly || !can("crm.leads.import")}
@@ -405,8 +408,8 @@ export default function AllLeadsPage({
           >
             <Upload className="mr-1.5 h-4 w-4 text-blue-600" />
             Import Leads
-          </Button>
-          <Button
+          </Button>}
+          {!isFieldExecutive && <Button
             variant="outline"
             size="sm"
             disabled={readOnly || !can("crm.leads.export")}
@@ -414,8 +417,8 @@ export default function AllLeadsPage({
           >
             <Download className="mr-1.5 h-4 w-4 text-emerald-600" />
             Export Data
-          </Button>
-          <Button
+          </Button>}
+          {!isFieldExecutive && <Button
             variant="outline"
             size="sm"
             disabled={readOnly || !can("crm.leads.assign")}
@@ -423,7 +426,7 @@ export default function AllLeadsPage({
           >
             <UserCheck className="mr-1.5 h-4 w-4" />
             Bulk Assign
-          </Button>
+          </Button>}
           <Button
             variant="accent"
             size="sm"
@@ -464,14 +467,14 @@ export default function AllLeadsPage({
           iconBgColor="bg-amber-500/10"
           iconTextColor="text-amber-600"
         />
-        <KpiCard
+        {!isFieldExecutive && <KpiCard
           title="Unassigned Leads"
           value={metric(counts.data?.unassigned)}
           subValue="Needs executive"
           icon={AlertCircle}
           iconBgColor="bg-purple-500/10"
           iconTextColor="text-purple-600"
-        />
+        />}
         <KpiCard
           title="Converted"
           value={metric(byStatus("CONVERTED"))}
@@ -530,7 +533,7 @@ export default function AllLeadsPage({
             }}
           />
         </div>
-        <Select
+        {!isFieldExecutive && <Select
           id="lead-region"
           placeholder="All Regions"
           options={[
@@ -541,7 +544,7 @@ export default function AllLeadsPage({
             { value: "thane", label: "Thane & Navi Mumbai" },
             { value: "pune", label: "Pune" },
           ]}
-        />
+        />}
         <Select
           id="lead-priority"
           placeholder="All Priorities"
@@ -627,7 +630,7 @@ export default function AllLeadsPage({
           columns={columns}
           data={result.data?.items ?? []}
           keyExtractor={(l) => l.id}
-          selectable={true}
+          selectable={!isFieldExecutive}
           selectedIds={selectedIds}
           onSelectAll={(e) =>
             setSelectedIds(

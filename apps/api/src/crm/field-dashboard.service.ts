@@ -52,12 +52,13 @@ export class FieldDashboardService {
         demoDate: { gte: selected.startDate, lte: selected.endDate },
         lead: { is: { deletedAt: null } },
       };
-      const [visits, visitCount, completedVisits, followUpsDue, demos, completedDemos, territories, attendance, assignedShift] = await Promise.all([
+      const [visits, visitCount, completedVisits, followUpsDue, demos, completedDemos, territories, attendance, assignedShift, punches, membership] = await Promise.all([
         tx.leadVisit.findMany({
           where: visitWhere, orderBy: { checkInTime: "asc" }, take: 100,
           select: {
             id: true, leadId: true, checkInTime: true, checkOutTime: true,
             location: true, latitude: true, longitude: true, purpose: true, status: true,
+            outcome: true, durationMinutes: true,
             lead: { select: { name: true, businessName: true, leadCode: true } },
           },
         }),
@@ -78,7 +79,7 @@ export class FieldDashboardService {
           } } },
         }),
         tx.attendance.findFirst({
-          where: { tenantId, tenantMembershipId: membershipId, date: new Date(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`) },
+          where: { tenantId, tenantMembershipId: membershipId, date: new Date(`${selected.startDate}T00:00:00Z`) },
           select: { punchInTime: true, punchOutTime: true, totalWorkMinutes: true },
         }),
         tx.userShift.findFirst({
@@ -90,11 +91,31 @@ export class FieldDashboardService {
           orderBy: { startDate: "desc" },
           select: { shift: { select: { name: true, startTime: true, endTime: true } } },
         }),
+        tx.punchLog.findMany({
+          where: {
+            tenantId, tenantMembershipId: membershipId,
+            timestamp: { gte: start, lt: end },
+          },
+          orderBy: { timestamp: "asc" },
+          take: 200,
+          select: {
+            id: true, type: true, timestamp: true,
+            latitude: true, longitude: true, locationName: true,
+          },
+        }),
+        tx.tenantMembership.findFirst({
+          where: { id: membershipId, tenantId },
+          select: { user: { select: { fullName: true, avatarUrl: true } } },
+        }),
       ]);
       const targetAmount = territories.reduce((total, item) => total + Number(item.territory.targets[0]?.monthlyTarget ?? 0), 0);
       const achievedAmount = territories.reduce((total, item) => total + Number(item.territory.targets[0]?.monthlyAchieved ?? 0), 0);
       return {
         ...selected, today, timezone,
+        executive: {
+          name: membership?.user.fullName ?? "Field executive",
+          avatarUrl: membership?.user.avatarUrl ?? null,
+        },
         summary: {
           visitCount, completedVisits, followUpsDue, demos, completedDemos,
           target: territories.some((item) => item.territory.targets.length) ? {
@@ -109,6 +130,12 @@ export class FieldDashboardService {
           scheduledAt: visit.checkInTime, checkOutTime: visit.checkOutTime,
           location: visit.location, latitude: visit.latitude, longitude: visit.longitude,
           purpose: visit.purpose, status: visit.status,
+          outcome: visit.outcome, durationMinutes: visit.durationMinutes,
+        })),
+        punches: punches.map((punch) => ({
+          id: punch.id, type: punch.type, timestamp: punch.timestamp,
+          latitude: punch.latitude, longitude: punch.longitude,
+          locationName: punch.locationName,
         })),
         attendance: {
           punchInTime: attendance?.punchInTime ?? null,

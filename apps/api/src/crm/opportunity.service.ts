@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
@@ -9,6 +10,7 @@ import { CrmPolicy } from "./crm-policy";
 import { CrmRepository, crmConflict } from "./crm.repository";
 import * as dto from "./opportunity-contract";
 import { requireOpportunity, opportunityScope } from "./opportunity-policy";
+import { isFieldExecutive, leadScope } from "./lead-policy";
 import { opportunitySelect, OpportunityRow } from "./opportunity-select";
 
 const page = <T>(
@@ -235,6 +237,18 @@ export class OpportunityService {
     const v = dto.createOpportunity.parse(body);
 
     return this.repo.run(actor, true, async (tx) => {
+      if (isFieldExecutive(p)) {
+        if (!v.leadId ||
+          (v.ownerMembershipId && v.ownerMembershipId !== p.scope.membershipId) ||
+          (v.assignedMembershipId && v.assignedMembershipId !== p.scope.membershipId)) {
+          throw new ForbiddenException("CRM_SCOPE_REQUIRED");
+        }
+        const assignedLead = await tx.lead.findFirst({
+          where: { AND: [leadScope(p), { id: v.leadId }] },
+          select: { id: true },
+        });
+        if (!assignedLead) throw new NotFoundException("CRM_LEAD_NOT_FOUND");
+      }
       let stageValueId = v.stageValueId;
       if (!stageValueId && v.stage) {
         const master = await tx.masterValue.findFirst({

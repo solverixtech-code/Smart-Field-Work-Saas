@@ -12,6 +12,8 @@ export interface FieldDashboardVisit {
   longitude: number | null;
   purpose: string;
   status: string;
+  outcome: string | null;
+  durationMinutes: number;
 }
 
 export interface FieldDashboardData {
@@ -19,6 +21,7 @@ export interface FieldDashboardData {
   endDate: string;
   today: string;
   timezone: string;
+  executive: { name: string; avatarUrl: string | null };
   summary: {
     visitCount: number;
     completedVisits: number;
@@ -29,6 +32,14 @@ export interface FieldDashboardData {
   };
   territoryNames: string[];
   visits: FieldDashboardVisit[];
+  punches: Array<{
+    id: string;
+    type: 'PUNCH_IN' | 'PUNCH_OUT';
+    timestamp: string;
+    latitude: number;
+    longitude: number;
+    locationName: string | null;
+  }>;
   attendance: {
     punchInTime: string | null;
     punchOutTime: string | null;

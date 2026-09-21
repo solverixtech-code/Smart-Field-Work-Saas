@@ -370,8 +370,12 @@ export function InteractiveMap({
 
   // Fetch real-world driving route geometry from Mapbox / OSRM routing API
   useEffect(() => {
-    if ((mode !== 'route-playback' && routeStops.length === 0) || routeStops.length < 2) return;
+    if ((mode !== 'route-playback' && routeStops.length === 0) || routeStops.length < 2) {
+      setFetchedRealRoadPath([]);
+      return;
+    }
 
+    setFetchedRealRoadPath([]);
     let isMounted = true;
     const fetchRealRoadRoute = async () => {
       try {

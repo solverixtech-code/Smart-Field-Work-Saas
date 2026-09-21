@@ -13,7 +13,7 @@ import { crmId, revisionCommand, ownerQuery } from "./crm-contract";
 import { CrmRepository, crmConflict } from "./crm.repository";
 import { CrmService } from "./crm.service";
 import { CrmPolicy } from "./crm-policy";
-import { leadScope, requireLead } from "./lead-policy";
+import { isFieldExecutive, leadScope, requireLead } from "./lead-policy";
 import { leadSelect, LeadRow, conversionSelect } from "./lead-select";
 import { parseFollowUpSchedule } from './follow-up-schedule';
 import { JobService } from '../jobs/job.service';
@@ -330,20 +330,25 @@ export class LeadService {
     return this.repo.run(actor, true, async (tx, p) => {
       requireLead(p, "create");
       const owner = v.ownerMembershipId ?? p.scope.membershipId;
-      if (owner !== p.scope.membershipId || v.assignedMembershipId)
+      if (isFieldExecutive(p) && v.assignedMembershipId && v.assignedMembershipId !== p.scope.membershipId)
+        throw new ForbiddenException("CRM_SCOPE_REQUIRED");
+      const assignedMembershipId = isFieldExecutive(p)
+        ? p.scope.membershipId
+        : v.assignedMembershipId;
+      if (owner !== p.scope.membershipId || (assignedMembershipId && assignedMembershipId !== p.scope.membershipId))
         requireLead(p, "assign");
       if (
         !p.has("crm.leads.access.tenant") &&
         !(p.has("crm.leads.access.own") && owner === p.scope.membershipId) &&
         !(
           p.has("crm.leads.access.assigned") &&
-          v.assignedMembershipId === p.scope.membershipId
+          assignedMembershipId === p.scope.membershipId
         )
       )
         throw new ForbiddenException("CRM_SCOPE_REQUIRED");
       await this.repo.owner(tx, p, owner);
-      if (v.assignedMembershipId)
-        await this.repo.owner(tx, p, v.assignedMembershipId);
+      if (assignedMembershipId)
+        await this.repo.owner(tx, p, assignedMembershipId);
       await this.repo.master(tx, p, v.sourceValueId, "lead_source");
       await this.links(tx, p, v.accountId ?? null, v.contactId ?? null);
       const kind = v.kind ?? "BUSINESS";
@@ -358,7 +363,7 @@ export class LeadService {
           leadCode: await this.leadCode(tx, p.scope.tenantId),
           name: v.name,
           ownerMembershipId: owner,
-          assignedMembershipId: v.assignedMembershipId,
+          assignedMembershipId,
           tenantId: p.scope.tenantId,
           createdByMembershipId: p.scope.membershipId,
           updatedByMembershipId: p.scope.membershipId,
