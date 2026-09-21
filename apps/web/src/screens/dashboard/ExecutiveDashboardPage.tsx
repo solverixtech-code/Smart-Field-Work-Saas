@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import {
   Users,
   UserCheck,
@@ -31,8 +32,14 @@ import {
 } from 'recharts';
 import { useAppSelector } from '../../store';
 import { KpiCard } from '../../components/dashboard/KpiCard';
-import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { DateRangePicker, type DateRange } from '../../components/ui/DateRangePicker';
 import { Button } from '../../components/ui/Button';
+import { InteractiveMap } from '../../components/maps/InteractiveMap';
+import type { RouteStop } from '../maps/mapsData';
+import { extractErrorMessage } from '../../common/api';
+import { fieldDashboardApi, type FieldDashboardData } from './field-dashboard.api';
+import { Modal } from '../../components/ui/Modal';
+import { Textarea } from '../../components/ui/Textarea';
 
 const performanceOverviewData = [
   { date: 'May 12', leads: 6000, tasks: 3200, visits: 2600, conversions: 1200 },
@@ -75,10 +82,19 @@ const realtimeActivities = [
   { id: '5', title: 'Anita Kumari achieved Top Performer', time: '1 hour ago', type: 'trophy', color: 'bg-purple-100 text-purple-700' },
 ];
 
+function dateInTimezone(value: string, timezone: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date(value));
+  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
 export default function ExecutiveDashboardPage() {
+  const navigate = useNavigate();
   const user = useAppSelector((s) => s.auth.user);
   const tenant = useAppSelector((s) => s.authorization.tenant);
-  const roleCode = (user?.role as string) || tenant?.roleCode || '';
+  const roleCode = tenant?.roleCode || (user?.role as string) || '';
 
   const isExecutiveRole =
     roleCode === 'FIELD_EXECUTIVE' ||
@@ -88,13 +104,113 @@ export default function ExecutiveDashboardPage() {
     roleCode === 'executive' ||
     roleCode === 'sales_executive';
 
-  // Mock executive daily schedule data
-  const executiveSchedule = [
-    { id: 'VIS-101', store: 'Sharma Electronics & Electricals', area: 'Andheri East, Mumbai', time: '10:00 AM', status: 'Completed', type: 'Sales Visit', priority: 'High' },
-    { id: 'VIS-102', store: 'Apex Telecom & Mobile Hub', area: 'Chakaala, Andheri East', time: '11:45 AM', status: 'In Progress', type: 'Product Demo', priority: 'Urgent' },
-    { id: 'VIS-103', store: 'Modern Hardwares & Tools', area: 'MIDC Zone 3, Andheri', time: '02:15 PM', status: 'Scheduled', type: 'Payment Collection', priority: 'Medium' },
-    { id: 'VIS-104', store: 'Metro Digital Superstore', area: 'Marol Naka, Mumbai', time: '04:00 PM', status: 'Scheduled', type: 'Follow-up Meeting', priority: 'High' },
-  ];
+  const [range, setRange] = useState<DateRange | null>(null);
+  const [fieldData, setFieldData] = useState<FieldDashboardData | null>(null);
+  const [fieldLoading, setFieldLoading] = useState(false);
+  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [fieldRefresh, setFieldRefresh] = useState(0);
+  const [fieldAction, setFieldAction] = useState<string | null>(null);
+  const [outcomeVisitId, setOutcomeVisitId] = useState<string | null>(null);
+  const [outcome, setOutcome] = useState('');
+
+  useEffect(() => {
+    if (!isExecutiveRole) return;
+    const controller = new AbortController();
+    setFieldLoading(true);
+    setFieldError(null);
+    setFieldData(null);
+    fieldDashboardApi.get(range, controller.signal)
+      .then(setFieldData)
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) setFieldError(extractErrorMessage(error, 'Could not load your field dashboard.'));
+      })
+      .finally(() => { if (!controller.signal.aborted) setFieldLoading(false); });
+    return () => controller.abort();
+  }, [isExecutiveRole, range, fieldRefresh]);
+
+  const displayedRange = range ?? (fieldData ? {
+    startDate: fieldData.startDate, endDate: fieldData.endDate, label: 'Today',
+  } : undefined);
+  const executiveSchedule = fieldData?.visits ?? [];
+  const routeStops: RouteStop[] = executiveSchedule.flatMap((visit, index) =>
+    visit.latitude === null || visit.longitude === null ? [] : [{
+      id: visit.id, stopNumber: index + 1, type: 'visit' as const,
+      title: visit.name, locationName: visit.location, address: visit.location,
+      timestamp: visit.scheduledAt, distanceKm: 0,
+      lat: visit.latitude, lng: visit.longitude, statusText: visit.status,
+    }],
+  );
+  const formatTime = (value: string) => new Date(value).toLocaleTimeString('en-IN', {
+    timeZone: fieldData?.timezone, hour: '2-digit', minute: '2-digit',
+  });
+  const currency = (value: number) => new Intl.NumberFormat('en-IN', {
+    style: 'currency', currency: 'INR', maximumFractionDigits: 0,
+  }).format(value);
+
+  async function punch(action: 'in' | 'out') {
+    if (!navigator.geolocation) {
+      toast.error('Location access is required to record attendance.');
+      return;
+    }
+    setFieldAction('punch');
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000 }),
+      );
+      await fieldDashboardApi.punch(action, position.coords);
+      toast.success(action === 'in' ? 'Punch in recorded.' : 'Punch out recorded.');
+      setFieldRefresh((value) => value + 1);
+    } catch (error) {
+      toast.error(extractErrorMessage(error, 'Could not record attendance. Check location access and try again.'));
+    } finally {
+      setFieldAction(null);
+    }
+  }
+
+  async function checkIn(visitId: string) {
+    setFieldAction(visitId);
+    try {
+      await fieldDashboardApi.checkIn(visitId);
+      toast.success('Visit check-in recorded.');
+      setFieldRefresh((value) => value + 1);
+    } catch (error) {
+      toast.error(extractErrorMessage(error, 'Could not check in to this visit.'));
+    } finally {
+      setFieldAction(null);
+    }
+  }
+
+  async function completeVisit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!outcomeVisitId || !outcome.trim()) return;
+    setFieldAction(outcomeVisitId);
+    try {
+      await fieldDashboardApi.complete(outcomeVisitId, outcome.trim());
+      toast.success('Visit outcome recorded.');
+      setOutcomeVisitId(null);
+      setOutcome('');
+      setFieldRefresh((value) => value + 1);
+    } catch (error) {
+      toast.error(extractErrorMessage(error, 'Could not complete this visit.'));
+    } finally {
+      setFieldAction(null);
+    }
+  }
+
+  function downloadBeatSheet() {
+    if (!fieldData?.visits.length) return;
+    const escape = (value: string) => `"${(/^[=+\-@]/.test(value) ? "'" : '') + value.replace(/"/g, '""')}"`;
+    const rows = [['Time', 'Customer', 'Lead code', 'Location', 'Purpose', 'Status'], ...fieldData.visits.map((visit) => [
+      formatTime(visit.scheduledAt), visit.name, visit.leadCode, visit.location, visit.purpose, visit.status,
+    ])];
+    const csv = rows.map((row) => row.map(escape).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `beat-sheet-${fieldData.startDate}-${fieldData.endDate}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
 
   if (isExecutiveRole) {
     return (
@@ -116,48 +232,55 @@ export default function ExecutiveDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <DateRangePicker />
+            <DateRangePicker value={displayedRange} onChange={setRange} />
             <Button
               variant="primary"
               size="sm"
-              onClick={() => toast.success('Punch in timestamp recorded (+91 96540 88990)')}
+              onClick={() => punch(fieldData?.attendance.punchInTime ? 'out' : 'in')}
+              disabled={!fieldData || !!fieldData.attendance.punchOutTime || !tenant?.permissions.includes('attendance.self.punch')}
+              isLoading={fieldAction === 'punch'}
               className="flex items-center gap-2 font-semibold shadow-xs"
             >
-              <CheckCircle2 className="h-4 w-4" /> Duty Active (On Field)
+              <CheckCircle2 className="h-4 w-4" /> {fieldData?.attendance.punchOutTime ? 'Duty Complete' : fieldData?.attendance.punchInTime ? 'Punch Out (On Duty)' : 'Punch In'}
             </Button>
           </div>
         </div>
 
+        {fieldError && <div role="alert" className="rounded-sm border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-800">
+          {fieldError} <Button variant="outline" size="sm" onClick={() => setFieldRefresh((value) => value + 1)} className="ml-3">Retry</Button>
+        </div>}
+        {fieldLoading && <p role="status" className="text-xs font-semibold text-slate-600">Loading field dashboard…</p>}
+
         {/* Executive Target & Daily Metrics Grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <KpiCard
-            title="Today's Visits"
-            value="4 Scheduled"
-            subValue="1 Completed • 1 In Progress"
+            title={fieldData?.startDate === fieldData?.endDate && fieldData?.startDate === fieldData?.today ? "Today's Visits" : 'Visits'}
+            value={fieldData ? `${fieldData.summary.visitCount} Visits` : '—'}
+            subValue={fieldData ? `${fieldData.summary.completedVisits} Completed` : 'No data available'}
             icon={Store}
             iconBgColor="bg-blue-50"
             iconTextColor="text-blue-700"
           />
           <KpiCard
             title="Follow-ups Due"
-            value="3 Follow-ups"
-            subValue="Scheduled for Today"
+            value={fieldData ? `${fieldData.summary.followUpsDue} Follow-ups` : '—'}
+            subValue="Scheduled in selected range"
             icon={CalendarClock}
             iconBgColor="bg-amber-50"
             iconTextColor="text-amber-700"
           />
           <KpiCard
             title="Demos Scheduled"
-            value="2 Demos"
-            subValue="1 Demo Completed"
+            value={fieldData ? `${fieldData.summary.demos} Demos` : '—'}
+            subValue={fieldData ? `${fieldData.summary.completedDemos} Demo Completed` : 'No data available'}
             icon={Video}
             iconBgColor="bg-purple-50"
             iconTextColor="text-purple-700"
           />
           <KpiCard
             title="Monthly Target Achieved"
-            value="78.5%"
-            subValue="₹1,88,400 / ₹2,40,000"
+            value={fieldData?.summary.target ? `${fieldData.summary.target.percentage}%` : '—'}
+            subValue={fieldData?.summary.target ? `${currency(fieldData.summary.target.achieved)} / ${currency(fieldData.summary.target.amount)} (assigned territories)` : 'No target assigned'}
             icon={Target}
             iconBgColor="bg-emerald-50"
             iconTextColor="text-emerald-700"
@@ -170,15 +293,16 @@ export default function ExecutiveDashboardPage() {
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-8 space-y-4 flex flex-col justify-between">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-base font-bold text-[#0D1F3D]">Today's Beat Schedule</h3>
+                <h3 className="text-base font-bold text-[#0D1F3D]">{fieldData?.startDate === fieldData?.endDate && fieldData?.startDate === fieldData?.today ? "Today's Beat Schedule" : 'Beat Schedule'}</h3>
                 <p className="text-xs text-slate-600">Chronological visit order for your assigned beat route</p>
               </div>
               <span className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-                Andheri East Beat #4
+                {fieldData?.territoryNames.join(', ') || 'No assigned beat'}
               </span>
             </div>
 
             <div className="space-y-3">
+              {fieldData && executiveSchedule.length === 0 && <p className="py-10 text-center text-xs font-semibold text-slate-600">No assigned visits for this date range.</p>}
               {executiveSchedule.map((item, idx) => (
                 <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-sm border border-slate-200 hover:border-slate-300 bg-white transition-all shadow-2xs">
                   <div className="flex items-start gap-3">
@@ -187,17 +311,17 @@ export default function ExecutiveDashboardPage() {
                     </div>
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-[#0D1F3D]">{item.store}</h4>
+                        <h4 className="text-sm font-bold text-[#0D1F3D]">{item.name}</h4>
                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
-                          item.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                          item.status === 'In Progress' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                          item.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          item.status === 'IN_PROGRESS' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
                           'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}>
-                          {item.status}
+                          {item.status === 'IN_PROGRESS' ? 'In Progress' : item.status === 'COMPLETED' ? 'Completed' : 'Scheduled'}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-600 font-medium">{item.area}</p>
-                      <p className="text-[11px] text-slate-500 font-medium">Slot: <span className="font-semibold text-slate-800">{item.time}</span> • Type: <span className="font-semibold text-slate-800">{item.type}</span></p>
+                      <p className="text-xs text-slate-600 font-medium">{item.location}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">Slot: <span className="font-semibold text-slate-800">{formatTime(item.scheduledAt)}</span> • Type: <span className="font-semibold text-slate-800">{item.purpose}</span></p>
                     </div>
                   </div>
 
@@ -205,7 +329,9 @@ export default function ExecutiveDashboardPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => toast.info(`Opening directions to ${item.store}`)}
+                      onClick={() => item.latitude !== null && item.longitude !== null && window.open(`https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}`, '_blank', 'noopener,noreferrer')}
+                      disabled={item.latitude === null || item.longitude === null}
+                      title={item.latitude === null || item.longitude === null ? 'No coordinates recorded for this visit' : undefined}
                       className="text-xs font-semibold"
                     >
                       Navigate
@@ -213,19 +339,26 @@ export default function ExecutiveDashboardPage() {
                     <Button
                       variant="primary"
                       size="sm"
-                      onClick={() => toast.success(`Check-in dialog opened for ${item.store}`)}
+                      onClick={() => item.status === 'SCHEDULED' ? checkIn(item.id) : item.status === 'IN_PROGRESS' ? setOutcomeVisitId(item.id) : navigate(`/admin/leads/${item.leadId}/visits`)}
+                      disabled={fieldAction === item.id || ((item.status === 'SCHEDULED' || item.status === 'IN_PROGRESS') && !tenant?.permissions.includes('crm.visits.checkin')) || (item.status === 'SCHEDULED' && (!fieldData || dateInTimezone(item.scheduledAt, fieldData.timezone) !== fieldData.today))}
+                      isLoading={fieldAction === item.id}
                       className="text-xs font-semibold"
                     >
-                      {item.status === 'In Progress' ? 'Log Outcome' : 'Check-In'}
+                      {item.status === 'IN_PROGRESS' ? 'Log Outcome' : item.status === 'COMPLETED' ? 'View Details' : 'Check-In'}
                     </Button>
                   </div>
                 </div>
               ))}
+              {fieldData && fieldData.summary.visitCount > executiveSchedule.length && (
+                <p className="text-center text-xs font-semibold text-slate-600">
+                  Showing the first {executiveSchedule.length} of {fieldData.summary.visitCount} visits. Choose a shorter date range to see the rest.
+                </p>
+              )}
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600 font-medium">
-              <span>Total Distance Covered Today: <strong className="text-[#0D1F3D] font-bold">14.2 km</strong></span>
-              <Button variant="ghost" size="sm" onClick={() => toast.success('Daily route report downloaded')} className="text-xs font-bold text-[#0D1F3D]">
+              <span>Total Distance Covered Today: <strong className="text-[#0D1F3D] font-bold">Not recorded</strong></span>
+              <Button variant="ghost" size="sm" onClick={downloadBeatSheet} disabled={!executiveSchedule.length} className="text-xs font-bold text-[#0D1F3D]">
                 Download Beat Sheet
               </Button>
             </div>
@@ -235,32 +368,34 @@ export default function ExecutiveDashboardPage() {
           <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-4 space-y-4 flex flex-col justify-between">
             <div>
               <h3 className="text-base font-bold text-[#0D1F3D]">Route Map Preview</h3>
-              <p className="text-xs text-slate-600">Geofenced customer pins on your beat</p>
+              <p className="text-xs text-slate-600">Geotagged customer pins on your beat</p>
             </div>
 
             <div className="h-64 w-full rounded-sm border border-slate-200 bg-slate-100 relative overflow-hidden flex flex-col items-center justify-center p-4 text-center space-y-2">
-              <div className="absolute inset-0 bg-cover bg-center opacity-40" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=600&q=80')` }} />
-              <div className="relative z-10 bg-white/95 backdrop-blur-xs p-3 rounded-md border border-slate-200 shadow-sm max-w-[220px]">
-                <p className="text-xs font-extrabold text-[#0D1F3D]">Andheri East Beat #4</p>
-                <p className="text-[11px] font-medium text-slate-600">4 Active Customer Locations</p>
-                <div className="mt-2 text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold">
-                  Geofence Active (100m radius)
-                </div>
-              </div>
+              {routeStops.length && import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ? <InteractiveMap mode="route-playback" routeStops={routeStops} heightClassName="h-full" compact hideControls hideLegend /> : <div className="relative z-10 bg-white/95 p-3 rounded-md border border-slate-200 shadow-sm max-w-[220px]">
+                <p className="text-xs font-extrabold text-[#0D1F3D]">{fieldData?.territoryNames.join(', ') || 'Your beat'}</p>
+                <p className="text-[11px] font-medium text-slate-600">{fieldError ? 'Map unavailable while dashboard data is loading.' : routeStops.length ? 'Map unavailable. Configure a map token to view visit pins.' : 'No geotagged visit locations for this range.'}</p>
+              </div>}
             </div>
 
             <div className="space-y-2 text-xs font-medium text-slate-700">
               <div className="flex justify-between items-center">
                 <span>Start Point:</span>
-                <span className="font-bold text-[#0D1F3D]">Andheri Hub Depot</span>
+                <span className="font-bold text-[#0D1F3D]">{executiveSchedule[0]?.location || '—'}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span>End Point:</span>
-                <span className="font-bold text-[#0D1F3D]">Marol Naka Superstore</span>
+                <span className="font-bold text-[#0D1F3D]">{executiveSchedule[executiveSchedule.length - 1]?.location || '—'}</span>
               </div>
             </div>
           </div>
         </div>
+        <Modal isOpen={outcomeVisitId !== null} onClose={() => setOutcomeVisitId(null)} title="Log visit outcome" maxWidth="max-w-md">
+          <form onSubmit={completeVisit} className="space-y-4">
+            <Textarea id="visit-outcome" label="Outcome" value={outcome} onChange={(event) => setOutcome(event.target.value)} required maxLength={2000} rows={4} />
+            <div className="flex justify-end gap-2"><Button variant="outline" type="button" onClick={() => setOutcomeVisitId(null)}>Cancel</Button><Button type="submit" isLoading={fieldAction === outcomeVisitId}>Complete visit</Button></div>
+          </form>
+        </Modal>
       </div>
     );
   }

@@ -14,6 +14,8 @@ import { TerritoryService } from "./territory.service";
 import { FollowUpController } from "./follow-up.controller";
 import { FollowUpService } from "./follow-up.service";
 import { JobCoreModule } from '../jobs/job-core.module';
+import { FieldDashboardController } from "./field-dashboard.controller";
+import { FieldDashboardService } from "./field-dashboard.service";
 
 @Module({
   imports: [PersistenceModule, MasterCoreModule, JobCoreModule],
@@ -23,6 +25,7 @@ import { JobCoreModule } from '../jobs/job-core.module';
     OpportunityController,
     TerritoryController,
     FollowUpController,
+    FieldDashboardController,
   ],
   providers: [
     CrmRepository,
@@ -32,6 +35,7 @@ import { JobCoreModule } from '../jobs/job-core.module';
     TerritoryRepository,
     TerritoryService,
     FollowUpService,
+    FieldDashboardService,
   ],
   exports: [OpportunityService, TerritoryService],
 })
