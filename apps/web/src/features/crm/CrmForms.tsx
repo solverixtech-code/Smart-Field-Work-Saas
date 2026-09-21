@@ -26,29 +26,31 @@ export function ContactFields({
 }) {
   const { can } = useCrm();
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 font-sans text-xs">
       <Input
         id="contact-name"
-        label="Contact name"
+        label="Contact Name *"
         required
         maxLength={200}
+        placeholder="e.g. Rahul Sharma"
         value={value.name}
         onChange={(e) => onChange({ ...value, name: e.target.value })}
       />
       <Input
         id="contact-phone"
-        label="Phone (with country code)"
+        label="Phone Number (with +91)"
         type="tel"
         maxLength={30}
-        placeholder="+919876543210"
+        placeholder="+91 98765 43210"
         value={value.phone ?? ""}
         onChange={(e) => onChange({ ...value, phone: e.target.value || null })}
       />
       <Input
         id="contact-email"
-        label="Email"
+        label="Email Address"
         type="email"
         maxLength={254}
+        placeholder="rahul@business.com"
         value={value.email ?? ""}
         onChange={(e) => onChange({ ...value, email: e.target.value || null })}
       />
@@ -63,18 +65,20 @@ export function ContactFields({
         }}
       />
       {can("system.masters.view") && (
-        <CrmLookup
-          id="contact-role"
-          label="Contact role"
-          kind="contact_role"
-          value={value.roleValueId}
-          currentLabel={current?.role}
-          onChange={(roleValueId) =>
-            onChange({ ...value, roleValueId: roleValueId || null })
-          }
-        />
+        <div className="sm:col-span-2">
+          <CrmLookup
+            id="contact-role"
+            label="Contact Role / Designation"
+            kind="contact_role"
+            value={value.roleValueId}
+            currentLabel={current?.role}
+            onChange={(roleValueId) =>
+              onChange({ ...value, roleValueId: roleValueId || null })
+            }
+          />
+        </div>
       )}
-      <p className="text-sm text-slate-600 sm:col-span-2">
+      <p className="text-xs font-semibold text-slate-500 sm:col-span-2">
         Provide at least a phone number or email address.
       </p>
     </div>
@@ -412,17 +416,11 @@ export function ContactForm({
     }
   }
   return (
-    <form
-      onSubmit={submit}
-      className="space-y-4 rounded-lg border border-slate-200 bg-white p-5"
-    >
-      <h2 className="text-lg font-semibold">
-        {initial ? "Edit contact" : "Add contact"}
-      </h2>
+    <form onSubmit={submit} className="space-y-5 font-sans">
       {mutation.error && <CrmFailure error={mutation.error} />}
       {reload.error && <CrmFailure error={reload.error} />}
       {mutation.error?.conflict && initial && (
-        <>
+        <div className="space-y-2">
           <Button
             type="button"
             variant="outline"
@@ -432,34 +430,37 @@ export function ContactForm({
             Reload current revision
           </Button>
           {reviewed && (
-            <p className="text-sm">
+            <p className="text-xs font-semibold text-slate-600">
               Current saved contact: {current?.name},{" "}
               {current?.phone || "no phone"}, {current?.email || "no email"},{" "}
               {current?.status}, {current?.role || "no role"}. Revision{" "}
               {revision}. Your edits are retained below.
             </p>
           )}
-        </>
+        </div>
       )}
-      <fieldset disabled={!allowed || mutation.pending} className="space-y-4">
+      <fieldset disabled={!allowed || mutation.pending} className="space-y-5">
         <ContactFields value={draft} onChange={setDraft} current={current} />
-        <div className="flex gap-3">
+        <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+          <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+            Cancel
+          </Button>
           <Button
             type="submit"
+            size="sm"
             isLoading={mutation.pending}
             disabled={Boolean(mutation.error?.conflict && !reviewed)}
+            className="bg-[#0D1F3D] hover:bg-slate-800 text-white font-bold"
           >
             {reviewed
-              ? "Submit reviewed changes"
+              ? "Submit Reviewed Changes"
               : initial
-                ? "Save contact"
-                : "Create contact"}
-          </Button>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+                ? "Save Contact"
+                : "Create Contact"}
           </Button>
         </div>
       </fieldset>
     </form>
   );
 }
+
