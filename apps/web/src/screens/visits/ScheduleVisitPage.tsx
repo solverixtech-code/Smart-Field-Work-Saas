@@ -315,6 +315,48 @@ export default function ScheduleVisitPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
+    const newScheduledVisit = {
+      id: `VIS-2026-${Math.floor(1000 + Math.random() * 9000)}`,
+      businessId: selectedBusiness?.id || "BUS-101",
+      businessName: selectedBusiness?.name || "Merchant",
+      businessType: selectedBusiness?.businessType || "Commercial Merchant",
+      businessCategory: "Commercial",
+      location: address,
+      executiveId: selectedExecutive?.value || "ex-1",
+      executiveName: selectedExecutive?.name || "Field Executive",
+      executiveRole: selectedExecutive?.role || "Field Executive",
+      executiveAvatar: selectedExecutive?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+      executivePhone: "+91 98765 43210",
+      executiveEmail: "executive@sfw.com",
+      visitType: visitType || "Sales Visit",
+      purpose: purpose || "Product Demo & Corporate Discussion",
+      scheduledDateTime: `${scheduledDate}, ${startTime}`,
+      status: "Scheduled" as const,
+      isGpsVerified: true,
+      gpsStatus: "Verified (Within 100m)" as const,
+      distanceFromShop: "12m",
+      routeArea: routeArea || "Andheri East Route",
+      travelMode: travelMode || "Bike",
+      distanceTraveled: "0 km",
+      outcome: "Pending" as const,
+      nextStep: "Conduct Visit",
+      priority: (priority as any) || "High",
+      remarks: instructions,
+      notes: instructions,
+      createdBy: "Admin User",
+      createdOn: new Date().toLocaleDateString(),
+      productsDiscussed: [],
+      tasksCreated: [],
+      documentsShared: [],
+    };
+
+    try {
+      const existing = JSON.parse(localStorage.getItem("sfw_scheduled_visits") || "[]");
+      localStorage.setItem("sfw_scheduled_visits", JSON.stringify([newScheduledVisit, ...existing]));
+    } catch (err) {
+      console.warn("localStorage visit save warning:", err);
+    }
+
     try {
       if (targetType === "lead" && selectedBusinessId) {
         await mutation.run(async (s, signal) => {

@@ -98,107 +98,71 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
     return options;
   }, [realOwners]);
 
-  // Construct dynamic visits list using REAL backend leads and accounts when available
+  // Construct dynamic visits list using user-scheduled visits and real business accounts
   const dynamicVisitsList: VisitItem[] = React.useMemo(() => {
-    const hasRealData = realAccounts.length > 0 || realLeads.length > 0;
+    let localScheduled: VisitItem[] = [];
+    try {
+      localScheduled = JSON.parse(localStorage.getItem('sfw_scheduled_visits') || '[]');
+    } catch (e) {}
 
-    if (!hasRealData) {
+    const list: VisitItem[] = [...localScheduled];
+
+    // Map real user-created accounts / businesses
+    if (realAccounts.length > 0) {
+      realAccounts.forEach((acc: any, idx: number) => {
+        if (list.some((v) => v.businessId === acc.id || v.businessName === acc.name)) return;
+
+        const fullAddr = [acc.addressLine1, acc.addressLine2, acc.city, acc.state, acc.postalCode]
+          .filter(Boolean)
+          .join(', ') || acc.city || 'Mumbai, Maharashtra';
+
+        list.push({
+          id: `VIS-2026-${1000 + idx}`,
+          businessId: acc.id,
+          businessName: acc.name,
+          businessType: acc.businessTypeValue?.label || acc.businessType || 'Commercial Merchant',
+          businessCategory: acc.categoryLabel || 'Retail',
+          location: fullAddr,
+          executiveId: acc.ownerMembershipId || 'FE-1001',
+          executiveName: acc.owner?.displayName || 'Sahibjit Singh',
+          executiveRole: acc.owner?.role || 'Field Executive',
+          executiveAvatar: acc.owner?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+          executivePhone: acc.primaryContact?.phone || acc.phone || '+91 98765 43210',
+          executiveEmail: acc.primaryContact?.email || acc.email || 'executive@sfw.com',
+          visitType: 'Sales Visit',
+          purpose: 'Product Demo & Requirement Discussion',
+          scheduledDateTime: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', 10:00 AM',
+          status: acc.status === 'ACTIVE' ? 'Completed' : 'Scheduled',
+          checkInTime: acc.status === 'ACTIVE' ? '10:05 AM' : undefined,
+          checkOutTime: acc.status === 'ACTIVE' ? '10:45 AM' : undefined,
+          duration: '40m',
+          isGpsVerified: true,
+          gpsStatus: 'Verified (Within 100m)',
+          distanceFromShop: '15m',
+          routeArea: `${acc.city || 'Andheri'} Route`,
+          travelMode: 'Bike',
+          distanceTraveled: '5.4 km',
+          outcome: acc.status === 'ACTIVE' ? 'Positive' : 'Pending',
+          nextStep: 'Follow up',
+          priority: 'High',
+          remarks: 'Account visit synced from CRM.',
+          notes: acc.description || 'Active account visit.',
+          createdBy: acc.owner?.displayName || 'System Administrator',
+          createdOn: new Date(acc.createdAt || Date.now()).toLocaleDateString(),
+          productsDiscussed: [],
+          tasksCreated: [],
+          documentsShared: [],
+        });
+      });
+    }
+
+    // Fallback to mockVisits ONLY if absolutely no scheduled visits or real accounts exist
+    if (list.length === 0) {
       return mockVisits;
     }
 
-    const list: VisitItem[] = [];
-
-    // Map real accounts / businesses
-    realAccounts.forEach((acc: any, idx: number) => {
-      const fullAddr = [acc.addressLine1, acc.addressLine2, acc.city, acc.state, acc.postalCode]
-        .filter(Boolean)
-        .join(', ') || acc.city || 'Mumbai, Maharashtra';
-
-      list.push({
-        id: `VIS-2025-${1000 + idx}`,
-        businessId: acc.id,
-        businessName: acc.name,
-        businessType: acc.businessTypeValue?.label || acc.businessType || 'Commercial Merchant',
-        businessCategory: acc.categoryLabel || 'Retail',
-        location: fullAddr,
-        executiveId: acc.ownerMembershipId || 'FE-1001',
-        executiveName: acc.owner?.displayName || 'Sahibjit Singh',
-        executiveRole: acc.owner?.role || 'Field Executive',
-        executiveAvatar: acc.owner?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        executivePhone: acc.primaryContact?.phone || acc.phone || '+91 98765 43210',
-        executiveEmail: acc.primaryContact?.email || acc.email || 'executive@sfw.com',
-        visitType: 'Sales Visit',
-        purpose: 'Product Demo & Requirement Discussion',
-        scheduledDateTime: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', 10:00 AM',
-        status: acc.status === 'ACTIVE' ? 'Completed' : 'Scheduled',
-        checkInTime: acc.status === 'ACTIVE' ? '10:05 AM' : undefined,
-        checkOutTime: acc.status === 'ACTIVE' ? '10:45 AM' : undefined,
-        duration: '40m',
-        isGpsVerified: true,
-        gpsStatus: 'Verified (Within 100m)',
-        distanceFromShop: '15m',
-        routeArea: `${acc.city || 'Andheri'} Route`,
-        travelMode: 'Bike',
-        distanceTraveled: '5.4 km',
-        outcome: acc.status === 'ACTIVE' ? 'Positive' : 'Pending',
-        nextStep: 'Follow up',
-        priority: 'High',
-        remarks: 'Account visit synced from CRM.',
-        notes: acc.description || 'Active account visit.',
-        createdBy: acc.owner?.displayName || 'System Administrator',
-        createdOn: new Date(acc.createdAt || Date.now()).toLocaleDateString(),
-        productsDiscussed: [],
-        tasksCreated: [],
-        documentsShared: [],
-      });
-    });
-
-    // Map real leads / prospects
-    realLeads.forEach((lead: any, idx: number) => {
-      const bName = lead.businessName || lead.contactName || lead.name || 'Prospect Account';
-      if (list.some((v) => v.businessId === lead.id || v.businessName === bName)) return;
-
-      list.push({
-        id: `VIS-2025-${2000 + idx}`,
-        businessId: lead.id,
-        businessName: bName,
-        businessType: lead.category || 'Prospect Lead',
-        businessCategory: 'Commercial',
-        location: lead.address || lead.city || 'Mumbai, Maharashtra',
-        executiveId: lead.ownerMembershipId || 'FE-1001',
-        executiveName: lead.owner?.displayName || 'Sahibjit Singh',
-        executiveRole: lead.owner?.role || 'Field Executive',
-        executiveAvatar: lead.owner?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        executivePhone: lead.phone || '+91 98765 43210',
-        executiveEmail: lead.email || 'executive@sfw.com',
-        visitType: 'Sales Visit',
-        purpose: lead.nextActionNote || 'Prospect Product Pitch',
-        scheduledDateTime: lead.nextFollowUpAt
-          ? new Date(lead.nextFollowUpAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', 11:30 AM'
-          : new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', 11:30 AM',
-        status: lead.status === 'QUALIFIED' ? 'Completed' : 'Scheduled',
-        checkInTime: lead.status === 'QUALIFIED' ? '11:35 AM' : undefined,
-        isGpsVerified: true,
-        gpsStatus: 'Verified (Within 100m)',
-        distanceFromShop: '15m',
-        routeArea: `${lead.city || 'Andheri'} Route`,
-        travelMode: 'Bike',
-        distanceTraveled: '6.5 km',
-        outcome: lead.status === 'QUALIFIED' ? 'Positive' : 'Pending',
-        nextStep: lead.nextActionNote || 'Follow up call',
-        priority: lead.priority === 'HIGH' || lead.priority === 'URGENT' ? 'High' : 'Medium',
-        remarks: lead.requirementNote || 'Lead created from CRM.',
-        notes: lead.description || 'CRM active lead visit.',
-        createdBy: lead.owner?.displayName || 'System Administrator',
-        createdOn: new Date(lead.createdAt || Date.now()).toLocaleDateString(),
-        productsDiscussed: [],
-        tasksCreated: [],
-        documentsShared: [],
-      });
-    });
-
     return list;
-  }, [realLeads, realAccounts]);
+  }, [realAccounts]);
 
   const [selectedVisitId, setSelectedVisitId] = useState<string>(dynamicVisitsList[0]?.id || mockVisits[0].id);
   const selectedVisit = dynamicVisitsList.find((v) => v.id === selectedVisitId) || dynamicVisitsList[0] || mockVisits[0];
