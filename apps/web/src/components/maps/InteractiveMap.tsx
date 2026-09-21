@@ -109,6 +109,8 @@ export interface InteractiveMapProps {
   children?: React.ReactNode;
 }
 
+const emptyRoutePath: [number, number][] = [];
+
 export function InteractiveMap({
   mode = 'live-executives',
   executives = [],
@@ -117,7 +119,7 @@ export function InteractiveMap({
   territories = [],
   territoryPath,
   routeStops = [],
-  routePath = [],
+  routePath = emptyRoutePath,
   playbackActiveStopIndex,
   selectedExecutiveId,
   selectedProspectId,
@@ -430,7 +432,12 @@ export function InteractiveMap({
 
         const pathCoords = activeCoords.map(([lat, lng]) => [lng, lat]);
 
-        if (pathCoords.length < 2) return;
+        if (pathCoords.length < 2) {
+          if (map.getLayer('mapbox-route-line')) map.removeLayer('mapbox-route-line');
+          if (map.getLayer('mapbox-route-glow')) map.removeLayer('mapbox-route-glow');
+          if (map.getSource('mapbox-route-src')) map.removeSource('mapbox-route-src');
+          return;
+        }
 
         const geojson: any = {
           type: 'Feature',

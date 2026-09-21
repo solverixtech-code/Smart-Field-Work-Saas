@@ -322,6 +322,20 @@ export class OpportunityService {
 
       dealRevision(row, v.expectedRevision);
 
+      if (isFieldExecutive(p)) {
+        if (v.leadId === null ||
+          (v.assignedMembershipId && v.assignedMembershipId !== p.scope.membershipId)) {
+          throw new ForbiddenException("CRM_SCOPE_REQUIRED");
+        }
+        if (v.leadId && v.leadId !== row.leadId) {
+          const assignedLead = await tx.lead.findFirst({
+            where: { AND: [leadScope(p), { id: v.leadId }] },
+            select: { id: true },
+          });
+          if (!assignedLead) throw new NotFoundException("CRM_LEAD_NOT_FOUND");
+        }
+      }
+
       let stageValueId = v.stageValueId;
       if (v.stage && !stageValueId) {
         const master = await tx.masterValue.findFirst({

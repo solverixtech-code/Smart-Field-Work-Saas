@@ -69,4 +69,25 @@ describe("field executive CRM record scope", () => {
       select: { id: true },
     });
   });
+
+  it("cannot detach or relink an assigned deal to another member's lead", async () => {
+    const editor = { ...actor, tenantPermissions: [...actor.tenantPermissions, "crm.leads.update"] };
+    const policy = new CrmPolicy(editor);
+    const tx = {
+      opportunity: { findFirst: jest.fn().mockResolvedValue({ revision: 1, leadId: "lead-a" }) },
+      lead: { findFirst: jest.fn().mockResolvedValue(null) },
+    };
+    const repo = {
+      run: (_principal: RequestPrincipal, _write: boolean,
+        work: (transaction: Prisma.TransactionClient, authorization: CrmPolicy) => Promise<unknown>) =>
+        work(tx as unknown as Prisma.TransactionClient, policy),
+    };
+    const service = new OpportunityService(repo as unknown as CrmRepository);
+    const dealId = "e3bb0c7c-247a-4a70-abab-1ab688ba04f6";
+    await expect(service.update(editor, dealId, { expectedRevision: 1, leadId: null }))
+      .rejects.toThrow(ForbiddenException);
+    await expect(service.update(editor, dealId, {
+      expectedRevision: 1, leadId: "4a843e48-0e57-49ca-8fc8-ffda0e05f567",
+    })).rejects.toThrow(NotFoundException);
+  });
 });

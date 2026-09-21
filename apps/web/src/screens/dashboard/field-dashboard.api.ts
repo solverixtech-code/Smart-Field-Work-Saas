@@ -57,7 +57,4 @@ export const fieldDashboardApi = {
   complete: async (visitId: string, outcome: string): Promise<void> => {
     await api.patch(`/tenant/crm/field-dashboard/visits/${visitId}/complete`, { outcome });
   },
-  punch: async (action: 'in' | 'out', coordinates: GeolocationCoordinates): Promise<void> => {
-    await api.post(`/attendance/punch-${action}`, { latitude: coordinates.latitude, longitude: coordinates.longitude });
-  },
 };

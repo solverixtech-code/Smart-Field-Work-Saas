@@ -1,25 +1,19 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import {
-  User,
   Calendar,
-  Clock,
-  Navigation,
-  MapPin,
-  CheckCircle2,
   Play,
   Pause,
   Filter,
   Download,
-  Maximize2,
-  ChevronRight,
   RotateCcw,
-  Zap,
+  ChevronRight,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Avatar } from '../../components/ui/Avatar';
 import { DatePicker } from '../../components/ui/DatePicker';
+import { Modal } from '../../components/ui/Modal';
+import { Textarea } from '../../components/ui/Textarea';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import { extractErrorMessage } from '../../common/api';
 import { useAppSelector } from '../../store';
@@ -66,7 +60,6 @@ function liveActivities(data: FieldDashboardData): RouteActivity[] {
 }
 
 export default function RoutePlaybackPage() {
-  const navigate = useNavigate();
   const tenant = useAppSelector((state) => state.authorization.tenant);
   const user = useAppSelector((state) => state.auth.user);
   const isOwnRoute = isExecutiveRole(tenant?.roleCode);
@@ -81,6 +74,9 @@ export default function RoutePlaybackPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
+  const [actionVisitId, setActionVisitId] = useState<string | null>(null);
+  const [outcomeVisitId, setOutcomeVisitId] = useState<string | null>(null);
+  const [outcome, setOutcome] = useState('');
 
   useEffect(() => {
     if (!isOwnRoute) return;
@@ -110,18 +106,19 @@ export default function RoutePlaybackPage() {
       timestamp: formatTime(activity.timestamp, timezone), distanceKm: 0,
       lat: activity.latitude, lng: activity.longitude, statusText: activity.status,
     }]), [visibleActivities, timezone]);
-  const workedMinutes = fieldData?.attendance.punchInTime && fieldData.attendance.punchOutTime
-    ? Math.max(0, Math.floor((new Date(fieldData.attendance.punchOutTime).getTime() -
-      new Date(fieldData.attendance.punchInTime).getTime()) / 60000)) : null;
+  const punchIn = fieldData?.punches.find((punch) => punch.type === 'PUNCH_IN')?.timestamp ?? null;
+  const punchOut = fieldData?.punches.slice().reverse().find((punch) => punch.type === 'PUNCH_OUT')?.timestamp ?? null;
+  const workedMinutes = punchIn && punchOut
+    ? Math.max(0, Math.floor((new Date(punchOut).getTime() - new Date(punchIn).getTime()) / 60000)) : null;
   const route: ExecutiveRoute = isOwnRoute ? {
     executiveId: tenant?.membershipId ?? '',
     executiveName: fieldData?.executive.name ?? user?.fullName ?? 'Field executive',
     executiveAvatar: fieldData?.executive.avatarUrl ?? '',
-    status: fieldData?.attendance.punchInTime && !fieldData.attendance.punchOutTime ? 'On duty' : 'Off duty',
+    status: fieldData?.startDate === fieldData?.today && punchIn && !punchOut ? 'On duty' : 'Off duty',
     date: new Date(`${selectedDate ?? fieldData?.today ?? new Date().toISOString().slice(0, 10)}T00:00:00Z`)
       .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }),
-    startTime: formatTime(fieldData?.attendance.punchInTime, timezone),
-    endTime: formatTime(fieldData?.attendance.punchOutTime, timezone),
+    startTime: formatTime(punchIn, timezone),
+    endTime: formatTime(punchOut, timezone),
     totalDurationText: workedMinutes === null ? '—' : `${Math.floor(workedMinutes / 60)}h ${workedMinutes % 60}m`,
     totalDistanceKm: 0,
     totalVisitsPlanned: fieldData?.summary.visitCount ?? 0,
@@ -155,6 +152,41 @@ export default function RoutePlaybackPage() {
     link.download = `route-activities-${fieldData.startDate}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function checkIn(visitId: string) {
+    setActionVisitId(visitId);
+    try {
+      await fieldDashboardApi.checkIn(visitId);
+      toast.success('Visit check-in recorded.');
+      setRefresh((value) => value + 1);
+    } catch (reason: unknown) {
+      toast.error(extractErrorMessage(reason, 'Could not check in to this visit.'));
+    } finally {
+      setActionVisitId(null);
+    }
+  }
+
+  async function completeVisit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!outcomeVisitId || !outcome.trim()) return;
+    setActionVisitId(outcomeVisitId);
+    try {
+      await fieldDashboardApi.complete(outcomeVisitId, outcome.trim());
+      toast.success('Visit outcome recorded.');
+      setOutcomeVisitId(null);
+      setOutcome('');
+      setRefresh((value) => value + 1);
+    } catch (reason: unknown) {
+      toast.error(extractErrorMessage(reason, 'Could not complete this visit.'));
+    } finally {
+      setActionVisitId(null);
+    }
+  }
+
+  function closeOutcome() {
+    setOutcomeVisitId(null);
+    setOutcome('');
   }
 
   // Playback steps through recorded locations and assigned visit locations.
@@ -281,7 +313,8 @@ export default function RoutePlaybackPage() {
         <div className="lg:col-span-8 flex flex-col space-y-3">
           {isOwnRoute && (!route.stops.length || !import.meta.env.VITE_MAPBOX_ACCESS_TOKEN) ?
             <div className="flex h-[580px] items-center justify-center rounded-md border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-600">
-              {route.stops.length ? 'Mapbox is not configured for this workspace.' : 'No geotagged visits or mobile attendance locations for this date.'}
+              {loading ? 'Loading route locations…' : error ? 'Route locations are unavailable. Retry to load them.' :
+                route.stops.length ? 'Mapbox is not configured for this workspace.' : 'No geotagged visits or mobile attendance locations for this date.'}
             </div> :
             <InteractiveMap
               mode="route-playback"
@@ -290,7 +323,7 @@ export default function RoutePlaybackPage() {
               playbackActiveStopIndex={activeStopIndex}
               heightClassName="h-[580px]"
             />}
-          {isOwnRoute && route.stops.length > 1 && <p className="text-xs text-slate-500">Mapbox draws a suggested road route between recorded locations; travel distance and speed are not tracked here.</p>}
+          {isOwnRoute && route.stops.length > 1 && <p className="text-xs text-slate-500">Mapbox connects assigned visit locations and mobile punch coordinates with a suggested road route. This is not a GPS trace; travel distance and speed are not tracked here.</p>}
 
           {/* BOTTOM FLOATING ROUTE PLAYBACK PLAYER BAR */}
           <div className="rounded-sm border border-slate-200/90 bg-white p-3 shadow-md flex items-center justify-between gap-4 text-xs font-semibold">
@@ -393,19 +426,21 @@ export default function RoutePlaybackPage() {
 
             {isOwnRoute && !loading && !error && listedActivities.length === 0 &&
               <p className="rounded-md border border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-600">No {activeTab === 'visits' ? 'assigned visits' : 'route activities'} for this date.</p>}
+            {isOwnRoute && fieldData && fieldData.summary.visitCount > fieldData.visits.length &&
+              <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Showing the first {fieldData.visits.length} of {fieldData.summary.visitCount} assigned visits.</p>}
             {listedActivities.map((st) => {
               const mapIndex = route.stops.findIndex((stop) => stop.id === st.id);
-              return <button
-                type="button"
-                key={st.id}
-                onClick={() => mapIndex >= 0 && setActiveStopIndex(mapIndex)}
-                disabled={mapIndex < 0}
-                className={`flex w-full items-start gap-3 p-2.5 rounded-sm border text-left transition-all ${
-                  activeStopIndex === mapIndex && mapIndex >= 0
-                    ? 'border-[#0D1F3D] bg-slate-50 shadow-xs'
-                    : 'border-slate-200/80 bg-white enabled:hover:border-slate-300'
-                }`}
-              >
+              return <div key={st.id} className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => mapIndex >= 0 && setActiveStopIndex(mapIndex)}
+                  disabled={mapIndex < 0}
+                  className={`flex w-full items-start gap-3 p-2.5 rounded-sm border text-left transition-all ${
+                    activeStopIndex === mapIndex && mapIndex >= 0
+                      ? 'border-[#0D1F3D] bg-slate-50 shadow-xs'
+                      : 'border-slate-200/80 bg-white enabled:hover:border-slate-300'
+                  }`}
+                >
                 <div
                   className={`flex h-7 w-7 items-center justify-center rounded-full text-white font-extrabold text-[11px] shrink-0 mt-0.5 ${
                     st.type === 'start' ? 'bg-emerald-600' :
@@ -429,7 +464,17 @@ export default function RoutePlaybackPage() {
                     </span>
                   )}
                 </div>
-              </button>;
+                </button>
+                {isOwnRoute && st.type === 'visit' && tenant?.permissions.includes('crm.visits.checkin') &&
+                  (st.status === 'SCHEDULED' || st.status === 'IN_PROGRESS') &&
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm" className="text-xs" isLoading={actionVisitId === st.id}
+                      disabled={st.status === 'SCHEDULED' && fieldData?.startDate !== fieldData?.today}
+                      onClick={() => st.status === 'SCHEDULED' ? checkIn(st.id) : setOutcomeVisitId(st.id)}>
+                      {st.status === 'SCHEDULED' ? 'Check in to visit' : 'Log visit outcome'}
+                    </Button>
+                  </div>}
+              </div>;
             })}
           </div>
 
@@ -444,6 +489,15 @@ export default function RoutePlaybackPage() {
           </Button>}
         </div>
       </div>
+      <Modal isOpen={outcomeVisitId !== null} onClose={closeOutcome} title="Log visit outcome" maxWidth="max-w-md">
+        <form onSubmit={completeVisit} className="space-y-4">
+          <Textarea id="route-visit-outcome" label="Outcome" value={outcome} onChange={(event) => setOutcome(event.target.value)} required maxLength={2000} rows={4} />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" type="button" onClick={closeOutcome}>Cancel</Button>
+            <Button type="submit" isLoading={actionVisitId === outcomeVisitId}>Complete visit</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

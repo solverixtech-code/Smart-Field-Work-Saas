@@ -8,14 +8,14 @@ import RoutePlaybackPage from './RoutePlaybackPage';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
-const apiMock = vi.hoisted(() => ({ get: vi.fn() }));
+const apiMock = vi.hoisted(() => ({ get: vi.fn(), checkIn: vi.fn(), complete: vi.fn() }));
 vi.mock('../dashboard/field-dashboard.api', () => ({ fieldDashboardApi: apiMock }));
 vi.mock('../../store', () => ({
   useAppSelector: (selector: (state: {
-    authorization: { tenant: { roleCode: string; membershipId: string } };
+    authorization: { tenant: { roleCode: string; membershipId: string; permissions: string[] } };
     auth: { user: { fullName: string } };
   }) => unknown) => selector({
-    authorization: { tenant: { roleCode: 'field_executive', membershipId: 'member-1' } },
+    authorization: { tenant: { roleCode: 'field_executive', membershipId: 'member-1', permissions: ['crm.visits.checkin'] } },
     auth: { user: { fullName: 'Vikram Singh' } },
   }),
 }));
@@ -51,6 +51,8 @@ let root: Root;
 beforeEach(() => {
   vi.stubEnv('VITE_MAPBOX_ACCESS_TOKEN', 'test-token');
   apiMock.get.mockResolvedValue(routeData);
+  apiMock.checkIn.mockResolvedValue(undefined);
+  apiMock.complete.mockResolvedValue(undefined);
   host = document.createElement('div');
   document.body.append(host);
   root = createRoot(host);
@@ -81,5 +83,16 @@ describe('field executive route playback', () => {
     expect(host.textContent).toContain('No geotagged visits or mobile attendance locations');
     expect(host.textContent).toContain('No route activities for this date.');
     expect(host.textContent).not.toContain('28.6 km');
+  });
+
+  it('retains visit check-in without offering desktop attendance punch-in', async () => {
+    apiMock.get.mockResolvedValue({ ...routeData, visits: [{ ...routeData.visits[0], status: 'SCHEDULED' }],
+      summary: { ...routeData.summary, completedVisits: 0 } });
+    await act(async () => root.render(<MemoryRouter><RoutePlaybackPage /></MemoryRouter>));
+    const checkIn = Array.from(host.querySelectorAll('button')).find((button) => button.textContent?.includes('Check in to visit'));
+    expect(checkIn).toBeTruthy();
+    await act(async () => checkIn?.click());
+    expect(apiMock.checkIn).toHaveBeenCalledWith('visit-1');
+    expect(host.querySelector('button[aria-label="Punch In"]')).toBeNull();
   });
 });
