@@ -7,8 +7,10 @@ import {
   Check,
   Plus,
   Info,
+  X,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { ConfirmTerritoryUnassignModal } from './ConfirmTerritoryUnassignModal';
 import { Select, SelectOption } from '../../components/ui/Select';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import { getEmployeeProfile, mapTerritoryDtoToItem, TerritoryItem } from './territoriesData';
@@ -49,6 +51,9 @@ export default function EditTerritoryPage() {
   const [retentionTarget, setRetentionTarget] = useState('0');
 
   const [assignedExecutives, setAssignedExecutives] = useState<TerritoryMemberSummary[]>([]);
+  const [unassignTarget, setUnassignTarget] = useState<TerritoryMemberSummary | null>(null);
+  const [unassignPending, setUnassignPending] = useState(false);
+  const [unassignError, setUnassignError] = useState<string | null>(null);
 
   const [notes, setNotes] = useState('');
 
@@ -173,14 +178,19 @@ export default function EditTerritoryPage() {
     }
   };
 
-  const handleUnassign = async (member: TerritoryMemberSummary) => {
-    if (!territoryId) return;
+  const handleUnassign = async () => {
+    if (!territoryId || !unassignTarget || unassignPending) return;
+    setUnassignPending(true);
+    setUnassignError(null);
     try {
-      await crmApi.unassignTerritoryMember(territoryId, member.membershipId);
-      setAssignedExecutives((current) => current.filter((item) => item.id !== member.id));
+      await crmApi.unassignTerritoryMember(territoryId, unassignTarget.membershipId);
+      setAssignedExecutives((current) => current.filter((item) => item.id !== unassignTarget.id));
+      setUnassignTarget(null);
       toast.success('Executive removed from territory');
     } catch (cause) {
-      toast.error(crmError(cause).message);
+      setUnassignError(`Could not unassign ${unassignTarget.membership?.user?.fullName ?? 'this executive'}. ${crmError(cause).message}`);
+    } finally {
+      setUnassignPending(false);
     }
   };
 
@@ -475,13 +485,16 @@ export default function EditTerritoryPage() {
                       className="h-5 w-5 rounded-full object-cover border border-white shrink-0"
                     />
                     <span>{name}</span>
-                    <button
+                    <Button
                       type="button"
-                      onClick={() => void handleUnassign(member)}
-                      className="text-slate-400 hover:text-slate-900 font-extrabold ml-1 cursor-pointer"
+                      variant="ghost"
+                      size="sm"
+                      aria-label={`Unassign ${name}`}
+                      onClick={() => { setUnassignError(null); setUnassignTarget(member); }}
+                      className="ml-1 h-5 min-h-0 w-5 p-0 text-slate-500"
                     >
-                      ×
-                    </button>
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
                   </span>
                 );
               })}
@@ -558,6 +571,14 @@ export default function EditTerritoryPage() {
           </div>
         </div>
       </form>
+      <ConfirmTerritoryUnassignModal
+        executiveName={unassignTarget?.membership?.user?.fullName ?? (unassignTarget ? 'Unknown executive' : null)}
+        territoryName={territory.name}
+        pending={unassignPending}
+        error={unassignError}
+        onClose={() => setUnassignTarget(null)}
+        onConfirm={() => void handleUnassign()}
+      />
     </div>
   );
 }

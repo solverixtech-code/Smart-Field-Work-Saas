@@ -42,6 +42,19 @@ const territory: TerritoryDto = {
   members: [], targets: [],
   _count: { members: 0, accounts: 0, leads: 0 },
 };
+const membershipId = '37cc78b5-1095-4aa2-a765-b5733e03575e';
+const territoryWithMember: TerritoryDto = {
+  ...territory,
+  members: [{
+    id: 'assignment-1', membershipId, role: 'Field Executive',
+    assignedAt: '2026-09-20T00:00:00Z',
+    membership: {
+      id: membershipId, status: 'ACTIVE',
+      user: { fullName: 'Amit Sharma', avatarUrl: null, email: 'amit@example.com', mobile: '+919876543210' },
+      team: { id: 'team-1', name: 'West team' }, tenantRole: { name: 'Field Executive' },
+    },
+  }],
+};
 let host: HTMLDivElement;
 let root: Root;
 const flush = () => act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
@@ -120,19 +133,7 @@ describe('saved territory pages', () => {
   });
 
   it('opens real assigned executive details without displaying the membership ID', async () => {
-    const membershipId = '37cc78b5-1095-4aa2-a765-b5733e03575e';
-    apiMock.territory.mockResolvedValue({
-      ...territory,
-      members: [{
-        id: 'assignment-1', membershipId, role: 'Field Executive',
-        assignedAt: '2026-09-20T00:00:00Z',
-        membership: {
-          id: membershipId, status: 'ACTIVE',
-          user: { fullName: 'Amit Sharma', avatarUrl: null, email: 'amit@example.com', mobile: '+919876543210' },
-          team: { id: 'team-1', name: 'West team' }, tenantRole: { name: 'Field Executive' },
-        },
-      }],
-    });
+    apiMock.territory.mockResolvedValue(territoryWithMember);
     await renderPage(<TerritoryDetailsPage initialTab="Executives" />, '/admin/territories/saved-territory');
     expect(host.textContent).toContain('Amit Sharma');
     expect(host.textContent).not.toContain(membershipId);
@@ -145,6 +146,51 @@ describe('saved territory pages', () => {
     expect(dialog?.textContent).toContain('amit@example.com');
     expect(dialog?.textContent).toContain('West team');
     expect(dialog?.textContent).not.toContain(membershipId);
+  });
+
+  it('requires confirmation before unassigning and keeps the roster on cancel', async () => {
+    apiMock.territory.mockResolvedValueOnce(territoryWithMember).mockResolvedValue(territory);
+    await renderPage(<TerritoryDetailsPage initialTab="Executives" />, '/admin/territories/saved-territory');
+    const unassign = [...host.querySelectorAll('button')].find((button) => button.textContent === 'Unassign');
+    await act(async () => unassign!.click());
+    let dialog = [...document.querySelectorAll('[role="dialog"]')].find((item) => item.textContent?.includes('Unassign executive'));
+    expect(dialog?.textContent).toContain('Amit Sharma');
+    expect(dialog?.textContent).toContain('Saved Territory');
+    expect(apiMock.unassignTerritoryMember).not.toHaveBeenCalled();
+    await act(async () => [...(dialog?.querySelectorAll('button') ?? [])].find((button) => button.textContent === 'Cancel')!.click());
+    expect(host.textContent).toContain('Amit Sharma');
+    expect(apiMock.unassignTerritoryMember).not.toHaveBeenCalled();
+
+    await act(async () => unassign!.click());
+    dialog = [...document.querySelectorAll('[role="dialog"]')].find((item) => item.textContent?.includes('Unassign executive'));
+    await act(async () => [...(dialog?.querySelectorAll('button') ?? [])].find((button) => button.textContent === 'Unassign executive')!.click());
+    expect(apiMock.unassignTerritoryMember).toHaveBeenCalledWith(territory.id, membershipId);
+    await flush();
+    expect(host.textContent).toContain('No executives are assigned to this territory yet.');
+  });
+
+  it('keeps confirmation open and the executive assigned if unassign fails', async () => {
+    apiMock.territory.mockResolvedValue(territoryWithMember);
+    apiMock.unassignTerritoryMember.mockRejectedValueOnce(new Error('Network unavailable'));
+    await renderPage(<TerritoryDetailsPage initialTab="Executives" />, '/admin/territories/saved-territory');
+    const unassign = [...host.querySelectorAll('button')].find((button) => button.textContent === 'Unassign');
+    await act(async () => unassign!.click());
+    const dialog = [...document.querySelectorAll('[role="dialog"]')].find((item) => item.textContent?.includes('Unassign executive'));
+    await act(async () => [...(dialog?.querySelectorAll('button') ?? [])].find((button) => button.textContent === 'Unassign executive')!.click());
+    expect(dialog?.querySelector('[role="alert"]')?.textContent).toContain('Could not unassign Amit Sharma.');
+    expect(host.textContent).toContain('Amit Sharma');
+  });
+
+  it('confirms unassignment from the edit page before removing its chip', async () => {
+    apiMock.territory.mockResolvedValue(territoryWithMember);
+    await renderPage(<EditTerritoryPage />, '/admin/territories/saved-territory/edit');
+    const unassign = host.querySelector<HTMLButtonElement>('button[aria-label="Unassign Amit Sharma"]');
+    await act(async () => unassign!.click());
+    const dialog = [...document.querySelectorAll('[role="dialog"]')].find((item) => item.textContent?.includes('Unassign executive'));
+    expect(apiMock.unassignTerritoryMember).not.toHaveBeenCalled();
+    await act(async () => [...(dialog?.querySelectorAll('button') ?? [])].find((button) => button.textContent === 'Unassign executive')!.click());
+    expect(apiMock.unassignTerritoryMember).toHaveBeenCalledWith(territory.id, membershipId);
+    expect(host.querySelector('button[aria-label="Unassign Amit Sharma"]')).toBeNull();
   });
 
   it('renders the date menu above the page and explains missing performance records', async () => {

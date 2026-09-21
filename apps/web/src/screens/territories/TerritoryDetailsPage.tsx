@@ -35,6 +35,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Avatar } from '../../components/ui/Avatar';
 import { Modal } from '../../components/ui/Modal';
+import { ConfirmTerritoryUnassignModal } from './ConfirmTerritoryUnassignModal';
 import { Select } from '../../components/ui/Select';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { DateRangePicker, DateRange } from '../../components/ui/DateRangePicker';
@@ -160,6 +161,9 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   // Executives Tab State
   const [execSearchQuery, setExecSearchQuery] = useState('');
   const [selectedExecutiveId, setSelectedExecutiveId] = useState<string | null>(null);
+  const [unassignTarget, setUnassignTarget] = useState<TerritoryExecutive | null>(null);
+  const [unassignPending, setUnassignPending] = useState(false);
+  const [unassignError, setUnassignError] = useState<string | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedExecIds, setSelectedExecIds] = useState<string[]>([]);
   const [assignmentCandidates, setAssignmentCandidates] = useState<TerritoryExecutive[]>([]);
@@ -303,6 +307,22 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
       }
     } finally {
       setSavingAssignments(false);
+    }
+  };
+
+  const confirmUnassign = async () => {
+    if (!territoryDto || !unassignTarget || unassignPending) return;
+    setUnassignPending(true);
+    setUnassignError(null);
+    try {
+      await crmApi.unassignTerritoryMember(territoryDto.id, unassignTarget.id);
+      toast.success(`Removed ${unassignTarget.name} from territory`);
+      setUnassignTarget(null);
+      setRefreshKey((value) => value + 1);
+    } catch (cause) {
+      setUnassignError(`Could not unassign ${unassignTarget.name}. ${crmError(cause).message}`);
+    } finally {
+      setUnassignPending(false);
     }
   };
 
@@ -776,13 +796,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={async () => {
-                          try {
-                            await crmApi.unassignTerritoryMember(territory.id, exec.id);
-                            setRefreshKey((value) => value + 1);
-                            toast.success(`Removed ${exec.name} from territory`);
-                          } catch (cause) { toast.error(crmError(cause).message); }
-                        }}
+                        onClick={() => { setUnassignError(null); setUnassignTarget(exec); }}
                         className="text-[10px] py-0.5 px-2 text-red-600 border-red-200 hover:bg-red-50"
                       >
                         Unassign
@@ -1780,6 +1794,15 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
         </div>
       )}
+
+      <ConfirmTerritoryUnassignModal
+        executiveName={unassignTarget?.name ?? null}
+        territoryName={territory.name}
+        pending={unassignPending}
+        error={unassignError}
+        onClose={() => setUnassignTarget(null)}
+        onConfirm={() => void confirmUnassign()}
+      />
 
       <Modal
         isOpen={Boolean(selectedExecutiveMember)}
