@@ -25,6 +25,9 @@ export function ContactFields({
   current?: ContactDto;
 }) {
   const { can } = useCrm();
+
+  const phoneNum = (value.phone ?? "").replace(/^\+91\s?/, "");
+
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 font-sans text-xs">
       <Input
@@ -38,12 +41,16 @@ export function ContactFields({
       />
       <Input
         id="contact-phone"
-        label="Phone Number (with +91)"
+        label="Mobile Number (with +91)"
         type="tel"
-        maxLength={30}
-        placeholder="+91 98765 43210"
-        value={value.phone ?? ""}
-        onChange={(e) => onChange({ ...value, phone: e.target.value || null })}
+        maxLength={15}
+        leftAddon="🇮🇳 +91"
+        placeholder="98765 43210"
+        value={phoneNum}
+        onChange={(e) => {
+          const val = e.target.value.replace(/[^\d\s]/g, "");
+          onChange({ ...value, phone: val ? `+91 ${val.trim()}` : null });
+        }}
       />
       <Input
         id="contact-email"
@@ -56,7 +63,7 @@ export function ContactFields({
       />
       <Select
         id="contact-status"
-        label="Status"
+        label="Contact Status"
         value={value.status ?? "ACTIVE"}
         options={statuses}
         onChange={(e) => {
@@ -68,7 +75,7 @@ export function ContactFields({
         <div className="sm:col-span-2">
           <CrmLookup
             id="contact-role"
-            label="Contact Role / Designation"
+            label="Designation / Contact Role"
             kind="contact_role"
             value={value.roleValueId}
             currentLabel={current?.role}
@@ -78,9 +85,6 @@ export function ContactFields({
           />
         </div>
       )}
-      <p className="text-xs font-semibold text-slate-500 sm:col-span-2">
-        Provide at least a phone number or email address.
-      </p>
     </div>
   );
 }
