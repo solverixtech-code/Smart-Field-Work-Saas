@@ -114,7 +114,6 @@ export default function BusinessLayoutWrapper() {
   const navItems = [
     { label: 'Business Details', icon: Building2, path: `/admin/businesses/${business.id}` },
     { label: 'Contacts', icon: Users, path: `/admin/businesses/${business.id}/contacts` },
-    { label: 'Sales History', icon: ShoppingBag, path: `/admin/businesses/${business.id}/sales-history` },
     { label: 'Visit History', icon: Calendar, path: `/admin/businesses/${business.id}/visits` },
     { label: 'Subscription', icon: CreditCard, path: `/admin/businesses/${business.id}/subscription` },
   ];
@@ -188,18 +187,6 @@ export default function BusinessLayoutWrapper() {
                 >
                   <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                   <span>Schedule Visit</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMoreOpen(false);
-                    navigate(`/admin/businesses/${business.id}/sales-history`);
-                  }}
-                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#0D1F3D] cursor-pointer transition-colors"
-                >
-                  <ShoppingBag className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span>Sales History</span>
                 </button>
 
                 <button
