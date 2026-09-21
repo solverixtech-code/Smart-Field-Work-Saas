@@ -131,12 +131,12 @@ async function seedCrmLeads() {
   ];
 
   for (const item of sampleLeads) {
-    const exists = await prisma.lead.findFirst({
+    let lead = await prisma.lead.findFirst({
       where: { tenantId, leadCode: item.leadCode },
     });
 
-    if (!exists) {
-      await prisma.lead.create({
+    if (!lead) {
+      lead = await prisma.lead.create({
         data: {
           tenantId,
           ownerMembershipId: membershipId,
@@ -148,9 +148,130 @@ async function seedCrmLeads() {
       });
       console.log('Created lead:', item.leadCode, item.name);
     }
+
+    // Seed Sub-Resources for this lead if not present
+    const existingVisit = await prisma.leadVisit.findFirst({ where: { tenantId, leadId: lead.id } });
+    if (!existingVisit) {
+      await prisma.leadVisit.createMany({
+        data: [
+          {
+            tenantId,
+            leadId: lead.id,
+            executiveMembershipId: membershipId,
+            executiveName: 'Rajesh Kumar',
+            location: `${lead.city || 'Mumbai'} Industrial Area - HQ Office`,
+            latitude: 19.076,
+            longitude: 72.8777,
+            purpose: 'Initial Requirements Gathering & Site Inspection',
+            outcome: 'Met with Operations VP. Client requested custom attendance geofencing demo for 3 branch offices.',
+            durationMinutes: 45,
+            status: 'COMPLETED',
+            checkInTime: new Date(Date.now() - 86400000 * 2),
+            checkOutTime: new Date(Date.now() - 86400000 * 2 + 2700000),
+          },
+          {
+            tenantId,
+            leadId: lead.id,
+            executiveMembershipId: membershipId,
+            executiveName: 'Priya Sharma',
+            location: `${lead.city || 'Mumbai'} Regional Distribution Center`,
+            latitude: 19.082,
+            longitude: 72.889,
+            purpose: 'Field Executive Mobile App Workflow Walkthrough',
+            outcome: 'Demonstrated offline GPS tracking. Client satisfied with battery consumption stats.',
+            durationMinutes: 60,
+            status: 'COMPLETED',
+            checkInTime: new Date(Date.now() - 86400000 * 5),
+            checkOutTime: new Date(Date.now() - 86400000 * 5 + 3600000),
+          },
+        ],
+      });
+    }
+
+    const existingFollowUp = await prisma.leadFollowUp.findFirst({ where: { tenantId, leadId: lead.id } });
+    if (!existingFollowUp) {
+      await prisma.leadFollowUp.createMany({
+        data: [
+          {
+            tenantId,
+            leadId: lead.id,
+            assignedMembershipId: membershipId,
+            assignedToName: 'Rajesh Kumar',
+            title: 'Call VP Sales regarding contract review',
+            scheduledDate: '2026-09-24',
+            scheduledTime: '11:30 AM',
+            notes: 'Confirm if legal team approved the SLA clauses.',
+            status: 'Pending',
+          },
+          {
+            tenantId,
+            leadId: lead.id,
+            assignedMembershipId: membershipId,
+            assignedToName: 'Priya Sharma',
+            title: 'Share custom pricing quotation PDF',
+            scheduledDate: '2026-09-20',
+            scheduledTime: '03:00 PM',
+            notes: 'Sent via official email and WhatsApp broadcast.',
+            status: 'Completed',
+            completedAt: new Date(Date.now() - 86400000),
+          },
+        ],
+      });
+    }
+
+    const existingDemo = await prisma.leadDemo.findFirst({ where: { tenantId, leadId: lead.id } });
+    if (!existingDemo) {
+      await prisma.leadDemo.createMany({
+        data: [
+          {
+            tenantId,
+            leadId: lead.id,
+            conductedByMembershipId: membershipId,
+            conductedByName: 'Vikram Malhotra',
+            demoTitle: 'Solverix Smart Field Work Platform Overview',
+            demoDate: '2026-09-18',
+            demoMode: 'Virtual Google Meet',
+            attendeesCount: 4,
+            feedbackRating: 5.0,
+            keyQuestions: 'How does live location tracking handle poor network areas in remote zones?',
+            status: 'COMPLETED',
+          },
+        ],
+      });
+    }
+
+    const existingComm = await prisma.leadCommunication.findFirst({ where: { tenantId, leadId: lead.id } });
+    if (!existingComm) {
+      await prisma.leadCommunication.createMany({
+        data: [
+          {
+            tenantId,
+            leadId: lead.id,
+            loggedByMembershipId: membershipId,
+            loggedByName: 'Rajesh Kumar',
+            channel: 'Call',
+            direction: 'Outbound',
+            subject: 'Discussed Enterprise Licensing & Deployment Timeline',
+            details: 'Client confirmed budget allocation for Q3 rollout.',
+            timestamp: new Date(Date.now() - 86400000 * 3),
+          },
+          {
+            tenantId,
+            leadId: lead.id,
+            loggedByMembershipId: membershipId,
+            loggedByName: 'Priya Sharma',
+            channel: 'Email',
+            direction: 'Outbound',
+            subject: 'Sent Technical Architecture & Security Compliance Document',
+            details: 'Included ISO 27001 certificate and SOC2 audit summary.',
+            timestamp: new Date(Date.now() - 86400000 * 4),
+          },
+        ],
+      });
+    }
   }
 
-  console.log('Seed completed successfully!');
+  console.log('Seed completed successfully with dynamic sub-resources!');
 }
 
 seedCrmLeads()
@@ -159,3 +280,4 @@ seedCrmLeads()
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());
+

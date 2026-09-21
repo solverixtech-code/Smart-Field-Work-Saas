@@ -34,4 +34,23 @@ export const leadApi: LeadApi = {
     (await api.get(root + "/" + id + "/history", { signal })).data,
   addNote: async (id, body, signal) =>
     (await api.post(root + "/" + id + "/notes", body, { signal })).data,
+  visits: async (id, signal) =>
+    (await api.get(root + "/" + id + "/visits", { signal })).data,
+  createVisit: async (id, body, signal) =>
+    (await api.post(root + "/" + id + "/visits", body, { signal })).data,
+  followUps: async (id, signal) =>
+    (await api.get(root + "/" + id + "/follow-ups", { signal })).data,
+  createFollowUp: async (id, body, signal) =>
+    (await api.post(root + "/" + id + "/follow-ups", body, { signal })).data,
+  updateFollowUp: async (id, followUpId, body, signal) =>
+    (await api.patch(root + "/" + id + "/follow-ups/" + followUpId, body, { signal })).data,
+  demos: async (id, signal) =>
+    (await api.get(root + "/" + id + "/demos", { signal })).data,
+  createDemo: async (id, body, signal) =>
+    (await api.post(root + "/" + id + "/demos", body, { signal })).data,
+  communications: async (id, signal) =>
+    (await api.get(root + "/" + id + "/communications", { signal })).data,
+  createCommunication: async (id, body, signal) =>
+    (await api.post(root + "/" + id + "/communications", body, { signal })).data,
 };
+

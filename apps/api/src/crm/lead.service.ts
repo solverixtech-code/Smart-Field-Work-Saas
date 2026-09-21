@@ -1141,4 +1141,209 @@ export class LeadService {
       };
     });
   }
+
+  // ─── Lead Sub-Resources ────────────────────────────────────────────────────────
+  async listVisits(actor: RequestPrincipal, leadId: string) {
+    crmId.parse(leadId);
+    return this.repo.run(actor, false, async (tx, p) => {
+      requireLead(p, "read");
+      await this.row(tx, p, leadId);
+      return tx.leadVisit.findMany({
+        where: { tenantId: p.scope.tenantId, leadId },
+        orderBy: { createdAt: "desc" },
+      });
+    });
+  }
+
+  async createVisit(actor: RequestPrincipal, leadId: string, body: unknown) {
+    crmId.parse(leadId);
+    const v = dto.createLeadVisit.parse(body);
+    return this.repo.run(actor, true, async (tx, p) => {
+      requireLead(p, "update");
+      await this.row(tx, p, leadId, true);
+      const membership = await tx.tenantMembership.findUnique({
+        where: { id: p.scope.membershipId },
+        include: { user: { select: { fullName: true, avatarUrl: true } } },
+      });
+      const visit = await tx.leadVisit.create({
+        data: {
+          tenantId: p.scope.tenantId,
+          leadId,
+          executiveMembershipId: p.scope.membershipId,
+          executiveName: membership?.user.fullName || "Field Executive",
+          executiveAvatar: membership?.user.avatarUrl || null,
+          location: v.location,
+          latitude: v.latitude,
+          longitude: v.longitude,
+          purpose: v.purpose,
+          outcome: v.outcome,
+          photos: v.photos,
+          durationMinutes: v.durationMinutes,
+          status: v.status,
+          checkInTime: v.checkInTime || new Date(),
+          checkOutTime: v.checkOutTime || null,
+        },
+      });
+      await this.recordHistory(tx, p, leadId, "visit_logged", `Field visit logged: ${v.purpose}`, v.outcome || null);
+      return visit;
+    });
+  }
+
+  async listFollowUps(actor: RequestPrincipal, leadId: string) {
+    crmId.parse(leadId);
+    return this.repo.run(actor, false, async (tx, p) => {
+      requireLead(p, "read");
+      await this.row(tx, p, leadId);
+      return tx.leadFollowUp.findMany({
+        where: { tenantId: p.scope.tenantId, leadId },
+        orderBy: { createdAt: "desc" },
+      });
+    });
+  }
+
+  async createFollowUp(actor: RequestPrincipal, leadId: string, body: unknown) {
+    crmId.parse(leadId);
+    const v = dto.createLeadFollowUp.parse(body);
+    return this.repo.run(actor, true, async (tx, p) => {
+      requireLead(p, "update");
+      await this.row(tx, p, leadId, true);
+      const assignedMembershipId = v.assignedMembershipId || p.scope.membershipId;
+      const membership = await tx.tenantMembership.findUnique({
+        where: { id: assignedMembershipId },
+        include: { user: { select: { fullName: true } } },
+      });
+      const followUp = await tx.leadFollowUp.create({
+        data: {
+          tenantId: p.scope.tenantId,
+          leadId,
+          assignedMembershipId,
+          assignedToName: membership?.user.fullName || "Field Executive",
+          title: v.title,
+          scheduledDate: v.scheduledDate,
+          scheduledTime: v.scheduledTime,
+          notes: v.notes,
+          status: "Pending",
+        },
+      });
+      const scheduledDateTime = new Date(`${v.scheduledDate}T10:00:00Z`);
+      if (!isNaN(scheduledDateTime.getTime())) {
+        await tx.lead.update({
+          where: { id_tenantId: { id: leadId, tenantId: p.scope.tenantId } },
+          data: { nextFollowUpAt: scheduledDateTime, nextActionNote: v.title },
+        });
+      }
+      await this.recordHistory(tx, p, leadId, "followup_scheduled", `Follow-up scheduled: ${v.title}`, v.notes || null);
+      return followUp;
+    });
+  }
+
+  async updateFollowUp(actor: RequestPrincipal, leadId: string, followUpId: string, body: unknown) {
+    crmId.parse(leadId);
+    crmId.parse(followUpId);
+    const v = dto.updateLeadFollowUp.parse(body);
+    return this.repo.run(actor, true, async (tx, p) => {
+      requireLead(p, "update");
+      await this.row(tx, p, leadId, true);
+      const followUp = await tx.leadFollowUp.findFirst({
+        where: { id: followUpId, leadId, tenantId: p.scope.tenantId },
+      });
+      if (!followUp) throw new NotFoundException("Follow-up not found");
+      const updated = await tx.leadFollowUp.update({
+        where: { id: followUpId },
+        data: {
+          status: v.status,
+          notes: v.notes ? `${followUp.notes ? followUp.notes + " | " : ""}${v.notes}` : followUp.notes,
+          completedAt: v.status === "Completed" ? new Date() : followUp.completedAt,
+        },
+      });
+      await this.recordHistory(tx, p, leadId, "followup_updated", `Follow-up updated to ${v.status}`, v.notes || null);
+      return updated;
+    });
+  }
+
+  async listDemos(actor: RequestPrincipal, leadId: string) {
+    crmId.parse(leadId);
+    return this.repo.run(actor, false, async (tx, p) => {
+      requireLead(p, "read");
+      await this.row(tx, p, leadId);
+      return tx.leadDemo.findMany({
+        where: { tenantId: p.scope.tenantId, leadId },
+        orderBy: { createdAt: "desc" },
+      });
+    });
+  }
+
+  async createDemo(actor: RequestPrincipal, leadId: string, body: unknown) {
+    crmId.parse(leadId);
+    const v = dto.createLeadDemo.parse(body);
+    return this.repo.run(actor, true, async (tx, p) => {
+      requireLead(p, "update");
+      await this.row(tx, p, leadId, true);
+      const conductedByMembershipId = v.conductedByMembershipId || p.scope.membershipId;
+      const membership = await tx.tenantMembership.findUnique({
+        where: { id: conductedByMembershipId },
+        include: { user: { select: { fullName: true, avatarUrl: true } } },
+      });
+      const demo = await tx.leadDemo.create({
+        data: {
+          tenantId: p.scope.tenantId,
+          leadId,
+          conductedByMembershipId,
+          conductedByName: membership?.user.fullName || "Sales Specialist",
+          conductedByAvatar: membership?.user.avatarUrl || null,
+          demoTitle: v.demoTitle,
+          demoDate: v.demoDate,
+          demoMode: v.demoMode,
+          attendeesCount: v.attendeesCount,
+          feedbackRating: v.feedbackRating,
+          keyQuestions: v.keyQuestions,
+          status: v.status,
+        },
+      });
+      await this.recordHistory(tx, p, leadId, "demo_scheduled", `Product demo recorded: ${v.demoTitle}`, v.keyQuestions || null);
+      return demo;
+    });
+  }
+
+  async listCommunications(actor: RequestPrincipal, leadId: string) {
+    crmId.parse(leadId);
+    return this.repo.run(actor, false, async (tx, p) => {
+      requireLead(p, "read");
+      await this.row(tx, p, leadId);
+      return tx.leadCommunication.findMany({
+        where: { tenantId: p.scope.tenantId, leadId },
+        orderBy: { timestamp: "desc" },
+      });
+    });
+  }
+
+  async createCommunication(actor: RequestPrincipal, leadId: string, body: unknown) {
+    crmId.parse(leadId);
+    const v = dto.createLeadCommunication.parse(body);
+    return this.repo.run(actor, true, async (tx, p) => {
+      requireLead(p, "update");
+      await this.row(tx, p, leadId, true);
+      const membership = await tx.tenantMembership.findUnique({
+        where: { id: p.scope.membershipId },
+        include: { user: { select: { fullName: true, avatarUrl: true } } },
+      });
+      const comm = await tx.leadCommunication.create({
+        data: {
+          tenantId: p.scope.tenantId,
+          leadId,
+          loggedByMembershipId: p.scope.membershipId,
+          loggedByName: membership?.user.fullName || "Sales Specialist",
+          loggedByAvatar: membership?.user.avatarUrl || null,
+          channel: v.channel,
+          direction: v.direction,
+          subject: v.subject,
+          details: v.details,
+          timestamp: v.timestamp || new Date(),
+        },
+      });
+      await this.recordHistory(tx, p, leadId, "communication_logged", `${v.direction} ${v.channel}: ${v.subject}`, v.details || null);
+      return comm;
+    });
+  }
 }
+

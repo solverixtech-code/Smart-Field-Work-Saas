@@ -830,6 +830,10 @@ model Tenant {
   crmLeads Lead[]
   leadHistories LeadHistory[]
   leadConversions LeadConversionCommand[]
+  leadVisits LeadVisit[]
+  leadFollowUps LeadFollowUp[]
+  leadDemos LeadDemo[]
+  leadCommunications LeadCommunication[]
   crmAccounts Account[]
   crmContacts Contact[]
   crmOpportunities Opportunity[]
@@ -943,6 +947,10 @@ model TenantMembership {
   lead4 Lead[] @relation("LeadConverter")
   leadHistoryEvents LeadHistory[]
   leadConversionCommands LeadConversionCommand[]
+  executiveVisits LeadVisit[]
+  assignedFollowUps LeadFollowUp[]
+  conductedDemos LeadDemo[]
+  loggedCommunications LeadCommunication[]
   ownedAccounts Account[] @relation("AccountOwner")
   createdAccounts Account[] @relation("AccountCreator")
   updatedAccounts Account[] @relation("AccountUpdater")
@@ -1685,6 +1693,10 @@ model Lead {
   updatedByMembershipId String
   updatedByMembership TenantMembership @relation("LeadUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
   histories LeadHistory[]
+  visits LeadVisit[]
+  followUps LeadFollowUp[]
+  demos LeadDemo[]
+  communications LeadCommunication[]
   conversion LeadConversionCommand?
   opportunity Opportunity?
   territoryId String?
@@ -1985,5 +1997,98 @@ model TerritoryTarget {
   @@unique([territoryId, period])
   @@index([tenantId, territoryId, period])
 }
+
+// ─── Lead Sub-Resources (Visits, Follow-ups, Demos, Communications) ────────────
+
+model LeadVisit {
+  id                    String            @id @default(uuid())
+  tenantId              String
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leadId                String
+  lead                  Lead              @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  executiveMembershipId String
+  executiveMembership   TenantMembership  @relation(fields: [executiveMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  executiveName         String
+  executiveAvatar       String?
+  checkInTime           DateTime          @default(now())
+  checkOutTime          DateTime?
+  durationMinutes       Int               @default(30)
+  location              String
+  latitude              Float?
+  longitude             Float?
+  purpose               String
+  outcome               String?
+  photos                String[]
+  status                String            @default("COMPLETED") // COMPLETED, SCHEDULED, CANCELLED
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@index([tenantId, leadId, createdAt])
+}
+
+model LeadFollowUp {
+  id                   String            @id @default(uuid())
+  tenantId             String
+  tenant               Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leadId               String
+  lead                 Lead              @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  assignedMembershipId String
+  assignedMembership   TenantMembership  @relation(fields: [assignedMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  assignedToName       String
+  title                String
+  scheduledDate        String // e.g. "2026-09-25"
+  scheduledTime        String // e.g. "11:30 AM"
+  notes                String?
+  status               String            @default("Pending") // Pending, Completed, Cancelled
+  completedAt          DateTime?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@index([tenantId, leadId, status])
+}
+
+model LeadDemo {
+  id                      String            @id @default(uuid())
+  tenantId                String
+  tenant                  Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leadId                  String
+  lead                    Lead              @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  conductedByMembershipId String
+  conductedByMembership   TenantMembership  @relation(fields: [conductedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  conductedByName         String
+  conductedByAvatar       String?
+  demoTitle               String
+  demoDate                String // e.g. "2026-09-22"
+  demoMode                String            @default("Virtual Google Meet") // Virtual, In-Person
+  attendeesCount          Int               @default(3)
+  feedbackRating          Float             @default(5.0)
+  keyQuestions            String?
+  status                  String            @default("COMPLETED") // COMPLETED, SCHEDULED
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@index([tenantId, leadId, createdAt])
+}
+
+model LeadCommunication {
+  id                  String            @id @default(uuid())
+  tenantId            String
+  tenant              Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leadId              String
+  lead                Lead              @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  loggedByMembershipId String
+  loggedByMembership  TenantMembership  @relation(fields: [loggedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  loggedByName        String
+  loggedByAvatar      String?
+  channel             String            // Call, Email, WhatsApp
+  direction           String            @default("Outbound") // Inbound, Outbound
+  subject             String
+  details             String?
+  timestamp           DateTime          @default(now())
+  createdAt           DateTime          @default(now())
+
+  @@index([tenantId, leadId, timestamp])
+}
+
 
 

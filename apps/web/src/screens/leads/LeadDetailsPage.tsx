@@ -34,7 +34,6 @@ import { LeadVisitsTab } from './tabs/LeadVisitsTab';
 import { LeadFollowUpsTab } from './tabs/LeadFollowUpsTab';
 import { LeadDemosTab } from './tabs/LeadDemosTab';
 import { LeadCommunicationTab } from './tabs/LeadCommunicationTab';
-import { LeadPaymentsTab } from './tabs/LeadPaymentsTab';
 import { LeadAssignmentTab } from './tabs/LeadAssignmentTab';
 
 export default function LeadDetailsPage() {
@@ -66,7 +65,6 @@ function LeadDetailsContent() {
   else if (activeSegment === 'follow-ups') activeTab = 'follow-ups';
   else if (activeSegment === 'demos') activeTab = 'demos';
   else if (activeSegment === 'communications') activeTab = 'communications';
-  else if (activeSegment === 'payments') activeTab = 'payments';
   else if (activeSegment === 'assignment') activeTab = 'assignment';
 
   const handleTabChange = (tabId: string) => {
@@ -242,7 +240,6 @@ function LeadDetailsContent() {
           { id: 'follow-ups', label: 'Follow-ups' },
           { id: 'demos', label: 'Product Demos' },
           { id: 'communications', label: 'Communications' },
-          { id: 'payments', label: 'Payments Ledger' },
           { id: 'assignment', label: 'Lead Assignment' },
         ].map((tab) => {
           const isActive = activeTab === tab.id;
@@ -267,15 +264,15 @@ function LeadDetailsContent() {
       <div className="pt-1">
         {activeTab === 'overview' && <LeadOverviewTab lead={lead} />}
         {activeTab === 'timeline' && <LeadTimelineTab leadId={lead.id} />}
-        {activeTab === 'visits' && <LeadVisitsTab />}
-        {activeTab === 'follow-ups' && <LeadFollowUpsTab />}
-        {activeTab === 'demos' && <LeadDemosTab />}
-        {activeTab === 'communications' && <LeadCommunicationTab />}
-        {activeTab === 'payments' && <LeadPaymentsTab />}
+        {activeTab === 'visits' && <LeadVisitsTab leadId={lead.id} />}
+        {activeTab === 'follow-ups' && <LeadFollowUpsTab leadId={lead.id} />}
+        {activeTab === 'demos' && <LeadDemosTab leadId={lead.id} />}
+        {activeTab === 'communications' && <LeadCommunicationTab leadId={lead.id} />}
         {activeTab === 'assignment' && (
           <LeadAssignment key={lead.id} lead={lead} onSaved={() => navigate('/admin/leads')} />
         )}
       </div>
+
 
       {/* Modals */}
       {converting && (

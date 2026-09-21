@@ -172,3 +172,65 @@ export const exportQuery = masterPage
 export const createLeadNote = z
   .object({ note: z.string().trim().min(1).max(2000) })
   .strict();
+
+export const createLeadVisit = z
+  .object({
+    location: z.string().trim().min(1).max(500),
+    latitude: z.coerce.number().optional(),
+    longitude: z.coerce.number().optional(),
+    purpose: z.string().trim().min(1).max(500),
+    outcome: z.string().trim().max(2000).optional(),
+    photos: z.array(z.string().url()).optional().default([]),
+    durationMinutes: z.coerce.number().int().min(1).max(1440).default(30),
+    status: z.enum(["COMPLETED", "SCHEDULED", "CANCELLED"]).default("COMPLETED"),
+    checkInTime: z.coerce.date().optional(),
+    checkOutTime: z.coerce.date().nullable().optional(),
+  })
+  .strict();
+
+export const createLeadFollowUp = z
+  .object({
+    title: z.string().trim().min(1).max(300),
+    scheduledDate: z.string().trim().min(1).max(50),
+    scheduledTime: z.string().trim().min(1).max(50),
+    notes: z.string().trim().max(2000).optional(),
+    assignedMembershipId: crmId.optional(),
+  })
+  .strict();
+
+export const updateLeadFollowUp = z
+  .object({
+    status: z.enum(["Pending", "Completed", "Cancelled"]),
+    notes: z.string().trim().max(2000).optional(),
+  })
+  .strict();
+
+export const createLeadDemo = z
+  .object({
+    demoTitle: z.string().trim().min(1).max(300),
+    demoDate: z.string().trim().min(1).max(50),
+    demoMode: z.string().trim().max(100).default("Virtual Google Meet"),
+    attendeesCount: z.coerce.number().int().min(1).max(500).default(3),
+    feedbackRating: z.coerce.number().min(1.0).max(5.0).default(5.0),
+    keyQuestions: z.string().trim().max(2000).optional(),
+    status: z.enum(["COMPLETED", "SCHEDULED"]).default("COMPLETED"),
+    conductedByMembershipId: crmId.optional(),
+  })
+  .strict();
+
+export const createLeadCommunication = z
+  .object({
+    channel: z.enum(["Call", "Email", "WhatsApp"]),
+    direction: z.enum(["Inbound", "Outbound"]).default("Outbound"),
+    subject: z.string().trim().min(1).max(300),
+    details: z.string().trim().max(2000).optional(),
+    timestamp: z.coerce.date().optional(),
+  })
+  .strict();
+
+export type CreateLeadVisitInput = z.infer<typeof createLeadVisit>;
+export type CreateLeadFollowUpInput = z.infer<typeof createLeadFollowUp>;
+export type UpdateLeadFollowUpInput = z.infer<typeof updateLeadFollowUp>;
+export type CreateLeadDemoInput = z.infer<typeof createLeadDemo>;
+export type CreateLeadCommunicationInput = z.infer<typeof createLeadCommunication>;
+

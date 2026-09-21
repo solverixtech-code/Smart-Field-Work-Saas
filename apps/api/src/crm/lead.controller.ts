@@ -143,4 +143,84 @@ export class LeadController {
   ) {
     return this.leads.remove(p, id, v);
   }
+
+  // ─── Sub-Resources ─────────────────────────────────────────────────────────────
+  @Get(":id/visits")
+  @RequirePermissions("crm.leads.view")
+  listVisits(@CurrentPrincipal() p: RequestPrincipal, @Param("id") id: string) {
+    return this.leads.listVisits(p, id);
+  }
+
+  @Post(":id/visits")
+  @RequirePermissions("crm.leads.update")
+  createVisit(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("id") id: string,
+    @Body() v: unknown,
+  ) {
+    return this.leads.createVisit(p, id, v);
+  }
+
+  @Get(":id/follow-ups")
+  @RequirePermissions("crm.leads.view")
+  listFollowUps(@CurrentPrincipal() p: RequestPrincipal, @Param("id") id: string) {
+    return this.leads.listFollowUps(p, id);
+  }
+
+  @Post(":id/follow-ups")
+  @RequirePermissions("crm.leads.update")
+  createFollowUp(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("id") id: string,
+    @Body() v: unknown,
+  ) {
+    return this.leads.createFollowUp(p, id, v);
+  }
+
+  @Patch(":id/follow-ups/:followUpId")
+  @RequirePermissions("crm.leads.update")
+  updateFollowUp(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("id") id: string,
+    @Param("followUpId") followUpId: string,
+    @Body() v: unknown,
+  ) {
+    return this.leads.updateFollowUp(p, id, followUpId, v);
+  }
+
+  @Get(":id/demos")
+  @RequirePermissions("crm.leads.view")
+  listDemos(@CurrentPrincipal() p: RequestPrincipal, @Param("id") id: string) {
+    return this.leads.listDemos(p, id);
+  }
+
+  @Post(":id/demos")
+  @RequirePermissions("crm.leads.update")
+  createDemo(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("id") id: string,
+    @Body() v: unknown,
+  ) {
+    return this.leads.createDemo(p, id, v);
+  }
+
+  @Get(":id/communications")
+  @RequirePermissions("crm.leads.view")
+  listCommunications(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("id") id: string,
+  ) {
+    return this.leads.listCommunications(p, id);
+  }
+
+  @Post(":id/communications")
+  @RequirePermissions("crm.leads.update")
+  createCommunication(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("id") id: string,
+    @Body() v: unknown,
+  ) {
+    return this.leads.createCommunication(p, id, v);
+  }
 }
+

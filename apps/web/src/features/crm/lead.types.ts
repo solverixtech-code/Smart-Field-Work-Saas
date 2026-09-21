@@ -112,6 +112,65 @@ export interface LeadImportResult extends LeadImportPreview {
   rejected: number;
   createdIds: string[];
 }
+export interface LeadVisitDto {
+  id: string;
+  leadId: string;
+  executiveName: string;
+  executiveAvatar?: string | null;
+  checkInTime: string;
+  checkOutTime?: string | null;
+  durationMinutes: number;
+  location: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  purpose: string;
+  outcome?: string | null;
+  photos: string[];
+  status: 'COMPLETED' | 'SCHEDULED' | 'CANCELLED';
+  createdAt: string;
+}
+
+export interface LeadFollowUpDto {
+  id: string;
+  leadId: string;
+  assignedToName: string;
+  title: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  notes?: string | null;
+  status: 'Pending' | 'Completed' | 'Cancelled';
+  completedAt?: string | null;
+  createdAt: string;
+}
+
+export interface LeadDemoDto {
+  id: string;
+  leadId: string;
+  conductedByName: string;
+  conductedByAvatar?: string | null;
+  demoTitle: string;
+  demoDate: string;
+  demoMode: string;
+  attendeesCount: number;
+  feedbackRating: number;
+  keyQuestions?: string | null;
+  status: 'COMPLETED' | 'SCHEDULED';
+  createdAt: string;
+}
+
+export interface LeadCommunicationDto {
+  id: string;
+  leadId: string;
+  loggedByName: string;
+  loggedByAvatar?: string | null;
+  channel: 'Call' | 'Email' | 'WhatsApp';
+  direction: 'Inbound' | 'Outbound';
+  subject: string;
+  details?: string | null;
+  timestamp: string;
+  createdAt: string;
+}
+
 export interface LeadApi {
   list(query: LeadQuery, signal: AbortSignal): Promise<Page<LeadDto>>;
   counts(query: LeadQuery, signal: AbortSignal): Promise<LeadCounts>;
@@ -191,7 +250,17 @@ export interface LeadApi {
     body: { note: string },
     signal: AbortSignal,
   ): Promise<{ id: string; createdAt: string }>;
+  visits(id: string, signal?: AbortSignal): Promise<LeadVisitDto[]>;
+  createVisit(id: string, body: Partial<LeadVisitDto>, signal?: AbortSignal): Promise<LeadVisitDto>;
+  followUps(id: string, signal?: AbortSignal): Promise<LeadFollowUpDto[]>;
+  createFollowUp(id: string, body: Partial<LeadFollowUpDto>, signal?: AbortSignal): Promise<LeadFollowUpDto>;
+  updateFollowUp(id: string, followUpId: string, body: { status: string; notes?: string }, signal?: AbortSignal): Promise<LeadFollowUpDto>;
+  demos(id: string, signal?: AbortSignal): Promise<LeadDemoDto[]>;
+  createDemo(id: string, body: Partial<LeadDemoDto>, signal?: AbortSignal): Promise<LeadDemoDto>;
+  communications(id: string, signal?: AbortSignal): Promise<LeadCommunicationDto[]>;
+  createCommunication(id: string, body: Partial<LeadCommunicationDto>, signal?: AbortSignal): Promise<LeadCommunicationDto>;
 }
+
 export const leadStatuses: Array<{ value: LeadStatus; label: string }> = [
   { value: "OPEN", label: "Open" },
   { value: "QUALIFIED", label: "Qualified" },
