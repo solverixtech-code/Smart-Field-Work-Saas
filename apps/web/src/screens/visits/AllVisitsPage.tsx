@@ -126,7 +126,7 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
           executiveId: acc.ownerMembershipId || 'FE-1001',
           executiveName: acc.owner?.displayName || 'Sahibjit Singh',
           executiveRole: acc.owner?.role || 'Field Executive',
-          executiveAvatar: acc.owner?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+          executiveAvatar: acc.owner?.avatarUrl || null,
           executivePhone: acc.primaryContact?.phone || acc.phone || '+91 98765 43210',
           executiveEmail: acc.primaryContact?.email || acc.email || 'executive@sfw.com',
           visitType: 'Sales Visit',
@@ -257,6 +257,16 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
     return matchesSearch && matchesExec && matchesType && matchesStatus && matchesArea && matchesView;
   });
 
+  // Helper to extract executive initials
+  const getExecutiveInitials = (name: string) => {
+    if (!name) return 'EX';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
   const columns: ColumnDef<VisitItem>[] = [
     {
       header: 'Visit ID & Date',
@@ -291,26 +301,43 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
     },
     {
       header: 'Executive',
-      cell: (v) => (
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate('/admin/executives/FE-1001');
-          }}
-          className="flex items-center gap-2 cursor-pointer group"
-          title={`View ${v.executiveName}'s Profile`}
-        >
-          <img
-            src={v.executiveAvatar}
-            alt={v.executiveName}
-            className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0 group-hover:ring-2 group-hover:ring-purple-600 transition-all"
-          />
-          <div>
-            <p className="font-bold text-[#0D1F3D] group-hover:text-purple-600 group-hover:underline transition-colors">{v.executiveName}</p>
-            <p className="text-[10px] text-slate-500 font-medium">{v.executiveRole}</p>
+      cell: (v) => {
+        const hasAvatar = Boolean(
+          v.executiveAvatar &&
+            (v.executiveAvatar.startsWith('http://') ||
+              v.executiveAvatar.startsWith('https://') ||
+              v.executiveAvatar.startsWith('data:'))
+        );
+
+        return (
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate('/admin/executives/FE-1001');
+            }}
+            className="flex items-center gap-2 cursor-pointer group"
+            title={`View ${v.executiveName}'s Profile`}
+          >
+            {hasAvatar ? (
+              <img
+                src={v.executiveAvatar}
+                alt={v.executiveName}
+                className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0 group-hover:ring-2 group-hover:ring-purple-600 transition-all shadow-xs"
+              />
+            ) : (
+              <div className="h-7 w-7 rounded-full bg-[#0D1F3D] text-white flex items-center justify-center font-bold text-[11px] shrink-0 border border-slate-200 group-hover:ring-2 group-hover:ring-purple-600 transition-all shadow-xs">
+                {getExecutiveInitials(v.executiveName)}
+              </div>
+            )}
+            <div>
+              <p className="font-bold text-[#0D1F3D] group-hover:text-purple-600 group-hover:underline transition-colors">
+                {v.executiveName}
+              </p>
+              <p className="text-[10px] text-slate-500 font-medium">{v.executiveRole}</p>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       header: 'Check-in',
