@@ -166,7 +166,7 @@ export function InteractiveMap({
 
   // Sync prop territoryPath changes if provided externally
   useEffect(() => {
-    if (territoryPath && territoryPath.length > 0) {
+    if (territoryPath !== undefined) {
       setDrawnPolygonPoints(territoryPath);
     }
   }, [territoryPath]);
@@ -283,7 +283,18 @@ export function InteractiveMap({
       map.on('rotate', updatePositions);
 
       // Trigger initial render projection
-      map.on('load', updatePositions);
+      map.on('load', () => {
+        updatePositions();
+        if (territoryPath?.length) {
+          if (territoryPath.length === 1) {
+            map.jumpTo({ center: [territoryPath[0][1], territoryPath[0][0]], zoom: 15 });
+          } else {
+            const bounds = new mapboxgl.LngLatBounds();
+            territoryPath.forEach(([lat, lng]) => bounds.extend([lng, lat]));
+            map.fitBounds(bounds, { padding: 48, maxZoom: 15, duration: 0 });
+          }
+        }
+      });
 
       return () => {
         map.remove();

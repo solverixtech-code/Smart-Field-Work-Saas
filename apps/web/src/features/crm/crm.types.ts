@@ -204,6 +204,7 @@ export interface CrmService {
   deleteDeal(id: string, signal?: AbortSignal): Promise<void>;
 
   territories(query?: ListQuery & { status?: string; city?: string; managerMembershipId?: string }, signal?: AbortSignal): Promise<TerritoryListPageResponse>;
+  territoryMemberOptions(query: ListQuery, signal?: AbortSignal): Promise<Page<OwnerOption>>;
   territory(id: string, signal?: AbortSignal): Promise<TerritoryDto>;
   createTerritory(body: CreateTerritoryInput, signal?: AbortSignal): Promise<TerritoryDto>;
   updateTerritory(id: string, body: UpdateTerritoryInput, signal?: AbortSignal): Promise<TerritoryDto>;
@@ -255,6 +256,8 @@ export interface TerritoryTargetItem {
   visitAchieved: number;
   newBusinessTarget: number;
   newBusinessAchieved: number;
+  activeBusinessTarget: number;
+  retentionTarget: number;
   collectionTarget: number;
   collectionAchieved: number;
   revision: number;
@@ -276,6 +279,7 @@ export interface TerritoryDto {
   pincode?: string | null;
   microTerritory?: string | null;
   description?: string | null;
+  notes?: string | null;
   color?: string;
   status: "ACTIVE" | "INACTIVE";
   managerMembershipId?: string | null;
@@ -344,6 +348,7 @@ export interface CreateTerritoryInput {
   pincode?: string | null;
   microTerritory?: string | null;
   description?: string | null;
+  notes?: string | null;
   color?: string;
   status?: "ACTIVE" | "INACTIVE";
   managerMembershipId?: string | null;

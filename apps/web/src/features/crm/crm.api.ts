@@ -68,6 +68,8 @@ export const crmApi: CrmService = {
 
   territories: async (params, signal) =>
     (await api.get(`${root}/territories`, { params, signal })).data,
+  territoryMemberOptions: async (params, signal) =>
+    (await api.get(`${root}/territories/member-options`, { params, signal })).data,
   territory: async (id, signal) =>
     (await api.get(`${root}/territories/${id}`, { signal })).data,
   createTerritory: async (body, signal) =>

@@ -127,6 +127,7 @@ function service(): CrmService {
     updateDealStage: vi.fn(rejected),
     deleteDeal: vi.fn(rejected),
     territories: vi.fn(rejected),
+    territoryMemberOptions: vi.fn(rejected),
     territory: vi.fn(rejected),
     createTerritory: vi.fn(rejected),
     updateTerritory: vi.fn(rejected),

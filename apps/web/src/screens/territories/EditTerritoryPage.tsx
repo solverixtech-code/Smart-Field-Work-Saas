@@ -11,8 +11,10 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Select, SelectOption } from '../../components/ui/Select';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockTerritoriesList, mockTerritoryExecutives, getEmployeeProfile } from './territoriesData';
+import { getEmployeeProfile, mapTerritoryDtoToItem, TerritoryItem } from './territoriesData';
 import { crmApi } from '../../features/crm/crm.api';
+import { crmError } from '../../features/crm/crm.state';
+import type { TerritoryDto, TerritoryMemberSummary } from '../../features/crm/crm.types';
 
 export default function EditTerritoryPage() {
   const { territoryId } = useParams();
@@ -20,44 +22,42 @@ export default function EditTerritoryPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [revision, setRevision] = useState(1);
   const [managerOptions, setManagerOptions] = useState<SelectOption[]>([]);
-
-  const territory =
-    mockTerritoriesList.find((t) => t.id === territoryId || t.code === territoryId) ||
-    mockTerritoriesList[0];
+  const [territory, setTerritory] = useState<TerritoryItem | null>(null);
+  const [loadedTerritory, setLoadedTerritory] = useState<TerritoryDto | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [boundaryPoints, setBoundaryPoints] = useState<[number, number][]>([]);
+  const [boundaryChanged, setBoundaryChanged] = useState(false);
+  const [areaKm2, setAreaKm2] = useState(0);
+  const [perimeterKm, setPerimeterKm] = useState(0);
 
   // Form State initialized from existing territory data
-  const [territoryName, setTerritoryName] = useState(territory.name);
-  const [territoryCode, setTerritoryCode] = useState(territory.code);
-  const [regionArea, setRegionArea] = useState(territory.regionArea);
-  const [city, setCity] = useState(territory.city);
-  const [description, setDescription] = useState(territory.description);
-  const [status, setStatus] = useState(territory.status);
-  const [color, setColor] = useState(territory.color);
+  const [territoryName, setTerritoryName] = useState('');
+  const [territoryCode, setTerritoryCode] = useState('');
+  const [regionArea, setRegionArea] = useState('');
+  const [city, setCity] = useState('');
+  const [description, setDescription] = useState('');
+  const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
+  const [color, setColor] = useState('#2563EB');
 
   const [managerMembershipId, setManagerMembershipId] = useState('');
-  const [revenueTarget, setRevenueTarget] = useState('1400000');
-  const [visitTarget, setVisitTarget] = useState('250');
-  const [collectionTarget, setCollectionTarget] = useState('930000');
-  const [newBusinessTarget, setNewBusinessTarget] = useState('50');
-  const [activeBusinessTarget, setActiveBusinessTarget] = useState('200');
-  const [retentionTarget, setRetentionTarget] = useState('85');
+  const [revenueTarget, setRevenueTarget] = useState('0');
+  const [visitTarget, setVisitTarget] = useState('0');
+  const [collectionTarget, setCollectionTarget] = useState('0');
+  const [newBusinessTarget, setNewBusinessTarget] = useState('0');
+  const [activeBusinessTarget, setActiveBusinessTarget] = useState('0');
+  const [retentionTarget, setRetentionTarget] = useState('0');
 
-  const [assignedExecutives, setAssignedExecutives] = useState<string[]>([
-    'Arjun Mehta',
-    'Neha Sharma',
-    'Pooja Yadav',
-    'Rakesh Patel',
-  ]);
+  const [assignedExecutives, setAssignedExecutives] = useState<TerritoryMemberSummary[]>([]);
 
-  const [notes, setNotes] = useState(
-    'High potential commercial area with good market reach and business density.',
-  );
+  const [notes, setNotes] = useState('');
 
   React.useEffect(() => {
+    const controller = new AbortController();
     crmApi
-      .owners({ limit: 100 })
+      .territoryMemberOptions({ limit: 100 }, controller.signal)
       .then((res) => {
-        if (res && res.items) {
+        if (!controller.signal.aborted && res?.items) {
           setManagerOptions(
             res.items.map((m) => {
               const profile = getEmployeeProfile(m.displayName, m.role, m.avatarUrl);
@@ -75,30 +75,50 @@ export default function EditTerritoryPage() {
 
     if (territoryId) {
       crmApi
-        .territory(territoryId)
+        .territory(territoryId, controller.signal)
         .then((data) => {
-          if (data) {
+          if (!controller.signal.aborted) {
+            setLoadedTerritory(data);
+            setTerritory(mapTerritoryDtoToItem(data));
             setTerritoryName(data.name);
             setTerritoryCode(data.code);
-            if (data.regionArea) setRegionArea(data.regionArea);
-            if (data.city) setCity(data.city);
-            if (data.description) setDescription(data.description);
+            setRegionArea(data.regionArea ?? '');
+            setCity(data.city ?? '');
+            setDescription(data.description ?? '');
+            setNotes(data.notes ?? '');
             setStatus(data.status === 'ACTIVE' ? 'Active' : 'Inactive');
-            if (data.color) setColor(data.color);
-            if (data.managerMembershipId) setManagerMembershipId(data.managerMembershipId);
+            setColor(data.color ?? '#2563EB');
+            setManagerMembershipId(data.managerMembershipId ?? '');
             setRevision(data.revision);
-            if (data.targets?.[0]?.monthlyTarget) {
-              setRevenueTarget(String(data.targets[0].monthlyTarget));
-            }
+            setBoundaryPoints(data.pathPoints ?? []);
+            setBoundaryChanged(false);
+            setAreaKm2(Number(data.areaKm2 ?? 0));
+            setPerimeterKm(Number(data.perimeterKm ?? 0));
+            setAssignedExecutives(data.members ?? []);
+            setRevenueTarget(String(data.targets?.[0]?.monthlyTarget ?? 0));
+            setVisitTarget(String(data.targets?.[0]?.visitTarget ?? 0));
+            setCollectionTarget(String(data.targets?.[0]?.collectionTarget ?? 0));
+            setNewBusinessTarget(String(data.targets?.[0]?.newBusinessTarget ?? 0));
+            setActiveBusinessTarget(String(data.targets?.[0]?.activeBusinessTarget ?? 0));
+            setRetentionTarget(String(data.targets?.[0]?.retentionTarget ?? 0));
           }
         })
-        .catch(() => {});
+        .catch((cause: unknown) => {
+          if (!controller.signal.aborted) setLoadError(crmError(cause).message);
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    } else {
+      setLoadError('Territory ID is missing.');
+      setLoading(false);
     }
+    return () => controller.abort();
   }, [territoryId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!territoryName.trim()) {
+    if (!loadedTerritory || !territory || !territoryName.trim()) {
       toast.error('Please enter a Territory Name');
       return;
     }
@@ -110,23 +130,62 @@ export default function EditTerritoryPage() {
           expectedRevision: revision,
           name: territoryName.trim(),
           code: territoryCode.trim() || undefined,
-          regionArea: regionArea.trim() || undefined,
-          city: city.trim() || undefined,
-          description: description.trim() || undefined,
+          regionArea: regionArea.trim() || null,
+          city: city.trim() || null,
+          description: description.trim() || null,
+          notes: notes.trim() || null,
           status: status === 'Active' ? 'ACTIVE' : 'INACTIVE',
           color,
-          managerMembershipId: managerMembershipId || undefined,
-          monthlyTarget: Number(revenueTarget) || 0,
+          managerMembershipId: managerMembershipId || null,
+          ...(boundaryChanged ? { pathPoints: boundaryPoints, areaKm2, perimeterKm } : {}),
         });
+        const target = loadedTerritory.targets?.[0];
+        const period = target?.period ?? new Date().toISOString().slice(0, 7);
+        if (Number(revenueTarget) !== Number(target?.monthlyTarget ?? 0)
+          || Number(visitTarget) !== Number(target?.visitTarget ?? 0)
+          || Number(collectionTarget) !== Number(target?.collectionTarget ?? 0)
+          || Number(newBusinessTarget) !== Number(target?.newBusinessTarget ?? 0)
+          || Number(activeBusinessTarget) !== Number(target?.activeBusinessTarget ?? 0)
+          || Number(retentionTarget) !== Number(target?.retentionTarget ?? 0)) {
+          try {
+            await crmApi.updateTerritoryTarget(territoryId, {
+              period,
+              monthlyTarget: Number(revenueTarget) || 0,
+              visitTarget: Number(visitTarget) || 0,
+              collectionTarget: Number(collectionTarget) || 0,
+              newBusinessTarget: Number(newBusinessTarget) || 0,
+              activeBusinessTarget: Number(activeBusinessTarget) || 0,
+              retentionTarget: Number(retentionTarget) || 0,
+            });
+          } catch (cause) {
+            toast.error(`Territory saved, but targets were not: ${crmError(cause).message}`);
+            navigate(`/admin/territories/${territory.id}`);
+            return;
+          }
+        }
       }
       toast.success(`Territory "${territoryName}" updated successfully!`);
-      navigate(`/admin/territories/${territoryId || territory.id}`);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to update territory');
+      navigate(`/admin/territories/${territory.id}`);
+    } catch (cause) {
+      toast.error(crmError(cause).message);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const handleUnassign = async (member: TerritoryMemberSummary) => {
+    if (!territoryId) return;
+    try {
+      await crmApi.unassignTerritoryMember(territoryId, member.membershipId);
+      setAssignedExecutives((current) => current.filter((item) => item.id !== member.id));
+      toast.success('Executive removed from territory');
+    } catch (cause) {
+      toast.error(crmError(cause).message);
+    }
+  };
+
+  if (loading) return <div role="status" className="p-4 text-sm text-slate-600">Loading territory...</div>;
+  if (loadError || !territory) return <div role="alert" className="p-4 text-sm text-rose-700">{loadError ?? 'Territory unavailable.'}</div>;
 
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -240,7 +299,7 @@ export default function EditTerritoryPage() {
                 <Select
                   label="Status"
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as any)}
+                  onChange={(e) => setStatus(e.target.value === 'Active' ? 'Active' : 'Inactive')}
                   searchable={false}
                   options={[
                     { value: 'Active', label: 'Active' },
@@ -298,8 +357,13 @@ export default function EditTerritoryPage() {
               onChange={(e) => setManagerMembershipId(e.target.value)}
               placeholder="Search and select manager..."
               options={
-                managerOptions.length > 0
-                  ? managerOptions
+                managerOptions.length > 0 || managerMembershipId
+                  ? [
+                      ...(managerMembershipId && !managerOptions.some((option) => option.value === managerMembershipId)
+                        ? [{ value: managerMembershipId, label: loadedTerritory?.managerMembership?.user?.fullName ?? 'Current manager' }]
+                        : []),
+                      ...managerOptions,
+                    ]
                   : [
                       {
                         value: '',
@@ -394,16 +458,17 @@ export default function EditTerritoryPage() {
             </h3>
 
             <div className="flex flex-wrap gap-2">
-              {assignedExecutives.map((name) => {
-                const execObj = mockTerritoryExecutives.find((e) => e.name === name);
+              {assignedExecutives.map((member) => {
+                const name = member.membership?.user?.fullName ?? 'Unknown executive';
+                const profile = getEmployeeProfile(name, member.membership?.tenantRole?.name, member.membership?.user?.avatarUrl);
                 return (
                   <span
-                    key={name}
+                    key={member.id}
                     className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 pl-1 pr-2.5 py-1 text-xs font-bold text-[#0D1F3D] shadow-2xs"
                   >
                     <img
                       src={
-                        execObj?.avatar ||
+                        profile.avatar ||
                         'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200'
                       }
                       alt={name}
@@ -412,9 +477,7 @@ export default function EditTerritoryPage() {
                     <span>{name}</span>
                     <button
                       type="button"
-                      onClick={() =>
-                        setAssignedExecutives(assignedExecutives.filter((n) => n !== name))
-                      }
+                      onClick={() => void handleUnassign(member)}
                       className="text-slate-400 hover:text-slate-900 font-extrabold ml-1 cursor-pointer"
                     >
                       ×
@@ -426,14 +489,14 @@ export default function EditTerritoryPage() {
 
             <button
               type="button"
-              onClick={() => toast.info('Executive selector opened')}
+              onClick={() => navigate(`/admin/territories/${territory.id}/executives`)}
               className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1 mt-1"
             >
               <Plus className="h-3.5 w-3.5" /> Add More Executives
             </button>
 
             <span className="text-[11px] text-slate-400 font-normal block">
-              14 executives assigned
+              {assignedExecutives.length} executives assigned
             </span>
           </div>
         </div>
@@ -454,7 +517,13 @@ export default function EditTerritoryPage() {
                 mode="territories"
                 heightClassName="h-[360px]"
                 enablePolygonDrawing
-                territoryPath={territory.pathPoints}
+                territoryPath={boundaryPoints}
+                onPolygonChange={(points, area, perimeter) => {
+                  setBoundaryPoints(points);
+                  setAreaKm2(area);
+                  setPerimeterKm(perimeter);
+                  setBoundaryChanged(true);
+                }}
                 compact
               />
             </div>

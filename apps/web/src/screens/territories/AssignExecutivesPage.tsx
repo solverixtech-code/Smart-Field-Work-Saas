@@ -62,7 +62,7 @@ export default function AssignExecutivesPage() {
   useEffect(() => {
     loadMembers();
     crmApi
-      .owners({ limit: 100 })
+      .territoryMemberOptions({ limit: 100 })
       .then((res) => {
         if (res && res.items) {
           setAvailableMembers(

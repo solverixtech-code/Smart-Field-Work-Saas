@@ -1907,6 +1907,7 @@ model Territory {
   pincode               String?
   microTerritory        String?
   description           String?
+  notes                 String?
   color                 String            @default("#2563EB")
   status                CrmRecordStatus   @default(ACTIVE)
 
@@ -1988,6 +1989,8 @@ model TerritoryTarget {
   visitAchieved         Int               @default(0)
   newBusinessTarget     Int               @default(0)
   newBusinessAchieved   Int               @default(0)
+  activeBusinessTarget  Int               @default(0)
+  retentionTarget       Int               @default(0)
   collectionTarget      Decimal           @default(0) @db.Decimal(14, 2)
   collectionAchieved    Decimal           @default(0) @db.Decimal(14, 2)
   revision              Int               @default(1)

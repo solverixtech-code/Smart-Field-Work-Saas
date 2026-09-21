@@ -5,6 +5,30 @@ export const ownerSelect = {
   tenantRole: { select: { name: true, code: true } },
   user: { select: { fullName: true, avatarUrl: true, role: true } },
 } satisfies Prisma.TenantMembershipSelect;
+export type OwnerRow = Prisma.TenantMembershipGetPayload<{ select: typeof ownerSelect }>;
+export const ownerOption = (row: OwnerRow) => ({
+  id: row.id,
+  displayName: row.user.fullName,
+  avatarUrl: row.user.avatarUrl || null,
+  role:
+    row.designation ||
+    row.tenantRole?.name ||
+    (row.user.role === "SUPER_ADMIN"
+      ? "Senior Sales Manager"
+      : row.user.role === "ADMIN"
+        ? "Area Operations Lead"
+        : row.user.role === "SALES_MANAGER"
+          ? "Sales Manager"
+          : row.user.role === "TEAM_LEADER"
+            ? "Team Leader"
+            : row.user.role === "FIELD_EXECUTIVE"
+              ? "Field Executive"
+              : row.user.role === "SUPPORT"
+                ? "Regional Support Lead"
+                : row.user.role === "FINANCE_OPS"
+                  ? "Finance Operations Lead"
+                  : "Manager"),
+});
 export const accountSelect = {
   id: true,
   tenantId: true,

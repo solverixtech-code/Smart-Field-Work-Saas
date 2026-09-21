@@ -17,6 +17,8 @@ import {
 } from "./territory-select";
 import { TerritoryRepository, territoryConflict } from "./territory.repository";
 import * as dto from "./territory-contract";
+import { ownerQuery } from "./crm-contract";
+import { ownerOption, ownerSelect } from "./crm-select";
 
 @Injectable()
 export class TerritoryService {
@@ -24,6 +26,38 @@ export class TerritoryService {
 
   private requirePermission(policy: CrmPolicy, action: string) {
     policy.require(`crm.territories.${action}`);
+  }
+
+  async memberOptions(principal: RequestPrincipal, query: unknown) {
+    const q = ownerQuery.parse(query);
+    return this.repo.run(principal, false, async (tx, p) => {
+      this.requirePermission(p, "view");
+      const where: Prisma.TenantMembershipWhereInput = {
+        tenantId: p.scope.tenantId,
+        status: "ACTIVE",
+        user: {
+          status: "ACTIVE",
+          ...(q.search ? { fullName: { contains: q.search, mode: "insensitive" } } : {}),
+        },
+      };
+      const [total, rows] = await Promise.all([
+        tx.tenantMembership.count({ where }),
+        tx.tenantMembership.findMany({
+          where,
+          select: ownerSelect,
+          skip: (q.page - 1) * q.limit,
+          take: q.limit,
+          orderBy: [{ user: { fullName: "asc" } }, { id: "asc" }],
+        }),
+      ]);
+      return {
+        items: rows.map(ownerOption),
+        total,
+        page: q.page,
+        limit: q.limit,
+        totalPages: Math.ceil(total / q.limit),
+      };
+    });
   }
 
   async list(principal: RequestPrincipal, query: unknown) {
@@ -180,6 +214,7 @@ export class TerritoryService {
           pincode: v.pincode,
           microTerritory: v.microTerritory,
           description: v.description,
+          notes: v.notes,
           color: v.color || "#2563EB",
           status: v.status || "ACTIVE",
           managerMembershipId: v.managerMembershipId || null,
@@ -273,6 +308,7 @@ export class TerritoryService {
           ...(v.pincode !== undefined ? { pincode: v.pincode } : {}),
           ...(v.microTerritory !== undefined ? { microTerritory: v.microTerritory } : {}),
           ...(v.description !== undefined ? { description: v.description } : {}),
+          ...(v.notes !== undefined ? { notes: v.notes } : {}),
           ...(v.color != null ? { color: v.color } : {}),
           ...(v.status != null ? { status: v.status } : {}),
           ...(v.managerMembershipId !== undefined ? { managerMembershipId: v.managerMembershipId } : {}),
@@ -529,6 +565,8 @@ export class TerritoryService {
           visitAchieved: v.visitAchieved || 0,
           newBusinessTarget: v.newBusinessTarget || 0,
           newBusinessAchieved: v.newBusinessAchieved || 0,
+          activeBusinessTarget: v.activeBusinessTarget || 0,
+          retentionTarget: v.retentionTarget || 0,
           collectionTarget: new Prisma.Decimal(v.collectionTarget || 0),
           collectionAchieved: new Prisma.Decimal(v.collectionAchieved || 0),
         },
@@ -539,6 +577,8 @@ export class TerritoryService {
           ...(v.visitAchieved !== undefined ? { visitAchieved: v.visitAchieved } : {}),
           ...(v.newBusinessTarget !== undefined ? { newBusinessTarget: v.newBusinessTarget } : {}),
           ...(v.newBusinessAchieved !== undefined ? { newBusinessAchieved: v.newBusinessAchieved } : {}),
+          ...(v.activeBusinessTarget !== undefined ? { activeBusinessTarget: v.activeBusinessTarget } : {}),
+          ...(v.retentionTarget !== undefined ? { retentionTarget: v.retentionTarget } : {}),
           ...(v.collectionTarget !== undefined ? { collectionTarget: new Prisma.Decimal(v.collectionTarget) } : {}),
           ...(v.collectionAchieved !== undefined ? { collectionAchieved: new Prisma.Decimal(v.collectionAchieved) } : {}),
           revision: { increment: 1 },

@@ -89,18 +89,28 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
 
     // Convert children <option> tags to SelectOption if options prop is not explicitly passed
     const parsedOptions: SelectOption[] = React.useMemo(() => {
-      if (passedOptions && passedOptions.length > 0) return passedOptions;
+      let raw: SelectOption[] = [];
+      if (passedOptions && passedOptions.length > 0) {
+        raw = passedOptions;
+      } else {
+        React.Children.forEach(children, (child) => {
+          if (React.isValidElement(child) && child.type === "option") {
+            const val =
+              child.props.value !== undefined ? String(child.props.value) : "";
+            const lbl = String(child.props.children || val);
+            raw.push({ value: val, label: lbl });
+          }
+        });
+      }
 
-      const opts: SelectOption[] = [];
-      React.Children.forEach(children, (child) => {
-        if (React.isValidElement(child) && child.type === "option") {
-          const val =
-            child.props.value !== undefined ? String(child.props.value) : "";
-          const lbl = String(child.props.children || val);
-          opts.push({ value: val, label: lbl });
-        }
+      // Automatically deduplicate options by label/value to ensure crisp 100% unique dropdown items
+      const seenKeys = new Set<string>();
+      return raw.filter((opt) => {
+        const key = opt.label && opt.label.trim() ? opt.label.trim().toLowerCase() : String(opt.value);
+        if (seenKeys.has(key)) return false;
+        seenKeys.add(key);
+        return true;
       });
-      return opts;
     }, [passedOptions, children]);
 
     // Filter options based on search query

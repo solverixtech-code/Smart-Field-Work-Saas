@@ -55,7 +55,7 @@ export default function TerritoriesListPage() {
 
   useEffect(() => {
     crmApi
-      .owners({ limit: 100 })
+      .territoryMemberOptions({ limit: 100 })
       .then((res) => {
         const items = res?.items || [];
         const seen = new Set<string>();

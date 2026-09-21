@@ -22,7 +22,7 @@ export function mapTerritoryDtoToItem(dto: TerritoryDto): TerritoryItem {
     code: dto.code,
     name: dto.name,
     regionArea: dto.regionArea || (dto.city ? `${dto.city} – ${dto.name}` : dto.name),
-    city: dto.city || 'Mumbai',
+    city: dto.city || '—',
     managerName: dto.managerMembership?.user?.fullName || 'Unassigned',
     managerAvatar:
       dto.managerMembership?.user?.avatarUrl ||
@@ -58,12 +58,12 @@ export function mapTerritoryDtoToItem(dto: TerritoryDto): TerritoryItem {
     estBusinesses: dto.estBusinesses || (dto._count?.accounts || 0),
     estPopulation: dto.estPopulation || '-',
     activeBusinessesCount: dto._count?.accounts || 0,
-    totalVisitsThisMonth: 0,
+    totalVisitsThisMonth: latestTarget?.visitAchieved ?? 0,
     pathPoints: dto.pathPoints || [],
     hierarchy: {
       country: dto.country || 'India',
       state: dto.state || 'Maharashtra',
-      city: dto.city || 'Mumbai',
+      city: dto.city || '—',
       zone: dto.zone || '',
       area: dto.area || dto.name,
       microTerritory: dto.microTerritory || '',
@@ -117,8 +117,8 @@ export interface TerritoryBusiness {
   assignedToName: string;
   assignedToAvatar: string;
   lastVisitDate: string;
-  status: 'Active' | 'Inactive';
-  category: 'Retail' | 'Service' | 'Healthcare' | 'Food & Beverage' | 'Others';
+  status: 'Active' | 'Inactive' | 'Blocked' | '—';
+  category: string;
   revenueFormatted?: string;
   visitStatus?: 'Visited' | 'Not Visited' | 'Scheduled';
   lat?: number;

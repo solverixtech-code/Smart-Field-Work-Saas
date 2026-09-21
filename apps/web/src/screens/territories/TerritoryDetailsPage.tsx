@@ -26,7 +26,6 @@ import {
   Mail,
   Award,
   FileText,
-  FileSpreadsheet,
   Check,
   X,
   Layers,
@@ -40,50 +39,113 @@ import { DateRangePicker, DateRange } from '../../components/ui/DateRangePicker'
 import { MapKpiCard } from '../../components/maps/MapKpiCard';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import {
-  mockTerritoriesList,
-  mockTerritoryExecutives,
-  mockTerritoryBusinesses,
   TerritoryItem,
+  TerritoryBusiness,
+  TerritoryExecutive,
   mapTerritoryDtoToItem,
 } from './territoriesData';
-import { mockBusinesses } from '../businesses/businessesData';
 import { crmApi } from '../../features/crm/crm.api';
+import { crmError } from '../../features/crm/crm.state';
+import type { AccountDto, TerritoryDto, TerritoryPerformanceDto } from '../../features/crm/crm.types';
 
 export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { initialTab?: string }) {
   const { territoryId } = useParams();
   const navigate = useNavigate();
 
   const [liveTerritory, setLiveTerritory] = useState<TerritoryItem | null>(null);
+  const [territoryDto, setTerritoryDto] = useState<TerritoryDto | null>(null);
+  const [territoryExecutives, setTerritoryExecutives] = useState<TerritoryExecutive[]>([]);
+  const [performance, setPerformance] = useState<TerritoryPerformanceDto | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [availableBusinesses, setAvailableBusinesses] = useState<AccountDto[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [savingBusiness, setSavingBusiness] = useState(false);
 
   React.useEffect(() => {
     if (territoryId) {
+      const controller = new AbortController();
+      setLoading(true);
+      setLoadError(null);
+      setLiveTerritory(null);
+      setTerritoryDto(null);
+      setTerritoryExecutives([]);
+      setBusinessesList([]);
+      setPerformance(null);
+      setAvailableBusinesses([]);
       crmApi
-        .territory(territoryId)
-        .then((data) => {
-          if (data) {
+        .territory(territoryId, controller.signal)
+        .then(async (data) => {
+          if (!controller.signal.aborted) {
+            setTerritoryDto(data);
             setLiveTerritory(mapTerritoryDtoToItem(data));
+            setTargetPeriodFilter(data.targets?.[0]?.period ?? new Date().toISOString().slice(0, 7));
+            setTerritoryExecutives((data.members ?? []).map((member) => ({
+              id: member.membershipId,
+              name: member.membership?.user?.fullName ?? 'Unknown executive',
+              avatar: member.membership?.user?.avatarUrl ?? '',
+              role: member.membership?.tenantRole?.name ?? member.role,
+              phone: member.membership?.user?.mobile ?? '',
+              team: member.membership?.team?.name ?? '—',
+              visitsCount: 0,
+              revenue: 0,
+              revenueFormatted: '₹ 0',
+              performancePercentage: 0,
+              status: 'Offline',
+            })));
+            try {
+              const [accounts, result] = await Promise.all([
+                crmApi.territoryBusinesses(data.id, controller.signal),
+                crmApi.territoryPerformance(data.id, controller.signal),
+              ]);
+              if (!controller.signal.aborted) {
+                setPerformance(result);
+                setBusinessesList(accounts.map((account) => ({
+                  id: account.id,
+                  name: account.name,
+                  businessType: account.categoryLabel ?? '—',
+                  category: account.categoryLabel ?? 'Others',
+                  contactPerson: account.contacts?.[0]?.name ?? '—',
+                  contactRole: '—',
+                  phone: account.contacts?.[0]?.phone ?? '',
+                  email: account.contacts?.[0]?.email ?? '',
+                  address: [account.addressLine1, account.city, account.postalCode].filter(Boolean).join(', '),
+                  assignedToName: account.ownerMembership?.user?.fullName ?? 'Unassigned',
+                  assignedToAvatar: account.ownerMembership?.user?.avatarUrl ?? '',
+                  lastVisitDate: '—',
+                  status: account.status === 'ACTIVE' ? 'Active' : account.status === 'BLOCKED' ? 'Blocked' : 'Inactive',
+                })));
+              }
+            } catch (cause) {
+              if (!controller.signal.aborted) setLoadError(crmError(cause).message);
+            }
           }
         })
-        .catch(() => {
-          // graceful fallback
-        });
+        .catch((cause: unknown) => {
+          if (!controller.signal.aborted) setLoadError(crmError(cause).message);
+        })
+        .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+      return () => controller.abort();
     }
-  }, [territoryId]);
+    setLoadError('Territory ID is missing.');
+    setLoading(false);
+  }, [territoryId, refreshKey]);
 
   // Active Tab State (No page jump - seamlessly renders under tab header)
   const [activeTab, setActiveTab] = useState(initialTab);
+  React.useEffect(() => setActiveTab(initialTab), [initialTab]);
 
   // Link Existing Business Modal State
   const [isLinkBusinessModalOpen, setIsLinkBusinessModalOpen] = useState(false);
   const [linkSearchQuery, setLinkSearchQuery] = useState('');
-  const [selectedLinkBizId, setSelectedLinkBizId] = useState(mockBusinesses[0]?.id || '');
-  const [linkAssignedExec, setLinkAssignedExec] = useState('Arjun Mehta');
+  const [selectedLinkBizId, setSelectedLinkBizId] = useState('');
+  const [linkAssignedExec, setLinkAssignedExec] = useState('');
 
   // Performance Filters State
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange>({
-    label: '01 May 2025 - 20 May 2025',
-    startDate: '2025-05-01',
-    endDate: '2025-05-20',
+    label: 'Current month',
+    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
+    endDate: new Date().toISOString().slice(0, 10),
   });
   const [compareFilter, setCompareFilter] = useState('none');
 
@@ -91,12 +153,13 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   const [businessSearchQuery, setBusinessSearchQuery] = useState('');
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
   const [selectedBusinessStatus, setSelectedBusinessStatus] = useState('All');
-  const [selectedBusinessId, setSelectedBusinessId] = useState(mockTerritoryBusinesses[0]?.id);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string | undefined>();
 
   // Executives Tab State
   const [execSearchQuery, setExecSearchQuery] = useState('');
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-  const [selectedExecIds, setSelectedExecIds] = useState<string[]>(['exec-1', 'exec-2', 'exec-3']);
+  const [selectedExecIds, setSelectedExecIds] = useState<string[]>([]);
+  const [assignmentCandidates, setAssignmentCandidates] = useState<TerritoryExecutive[]>([]);
 
   // Map Layers Toggle State
   const [showBoundary, setShowBoundary] = useState(true);
@@ -109,15 +172,15 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   const [showHeatmap, setShowHeatmap] = useState(false);
 
   // Targets Tab State
-  const [targetPeriodFilter, setTargetPeriodFilter] = useState('May 2025');
+  const [targetPeriodFilter, setTargetPeriodFilter] = useState(new Date().toISOString().slice(0, 7));
   const [targetMetricType, setTargetMetricType] = useState('all');
   const [isSetTargetModalOpen, setIsSetTargetModalOpen] = useState(false);
-  const [editingTargetExec, setEditingTargetExec] = useState<any>(null);
-  const [targetRevenueInput, setTargetRevenueInput] = useState('250000');
-  const [targetVisitInput, setTargetVisitInput] = useState('35');
+  const [editingTargetExec, setEditingTargetExec] = useState<TerritoryExecutive | null>(null);
+  const [targetRevenueInput, setTargetRevenueInput] = useState('0');
+  const [targetVisitInput, setTargetVisitInput] = useState('0');
 
   // Businesses List State
-  const [businessesList, setBusinessesList] = useState(mockTerritoryBusinesses);
+  const [businessesList, setBusinessesList] = useState<TerritoryBusiness[]>([]);
   const [isAddBusinessModalOpen, setIsAddBusinessModalOpen] = useState(false);
   const [newBusinessData, setNewBusinessData] = useState({
     name: '',
@@ -126,14 +189,140 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
     phone: '',
     email: '',
     address: '',
-    assignedExecutive: 'Arjun Mehta',
+    assignedExecutive: '',
     status: 'Active',
   });
 
-  const territory =
-    liveTerritory ||
-    mockTerritoriesList.find((t) => t.id === territoryId || t.code === territoryId) ||
-    mockTerritoriesList[0];
+  const territory = liveTerritory;
+  const businessCandidates = availableBusinesses.map((account) => ({
+    id: account.id,
+    name: account.name,
+    businessType: account.businessType ?? '—',
+    contactPerson: account.primaryContact?.name ?? '—',
+    city: account.city ?? '',
+    fullAddress: [account.addressLine1, account.city].filter(Boolean).join(', '),
+    address: account.addressLine1 ?? '',
+    category: account.categoryLabel ?? 'Others',
+    contactRole: account.primaryContact?.role ?? '—',
+    phone: account.primaryContact?.phone ?? '',
+    email: account.primaryContact?.email ?? '',
+    annualRevenue: '',
+  }));
+
+  React.useEffect(() => {
+    if (!isLinkBusinessModalOpen) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      crmApi.accounts({ search: linkSearchQuery, page: 1, limit: 50 }, controller.signal)
+        .then((page) => { if (!controller.signal.aborted) setAvailableBusinesses(page.items); })
+        .catch((cause: unknown) => { if (!controller.signal.aborted) toast.error(crmError(cause).message); });
+    }, 250);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [isLinkBusinessModalOpen, linkSearchQuery]);
+
+  React.useEffect(() => {
+    if (!isAssignModalOpen) return;
+    const controller = new AbortController();
+    crmApi.territoryMemberOptions({ limit: 100 }, controller.signal).then((page) => {
+      if (controller.signal.aborted) return;
+      setAssignmentCandidates(page.items.map((owner) => ({
+        id: owner.id, name: owner.displayName, avatar: owner.avatarUrl ?? '',
+        role: owner.role ?? '', phone: '', team: '—', visitsCount: 0,
+        revenue: 0, revenueFormatted: '₹ 0', performancePercentage: 0, status: 'Offline',
+      })));
+    }).catch((cause: unknown) => {
+      if (!controller.signal.aborted) toast.error(crmError(cause).message);
+    });
+    return () => controller.abort();
+  }, [isAssignModalOpen]);
+
+  const saveExecutiveAssignments = async () => {
+    if (!territoryDto) return;
+    const existing = new Set(territoryDto.members?.map((member) => member.membershipId) ?? []);
+    const selected = new Set(selectedExecIds);
+    const changes = [
+      ...[...selected].filter((id) => !existing.has(id)).map((id) => crmApi.assignTerritoryMember(territoryDto.id, { membershipId: id })),
+      ...[...existing].filter((id) => !selected.has(id)).map((id) => crmApi.unassignTerritoryMember(territoryDto.id, id)),
+    ];
+    const results = await Promise.allSettled(changes);
+    setIsAssignModalOpen(false);
+    setRefreshKey((value) => value + 1);
+    if (results.some((result) => result.status === 'rejected')) toast.error('Some assignments could not be saved. Review the current roster.');
+    else toast.success('Executive assignments updated successfully!');
+  };
+
+  const handleCreateBusiness = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!territoryDto || savingBusiness) return;
+    if (!newBusinessData.name.trim() || !newBusinessData.contactPerson.trim() || !newBusinessData.phone.trim()) {
+      toast.error('Enter the business name, contact name and phone number.');
+      return;
+    }
+    let createdAccount: AccountDto | null = null;
+    try {
+      setSavingBusiness(true);
+      createdAccount = await crmApi.createAccount({
+        name: newBusinessData.name.trim(),
+        categoryLabel: newBusinessData.category,
+        addressLine1: newBusinessData.address.trim() || null,
+        city: territoryDto.city,
+        status: newBusinessData.status === 'Active' ? 'ACTIVE' : 'INACTIVE',
+        ownerMembershipId: newBusinessData.assignedExecutive || undefined,
+        primaryContact: {
+          name: newBusinessData.contactPerson.trim(),
+          phone: newBusinessData.phone.trim(),
+          email: newBusinessData.email.trim() || null,
+        },
+      });
+      await crmApi.assignTerritoryBusiness(territoryDto.id, createdAccount.id);
+      setIsAddBusinessModalOpen(false);
+      setRefreshKey((value) => value + 1);
+      toast.success(`Business "${createdAccount.name}" added to ${territoryDto.name} successfully!`);
+    } catch (cause) {
+      if (createdAccount) setIsAddBusinessModalOpen(false);
+      toast.error(createdAccount
+        ? `Business "${createdAccount.name}" was created but could not be assigned. Find it under existing businesses and retry. ${crmError(cause).message}`
+        : crmError(cause).message);
+    } finally {
+      setSavingBusiness(false);
+    }
+  };
+
+  const handleAssignBusiness = async () => {
+    if (!territoryDto || !selectedLinkBizId || savingBusiness) return;
+    const account = availableBusinesses.find((item) => item.id === selectedLinkBizId);
+    if (!account) return;
+    let assigned = false;
+    try {
+      setSavingBusiness(true);
+      await crmApi.assignTerritoryBusiness(territoryDto.id, account.id);
+      assigned = true;
+      if (linkAssignedExec && linkAssignedExec !== account.ownerMembershipId) {
+        await crmApi.updateAccount(account.id, { expectedRevision: account.revision + 1, name: account.name, ownerMembershipId: linkAssignedExec });
+      }
+      setIsLinkBusinessModalOpen(false);
+      setRefreshKey((value) => value + 1);
+      toast.success(`Business "${account.name}" assigned to ${territoryDto.name}!`);
+    } catch (cause) {
+      setRefreshKey((value) => value + 1);
+      toast.error(assigned
+        ? `Business assigned, but its executive could not be updated. ${crmError(cause).message}`
+        : crmError(cause).message);
+    } finally {
+      setSavingBusiness(false);
+    }
+  };
+
+  const exportTerritory = () => {
+    if (!territoryDto) return;
+    const blob = new Blob([JSON.stringify({ territory: territoryDto, businesses: businessesList }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `territory-${territoryDto.code.replace(/[^a-z0-9-]/gi, '_')}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const filteredBusinesses = businessesList.filter((b) => {
     const matchesSearch =
@@ -147,13 +336,24 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
   });
 
   const selectedBusiness =
-    businessesList.find((b) => b.id === selectedBusinessId) || businessesList[0];
+    businessesList.find((b) => b.id === selectedBusinessId) || businessesList[0] || {
+      id: '', name: 'No business selected', businessType: '—', contactPerson: '—',
+      contactRole: '—', phone: '', email: '', address: '', assignedToName: '—',
+      assignedToAvatar: '', lastVisitDate: '—', status: '—' as const, category: 'Others' as const,
+    };
 
-  const filteredExecutives = mockTerritoryExecutives.filter(
+  const filteredExecutives = territoryExecutives.filter(
     (e) =>
       e.name.toLowerCase().includes(execSearchQuery.toLowerCase()) ||
       e.team.toLowerCase().includes(execSearchQuery.toLowerCase()),
   );
+  const selectedTarget = territoryDto?.targets?.find((target) => target.period === targetPeriodFilter);
+  const targetAmount = Number(selectedTarget?.monthlyTarget ?? 0);
+  const achievedAmount = Number(selectedTarget?.monthlyAchieved ?? 0);
+  const targetProgress = targetAmount > 0 ? Math.min(100, Math.round(achievedAmount / targetAmount * 100)) : 0;
+
+  if (loading && !territory) return <div role="status" className="p-4 text-sm text-slate-600">Loading territory...</div>;
+  if (loadError || !territory) return <div role="alert" className="p-4 text-sm text-rose-700">{loadError ?? 'Territory unavailable.'}</div>;
 
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -191,7 +391,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Exporting Territory Report...')}
+              onClick={exportTerritory}
               className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
             >
               <Download className="h-3.5 w-3.5" /> Export Data
@@ -225,7 +425,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
           <div className="border-l border-slate-200 pl-4">
             <span className="text-xs font-semibold text-slate-500 block">Total Businesses</span>
-            <span className="font-extrabold text-[#0D1F3D]">168</span>
+            <span className="font-extrabold text-[#0D1F3D]">{territory.activeBusinessesCount}</span>
           </div>
 
           <div className="border-l border-slate-200 pl-4">
@@ -393,7 +593,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {mockTerritoryExecutives.map((exec) => (
+                    {territoryExecutives.map((exec) => (
                       <tr key={exec.id} className="hover:bg-slate-50/50">
                         <td className="py-2.5">
                           <div className="flex items-center gap-2">
@@ -430,7 +630,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
                 <div className="relative py-2 flex flex-col items-center justify-center">
                   <div className="h-28 w-28 rounded-full border-8 border-emerald-500 border-b-slate-100 border-l-emerald-500 flex flex-col items-center justify-center shadow-inner">
-                    <span className="text-2xl font-extrabold text-[#0D1F3D]">67%</span>
+                    <span className="text-2xl font-extrabold text-[#0D1F3D]">{territory.performancePercentage}%</span>
                     <span className="text-xs font-semibold text-slate-500">Overall</span>
                   </div>
                 </div>
@@ -467,7 +667,10 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             <Button
               variant="accent"
               size="sm"
-              onClick={() => setIsAssignModalOpen(true)}
+              onClick={() => {
+                setSelectedExecIds(territoryDto?.members?.map((member) => member.membershipId) ?? []);
+                setIsAssignModalOpen(true);
+              }}
               className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] text-white"
             >
               <Plus className="h-3.5 w-3.5" /> Assign Executives
@@ -506,7 +709,13 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => toast.success(`Removed ${exec.name} from territory`)}
+                        onClick={async () => {
+                          try {
+                            await crmApi.unassignTerritoryMember(territory.id, exec.id);
+                            setRefreshKey((value) => value + 1);
+                            toast.success(`Removed ${exec.name} from territory`);
+                          } catch (cause) { toast.error(crmError(cause).message); }
+                        }}
                         className="text-[10px] py-0.5 px-2 text-red-600 border-red-200 hover:bg-red-50"
                       >
                         Unassign
@@ -530,12 +739,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 <Select
                   value={targetPeriodFilter}
                   onChange={(e) => setTargetPeriodFilter(e.target.value)}
-                  options={[
-                    { value: 'May 2025', label: 'May 2025 (Current)' },
-                    { value: 'April 2025', label: 'April 2025' },
-                    { value: 'March 2025', label: 'March 2025' },
-                    { value: 'Q2 2025', label: 'Q2 2025 Overall' },
-                  ]}
+                  options={(territoryDto?.targets?.length ? territoryDto.targets : [{ period: targetPeriodFilter }]).map((target) => ({ value: target.period, label: target.period }))}
                   searchable={false}
                 />
               </div>
@@ -558,10 +762,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             <Button
               variant="accent"
               size="sm"
-              onClick={() => {
-                setEditingTargetExec(null);
-                setIsSetTargetModalOpen(true);
-              }}
+              onClick={() => toast.info('Individual executive targets are not available for this territory.')}
               className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] text-white hover:bg-[#07152E]"
             >
               <Plus className="h-3.5 w-3.5" /> Set Executive Targets
@@ -572,32 +773,32 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <MapKpiCard
               title="Revenue Target (Monthly)"
-              value="₹ 15,00,000"
-              subValue="₹ 14,00,000 Achieved (93.3%)"
+              value={`₹ ${targetAmount.toLocaleString('en-IN')}`}
+              subValue={`₹ ${achievedAmount.toLocaleString('en-IN')} Achieved (${targetProgress}%)`}
               icon={Target}
               iconBgColor="bg-emerald-50"
               iconTextColor="text-emerald-600"
             />
             <MapKpiCard
               title="Visit Volume Target"
-              value="200 Visits"
-              subValue="176 Completed (88.0%)"
+              value={`${selectedTarget?.visitTarget ?? 0} Visits`}
+              subValue={`${selectedTarget?.visitAchieved ?? 0} Completed`}
               icon={TrendingUp}
               iconBgColor="bg-blue-50"
               iconTextColor="text-blue-600"
             />
             <MapKpiCard
               title="New Business Goal"
-              value="200 Businesses"
-              subValue="168 Acquired (84.0%)"
+              value={`${selectedTarget?.newBusinessTarget ?? 0} Businesses`}
+              subValue={`${selectedTarget?.newBusinessAchieved ?? 0} Acquired`}
               icon={Building}
               iconBgColor="bg-purple-50"
               iconTextColor="text-purple-600"
             />
             <MapKpiCard
               title="Top Performer Goal"
-              value="Arjun Mehta"
-              subValue="₹ 2,48,000 / ₹ 2,50,000 (106% Exceeded)"
+              value={territory.managerName}
+              subValue="Manager"
               icon={Award}
               iconBgColor="bg-amber-50"
               iconTextColor="text-amber-600"
@@ -612,19 +813,19 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 <p className="text-[11px] font-medium text-slate-500">Overall progress toward monthly revenue & field operational goals</p>
               </div>
               <span className="rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-extrabold text-emerald-700">
-                93.3% Base Target Completed
+                {targetProgress}% Base Target Completed
               </span>
             </div>
 
             <div className="space-y-1.5 pt-1 text-xs">
               <div className="flex justify-between font-extrabold text-[#0D1F3D]">
-                <span>Progress: ₹ 14,00,000</span>
-                <span>Target: ₹ 15,00,000</span>
+                <span>Progress: ₹ {achievedAmount.toLocaleString('en-IN')}</span>
+                <span>Target: ₹ {targetAmount.toLocaleString('en-IN')}</span>
               </div>
               <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden flex p-0.5 border border-slate-200">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all duration-500"
-                  style={{ width: '93.3%' }}
+                  style={{ width: `${targetProgress}%` }}
                 />
               </div>
               <div className="flex justify-between text-[11px] font-semibold text-slate-500">
@@ -642,17 +843,17 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               <h3 className="text-xs font-extrabold text-[#0D1F3D]">
                 Executive Target & Achievement Matrix ({targetPeriodFilter})
               </h3>
-              <span className="text-[11px] font-bold text-slate-500">5 Active Executives Assigned</span>
+              <span className="text-[11px] font-bold text-slate-500">{territoryExecutives.length} Executives Assigned</span>
             </div>
 
             <div className="space-y-4">
-              {mockTerritoryExecutives.map((exec) => {
-                const targetRev = 250000;
-                const achievedRev = parseInt(exec.revenueFormatted.replace(/[^0-9]/g, '')) || 200000;
-                const revPct = Math.round((achievedRev / targetRev) * 100);
-                const visitTarget = 35;
+              {territoryExecutives.map((exec) => {
+                const targetRev = 0;
+                const achievedRev = exec.revenue;
+                const revPct = targetRev > 0 ? Math.round((achievedRev / targetRev) * 100) : 0;
+                const visitTarget = 0;
                 const visitsDone = exec.visitsCount;
-                const visitPct = Math.round((visitsDone / visitTarget) * 100);
+                const visitPct = visitTarget > 0 ? Math.round((visitsDone / visitTarget) * 100) : 0;
                 const isExceeded = revPct >= 100;
                 const isOnTrack = revPct >= 85 && revPct < 100;
 
@@ -687,17 +888,12 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                               : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}
                         >
-                          {isExceeded ? '• Target Exceeded' : isOnTrack ? '• On Track' : '• Needs Attention'}
+                          {targetRev === 0 ? '• No individual target' : isExceeded ? '• Target Exceeded' : isOnTrack ? '• On Track' : '• Needs Attention'}
                         </span>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            setEditingTargetExec(exec);
-                            setTargetRevenueInput(targetRev.toString());
-                            setTargetVisitInput(visitTarget.toString());
-                            setIsSetTargetModalOpen(true);
-                          }}
+                          onClick={() => toast.info('Individual executive targets are not available for this territory.')}
                           className="text-[11px] py-1 px-2.5 bg-white border-slate-200 font-bold hover:bg-slate-100"
                         >
                           <Edit className="mr-1 h-3 w-3" /> Edit Target
@@ -711,7 +907,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                         <div className="flex justify-between text-xs font-bold">
                           <span className="text-slate-600">Revenue Goal</span>
                           <span className="font-mono text-emerald-700">
-                            {exec.revenueFormatted} / ₹ 2,50,000 ({revPct}%)
+                            {exec.revenueFormatted} / ₹ {targetRev.toLocaleString('en-IN')} ({revPct}%)
                           </span>
                         </div>
                         <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
@@ -751,12 +947,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs font-semibold">
-              {[
-                { category: 'Retail Stores', target: '₹ 6,00,000', achieved: '₹ 5,88,000', pct: 98, color: 'bg-emerald-500' },
-                { category: 'Healthcare & Pharma', target: '₹ 3,50,000', achieved: '₹ 3,36,000', pct: 96, color: 'bg-blue-500' },
-                { category: 'Automobile & Service', target: '₹ 3,00,000', achieved: '₹ 2,52,000', pct: 84, color: 'bg-purple-500' },
-                { category: 'Food & Beverage', target: '₹ 2,00,000', achieved: '₹ 1,54,000', pct: 77, color: 'bg-amber-500' },
-              ].map((cat) => (
+              {[...new Set(businessesList.map((business) => business.category))].map((category) => ({ category, target: '—', achieved: `${businessesList.filter((business) => business.category === category).length} businesses`, pct: 0, color: 'bg-slate-400' })).map((cat) => (
                 <div key={cat.category} className="rounded-sm bg-slate-50 border border-slate-200 p-3 space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="font-extrabold text-[#0D1F3D]">{cat.category}</span>
@@ -800,12 +991,12 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
           {/* Top KPI Metric Cards */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
-            <MapKpiCard title="Total Visits" value="176" subValue="↑ 18.4%" icon={TrendingUp} iconBgColor="bg-emerald-50" iconTextColor="text-emerald-600" />
-            <MapKpiCard title="Completed Visits" value="142" subValue="↑ 21.7%" icon={CheckCircle2} iconBgColor="bg-blue-50" iconTextColor="text-blue-600" />
-            <MapKpiCard title="New Leads" value="98" subValue="↑ 16.3%" icon={Users} iconBgColor="bg-purple-50" iconTextColor="text-purple-600" />
-            <MapKpiCard title="Demos Conducted" value="36" subValue="↑ 12.5%" icon={Target} iconBgColor="bg-amber-50" iconTextColor="text-amber-600" />
-            <MapKpiCard title="Sales Closed" value="28" subValue="↑ 21.7%" icon={ShoppingBag} iconBgColor="bg-teal-50" iconTextColor="text-teal-600" />
-            <MapKpiCard title="Revenue" value="₹ 14,00,000" subValue="↑ 24.6%" icon={Award} iconBgColor="bg-rose-50" iconTextColor="text-rose-600" />
+            <MapKpiCard title="Total Visits" value={selectedTarget?.visitAchieved ?? 0} subValue={selectedTarget?.period ?? 'No target'} icon={TrendingUp} iconBgColor="bg-emerald-50" iconTextColor="text-emerald-600" />
+            <MapKpiCard title="Completed Visits" value={selectedTarget?.visitAchieved ?? 0} subValue={selectedTarget?.period ?? 'No target'} icon={CheckCircle2} iconBgColor="bg-blue-50" iconTextColor="text-blue-600" />
+            <MapKpiCard title="New Leads" value={performance?.leadsCount ?? 0} subValue="Total territory leads" icon={Users} iconBgColor="bg-purple-50" iconTextColor="text-purple-600" />
+            <MapKpiCard title="Demos Conducted" value="—" subValue="Not tracked" icon={Target} iconBgColor="bg-amber-50" iconTextColor="text-amber-600" />
+            <MapKpiCard title="Sales Closed" value="—" subValue="Not tracked" icon={ShoppingBag} iconBgColor="bg-teal-50" iconTextColor="text-teal-600" />
+            <MapKpiCard title="Revenue" value={`₹ ${(performance?.monthlyAchieved ?? 0).toLocaleString('en-IN')}`} subValue={selectedTarget?.period ?? 'No target'} icon={Award} iconBgColor="bg-rose-50" iconTextColor="text-rose-600" />
           </div>
 
           {/* Performance Analytics Grid Section */}
@@ -818,19 +1009,19 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                   <p className="text-[11px] font-medium text-slate-500">Historical performance across last 5 months in {territory.name}</p>
                 </div>
                 <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                  Target Met: 67%
+                  Target Met: {performance?.performancePercentage ?? 0}%
                 </span>
               </div>
 
               {/* Bar Chart Visualization */}
               <div className="space-y-3 pt-2">
-                {[
-                  { month: 'Jan 2025', revenue: 950000, target: 1200000, visits: 130, pct: 79 },
-                  { month: 'Feb 2025', revenue: 1100000, target: 1250000, visits: 145, pct: 88 },
-                  { month: 'Mar 2025', revenue: 1280000, target: 1300000, visits: 160, pct: 98 },
-                  { month: 'Apr 2025', revenue: 1350000, target: 1400000, visits: 168, pct: 96 },
-                  { month: 'May 2025 (Current)', revenue: 1400000, target: 1500000, visits: 176, pct: 93 },
-                ].map((item) => (
+                {(performance?.periodTargets ?? []).map((period) => ({
+                  month: period.period,
+                  revenue: Number(period.monthlyAchieved),
+                  target: Number(period.monthlyTarget),
+                  visits: period.visitAchieved,
+                  pct: Number(period.monthlyTarget) > 0 ? Math.min(100, Math.round(Number(period.monthlyAchieved) / Number(period.monthlyTarget) * 100)) : 0,
+                })).map((item) => (
                   <div key={item.month} className="space-y-1 text-xs">
                     <div className="flex items-center justify-between font-bold">
                       <span className="text-[#0D1F3D]">{item.month}</span>
@@ -856,23 +1047,23 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="rounded-sm bg-slate-50 p-3 border border-slate-200/70 text-center">
                     <span className="text-xs font-semibold text-slate-600 block">Total Prospects</span>
-                    <span className="text-lg font-extrabold text-[#0D1F3D]">168</span>
-                    <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">100% Coverage</span>
+                    <span className="text-lg font-extrabold text-[#0D1F3D]">{performance?.leadsCount ?? 0}</span>
+                    <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">Territory leads</span>
                   </div>
                   <div className="rounded-sm bg-blue-50/50 p-3 border border-blue-100 text-center">
                     <span className="text-[10px] font-bold text-blue-600 block">Visits Completed</span>
-                    <span className="text-lg font-extrabold text-blue-900">142</span>
-                    <span className="text-[10px] text-blue-700 font-bold block mt-0.5">84.5% Visit Rate</span>
+                    <span className="text-lg font-extrabold text-blue-900">{selectedTarget?.visitAchieved ?? 0}</span>
+                    <span className="text-[10px] text-blue-700 font-bold block mt-0.5">Recorded for {selectedTarget?.period ?? 'current period'}</span>
                   </div>
                   <div className="rounded-sm bg-amber-50/50 p-3 border border-amber-100 text-center">
                     <span className="text-[10px] font-bold text-amber-700 block">Demos Conducted</span>
-                    <span className="text-lg font-extrabold text-amber-900">36</span>
-                    <span className="text-[10px] text-amber-800 font-bold block mt-0.5">25.3% Demo Rate</span>
+                    <span className="text-lg font-extrabold text-amber-900">—</span>
+                    <span className="text-[10px] text-amber-800 font-bold block mt-0.5">Not tracked</span>
                   </div>
                   <div className="rounded-sm bg-emerald-50/50 p-3 border border-emerald-100 text-center">
                     <span className="text-[10px] font-bold text-emerald-700 block">Sales Closed</span>
-                    <span className="text-lg font-extrabold text-emerald-900">28</span>
-                    <span className="text-[10px] text-emerald-800 font-bold block mt-0.5">77.7% Closing Rate</span>
+                    <span className="text-lg font-extrabold text-emerald-900">—</span>
+                    <span className="text-[10px] text-emerald-800 font-bold block mt-0.5">Not tracked</span>
                   </div>
                 </div>
               </div>
@@ -886,13 +1077,12 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               </div>
 
               <div className="space-y-3">
-                {[
-                  { category: 'Retail Stores', share: 42, amount: '₹ 5,88,000', color: 'bg-emerald-500' },
-                  { category: 'Healthcare & Pharmacy', share: 24, amount: '₹ 3,36,000', color: 'bg-blue-500' },
-                  { category: 'Automobile & Service', share: 18, amount: '₹ 2,52,000', color: 'bg-purple-500' },
-                  { category: 'Food & Beverage', share: 11, amount: '₹ 1,54,000', color: 'bg-amber-500' },
-                  { category: 'Hardware & Others', share: 5, amount: '₹ 70,000', color: 'bg-rose-500' },
-                ].map((cat) => (
+                {[...new Set(businessesList.map((business) => business.category))].map((category) => ({
+                  category,
+                  share: businessesList.length ? Math.round(businessesList.filter((business) => business.category === category).length / businessesList.length * 100) : 0,
+                  amount: `${businessesList.filter((business) => business.category === category).length} businesses`,
+                  color: 'bg-blue-500',
+                })).map((cat) => (
                   <div key={cat.category} className="space-y-1 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-[#0D1F3D]">{cat.category}</span>
@@ -910,11 +1100,11 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 <div className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
                   <div>
                     <span className="text-xs font-semibold text-slate-500 block">Overall Territory Score</span>
-                    <span className="text-xl font-extrabold text-emerald-600">88.5 / 100</span>
+                    <span className="text-xl font-extrabold text-emerald-600">—</span>
                   </div>
                   <div className="text-right">
                     <span className="text-xs font-semibold text-slate-500 block">Status</span>
-                    <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Optimal</span>
+                    <span className="text-xs font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Not tracked</span>
                   </div>
                 </div>
               </div>
@@ -925,7 +1115,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
           <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs space-y-3">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="text-xs font-extrabold text-[#0D1F3D]">Executive Performance Leaderboard ({territory.name})</h3>
-              <span className="text-[11px] font-bold text-slate-500">May 2025 Performance</span>
+              <span className="text-[11px] font-bold text-slate-500">{selectedTarget?.period ?? 'No period'} Performance</span>
             </div>
 
             <table className="w-full text-left border-collapse text-xs font-semibold">
@@ -941,7 +1131,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {mockTerritoryExecutives.map((exec) => (
+                {territoryExecutives.map((exec) => (
                   <tr key={exec.id} className="hover:bg-slate-50">
                     <td className="p-3">
                       <div className="flex items-center gap-2.5">
@@ -953,11 +1143,11 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                       </div>
                     </td>
                     <td className="p-3 text-center font-bold text-slate-700">{exec.visitsCount}</td>
-                    <td className="p-3 text-center font-bold text-amber-700">{Math.round(exec.visitsCount * 0.28)}</td>
-                    <td className="p-3 text-center font-bold text-emerald-700">{Math.round(exec.visitsCount * 0.2)}</td>
+                    <td className="p-3 text-center font-bold text-amber-700">—</td>
+                    <td className="p-3 text-center font-bold text-emerald-700">—</td>
                     <td className="p-3 text-right font-mono font-bold text-slate-900">{exec.revenueFormatted}</td>
                     <td className="p-3 text-center font-extrabold text-blue-600">
-                      {(20 + (exec.performancePercentage % 15)).toFixed(1)}%
+                      —
                     </td>
                     <td className="p-3 text-center">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -965,7 +1155,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           : 'bg-amber-50 text-amber-700 border border-amber-200'
                       }`}>
-                        {exec.performancePercentage}% Completed
+                        Not tracked
                       </span>
                     </td>
                   </tr>
@@ -982,6 +1172,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
           <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
             Territory Field Visits Log
           </h3>
+          <p className="text-xs text-slate-500">Visit history is not available for this territory.</p>
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 text-[11px]">
@@ -993,11 +1184,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                { time: '20 May, 10:30 AM', exec: 'Arjun Mehta', business: 'Sai Enterprises', purpose: 'Product Demo', status: 'Completed' },
-                { time: '20 May, 11:45 AM', exec: 'Neha Sharma', business: 'Sharma Medical', purpose: 'Payment Collection', status: 'Completed' },
-                { time: '20 May, 02:15 PM', exec: 'Pooja Yadav', business: 'Marol Electronics', purpose: 'Lead Follow-up', status: 'Completed' },
-              ].map((v, i) => (
+              {([] as Array<{ time: string; exec: string; business: string; purpose: string; status: string }>).map((v, i) => (
                 <tr key={i} className="hover:bg-slate-50">
                   <td className="p-2.5 font-mono text-slate-500">{v.time}</td>
                   <td className="p-2.5 font-extrabold text-[#0D1F3D]">{v.exec}</td>
@@ -1104,7 +1291,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                           </div>
                         </td>
                         <td className="p-3 text-right font-mono font-bold text-emerald-700">
-                          {b.revenueFormatted || '₹ 1,80,000'}
+                          {b.revenueFormatted || '—'}
                         </td>
                         <td className="p-3 text-center">
                           <span
@@ -1194,14 +1381,17 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <button
                   type="button"
-                  onClick={() => toast.info(`Calling ${selectedBusiness.contactPerson} at ${selectedBusiness.phone}...`)}
+                  onClick={() => {
+                    if (selectedBusiness.phone) window.location.href = `tel:${selectedBusiness.phone}`;
+                    else toast.info('No phone number is available for this business.');
+                  }}
                   className="flex items-center justify-center gap-1.5 rounded-sm bg-[#0D1F3D] py-1.5 text-xs font-bold text-white shadow-xs hover:bg-[#07152E] cursor-pointer"
                 >
                   <Phone className="h-3.5 w-3.5" /> Call Owner
                 </button>
                 <button
                   type="button"
-                  onClick={() => toast.info(`Navigating to ${selectedBusiness.name}...`)}
+                  onClick={() => toast.info('A mapped location is unavailable for this business.')}
                   className="flex items-center justify-center gap-1.5 rounded-sm border border-slate-200 bg-white py-1.5 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 cursor-pointer"
                 >
                   <MapPin className="h-3.5 w-3.5 text-red-600" /> Directions
@@ -1215,22 +1405,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                   mode="prospects"
                   heightClassName="h-full"
                   compact
-                  prospects={[
-                    {
-                      id: selectedBusiness.id,
-                      name: selectedBusiness.name,
-                      category: selectedBusiness.category,
-                      address: selectedBusiness.address || selectedBusiness.contactPerson,
-                      status: selectedBusiness.visitStatus === 'Visited' ? 'Visited' : selectedBusiness.visitStatus === 'Scheduled' ? 'Follow-up' : 'New Prospect',
-                      markerColor: 'green',
-                      contactPerson: selectedBusiness.contactPerson,
-                      phone: selectedBusiness.phone,
-                      lastVisitTime: selectedBusiness.lastVisitDate,
-                      lat: selectedBusiness.lat || 19.118,
-                      lng: selectedBusiness.lng || 72.868,
-                      region: 'Andheri East',
-                    },
-                  ]}
+                  prospects={[]}
                 />
               </div>
             </div>
@@ -1369,42 +1544,42 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                     <span className="flex items-center gap-2">
                       <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Active Businesses
                     </span>
-                    <span className="font-extrabold text-[#0D1F3D]">142</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{businessesList.filter((business) => business.status === 'Active').length}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-2">
                       <span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Inactive Businesses
                     </span>
-                    <span className="font-extrabold text-[#0D1F3D]">26</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{businessesList.filter((business) => business.status === 'Inactive').length}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-2">
                       <span className="h-2.5 w-2.5 rounded-full bg-blue-600" /> Leads
                     </span>
-                    <span className="font-extrabold text-[#0D1F3D]">98</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{performance?.leadsCount ?? 0}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-2">
                       <span className="text-amber-500">📍</span> Visited Locations
                     </span>
-                    <span className="font-extrabold text-[#0D1F3D]">176</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{selectedTarget?.visitAchieved ?? 0}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-2">
                       <span className="text-red-500">👤</span> Executives
                     </span>
-                    <span className="font-extrabold text-[#0D1F3D]">14</span>
+                    <span className="font-extrabold text-[#0D1F3D]">{territoryExecutives.length}</span>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <span className="flex items-center gap-2">
                       <span className="text-blue-500 font-mono">---</span> Routes
                     </span>
-                    <span className="font-extrabold text-[#0D1F3D]">28</span>
+                    <span className="font-extrabold text-[#0D1F3D]">—</span>
                   </div>
                 </div>
               </div>
@@ -1445,47 +1620,10 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               <div className="relative rounded-sm border border-slate-200/90 bg-white shadow-xs overflow-hidden flex-1 min-h-[580px]">
                 <InteractiveMap
                   mode={showHeatmap ? 'visit-heatmap' : 'live-executives'}
-                  enablePolygonDrawing
-                  executives={
-                    showExecutives
-                      ? mockTerritoryExecutives.map((exec, idx) => ({
-                          id: exec.id,
-                          name: exec.name,
-                          avatar: exec.avatar,
-                          status: (exec.status as any) || 'On Field',
-                          currentLocation: 'Andheri East, Mumbai',
-                          lastUpdated: '10:25 AM',
-                          batteryLevel: 85 - idx * 5,
-                          lat: 19.115 + idx * 0.008,
-                          lng: 72.86 + idx * 0.008,
-                          phone: exec.phone,
-                          team: exec.team,
-                          visitsTodayCompleted: exec.visitsCount,
-                          visitsTodayTotal: 30,
-                          distanceKmToday: 18.5,
-                        }))
-                      : []
-                  }
-                  prospects={
-                    showBusinesses
-                      ? mockTerritoryBusinesses.map((b, idx) => ({
-                          id: b.id,
-                          name: b.name,
-                          category: b.category,
-                          address: 'Andheri East, Mumbai',
-                          status: (b.status === 'Active' ? 'Visited' : 'New Prospect') as any,
-                          markerColor: b.status === 'Active' ? 'green' : 'purple',
-                          contactPerson: b.contactPerson,
-                          phone: b.phone,
-                          lastVisitTime: b.lastVisitDate,
-                          lat: 19.11 + (idx % 4) * 0.01,
-                          lng: 72.85 + (idx % 3) * 0.015,
-                          region: 'Mumbai – Andheri East',
-                        }))
-                      : []
-                  }
+                  executives={[]}
+                  prospects={[]}
                   heightClassName="h-full min-h-[580px]"
-                  territoryPath={showBoundary ? territory.pathPoints : undefined}
+                  territoryPath={showBoundary ? territory.pathPoints : []}
                   showHeatmapToggle={showHeatmap}
                 />
 
@@ -1501,40 +1639,40 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 pt-2">
             <MapKpiCard
               title="Total Visits (This Month)"
-              value="176"
-              subValue="↑ 18.4% vs last month"
+              value={selectedTarget?.visitAchieved ?? 0}
+              subValue={selectedTarget?.period ?? 'No target'}
               icon={TrendingUp}
               iconBgColor="bg-blue-50"
               iconTextColor="text-blue-600"
             />
             <MapKpiCard
               title="Active Businesses"
-              value="142"
-              subValue="84% of total"
+              value={businessesList.filter((business) => business.status === 'Active').length}
+              subValue={`${businessesList.length} total`}
               icon={Building}
               iconBgColor="bg-emerald-50"
               iconTextColor="text-emerald-600"
             />
             <MapKpiCard
               title="Leads"
-              value="98"
-              subValue="58.3% converted"
+              value={performance?.leadsCount ?? 0}
+              subValue="In this territory"
               icon={Users}
               iconBgColor="bg-purple-50"
               iconTextColor="text-purple-600"
             />
             <MapKpiCard
               title="Avg. Visit Duration"
-              value="32m 15s"
-              subValue="↑ 8.6% vs last month"
+              value="—"
+              subValue="Not tracked"
               icon={Clock}
               iconBgColor="bg-amber-50"
               iconTextColor="text-amber-600"
             />
             <MapKpiCard
               title="Coverage Efficiency"
-              value="78%"
-              subValue="Good coverage"
+              value="—"
+              subValue="Not tracked"
               icon={CheckCircle2}
               iconBgColor="bg-rose-50"
               iconTextColor="text-rose-600"
@@ -1549,30 +1687,8 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
           <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
             Territory Activity Feed Stream
           </h3>
+          <p className="text-xs text-slate-500">Territory activities are not available.</p>
 
-          <div className="space-y-3">
-            {[
-              { time: '10 mins ago', title: 'Deal Closed', desc: 'Arjun Mehta closed ₹ 45,000 order with Sai Enterprises', icon: ShoppingBag, color: 'text-emerald-600 bg-emerald-50' },
-              { time: '35 mins ago', title: 'Visit Completed', desc: 'Neha Sharma completed visit at Sharma Medical', icon: CheckCircle2, color: 'text-blue-600 bg-blue-50' },
-              { time: '1 hour ago', title: 'New Business Added', desc: 'Pooja Yadav added Marol Electronics', icon: Building, color: 'text-purple-600 bg-purple-50' },
-            ].map((act, idx) => {
-              const Icon = act.icon;
-              return (
-                <div key={idx} className="flex items-start gap-3 p-2.5 rounded-sm hover:bg-slate-50">
-                  <div className={`p-2 rounded-full shrink-0 ${act.color}`}>
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <span className="font-extrabold text-[#0D1F3D]">{act.title}</span>
-                      <span className="text-[10px] font-mono text-slate-400">{act.time}</span>
-                    </div>
-                    <p className="text-[11px] text-slate-600 font-normal mt-0.5">{act.desc}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
       )}
 
@@ -1582,27 +1698,8 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
           <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
             Territory Documents Repository
           </h3>
+          <p className="text-xs text-slate-500">No territory documents are available.</p>
 
-          <div className="space-y-2">
-            {[
-              { name: 'Marol_Territory_Boundary_Polygon.geojson', size: '124 KB', date: '01 May 2025' },
-              { name: 'May_2025_Executive_Target_Approvals.pdf', size: '1.4 MB', date: '02 May 2025' },
-              { name: 'Field_Executive_Assignment_Roster.xlsx', size: '450 KB', date: '10 May 2025' },
-            ].map((doc, i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-sm bg-slate-50 border border-slate-200">
-                <div className="flex items-center gap-2.5">
-                  <FileSpreadsheet className="h-5 w-5 text-red-500" />
-                  <div>
-                    <p className="font-extrabold text-[#0D1F3D]">{doc.name}</p>
-                    <p className="text-[10px] text-slate-400 font-medium">{doc.size} • Uploaded {doc.date}</p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => toast.success(`Downloading ${doc.name}`)}>
-                  Download
-                </Button>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
@@ -1612,19 +1709,8 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
           <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">
             Territory Audit & Modification Log
           </h3>
+          <p className="text-xs text-slate-500">Territory audit history is not available.</p>
 
-          <div className="space-y-3">
-            {[
-              { title: 'Boundary Polygon Modified', user: 'Vikram Singh (Admin)', time: '15 May 2025, 03:20 PM' },
-              { title: 'Executive Assigned: Rahul Verma', user: 'Vikram Singh (Admin)', time: '10 May 2025, 11:15 AM' },
-              { title: 'Monthly Target Updated to ₹ 14,00,000', user: 'Neha Gupta (Manager)', time: '01 May 2025, 09:00 AM' },
-            ].map((h, i) => (
-              <div key={i} className="border-l-2 border-slate-200 pl-3 space-y-0.5">
-                <p className="font-extrabold text-[#0D1F3D]">{h.title}</p>
-                <p className="text-[10px] text-slate-500">{h.user} • {h.time}</p>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
@@ -1639,7 +1725,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
           </div>
 
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {mockTerritoryExecutives.map((exec) => {
+            {assignmentCandidates.map((exec) => {
               const isChecked = selectedExecIds.includes(exec.id);
               return (
                 <div key={exec.id} className="flex items-center justify-between p-2 rounded-sm bg-slate-50 border border-slate-100">
@@ -1669,10 +1755,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             <Button
               variant="accent"
               size="sm"
-              onClick={() => {
-                setIsAssignModalOpen(false);
-                toast.success('Executive assignments updated successfully!');
-              }}
+              onClick={() => void saveExecutiveAssignments()}
               className="bg-[#0D1F3D] text-white"
             >
               Save Assignments
@@ -1769,58 +1852,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             </button>
           </div>
 
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!newBusinessData.name.trim()) {
-                toast.error('Please enter business name');
-                return;
-              }
-              if (!newBusinessData.contactPerson.trim()) {
-                toast.error('Please enter contact person name');
-                return;
-              }
-              if (!newBusinessData.phone.trim()) {
-                toast.error('Please enter contact phone number');
-                return;
-              }
-
-              const created: any = {
-                id: `biz-${Date.now()}`,
-                name: newBusinessData.name,
-                category: newBusinessData.category,
-                businessType: newBusinessData.category === 'Retail' ? 'Electronics Store' : newBusinessData.category,
-                contactPerson: newBusinessData.contactPerson,
-                phone: newBusinessData.phone,
-                email: newBusinessData.email || `${newBusinessData.name.toLowerCase().replace(/\s+/g, '')}@gmail.com`,
-                address: newBusinessData.address || `${territory.name}, Mumbai`,
-                assignedToName: newBusinessData.assignedExecutive,
-                assignedToAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-                status: newBusinessData.status,
-                annualRevenue: '₹ 1,50,000',
-                revenueFormatted: '₹ 1,50,000',
-                lastVisitDate: 'Just now',
-                hotBadge: true,
-                badge: 'Hot',
-              };
-
-              setBusinessesList([created, ...businessesList]);
-              setSelectedBusinessId(created.id);
-              setIsAddBusinessModalOpen(false);
-              setNewBusinessData({
-                name: '',
-                category: 'Retail',
-                contactPerson: '',
-                phone: '',
-                email: '',
-                address: '',
-                assignedExecutive: 'Arjun Mehta',
-                status: 'Active',
-              });
-              toast.success(`Business "${created.name}" added to ${territory.name} successfully!`);
-            }}
-            className="space-y-3 text-xs font-semibold"
-          >
+          <form onSubmit={handleCreateBusiness} className="space-y-3 text-xs font-semibold">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1">
                 <label className="text-slate-700 block">Business Name *</label>
@@ -1888,9 +1920,9 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 label="Assign To Field Executive *"
                 value={newBusinessData.assignedExecutive}
                 onChange={(e) => setNewBusinessData({ ...newBusinessData, assignedExecutive: e.target.value })}
-                options={mockTerritoryExecutives.map((ex) => ({
+                options={territoryExecutives.map((ex) => ({
                   label: `${ex.name} (${ex.team})`,
-                  value: ex.name,
+                  value: ex.id,
                 }))}
               />
             </div>
@@ -1922,7 +1954,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
                 <Button variant="outline" size="sm" type="button" onClick={() => setIsAddBusinessModalOpen(false)}>
                   Cancel
                 </Button>
-                <Button variant="accent" size="sm" type="submit" className="bg-[#E20613] hover:bg-red-700 text-white font-bold">
+                <Button variant="accent" size="sm" type="submit" isLoading={savingBusiness} className="bg-[#E20613] hover:bg-red-700 text-white font-bold">
                   Save & Add Business
                 </Button>
               </div>
@@ -1959,7 +1991,7 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
 
             {/* Business Selection List */}
             <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-sm divide-y divide-slate-100 bg-slate-50/50">
-              {mockBusinesses
+              {businessCandidates
                 .filter(
                   (b) =>
                     b.name.toLowerCase().includes(linkSearchQuery.toLowerCase()) ||
@@ -1998,9 +2030,9 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
               label="Assign Executive in Territory *"
               value={linkAssignedExec}
               onChange={(e) => setLinkAssignedExec(e.target.value)}
-              options={mockTerritoryExecutives.map((ex) => ({
+              options={territoryExecutives.map((ex) => ({
                 label: `${ex.name} (${ex.team})`,
-                value: ex.name,
+                value: ex.id,
               }))}
             />
           </div>
@@ -2012,35 +2044,8 @@ export default function TerritoryDetailsPage({ initialTab = 'Overview' }: { init
             <Button
               variant="accent"
               size="sm"
-              onClick={() => {
-                const targetBiz = mockBusinesses.find((b) => b.id === selectedLinkBizId);
-                if (targetBiz) {
-                  const created: any = {
-                    id: targetBiz.id,
-                    name: targetBiz.name,
-                    category: targetBiz.category || 'Retail',
-                    businessType: targetBiz.businessType,
-                    contactPerson: targetBiz.contactPerson,
-                    contactRole: targetBiz.contactRole || 'Owner',
-                    phone: targetBiz.phone,
-                    email: targetBiz.email,
-                    address: targetBiz.fullAddress || targetBiz.address,
-                    assignedToName: linkAssignedExec,
-                    assignedToAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200',
-                    status: 'Active',
-                    annualRevenue: targetBiz.annualRevenue || '₹ 1,80,000',
-                    revenueFormatted: '₹ 1,80,000',
-                    lastVisitDate: 'Just now',
-                    hotBadge: true,
-                    badge: 'Assigned',
-                  };
-
-                  setBusinessesList([created, ...businessesList.filter((b) => b.id !== targetBiz.id)]);
-                  setSelectedBusinessId(created.id);
-                  setIsLinkBusinessModalOpen(false);
-                  toast.success(`Business "${targetBiz.name}" assigned to ${territory.name}!`);
-                }
-              }}
+              onClick={() => void handleAssignBusiness()}
+              isLoading={savingBusiness}
               className="bg-[#0D1F3D] text-white font-bold"
             >
               Assign to Territory

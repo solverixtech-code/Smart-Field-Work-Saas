@@ -30,6 +30,12 @@ export class TerritoryController {
     return this.territories.list(p, q);
   }
 
+  @Get("member-options")
+  @RequirePermissions("crm.territories.view")
+  memberOptions(@CurrentPrincipal() p: RequestPrincipal, @Query() q: unknown) {
+    return this.territories.memberOptions(p, q);
+  }
+
   @Get(":id")
   @RequirePermissions("crm.territories.view")
   get(@CurrentPrincipal() p: RequestPrincipal, @Param("id") id: string) {

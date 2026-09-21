@@ -20,7 +20,8 @@ import { Button } from '../../components/ui/Button';
 import { Select, SelectOption } from '../../components/ui/Select';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import { crmApi } from '../../features/crm/crm.api';
-import { mockTerritoryExecutives, getEmployeeProfile } from './territoriesData';
+import { crmError } from '../../features/crm/crm.state';
+import { getEmployeeProfile } from './territoriesData';
 
 export default function CreateTerritoryPage() {
   const navigate = useNavigate();
@@ -41,22 +42,25 @@ export default function CreateTerritoryPage() {
   const [visitTarget, setVisitTarget] = useState('100');
   const [collectionTarget, setCollectionTarget] = useState('300000');
   const [newBusinessTarget, setNewBusinessTarget] = useState('20');
-  const [selectedExecutives, setSelectedExecutives] = useState<string[]>(['Arjun Mehta']);
+  const [selectedExecutives, setSelectedExecutives] = useState<string[]>([]);
   const [searchLocation, setSearchLocation] = useState('');
   const [notes, setNotes] = useState('');
 
   // Map Polygon Coordinates State
   const [boundaryPoints, setBoundaryPoints] = useState<[number, number][]>([]);
-  const [areaKm2, setAreaKm2] = useState<number>(18.45);
-  const [perimeterKm, setPerimeterKm] = useState<number>(23.67);
+  const [areaKm2, setAreaKm2] = useState<number>(0);
+  const [perimeterKm, setPerimeterKm] = useState<number>(0);
 
   useEffect(() => {
     crmApi
-      .owners({ limit: 100 })
+      .territoryMemberOptions({ limit: 100 })
       .then((res) => {
         if (res && res.items) {
+          const uniqueItems = Array.from(
+            new Map(res.items.map((item) => [item.displayName || item.id, item])).values()
+          );
           setManagerOptions(
-            res.items.map((m) => {
+            uniqueItems.map((m) => {
               const profile = getEmployeeProfile(m.displayName, m.role, m.avatarUrl);
               return {
                 value: m.id,
@@ -82,12 +86,13 @@ export default function CreateTerritoryPage() {
 
     try {
       setIsSubmitting(true);
-      await crmApi.createTerritory({
+      const created = await crmApi.createTerritory({
         name: territoryName.trim(),
         code: territoryCode.trim() || undefined,
         regionArea: regionArea.trim() || undefined,
         city: city.trim() || undefined,
         description: description.trim() || undefined,
+        notes: notes.trim() || null,
         status: status === 'Active' ? 'ACTIVE' : 'INACTIVE',
         color,
         managerMembershipId: managerMembershipId || undefined,
@@ -95,12 +100,29 @@ export default function CreateTerritoryPage() {
         areaKm2,
         perimeterKm,
         pathPoints: boundaryPoints,
+        initialExecutiveIds: selectedExecutives,
       });
+
+      if (Number(visitTarget) || Number(collectionTarget) || Number(newBusinessTarget)) {
+        try {
+          await crmApi.updateTerritoryTarget(created.id, {
+            period: new Date().toISOString().slice(0, 7),
+            monthlyTarget: Number(revenueTarget) || 0,
+            visitTarget: Number(visitTarget) || 0,
+            collectionTarget: Number(collectionTarget) || 0,
+            newBusinessTarget: Number(newBusinessTarget) || 0,
+          });
+        } catch {
+          toast.error(`Territory "${created.name}" was created, but some targets could not be saved. Edit the territory to retry.`);
+          navigate('/admin/territories');
+          return;
+        }
+      }
 
       toast.success(`Territory "${territoryName}" created successfully!`);
       navigate('/admin/territories');
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to create territory');
+    } catch (cause) {
+      toast.error(crmError(cause).message);
     } finally {
       setIsSubmitting(false);
     }
@@ -231,7 +253,7 @@ export default function CreateTerritoryPage() {
                 <Select
                   label="Status *"
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as any)}
+                  onChange={(e) => setStatus(e.target.value === 'Active' ? 'Active' : 'Inactive')}
                   searchable={false}
                   options={[
                     { value: 'Active', label: 'Active' },
@@ -363,12 +385,7 @@ export default function CreateTerritoryPage() {
               <Select
                 searchable
                 placeholder="Search executive by name or team..."
-                options={mockTerritoryExecutives.map((exec) => ({
-                  value: exec.name,
-                  label: exec.name,
-                  sublabel: `${exec.role} • ${exec.team}`,
-                  avatar: exec.avatar,
-                }))}
+                options={managerOptions}
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val && !selectedExecutives.includes(val)) {
@@ -379,11 +396,12 @@ export default function CreateTerritoryPage() {
 
               {selectedExecutives.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {selectedExecutives.map((name) => {
-                    const execObj = mockTerritoryExecutives.find((e) => e.name === name);
+                  {selectedExecutives.map((id) => {
+                    const execObj = managerOptions.find((option) => option.value === id);
+                    const name = execObj?.label ?? 'Executive';
                     return (
                       <span
-                        key={name}
+                        key={id}
                         className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 border border-slate-200 pl-1 pr-2.5 py-1 text-xs font-bold text-[#0D1F3D] shadow-2xs"
                       >
                         <img
@@ -398,7 +416,7 @@ export default function CreateTerritoryPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            setSelectedExecutives(selectedExecutives.filter((n) => n !== name))
+                            setSelectedExecutives(selectedExecutives.filter((value) => value !== id))
                           }
                           className="text-slate-400 hover:text-slate-900 font-extrabold ml-1 cursor-pointer"
                         >
@@ -514,18 +532,18 @@ export default function CreateTerritoryPage() {
 
               <div className="rounded-sm border border-slate-200/80 bg-slate-50/60 p-3 text-center">
                 <span className="text-xs font-semibold text-slate-500 block mb-1">Est. Businesses</span>
-                <span className="text-sm font-extrabold text-[#0D1F3D] block">1,248</span>
+                <span className="text-sm font-extrabold text-[#0D1F3D] block">0</span>
               </div>
 
               <div className="rounded-sm border border-slate-200/80 bg-slate-50/60 p-3 text-center">
                 <span className="text-xs font-semibold text-slate-500 block mb-1">Est. Population</span>
-                <span className="text-sm font-extrabold text-[#0D1F3D] block">3.2 Lakh</span>
+                <span className="text-sm font-extrabold text-[#0D1F3D] block">—</span>
               </div>
 
               <div className="rounded-sm border border-slate-200/80 bg-slate-50/60 p-3 text-center col-span-2 sm:col-span-1">
                 <span className="text-xs font-semibold text-slate-500 block mb-1">Active Executives</span>
                 <span className="text-sm font-extrabold text-blue-600 block">
-                  {selectedExecutives.length || 12}
+                  {selectedExecutives.length}
                 </span>
               </div>
             </div>

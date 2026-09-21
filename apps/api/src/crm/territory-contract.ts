@@ -25,6 +25,7 @@ export const territoryFields = z.object({
   pincode: z.string().trim().max(20).nullable().optional(),
   microTerritory: z.string().trim().max(100).nullable().optional(),
   description: z.string().trim().max(2000).nullable().optional(),
+  notes: z.string().trim().max(300).nullable().optional(),
   color: z.string().trim().max(30).default("#2563EB").optional(),
   status: territoryStatus.default("ACTIVE").optional(),
   managerMembershipId: crmId.nullable().optional(),
@@ -87,6 +88,8 @@ export const territoryTargetSchema = z
     visitAchieved: z.coerce.number().int().min(0).default(0).optional(),
     newBusinessTarget: z.coerce.number().int().min(0).default(0).optional(),
     newBusinessAchieved: z.coerce.number().int().min(0).default(0).optional(),
+    activeBusinessTarget: z.coerce.number().int().min(0).default(0).optional(),
+    retentionTarget: z.coerce.number().int().min(0).max(100).default(0).optional(),
     collectionTarget: z.coerce.number().min(0).max(999999999999.99).default(0).optional(),
     collectionAchieved: z.coerce.number().min(0).max(999999999999.99).default(0).optional(),
   })
