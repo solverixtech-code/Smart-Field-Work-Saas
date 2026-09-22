@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Calendar as CalendarIcon, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DatePickerProps {
+  id?: string;
   label?: string;
   value?: string; // YYYY-MM-DD
   onChange?: (dateStr: string) => void;
@@ -24,6 +25,7 @@ function formatDateDisplay(dateStr: string): string {
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({
+  id,
   label,
   value = '2025-05-20',
   onChange,
@@ -43,6 +45,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   useEffect(() => {
     setSelectedDate(value);
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (match) {
+      setCurrentYear(Number(match[1]));
+      setCurrentMonth(Number(match[2]) - 1);
+    }
   }, [value]);
 
   useEffect(() => {
@@ -70,15 +77,18 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   return (
     <div className="space-y-1 text-left font-sans" ref={dropdownRef}>
       {label && (
-        <label className="font-bold text-slate-700 block text-xs">
+        <label htmlFor={id} className="font-bold text-slate-700 block text-xs">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
 
       <div className="relative">
         <button
+          id={id}
           type="button"
           onClick={() => setIsOpen(!isOpen)}
+          aria-haspopup="dialog"
+          aria-expanded={isOpen}
           className="flex w-full items-center justify-between rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#0D1F3D] shadow-xs hover:border-[#0D1F3D] focus:outline-none transition-colors"
         >
           <div className="flex items-center gap-2">

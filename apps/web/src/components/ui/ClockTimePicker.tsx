@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Clock, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface ClockTimePickerProps {
+  id?: string;
   label?: string;
   value?: string; // e.g. "11:30 AM" or "14:30"
   onChange?: (formattedTime: string) => void;
@@ -9,6 +10,7 @@ interface ClockTimePickerProps {
 }
 
 export const ClockTimePicker: React.FC<ClockTimePickerProps> = ({
+  id,
   label = 'Time',
   value = '11:00 AM',
   onChange,
@@ -106,14 +108,17 @@ export const ClockTimePicker: React.FC<ClockTimePickerProps> = ({
   return (
     <div className="space-y-1 relative" ref={containerRef}>
       {label && (
-        <label className="font-bold text-slate-700 block text-xs">
+        <label htmlFor={id} className="font-bold text-slate-700 block text-xs">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
 
       <button
+        id={id}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
         className="w-full flex items-center justify-between rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs font-mono font-bold text-slate-800 focus:border-[#0D1F3D] focus:outline-none shadow-xs hover:bg-slate-50 transition cursor-pointer"
       >
         <span className="flex items-center gap-2">

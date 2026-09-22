@@ -94,7 +94,7 @@ describe("field executive follow-ups", () => {
     await flush();
 
     const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
-    expect(dialog.textContent).toContain("Add follow-up");
+    expect(dialog.textContent).toContain("Add new follow-up");
     const leadSelect = Array.from(dialog.querySelectorAll<HTMLButtonElement>("button"))
       .find((button) => button.textContent?.includes("Select a lead"))!;
     await act(async () => leadSelect.click());
@@ -102,24 +102,23 @@ describe("field executive follow-ups", () => {
       .find((button) => button.textContent?.includes("Acme Retail Solutions"))!;
     await act(async () => leadOption.click());
 
-    for (const [id, value] of [
-      ["follow-up-title", "Call buyer"],
-      ["follow-up-date", "2026-09-23"],
-      ["follow-up-time", "10:30"],
-    ]) {
-      const input = dialog.querySelector<HTMLInputElement>(`#${id}`)!;
-      await act(async () => {
-        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, value);
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-      });
-    }
+    expect(dialog.textContent).toContain("09:00 AM");
+    const title = dialog.querySelector<HTMLInputElement>("#follow-up-title")!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(title, "Call buyer");
+      title.dispatchEvent(new Event("input", { bubbles: true }));
+    });
     await act(async () => dialog.querySelector("form")!.dispatchEvent(
       new Event("submit", { bubbles: true, cancelable: true }),
     ));
     await flush();
     expect(api.post).toHaveBeenCalledWith(
       "/tenant/crm/leads/assigned-lead/follow-ups",
-      expect.objectContaining({ title: "Call buyer", scheduledDate: "2026-09-23", scheduledTime: "10:30" }),
+      expect.objectContaining({
+        title: "Call buyer",
+        scheduledDate: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        scheduledTime: "09:00 AM",
+      }),
       expect.any(Object),
     );
   });

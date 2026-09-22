@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Clock3,
   Download,
   Edit,
   Eye,
@@ -89,7 +90,7 @@ const initialDateRange = (): DateRange => ({
 });
 
 const csvCell = (value: string | null | undefined) =>
-  `"${String(value ?? "").replaceAll('"', '""')}"`;
+  `"${String(value ?? "").replace(/"/g, '""')}"`;
 
 function exportVisibleFollowUps(items: FollowUpRecord[]) {
   if (items.length === 0) {
@@ -196,6 +197,12 @@ export default function FollowUpsListPage({ view }: { view: FollowUpView }) {
         signal,
       ),
   );
+  const overduePreview = useCrmQuery("follow-ups:overdue-preview", (_, signal) =>
+    followUpApi.list({ view: "overdue", page: 1, limit: 3 }, signal),
+  );
+  const todayPreview = useCrmQuery("follow-ups:today-preview", (_, signal) =>
+    followUpApi.list({ view: "today", page: 1, limit: 3 }, signal),
+  );
   const current = views.find((item) => item.id === view) ?? views[0];
   const items = result.data?.items ?? [];
   const summary = result.loading ? undefined : result.data?.summary;
@@ -204,6 +211,15 @@ export default function FollowUpsListPage({ view }: { view: FollowUpView }) {
   const statusOptions = useMemo(
     () => views.map((item) => ({ value: item.id, label: item.label })),
     [],
+  );
+  const priorityCounts = useMemo(
+    () =>
+      items.reduce<Record<string, number>>((counts, item) => {
+        const label = leadLabel(item.lead.priority);
+        counts[label] = (counts[label] ?? 0) + 1;
+        return counts;
+      }, {}),
+    [items],
   );
 
   useEffect(() => {
@@ -443,6 +459,80 @@ export default function FollowUpsListPage({ view }: { view: FollowUpView }) {
         )}
       </div>
 
+      {!result.loading && !result.error && summary && (
+        <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2 lg:grid-cols-4">
+          <SummaryCard title="Follow-ups by status">
+            <div className="flex justify-center py-2">
+              <div className="flex h-20 w-20 flex-col items-center justify-center rounded-full border-4 border-emerald-500 border-r-red-500 border-t-amber-500 shadow-xs">
+                <span className="text-base font-extrabold text-[#0D1F3D]">
+                  {summary.completed + summary.pending}
+                </span>
+                <span className="text-[9px] font-bold text-slate-400">Total</span>
+              </div>
+            </div>
+            <SummaryRow color="bg-emerald-500" label="Completed" value={summary.completed} />
+            <SummaryRow color="bg-amber-500" label="Pending" value={summary.pending} />
+            <SummaryRow color="bg-red-500" label="Overdue" value={summary.overdue} />
+            <SummaryRow color="bg-purple-500" label="Due today" value={summary.today} />
+          </SummaryCard>
+
+          <SummaryCard title="Visible follow-ups by priority">
+            {Object.keys(priorityCounts).length > 0 ? (
+              <div className="space-y-2 pt-2">
+                {["Urgent", "High", "Medium", "Low"].map((priority) => (
+                  <SummaryRow
+                    key={priority}
+                    color={priority === "Urgent" || priority === "High" ? "bg-red-500" : priority === "Medium" ? "bg-amber-500" : "bg-slate-400"}
+                    label={priority}
+                    value={priorityCounts[priority] ?? 0}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptySummary message="No follow-ups on this page." />
+            )}
+          </SummaryCard>
+
+          <SummaryCard
+            title="Overdue follow-ups"
+            action={<Link to="/admin/follow-ups/overdue" className="text-[11px] font-bold text-blue-600 hover:underline">View all</Link>}
+          >
+            {overduePreview.loading ? (
+              <EmptySummary message="Loading overdue follow-ups..." />
+            ) : overduePreview.error ? (
+              <EmptySummary message="Overdue follow-ups are unavailable." />
+            ) : overduePreview.data?.items.length ? (
+              <div className="space-y-2.5 pt-1">
+                {overduePreview.data.items.map((item) => (
+                  <CompactFollowUp key={item.id} item={item} />
+                ))}
+              </div>
+            ) : (
+              <EmptySummary message="No overdue follow-ups." />
+            )}
+          </SummaryCard>
+
+          <SummaryCard
+            title="Today's follow-ups"
+            action={<Link to="/admin/follow-ups/today" className="text-[11px] font-bold text-blue-600 hover:underline">View all</Link>}
+          >
+            {todayPreview.loading ? (
+              <EmptySummary message="Loading today's follow-ups..." />
+            ) : todayPreview.error ? (
+              <EmptySummary message="Today's follow-ups are unavailable." />
+            ) : todayPreview.data?.items.length ? (
+              <div className="space-y-2.5 pt-1">
+                {todayPreview.data.items.map((item) => (
+                  <CompactFollowUp key={item.id} item={item} />
+                ))}
+              </div>
+            ) : (
+              <EmptySummary message="No follow-ups due today." />
+            )}
+          </SummaryCard>
+        </div>
+      )}
+
       <FollowUpFormModal isOpen={addOpen} onClose={() => setAddOpen(false)} onSuccess={result.reload} />
       <FollowUpFormModal isOpen={Boolean(editingFollowUp)} onClose={() => setEditingFollowUp(undefined)} onSuccess={result.reload} followUp={editingFollowUp} />
     </div>
@@ -480,4 +570,58 @@ function StatusBadge({ status }: { status: string }) {
 function PriorityBadge({ priority }: { priority: string }) {
   const style = priority === "Urgent" || priority === "High" ? "border-red-200 bg-red-50 text-red-700" : priority === "Medium" ? "border-amber-200 bg-amber-50 text-amber-700" : "border-slate-200 bg-slate-100 text-slate-700";
   return <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${style}`}>{priority}</span>;
+}
+
+function SummaryCard({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="space-y-3 rounded-sm border border-slate-200/80 bg-white p-4 text-xs font-semibold shadow-xs">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+        <h2 className="text-xs font-extrabold text-[#0D1F3D]">{title}</h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function SummaryRow({ color, label, value }: { color: string; label: string; value: number }) {
+  return (
+    <div className="flex items-center justify-between text-xs text-slate-700">
+      <span className="flex items-center gap-1.5 font-medium">
+        <span className={`h-2 w-2 rounded-full ${color}`} /> {label}
+      </span>
+      <span className="font-extrabold">{value}</span>
+    </div>
+  );
+}
+
+function EmptySummary({ message }: { message: string }) {
+  return <p className="py-8 text-center text-[11px] font-medium text-slate-500">{message}</p>;
+}
+
+function CompactFollowUp({ item }: { item: FollowUpRecord }) {
+  return (
+    <Link
+      to={`/admin/follow-ups/${item.id}`}
+      className="flex items-center justify-between gap-3 rounded-sm p-1.5 transition hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D1F3D]"
+    >
+      <span className="min-w-0">
+        <span className="block truncate font-extrabold text-[#0D1F3D]">
+          {item.lead.businessName || item.lead.name}
+        </span>
+        <span className="block truncate text-[10px] font-medium text-slate-500">{item.title}</span>
+      </span>
+      <span className="flex shrink-0 items-center gap-1 text-[10px] font-bold text-slate-600">
+        <Clock3 className="h-3 w-3" /> {displayTime(item.scheduledTime)}
+      </span>
+    </Link>
+  );
 }
