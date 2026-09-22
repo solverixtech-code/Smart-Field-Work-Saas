@@ -4,6 +4,7 @@ import { z } from "zod";
 import { RequestPrincipal } from "../common/security/request-principal.interface";
 import { crmId } from "./crm-contract";
 import { CrmRepository } from "./crm.repository";
+import { parseFollowUpSchedule } from "./follow-up-schedule";
 import { isFieldExecutive } from "./lead-policy";
 
 const visitListQuery = z
@@ -97,9 +98,14 @@ export class VisitService {
       });
       const timezone = settings?.timezone ?? "Asia/Kolkata";
       const today = localDate(timezone);
-      const startOfToday = new Date(`${today}T00:00:00.000Z`);
-      const startOfTomorrow = new Date(startOfToday);
-      startOfTomorrow.setUTCDate(startOfTomorrow.getUTCDate() + 1);
+      const startOfToday = parseFollowUpSchedule(today, "12:00 AM", timezone);
+      const tomorrow = new Date(`${today}T00:00:00.000Z`);
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+      const startOfTomorrow = parseFollowUpSchedule(
+        tomorrow.toISOString().slice(0, 10),
+        "12:00 AM",
+        timezone,
+      );
 
       const scope: Prisma.LeadVisitWhereInput = {
         tenantId,

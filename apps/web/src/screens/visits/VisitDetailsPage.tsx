@@ -30,103 +30,25 @@ import { Modal } from '../../components/ui/Modal';
 import { DatePicker } from '../../components/ui/DatePicker';
 import { Input } from '../../components/ui/Input';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockVisits } from './visitsData';
-
 import { useCrmQuery } from '../../features/crm/CrmContext';
+import { visitApi } from './visit.api';
+import { toVisitItem } from './visit-adapter';
 
 export default function VisitDetailsPage() {
   const navigate = useNavigate();
   const { visitId } = useParams();
 
-  // Dynamic CRM queries for real backend account data
-  const accountsQuery = useCrmQuery('visit-details-accounts', (s, signal) => s.accounts({ limit: 100 }, signal));
-  const realAccounts = (accountsQuery.data as any)?.items || [];
-
-  const dynamicVisit = React.useMemo(() => {
-    // 1. Check localStorage for user-scheduled visits
-    try {
-      const localScheduled = JSON.parse(localStorage.getItem('sfw_scheduled_visits') || '[]');
-      const foundLocal = localScheduled.find((v: any) => v.id === visitId);
-      if (foundLocal) return foundLocal;
-    } catch (e) {}
-
-    // 2. Check if visitId matches real backend accounts
-    const foundAcc = realAccounts.find(
-      (a: any) => a.id === visitId || `VIS-2026-${1000 + realAccounts.indexOf(a)}` === visitId
-    );
-
-    if (foundAcc) {
-      const idx = realAccounts.indexOf(foundAcc);
-      const fullAddr = [foundAcc.addressLine1, foundAcc.addressLine2, foundAcc.city, foundAcc.state, foundAcc.postalCode]
-        .filter(Boolean)
-        .join(', ') || foundAcc.city || 'Mumbai, Maharashtra';
-
-      return {
-        id: `VIS-2026-${1000 + idx}`,
-        businessId: foundAcc.id,
-        businessName: foundAcc.name,
-        businessType: foundAcc.businessTypeValue?.label || foundAcc.businessType || 'Commercial Merchant',
-        businessCategory: foundAcc.categoryLabel || 'Retail',
-        location: fullAddr,
-        executiveId: foundAcc.ownerMembershipId || 'FE-1001',
-        executiveName: foundAcc.owner?.displayName || 'Sahibjit Singh',
-        executiveRole: foundAcc.owner?.role || 'Field Executive',
-        executiveAvatar: foundAcc.owner?.avatarUrl || null,
-        executivePhone: foundAcc.primaryContact?.phone || foundAcc.phone || '+91 98765 43210',
-        executiveEmail: foundAcc.primaryContact?.email || foundAcc.email || 'executive@sfw.com',
-        visitType: 'Sales Visit',
-        purpose: 'Product Demo & Requirement Discussion',
-        scheduledDateTime: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', 10:00 AM',
-        actualDateTime: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', 10:05 AM - 10:45 AM',
-        duration: '40m',
-        status: foundAcc.status === 'ACTIVE' ? 'Completed' : 'Scheduled',
-        checkInTime: '10:05 AM',
-        checkOutTime: '10:45 AM',
-        isGpsVerified: true,
-        gpsStatus: 'Verified (Within 100m)',
-        distanceFromShop: '15m',
-        routeArea: `${foundAcc.city || 'Andheri'} Route`,
-        travelMode: 'Bike',
-        distanceTraveled: '5.4 km',
-        outcome: foundAcc.status === 'ACTIVE' ? 'Positive' : 'Pending',
-        nextStep: 'Follow up with decision maker',
-        followUpDate: new Date(Date.now() + 86400000 * 3).toLocaleDateString(),
-        priority: 'High' as const,
-        remarks: 'Merchant completed POS demonstration. Positive feedback.',
-        notes: foundAcc.description || 'Active business account field visit recorded in CRM.',
-        createdBy: foundAcc.owner?.displayName || 'System Administrator',
-        createdOn: new Date(foundAcc.createdAt || Date.now()).toLocaleDateString(),
-        productsDiscussed: [
-          {
-            name: 'Smart POS Software License',
-            discussion: 'Presented core features, offline sync, and payment integration',
-            interest: 'High',
-            expectedValue: '₹1,50,000',
-            nextStep: 'Send commercial contract',
-          },
-        ],
-        tasksCreated: [
-          {
-            title: 'Send formal contract document',
-            dueDate: new Date(Date.now() + 86400000 * 2).toLocaleDateString(),
-            status: 'Pending',
-          },
-        ],
-        documentsShared: [
-          {
-            name: 'SFW_Product_Brochure.pdf',
-            size: '1.8 MB',
-            url: '#',
-          },
-        ],
-      };
-    }
-
-    // 3. Fallback to mockVisits
-    return mockVisits.find((v) => v.id === visitId) || mockVisits[0];
-  }, [visitId, realAccounts]);
-
-  const visit = dynamicVisit;
+  const visitQuery = useCrmQuery(
+    `visit-details:${visitId ?? 'missing'}`,
+    (_service, signal) => {
+      if (!visitId) return Promise.reject(new Error('Visit ID is required'));
+      return visitApi.get(visitId, signal);
+    },
+  );
+  const visit = React.useMemo(
+    () => (visitQuery.data ? toVisitItem(visitQuery.data) : null),
+    [visitQuery.data],
+  );
 
   const getExecutiveInitials = (name: string) => {
     if (!name) return 'EX';
@@ -161,10 +83,15 @@ export default function VisitDetailsPage() {
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDueDate, setTaskDueDate] = useState('2026-09-26');
   const [taskPriority, setTaskPriority] = useState<'High' | 'Medium' | 'Low'>('Medium');
-  const [taskAssignee, setTaskAssignee] = useState(visit.executiveName);
+  const [taskAssignee, setTaskAssignee] = useState('');
   const [taskDescription, setTaskDescription] = useState('');
 
+  React.useEffect(() => {
+    if (visit) setTaskAssignee(visit.executiveName);
+  }, [visit]);
+
   const handleDownloadDoc = (doc: { name: string; size?: string }) => {
+    if (!visit) return;
     const fileContent = `VISIBLO SMART FIELD WORK SAAS - DOCUMENT EXPORT
 --------------------------------------------------
 Document Name: ${doc.name}
@@ -194,6 +121,7 @@ SUMMARY & DETAILS:
 
   const handleRescheduleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!visit) return;
     try {
       const localScheduled = JSON.parse(localStorage.getItem('sfw_scheduled_visits') || '[]');
       const updated = localScheduled.map((v: any) => {
@@ -216,6 +144,7 @@ SUMMARY & DETAILS:
 
   const handleFollowUpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!visit) return;
     if (!followUpNotes.trim()) {
       toast.error('Please enter follow-up action notes');
       return;
@@ -245,6 +174,7 @@ SUMMARY & DETAILS:
 
   const handleTaskSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!visit) return;
     if (!taskTitle.trim()) {
       toast.error('Please enter a task title');
       return;
@@ -273,6 +203,22 @@ SUMMARY & DETAILS:
     setIsTaskOpen(false);
   };
 
+  if (visitQuery.loading) {
+    return <p role="status" className="p-6 text-sm text-slate-500">Loading visit details...</p>;
+  }
+
+  if (visitQuery.error || !visit) {
+    return (
+      <div role="alert" className="rounded-sm border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+        <p className="font-bold">This visit is unavailable.</p>
+        <p className="mt-1">It may not be assigned to you or may no longer exist.</p>
+        <Button variant="outline" size="sm" className="mt-4" onClick={() => navigate('/admin/visits')}>
+          Back to visits
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 font-sans pb-12">
       {/* Top Header & Actions Bar */}
@@ -297,7 +243,7 @@ SUMMARY & DETAILS:
               <ArrowLeft className="h-4 w-4" />
             </button>
             <h1 className="text-xl font-extrabold text-[#0D1F3D]">
-              Visit Details: {visit.id}
+              Visit Details: {visit.displayId || 'Visit'}
             </h1>
             <span
               className={`rounded-full px-2.5 py-0.5 text-xs font-extrabold border ${
