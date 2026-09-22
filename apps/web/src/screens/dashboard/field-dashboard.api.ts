@@ -2,7 +2,7 @@ import { api } from '../../common/api';
 
 export interface FieldDashboardVisit {
   id: string;
-  leadId: string;
+  leadId: string | null;
   leadCode: string;
   name: string;
   scheduledAt: string;

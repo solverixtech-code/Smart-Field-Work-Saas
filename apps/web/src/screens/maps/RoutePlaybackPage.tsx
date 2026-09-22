@@ -47,7 +47,7 @@ function liveActivities(data: FieldDashboardData): RouteActivity[] {
       id: visit.id, type: 'visit' as const, title: visit.name,
       address: visit.location, timestamp: visit.scheduledAt,
       status: visit.status, latitude: visit.latitude, longitude: visit.longitude,
-      leadId: visit.leadId,
+      ...(visit.leadId ? { leadId: visit.leadId } : {}),
     })),
     ...data.punches.map((punch) => ({
       id: punch.id, type: (punch.type === 'PUNCH_IN' ? 'start' : 'end') as RouteStop['type'],

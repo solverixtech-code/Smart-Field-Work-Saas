@@ -1153,7 +1153,7 @@ export class LeadService {
     const v = dto.createLeadVisit.parse(body);
     return this.repo.run(actor, true, async (tx, p) => {
       requireLead(p, "update");
-      await this.row(tx, p, leadId, true);
+      const lead = await this.row(tx, p, leadId, true);
       const membership = await tx.tenantMembership.findUnique({
         where: { id: p.scope.membershipId },
         include: { user: { select: { fullName: true, avatarUrl: true } } },
@@ -1162,7 +1162,10 @@ export class LeadService {
         data: {
           tenantId: p.scope.tenantId,
           leadId,
+          targetType: "LEAD",
+          targetName: lead.businessName || lead.name,
           executiveMembershipId: p.scope.membershipId,
+          createdByMembershipId: p.scope.membershipId,
           executiveName: membership?.user.fullName || "Field Executive",
           executiveAvatar: membership?.user.avatarUrl || null,
           location: v.location,

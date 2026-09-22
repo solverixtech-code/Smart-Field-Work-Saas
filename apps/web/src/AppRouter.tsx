@@ -895,10 +895,12 @@ export default function AppRouter() {
                   path="/admin/visits"
                   element={<AllVisitsPage viewMode="all" />}
                 />
-                <Route
-                  path="/admin/visits/schedule"
-                  element={<ScheduleVisitPage />}
-                />
+                <Route element={<PermissionRoute permission="crm.visits.schedule" />}>
+                  <Route
+                    path="/admin/visits/schedule"
+                    element={<ScheduleVisitPage />}
+                  />
+                </Route>
                 <Route
                   path="/admin/visits/today"
                   element={<AllVisitsPage viewMode="today" />}

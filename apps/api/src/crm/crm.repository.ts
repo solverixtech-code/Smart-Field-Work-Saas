@@ -62,6 +62,7 @@ type CrmAuditAction =
   | "lead.deleted"
   | "lead.assigned"
   | "lead.converted"
+  | "visit.scheduled"
   | "opportunity.created"
   | "opportunity.updated"
   | "opportunity.stage_changed"
@@ -239,7 +240,7 @@ export class CrmRepository {
     tx: Prisma.TransactionClient,
     p: CrmPolicy,
     action: CrmAuditAction,
-    entityType: "Account" | "Contact" | "Lead" | "Opportunity",
+    entityType: "Account" | "Contact" | "Lead" | "Opportunity" | "LeadVisit",
     id: string,
     metadata: CrmAuditMetadata,
   ) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -25,8 +25,8 @@ import { Select } from "../../components/ui/Select";
 import { ClockTimePickerModal } from "../../components/ui/ClockTimePickerModal";
 import { GoogleMapPicker } from "../../components/ui/GoogleMapPicker";
 import { PhoneInput } from "../../components/ui/PhoneInput";
-import { mockBusinesses } from "../businesses/businessesData";
 import { useCrm, useCrmQuery, useCrmMutation } from "../../features/crm/CrmContext";
+import { visitApi, ScheduleVisitInput } from "./visit.api";
 
 interface BusinessOption {
   id: string;
@@ -38,188 +38,147 @@ interface BusinessOption {
   phone: string;
   email: string;
   logoText: string;
-  latitude?: number | string | null;
-  longitude?: number | string | null;
 }
 
 export default function ScheduleVisitPage() {
   const navigate = useNavigate();
   const mutation = useCrmMutation();
+  const { can } = useCrm();
 
   // Dynamic CRM queries for real backend data
   const accountsQuery = useCrmQuery("schedule-page-accounts", (s, signal) =>
-    s.accounts({ limit: 100 }, signal)
+    can("crm.businesses.view")
+      ? s.accounts({ limit: 100 }, signal)
+      : Promise.resolve({ items: [], total: 0, page: 1, limit: 100, totalPages: 0 })
   );
 
   const leadsQuery = useCrmQuery("schedule-page-leads", (s, signal) =>
-    s.leads.list({ limit: 100 }, signal)
-  );
-
-  const ownersQuery = useCrmQuery("schedule-page-owners", (s, signal) =>
-    s.owners({ limit: 100 }, signal)
+    can("crm.leads.view")
+      ? s.leads.list({ limit: 100 }, signal)
+      : Promise.resolve({ items: [], total: 0, page: 1, limit: 100, totalPages: 0 })
   );
 
   // Target type: 'existing' | 'lead' | 'custom'
   const [targetType, setTargetType] = useState<"existing" | "lead" | "custom">(
-    "existing"
+    () => can("crm.businesses.view") ? "existing" : can("crm.leads.view") ? "lead" : "custom",
   );
 
   // Process dynamic businesses / accounts
-  const realAccounts = (accountsQuery.data as any)?.items || [];
-  const realLeads = (leadsQuery.data as any)?.items || [];
-  const realOwners = (ownersQuery.data as any)?.items || [];
+  const realAccounts = accountsQuery.data?.items ?? [];
+  const realLeads = leadsQuery.data?.items ?? [];
 
-  const businessOptionsList: BusinessOption[] =
-    realAccounts.length > 0
-      ? realAccounts.map((a: any) => ({
+  const businessOptionsList = useMemo<BusinessOption[]>(
+    () => realAccounts.map((a) => ({
           id: a.id,
           name: a.name,
-          businessType:
-            a.businessTypeValue?.label || a.businessType || "Commercial Merchant",
-          city: a.city || "Mumbai",
+          businessType: a.businessType || a.categoryLabel || "Business",
+          city: a.city || "",
           fullAddress:
             [a.addressLine1, a.addressLine2, a.city, a.state, a.postalCode]
               .filter(Boolean)
-              .join(", ") || "Address not specified",
-          contactPerson: a.primaryContact?.name || "Primary Representative",
-          phone: a.primaryContact?.phone || a.phone || "+91 98765 43210",
-          email: a.primaryContact?.email || a.email || "contact@business.com",
+              .join(", "),
+          contactPerson: a.primaryContact?.name || "",
+          phone: a.primaryContact?.phone || "",
+          email: a.primaryContact?.email || "",
           logoText: a.name ? a.name.slice(0, 2).toUpperCase() : "BU",
-          latitude: a.latitude,
-          longitude: a.longitude,
-        }))
-      : mockBusinesses.map((b) => ({
-          id: b.id,
-          name: b.name,
-          businessType: b.businessType,
-          city: b.city,
-          fullAddress: b.fullAddress,
-          contactPerson: b.contactPerson,
-          phone: b.phone,
-          email: b.email,
-          logoText: b.logoText || b.name.slice(0, 2).toUpperCase(),
-          latitude: 19.1197,
-          longitude: 72.8697,
-        }));
+        })), [realAccounts]);
 
-  const leadOptionsList: BusinessOption[] = realLeads.map((l: any) => ({
+  const leadOptionsList = useMemo<BusinessOption[]>(() => realLeads.map((l) => ({
     id: l.id,
-    name: l.businessName || l.contactName || "Lead Prospect",
-    businessType: l.category || "Prospect Lead",
-    city: l.city || "Mumbai",
-    fullAddress: l.address || l.city || "Lead Address",
-    contactPerson: l.contactName || "Contact Person",
-    phone: l.phone || "+91 98765 43210",
-    email: l.email || "lead@prospect.com",
+    name: l.businessName || l.name,
+    businessType: "Prospect Lead",
+    city: l.city || "",
+    fullAddress: [l.addressLine1, l.addressLine2, l.city, l.state, l.postalCode]
+      .filter(Boolean)
+      .join(", "),
+    contactPerson: l.contactName || "",
+    phone: l.phone || "",
+    email: l.email || "",
     logoText: (l.businessName || l.contactName || "LD").slice(0, 2).toUpperCase(),
-    latitude: l.latitude,
-    longitude: l.longitude,
-  }));
+  })), [realLeads]);
 
   const activeOptionsList =
     targetType === "lead"
-      ? leadOptionsList.length > 0
-        ? leadOptionsList
-        : businessOptionsList
-      : businessOptionsList;
+      ? leadOptionsList
+      : targetType === "existing"
+        ? businessOptionsList
+        : [];
+  const targetOptionsLoading = targetType === "lead" ? leadsQuery.loading : accountsQuery.loading;
+  const targetOptionsError = targetType === "lead" ? leadsQuery.error : accountsQuery.error;
 
   // Selected Business State
-  const [selectedBusinessId, setSelectedBusinessId] = useState(
-    activeOptionsList[0]?.id || "BUS-101"
-  );
+  const [selectedBusinessId, setSelectedBusinessId] = useState("");
+  const [customTargetName, setCustomTargetName] = useState("");
 
-  const selectedBusiness =
-    activeOptionsList.find((b) => b.id === selectedBusinessId) ||
-    activeOptionsList[0] ||
-    businessOptionsList[0];
+  const selectedLinkedBusiness = activeOptionsList.find(
+    (business) => business.id === selectedBusinessId,
+  );
 
   const [contactName, setContactName] = useState(
-    selectedBusiness?.contactPerson || ""
+    ""
   );
   const [contactPhone, setContactPhone] = useState(
-    selectedBusiness?.phone || ""
+    ""
   );
   const [contactEmail, setContactEmail] = useState(
-    selectedBusiness?.email || ""
+    ""
   );
   const [address, setAddress] = useState(
-    selectedBusiness?.fullAddress || ""
+    ""
   );
 
-  // Prefilled Coordinates & Geofence Radius State
-  const [coords, setCoords] = useState<{ lat: number; lng: number }>({
-    lat: 19.1197,
-    lng: 72.8697,
-  });
-  const [radiusMeters, setRadiusMeters] = useState<number>(100);
+  const selectedBusiness: BusinessOption | undefined =
+    targetType === "custom"
+      ? {
+          id: "",
+          name: customTargetName,
+          businessType: "Quick Address",
+          city: "",
+          fullAddress: address,
+          contactPerson: contactName,
+          phone: contactPhone,
+          email: contactEmail,
+          logoText: customTargetName.slice(0, 2).toUpperCase() || "QA",
+        }
+      : selectedLinkedBusiness;
 
-  // Helper to compute / prefill coordinates dynamically based on location
-  const getCoordinatesForTarget = (item?: BusinessOption) => {
-    if (
-      item?.latitude &&
-      item?.longitude &&
-      !isNaN(Number(item.latitude)) &&
-      !isNaN(Number(item.longitude))
-    ) {
-      return { lat: Number(item.latitude), lng: Number(item.longitude) };
-    }
-    const searchStr = `${item?.fullAddress || ""} ${item?.city || ""} ${item?.name || ""}`.toLowerCase();
-    if (searchStr.includes("bengaluru") || searchStr.includes("bangalore"))
-      return { lat: 12.9716, lng: 77.5946 };
-    if (searchStr.includes("delhi") || searchStr.includes("ncr"))
-      return { lat: 28.6139, lng: 77.2090 };
-    if (searchStr.includes("pune"))
-      return { lat: 18.5204, lng: 73.8567 };
-    if (searchStr.includes("thane"))
-      return { lat: 19.2183, lng: 72.9781 };
-    if (searchStr.includes("hyderabad"))
-      return { lat: 17.3850, lng: 78.4867 };
-    if (searchStr.includes("andheri"))
-      return { lat: 19.1197, lng: 72.8697 };
-    if (searchStr.includes("dadar"))
-      return { lat: 19.0178, lng: 72.8478 };
-    if (searchStr.includes("vashi"))
-      return { lat: 19.0771, lng: 72.9986 };
-    if (searchStr.includes("borivali"))
-      return { lat: 19.2307, lng: 72.8567 };
-    return { lat: 19.1197, lng: 72.8697 };
-  };
+  // Prefilled Coordinates & Geofence Radius State
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [radiusMeters, setRadiusMeters] = useState<number>(100);
 
   // Sync state whenever selected business changes or mode switches
   const handleBusinessChange = (busId: string) => {
     setSelectedBusinessId(busId);
     const bus = activeOptionsList.find((b) => b.id === busId);
     if (bus) {
-      if (bus.contactPerson && bus.contactPerson.trim()) {
-        setContactName(bus.contactPerson);
-      }
-      if (bus.phone && bus.phone.trim()) {
-        setContactPhone(bus.phone);
-      }
-      if (bus.email && bus.email.trim() && bus.email !== "Not set") {
-        setContactEmail(bus.email);
-      }
-      if (bus.fullAddress && bus.fullAddress.trim()) {
-        setAddress(bus.fullAddress);
-      }
-
-      // Auto prefill map coordinates dynamically!
-      const newCoords = getCoordinatesForTarget(bus);
-      setCoords(newCoords);
+      setContactName(bus.contactPerson);
+      setContactPhone(bus.phone);
+      setContactEmail(bus.email);
+      setAddress(bus.fullAddress);
+      setCoords(null);
     }
   };
 
   // Initialize coords and prefill address on mount or targetType / business changes
   useEffect(() => {
     if (selectedBusiness) {
-      if (selectedBusiness.fullAddress) setAddress(selectedBusiness.fullAddress);
-      if (selectedBusiness.contactPerson) setContactName(selectedBusiness.contactPerson);
-      if (selectedBusiness.phone) setContactPhone(selectedBusiness.phone);
-      if (selectedBusiness.email && selectedBusiness.email !== "Not set") setContactEmail(selectedBusiness.email);
-      const initialCoords = getCoordinatesForTarget(selectedBusiness);
-      setCoords(initialCoords);
+      setAddress(selectedBusiness.fullAddress);
+      setContactName(selectedBusiness.contactPerson);
+      setContactPhone(selectedBusiness.phone);
+      setContactEmail(selectedBusiness.email);
+      setCoords(null);
     }
-  }, [selectedBusinessId, targetType]);
+  }, [selectedBusinessId, targetType, selectedLinkedBusiness]);
+
+  useEffect(() => {
+    if (targetType === "custom") {
+      setSelectedBusinessId("");
+      return;
+    }
+    if (!activeOptionsList.some((option) => option.id === selectedBusinessId)) {
+      setSelectedBusinessId(activeOptionsList[0]?.id ?? "");
+    }
+  }, [activeOptionsList, selectedBusinessId, targetType]);
 
   // Visit details
   const [visitType, setVisitType] = useState("Sales Visit");
@@ -233,58 +192,45 @@ export default function ScheduleVisitPage() {
   const [recurring, setRecurring] = useState("None");
 
   // Executive Roster
-  const executiveOptionsList =
-    realOwners.length > 0
-      ? realOwners.map((o: any) => ({
-          value: o.id,
-          label: `${o.displayName} (${o.role || "Field Executive"})`,
-          name: o.displayName,
-          avatarUrl: o.avatarUrl || null,
-          role: o.role || "Field Executive",
-        }))
-      : [
-          {
-            value: "ex-1",
-            label: "Amit Verma (North Mumbai • 4 Visits)",
-            name: "Amit Verma",
-            avatarUrl:
-              "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80",
-            role: "North Mumbai • 4 Visits",
-          },
-          {
-            value: "ex-2",
-            label: "Neha Gupta (West Mumbai • 2 Visits)",
-            name: "Neha Gupta",
-            avatarUrl:
-              "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
-            role: "West Mumbai • 2 Visits",
-          },
-          {
-            value: "ex-3",
-            label: "Vikram Patil (Thane Zone • 3 Visits)",
-            name: "Vikram Patil",
-            avatarUrl:
-              "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-            role: "Thane Zone • 3 Visits",
-          },
-          {
-            value: "ex-4",
-            label: "Pooja Yadav (Navi Mumbai • 1 Visit)",
-            name: "Pooja Yadav",
-            avatarUrl:
-              "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80",
-            role: "Navi Mumbai • 1 Visit",
-          },
-        ];
-
-  const [assignedExecutiveId, setAssignedExecutiveId] = useState(
-    executiveOptionsList[0]?.value || "ex-1"
+  const executivesQuery = useCrmQuery(
+    `schedule-page-executives:${scheduledDate}`,
+    (_service, signal) => visitApi.executiveOptions(scheduledDate, signal),
   );
-  const selectedExecutive =
-    executiveOptionsList.find((exec: any) => exec.value === assignedExecutiveId) ||
-    executiveOptionsList[0];
-
-  const [routeArea, setRouteArea] = useState("Andheri East Route");
+  const executiveOptionsList = executivesQuery.data?.items ?? [];
+  const [assignedExecutiveId, setAssignedExecutiveId] = useState("");
+  useEffect(() => {
+    if (!executiveOptionsList.some((executive) => executive.id === assignedExecutiveId)) {
+      setAssignedExecutiveId(executiveOptionsList[0]?.id ?? "");
+    }
+  }, [assignedExecutiveId, executiveOptionsList]);
+  const selectedExecutive = executiveOptionsList.find(
+    (executive) => executive.id === assignedExecutiveId,
+  );
+  const availabilityQuery = useCrmQuery(
+    `visit-availability:${assignedExecutiveId}:${scheduledDate}:${startTime}:${endTime}`,
+    (_service, signal) =>
+      assignedExecutiveId
+        ? visitApi.availability(
+            {
+              executiveMembershipId: assignedExecutiveId,
+              scheduledDate,
+              startTime,
+              endTime,
+            },
+            signal,
+          )
+        : Promise.resolve(null),
+  );
+  const routeOptions = useMemo(
+    () => selectedExecutive?.territories ?? [],
+    [selectedExecutive],
+  );
+  const [routeArea, setRouteArea] = useState("");
+  useEffect(() => {
+    if (!routeOptions.includes(routeArea)) {
+      setRouteArea(routeOptions[0] ?? "");
+    }
+  }, [routeArea, routeOptions]);
   const [travelMode, setTravelMode] = useState("Bike");
   const [allowManualCheckIn, setAllowManualCheckIn] = useState(false);
 
@@ -298,7 +244,7 @@ export default function ScheduleVisitPage() {
     "Demonstrate POS Software on tablet",
   ]);
   const [newChecklistItem, setNewChecklistItem] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmitting = mutation.pending;
 
   const handleAddChecklistItem = () => {
     if (newChecklistItem.trim()) {
@@ -313,82 +259,60 @@ export default function ScheduleVisitPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (!selectedBusiness?.name.trim()) {
+      toast.error(targetType === "custom" ? "Enter a target name." : "Select a target.");
+      return;
+    }
+    if (!address.trim()) {
+      toast.error("Enter the visit address.");
+      return;
+    }
+    if (!selectedExecutive) {
+      toast.error("Select a field executive.");
+      return;
+    }
+    if (availabilityQuery.data && !availabilityQuery.data.available) {
+      toast.error("The selected executive already has a visit during this time.");
+      return;
+    }
 
-    const newScheduledVisit = {
-      id: `VIS-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-      businessId: selectedBusiness?.id || "BUS-101",
-      businessName: selectedBusiness?.name || "Merchant",
-      businessType: selectedBusiness?.businessType || "Commercial Merchant",
-      businessCategory: "Commercial",
-      location: address,
-      executiveId: selectedExecutive?.value || "ex-1",
-      executiveName: selectedExecutive?.name || "Field Executive",
-      executiveRole: selectedExecutive?.role || "Field Executive",
-      executiveAvatar: selectedExecutive?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-      executivePhone: "+91 98765 43210",
-      executiveEmail: "executive@sfw.com",
-      visitType: visitType || "Sales Visit",
-      purpose: purpose || "Product Demo & Corporate Discussion",
-      scheduledDateTime: `${scheduledDate}, ${startTime}`,
-      status: "Scheduled" as const,
-      isGpsVerified: true,
-      gpsStatus: "Verified (Within 100m)" as const,
-      distanceFromShop: "12m",
-      routeArea: routeArea || "Andheri East Route",
-      travelMode: travelMode || "Bike",
-      distanceTraveled: "0 km",
-      outcome: "Pending" as const,
-      nextStep: "Conduct Visit",
-      priority: (priority as any) || "High",
-      remarks: instructions,
-      notes: instructions,
-      createdBy: "Admin User",
-      createdOn: new Date().toLocaleDateString(),
-      productsDiscussed: [],
-      tasksCreated: [],
-      documentsShared: [],
+    const targetTypeByMode: Record<typeof targetType, ScheduleVisitInput["targetType"]> = {
+      existing: "ACCOUNT",
+      lead: "LEAD",
+      custom: "QUICK_ADDRESS",
     };
-
-    try {
-      const existing = JSON.parse(localStorage.getItem("sfw_scheduled_visits") || "[]");
-      localStorage.setItem("sfw_scheduled_visits", JSON.stringify([newScheduledVisit, ...existing]));
-    } catch (err) {
-      console.warn("localStorage visit save warning:", err);
-    }
-
-    try {
-      if (targetType === "lead" && selectedBusinessId) {
-        await mutation.run(async (s, signal) => {
-          await s.leads.createVisit(
-            selectedBusinessId,
-            {
-              location: address,
-              latitude: coords.lat,
-              longitude: coords.lng,
-              purpose: `${visitType}: ${purpose}`,
-              outcome: instructions,
-              durationMinutes: 60,
-              status: "SCHEDULED",
-            },
-            signal
-          );
-        });
-      }
-      toast.success(
-        `Visit successfully scheduled for ${selectedBusiness?.name || "Merchant"}!`
-      );
-      navigate("/admin/visits");
-    } catch (err: any) {
-      toast.success(
-        `Visit successfully scheduled for ${selectedBusiness?.name || "Merchant"}!`
-      );
-      navigate("/admin/visits");
-    } finally {
-      setIsSubmitting(false);
-    }
+    const body: ScheduleVisitInput = {
+      targetType: targetTypeByMode[targetType],
+      ...(targetType !== "custom" ? { targetId: selectedBusiness.id } : {}),
+      targetName: selectedBusiness.name,
+      ...(contactName.trim() ? { contactName: contactName.trim() } : {}),
+      ...(contactPhone.trim() ? { contactPhone: contactPhone.trim() } : {}),
+      ...(contactEmail.trim() ? { contactEmail: contactEmail.trim() } : {}),
+      location: address.trim(),
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lng ?? null,
+      geofenceRadiusMeters: radiusMeters,
+      visitType: visitType as ScheduleVisitInput["visitType"],
+      purpose: purpose.trim(),
+      scheduledDate,
+      startTime,
+      endTime,
+      priority: priority as ScheduleVisitInput["priority"],
+      recurrence: recurring as ScheduleVisitInput["recurrence"],
+      executiveMembershipId: selectedExecutive.id,
+      ...(routeArea.trim() ? { routeArea: routeArea.trim() } : {}),
+      travelMode: travelMode as ScheduleVisitInput["travelMode"],
+      allowManualCheckIn,
+      ...(instructions.trim() ? { instructions: instructions.trim() } : {}),
+      checklist,
+    };
+    const created = await mutation.run((_service, signal) =>
+      visitApi.create(body, signal),
+    );
+    if (!created) return;
+    toast.success(`Visit successfully scheduled for ${created.targetName}!`);
+    navigate("/admin/visits/scheduled");
   };
-
   return (
     <div className="space-[#0D1F3D] font-sans pb-12 space-y-4">
       {/* Top Header & Navigation Bar */}
@@ -443,6 +367,12 @@ export default function ScheduleVisitPage() {
         </div>
       </div>
 
+      {mutation.error ? (
+        <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
+          {mutation.error.message}
+        </div>
+      ) : null}
+
       {/* Main Grid: Left Form (8 Cols) + Right Sticky Summary (4 Cols) */}
       <form
         onSubmit={handleSubmit}
@@ -466,8 +396,7 @@ export default function ScheduleVisitPage() {
                   checked={targetType === "existing"}
                   onChange={() => {
                     setTargetType("existing");
-                    if (businessOptionsList[0])
-                      handleBusinessChange(businessOptionsList[0].id);
+                    setSelectedBusinessId(businessOptionsList[0]?.id ?? "");
                   }}
                   className="accent-[#0D1F3D]"
                 />
@@ -480,8 +409,7 @@ export default function ScheduleVisitPage() {
                   checked={targetType === "lead"}
                   onChange={() => {
                     setTargetType("lead");
-                    if (leadOptionsList[0])
-                      handleBusinessChange(leadOptionsList[0].id);
+                    setSelectedBusinessId(leadOptionsList[0]?.id ?? "");
                   }}
                   className="accent-[#0D1F3D]"
                 />
@@ -492,7 +420,15 @@ export default function ScheduleVisitPage() {
                   type="radio"
                   name="targetType"
                   checked={targetType === "custom"}
-                  onChange={() => setTargetType("custom")}
+                  onChange={() => {
+                    setTargetType("custom");
+                    setSelectedBusinessId("");
+                    setContactName("");
+                    setContactPhone("");
+                    setContactEmail("");
+                    setAddress("");
+                    setCoords(null);
+                  }}
                   className="accent-[#0D1F3D]"
                 />
                 <span>Quick Address</span>
@@ -502,17 +438,37 @@ export default function ScheduleVisitPage() {
             <div className="space-y-3">
               <div>
                 <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  Select Business Account *
+                  {targetType === "custom" ? "Target Name *" : targetType === "lead" ? "Select Lead / Prospect *" : "Select Business Account *"}
                 </label>
-                <Select
-                  searchable={true}
-                  value={selectedBusinessId}
-                  onChange={(e) => handleBusinessChange(e.target.value)}
-                  options={activeOptionsList.map((b) => ({
-                    label: `${b.name} (${b.city} • ${b.businessType})`,
-                    value: b.id,
-                  }))}
-                />
+                {targetType === "custom" ? (
+                  <input
+                    type="text"
+                    value={customTargetName}
+                    onChange={(event) => setCustomTargetName(event.target.value)}
+                    placeholder="Enter merchant or location name"
+                    className="w-full rounded-sm border border-slate-200 bg-white p-2.5 font-semibold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
+                  />
+                ) : (
+                  <Select
+                    searchable={true}
+                    value={selectedBusinessId}
+                    onChange={(event) => handleBusinessChange(event.target.value)}
+                    placeholder={targetOptionsLoading ? "Loading options..." : "Select option"}
+                    options={activeOptionsList.map((business) => ({
+                      label: `${business.name}${business.city ? ` (${business.city} • ${business.businessType})` : ` (${business.businessType})`}`,
+                      value: business.id,
+                    }))}
+                  />
+                )}
+                {targetType !== "custom" && targetOptionsError ? (
+                  <p role="alert" className="mt-1 text-[10px] font-semibold text-red-600">
+                    {targetType === "lead" ? "Assigned leads" : "Business accounts"} could not be loaded.
+                  </p>
+                ) : targetType !== "custom" && !targetOptionsLoading && activeOptionsList.length === 0 ? (
+                  <p className="mt-1 text-[10px] font-semibold text-slate-500">
+                    No {targetType === "lead" ? "assigned leads" : "business accounts"} are available.
+                  </p>
+                ) : null}
               </div>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -571,8 +527,8 @@ export default function ScheduleVisitPage() {
                 <GoogleMapPicker
                   address={address}
                   onAddressChange={(newAddr) => setAddress(newAddr)}
-                  lat={coords.lat}
-                  lng={coords.lng}
+                  lat={coords?.lat}
+                  lng={coords?.lng}
                   onCoordinatesChange={(newCoords) => setCoords(newCoords)}
                   radiusMeters={radiusMeters}
                   onRadiusChange={(val) => setRadiusMeters(val)}
@@ -716,13 +672,23 @@ export default function ScheduleVisitPage() {
                   searchable={true}
                   value={assignedExecutiveId}
                   onChange={(e) => setAssignedExecutiveId(e.target.value)}
-                  options={executiveOptionsList.map((exec: any) => ({
-                    label: exec.label,
-                    value: exec.value,
-                    avatar: exec.avatarUrl,
-                    sublabel: exec.role,
+                  placeholder={executivesQuery.loading ? "Loading executives..." : "Select field executive"}
+                  options={executiveOptionsList.map((exec) => ({
+                    label: `${exec.name} (${exec.scheduledVisitCount} scheduled)`,
+                    value: exec.id,
+                    avatar: exec.avatarUrl ?? undefined,
+                    sublabel: exec.team ? `${exec.role} • ${exec.team}` : exec.role,
                   }))}
                 />
+                {executivesQuery.error ? (
+                  <p role="alert" className="mt-1 text-[10px] font-semibold text-red-600">
+                    Field executives could not be loaded.
+                  </p>
+                ) : !executivesQuery.loading && executiveOptionsList.length === 0 ? (
+                  <p className="mt-1 text-[10px] font-semibold text-slate-500">
+                    No active field executives are available.
+                  </p>
+                ) : null}
               </div>
 
               <div>
@@ -733,16 +699,11 @@ export default function ScheduleVisitPage() {
                   searchable={true}
                   value={routeArea}
                   onChange={(e) => setRouteArea(e.target.value)}
-                  options={[
-                    {
-                      label: "Andheri East Route",
-                      value: "Andheri East Route",
-                    },
-                    { label: "Dadar West Route", value: "Dadar West Route" },
-                    { label: "Thane West Route", value: "Thane West Route" },
-                    { label: "Vashi Route", value: "Vashi Route" },
-                    { label: "Borivali Route", value: "Borivali Route" },
-                  ]}
+                  placeholder={selectedExecutive ? "No assigned territory" : "Select an executive first"}
+                  options={routeOptions.map((territory) => ({
+                    label: territory,
+                    value: territory,
+                  }))}
                 />
               </div>
 
@@ -926,13 +887,15 @@ export default function ScheduleVisitPage() {
                 <div className="flex justify-between py-1 border-b border-slate-100">
                   <span className="text-slate-500">Coordinates</span>
                   <span className="font-mono text-[11px] font-bold text-slate-700">
-                    {coords.lat.toFixed(4)}°, {coords.lng.toFixed(4)}°
+                    {coords
+                      ? `${coords.lat.toFixed(4)}°, ${coords.lng.toFixed(4)}°`
+                      : "Pin not set"}
                   </span>
                 </div>
 
                 <div className="flex justify-between py-1">
                   <span className="text-slate-500">Route Area</span>
-                  <span className="font-bold text-[#0D1F3D]">{routeArea}</span>
+                  <span className="font-bold text-[#0D1F3D]">{routeArea || "Not assigned"}</span>
                 </div>
               </div>
 
@@ -957,11 +920,26 @@ export default function ScheduleVisitPage() {
             </h3>
 
             <div className="space-y-2">
-              <div className="flex items-center gap-2 p-2 rounded-sm bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+              <div
+                className={`flex items-center gap-2 p-2 rounded-sm border font-bold ${
+                  availabilityQuery.error || availabilityQuery.data?.available === false
+                    ? "bg-red-50 border-red-200 text-red-800"
+                    : "bg-emerald-50 border-emerald-200 text-emerald-800"
+                }`}
+              >
+                {availabilityQuery.error || availabilityQuery.data?.available === false ? (
+                  <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                )}
                 <span>
-                  {selectedExecutive?.name || "Executive"} is available on{" "}
-                  {scheduledDate}
+                  {availabilityQuery.error
+                    ? "Availability could not be checked"
+                    : availabilityQuery.loading
+                      ? "Checking executive availability..."
+                      : availabilityQuery.data?.available === false
+                        ? `${selectedExecutive?.name || "Executive"} has a conflicting visit`
+                        : `${selectedExecutive?.name || "Executive"} is available on ${scheduledDate}`}
                 </span>
               </div>
 
@@ -970,10 +948,14 @@ export default function ScheduleVisitPage() {
                   Scheduled Workload:
                 </p>
                 <p className="text-[#0D1F3D] font-bold">
-                  {selectedExecutive?.role || "Active Field Route"}
+                  {availabilityQuery.data
+                    ? `${availabilityQuery.data.scheduledVisitCount} visit${availabilityQuery.data.scheduledVisitCount === 1 ? "" : "s"} on ${scheduledDate}`
+                    : selectedExecutive?.role || "Active Field Route"}
                 </p>
                 <p className="text-slate-400 text-[10px]">
-                  10:00 AM {selectedBusiness?.name || "Merchant"}
+                  {availabilityQuery.data?.conflictingVisitCount
+                    ? `${availabilityQuery.data.conflictingVisitCount} visit conflict${availabilityQuery.data.conflictingVisitCount === 1 ? "" : "s"} between ${startTime} and ${endTime}`
+                    : `${startTime} - ${endTime} ${selectedBusiness?.name || "Merchant"}`}
                 </p>
               </div>
             </div>

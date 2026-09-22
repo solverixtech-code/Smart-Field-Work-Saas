@@ -11,6 +11,13 @@ const range = z.object({ startDate: date, endDate: date }).strict().refine(
   "Start date must be on or before end date.",
 );
 
+const activeVisitTarget = {
+  OR: [
+    { leadId: null },
+    { lead: { is: { deletedAt: null } } },
+  ],
+};
+
 function localDay(timezone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit",
@@ -45,7 +52,7 @@ export class FieldDashboardService {
         tenantId, executiveMembershipId: membershipId,
         checkInTime: { gte: start, lt: end },
         status: { not: "CANCELLED" },
-        lead: { is: { deletedAt: null } },
+        AND: [activeVisitTarget],
       };
       const demoWhere = {
         tenantId, conductedByMembershipId: membershipId,
@@ -56,7 +63,8 @@ export class FieldDashboardService {
         tx.leadVisit.findMany({
           where: visitWhere, orderBy: { checkInTime: "asc" }, take: 100,
           select: {
-            id: true, leadId: true, checkInTime: true, checkOutTime: true,
+            id: true, leadId: true, targetType: true, targetName: true,
+            checkInTime: true, checkOutTime: true,
             location: true, latitude: true, longitude: true, purpose: true, status: true,
             outcome: true, durationMinutes: true,
             lead: { select: { name: true, businessName: true, leadCode: true } },
@@ -125,8 +133,10 @@ export class FieldDashboardService {
         },
         territoryNames: territories.map((item) => item.territory.name),
         visits: visits.map((visit) => ({
-          id: visit.id, leadId: visit.leadId, leadCode: visit.lead.leadCode,
-          name: visit.lead.businessName || visit.lead.name,
+          id: visit.id,
+          leadId: visit.leadId,
+          leadCode: visit.lead?.leadCode ?? (visit.targetType === "ACCOUNT" ? "Business account" : "Quick address"),
+          name: visit.targetName || visit.lead?.businessName || visit.lead?.name || "Field visit",
           scheduledAt: visit.checkInTime, checkOutTime: visit.checkOutTime,
           location: visit.location, latitude: visit.latitude, longitude: visit.longitude,
           purpose: visit.purpose, status: visit.status,
@@ -153,7 +163,7 @@ export class FieldDashboardService {
       policy.require("crm.visits.checkin");
       const visit = await tx.leadVisit.findFirst({
         where: { id: visitId, tenantId: policy.scope.tenantId, executiveMembershipId: policy.scope.membershipId,
-          lead: { is: { deletedAt: null } } },
+          AND: [activeVisitTarget] },
         select: { id: true, status: true, checkInTime: true },
       });
       if (!visit) throw new NotFoundException("Visit not found.");
@@ -185,7 +195,7 @@ export class FieldDashboardService {
       policy.require("crm.visits.checkin");
       const visit = await tx.leadVisit.findFirst({
         where: { id: visitId, tenantId: policy.scope.tenantId, executiveMembershipId: policy.scope.membershipId,
-          lead: { is: { deletedAt: null } } },
+          AND: [activeVisitTarget] },
         select: { id: true, status: true },
       });
       if (!visit) throw new NotFoundException("Visit not found.");

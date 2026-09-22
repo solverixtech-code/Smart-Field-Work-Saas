@@ -947,7 +947,8 @@ model TenantMembership {
   lead4 Lead[] @relation("LeadConverter")
   leadHistoryEvents LeadHistory[]
   leadConversionCommands LeadConversionCommand[]
-  executiveVisits LeadVisit[]
+  executiveVisits LeadVisit[] @relation("VisitExecutive")
+  createdVisits LeadVisit[] @relation("VisitCreator")
   assignedFollowUps LeadFollowUp[]
   conductedDemos LeadDemo[]
   loggedCommunications LeadCommunication[]
@@ -1550,6 +1551,7 @@ model Account {
   currentLeads Lead[] @relation("LeadAccount")
   convertedLeads Lead[] @relation("LeadConvertedAccount")
   leadConversionCommands LeadConversionCommand[]
+  scheduledVisits LeadVisit[] @relation("AccountVisits")
   id String @id @default(uuid())
   tenantId String
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
@@ -2018,19 +2020,38 @@ model LeadVisit {
   id                    String            @id @default(uuid())
   tenantId              String
   tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  leadId                String
-  lead                  Lead              @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  leadId                String?
+  lead                  Lead?             @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  accountId             String?
+  account               Account?          @relation("AccountVisits", fields: [accountId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  targetType            String            @default("LEAD")
+  targetName            String
+  contactName           String?
+  contactPhone          String?
+  contactEmail          String?
   executiveMembershipId String
-  executiveMembership   TenantMembership  @relation(fields: [executiveMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  executiveMembership   TenantMembership  @relation("VisitExecutive", fields: [executiveMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  createdByMembershipId String
+  createdByMembership   TenantMembership  @relation("VisitCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
   executiveName         String
   executiveAvatar       String?
   checkInTime           DateTime          @default(now())
   checkOutTime          DateTime?
+  scheduledEndTime      DateTime?
   durationMinutes       Int               @default(30)
   location              String
   latitude              Float?
   longitude             Float?
   purpose               String
+  visitType             String            @default("Sales Visit")
+  priority              String            @default("Medium")
+  recurrence            String            @default("None")
+  routeArea             String?
+  travelMode            String?
+  geofenceRadiusMeters  Int               @default(100)
+  allowManualCheckIn    Boolean           @default(false)
+  instructions          String?
+  checklist             String[]
   outcome               String?
   photos                String[]
   status                String            @default("COMPLETED") // COMPLETED, SCHEDULED, CANCELLED
@@ -2038,6 +2059,7 @@ model LeadVisit {
   updatedAt             DateTime          @updatedAt
 
   @@index([tenantId, leadId, createdAt])
+  @@index([tenantId, accountId, createdAt])
   @@index([tenantId, executiveMembershipId, checkInTime])
 }
 

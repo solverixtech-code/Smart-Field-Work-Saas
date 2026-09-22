@@ -10,7 +10,7 @@ export interface PermissionDefinition {
   moduleKey: string;
 }
 
-export const PERMISSION_REGISTRY_VERSION = '1.5.1';
+export const PERMISSION_REGISTRY_VERSION = '1.6.0';
 
 export const CRM_PHASE_1_1_PERMISSIONS: PermissionDefinition[] = [
   ...(
@@ -596,6 +596,15 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
     moduleKey: 'crm_visits',
   },
   {
+    code: 'crm.visits.schedule',
+    scope: PermissionScope.TENANT,
+    domain: 'crm',
+    resource: 'visits',
+    action: 'schedule',
+    description: 'Schedule visits for permitted targets and executives',
+    moduleKey: 'crm_visits',
+  },
+  {
     code: 'crm.map.view',
     scope: PermissionScope.TENANT,
     domain: 'crm',
@@ -777,6 +786,7 @@ export const DEFAULT_TENANT_ROLE_GRANTS: Record<string, string[]> = {
     'crm.followups.view',
     'crm.visits.view',
     'crm.visits.checkin',
+    'crm.visits.schedule',
     'crm.map.view',
     'crm.teams.view',
     'crm.executives.view',
@@ -804,6 +814,7 @@ export const DEFAULT_TENANT_ROLE_GRANTS: Record<string, string[]> = {
     'crm.followups.view',
     'crm.visits.view',
     'crm.visits.checkin',
+    'crm.visits.schedule',
     'crm.map.view',
     'crm.teams.view',
     'crm.executives.view',
@@ -821,6 +832,7 @@ export const DEFAULT_TENANT_ROLE_GRANTS: Record<string, string[]> = {
     'crm.followups.manage',
     'crm.visits.view',
     'crm.visits.checkin',
+    'crm.visits.schedule',
   ],
   finance_ops: [
     'payroll.salary_structure.view',

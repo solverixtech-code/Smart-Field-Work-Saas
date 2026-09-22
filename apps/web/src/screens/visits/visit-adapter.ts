@@ -52,12 +52,13 @@ function formatTime(value: string | null): string | undefined {
 }
 
 export function toVisitItem(record: VisitRecord): VisitItem {
+  const target = record.lead ?? record.account;
   const address = [
-    record.lead.addressLine1,
-    record.lead.addressLine2,
-    record.lead.city,
-    record.lead.state,
-    record.lead.postalCode,
+    target?.addressLine1,
+    target?.addressLine2,
+    target?.city,
+    target?.state,
+    target?.postalCode,
   ]
     .filter(Boolean)
     .join(", ");
@@ -66,22 +67,24 @@ export function toVisitItem(record: VisitRecord): VisitItem {
 
   return {
     id: record.id,
-    displayId: record.lead.leadCode,
-    businessId: record.lead.accountId ?? record.lead.id,
-    businessPath: record.lead.accountId
-      ? `/admin/businesses/${record.lead.accountId}`
-      : `/admin/leads/${record.lead.id}`,
-    businessName: record.lead.businessName || record.lead.name,
-    businessType: "Lead visit",
-    businessCategory: record.lead.status,
+    displayId: record.lead?.leadCode,
+    businessId: record.accountId ?? record.leadId ?? record.id,
+    businessPath: record.accountId
+      ? `/admin/businesses/${record.accountId}`
+      : record.leadId
+        ? `/admin/leads/${record.leadId}`
+        : undefined,
+    businessName: record.targetName,
+    businessType: record.targetType === "ACCOUNT" ? "Business visit" : record.targetType === "LEAD" ? "Lead visit" : "Quick-address visit",
+    businessCategory: record.lead?.status ?? record.account?.status ?? "Scheduled",
     location: record.location || address || "Location not recorded",
     executiveId: record.executiveMembershipId,
     executiveName: executive.fullName || record.executiveName,
     executiveRole: record.executiveMembership.designation || "Field Executive",
     executiveAvatar: executive.avatarUrl || record.executiveAvatar || "",
-    executivePhone: executive.mobile || "Not available",
+    executivePhone: record.contactPhone || executive.mobile || "Not available",
     executiveEmail: executive.email,
-    visitType: visitType(record.purpose),
+    visitType: visitType(record.visitType || record.purpose),
     purpose: record.purpose,
     scheduledDateTime: formatDateTime(record.checkInTime),
     actualDateTime: record.checkOutTime
@@ -95,14 +98,14 @@ export function toVisitItem(record: VisitRecord): VisitItem {
     checkOutPhoto: record.photos[1],
     isGpsVerified: hasCoordinates,
     gpsStatus: hasCoordinates ? "Verified (Within 100m)" : "No Signal Area",
-    routeArea: record.lead.city || record.location || "Area not recorded",
-    travelMode: "Not recorded",
+    routeArea: record.routeArea || target?.city || record.location || "Area not recorded",
+    travelMode: record.travelMode || "Not recorded",
     distanceTraveled: "Not recorded",
     outcome: outcome(record.outcome),
     nextStep: "",
-    priority: priority(record.lead.priority),
-    remarks: record.outcome || "",
-    notes: record.outcome || "",
+    priority: priority(record.priority || record.lead?.priority || "MEDIUM"),
+    remarks: record.instructions || record.outcome || "",
+    notes: record.instructions || record.outcome || "",
     createdBy: executive.fullName || record.executiveName,
     createdOn: formatDateTime(record.createdAt),
     productsDiscussed: [],

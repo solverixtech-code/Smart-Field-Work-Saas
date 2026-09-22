@@ -30,7 +30,7 @@ import { DataTable, ColumnDef } from '../../components/ui/DataTable';
 import { GoogleMapPicker } from '../../components/ui/GoogleMapPicker';
 import { VisitItem } from './visitsData';
 import GpsExceptionsPage from './GpsExceptionsPage';
-import { useCrmQuery, useDebouncedSearch } from '../../features/crm/CrmContext';
+import { useCrm, useCrmQuery, useDebouncedSearch } from '../../features/crm/CrmContext';
 import { visitApi, VisitView } from './visit.api';
 import { toVisitItem } from './visit-adapter';
 
@@ -40,6 +40,7 @@ interface AllVisitsPageProps {
 
 export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) {
   const navigate = useNavigate();
+  const { can } = useCrm();
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
@@ -362,15 +363,17 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
                   <Eye className="h-3.5 w-3.5 text-blue-600" /> View Details
                 </button>
 
-                <button
-                  onClick={() => {
-                    setActiveActionId(null);
-                    navigate('/admin/visits/schedule');
-                  }}
-                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-slate-100 text-[#0D1F3D] cursor-pointer"
-                >
-                  <Calendar className="h-3.5 w-3.5 text-emerald-600" /> Reschedule Visit
-                </button>
+                {can('crm.visits.schedule') ? (
+                  <button
+                    onClick={() => {
+                      setActiveActionId(null);
+                      navigate('/admin/visits/schedule');
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-slate-100 text-[#0D1F3D] cursor-pointer"
+                  >
+                    <Calendar className="h-3.5 w-3.5 text-emerald-600" /> Reschedule Visit
+                  </button>
+                ) : null}
 
                 <button
                   onClick={() => {
@@ -442,14 +445,14 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
           >
             <RefreshCw className="h-4 w-4" /> Refresh
           </Button>
-          <Button
+          {can('crm.visits.schedule') ? <Button
             variant="accent"
             size="sm"
             onClick={() => navigate('/admin/visits/schedule')}
             className="flex items-center gap-1.5 font-bold shadow-xs bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm"
           >
             <Plus className="h-4 w-4" /> Schedule Visit
-          </Button>
+          </Button> : null}
         </div>
       </div>
 
@@ -724,15 +727,17 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
               </div>
 
               <div className="space-y-2 pt-2 border-t border-slate-100">
-                <Button
-                  variant="accent"
-                  size="sm"
-                  fullWidth
-                  onClick={() => navigate('/admin/visits/schedule')}
-                  className="flex items-center justify-center gap-1.5 font-bold bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm h-8"
-                >
-                  <Calendar className="h-3.5 w-3.5" /> Schedule New Visit
-                </Button>
+                {can('crm.visits.schedule') ? (
+                  <Button
+                    variant="accent"
+                    size="sm"
+                    fullWidth
+                    onClick={() => navigate('/admin/visits/schedule')}
+                    className="flex items-center justify-center gap-1.5 font-bold bg-[#0D1F3D] hover:bg-slate-800 text-white rounded-sm h-8"
+                  >
+                    <Calendar className="h-3.5 w-3.5" /> Schedule New Visit
+                  </Button>
+                ) : null}
 
                 <Button
                   variant="outline"
