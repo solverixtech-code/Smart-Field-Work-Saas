@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Briefcase, RotateCcw, User } from "lucide-react";
 import { Button } from "../../components/ui/Button";
-import { ClockTimePicker } from "../../components/ui/ClockTimePicker";
+import { ClockTimePickerModal } from "../../components/ui/ClockTimePickerModal";
 import { DatePicker } from "../../components/ui/DatePicker";
 import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
@@ -238,12 +238,10 @@ export function FollowUpFormModal({
             onChange={setScheduledDate}
             required
           />
-          <ClockTimePicker
-            id="follow-up-time"
-            label="Follow-up time"
+          <ClockTimePickerModal
+            label="Follow-up time *"
             value={scheduledTime}
             onChange={setScheduledTime}
-            required
           />
           {can("crm.leads.assign") && (
             <div className="sm:col-span-2">

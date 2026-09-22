@@ -103,6 +103,19 @@ describe("field executive follow-ups", () => {
     await act(async () => leadOption.click());
 
     expect(dialog.textContent).toContain("09:00 AM");
+    const timeTrigger = Array.from(dialog.querySelectorAll<HTMLButtonElement>("button"))
+      .find((button) => button.textContent?.includes("09:00 AM"))!;
+    await act(async () => timeTrigger.click());
+    await flush();
+    const dialogs = document.querySelectorAll<HTMLElement>('[role="dialog"]');
+    expect(dialogs).toHaveLength(2);
+    const clockDialog = dialogs[dialogs.length - 1];
+    expect(clockDialog.textContent).toContain("Clock Time Picker");
+    const done = Array.from(clockDialog.querySelectorAll<HTMLButtonElement>("button"))
+      .find((button) => button.textContent === "Done")!;
+    await act(async () => done.click());
+    await flush();
+
     const title = dialog.querySelector<HTMLInputElement>("#follow-up-title")!;
     await act(async () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(title, "Call buyer");
