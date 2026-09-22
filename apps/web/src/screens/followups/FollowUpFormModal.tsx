@@ -18,6 +18,8 @@ interface Props {
   onClose: () => void;
   onSuccess: () => void;
   followUp?: FollowUpRecord;
+  initialLeadId?: string;
+  initialLeadName?: string;
 }
 
 export function FollowUpFormModal({
@@ -25,8 +27,11 @@ export function FollowUpFormModal({
   onClose,
   onSuccess,
   followUp,
+  initialLeadId,
+  initialLeadName,
 }: Props) {
   const { can, readOnly } = useCrm();
+  const canManage = can("crm.followups.manage") || can("crm.leads.update");
   const mutation = useCrmMutation();
   const [leadSearch, setLeadSearch] = useState("");
   const search = useDebouncedSearch(leadSearch);
@@ -39,7 +44,7 @@ export function FollowUpFormModal({
   const leads = useCrmQuery(
     `follow-up-leads:${isOpen}:${search}`,
     async (_, signal) =>
-      isOpen && !followUp && can("crm.leads.view")
+      isOpen && !followUp && !initialLeadId && can("crm.leads.view")
         ? leadApi.list({ search, limit: 50 }, signal)
         : { items: [], total: 0, page: 1, limit: 50, totalPages: 0 },
   );
@@ -51,17 +56,17 @@ export function FollowUpFormModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    setLeadId(followUp?.leadId ?? "");
+    setLeadId(followUp?.leadId ?? initialLeadId ?? "");
     setTitle(followUp?.title ?? "");
     setScheduledDate(followUp?.scheduledDate ?? "");
     setScheduledTime(followUp?.scheduledTime ?? "");
     setNotes(followUp?.notes ?? "");
     setAssignedMembershipId("");
-  }, [isOpen, followUp]);
+  }, [isOpen, followUp, initialLeadId]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const targetLeadId = followUp?.leadId ?? leadId;
+    const targetLeadId = followUp?.leadId ?? initialLeadId ?? leadId;
     if (!targetLeadId) return;
     const result = await mutation.run((_, signal) =>
       followUp
@@ -108,7 +113,7 @@ export function FollowUpFormModal({
       maxWidth="max-w-xl"
     >
       <form onSubmit={submit} className="space-y-4">
-        {!followUp && (
+        {!followUp && !initialLeadId && (
           <div className="space-y-2">
             <Input
               id="follow-up-lead-search"
@@ -149,6 +154,11 @@ export function FollowUpFormModal({
                 </p>
               )}
           </div>
+        )}
+        {!followUp && initialLeadId && (
+          <p className="text-xs text-slate-600">
+            Lead: <strong>{initialLeadName ?? "Current lead"}</strong>
+          </p>
         )}
         {followUp && (
           <p className="text-xs text-slate-600">
@@ -235,8 +245,8 @@ export function FollowUpFormModal({
             isLoading={mutation.pending}
             disabled={
               readOnly ||
-              !can("crm.leads.update") ||
-              !targetIsValid(leadId, followUp)
+              !canManage ||
+              !Boolean(followUp?.leadId ?? initialLeadId ?? leadId)
             }
           >
             {followUp ? "Save changes" : "Schedule follow-up"}
@@ -245,8 +255,4 @@ export function FollowUpFormModal({
       </form>
     </Modal>
   );
-}
-
-function targetIsValid(leadId: string, followUp?: FollowUpRecord) {
-  return Boolean(followUp?.leadId || leadId);
 }

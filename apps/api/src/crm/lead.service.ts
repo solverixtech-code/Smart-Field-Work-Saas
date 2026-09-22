@@ -14,7 +14,7 @@ import { CrmRepository, crmConflict } from "./crm.repository";
 import { CrmService } from "./crm.service";
 import { CrmPolicy } from "./crm-policy";
 import { ownerOption } from "./crm-select";
-import { isFieldExecutive, leadScope, requireLead } from "./lead-policy";
+import { isFieldExecutive, leadScope, requireFollowUpWrite, requireLead } from "./lead-policy";
 import { leadSelect, LeadRow, conversionSelect } from "./lead-select";
 import { parseFollowUpSchedule } from './follow-up-schedule';
 import { JobService } from '../jobs/job.service';
@@ -1240,7 +1240,7 @@ export class LeadService {
     crmId.parse(leadId);
     const v = dto.createLeadFollowUp.parse(body);
     return this.repo.run(actor, true, async (tx, p) => {
-      requireLead(p, "update");
+      requireFollowUpWrite(p);
       await this.row(tx, p, leadId, true);
       const assignedMembershipId = v.assignedMembershipId || p.scope.membershipId;
       if (assignedMembershipId !== p.scope.membershipId) p.require('crm.leads.assign');
@@ -1276,12 +1276,14 @@ export class LeadService {
     crmId.parse(followUpId);
     const v = dto.updateLeadFollowUp.parse(body);
     return this.repo.run(actor, true, async (tx, p) => {
-      requireLead(p, "update");
+      requireFollowUpWrite(p);
       await this.row(tx, p, leadId, true);
       const followUp = await tx.leadFollowUp.findFirst({
         where: { id: followUpId, leadId, tenantId: p.scope.tenantId },
       });
       if (!followUp) throw new NotFoundException("Follow-up not found");
+      if (isFieldExecutive(p) && followUp.assignedMembershipId !== p.scope.membershipId)
+        throw new NotFoundException("Follow-up not found");
       const timezone = await this.followUpTimezone(tx, p.scope.tenantId);
       const scheduledDate = v.scheduledDate ?? followUp.scheduledDate;
       const scheduledTime = v.scheduledTime ?? followUp.scheduledTime;
@@ -1322,13 +1324,15 @@ export class LeadService {
     crmId.parse(leadId);
     crmId.parse(followUpId);
     return this.repo.run(actor, true, async (tx, p) => {
-      requireLead(p, 'update');
+      requireFollowUpWrite(p);
       await this.row(tx, p, leadId, true);
       const followUp = await tx.leadFollowUp.findFirst({
         where: { id: followUpId, leadId, tenantId: p.scope.tenantId },
-        select: { id: true, title: true },
+        select: { id: true, title: true, assignedMembershipId: true },
       });
       if (!followUp) throw new NotFoundException('Follow-up not found');
+      if (isFieldExecutive(p) && followUp.assignedMembershipId !== p.scope.membershipId)
+        throw new NotFoundException('Follow-up not found');
       await tx.leadFollowUp.delete({ where: { id: followUpId } });
       await this.syncNextFollowUp(tx, p.scope.tenantId, leadId, await this.followUpTimezone(tx, p.scope.tenantId));
       await this.recordHistory(tx, p, leadId, 'followup_deleted', `Follow-up deleted: ${followUp.title}`, null);

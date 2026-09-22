@@ -10,7 +10,7 @@ export interface PermissionDefinition {
   moduleKey: string;
 }
 
-export const PERMISSION_REGISTRY_VERSION = '1.5.0';
+export const PERMISSION_REGISTRY_VERSION = '1.5.1';
 
 export const CRM_PHASE_1_1_PERMISSIONS: PermissionDefinition[] = [
   ...(
@@ -569,6 +569,15 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
     moduleKey: 'crm_followups',
   },
   {
+    code: 'crm.followups.manage',
+    scope: PermissionScope.TENANT,
+    domain: 'crm',
+    resource: 'followups',
+    action: 'manage',
+    description: 'Schedule and manage follow-ups on accessible leads',
+    moduleKey: 'crm_followups',
+  },
+  {
     code: 'crm.visits.view',
     scope: PermissionScope.TENANT,
     domain: 'crm',
@@ -809,6 +818,7 @@ export const DEFAULT_TENANT_ROLE_GRANTS: Record<string, string[]> = {
     'crm.leads.access.assigned',
     'crm.demos.view',
     'crm.followups.view',
+    'crm.followups.manage',
     'crm.visits.view',
     'crm.visits.checkin',
   ],

@@ -168,7 +168,7 @@ export class LeadController {
   }
 
   @Post(":id/follow-ups")
-  @RequirePermissions("crm.leads.update")
+  @RequirePermissions("crm.leads.view")
   createFollowUp(
     @CurrentPrincipal() p: RequestPrincipal,
     @Param("id") id: string,
@@ -178,7 +178,7 @@ export class LeadController {
   }
 
   @Patch(":id/follow-ups/:followUpId")
-  @RequirePermissions("crm.leads.update")
+  @RequirePermissions("crm.leads.view")
   updateFollowUp(
     @CurrentPrincipal() p: RequestPrincipal,
     @Param("id") id: string,
@@ -189,7 +189,7 @@ export class LeadController {
   }
 
   @Delete(":id/follow-ups/:followUpId")
-  @RequirePermissions("crm.leads.update")
+  @RequirePermissions("crm.leads.view")
   deleteFollowUp(
     @CurrentPrincipal() p: RequestPrincipal,
     @Param("id") id: string,

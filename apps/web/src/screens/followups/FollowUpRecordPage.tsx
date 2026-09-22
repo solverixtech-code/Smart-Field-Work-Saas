@@ -33,7 +33,8 @@ export default function FollowUpRecordPage() {
   const [editing, setEditing] = useState(false);
   const [action, setAction] = useState<Action | null>(null);
   const item = result.data;
-  const canEdit = can("crm.leads.update") && !readOnly;
+  const canEdit =
+    (can("crm.followups.manage") || can("crm.leads.update")) && !readOnly;
 
   async function confirm() {
     if (!item || !action) return;

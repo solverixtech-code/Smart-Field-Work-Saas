@@ -4,7 +4,7 @@ import { z } from "zod";
 import { RequestPrincipal } from "../common/security/request-principal.interface";
 import { CrmRepository } from "./crm.repository";
 import { crmId } from "./crm-contract";
-import { leadScope } from "./lead-policy";
+import { isFieldExecutive, leadScope } from "./lead-policy";
 
 const listQuery = z
   .object({
@@ -96,6 +96,9 @@ export class FollowUpService {
       const base: Prisma.LeadFollowUpWhereInput = {
         tenantId: policy.scope.tenantId,
         lead: { is: scope },
+        ...(isFieldExecutive(policy)
+          ? { assignedMembershipId: policy.scope.membershipId }
+          : {}),
       };
       const where: Prisma.LeadFollowUpWhereInput = {
         ...base,
@@ -207,6 +210,9 @@ export class FollowUpService {
           id,
           tenantId: policy.scope.tenantId,
           lead: { is: leadScope(policy) },
+          ...(isFieldExecutive(policy)
+            ? { assignedMembershipId: policy.scope.membershipId }
+            : {}),
         },
         select: followUpSelect,
       });

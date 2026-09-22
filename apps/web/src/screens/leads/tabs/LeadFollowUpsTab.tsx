@@ -1,25 +1,19 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Plus, CheckCircle2, Calendar } from 'lucide-react';
 import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
-import { Modal } from '../../../components/ui/Modal';
-import { DatePicker } from '../../../components/ui/DatePicker';
 import { useCrm, useCrmQuery, useCrmMutation } from '../../../features/crm/CrmContext';
 import { CrmFailure } from '../../../features/crm/CrmControls';
 import { LeadFollowUpDto } from '../../../features/crm/lead.types';
+import { useAppSelector } from '../../../store';
+import { FollowUpFormModal } from '../../followups/FollowUpFormModal';
 import { toast } from 'sonner';
 
-export function LeadFollowUpsTab({ leadId }: { leadId: string }) {
+export function LeadFollowUpsTab({ leadId, leadName }: { leadId: string; leadName: string }) {
   const { can, readOnly } = useCrm();
-  const canUpdate = can('crm.leads.update') && !readOnly;
+  const canManage = (can('crm.followups.manage') || can('crm.leads.update')) && !readOnly;
+  const membershipId = useAppSelector((state) => state.authorization.tenant?.membershipId);
   const [showModal, setShowModal] = useState(false);
-  const [title, setTitle] = useState('');
-  const [scheduledDate, setScheduledDate] = useState(
-    new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0]
-  );
-  const [scheduledTime, setScheduledTime] = useState('11:30 AM');
-  const [notes, setNotes] = useState('');
 
   const mutation = useCrmMutation();
   const query = useCrmQuery('lead-followups:' + leadId, (s, signal) =>
@@ -27,36 +21,6 @@ export function LeadFollowUpsTab({ leadId }: { leadId: string }) {
   );
 
   const followUps = query.data || [];
-
-  const handleCreateFollowUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) {
-      toast.error('Please enter follow-up title');
-      return;
-    }
-
-    const success = await mutation.run(async (s, signal) => {
-      await s.leads.createFollowUp(
-        leadId,
-        {
-          title: title.trim(),
-          scheduledDate,
-          scheduledTime,
-          notes: notes.trim() || undefined,
-        },
-        signal
-      );
-      return true;
-    });
-
-    if (success) {
-      toast.success('Follow-up scheduled successfully!');
-      setShowModal(false);
-      setTitle('');
-      setNotes('');
-      query.reload();
-    }
-  };
 
   const handleMarkComplete = async (item: LeadFollowUpDto) => {
     const success = await mutation.run(async (s, signal) => {
@@ -92,7 +56,7 @@ export function LeadFollowUpsTab({ leadId }: { leadId: string }) {
           </p>
         </div>
 
-        {canUpdate && <Button
+        {canManage && <Button
           variant="accent"
           size="sm"
           onClick={() => setShowModal(true)}
@@ -124,7 +88,7 @@ export function LeadFollowUpsTab({ leadId }: { leadId: string }) {
             >
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  {can('crm.followups.view') ? <Link to={`/admin/follow-ups/${item.id}`} className="font-extrabold text-[#0D1F3D] text-sm hover:underline">{item.title}</Link> : <span className="font-extrabold text-[#0D1F3D] text-sm">{item.title}</span>}
+                  {can('crm.followups.view') && (can('crm.leads.update') || item.assignedMembershipId === membershipId) ? <Link to={`/admin/follow-ups/${item.id}`} className="font-extrabold text-[#0D1F3D] text-sm hover:underline">{item.title}</Link> : <span className="font-extrabold text-[#0D1F3D] text-sm">{item.title}</span>}
                   <span
                     className={`rounded-sm px-2 py-0.5 text-[10px] font-extrabold border ${
                       item.status === 'Pending'
@@ -149,7 +113,7 @@ export function LeadFollowUpsTab({ leadId }: { leadId: string }) {
                 )}
               </div>
 
-              {item.status === 'Pending' && canUpdate && (
+              {item.status === 'Pending' && canManage && (can('crm.leads.update') || item.assignedMembershipId === membershipId) && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -167,86 +131,13 @@ export function LeadFollowUpsTab({ leadId }: { leadId: string }) {
 
       {mutation.error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">{mutation.error.message}</p>}
 
-      {/* Schedule Follow-up Modal */}
-      {showModal && (
-        <Modal
-          isOpen={showModal}
-          title="Schedule Follow-up Task"
-          onClose={() => setShowModal(false)}
-          maxWidth="max-w-md"
-        >
-          <form onSubmit={handleCreateFollowUp} className="space-y-4 font-sans text-xs">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Follow-up Action / Title *
-              </label>
-              <Input
-                type="text"
-                placeholder="e.g. Call VP Sales to review commercial proposal"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">
-                  Scheduled Date *
-                </label>
-                <DatePicker
-                  value={scheduledDate}
-                  onChange={(val) => setScheduledDate(val)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">
-                  Time Slot *
-                </label>
-                <Input
-                  type="text"
-                  placeholder="e.g. 11:30 AM"
-                  value={scheduledTime}
-                  onChange={(e) => setScheduledTime(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Instruction Notes / Discussion Points
-              </label>
-              <textarea
-                className="w-full rounded-md border border-slate-200 bg-white p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-[#0D1F3D] focus:outline-none min-h-[80px]"
-                placeholder="Confirm legal approval for SLA terms..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={mutation.pending}
-                className="bg-[#0D1F3D] text-white hover:bg-slate-800 font-bold"
-              >
-                {mutation.pending ? 'Scheduling...' : 'Schedule Follow-up'}
-              </Button>
-            </div>
-          </form>
-        </Modal>
-      )}
+      <FollowUpFormModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSuccess={query.reload}
+        initialLeadId={leadId}
+        initialLeadName={leadName}
+      />
     </div>
   );
 }

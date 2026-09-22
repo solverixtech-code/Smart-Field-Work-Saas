@@ -133,6 +133,7 @@ export interface LeadVisitDto {
 export interface LeadFollowUpDto {
   id: string;
   leadId: string;
+  assignedMembershipId: string | null;
   assignedToName: string;
   title: string;
   scheduledDate: string;

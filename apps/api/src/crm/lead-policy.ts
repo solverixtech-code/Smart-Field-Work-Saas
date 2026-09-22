@@ -17,6 +17,13 @@ export function requireLead(p: CrmPolicy, action: string) {
   )
     throw new ForbiddenException("CRM_SCOPE_REQUIRED");
 }
+
+export function requireFollowUpWrite(p: CrmPolicy) {
+  requireLead(p, "view");
+  if (!p.has("crm.followups.manage") && !p.has("crm.leads.update"))
+    throw new ForbiddenException("CRM_PERMISSION_DENIED");
+}
+
 export function leadScope(p: CrmPolicy): Prisma.LeadWhereInput {
   if (isFieldExecutive(p)) {
     if (!p.has("crm.leads.access.assigned"))

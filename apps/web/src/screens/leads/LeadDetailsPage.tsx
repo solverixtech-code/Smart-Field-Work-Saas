@@ -273,7 +273,7 @@ function LeadDetailsContent() {
         {activeTab === 'overview' && <LeadOverviewTab lead={lead} />}
         {activeTab === 'timeline' && <LeadTimelineTab leadId={lead.id} />}
         {activeTab === 'visits' && <LeadVisitsTab leadId={lead.id} />}
-        {activeTab === 'follow-ups' && <LeadFollowUpsTab leadId={lead.id} />}
+        {activeTab === 'follow-ups' && <LeadFollowUpsTab leadId={lead.id} leadName={lead.businessName || lead.name} />}
         {activeTab === 'demos' && <LeadDemosTab leadId={lead.id} />}
         {activeTab === 'communications' && <LeadCommunicationTab leadId={lead.id} />}
         {activeTab === 'assignment' && (
