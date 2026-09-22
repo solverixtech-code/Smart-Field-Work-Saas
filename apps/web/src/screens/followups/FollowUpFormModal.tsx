@@ -174,14 +174,6 @@ export function FollowUpFormModal({
         <div className="space-y-4">
           {!followUp && !initialLeadId && (
             <div className="space-y-3.5">
-              <Input
-                id="follow-up-lead-search"
-                label="Find a lead or business"
-                value={leadSearch}
-                onChange={(event) => setLeadSearch(event.target.value)}
-                placeholder="Search by lead name, business or code"
-                leftIcon={<Briefcase className="h-4 w-4" />}
-              />
               {!can("crm.leads.view") && (
                 <p className="text-xs font-medium text-slate-500">
                   Lead access is required to schedule a follow-up.
