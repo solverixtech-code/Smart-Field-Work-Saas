@@ -1136,7 +1136,13 @@ export class LeadService {
       requireLead(p, "view");
       await this.row(tx, p, leadId);
       return tx.leadVisit.findMany({
-        where: { tenantId: p.scope.tenantId, leadId },
+        where: {
+          tenantId: p.scope.tenantId,
+          leadId,
+          ...(isFieldExecutive(p)
+            ? { executiveMembershipId: p.scope.membershipId }
+            : {}),
+        },
         orderBy: { createdAt: "desc" },
       });
     });

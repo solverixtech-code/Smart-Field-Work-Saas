@@ -2038,6 +2038,7 @@ model LeadVisit {
   updatedAt             DateTime          @updatedAt
 
   @@index([tenantId, leadId, createdAt])
+  @@index([tenantId, executiveMembershipId, checkInTime])
 }
 
 model LeadFollowUp {

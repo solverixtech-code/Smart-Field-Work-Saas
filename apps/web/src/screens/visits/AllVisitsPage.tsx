@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -22,50 +22,26 @@ import {
   TrendingUp,
   Building2,
 } from 'lucide-react';
-import { ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DataTable, ColumnDef } from '../../components/ui/DataTable';
 import { GoogleMapPicker } from '../../components/ui/GoogleMapPicker';
-import { mockVisits, mockGpsExceptions, VisitItem, GpsExceptionItem } from './visitsData';
+import { VisitItem } from './visitsData';
 import GpsExceptionsPage from './GpsExceptionsPage';
-
-import { useCrmQuery } from '../../features/crm/CrmContext';
+import { useCrmQuery, useDebouncedSearch } from '../../features/crm/CrmContext';
+import { visitApi, VisitView } from './visit.api';
+import { toVisitItem } from './visit-adapter';
 
 interface AllVisitsPageProps {
   viewMode?: 'all' | 'today' | 'scheduled' | 'completed' | 'missed' | 'verified' | 'unverified' | 'gps-exceptions';
 }
 
-const visitsTrendData = [
-  { day: 'May 24', visits: 20 },
-  { day: 'May 25', visits: 32 },
-  { day: 'May 26', visits: 24 },
-  { day: 'May 27', visits: 30 },
-  { day: 'May 28', visits: 22 },
-  { day: 'May 29', visits: 28 },
-  { day: 'May 30', visits: 35 },
-];
-
-const visitsTypeDistribution = [
-  { name: 'Sales Visit', value: 52, color: '#2563EB' },
-  { name: 'Follow-up', value: 30, color: '#F59E0B' },
-  { name: 'Collection', value: 24, color: '#10B981' },
-  { name: 'Others', value: 22, color: '#8B5CF6' },
-];
-
 export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) {
   const navigate = useNavigate();
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
-
-  // Dynamic CRM queries for real backend data
-  const accountsQuery = useCrmQuery('all-visits-accounts', (s, signal) => s.accounts({ limit: 100 }, signal));
-  const leadsQuery = useCrmQuery('all-visits-leads', (s, signal) => s.leads.list({ limit: 100 }, signal));
-  const ownersQuery = useCrmQuery('all-visits-owners', (s, signal) => s.owners({ limit: 100 }, signal));
-
-  const realAccounts = (accountsQuery.data as any)?.items || [];
-  const realLeads = (leadsQuery.data as any)?.items || [];
-  const realOwners = (ownersQuery.data as any)?.items || [];
+  const [page, setPage] = useState(1);
 
   React.useEffect(() => {
     const handleClose = () => setActiveActionId(null);
@@ -74,111 +50,64 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
   }, []);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebouncedSearch(searchTerm.trim());
   const [executiveFilter, setExecutiveFilter] = useState('All');
   const [typeFilter, setTypeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [areaFilter, setAreaFilter] = useState('All');
 
-  // Executive options for dropdown filter
-  const executiveFilterOptions = React.useMemo(() => {
-    const options = [{ label: 'All Executives', value: 'All' }];
-    if (realOwners.length > 0) {
-      realOwners.forEach((o: any) => {
-        options.push({ label: o.displayName, value: o.displayName });
-      });
-    } else {
-      options.push(
-        { label: 'Amit Verma', value: 'Amit Verma' },
-        { label: 'Neha Gupta', value: 'Neha Gupta' },
-        { label: 'Vikram Patil', value: 'Vikram Patil' },
-        { label: 'Pooja Yadav', value: 'Pooja Yadav' },
-        { label: 'Ankush Yadav', value: 'Ankush Yadav' }
-      );
+  const apiView: VisitView = viewMode === 'gps-exceptions' ? 'all' : viewMode;
+  const visitsQuery = useCrmQuery(
+    `visits:${apiView}:${page}:${debouncedSearch}`,
+    (_service, signal) =>
+      visitApi.list(
+        { view: apiView, page, limit: 25, ...(debouncedSearch ? { search: debouncedSearch } : {}) },
+        signal,
+      ),
+  );
+  const dynamicVisitsList = useMemo(
+    () => (visitsQuery.data?.items ?? []).map(toVisitItem),
+    [visitsQuery.data?.items],
+  );
+  const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!dynamicVisitsList.some((visit) => visit.id === selectedVisitId)) {
+      setSelectedVisitId(dynamicVisitsList[0]?.id ?? null);
     }
-    return options;
-  }, [realOwners]);
+  }, [dynamicVisitsList, selectedVisitId]);
+  const selectedVisit = dynamicVisitsList.find((visit) => visit.id === selectedVisitId);
 
-  // Construct dynamic visits list using user-scheduled visits and real business accounts
-  const dynamicVisitsList: VisitItem[] = React.useMemo(() => {
-    let localScheduled: VisitItem[] = [];
-    try {
-      localScheduled = JSON.parse(localStorage.getItem('sfw_scheduled_visits') || '[]');
-    } catch (e) {}
+  useEffect(() => setPage(1), [apiView, debouncedSearch]);
 
-    const list: VisitItem[] = [...localScheduled];
+  const executiveFilterOptions = useMemo(() => [
+    { label: 'All Executives', value: 'All' },
+    ...Array.from(new Set(dynamicVisitsList.map((visit) => visit.executiveName)))
+      .sort()
+      .map((name) => ({ label: name, value: name })),
+  ], [dynamicVisitsList]);
+  const areaFilterOptions = useMemo(() => [
+    { label: 'All Areas / Locations', value: 'All' },
+    ...Array.from(new Set(dynamicVisitsList.map((visit) => visit.routeArea)))
+      .sort()
+      .map((area) => ({ label: area, value: area })),
+  ], [dynamicVisitsList]);
+  const summary = visitsQuery.data?.summary;
+  const allCount = summary?.all ?? 0;
+  const todayCount = summary?.today ?? 0;
+  const scheduledCount = summary?.scheduled ?? 0;
+  const completedCount = summary?.completed ?? 0;
+  const missedCount = summary?.missed ?? 0;
+  const verifiedCount = summary?.verified ?? 0;
+  const unverifiedCount = summary?.unverified ?? 0;
 
-    // Map real user-created accounts / businesses
-    if (realAccounts.length > 0) {
-      realAccounts.forEach((acc: any, idx: number) => {
-        if (list.some((v) => v.businessId === acc.id || v.businessName === acc.name)) return;
-
-        const fullAddr = [acc.addressLine1, acc.addressLine2, acc.city, acc.state, acc.postalCode]
-          .filter(Boolean)
-          .join(', ') || acc.city || 'Mumbai, Maharashtra';
-
-        list.push({
-          id: `VIS-2026-${1000 + idx}`,
-          businessId: acc.id,
-          businessName: acc.name,
-          businessType: acc.businessTypeValue?.label || acc.businessType || 'Commercial Merchant',
-          businessCategory: acc.categoryLabel || 'Retail',
-          location: fullAddr,
-          executiveId: acc.ownerMembershipId || 'FE-1001',
-          executiveName: acc.owner?.displayName || 'Sahibjit Singh',
-          executiveRole: acc.owner?.role || 'Field Executive',
-          executiveAvatar: acc.owner?.avatarUrl || null,
-          executivePhone: acc.primaryContact?.phone || acc.phone || '+91 98765 43210',
-          executiveEmail: acc.primaryContact?.email || acc.email || 'executive@sfw.com',
-          visitType: 'Sales Visit',
-          purpose: 'Product Demo & Requirement Discussion',
-          scheduledDateTime: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ', 10:00 AM',
-          status: acc.status === 'ACTIVE' ? 'Completed' : 'Scheduled',
-          checkInTime: acc.status === 'ACTIVE' ? '10:05 AM' : undefined,
-          checkOutTime: acc.status === 'ACTIVE' ? '10:45 AM' : undefined,
-          duration: '40m',
-          isGpsVerified: true,
-          gpsStatus: 'Verified (Within 100m)',
-          distanceFromShop: '15m',
-          routeArea: `${acc.city || 'Andheri'} Route`,
-          travelMode: 'Bike',
-          distanceTraveled: '5.4 km',
-          outcome: acc.status === 'ACTIVE' ? 'Positive' : 'Pending',
-          nextStep: 'Follow up',
-          priority: 'High',
-          remarks: 'Account visit synced from CRM.',
-          notes: acc.description || 'Active account visit.',
-          createdBy: acc.owner?.displayName || 'System Administrator',
-          createdOn: new Date(acc.createdAt || Date.now()).toLocaleDateString(),
-          productsDiscussed: [],
-          tasksCreated: [],
-          documentsShared: [],
-        });
-      });
-    }
-
-    // Fallback to mockVisits ONLY if absolutely no scheduled visits or real accounts exist
-    if (list.length === 0) {
-      return mockVisits;
-    }
-
-    return list;
-  }, [realAccounts]);
-
-  const [selectedVisitId, setSelectedVisitId] = useState<string>(dynamicVisitsList[0]?.id || mockVisits[0].id);
-  const selectedVisit = dynamicVisitsList.find((v) => v.id === selectedVisitId) || dynamicVisitsList[0] || mockVisits[0];
-
-  // Dynamic Tab Badges and Counts
-  const todayDateStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-
-  const allCount = dynamicVisitsList.length;
-  const todayCount = dynamicVisitsList.filter(
-    (v) => v.scheduledDateTime.includes(todayDateStr) || v.scheduledDateTime.includes('May 24') || v.scheduledDateTime.includes('May 25')
-  ).length;
-  const scheduledCount = dynamicVisitsList.filter((v) => v.status === 'Scheduled').length;
-  const completedCount = dynamicVisitsList.filter((v) => v.status === 'Completed').length;
-  const missedCount = dynamicVisitsList.filter((v) => v.status === 'Missed' || v.status === 'Cancelled').length;
-  const verifiedCount = dynamicVisitsList.filter((v) => v.isGpsVerified).length;
-  const unverifiedCount = dynamicVisitsList.filter((v) => !v.isGpsVerified).length;
+  const visitsTrendData = useMemo(() => {
+    const counts = new Map<string, number>();
+    dynamicVisitsList.forEach((visit) => {
+      const day = visit.scheduledDateTime.split(',').slice(0, 2).join(',');
+      counts.set(day, (counts.get(day) ?? 0) + 1);
+    });
+    return Array.from(counts, ([day, visits]) => ({ day, visits })).slice(-7);
+  }, [dynamicVisitsList]);
 
   const visitTabs = [
     { key: 'all', label: 'All Visits', badge: String(allCount), path: '/admin/visits' },
@@ -233,28 +162,14 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
     }
   };
 
-  // Filter dataset based on viewMode & user filters
+  // Secondary presentation filters only operate on the already authorized API page.
   const filteredVisits = dynamicVisitsList.filter((v) => {
-    const matchesSearch =
-      v.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.executiveName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.location.toLowerCase().includes(searchTerm.toLowerCase());
-
     const matchesExec = executiveFilter === 'All' || v.executiveName === executiveFilter;
     const matchesType = typeFilter === 'All' || v.visitType === typeFilter;
     const matchesStatus = statusFilter === 'All' || v.status === statusFilter;
     const matchesArea = areaFilter === 'All' || v.routeArea.includes(areaFilter);
 
-    let matchesView = true;
-    if (viewMode === 'today') matchesView = v.scheduledDateTime.includes('May 24') || v.scheduledDateTime.includes('May 25');
-    else if (viewMode === 'scheduled') matchesView = v.status === 'Scheduled';
-    else if (viewMode === 'completed') matchesView = v.status === 'Completed';
-    else if (viewMode === 'missed') matchesView = v.status === 'Missed';
-    else if (viewMode === 'verified') matchesView = v.isGpsVerified;
-    else if (viewMode === 'unverified') matchesView = !v.isGpsVerified;
-
-    return matchesSearch && matchesExec && matchesType && matchesStatus && matchesArea && matchesView;
+    return matchesExec && matchesType && matchesStatus && matchesArea;
   });
 
   // Helper to extract executive initials
@@ -276,7 +191,7 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
             onClick={() => navigate(`/admin/visits/${v.id}`)}
             className="font-bold text-[#0D1F3D] hover:text-blue-600 hover:underline block text-left"
           >
-            {v.id}
+            {v.displayId || 'Visit'}
           </button>
           <p className="text-[11px] text-slate-500 font-medium whitespace-nowrap">{v.scheduledDateTime}</p>
         </div>
@@ -289,7 +204,7 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
           <button
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/admin/businesses/${v.businessId}`);
+              navigate(v.businessPath || `/admin/businesses/${v.businessId}`);
             }}
             className="font-bold text-[#0D1F3D] hover:text-[#E20613] hover:underline text-left cursor-pointer block"
           >
@@ -313,7 +228,7 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
           <div
             onClick={(e) => {
               e.stopPropagation();
-              navigate('/admin/executives/FE-1001');
+              navigate(`/admin/employees/${v.executiveId}`);
             }}
             className="flex items-center gap-2 cursor-pointer group"
             title={`View ${v.executiveName}'s Profile`}
@@ -359,7 +274,7 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
         <div className="flex items-center gap-1.5">
           {v.isGpsVerified ? (
             <span className="flex items-center gap-1 font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-sm text-[10px] border border-emerald-200">
-              <ShieldCheck className="h-3 w-3" /> Verified ({v.distanceFromShop})
+              <ShieldCheck className="h-3 w-3" /> Verified{v.distanceFromShop ? ` (${v.distanceFromShop})` : ''}
             </span>
           ) : (
             <span className="flex items-center gap-1 font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-sm text-[10px] border border-amber-200">
@@ -460,7 +375,7 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
                 <button
                   onClick={() => {
                     setActiveActionId(null);
-                    navigate(`/admin/businesses/${v.businessId}`);
+                    navigate(v.businessPath || `/admin/businesses/${v.businessId}`);
                   }}
                   className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-slate-100 text-[#0D1F3D] cursor-pointer"
                 >
@@ -520,10 +435,8 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
             variant="outline"
             size="sm"
             onClick={() => {
-              accountsQuery.reload();
-              leadsQuery.reload();
-              ownersQuery.reload();
-              toast.success('Visit data synchronized with CRM backend!');
+              visitsQuery.reload();
+              toast.success('Visit data refreshed.');
             }}
             className="flex items-center gap-1.5 font-bold border-slate-200 text-slate-700 hover:bg-slate-100 rounded-sm"
           >
@@ -608,8 +521,8 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
             />
             <KpiCard
               title="GPS Exceptions"
-              value="18"
-              subValue="Pending review"
+              value={String(unverifiedCount)}
+              subValue="Location not verified"
               icon={ShieldAlert}
               iconBgColor="bg-purple-500/10"
               iconTextColor="text-purple-600"
@@ -664,37 +577,44 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
               <Select
                 value={areaFilter}
                 onChange={(e) => setAreaFilter(e.target.value)}
-                options={[
-                  { label: 'All Areas / Locations', value: 'All' },
-                  { label: 'Andheri East', value: 'Andheri East' },
-                  { label: 'Dadar West', value: 'Dadar West' },
-                  { label: 'Thane West', value: 'Thane West' },
-                  { label: 'Vashi', value: 'Vashi' },
-                  { label: 'Borivali', value: 'Borivali' },
-                ]}
+                options={areaFilterOptions}
               />
             </div>
           </div>
 
           {/* Full-width Datatable */}
           <div className="space-y-4">
+            {visitsQuery.error ? (
+              <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
+                {visitsQuery.error.message}
+              </div>
+            ) : null}
             <DataTable
               data={filteredVisits}
               columns={columns}
               keyExtractor={(v) => v.id}
               density="relaxed"
               onRowClick={(v) => setSelectedVisitId(v.id)}
+              isLoading={visitsQuery.loading}
+              emptyMessage="No visits are assigned for this view"
+              pagination={visitsQuery.data ? {
+                currentPage: visitsQuery.data.page,
+                totalPages: Math.max(1, visitsQuery.data.totalPages),
+                totalEntries: visitsQuery.data.total,
+                pageSize: visitsQuery.data.limit,
+                onPageChange: setPage,
+              } : undefined}
             />
           </div>
 
           {/* 3 Side-by-Side Inspection & Analytics Cards directly next to Datatable */}
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          {selectedVisit ? <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
             {/* Card 1: Selected Visit Location Map (4 Cols) */}
             <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-xs space-y-3 text-xs lg:col-span-4 flex flex-col justify-between">
               <div>
                 <h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2 flex items-center justify-between">
                   <span>Visit Location & Map</span>
-                  <span className="font-mono text-[#E20613]">{selectedVisit.id}</span>
+                  <span className="font-mono text-[#E20613]">{selectedVisit.displayId || 'Visit'}</span>
                 </h3>
 
                 <div className="pt-3">
@@ -725,7 +645,7 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 pt-2">
                   <div className="flex justify-between py-1 border-b border-slate-100">
                     <span className="text-slate-500 font-medium">Visit ID</span>
-                    <span className="font-bold text-[#E20613] font-mono">{selectedVisit.id}</span>
+                    <span className="font-bold text-[#E20613] font-mono">{selectedVisit.displayId || 'Visit'}</span>
                   </div>
 
                   <div className="flex justify-between py-1 border-b border-slate-100">
@@ -763,7 +683,7 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
               </div>
 
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-slate-500 text-[11px]">Duration: <strong className="text-[#0D1F3D]">{selectedVisit.duration || '45m'}</strong></span>
+                <span className="text-slate-500 text-[11px]">Duration: <strong className="text-[#0D1F3D]">{selectedVisit.duration || 'Not recorded'}</strong></span>
                 <Button
                   variant="outline"
                   size="sm"
@@ -818,14 +738,14 @@ export default function AllVisitsPage({ viewMode = 'all' }: AllVisitsPageProps) 
                   variant="outline"
                   size="sm"
                   fullWidth
-                  onClick={() => navigate(`/admin/businesses/${selectedVisit.businessId}`)}
+                  onClick={() => navigate(selectedVisit.businessPath || `/admin/businesses/${selectedVisit.businessId}`)}
                   className="flex items-center justify-center gap-1.5 font-bold text-slate-700 border-slate-200 hover:bg-slate-100 rounded-sm h-8"
                 >
                   <Building2 className="h-3.5 w-3.5 text-slate-500" /> Business Profile
                 </Button>
               </div>
             </div>
-          </div>
+          </div> : null}
         </>
       )}
     </div>

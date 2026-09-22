@@ -1,6 +1,8 @@
 export interface VisitItem {
   id: string; // e.g. VIS-2025-1042
+  displayId?: string;
   businessId: string;
+  businessPath?: string;
   businessName: string;
   businessType: string;
   businessCategory: string;
