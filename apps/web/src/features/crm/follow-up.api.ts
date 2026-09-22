@@ -9,6 +9,7 @@ export interface FollowUpRecord {
   assignedMembershipId: string | null;
   assignedToName: string;
   title: string;
+  type?: string | null;
   scheduledDate: string;
   scheduledTime: string;
   notes: string | null;

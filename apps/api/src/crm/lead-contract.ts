@@ -191,6 +191,7 @@ export const createLeadVisit = z
 export const createLeadFollowUp = z
   .object({
     title: z.string().trim().min(1).max(300),
+    type: z.string().trim().max(100).optional(),
     scheduledDate: z.string().trim().min(1).max(50),
     scheduledTime: z.string().trim().min(1).max(50),
     notes: z.string().trim().max(2000).optional(),
@@ -202,6 +203,7 @@ export const updateLeadFollowUp = z
   .object({
     status: z.enum(["Pending", "Completed", "Cancelled"]).optional(),
     title: z.string().trim().min(1).max(300).optional(),
+    type: z.string().trim().max(100).optional(),
     scheduledDate: z.string().trim().min(1).max(50).optional(),
     scheduledTime: z.string().trim().min(1).max(50).optional(),
     assignedMembershipId: crmId.optional(),
@@ -238,4 +240,3 @@ export type CreateLeadFollowUpInput = z.infer<typeof createLeadFollowUp>;
 export type UpdateLeadFollowUpInput = z.infer<typeof updateLeadFollowUp>;
 export type CreateLeadDemoInput = z.infer<typeof createLeadDemo>;
 export type CreateLeadCommunicationInput = z.infer<typeof createLeadCommunication>;
-

@@ -692,10 +692,12 @@ export const initialMasterRecords: Record<string, MasterRecordItem[]> = {
 
   // Demos & Follow-ups
   followup_type: [
-    { id: 'fut-1', category: 'followup_type', name: 'Quotation Follow-up', code: 'QUOTE_FOLLOWUP', description: 'Commercial pricing and proposal review follow-up.', sortOrder: 1, isActive: true, isSystemDefault: true, displayColor: '#7C3AED' },
-    { id: 'fut-2', category: 'followup_type', name: 'Demo Follow-up', code: 'DEMO_FOLLOWUP', description: 'Post product demo feedback and technical query resolution.', sortOrder: 2, isActive: true, isSystemDefault: true, displayColor: '#2563EB' },
-    { id: 'fut-3', category: 'followup_type', name: 'Product Info Follow-up', code: 'INFO_FOLLOWUP', description: 'Share product brochure, case studies and features.', sortOrder: 3, isActive: true, isSystemDefault: true, displayColor: '#059669' },
-    { id: 'fut-4', category: 'followup_type', name: 'Payment Follow-up', code: 'PAYMENT_FOLLOWUP', description: 'Collection and invoice payment follow-up.', sortOrder: 4, isActive: true, isSystemDefault: true, displayColor: '#D97706' },
+    { id: 'fut-1', category: 'followup_type', name: 'Outbound Phone Call', code: 'PHONE_CALL', description: 'Telephonic follow-up or check-in call.', sortOrder: 1, isActive: true, isSystemDefault: true, displayColor: '#059669' },
+    { id: 'fut-2', category: 'followup_type', name: 'In-Person Field Visit', code: 'FIELD_VISIT', description: 'Physical store or site consultation visit.', sortOrder: 2, isActive: true, isSystemDefault: true, displayColor: '#2563EB' },
+    { id: 'fut-3', category: 'followup_type', name: 'Virtual Demo / Meeting', code: 'DEMO_FOLLOWUP', description: 'Online video demo session or screen share.', sortOrder: 3, isActive: true, isSystemDefault: true, displayColor: '#7C3AED' },
+    { id: 'fut-4', category: 'followup_type', name: 'WhatsApp / Chat', code: 'WHATSAPP', description: 'Instant messaging or chat follow-up.', sortOrder: 4, isActive: true, isSystemDefault: true, displayColor: '#16A34A' },
+    { id: 'fut-5', category: 'followup_type', name: 'Quotation Review', code: 'QUOTE_FOLLOWUP', description: 'Commercial pricing and proposal review.', sortOrder: 5, isActive: true, isSystemDefault: true, displayColor: '#D97706' },
+    { id: 'fut-6', category: 'followup_type', name: 'Payment Collection', code: 'PAYMENT_FOLLOWUP', description: 'Outstanding invoice and payment collection.', sortOrder: 6, isActive: true, isSystemDefault: true, displayColor: '#DC2626' },
   ],
   followup_outcome: [
     { id: 'fuo-1', category: 'followup_outcome', name: 'Interested - Send Quote', code: 'SEND_QUOTE', description: 'Merchant showed high interest, requested detailed quote.', sortOrder: 1, isActive: true, isSystemDefault: true, displayColor: '#10B981' },

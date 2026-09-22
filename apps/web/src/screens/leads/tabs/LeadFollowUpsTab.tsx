@@ -100,6 +100,11 @@ export function LeadFollowUpsTab({ leadId, leadName }: { leadId: string; leadNam
                   >
                     {item.status}
                   </span>
+                  {item.type && (
+                    <span className="rounded-sm bg-purple-50 px-2 py-0.5 text-[10px] font-extrabold text-purple-700 border border-purple-200 uppercase">
+                      {item.type.replace(/_/g, ' ')}
+                    </span>
+                  )}
                 </div>
                 <p className="text-slate-600 font-semibold">
                   Scheduled: <span className="text-[#0D1F3D] font-extrabold">{item.scheduledDate}</span> at{' '}

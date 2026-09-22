@@ -1,4 +1,4 @@
-import { auditEvents } from '../../audit/audit-event-writer';
+import { auditEvents } from "../../audit/audit-event-writer";
 import {
   BadRequestException,
   ConflictException,
@@ -167,7 +167,9 @@ export class MasterSeedService {
             });
           }
         if (results.some((r) => r.status === "CREATE"))
-          await auditEvents.write(tx, { scope: "SYSTEM", ...{
+          await auditEvents.write(tx, {
+            scope: "SYSTEM",
+            ...{
               actorUserId: actorId,
               action: "master.seed.apply",
               entityType: "MasterSeed",
@@ -175,9 +177,15 @@ export class MasterSeedService {
               afterJson: jsonValue({
                 provenance: seed.provenance,
                 reviewedHash,
-                results: { count: results.length, created: results.filter((result) => result.status === 'CREATE').length },
+                results: {
+                  count: results.length,
+                  created: results.filter(
+                    (result) => result.status === "CREATE",
+                  ).length,
+                },
               }),
-            } });
+            },
+          });
       }
       return {
         mode: approvedHash === undefined ? "DRY_RUN" : "APPLY",

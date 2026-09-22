@@ -103,9 +103,16 @@ export default function FollowUpRecordPage() {
         <>
           <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div>
-              <p className="mb-1 text-xs font-bold uppercase text-slate-500">
-                {item.status}
-              </p>
+              <div className="mb-1 flex items-center gap-2">
+                <span className="text-xs font-bold uppercase text-slate-500">
+                  {item.status}
+                </span>
+                {item.type && (
+                  <span className="rounded-xs bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700 border border-purple-200/60 uppercase">
+                    {item.type.replace(/_/g, " ")}
+                  </span>
+                )}
+              </div>
               <h1 className="text-2xl font-extrabold text-[#0D1F3D]">
                 {item.title}
               </h1>

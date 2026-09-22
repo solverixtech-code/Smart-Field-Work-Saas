@@ -46,6 +46,7 @@ export function FollowUpFormModal({
   const search = useDebouncedSearch(leadSearch);
   const [leadId, setLeadId] = useState("");
   const [title, setTitle] = useState("");
+  const [type, setType] = useState("PHONE_CALL");
   const [scheduledDate, setScheduledDate] = useState("");
   const [scheduledTime, setScheduledTime] = useState("");
   const [notes, setNotes] = useState("");
@@ -78,6 +79,7 @@ export function FollowUpFormModal({
     if (!isOpen) return;
     setLeadId(followUp?.leadId ?? initialLeadId ?? "");
     setTitle(followUp?.title ?? "");
+    setType(followUp?.type ?? "PHONE_CALL");
     setScheduledDate(followUp?.scheduledDate ?? localDateKey());
     setScheduledTime(followUp?.scheduledTime ?? "09:00 AM");
     setNotes(followUp?.notes ?? "");
@@ -109,6 +111,7 @@ export function FollowUpFormModal({
             followUp.id,
             {
               title,
+              type,
               scheduledDate,
               scheduledTime,
               replaceNotes: notes || null,
@@ -124,6 +127,7 @@ export function FollowUpFormModal({
             targetLeadId,
             {
               title,
+              type,
               scheduledDate,
               scheduledTime,
               notes,
@@ -264,7 +268,7 @@ export function FollowUpFormModal({
           )}
 
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+            <div>
               <Input
                 id="follow-up-title"
                 label="Follow-up purpose *"
@@ -273,6 +277,22 @@ export function FollowUpFormModal({
                 placeholder="For example, quotation review or product demo"
                 required
                 maxLength={300}
+              />
+            </div>
+            <div>
+              <Select
+                label="Follow-up type *"
+                value={type}
+                onChange={(e) => setType(e.target.value)}
+                searchable={true}
+                options={[
+                  { value: "PHONE_CALL", label: "Outbound Phone Call", sublabel: "Telephonic check-in call", badge: { text: "CALL", variant: "emerald" } },
+                  { value: "FIELD_VISIT", label: "In-Person Field Visit", sublabel: "Physical store consultation", badge: { text: "VISIT", variant: "blue" } },
+                  { value: "DEMO_FOLLOWUP", label: "Virtual Demo / Meeting", sublabel: "Online screen share demo", badge: { text: "DEMO", variant: "purple" } },
+                  { value: "WHATSAPP", label: "WhatsApp / Chat", sublabel: "Messaging or chat update", badge: { text: "CHAT", variant: "emerald" } },
+                  { value: "QUOTE_FOLLOWUP", label: "Quotation Review", sublabel: "Commercial quote discussion", badge: { text: "QUOTE", variant: "amber" } },
+                  { value: "PAYMENT_FOLLOWUP", label: "Payment Collection", sublabel: "Invoice payment collection", badge: { text: "PAYMENT", variant: "purple" } },
+                ]}
               />
             </div>
             <DatePicker
