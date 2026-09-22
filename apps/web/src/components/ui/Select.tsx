@@ -103,10 +103,10 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
         });
       }
 
-      // Automatically deduplicate options by label/value to ensure crisp 100% unique dropdown items
+      // Distinct records can have the same name; only duplicate values are the same option.
       const seenKeys = new Set<string>();
       return raw.filter((opt) => {
-        const key = opt.label && opt.label.trim() ? opt.label.trim().toLowerCase() : String(opt.value);
+        const key = String(opt.value);
         if (seenKeys.has(key)) return false;
         seenKeys.add(key);
         return true;

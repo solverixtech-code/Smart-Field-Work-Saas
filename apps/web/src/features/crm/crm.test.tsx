@@ -577,6 +577,12 @@ describe("Lead frontend production flows", () => {
     expect(
       host.querySelector('[role="img"][aria-label="Vikram Singh"]')?.textContent,
     ).toBe("VS");
+    expect(
+      host.querySelector<HTMLAnchorElement>('a[aria-label="View Sahbjit Singh\'s profile"]')?.getAttribute('href'),
+    ).toBe('/admin/employees/member-photo');
+    expect(
+      host.querySelector<HTMLAnchorElement>('a[aria-label="View Vikram Singh\'s profile"]')?.getAttribute('href'),
+    ).toBe('/admin/employees/member-no-photo');
   });
   it("preserves the rich zero state and uses aggregate totals rather than a page", async () => {
     const api = leadService();
@@ -778,6 +784,37 @@ describe("Lead frontend production flows", () => {
       },
       expect.any(AbortSignal),
     );
+  });
+  it("keeps same-name executives distinct when assigning a lead", async () => {
+    const api = leadService();
+    const saved = vi.fn();
+    vi.mocked(api.leads.owners).mockResolvedValue({
+      items: [
+        { id: "member-vis", displayName: "Vikram Singh", employeeCode: "VIS-FE-001", email: "vikram@vis.example", role: "Field Executive" },
+        { id: "member-sol", displayName: "Vikram Singh", employeeCode: "SOL-FE-001", email: "vikram@sol.example", role: "Field Executive" },
+      ],
+      total: 2,
+      totalPages: 1,
+      page: 1,
+      limit: 25,
+    });
+    vi.mocked(api.leads.assign).mockResolvedValue({ id: lead.id, revision: 3 });
+    await act(async () => root.render(view(api, <LeadAssignment lead={lead} onSaved={saved} />)));
+    await flush();
+    await act(async () => host.querySelector<HTMLButtonElement>("#assignment-member")!.click());
+    const options = Array.from(host.querySelectorAll<HTMLButtonElement>("[role='option']"));
+    expect(options.map((option) => option.textContent)).toEqual(expect.arrayContaining([
+      expect.stringContaining("VIS-FE-001"),
+      expect.stringContaining("SOL-FE-001"),
+    ]));
+    await act(async () => options.find((option) => option.textContent?.includes("SOL-FE-001"))!.click());
+    await submitForm();
+    expect(api.leads.assign).toHaveBeenCalledWith(
+      lead.id,
+      expect.objectContaining({ assignedMembershipId: "member-sol" }),
+      expect.any(AbortSignal),
+    );
+    expect(saved).toHaveBeenCalled();
   });
   it("queries the real follow-up filter instead of a fabricated lifecycle", async () => {
     const api = leadService();

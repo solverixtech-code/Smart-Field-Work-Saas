@@ -10,6 +10,8 @@ export interface Page<T> {
 export interface OwnerOption {
   avatarUrl?: string | null;
   role?: string | null;
+  employeeCode?: string | null;
+  email?: string | null;
   id: string;
   displayName: string;
 }

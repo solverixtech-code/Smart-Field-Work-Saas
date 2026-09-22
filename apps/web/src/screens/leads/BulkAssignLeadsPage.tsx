@@ -34,8 +34,10 @@ export default function BulkAssignLeadsPage() {
         const profile = getEmployeeProfile(owner.displayName, owner.role, owner.avatarUrl);
         return {
           value: owner.id,
-          label: owner.displayName,
-          sublabel: profile.sublabel,
+          label: owner.employeeCode || owner.email
+            ? `${owner.displayName} (${owner.employeeCode || owner.email})`
+            : owner.displayName,
+          sublabel: [profile.sublabel, owner.email].filter(Boolean).join(" · "),
           avatar: profile.avatar,
         };
       }),

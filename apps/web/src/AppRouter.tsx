@@ -20,6 +20,7 @@ import RealTimeActivityDashboardPage from "./screens/dashboard/RealTimeActivityD
 import AllExecutivesPage from "./screens/executives/AllExecutivesPage";
 import AddExecutivePage from "./screens/executives/AddExecutivePage";
 import ExecutiveDetailsPage from "./screens/executives/ExecutiveDetailsPage";
+import EmployeeProfilePage from "./screens/executives/EmployeeProfilePage";
 import EditExecutivePage from "./screens/executives/EditExecutivePage";
 import SuspendExecutivePage from "./screens/executives/SuspendExecutivePage";
 
@@ -717,6 +718,10 @@ export default function AppRouter() {
             {/* Leads Management Routes (Screens 33 to 53) */}
             <Route element={<PermissionRoute permission="crm.leads.view" />}>
               <Route element={<CrmBoundary />}>
+                <Route
+                  path="/admin/employees/:id"
+                  element={<EmployeeProfilePage />}
+                />
                 <Route
                   path="/admin/leads"
                   element={<AllLeadsPage viewMode="all" />}

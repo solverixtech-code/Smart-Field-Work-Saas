@@ -10,6 +10,7 @@ import { z } from "zod";
 import { RequestPrincipal } from "../common/security/request-principal.interface";
 import * as dto from "./crm-contract";
 import { CrmPolicy } from "./crm-policy";
+import { leadScope, requireLead } from "./lead-policy";
 import { CrmRepository, crmConflict } from "./crm.repository";
 import {
   accountSelect,
@@ -65,6 +66,62 @@ function phoneSearch(search: string): Prisma.ContactWhereInput[] {
 @Injectable()
 export class CrmService {
   constructor(private readonly repo: CrmRepository) {}
+  async getLeadAssigneeProfile(actor: RequestPrincipal, membershipId: string) {
+    dto.crmId.parse(membershipId);
+    return this.repo.run(actor, false, async (tx, policy) => {
+      requireLead(policy, "view");
+      const visibleLead = await tx.lead.findFirst({
+        where: {
+          AND: [leadScope(policy), { assignedMembershipId: membershipId }],
+        },
+        select: { id: true },
+      });
+      if (!visibleLead) throw new NotFoundException("Employee not found");
+      const membership = await tx.tenantMembership.findFirst({
+        where: { id: membershipId, tenantId: policy.scope.tenantId },
+        select: {
+          id: true,
+          status: true,
+          designation: true,
+          department: true,
+          joinedAt: true,
+          tenantRole: { select: { name: true, code: true } },
+          team: { select: { name: true, tenantId: true } },
+          managerMembership: {
+            select: { tenantId: true, user: { select: { fullName: true } } },
+          },
+          user: {
+            select: {
+              fullName: true,
+              avatarUrl: true,
+              role: true,
+              email: true,
+              mobile: true,
+              joinedAt: true,
+            },
+          },
+        },
+      });
+      if (!membership) throw new NotFoundException("Employee not found");
+      return {
+        ...ownerOption(membership),
+        department: membership.department,
+        status: membership.status,
+        email: membership.user.email,
+        mobile: membership.user.mobile,
+        teamName:
+          membership.team?.tenantId === policy.scope.tenantId ||
+          membership.team?.tenantId === null
+            ? membership.team.name
+            : null,
+        managerName:
+          membership.managerMembership?.tenantId === policy.scope.tenantId
+            ? membership.managerMembership.user.fullName
+            : null,
+        joinedAt: (membership.joinedAt ?? membership.user.joinedAt).toISOString(),
+      };
+    });
+  }
   private authorize(p: CrmPolicy, resource: dto.CrmResource, action: string) {
     p.require(`crm.${resource}.${action}`);
     p.requireScope(resource);

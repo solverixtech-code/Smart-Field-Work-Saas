@@ -519,53 +519,38 @@ export class LeadService {
       const where: Prisma.TenantMembershipWhereInput = {
         tenantId: p.scope.tenantId,
         status: "ACTIVE",
-        user: {
-          status: "ACTIVE",
-          ...(q.search
-            ? { fullName: { contains: q.search, mode: "insensitive" } }
-            : {}),
-        },
+        user: { status: "ACTIVE" },
+        ...(q.search
+          ? {
+              OR: [
+                { user: { fullName: { contains: q.search, mode: "insensitive" } } },
+                { user: { email: { contains: q.search, mode: "insensitive" } } },
+                { user: { employeeCode: { contains: q.search, mode: "insensitive" } } },
+                { employeeCode: { contains: q.search, mode: "insensitive" } },
+              ],
+            }
+          : {}),
       };
       const total = await tx.tenantMembership.count({ where });
       const rows = await tx.tenantMembership.findMany({
         where,
         select: {
           id: true,
+          employeeCode: true,
           designation: true,
           tenantRole: { select: { name: true, code: true } },
-          user: { select: { fullName: true, avatarUrl: true, role: true } },
+          user: { select: { fullName: true, avatarUrl: true, role: true, email: true, employeeCode: true } },
         },
         skip: (q.page - 1) * q.limit,
         take: q.limit,
         orderBy: [{ user: { fullName: "asc" } }, { id: "asc" }],
       });
       return page(
-        rows.map((r: any) => {
-          const role =
-            r.designation ||
-            r.tenantRole?.name ||
-            (r.user?.role === "SUPER_ADMIN"
-              ? "Senior Sales Manager"
-              : r.user?.role === "ADMIN"
-                ? "Area Operations Lead"
-                : r.user?.role === "SALES_MANAGER"
-                  ? "Sales Manager"
-                  : r.user?.role === "TEAM_LEADER"
-                    ? "Team Leader"
-                    : r.user?.role === "FIELD_EXECUTIVE"
-                      ? "Field Executive"
-                      : r.user?.role === "SUPPORT"
-                        ? "Regional Support Lead"
-                        : r.user?.role === "FINANCE_OPS"
-                          ? "Finance Operations Lead"
-                          : "Manager");
-          return {
-            id: r.id,
-            displayName: r.user.fullName,
-            avatarUrl: r.user.avatarUrl || null,
-            role,
-          };
-        }),
+        rows.map((r) => ({
+          ...ownerOption(r),
+          employeeCode: r.employeeCode || r.user.employeeCode,
+          email: r.user.email,
+        })),
         total,
         q,
       );

@@ -1081,6 +1081,21 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
         list.items.find((item: { id: string }) => item.id === row.id).assignee,
       ).toMatchObject({ id: c.membershipId, avatarUrl });
     });
+    it("loads the selected employee profile within the active tenant", async () => {
+      await createLead({ assignedMembershipId: c.membershipId });
+      const profile = (await api(c.token)
+        .get("/lead-assignees/" + c.membershipId + "/profile")
+        .expect(200)).body;
+      expect(profile).toMatchObject({ id: c.membershipId });
+      expect(profile.displayName).toEqual(expect.any(String));
+      expect(profile.email).toEqual(expect.any(String));
+      await api(c.token)
+        .get("/lead-assignees/" + d.membershipId + "/profile")
+        .expect(404);
+      await api(c.token)
+        .get("/lead-assignees/not-a-uuid/profile")
+        .expect(400);
+    });
     it("isolates foreign UUIDs across every read/write/assignment/conversion path", async () => {
       const foreign = await createLead({}, d);
       await api(c.token)
@@ -1250,6 +1265,8 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
       expect(Object.keys(options.items[0]).sort()).toEqual([
         "avatarUrl",
         "displayName",
+        "email",
+        "employeeCode",
         "id",
         "role",
       ]);

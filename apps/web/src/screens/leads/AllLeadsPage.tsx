@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   Target,
   UserPlus,
@@ -237,23 +237,36 @@ export default function AllLeadsPage({
     },
     {
       header: "Assigned Executive",
-      cell: (l) => (
-        <div className="flex items-center gap-2">
-          <Avatar
-            name={l.assignee?.displayName || l.owner.displayName}
-            src={l.assignee?.avatarUrl}
-            sizeClassName="h-7 w-7"
-          />
-          <div>
-            <p className="font-bold text-slate-900 text-xs">
-              {l.assignee?.displayName || "Unassigned"}
-            </p>
-            <p className="text-[10px] text-slate-400 font-medium">
-              Owner: {l.owner.displayName}
-            </p>
-          </div>
-        </div>
-      ),
+      cell: (l) => {
+        const content = (
+          <>
+            <Avatar
+              name={l.assignee?.displayName || l.owner.displayName}
+              src={l.assignee?.avatarUrl}
+              sizeClassName="h-7 w-7"
+            />
+            <div>
+              <p className="font-bold text-slate-900 text-xs">
+                {l.assignee?.displayName || "Unassigned"}
+              </p>
+              <p className="text-[10px] text-slate-400 font-medium">
+                Owner: {l.owner.displayName}
+              </p>
+            </div>
+          </>
+        );
+        return l.assignee ? (
+          <NavLink
+            to={`/admin/employees/${l.assignee.id}`}
+            aria-label={`View ${l.assignee.displayName}'s profile`}
+            className="flex items-center gap-2 rounded-md hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D1F3D]"
+          >
+            {content}
+          </NavLink>
+        ) : (
+          <div className="flex items-center gap-2">{content}</div>
+        );
+      },
     },
     {
       header: "Region & Territory",

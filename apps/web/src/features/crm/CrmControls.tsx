@@ -3,7 +3,7 @@ import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
 import { CrmError } from "./crm.state";
 import { useCrmQuery, useDebouncedSearch } from "./CrmContext";
-import { MasterCode } from "./crm.types";
+import { MasterCode, OwnerOption } from "./crm.types";
 
 const fieldLabels: Record<string, string> = {
   name: "Name",
@@ -105,11 +105,16 @@ export function CrmLookup({
         const response = await ownerFn({ search: query, page, limit: 25 }, signal);
         return {
           ...response,
-          items: response.items.map((r: any) => ({
+          items: response.items.map((r: OwnerOption) => ({
             value: r.id,
-            label: r.displayName || r.name,
+            label:
+              kind === "lead-owner" && (r.employeeCode || r.email)
+                ? `${r.displayName} (${r.employeeCode || r.email})`
+                : r.displayName,
             avatar: r.avatarUrl ?? undefined,
-            sublabel: r.role ?? undefined,
+            sublabel: [r.role, ...(kind === "lead-owner" ? [r.email] : [])]
+              .filter(Boolean)
+              .join(" · "),
           })),
         };
       }
