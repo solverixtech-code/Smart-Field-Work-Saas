@@ -13,6 +13,7 @@ import { crmId, revisionCommand, ownerQuery } from "./crm-contract";
 import { CrmRepository, crmConflict } from "./crm.repository";
 import { CrmService } from "./crm.service";
 import { CrmPolicy } from "./crm-policy";
+import { ownerOption } from "./crm-select";
 import { isFieldExecutive, leadScope, requireLead } from "./lead-policy";
 import { leadSelect, LeadRow, conversionSelect } from "./lead-select";
 import { parseFollowUpSchedule } from './follow-up-schedule';
@@ -178,16 +179,8 @@ export class LeadService {
       source: row.sourceValueId
         ? (sources.get(row.sourceValueId)?.name ?? null)
         : null,
-      owner: {
-        id: ownerMembership.id,
-        displayName: ownerMembership.user.fullName,
-      },
-      assignee: assignedMembership
-        ? {
-            id: assignedMembership.id,
-            displayName: assignedMembership.user.fullName,
-          }
-        : null,
+      owner: ownerOption(ownerMembership),
+      assignee: assignedMembership ? ownerOption(assignedMembership) : null,
     }));
   }
   private async leadCode(tx: Prisma.TransactionClient, tenantId: string) {

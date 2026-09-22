@@ -1063,6 +1063,24 @@ describe("Phase 1.1 CRM PostgreSQL and authenticated HTTP", () => {
         .expect(404);
       await api(c.token).get("/leads?limit=101").expect(400);
     });
+    it("returns the assigned executive's stored profile image in lead detail and list", async () => {
+      const avatarUrl = "https://example.test/lead-executive-avatar.jpg";
+      await prisma.user.update({
+        where: { id: c.owner },
+        data: { avatarUrl },
+      });
+      const row = await createLead({ assignedMembershipId: c.membershipId });
+      const detail = (await api(c.token).get("/leads/" + row.id).expect(200))
+        .body;
+      expect(detail.assignee).toMatchObject({
+        id: c.membershipId,
+        avatarUrl,
+      });
+      const list = (await api(c.token).get("/leads").expect(200)).body;
+      expect(
+        list.items.find((item: { id: string }) => item.id === row.id).assignee,
+      ).toMatchObject({ id: c.membershipId, avatarUrl });
+    });
     it("isolates foreign UUIDs across every read/write/assignment/conversion path", async () => {
       const foreign = await createLead({}, d);
       await api(c.token)

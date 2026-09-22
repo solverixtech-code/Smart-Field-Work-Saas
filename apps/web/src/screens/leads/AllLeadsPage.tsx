@@ -21,6 +21,7 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Select } from "../../components/ui/Select";
 import { Card } from "../../components/ui/Card";
+import { Avatar } from "../../components/ui/Avatar";
 import { DataTable, ColumnDef } from "../../components/ui/DataTable";
 import { RowActionsMenu } from "../../components/ui/RowActionsMenu";
 import {
@@ -238,19 +239,11 @@ export default function AllLeadsPage({
       header: "Assigned Executive",
       cell: (l) => (
         <div className="flex items-center gap-2">
-          {l.assignee?.displayName ? (
-            <img
-              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150"
-              alt={l.assignee.displayName}
-              className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0"
-            />
-          ) : (
-            <div className="h-7 w-7 rounded-full bg-[#0D1F3D] text-white font-bold text-[10px] flex items-center justify-center shrink-0 border border-slate-200">
-              {(l.assignee?.displayName || l.owner.displayName)
-                .slice(0, 2)
-                .toUpperCase()}
-            </div>
-          )}
+          <Avatar
+            name={l.assignee?.displayName || l.owner.displayName}
+            src={l.assignee?.avatarUrl}
+            sizeClassName="h-7 w-7"
+          />
           <div>
             <p className="font-bold text-slate-900 text-xs">
               {l.assignee?.displayName || "Unassigned"}

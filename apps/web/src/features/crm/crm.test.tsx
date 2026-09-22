@@ -537,6 +537,47 @@ async function submitForm(container: ParentNode = host) {
   await flush();
 }
 describe("Lead frontend production flows", () => {
+  it("shows assigned executives' profile images and initials when missing", async () => {
+    const api = leadService();
+    const photoUrl = "https://example.test/executive-avatar.jpg";
+    vi.mocked(api.leads.list).mockResolvedValue({
+      items: [
+        {
+          ...lead,
+          assignedMembershipId: "member-photo",
+          assignee: {
+            id: "member-photo",
+            displayName: "Sahbjit Singh",
+            avatarUrl: photoUrl,
+          },
+        },
+        {
+          ...lead,
+          id: "lead-without-photo",
+          leadCode: "LD-000002",
+          assignedMembershipId: "member-no-photo",
+          assignee: {
+            id: "member-no-photo",
+            displayName: "Vikram Singh",
+            avatarUrl: null,
+          },
+        },
+      ],
+      total: 2,
+      totalPages: 1,
+      page: 1,
+      limit: 25,
+    });
+    await act(async () => root.render(view(api, <AllLeadsPage />)));
+    await flush();
+    expect(
+      host.querySelector<HTMLImageElement>('img[alt="Sahbjit Singh"]')?.src,
+    ).toBe(photoUrl);
+    expect(host.querySelector('img[alt="Vikram Singh"]')).toBeNull();
+    expect(
+      host.querySelector('[role="img"][aria-label="Vikram Singh"]')?.textContent,
+    ).toBe("VS");
+  });
   it("preserves the rich zero state and uses aggregate totals rather than a page", async () => {
     const api = leadService();
     vi.mocked(api.leads.list).mockResolvedValue({
