@@ -9,6 +9,7 @@ interface ModalProps {
   children: React.ReactNode;
   title?: React.ReactNode;
   maxWidth?: string;
+  panelClassName?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -17,6 +18,7 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   title,
   maxWidth = "max-w-lg",
+  panelClassName = "",
 }) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -111,7 +113,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-labelledby={title ? titleId : undefined}
         aria-label={title ? undefined : "Dialog"}
         tabIndex={-1}
-        className={`relative w-full ${maxWidth} rounded-xl bg-white p-6 shadow-sm space-y-5 my-8 z-10 transition-all duration-250 ease-out overflow-hidden ${
+        className={`relative w-full ${maxWidth} rounded-xl bg-white p-6 shadow-sm space-y-5 my-8 z-10 transition-all duration-250 ease-out overflow-hidden ${panelClassName} ${
           visible
             ? "scale-100 translate-y-0 opacity-100"
             : "scale-95 translate-y-4 opacity-0"

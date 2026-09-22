@@ -13,6 +13,7 @@ export interface ClockTimePickerModalProps {
   label?: string;
   className?: string;
   widthClassName?: string;
+  triggerClassName?: string;
 }
 
 type ClockMode = 'hour' | 'minute';
@@ -115,6 +116,7 @@ export function ClockTimePickerModal({
   label,
   className = '',
   widthClassName = 'w-full',
+  triggerClassName = '',
 }: ClockTimePickerModalProps) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<ClockMode>('hour');
@@ -235,7 +237,7 @@ export function ClockTimePickerModal({
           open
             ? 'border-[#0D1F3D] ring-1 ring-[#0D1F3D]'
             : 'border-slate-200 hover:border-slate-300'
-        } ${disabled ? 'bg-slate-50 cursor-not-allowed opacity-60' : ''}`}
+        } ${disabled ? 'bg-slate-50 cursor-not-allowed opacity-60' : ''} ${triggerClassName}`}
       >
         <span className="flex items-center gap-2 truncate">
           <Clock className="h-4 w-4 text-[#0D1F3D] shrink-0" />

@@ -149,10 +149,15 @@ export function FollowUpFormModal({
         </span>
       }
       maxWidth="max-w-2xl"
+      panelClassName="sm:min-h-[680px] sm:self-start sm:flex sm:flex-col"
     >
-      <form onSubmit={submit} className="space-y-4 text-xs font-semibold">
+      <form
+        onSubmit={submit}
+        className="flex min-h-0 flex-1 flex-col text-xs font-semibold"
+      >
+        <div className="space-y-4">
         {!followUp && !initialLeadId && (
-          <div className="space-y-3">
+          <div className="space-y-3.5">
             <Input
               id="follow-up-lead-search"
               label="Find a lead or business"
@@ -237,11 +242,13 @@ export function FollowUpFormModal({
             value={scheduledDate}
             onChange={setScheduledDate}
             required
+            triggerClassName="h-10"
           />
           <ClockTimePickerModal
             label="Follow-up time *"
             value={scheduledTime}
             onChange={setScheduledTime}
+            triggerClassName="h-10"
           />
           {can("crm.leads.assign") && (
             <div className="sm:col-span-2">
@@ -280,7 +287,7 @@ export function FollowUpFormModal({
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             maxLength={2000}
-            rows={3}
+            rows={4}
             placeholder="Enter customer discussion notes or next steps..."
             className="mt-1 w-full rounded-md border border-slate-200 bg-white p-2.5 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:border-[#0D1F3D] focus:outline-none focus:ring-1 focus:ring-[#0D1F3D]"
           />
@@ -293,7 +300,8 @@ export function FollowUpFormModal({
             {mutation.error.message}
           </p>
         )}
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+        </div>
+        <div className="mt-5 flex items-center justify-end gap-2 border-t border-slate-100 pt-4 sm:mt-auto">
           <Button type="button" variant="outline" size="sm" onClick={onClose}>
             Cancel
           </Button>
