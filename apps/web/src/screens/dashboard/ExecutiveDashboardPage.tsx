@@ -35,7 +35,7 @@ import { KpiCard } from '../../components/dashboard/KpiCard';
 import { DateRangePicker, type DateRange } from '../../components/ui/DateRangePicker';
 import { Button } from '../../components/ui/Button';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import type { RouteStop } from '../maps/mapsData';
+import type { RouteStop } from '../maps/maps.api';
 import { extractErrorMessage } from '../../common/api';
 import { fieldDashboardApi, type FieldDashboardData } from './field-dashboard.api';
 import { Modal } from '../../components/ui/Modal';

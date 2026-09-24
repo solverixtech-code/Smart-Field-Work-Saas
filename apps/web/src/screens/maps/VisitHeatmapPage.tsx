@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import {
   MapPin,
   Target,
@@ -26,7 +25,7 @@ export default function VisitHeatmapPage() {
   const { data, range } = useMapSnapshot(30);
   const [selectedTerritory, setSelectedTerritory] = useState('All');
   const [showAllAreas, setShowAllAreas] = useState(false);
-  const heatmapPoints = (data?.visitHeatmap ?? []).filter((point) => selectedTerritory === 'All' || point.areaName.toLowerCase().includes(selectedTerritory.toLowerCase()));
+  const heatmapPoints = (data?.visitHeatmap ?? []).filter((point) => selectedTerritory === 'All' || point.territoryName === selectedTerritory);
   const rankedAreas = [...heatmapPoints].sort((a, b) => b.count - a.count);
   const topAreas = rankedAreas.slice(0, showAllAreas ? undefined : 5);
   const highest = rankedAreas[0];
@@ -184,10 +183,10 @@ export default function VisitHeatmapPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowAllAreas((value) => !value)}
+              onClick={() => setShowAllAreas(true)}
               className="w-full text-xs font-bold justify-between shadow-xs border-slate-200 text-[#0D1F3D]"
             >
-              <span>{showAllAreas ? 'Show Top Areas' : 'View All Areas'}</span>
+              <span>View All Areas</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

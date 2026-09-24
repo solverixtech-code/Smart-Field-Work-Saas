@@ -231,8 +231,8 @@ export default function LiveFieldMapPage() {
           <div className="rounded-sm border border-slate-200/90 bg-white p-4 shadow-sm space-y-3">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="font-extrabold text-[#0D1F3D] text-xs">Live Activity Feed</h3>
-              <button onClick={() => setShowAllActivities((value) => !value)} className="text-[11px] font-bold text-blue-600 hover:underline">
-                {showAllActivities ? 'Show Recent →' : 'View All →'}
+              <button onClick={() => setShowAllActivities(true)} className="text-[11px] font-bold text-blue-600 hover:underline">
+                View All →
               </button>
             </div>
 

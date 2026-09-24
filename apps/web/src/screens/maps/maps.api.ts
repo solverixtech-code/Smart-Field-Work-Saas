@@ -58,6 +58,7 @@ export interface HeatmapPoint {
   count: number;
   value: number;
   occurredAt?: string;
+  territoryName?: string | null;
 }
 
 export interface TerritoryPolygon {
@@ -92,6 +93,7 @@ export interface MapSnapshot {
     distanceKm: number;
     prospects: number;
     salesAmount: number;
+    salesOrders: number;
     locatedSalesAmount: number;
     territories: number;
     territoryExecutives: number;

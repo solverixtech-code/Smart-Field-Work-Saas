@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import {
   Map,
   Users,
@@ -27,6 +26,7 @@ export default function TerritoryMapPage() {
   const navigate = useNavigate();
   const { data, range } = useMapSnapshot(30);
   const [searchTerm, setSearchTerm] = useState('');
+  const [territoryView, setTerritoryView] = useState('Territories');
   const [selectedTerritory, setSelectedTerritory] = useState<TerritoryPolygon | null>(null);
   const territories = data?.territories ?? [];
   const rangeLabel = `${new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(`${range.startDate}T00:00:00`))} – ${new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${range.endDate}T00:00:00`))}`;
@@ -44,9 +44,9 @@ export default function TerritoryMapPage() {
     if (!selectedTerritory && territories.length) setSelectedTerritory(territories[0]);
   }, [selectedTerritory, territories]);
 
-  const filteredTerritories = territories.filter((t) =>
-    t.name.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
+  const filteredTerritories = territories
+    .filter((t) => t.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => territoryView === 'Performance' ? b.achievementPercentage - a.achievementPercentage : a.name.localeCompare(b.name));
 
   return (
     <div className="space-y-4 font-sans pb-8 text-left">
@@ -158,8 +158,8 @@ export default function TerritoryMapPage() {
             {/* Territory Overlay Selector */}
             <div className="absolute right-4 top-4 z-20 w-52">
               <Select
-                value="Territories"
-                onChange={() => {}}
+                value={territoryView}
+                onChange={(event) => setTerritoryView(event.target.value)}
                 options={[
                   { label: 'View by: Territories', value: 'Territories' },
                   { label: 'View by: Region Performance', value: 'Performance' },
@@ -220,7 +220,7 @@ export default function TerritoryMapPage() {
                     }`}>
                       {t.achievementPercentage}%
                     </span>
-                    <button className="text-slate-300 hover:text-slate-500">
+                    <button type="button" onClick={(event) => { event.stopPropagation(); navigate(`/admin/territories/${t.id}`); }} aria-label={`Open ${t.name}`} className="text-slate-300 hover:text-slate-500">
                       <MoreVertical className="h-3.5 w-3.5" />
                     </button>
                   </div>

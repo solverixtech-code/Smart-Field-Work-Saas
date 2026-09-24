@@ -181,13 +181,13 @@ export class MapService {
         };
       });
 
-      const visitClusters = new Map<string, { id: string; areaName: string; lat: number; lng: number; count: number; occurredAt: Date }>();
+      const visitClusters = new Map<string, { id: string; areaName: string; territoryName: string | null; lat: number; lng: number; count: number; occurredAt: Date }>();
       geotaggedVisits.forEach((visit) => {
         const key = `${visit.location}|${visit.latitude!.toFixed(3)}|${visit.longitude!.toFixed(3)}`;
         const current = visitClusters.get(key);
         visitClusters.set(key, current
           ? { ...current, count: current.count + 1, occurredAt: visit.checkInTime > current.occurredAt ? visit.checkInTime : current.occurredAt }
-          : { id: visit.id, areaName: visit.location, lat: visit.latitude!, lng: visit.longitude!, count: 1, occurredAt: visit.checkInTime });
+          : { id: visit.id, areaName: visit.location, territoryName: visit.account?.territory?.name ?? visit.lead?.territory?.name ?? null, lat: visit.latitude!, lng: visit.longitude!, count: 1, occurredAt: visit.checkInTime });
       });
       const maxVisitsAtPoint = Math.max(1, ...[...visitClusters.values()].map((cluster) => cluster.count));
       const visitHeatmap = [...visitClusters.values()].map((cluster) => ({
@@ -202,13 +202,13 @@ export class MapService {
         const visit = opportunity.leadId ? visitByTarget.get(`lead:${opportunity.leadId}`) : opportunity.accountId ? visitByTarget.get(`account:${opportunity.accountId}`) : undefined;
         return visit ? [{ id: opportunity.id, amount: Number(opportunity.amount), at: opportunity.closedAt ?? opportunity.updatedAt, visit }] : [];
       });
-      const salesClusters = new Map<string, { id: string; areaName: string; lat: number; lng: number; count: number; value: number; occurredAt: Date }>();
+      const salesClusters = new Map<string, { id: string; areaName: string; territoryName: string | null; lat: number; lng: number; count: number; value: number; occurredAt: Date }>();
       locatedSales.forEach((sale) => {
         const key = `${sale.visit.location}|${sale.visit.latitude!.toFixed(3)}|${sale.visit.longitude!.toFixed(3)}`;
         const current = salesClusters.get(key);
         salesClusters.set(key, current
           ? { ...current, count: current.count + 1, value: current.value + sale.amount, occurredAt: sale.at > current.occurredAt ? sale.at : current.occurredAt }
-          : { id: sale.id, areaName: sale.visit.location, lat: sale.visit.latitude!, lng: sale.visit.longitude!, count: 1, value: sale.amount, occurredAt: sale.at });
+          : { id: sale.id, areaName: sale.visit.location, territoryName: sale.visit.account?.territory?.name ?? sale.visit.lead?.territory?.name ?? null, lat: sale.visit.latitude!, lng: sale.visit.longitude!, count: 1, value: sale.amount, occurredAt: sale.at });
       });
       const maxSale = Math.max(1, ...[...salesClusters.values()].map((cluster) => cluster.value));
       const salesHeatmap = [...salesClusters.values()].map((cluster) => ({
@@ -253,6 +253,7 @@ export class MapService {
           distanceKm: Math.round(totalDistance * 10) / 10,
           prospects: prospects.length,
           salesAmount: opportunities.reduce((sum, opportunity) => sum + Number(opportunity.amount), 0),
+          salesOrders: opportunities.length,
           locatedSalesAmount: locatedSales.reduce((sum, sale) => sum + sale.amount, 0),
           territories: territoryRows.length,
           territoryExecutives: territoryRows.reduce((sum, territory) => sum + territory.executivesCount, 0),

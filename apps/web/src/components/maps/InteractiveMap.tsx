@@ -162,6 +162,10 @@ export function InteractiveMap({
   const [isDrawingModeActive, setIsDrawingModeActive] = useState<boolean>(
     Boolean(enablePolygonDrawing),
   );
+  const executiveStatusCounts = useMemo(() => executives.reduce((counts, executive) => ({
+    ...counts,
+    [executive.status]: counts[executive.status] + 1,
+  }), { 'On Field': 0, 'In Transit': 0, Break: 0, Offline: 0, Vehicle: 0 }), [executives]);
 
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -1110,25 +1114,25 @@ export function InteractiveMap({
                 <span className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> On Field
                 </span>{' '}
-                <span className="text-slate-500">24</span>
+                <span className="text-slate-500">{executiveStatusCounts['On Field']}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-amber-500" /> In Transit
                 </span>{' '}
-                <span className="text-slate-500">3</span>
+                <span className="text-slate-500">{executiveStatusCounts['In Transit']}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-purple-500" /> Break
                 </span>{' '}
-                <span className="text-slate-500">1</span>
+                <span className="text-slate-500">{executiveStatusCounts.Break}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full bg-slate-400" /> Offline / Not Working
                 </span>{' '}
-                <span className="text-slate-500">4</span>
+                <span className="text-slate-500">{executiveStatusCounts.Offline}</span>
               </div>
             </div>
           )}

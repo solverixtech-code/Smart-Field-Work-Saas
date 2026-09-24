@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Calendar,
   Play,
   Pause,
   Filter,
