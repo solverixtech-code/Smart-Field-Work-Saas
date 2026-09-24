@@ -47,7 +47,6 @@ import {
   BarChart3,
   CalendarCheck,
   Sliders,
-  FolderPlus,
   Compass,
   ClipboardCopy,
   Send,
@@ -216,24 +215,6 @@ const navCategories: NavCategory[] = [
         to: "/admin/performance/productivity",
         permission: "crm.performance.view",
         badge: "81.4 Score",
-      },
-    ],
-  },
-  {
-    title: "Business Categories",
-    items: [
-      {
-        label: "All Categories",
-        icon: Layers,
-        to: "/admin/categories",
-        permission: "crm.categories.view",
-        badge: "156 Total",
-      },
-      {
-        label: "Add Category",
-        icon: FolderPlus,
-        to: "/admin/categories/create",
-        permission: "crm.categories.view",
       },
     ],
   },
