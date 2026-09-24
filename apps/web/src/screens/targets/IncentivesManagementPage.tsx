@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -7,26 +7,17 @@ import {
   CheckCircle2,
   Clock,
   Check,
-  X,
   Download,
-  Filter,
   Search,
-  ChevronRight,
   Eye,
-  DollarSign,
-  AlertTriangle,
   User,
-  Building2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
-import {
-  mockIncentiveCalculations,
-  mockIncentivePayouts,
-  IncentiveCalculationItem,
-  IncentivePayoutItem,
-} from './targetsData';
+import { Avatar } from '../../components/ui/Avatar';
+import { extractErrorMessage } from '../../common/api';
+import { approveIncentives, calculateIncentives, currentPeriod, getIncentives, IncentiveCalculationItem, IncentivePayoutItem, periodLabel, shiftPeriod } from './target.api';
 
 export default function IncentivesManagementPage() {
   const navigate = useNavigate();
@@ -40,22 +31,74 @@ export default function IncentivesManagementPage() {
   else if (currentPath.includes('/payouts')) activeTab = 'payouts';
   else if (params.executiveId) activeTab = 'details';
 
-  const [calculations, setCalculations] = useState<IncentiveCalculationItem[]>(mockIncentiveCalculations);
-  const [payouts, setPayouts] = useState<IncentivePayoutItem[]>(mockIncentivePayouts);
-  const [selectedMonth, setSelectedMonth] = useState('May 2025');
+  const initialPeriod = currentPeriod();
+  const [calculations, setCalculations] = useState<IncentiveCalculationItem[]>([]);
+  const [payouts, setPayouts] = useState<IncentivePayoutItem[]>([]);
+  const [summary, setSummary] = useState({ total: 0, approved: 0, pending: 0, paid: 0, activeEarners: 0 });
+  const [selectedMonth, setSelectedMonth] = useState(initialPeriod);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+  const monthOptions = Array.from({ length: 18 }, (_, index) => shiftPeriod(initialPeriod, 3 - index)).map((value) => ({ value, label: periodLabel(value) }));
 
-  const handleApproveSelected = () => {
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setError(null); setSelectedIds([]);
+    calculateIncentives(selectedMonth).catch(() => undefined).then(() =>
+      getIncentives(selectedMonth, params.executiveId ? { executiveId: params.executiveId } : {}, controller.signal)
+    ).then(({ data }) => {
+      setCalculations(data.calculations);
+      setPayouts(data.payouts);
+      setSummary(data.summary);
+    }).catch((requestError: unknown) => {
+      if (!controller.signal.aborted) setError(extractErrorMessage(requestError, 'Unable to load incentive records.'));
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [params.executiveId, reloadToken, selectedMonth]);
+
+  const search = searchQuery.toLowerCase().trim();
+  const visibleCalculations = calculations.filter((calculation) => {
+    const matchesSearch = !search || calculation.executiveName.toLowerCase().includes(search) || calculation.executiveId.toLowerCase().includes(search);
+    return matchesSearch && (activeTab !== 'approvals' || calculation.payoutStatus === 'Pending Approval');
+  });
+  const visiblePayouts = payouts.filter((payout) => !search || payout.executiveName.toLowerCase().includes(search) || payout.payoutId.toLowerCase().includes(search));
+
+  const handleApproveSelected = async () => {
     if (selectedIds.length === 0) {
       toast.error('Please select at least one executive calculation to approve');
       return;
     }
-    setCalculations((prev) =>
-      prev.map((c) => (selectedIds.includes(c.id) ? { ...c, payoutStatus: 'Approved' } : c))
-    );
-    toast.success(`Approved ${selectedIds.length} incentive payout(s)!`);
-    setSelectedIds([]);
+    try {
+      await approveIncentives(selectedIds);
+      toast.success(`Approved ${selectedIds.length} incentive payout(s)!`);
+      setSelectedIds([]);
+      setReloadToken((token) => token + 1);
+    } catch (requestError: unknown) {
+      toast.error(extractErrorMessage(requestError, 'Unable to approve the selected incentives.'));
+    }
+  };
+
+  const exportRecords = () => {
+    const rows: Array<Array<string | number>> = activeTab === 'payouts'
+      ? [['Payout ref', 'Executive', 'Account', 'Amount', 'Date', 'Mode', 'Status'], ...visiblePayouts.map((payout) => [payout.payoutId, payout.executiveName, payout.bankAccountOrUpi, payout.amount, payout.payoutDate, payout.paymentMode, payout.status])]
+      : [['Executive', 'Employee ID', 'Team', 'Sales', 'Demos', 'Visits', 'Bonus', 'Total', 'Status'], ...visibleCalculations.map((calculation) => [calculation.executiveName, calculation.executiveId, calculation.teamName, calculation.salesIncentive, calculation.demoIncentive, calculation.visitIncentive, calculation.bonusIncentive, calculation.totalIncentive, calculation.payoutStatus])];
+    if (rows.length === 1) { toast.info('No incentive records to export.'); return; }
+    const escape = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
+    const url = URL.createObjectURL(new Blob([rows.map((row) => row.map(escape).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url; link.download = `incentives-${activeTab}-${selectedMonth}.csv`; link.click(); URL.revokeObjectURL(url);
+    toast.success('Incentive report exported.');
+  };
+
+  const approveOne = async (calculation: IncentiveCalculationItem) => {
+    try {
+      await approveIncentives([calculation.id]);
+      toast.success(`Approved incentive payout of ₹${calculation.totalIncentive.toLocaleString('en-IN')} for ${calculation.executiveName}`);
+      setReloadToken((token) => token + 1);
+    } catch (requestError: unknown) {
+      toast.error(extractErrorMessage(requestError, 'Unable to approve this incentive.'));
+    }
   };
 
   return (
@@ -103,10 +146,7 @@ export default function IncentivesManagementPage() {
               <Select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                options={[
-                  { value: 'May 2025', label: 'May 2025' },
-                  { value: 'April 2025', label: 'April 2025' },
-                ]}
+                options={monthOptions}
                 searchable={false}
               />
             </div>
@@ -125,7 +165,7 @@ export default function IncentivesManagementPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Exporting incentive report...')}
+              onClick={exportRecords}
               className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
             >
               <Download className="h-3.5 w-3.5 text-emerald-600" /> Export
@@ -139,8 +179,8 @@ export default function IncentivesManagementPage() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Total Incentives</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">₹ 1,24,350</span>
-            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">▲ 22.8% vs last month</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">₹ {summary.total.toLocaleString('en-IN')}</span>
+            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">Current period total</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-purple-50 text-purple-600 border border-purple-100 shrink-0">
             <Gift className="h-5 w-5" />
@@ -150,7 +190,7 @@ export default function IncentivesManagementPage() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Approved Amount</span>
-            <span className="text-xl font-extrabold text-emerald-600">₹ 50,000</span>
+            <span className="text-xl font-extrabold text-emerald-600">₹ {summary.approved.toLocaleString('en-IN')}</span>
             <span className="text-xs font-semibold text-emerald-600 block mt-0.5">Ready for payout</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
@@ -161,7 +201,7 @@ export default function IncentivesManagementPage() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Pending Approval</span>
-            <span className="text-xl font-extrabold text-amber-600">₹ 49,100</span>
+            <span className="text-xl font-extrabold text-amber-600">₹ {summary.pending.toLocaleString('en-IN')}</span>
             <span className="text-xs font-semibold text-amber-600 block mt-0.5">Action required</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-amber-50 text-amber-600 border border-amber-100 shrink-0">
@@ -172,7 +212,7 @@ export default function IncentivesManagementPage() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Paid Amount</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">₹ 75,250</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">₹ {summary.paid.toLocaleString('en-IN')}</span>
             <span className="text-xs font-semibold text-emerald-600 block mt-0.5">Disbursed by Finance</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
@@ -183,7 +223,7 @@ export default function IncentivesManagementPage() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Active Earners</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">48</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">{summary.activeEarners}</span>
             <span className="text-xs font-semibold text-emerald-600 block mt-0.5">Executives earning</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-cyan-50 text-cyan-600 border border-cyan-100 shrink-0">
@@ -261,9 +301,9 @@ export default function IncentivesManagementPage() {
                       <input
                         type="checkbox"
                         onChange={(e) =>
-                          setSelectedIds(e.target.checked ? calculations.map((c) => c.id) : [])
+                          setSelectedIds(e.target.checked ? visibleCalculations.map((c) => c.id) : [])
                         }
-                        checked={selectedIds.length === calculations.length}
+                        checked={visibleCalculations.length > 0 && selectedIds.length === visibleCalculations.length}
                         className="rounded-xs border-slate-300 text-purple-600 focus:ring-purple-500 cursor-pointer"
                       />
                     </th>
@@ -281,7 +321,10 @@ export default function IncentivesManagementPage() {
               </thead>
 
               <tbody className="divide-y divide-slate-100">
-                {calculations.map((c) => (
+                {loading && <tr><td colSpan={activeTab === 'approvals' ? 10 : 9} className="py-8 text-center text-slate-500">Loading incentive calculations...</td></tr>}
+                {!loading && error && <tr><td colSpan={activeTab === 'approvals' ? 10 : 9} className="py-8 text-center text-red-600">{error}</td></tr>}
+                {!loading && !error && visibleCalculations.length === 0 && <tr><td colSpan={activeTab === 'approvals' ? 10 : 9} className="py-8 text-center text-slate-500">No incentive calculations found for this period.</td></tr>}
+                {visibleCalculations.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
                     {activeTab === 'approvals' && (
                       <td className="py-3 px-3 text-center">
@@ -299,7 +342,7 @@ export default function IncentivesManagementPage() {
                     )}
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2.5">
-                        <img src={c.executiveAvatar} alt="" className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                        <Avatar src={c.executiveAvatar} name={c.executiveName} sizeClassName="h-7 w-7" />
                         <div>
                           <span className="font-extrabold text-[#0D1F3D] block">{c.executiveName}</span>
                           <span className="text-[10px] text-slate-400 font-mono font-semibold">{c.executiveId}</span>
@@ -329,16 +372,7 @@ export default function IncentivesManagementPage() {
                       <RowActionsMenu
                         items={[
                           { label: 'View Itemized Breakdown', icon: Eye, onClick: () => navigate(`/admin/incentives/${c.executiveId}`) },
-                          {
-                            label: 'Approve Payout',
-                            icon: Check,
-                            onClick: () => {
-                              setCalculations((prev) =>
-                                prev.map((item) => (item.id === c.id ? { ...item, payoutStatus: 'Approved' } : item))
-                              );
-                              toast.success(`Approved incentive payout of ₹${c.totalIncentive} for ${c.executiveName}`);
-                            },
-                          },
+                          ...(c.payoutStatus === 'Pending Approval' ? [{ label: 'Approve Payout', icon: Check, onClick: () => void approveOne(c) }] : []),
                         ]}
                       />
                     </td>
@@ -366,12 +400,15 @@ export default function IncentivesManagementPage() {
               </thead>
 
               <tbody className="divide-y divide-slate-100">
-                {payouts.map((p) => (
+                {loading && <tr><td colSpan={7} className="py-8 text-center text-slate-500">Loading payouts...</td></tr>}
+                {!loading && error && <tr><td colSpan={7} className="py-8 text-center text-red-600">{error}</td></tr>}
+                {!loading && !error && visiblePayouts.length === 0 && <tr><td colSpan={7} className="py-8 text-center text-slate-500">No payout records found for this period.</td></tr>}
+                {visiblePayouts.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-3 font-mono font-bold text-slate-800">{p.payoutId}</td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2.5">
-                        <img src={p.executiveAvatar} alt="" className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                        <Avatar src={p.executiveAvatar} name={p.executiveName} sizeClassName="h-7 w-7" />
                         <span className="font-extrabold text-[#0D1F3D]">{p.executiveName}</span>
                       </div>
                     </td>

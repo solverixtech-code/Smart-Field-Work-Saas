@@ -101,10 +101,7 @@ export default function ExecutiveTargetsScreen() {
               <Select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                options={[
-                  { value: 'May 2025', label: 'May 2025' },
-                  { value: 'April 2025', label: 'April 2025' },
-                ]}
+                options={monthOptions}
                 searchable={false}
               />
             </div>
@@ -112,7 +109,7 @@ export default function ExecutiveTargetsScreen() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Exporting executive targets report...')}
+              onClick={exportTargets}
               className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
             >
               <Download className="h-3.5 w-3.5 text-emerald-600" /> Export
@@ -121,7 +118,7 @@ export default function ExecutiveTargetsScreen() {
             <Button
               variant="accent"
               size="sm"
-              onClick={() => setIsSetTargetModalOpen(true)}
+              onClick={() => { setEditingExecutive(null); setIsSetTargetModalOpen(true); }}
               className="flex items-center gap-1.5 font-bold shadow-xs bg-[#E20613] hover:bg-red-700 text-white rounded-md px-4 py-2"
             >
               <Plus className="h-4 w-4" /> Assign Executive Target
@@ -135,8 +132,8 @@ export default function ExecutiveTargetsScreen() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Total Executives</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">48</span>
-            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">100% Assigned</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">{executives.length}</span>
+            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">{executives.length ? Math.round((executives.filter((executive) => executive.salesTarget > 0).length / executives.length) * 100) : 0}% Assigned</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
             <Users className="h-5 w-5" />
@@ -146,8 +143,8 @@ export default function ExecutiveTargetsScreen() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">On Track (&gt;80%)</span>
-            <span className="text-xl font-extrabold text-emerald-600">28 (58.3%)</span>
-            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">▲ 4 vs last month</span>
+            <span className="text-xl font-extrabold text-emerald-600">{statusValue('On Track')}</span>
+            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">Current period</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
             <CheckCircle2 className="h-5 w-5" />
@@ -157,7 +154,7 @@ export default function ExecutiveTargetsScreen() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">At Risk (60-80%)</span>
-            <span className="text-xl font-extrabold text-amber-600">12 (25.0%)</span>
+            <span className="text-xl font-extrabold text-amber-600">{statusValue('At Risk')}</span>
             <span className="text-xs font-semibold text-amber-600 block mt-0.5">Action Needed</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-amber-50 text-amber-600 border border-amber-100 shrink-0">
@@ -168,7 +165,7 @@ export default function ExecutiveTargetsScreen() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Behind (&lt;60%)</span>
-            <span className="text-xl font-extrabold text-red-600">8 (16.7%)</span>
+            <span className="text-xl font-extrabold text-red-600">{statusValue('Behind')}</span>
             <span className="text-xs font-semibold text-red-600 block mt-0.5">Needs Coaching</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-red-50 text-red-600 border border-red-100 shrink-0">
@@ -179,8 +176,8 @@ export default function ExecutiveTargetsScreen() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Incentive Earned</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">₹ 1,24,350</span>
-            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">Avg ₹ 2,590 / exec</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">₹ {dashboard?.summary.incentiveEarned.toLocaleString('en-IN') ?? '0'}</span>
+            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">Avg ₹ {executives.length ? Math.round((dashboard?.summary.incentiveEarned ?? 0) / executives.length).toLocaleString('en-IN') : '0'} / exec</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-purple-50 text-purple-600 border border-purple-100 shrink-0">
             <Gift className="h-5 w-5" />
@@ -196,12 +193,7 @@ export default function ExecutiveTargetsScreen() {
               <Select
                 value={selectedTeam}
                 onChange={(e) => setSelectedTeam(e.target.value)}
-                options={[
-                  { value: 'all', label: 'All Teams' },
-                  { value: 'west zone', label: 'West Zone' },
-                  { value: 'central zone', label: 'Central Zone' },
-                  { value: 'north zone', label: 'North Zone' },
-                ]}
+                options={[{ value: 'all', label: 'All Teams' }, ...teams]}
                 searchable={true}
               />
             </div>
@@ -235,15 +227,18 @@ export default function ExecutiveTargetsScreen() {
             </thead>
 
             <tbody className="divide-y divide-slate-100">
+              {loading && <tr><td colSpan={8} className="py-8 text-center text-slate-500">Loading executive targets...</td></tr>}
+              {!loading && error && <tr><td colSpan={8} className="py-8 text-center text-red-600">{error}</td></tr>}
+              {!loading && !error && filteredExecs.length === 0 && <tr><td colSpan={8} className="py-8 text-center text-slate-500">No executive targets found for this period.</td></tr>}
               {filteredExecs.map((et) => (
                 <tr key={et.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3 px-3">
                     <div
-                      onClick={() => navigate(`/admin/executives/${et.executiveId}`)}
+                      onClick={() => navigate(`/admin/executives/${et.id}`)}
                       className="flex items-center gap-2.5 cursor-pointer group"
                       title={`View ${et.executiveName}'s Profile`}
                     >
-                      <img src={et.executiveAvatar} alt="" className="h-7 w-7 rounded-full object-cover border border-slate-200 group-hover:ring-2 group-hover:ring-purple-600 transition-all shrink-0" />
+                      <Avatar src={et.executiveAvatar} name={et.executiveName} sizeClassName="h-7 w-7" className="group-hover:ring-2 group-hover:ring-purple-600 transition-all shrink-0" />
                       <div>
                         <span className="font-extrabold text-[#0D1F3D] block group-hover:text-purple-600 group-hover:underline transition-colors">{et.executiveName}</span>
                         <span className="text-[10px] text-slate-400 font-mono font-semibold block">{et.executiveId} • {et.role}</span>
@@ -292,7 +287,7 @@ export default function ExecutiveTargetsScreen() {
                     <RowActionsMenu
                       items={[
                         { label: 'View Incentive Details', icon: Eye, onClick: () => navigate(`/admin/incentives/${et.executiveId}`) },
-                        { label: 'Edit Target Quota', icon: Edit, onClick: () => setIsSetTargetModalOpen(true) },
+                        { label: 'Edit Target Quota', icon: Edit, onClick: () => { setEditingExecutive(et); setIsSetTargetModalOpen(true); } },
                       ]}
                     />
                   </td>
@@ -305,7 +300,12 @@ export default function ExecutiveTargetsScreen() {
 
       <SetTargetModal
         isOpen={isSetTargetModalOpen}
-        onClose={() => setIsSetTargetModalOpen(false)}
+        onClose={() => { setIsSetTargetModalOpen(false); setEditingExecutive(null); }}
+        period={selectedMonth}
+        teamOptions={dashboard?.options.teams ?? []}
+        executiveOptions={dashboard?.options.executives ?? []}
+        initialExecutive={editingExecutive}
+        onSaved={() => setReloadToken((token) => token + 1)}
       />
     </div>
   );

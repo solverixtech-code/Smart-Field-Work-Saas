@@ -1,27 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
-import { X, Gift, Plus, Calendar, DollarSign } from 'lucide-react';
+import { X, Gift } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
+import { createIncentiveRule, IncentiveRuleItem, updateIncentiveRule } from './target.api';
 
 interface CreateIncentiveRuleModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialRule?: IncentiveRuleItem | null;
+  onSaved?: () => void;
 }
 
-export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> = ({ isOpen, onClose }) => {
+const monthBounds = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const format = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return { start: format(new Date(year, month, 1)), end: format(new Date(year, month + 1, 0)) };
+};
+
+export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> = ({ isOpen, onClose, initialRule = null, onSaved }) => {
   const [rendered, setRendered] = useState(false);
   const [visible, setVisible] = useState(false);
 
   const [ruleName, setRuleName] = useState('');
-  const [ruleType, setRuleType] = useState('Achievement');
-  const [appliesTo, setAppliesTo] = useState('All Executives');
-  const [metric, setMetric] = useState('Total Sales (Amount)');
+  const [ruleType, setRuleType] = useState<IncentiveRuleItem['ruleType']>('Achievement');
+  const [appliesTo, setAppliesTo] = useState<IncentiveRuleItem['appliesTo']>('All Executives');
+  const [metric, setMetric] = useState<IncentiveRuleItem['metric']>('Total Sales (Amount)');
   const [payoutRate, setPayoutRate] = useState('500');
-  const [startDate, setStartDate] = useState('2025-05-01');
-  const [endDate, setEndDate] = useState('2025-05-31');
+  const [startDate, setStartDate] = useState(monthBounds().start);
+  const [endDate, setEndDate] = useState(monthBounds().end);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const bounds = monthBounds();
+    setRuleName(initialRule?.ruleName ?? '');
+    setRuleType(initialRule?.ruleType ?? 'Achievement');
+    setAppliesTo(initialRule?.appliesTo ?? 'All Executives');
+    setMetric(initialRule?.metric ?? 'Total Sales (Amount)');
+    setPayoutRate(String(initialRule?.payoutRate ?? 500));
+    setStartDate(initialRule?.startDate ?? bounds.start);
+    setEndDate(initialRule?.endDate ?? bounds.end);
+  }, [initialRule, isOpen]);
 
   // Smooth two-stage portal animation setup
   useEffect(() => {
@@ -48,14 +72,28 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ruleName.trim()) {
       toast.error('Please enter a rule name');
       return;
     }
-    toast.success(`Incentive rule "${ruleName}" created successfully!`);
-    onClose();
+    if (startDate > endDate) { toast.error('Validity end date must be on or after the start date'); return; }
+    const amount = Number(payoutRate);
+    if (!Number.isFinite(amount) || amount <= 0) { toast.error('Payout amount must be greater than zero'); return; }
+    setSaving(true);
+    try {
+      const input = { name: ruleName.trim(), ruleType, appliesTo, metric, payoutRate: amount, startDate, endDate };
+      if (initialRule) await updateIncentiveRule(initialRule.id, input);
+      else await createIncentiveRule(input);
+      toast.success(`Incentive rule "${ruleName.trim()}" ${initialRule ? 'updated' : 'created'} successfully!`);
+      onSaved?.();
+      onClose();
+    } catch {
+      toast.error(`Unable to ${initialRule ? 'update' : 'create'} the incentive rule.`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!rendered) return null;
@@ -85,7 +123,7 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
               <Gift className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-[#0D1F3D] leading-tight">Create Incentive Rule</h2>
+              <h2 className="text-base font-extrabold text-[#0D1F3D] leading-tight">{initialRule ? 'Edit Incentive Rule' : 'Create Incentive Rule'}</h2>
               <p className="text-[11px] font-semibold text-slate-400">Configure commission structure & performance payouts</p>
             </div>
           </div>
@@ -115,7 +153,7 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
             <Select
               label="Rule Type *"
               value={ruleType}
-              onChange={(e) => setRuleType(e.target.value)}
+              onChange={(e) => setRuleType(e.target.value as IncentiveRuleItem['ruleType'])}
               options={[
                 { value: 'Achievement', label: 'Achievement (Quota based)' },
                 { value: 'Performance', label: 'Performance (Acquisition based)' },
@@ -129,7 +167,7 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
             <Select
               label="Applies To *"
               value={appliesTo}
-              onChange={(e) => setAppliesTo(e.target.value)}
+              onChange={(e) => setAppliesTo(e.target.value as IncentiveRuleItem['appliesTo'])}
               options={[
                 { value: 'All Executives', label: 'All Sales Executives' },
                 { value: 'Field Executives', label: 'Field Executives Only' },
@@ -144,7 +182,7 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
             <Select
               label="Target Metric *"
               value={metric}
-              onChange={(e) => setMetric(e.target.value)}
+              onChange={(e) => setMetric(e.target.value as IncentiveRuleItem['metric'])}
               options={[
                 { value: 'Total Sales (Amount)', label: 'Total Sales Revenue (₹)' },
                 { value: 'New Customers (Count)', label: 'New Customers Acquired' },
@@ -193,11 +231,12 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
             </Button>
             <Button
               type="submit"
+              disabled={saving}
               variant="accent"
               size="sm"
               className="bg-[#E20613] hover:bg-red-700 text-white font-bold text-xs px-4"
             >
-              Save Rule
+              {saving ? 'Saving...' : 'Save Rule'}
             </Button>
           </div>
         </form>

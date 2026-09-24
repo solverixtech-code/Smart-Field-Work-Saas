@@ -139,35 +139,30 @@ const navCategories: NavCategory[] = [
         icon: Target,
         to: "/admin/targets",
         permission: "crm.targets.view",
-        badge: "69.9%",
       },
       {
         label: "Team Targets",
         icon: Users,
         to: "/admin/targets/teams",
         permission: "crm.targets.view",
-        badge: "24 Teams",
       },
       {
         label: "Executive Targets",
         icon: UserCheck,
         to: "/admin/targets/executives",
         permission: "crm.targets.view",
-        badge: "48 Staff",
       },
       {
         label: "Incentive Rules",
         icon: Gift,
         to: "/admin/incentives/rules",
         permission: "crm.incentives.view",
-        badge: "18 Rules",
       },
       {
         label: "Incentives & Payouts",
         icon: CreditCard,
         to: "/admin/incentives",
         permission: "crm.incentives.view",
-        badge: "₹1.24L",
       },
     ],
   },
@@ -987,6 +982,13 @@ export default function AppShell() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const [, setBizBreadcrumbVersion] = useState(0);
+  const [targetNavigationSummary, setTargetNavigationSummary] = useState<{
+    teamCount: number;
+    executiveCount: number;
+    ruleCount: number;
+    targetAchievement: number;
+    incentiveEarned: number;
+  } | null>(null);
 
   useEffect(() => {
     const handleBizNameUpdate = () => setBizBreadcrumbVersion((v) => v + 1);
@@ -1120,7 +1122,55 @@ export default function AppShell() {
     tenant?.roleCode === "executive" ||
     tenant?.roleCode === "sales_executive";
 
-  const displayedNavCategories = isExecutiveRole ? executiveNavCategories : navCategories;
+  useEffect(() => {
+    if (isExecutiveRole) return;
+    const controller = new AbortController();
+    api.get<{
+      teamCount: number;
+      executiveCount: number;
+      ruleCount: number;
+      targetAchievement: number;
+      incentiveEarned: number;
+    }>("/tenant/crm/targets/navigation-summary", { signal: controller.signal })
+      .then(({ data }) => setTargetNavigationSummary(data))
+      .catch(async () => {
+        if (controller.signal.aborted) return;
+        const dateParts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit" }).formatToParts(new Date());
+        const value = (type: Intl.DateTimeFormatPartTypes) => dateParts.find((part) => part.type === type)?.value ?? "";
+        try {
+          const [rules, incentives] = await Promise.all([
+            api.get<{ summary: { total: number } }>("/tenant/crm/incentive-rules", { signal: controller.signal }),
+            api.get<{ summary: { total: number } }>("/tenant/crm/incentives", { params: { period: `${value("year")}-${value("month")}` }, signal: controller.signal }),
+          ]);
+          setTargetNavigationSummary({ teamCount: 0, executiveCount: 0, ruleCount: rules.data.summary.total, targetAchievement: 0, incentiveEarned: incentives.data.summary.total });
+        } catch {
+          // Navigation remains usable without badges when summary access is unavailable.
+        }
+      });
+    return () => controller.abort();
+  }, [isExecutiveRole, tenantId]);
+
+  const compactCurrency = (value: number) => new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    notation: "compact",
+    maximumFractionDigits: 2,
+  }).format(value);
+  const dynamicAdminNavCategories = targetNavigationSummary
+    ? navCategories.map((category) => category.title !== "Targets & Incentives" ? category : {
+        ...category,
+        items: category.items.map((item) => ({
+          ...item,
+          badge: item.label === "Target Dashboard" ? `${targetNavigationSummary.targetAchievement}%`
+            : item.label === "Team Targets" ? `${targetNavigationSummary.teamCount} Teams`
+            : item.label === "Executive Targets" ? `${targetNavigationSummary.executiveCount} Staff`
+            : item.label === "Incentive Rules" ? `${targetNavigationSummary.ruleCount} Rules`
+            : item.label === "Incentives & Payouts" ? compactCurrency(targetNavigationSummary.incentiveEarned)
+            : item.badge,
+        })),
+      })
+    : navCategories;
+  const displayedNavCategories = isExecutiveRole ? executiveNavCategories : dynamicAdminNavCategories;
   const showBigLogo = !collapsed || isHovered;
 
   return (
@@ -1638,7 +1688,7 @@ export default function AppShell() {
 
             {/* Search Bar on the Left */}
             <div className="flex-1 max-w-[480px] lg:max-w-[540px] min-w-[280px]">
-              <HeaderSearchBar navCategories={navCategories} />
+              <HeaderSearchBar navCategories={displayedNavCategories} />
             </div>
           </div>
 

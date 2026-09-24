@@ -431,6 +431,8 @@ export default function AppRouter() {
                 path="/admin/targets/create"
                 element={<TargetDashboardPage />}
               />
+            </Route>
+            <Route element={<PermissionRoute permission="crm.incentives.view" />}>
               <Route
                 path="/admin/incentives/rules"
                 element={<IncentiveRulesPage />}

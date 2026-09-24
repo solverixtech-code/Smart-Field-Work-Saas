@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -9,28 +9,47 @@ import {
   CreditCard,
   Plus,
   Download,
-  Filter,
   Search,
-  ChevronRight,
   Edit,
   Play,
   Pause,
-  Award,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { Select } from '../../components/ui/Select';
 import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
-import { mockIncentiveRules, IncentiveRuleItem } from './targetsData';
 import { CreateIncentiveRuleModal } from './CreateIncentiveRuleModal';
+import { currentPeriod, getIncentiveRules, getIncentives, IncentiveRuleItem, updateIncentiveRuleStatus } from './target.api';
+import { extractErrorMessage } from '../../common/api';
 
 export default function IncentiveRulesPage() {
   const navigate = useNavigate();
 
-  const [rules, setRules] = useState<IncentiveRuleItem[]>(mockIncentiveRules);
+  const [rules, setRules] = useState<IncentiveRuleItem[]>([]);
+  const [payout, setPayout] = useState(0);
   const [activeTab, setActiveTab] = useState<'All Rules' | 'Active Rules' | 'Paused Rules' | 'Inactive Rules'>('All Rules');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('all');
   const [isRuleModalOpen, setIsRuleModalOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<IncentiveRuleItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setError(null);
+    Promise.all([
+      getIncentiveRules({}, controller.signal),
+      getIncentives(currentPeriod(), {}, controller.signal),
+    ]).then(([rulesResponse, incentivesResponse]) => {
+      setRules(rulesResponse.data.items);
+      setPayout(incentivesResponse.data.summary.total);
+    }).catch((requestError: unknown) => {
+      if (!controller.signal.aborted) setError(extractErrorMessage(requestError, 'Unable to load incentive rules.'));
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [reloadToken]);
+
+  const count = (status: IncentiveRuleItem['status']) => rules.filter((rule) => rule.status === status).length;
+  const statusValue = (status: IncentiveRuleItem['status']) => `${count(status)} (${rules.length ? ((count(status) / rules.length) * 100).toFixed(1) : '0.0'}%)`;
 
   const filteredRules = rules.filter((r) => {
     const matchesSearch =
@@ -46,17 +65,24 @@ export default function IncentiveRulesPage() {
     return matchesSearch && matchesTab;
   });
 
-  const toggleRuleStatus = (id: string) => {
-    setRules((prev) =>
-      prev.map((r) => {
-        if (r.id === id) {
-          const newStatus = r.status === 'Active' ? 'Paused' : 'Active';
-          toast.success(`Rule "${r.ruleName}" status updated to ${newStatus}`);
-          return { ...r, status: newStatus };
-        }
-        return r;
-      })
-    );
+  const toggleRuleStatus = async (rule: IncentiveRuleItem) => {
+    const newStatus = rule.status === 'Active' ? 'Paused' : 'Active';
+    try {
+      await updateIncentiveRuleStatus(rule.id, newStatus === 'Active' ? 'ACTIVE' : 'PAUSED');
+      setRules((previous) => previous.map((item) => item.id === rule.id ? { ...item, status: newStatus } : item));
+      toast.success(`Rule "${rule.ruleName}" status updated to ${newStatus}`);
+    } catch (requestError: unknown) {
+      toast.error(extractErrorMessage(requestError, 'Unable to update the rule status.'));
+    }
+  };
+
+  const exportRules = () => {
+    if (!filteredRules.length) { toast.info('No incentive rules to export.'); return; }
+    const escape = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
+    const rows = [['Rule name', 'Type', 'Applies to', 'Metric', 'Payout rate', 'Start date', 'End date', 'Status'], ...filteredRules.map((rule) => [rule.ruleName, rule.ruleType, rule.appliesTo, rule.metric, rule.payoutRate, rule.startDate, rule.endDate, rule.status])];
+    const url = URL.createObjectURL(new Blob([rows.map((row) => row.map(escape).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url; link.download = 'incentive-rules.csv'; link.click(); URL.revokeObjectURL(url);
+    toast.success('Incentive rules exported.');
   };
 
   return (
@@ -87,7 +113,7 @@ export default function IncentiveRulesPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Exporting rules...')}
+              onClick={exportRules}
               className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
             >
               <Download className="h-3.5 w-3.5 text-emerald-600" /> Export
@@ -96,7 +122,7 @@ export default function IncentiveRulesPage() {
             <Button
               variant="accent"
               size="sm"
-              onClick={() => setIsRuleModalOpen(true)}
+              onClick={() => { setEditingRule(null); setIsRuleModalOpen(true); }}
               className="flex items-center gap-1.5 font-bold shadow-xs bg-[#E20613] hover:bg-red-700 text-white rounded-md px-4 py-2"
             >
               <Plus className="h-4 w-4" /> Create New Rule
@@ -110,8 +136,8 @@ export default function IncentiveRulesPage() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Total Rules</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">18</span>
-            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">▲ 2 vs last month</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">{rules.length}</span>
+            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">Configured rules</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-purple-50 text-purple-600 border border-purple-100 shrink-0">
             <Gift className="h-5 w-5" />
@@ -121,7 +147,7 @@ export default function IncentiveRulesPage() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Active Rules</span>
-            <span className="text-xl font-extrabold text-emerald-600">14 (77.8%)</span>
+            <span className="text-xl font-extrabold text-emerald-600">{statusValue('Active')}</span>
             <span className="text-xs font-semibold text-emerald-600 block mt-0.5">Live commission rules</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
@@ -132,7 +158,7 @@ export default function IncentiveRulesPage() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Paused Rules</span>
-            <span className="text-xl font-extrabold text-amber-600">3 (16.7%)</span>
+            <span className="text-xl font-extrabold text-amber-600">{statusValue('Paused')}</span>
             <span className="text-xs font-semibold text-amber-600 block mt-0.5">Temporarily on hold</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-amber-50 text-amber-600 border border-amber-100 shrink-0">
@@ -143,7 +169,7 @@ export default function IncentiveRulesPage() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Inactive Rules</span>
-            <span className="text-xl font-extrabold text-slate-500">1 (5.5%)</span>
+            <span className="text-xl font-extrabold text-slate-500">{statusValue('Inactive')}</span>
             <span className="text-xs font-semibold text-slate-400 block mt-0.5">Expired rules</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-slate-100 text-slate-500 border border-slate-200 shrink-0">
@@ -154,8 +180,8 @@ export default function IncentiveRulesPage() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-3.5 shadow-xs flex items-center justify-between">
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Payout (This Month)</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">₹ 1,24,350</span>
-            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">▲ 22.8% vs last month</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">₹ {payout.toLocaleString('en-IN')}</span>
+            <span className="text-xs font-semibold text-emerald-600 block mt-0.5">Current month earnings</span>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-sm bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
             <CreditCard className="h-5 w-5" />
@@ -211,6 +237,9 @@ export default function IncentiveRulesPage() {
             </thead>
 
             <tbody className="divide-y divide-slate-100">
+              {loading && <tr><td colSpan={8} className="py-8 text-center text-slate-500">Loading incentive rules...</td></tr>}
+              {!loading && error && <tr><td colSpan={8} className="py-8 text-center text-red-600">{error}</td></tr>}
+              {!loading && !error && filteredRules.length === 0 && <tr><td colSpan={8} className="py-8 text-center text-slate-500">No incentive rules found.</td></tr>}
               {filteredRules.map((rule) => (
                 <tr key={rule.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3 px-3">
@@ -254,7 +283,7 @@ export default function IncentiveRulesPage() {
                     <div className="flex items-center justify-center gap-1">
                       <button
                         type="button"
-                        onClick={() => toggleRuleStatus(rule.id)}
+                        onClick={() => void toggleRuleStatus(rule)}
                         className="p-1 rounded-md text-slate-500 hover:bg-slate-100 hover:text-purple-700 cursor-pointer"
                         title={rule.status === 'Active' ? 'Pause Rule' : 'Activate Rule'}
                       >
@@ -262,7 +291,7 @@ export default function IncentiveRulesPage() {
                       </button>
                       <RowActionsMenu
                         items={[
-                          { label: 'Edit Incentive Rule', icon: Edit, onClick: () => setIsRuleModalOpen(true) },
+                          { label: 'Edit Incentive Rule', icon: Edit, onClick: () => { setEditingRule(rule); setIsRuleModalOpen(true); } },
                         ]}
                       />
                     </div>
@@ -276,7 +305,9 @@ export default function IncentiveRulesPage() {
 
       <CreateIncentiveRuleModal
         isOpen={isRuleModalOpen}
-        onClose={() => setIsRuleModalOpen(false)}
+        onClose={() => { setIsRuleModalOpen(false); setEditingRule(null); }}
+        initialRule={editingRule}
+        onSaved={() => setReloadToken((token) => token + 1)}
       />
     </div>
   );

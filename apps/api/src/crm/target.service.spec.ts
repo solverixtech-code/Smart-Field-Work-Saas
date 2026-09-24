@@ -17,6 +17,7 @@ describe('TargetService', () => {
     tenantSettings: { findUnique: jest.fn() }, salesTarget: { findMany: jest.fn(), findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
     team: { findMany: jest.fn(), findFirst: jest.fn() }, tenantMembership: { findMany: jest.fn(), findFirst: jest.fn() },
     opportunity: { findMany: jest.fn() }, leadVisit: { findMany: jest.fn() }, leadDemo: { findMany: jest.fn() },
+    incentiveCalculation: { findMany: jest.fn() },
   };
   const repo = { run: jest.fn((_actor: RequestPrincipal, _write: boolean, work: (transaction: Prisma.TransactionClient, policy: CrmPolicy) => Promise<unknown>) => work(tx as unknown as Prisma.TransactionClient, { scope: { tenantId: actor.tenantId, membershipId: actor.membershipId }, require: requirePermission } as unknown as CrmPolicy)) } as unknown as CrmRepository;
   const service = new TargetService(repo);
@@ -30,6 +31,7 @@ describe('TargetService', () => {
     tx.opportunity.findMany.mockResolvedValue([{ amount: 75000, closedAt: new Date('2026-09-15T08:00:00Z'), updatedAt: new Date('2026-09-15T08:00:00Z'), assignedMembership: { id: 'exec-1', teamId: 'team-1' }, ownerMembership: { id: 'admin-member', teamId: null } }]);
     tx.leadVisit.findMany.mockResolvedValue([]);
     tx.leadDemo.findMany.mockResolvedValue([]);
+    tx.incentiveCalculation.findMany.mockResolvedValue([]);
   });
 
   it('returns calculated team achievement from persisted targets and won opportunities', async () => {
