@@ -18,6 +18,8 @@ import { FieldDashboardController } from "./field-dashboard.controller";
 import { FieldDashboardService } from "./field-dashboard.service";
 import { VisitController } from "./visit.controller";
 import { VisitService } from "./visit.service";
+import { TeamController } from './team.controller';
+import { TeamService } from './team.service';
 
 @Module({
   imports: [PersistenceModule, MasterCoreModule, JobCoreModule],
@@ -29,6 +31,7 @@ import { VisitService } from "./visit.service";
     FollowUpController,
     FieldDashboardController,
     VisitController,
+    TeamController,
   ],
   providers: [
     CrmRepository,
@@ -40,6 +43,7 @@ import { VisitService } from "./visit.service";
     FollowUpService,
     FieldDashboardService,
     VisitService,
+    TeamService,
   ],
   exports: [OpportunityService, TerritoryService],
 })

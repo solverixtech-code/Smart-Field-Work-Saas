@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -19,198 +19,143 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
+import { Avatar } from '../../components/ui/Avatar';
+import { api, extractErrorMessage } from '../../common/api';
+import { useDebouncedSearch } from '../../features/crm/CrmContext';
 
-export interface SalesTeamItem {
+interface SalesTeamItem {
   id: string;
   name: string;
   code: string;
-  avatarBg: string;
-  avatarText: string;
   region: string;
   leaderName: string;
-  leaderCode: string;
-  leaderAvatar: string;
+  leaderCode: string | null;
+  leaderAvatarUrl: string | null;
   memberCount: number;
   department: string;
   monthlyTarget: number;
   achievedAmount: number;
   achievedPercent: number;
+  dealsThisMonth: number;
   status: 'Active' | 'Inactive';
 }
 
-const mockTeams: SalesTeamItem[] = [
-  {
-    id: 'MN-001',
-    name: 'Mumbai North Team',
-    code: 'MN-001',
-    avatarBg: 'bg-blue-100 text-blue-700',
-    avatarText: 'MN',
-    region: 'North Mumbai Region',
-    leaderName: 'Sanjay Yadav',
-    leaderCode: 'TL-1003',
-    leaderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
-    memberCount: 8,
-    department: 'Sales',
-    monthlyTarget: 1500000,
-    achievedAmount: 1245000,
-    achievedPercent: 83,
-    status: 'Active',
-  },
-  {
-    id: 'MW-002',
-    name: 'Mumbai West Team',
-    code: 'MW-002',
-    avatarBg: 'bg-purple-100 text-purple-700',
-    avatarText: 'MW',
-    region: 'Western Suburbs',
-    leaderName: 'Priya Mehta',
-    leaderCode: 'TL-1007',
-    leaderAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
-    memberCount: 6,
-    department: 'Sales',
-    monthlyTarget: 1200000,
-    achievedAmount: 910000,
-    achievedPercent: 76,
-    status: 'Active',
-  },
-  {
-    id: 'ME-003',
-    name: 'Mumbai East Team',
-    code: 'ME-003',
-    avatarBg: 'bg-emerald-100 text-emerald-700',
-    avatarText: 'ME',
-    region: 'Eastern Suburbs',
-    leaderName: 'Rohit Singh',
-    leaderCode: 'TL-1011',
-    leaderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
-    memberCount: 7,
-    department: 'Sales',
-    monthlyTarget: 1300000,
-    achievedAmount: 1060000,
-    achievedPercent: 82,
-    status: 'Active',
-  },
-  {
-    id: 'TH-004',
-    name: 'Thane Team',
-    code: 'TH-004',
-    avatarBg: 'bg-amber-100 text-amber-700',
-    avatarText: 'TH',
-    region: 'Thane & Navi Mumbai',
-    leaderName: 'Karan Patil',
-    leaderCode: 'TL-1009',
-    leaderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
-    memberCount: 6,
-    department: 'Sales',
-    monthlyTarget: 1000000,
-    achievedAmount: 780000,
-    achievedPercent: 78,
-    status: 'Active',
-  },
-  {
-    id: 'PU-005',
-    name: 'Pune Team',
-    code: 'PU-005',
-    avatarBg: 'bg-rose-100 text-rose-700',
-    avatarText: 'PU',
-    region: 'Pune City & PCMC',
-    leaderName: 'Neha Deshpande',
-    leaderCode: 'TL-1014',
-    leaderAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80',
-    memberCount: 5,
-    department: 'Sales',
-    monthlyTarget: 900000,
-    achievedAmount: 670000,
-    achievedPercent: 74,
-    status: 'Active',
-  },
-  {
-    id: 'NG-006',
-    name: 'Nagpur Team',
-    code: 'NG-006',
-    avatarBg: 'bg-indigo-100 text-indigo-700',
-    avatarText: 'NG',
-    region: 'Nagpur Region',
-    leaderName: 'Amit Kale',
-    leaderCode: 'TL-1016',
-    leaderAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&q=80',
-    memberCount: 4,
-    department: 'Sales',
-    monthlyTarget: 700000,
-    achievedAmount: 420000,
-    achievedPercent: 60,
-    status: 'Active',
-  },
-  {
-    id: 'SU-007',
-    name: 'Surat Team',
-    code: 'SU-007',
-    avatarBg: 'bg-slate-200 text-slate-700',
-    avatarText: 'SU',
-    region: 'Surat & South Gujarat',
-    leaderName: 'Vishal Shah',
-    leaderCode: 'TL-1017',
-    leaderAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=120&q=80',
-    memberCount: 4,
-    department: 'Sales',
-    monthlyTarget: 600000,
-    achievedAmount: 310000,
-    achievedPercent: 52,
-    status: 'Inactive',
-  },
-  {
-    id: 'BA-008',
-    name: 'Bangalore Team',
-    code: 'BA-008',
-    avatarBg: 'bg-slate-200 text-slate-700',
-    avatarText: 'BA',
-    region: 'Bangalore Region',
-    leaderName: 'Megha Iyer',
-    leaderCode: 'TL-1018',
-    leaderAvatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=120&q=80',
-    memberCount: 6,
-    department: 'Sales',
-    monthlyTarget: 1100000,
-    achievedAmount: 0,
-    achievedPercent: 0,
-    status: 'Inactive',
-  },
-];
+interface TeamDirectoryResponse {
+  items: SalesTeamItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  regions: string[];
+  summary: {
+    totalTeams: number;
+    totalMembers: number;
+    activeTeams: number;
+    averageTeamSize: number;
+    currentDeals: number;
+    dealChangePercent: number;
+  };
+  distribution: Array<{ region: string; value: number }>;
+  topPerformers: Array<Pick<SalesTeamItem, 'id' | 'name' | 'monthlyTarget' | 'achievedAmount' | 'achievedPercent'>>;
+}
 
-const teamDistributionData = [
-  { name: 'Mumbai Region', value: 3, color: '#0D1F3D' },
-  { name: 'Thane & Navi Mumbai', value: 1, color: '#10B981' },
-  { name: 'Pune Region', value: 1, color: '#2563EB' },
-  { name: 'Nagpur Region', value: 1, color: '#F59E0B' },
-  { name: 'South Gujarat', value: 1, color: '#E20613' },
-  { name: 'Bangalore Region', value: 1, color: '#8B5CF6' },
-];
+const emptyDirectory: TeamDirectoryResponse = {
+  items: [], total: 0, page: 1, limit: 10, totalPages: 0, regions: [],
+  summary: { totalTeams: 0, totalMembers: 0, activeTeams: 0, averageTeamSize: 0, currentDeals: 0, dealChangePercent: 0 },
+  distribution: [], topPerformers: [],
+};
 
+const colors = ['#0D1F3D', '#10B981', '#2563EB', '#F59E0B', '#E20613', '#8B5CF6'];
+const avatarClasses = ['bg-blue-100 text-blue-700', 'bg-purple-100 text-purple-700', 'bg-emerald-100 text-emerald-700', 'bg-amber-100 text-amber-700', 'bg-rose-100 text-rose-700', 'bg-indigo-100 text-indigo-700'];
+const initials = (name: string) => name.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
+const teamColor = (code: string) => avatarClasses[[...code].reduce((sum, char) => sum + char.charCodeAt(0), 0) % avatarClasses.length];
+const inr = (value: number) => `₹${value.toLocaleString('en-IN')}`;
 export default function SalesTeamsPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebouncedSearch(searchTerm.trim());
   const [regionFilter, setRegionFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [teams] = useState<SalesTeamItem[]>(mockTeams);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [directory, setDirectory] = useState(emptyDirectory);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleGlobalClick = () => setActiveMenuId(null);
     window.addEventListener('click', handleGlobalClick);
     return () => window.removeEventListener('click', handleGlobalClick);
   }, []);
 
-  const filteredTeams = teams.filter((t) => {
-    const matchesSearch =
-      t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.leaderName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRegion = regionFilter === 'All' || t.region.includes(regionFilter);
-    const matchesStatus = statusFilter === 'All' || t.status === statusFilter;
-    return matchesSearch && matchesRegion && matchesStatus;
-  });
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    api.get<TeamDirectoryResponse>('/tenant/crm/teams', {
+      signal: controller.signal,
+      params: {
+        page,
+        limit,
+        search: debouncedSearch || undefined,
+        region: regionFilter === 'All' ? undefined : regionFilter,
+        status: statusFilter === 'All' ? undefined : statusFilter,
+      },
+    }).then(({ data }) => {
+      setDirectory(data);
+      setSelectedIds([]);
+    }).catch((requestError: unknown) => {
+      if (!controller.signal.aborted) setError(extractErrorMessage(requestError, 'Unable to load sales teams.'));
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false);
+    });
+    return () => controller.abort();
+  }, [debouncedSearch, limit, page, regionFilter, statusFilter]);
+
+  const filteredTeams = directory.items;
+  const teamDistributionData = directory.distribution.map((item, index) => ({
+    name: item.region,
+    value: item.value,
+    color: colors[index % colors.length],
+  }));
+
+  const exportTeams = async () => {
+    try {
+      const params = {
+        limit: 500,
+        search: debouncedSearch || undefined,
+        region: regionFilter === 'All' ? undefined : regionFilter,
+        status: statusFilter === 'All' ? undefined : statusFilter,
+      };
+      const firstPage = await api.get<TeamDirectoryResponse>('/tenant/crm/teams', { params: { ...params, page: 1 } });
+      const remainingPages = await Promise.all(
+        Array.from({ length: Math.max(0, firstPage.data.totalPages - 1) }, (_, index) =>
+          api.get<TeamDirectoryResponse>('/tenant/crm/teams', { params: { ...params, page: index + 2 } })),
+      );
+      const items = [firstPage.data, ...remainingPages.map(({ data }) => data)].flatMap((response) => response.items);
+      if (!items.length) {
+        toast.info('No team records to export.');
+        return;
+      }
+      const escape = (value: string | number | null) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+      const rows = [
+        ['Team', 'Code', 'Region', 'Leader', 'Leader code', 'Members', 'Department', 'Monthly target', 'Achieved', 'Performance', 'Status'],
+        ...items.map((team) => [team.name, team.code, team.region, team.leaderName, team.leaderCode, team.memberCount, team.department, team.monthlyTarget, team.achievedAmount, `${team.achievedPercent}%`, team.status]),
+      ];
+      const blob = new Blob([rows.map((row) => row.map(escape).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `sales-teams-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success('Team data exported.');
+    } catch (requestError) {
+      toast.error(extractErrorMessage(requestError, 'Unable to export team data.'));
+    }
+  };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -225,6 +170,8 @@ export default function SalesTeamsPage() {
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
+  const firstResult = directory.total === 0 ? 0 : (directory.page - 1) * directory.limit + 1;
+  const lastResult = Math.min(directory.page * directory.limit, directory.total);
 
   return (
     <div className="space-y-3 font-sans pb-10">
@@ -241,7 +188,7 @@ export default function SalesTeamsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.success('Exporting Teams Data...')}
+            onClick={exportTeams}
             className="flex items-center gap-1.5 font-bold border-slate-200 text-slate-700 hover:bg-slate-50 shadow-xs"
           >
             <Download className="h-4 w-4 text-emerald-600" /> Export Data
@@ -261,7 +208,7 @@ export default function SalesTeamsPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 sm:grid-cols-3">
         <KpiCard
           title="Total Teams"
-          value="8"
+          value={String(directory.summary.totalTeams)}
           subValue="Active & Operational"
           timeframe=""
           icon={Building2}
@@ -270,7 +217,7 @@ export default function SalesTeamsPage() {
         />
         <KpiCard
           title="Total Members"
-          value="56"
+          value={String(directory.summary.totalMembers)}
           subValue="Active Field Staff"
           timeframe=""
           icon={Users}
@@ -279,8 +226,8 @@ export default function SalesTeamsPage() {
         />
         <KpiCard
           title="Active Teams"
-          value="7"
-          subValue="87.5% Active"
+          value={String(directory.summary.activeTeams)}
+          subValue={`${directory.summary.totalTeams ? ((directory.summary.activeTeams / directory.summary.totalTeams) * 100).toFixed(1) : 0}% Active`}
           timeframe=""
           icon={Target}
           iconBgColor="bg-purple-500/10"
@@ -288,7 +235,7 @@ export default function SalesTeamsPage() {
         />
         <KpiCard
           title="Avg Team Size"
-          value="7 Staff"
+          value={`${directory.summary.averageTeamSize} Staff`}
           subValue="Staff Per Team"
           timeframe=""
           icon={UserCheck}
@@ -297,9 +244,9 @@ export default function SalesTeamsPage() {
         />
         <KpiCard
           title="Total Deals (This Month)"
-          value="142 Deals"
-          change="+16%"
-          changeType="positive"
+          value={`${directory.summary.currentDeals} Deals`}
+          change={`${directory.summary.dealChangePercent >= 0 ? '+' : ''}${directory.summary.dealChangePercent}%`}
+          changeType={directory.summary.dealChangePercent >= 0 ? 'positive' : 'negative'}
           timeframe="vs last month"
           icon={BarChart3}
           iconBgColor="bg-blue-500/10"
@@ -318,7 +265,7 @@ export default function SalesTeamsPage() {
               type="text"
               placeholder="Search teams by name, code, leader..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               className="w-full rounded-sm border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
             />
           </div>
@@ -326,22 +273,17 @@ export default function SalesTeamsPage() {
           {/* Region Dropdown */}
           <select
             value={regionFilter}
-            onChange={(e) => setRegionFilter(e.target.value)}
+            onChange={(e) => { setRegionFilter(e.target.value); setPage(1); }}
             className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
           >
             <option value="All">All Regions</option>
-            <option value="Mumbai">Mumbai</option>
-            <option value="Thane">Thane</option>
-            <option value="Pune">Pune</option>
-            <option value="Nagpur">Nagpur</option>
-            <option value="Gujarat">Gujarat</option>
-            <option value="Bangalore">Bangalore</option>
+            {directory.regions.map((region) => <option key={region} value={region}>{region}</option>)}
           </select>
 
           {/* Status Dropdown */}
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
             className="rounded-sm border border-slate-200 bg-slate-50/60 px-3 py-2 text-xs font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none cursor-pointer"
           >
             <option value="All">All Statuses</option>
@@ -393,8 +335,8 @@ export default function SalesTeamsPage() {
                         {/* Team Name */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-3">
-                            <div className={`flex h-8 w-8 items-center justify-center rounded-sm font-bold text-xs shrink-0 ${t.avatarBg}`}>
-                              {t.avatarText}
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-sm font-bold text-xs shrink-0 ${teamColor(t.code)}`}>
+                              {initials(t.name)}
                             </div>
                             <div>
                               <button
@@ -411,14 +353,10 @@ export default function SalesTeamsPage() {
                         {/* Team Leader */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-2.5">
-                            <img
-                              src={t.leaderAvatar}
-                              alt={t.leaderName}
-                              className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0"
-                            />
+                            <Avatar name={t.leaderName} src={t.leaderAvatarUrl} sizeClassName="h-7 w-7" />
                             <div>
                               <p className="font-semibold text-slate-900 whitespace-nowrap">{t.leaderName}</p>
-                              <p className="text-xs text-slate-600 font-mono whitespace-nowrap">{t.leaderCode}</p>
+                              <p className="text-xs text-slate-600 font-mono whitespace-nowrap">{t.leaderCode ?? 'Not assigned'}</p>
                             </div>
                           </div>
                         </td>
@@ -443,13 +381,13 @@ export default function SalesTeamsPage() {
 
                         {/* Target (Monthly) - Aligned Right */}
                         <td className="px-4 py-3.5 font-semibold text-slate-900 whitespace-nowrap text-right">
-                          ₹{t.monthlyTarget.toLocaleString()}
+                          {inr(t.monthlyTarget)}
                         </td>
 
                         {/* Achieved (This Month) - Aligned Right */}
                         <td className="px-4 py-3.5 whitespace-nowrap text-right">
                           <div>
-                            <p className="font-semibold text-slate-900">₹{t.achievedAmount.toLocaleString()}</p>
+                            <p className="font-semibold text-slate-900">{inr(t.achievedAmount)}</p>
                             <p className={`text-xs font-semibold ${t.achievedPercent >= 75 ? 'text-emerald-700' : t.achievedPercent >= 50 ? 'text-amber-700' : 'text-rose-600'}`}>
                               {t.achievedPercent}%
                             </p>
@@ -584,6 +522,15 @@ export default function SalesTeamsPage() {
                       </tr>
                     );
                   })}
+                  {!loading && !error && filteredTeams.length === 0 && (
+                    <tr><td colSpan={10} className="px-4 py-16 text-center text-sm font-medium text-slate-500">No sales teams match these filters.</td></tr>
+                  )}
+                  {loading && (
+                    <tr><td colSpan={10} className="px-4 py-16 text-center text-sm font-medium text-slate-500">Loading sales teams...</td></tr>
+                  )}
+                  {!loading && error && (
+                    <tr><td colSpan={10} className="px-4 py-16 text-center text-sm font-medium text-[#E20613]">{error}</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -591,23 +538,40 @@ export default function SalesTeamsPage() {
 
           {/* Table Footer Pagination */}
           <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-700 font-medium bg-slate-50">
-            <p>Showing 1 to {filteredTeams.length} of {teams.length} teams</p>
+            <p>Showing {firstResult} to {lastResult} of {directory.total} teams</p>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
-                <button className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-300 bg-white text-slate-600 hover:bg-slate-50">
+                <button
+                  type="button"
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  disabled={directory.page <= 1 || loading}
+                  aria-label="Previous page"
+                  className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
                 <span className="flex h-7 w-7 items-center justify-center rounded-sm bg-slate-900 text-xs font-semibold text-white">
-                  1
+                  {directory.page}
                 </span>
-                <button className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-300 bg-white text-slate-600 hover:bg-slate-50">
+                <button
+                  type="button"
+                  onClick={() => setPage((current) => Math.min(directory.totalPages, current + 1))}
+                  disabled={directory.page >= directory.totalPages || loading}
+                  aria-label="Next page"
+                  className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-300 bg-white text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
                   <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
-              <select className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-900">
-                <option>10 / page</option>
-                <option>25 / page</option>
-                <option>50 / page</option>
+              <select
+                value={limit}
+                onChange={(event) => { setLimit(Number(event.target.value)); setPage(1); }}
+                aria-label="Teams per page"
+                className="rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-900"
+              >
+                <option value={10}>10 / page</option>
+                <option value={25}>25 / page</option>
+                <option value={50}>50 / page</option>
               </select>
             </div>
           </div>
@@ -642,12 +606,12 @@ export default function SalesTeamsPage() {
                     contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                     labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                     itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                    formatter={(val: any) => [`${val} Teams`, 'Count']}
+                    formatter={(val) => [`${val ?? 0} Teams`, 'Count']}
                   />
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xl font-bold text-slate-900">8</span>
+                <span className="text-xl font-bold text-slate-900">{directory.summary.totalTeams}</span>
                 <span className="text-xs font-normal text-slate-600">Total Teams</span>
               </div>
             </div>
@@ -674,29 +638,26 @@ export default function SalesTeamsPage() {
           </div>
 
           <div className="space-y-3">
-            {[
-              { rank: 1, name: 'Mumbai North Team', pct: 83, amount: '₹12,45,000 / ₹15,00,000', color: 'bg-emerald-600' },
-              { rank: 2, name: 'Mumbai East Team', pct: 82, amount: '₹10,60,000 / ₹13,00,000', color: 'bg-emerald-600' },
-              { rank: 3, name: 'Thane Team', pct: 78, amount: '₹7,80,000 / ₹10,00,000', color: 'bg-amber-500' },
-              { rank: 4, name: 'Mumbai West Team', pct: 76, amount: '₹9,10,000 / ₹12,00,000', color: 'bg-amber-500' },
-              { rank: 5, name: 'Pune Team', pct: 74, amount: '₹6,70,000 / ₹9,00,000', color: 'bg-amber-500' },
-            ].map((t) => (
-              <div key={t.rank} className="space-y-1.5 text-xs font-medium">
+            {directory.topPerformers.map((t, index) => (
+              <button type="button" onClick={() => navigate(`/admin/teams/${t.id}`)} key={t.id} className="block w-full space-y-1.5 text-xs font-medium text-left">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-800 border border-slate-200">
-                      {t.rank}
+                      {index + 1}
                     </span>
                     <span className="font-semibold text-slate-900">{t.name}</span>
                   </div>
-                  <span className="font-semibold text-slate-900">{t.pct}%</span>
+                  <span className="font-semibold text-slate-900">{t.achievedPercent}%</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200">
-                  <div className={`h-full ${t.color} rounded-full`} style={{ width: `${t.pct}%` }} />
+                  <div className={`h-full ${t.achievedPercent >= 75 ? 'bg-emerald-600' : t.achievedPercent >= 50 ? 'bg-amber-500' : 'bg-rose-600'} rounded-full`} style={{ width: `${Math.min(t.achievedPercent, 100)}%` }} />
                 </div>
-                <p className="text-xs text-right text-slate-600 font-normal">{t.amount}</p>
-              </div>
+                <p className="text-xs text-right text-slate-600 font-normal">{inr(t.achievedAmount)} / {inr(t.monthlyTarget)}</p>
+              </button>
             ))}
+            {!loading && directory.topPerformers.length === 0 && (
+              <p className="rounded-sm border border-slate-100 bg-slate-50 p-6 text-center text-xs font-medium text-slate-500">No monthly team targets are recorded.</p>
+            )}
           </div>
         </div>
 
