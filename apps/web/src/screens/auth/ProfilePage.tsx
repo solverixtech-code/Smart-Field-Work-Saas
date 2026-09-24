@@ -21,6 +21,7 @@ import {
 import { useAppSelector, useAppDispatch } from '../../store';
 import { setCredentials } from '../../store/slices/authSlice';
 import { Button } from '../../components/ui/Button';
+import { DatePicker } from '../../components/ui/DatePicker';
 import { ImageCropperModal } from '../../components/ui/ImageCropperModal';
 import { api, extractErrorMessage } from '../../common/api';
 import { getUserRoleLabel } from '@visiblo/shared';
@@ -87,26 +88,6 @@ function formatDateTime(value: string | null) {
     : 'Not recorded';
 }
 
-function formatDateOfBirth(value: string | null) {
-  return value
-    ? new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' })
-        .format(new Date(`${value}T00:00:00.000Z`))
-    : '';
-}
-
-function parseDateOfBirth(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
-  const parsed = new Date(trimmed);
-  if (Number.isNaN(parsed.getTime())) throw new Error('Enter a valid date of birth.');
-  return [
-    parsed.getFullYear(),
-    String(parsed.getMonth() + 1).padStart(2, '0'),
-    String(parsed.getDate()).padStart(2, '0'),
-  ].join('-');
-}
-
 function formatTimezone(timezone: string) {
   try {
     const now = new Date();
@@ -162,7 +143,7 @@ export default function ProfilePage() {
       fullName: nextProfile.fullName,
       mobile: nextProfile.mobile ?? '',
       designation: nextProfile.designation ?? '',
-      dateOfBirth: formatDateOfBirth(nextProfile.dateOfBirth),
+      dateOfBirth: nextProfile.dateOfBirth ?? '',
       officeAddress: nextProfile.officeAddress ?? '',
     });
   };
@@ -245,7 +226,7 @@ export default function ProfilePage() {
       const { data } = await api.patch<Profile>('/auth/me', {
         fullName: draft.fullName.trim(),
         mobile: draft.mobile.trim() || null,
-        dateOfBirth: parseDateOfBirth(draft.dateOfBirth),
+        dateOfBirth: draft.dateOfBirth || null,
         officeAddress: draft.officeAddress.trim() || null,
         ...(profile.canEditDesignation
           ? { designation: draft.designation.trim() || null }
@@ -423,13 +404,13 @@ export default function ProfilePage() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="font-bold text-slate-700 block">Date of Birth</label>
-              <input
-                type="text"
-                readOnly={!isEditing}
+              <label htmlFor="profile-date-of-birth" className="font-bold text-slate-700 block">Date of Birth</label>
+              <DatePicker
+                id="profile-date-of-birth"
                 value={draft.dateOfBirth}
-                onChange={(event) => updateDraft('dateOfBirth', event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:outline-none focus:border-[#0D1F3D]"
+                onChange={(value) => updateDraft('dateOfBirth', value)}
+                disabled={!isEditing}
+                triggerClassName="rounded-xl bg-slate-50/60 px-3.5 py-2.5"
               />
             </div>
             <div className="space-y-1.5 sm:col-span-2">

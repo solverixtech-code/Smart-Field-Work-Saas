@@ -110,6 +110,7 @@ describe('ProfilePage', () => {
     expect(host.textContent).toContain('IP: 127.0.0.1');
     expect(host.textContent).not.toContain('Amit Sharma');
     expect(host.textContent).not.toContain('103.21.45.67');
+    expect(host.querySelector<HTMLButtonElement>('#profile-date-of-birth')?.disabled).toBe(true);
   });
 
   it('persists edits through the current-user profile endpoint', async () => {
@@ -123,6 +124,7 @@ describe('ProfilePage', () => {
     const edit = Array.from(host.querySelectorAll<HTMLButtonElement>('button'))
       .find((button) => button.textContent?.includes('Edit Profile'))!;
     await act(async () => edit.click());
+    expect(host.querySelector<HTMLButtonElement>('#profile-date-of-birth')?.disabled).toBe(false);
 
     const fullNameLabel = Array.from(host.querySelectorAll('label'))
       .find((label) => label.textContent === 'Full Name')!;

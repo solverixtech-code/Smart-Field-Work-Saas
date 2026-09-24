@@ -7,6 +7,7 @@ interface DatePickerProps {
   value?: string; // YYYY-MM-DD
   onChange?: (dateStr: string) => void;
   required?: boolean;
+  disabled?: boolean;
   triggerClassName?: string;
 }
 
@@ -31,6 +32,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   value = '2025-05-20',
   onChange,
   required = false,
+  disabled = false,
   triggerClassName = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -88,10 +90,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         <button
           id={id}
           type="button"
+          disabled={disabled}
           onClick={() => setIsOpen(!isOpen)}
           aria-haspopup="dialog"
           aria-expanded={isOpen}
-          className={`flex w-full items-center justify-between rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#0D1F3D] shadow-xs hover:border-[#0D1F3D] focus:outline-none transition-colors ${triggerClassName}`}
+          className={`flex w-full items-center justify-between rounded-sm border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#0D1F3D] shadow-xs hover:border-[#0D1F3D] focus:outline-none transition-colors disabled:cursor-not-allowed disabled:bg-slate-100/70 disabled:text-slate-500 disabled:hover:border-slate-200 ${triggerClassName}`}
         >
           <div className="flex items-center gap-2">
             <CalendarIcon className="h-4 w-4 text-red-600 shrink-0" />
