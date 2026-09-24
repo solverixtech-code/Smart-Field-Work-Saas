@@ -10,7 +10,6 @@ import { z } from "zod";
 import { RequestPrincipal } from "../common/security/request-principal.interface";
 import * as dto from "./crm-contract";
 import { CrmPolicy } from "./crm-policy";
-import { leadScope, requireLead } from "./lead-policy";
 import { CrmRepository, crmConflict } from "./crm.repository";
 import {
   accountSelect,
@@ -63,32 +62,52 @@ function phoneSearch(search: string): Prisma.ContactWhereInput[] {
   return normalized ? [{ phone: { contains: normalized } }] : [];
 }
 
+function monthStart(date: Date, offset = 0) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + offset, 1));
+}
+
+function monthLabel(date: Date) {
+  return new Intl.DateTimeFormat("en-IN", { month: "short", year: "numeric", timeZone: "UTC" }).format(date);
+}
+
+function monthKey(date: Date) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function percentChange(current: number, previous: number) {
+  if (previous === 0) return current === 0 ? 0 : 100;
+  return Math.round(((current - previous) / previous) * 1000) / 10;
+}
+
+function minutesBetween(start: Date | null, end: Date | null) {
+  if (!start || !end) return 0;
+  return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60_000));
+}
+
 @Injectable()
 export class CrmService {
   constructor(private readonly repo: CrmRepository) {}
   async getLeadAssigneeProfile(actor: RequestPrincipal, membershipId: string) {
     dto.crmId.parse(membershipId);
     return this.repo.run(actor, false, async (tx, policy) => {
-      requireLead(policy, "view");
-      const visibleLead = await tx.lead.findFirst({
-        where: {
-          AND: [leadScope(policy), { assignedMembershipId: membershipId }],
-        },
-        select: { id: true },
-      });
-      if (!visibleLead) throw new NotFoundException("Employee not found");
+      policy.require("crm.executives.view");
       const membership = await tx.tenantMembership.findFirst({
         where: { id: membershipId, tenantId: policy.scope.tenantId },
         select: {
           id: true,
           status: true,
+          employeeCode: true,
           designation: true,
           department: true,
           joinedAt: true,
           tenantRole: { select: { name: true, code: true } },
           team: { select: { name: true, tenantId: true } },
           managerMembership: {
-            select: { tenantId: true, user: { select: { fullName: true } } },
+            select: {
+              tenantId: true,
+              employeeCode: true,
+              user: { select: { fullName: true, employeeCode: true } },
+            },
           },
           user: {
             select: {
@@ -97,28 +116,281 @@ export class CrmService {
               role: true,
               email: true,
               mobile: true,
+              employeeCode: true,
+              officeAddress: true,
               joinedAt: true,
             },
           },
         },
       });
       if (!membership) throw new NotFoundException("Employee not found");
+
+      const now = new Date();
+      const currentStart = monthStart(now);
+      const nextStart = monthStart(now, 1);
+      const previousStart = monthStart(now, -1);
+      const trendStart = monthStart(now, -5);
+      const tenantId = policy.scope.tenantId;
+      const leadWhere = { tenantId, assignedMembershipId: membershipId, deletedAt: null };
+      const opportunityWhere = { tenantId, assignedMembershipId: membershipId, deletedAt: null };
+
+      const [leads, opportunities, visits, attendance, territories, communications, histories] = await Promise.all([
+        tx.lead.findMany({
+          where: leadWhere,
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true, leadCode: true, name: true, businessName: true, status: true,
+            estimatedValue: true, createdAt: true, convertedAt: true,
+            sourceValue: { select: { name: true } },
+          },
+        }),
+        tx.opportunity.findMany({
+          where: opportunityWhere,
+          orderBy: { updatedAt: "desc" },
+          select: {
+            id: true, dealCode: true, title: true, amount: true, stage: true,
+            createdAt: true, updatedAt: true, closedAt: true,
+            account: { select: { name: true } },
+          },
+        }),
+        tx.leadVisit.findMany({
+          where: { tenantId, executiveMembershipId: membershipId, checkInTime: { gte: trendStart } },
+          orderBy: { checkInTime: "desc" },
+          take: 500,
+          select: {
+            id: true, targetName: true, targetType: true, location: true, purpose: true,
+            visitType: true, status: true, outcome: true, checkInTime: true,
+            checkOutTime: true, durationMinutes: true, latitude: true, longitude: true,
+          },
+        }),
+        tx.attendance.findMany({
+          where: { tenantId, tenantMembershipId: membershipId, date: { gte: currentStart, lt: nextStart } },
+          orderBy: { date: "asc" },
+          select: {
+            id: true, date: true, status: true, punchInTime: true, punchOutTime: true,
+            totalWorkMinutes: true, lateMinutes: true, remarks: true,
+          },
+        }),
+        tx.territoryMember.findMany({
+          where: { tenantId, membershipId, territory: { deletedAt: null } },
+          select: {
+            territory: {
+              select: {
+                name: true, city: true, regionArea: true,
+                targets: {
+                  where: { period: monthKey(now) },
+                  select: {
+                    monthlyTarget: true, monthlyAchieved: true,
+                    visitTarget: true, visitAchieved: true,
+                    newBusinessTarget: true, newBusinessAchieved: true,
+                  },
+                },
+              },
+            },
+          },
+        }),
+        tx.leadCommunication.findMany({
+          where: { tenantId, loggedByMembershipId: membershipId },
+          orderBy: { timestamp: "desc" },
+          take: 8,
+          select: { id: true, channel: true, subject: true, details: true, timestamp: true },
+        }),
+        tx.leadHistory.findMany({
+          where: { tenantId, actorMembershipId: membershipId },
+          orderBy: { createdAt: "desc" },
+          take: 8,
+          select: { id: true, eventType: true, message: true, note: true, createdAt: true },
+        }),
+      ]);
+
+      const monthStats = (start: Date, end: Date) => {
+        const assigned = leads.filter((lead) => lead.createdAt >= start && lead.createdAt < end).length;
+        const converted = leads.filter((lead) => lead.convertedAt && lead.convertedAt >= start && lead.convertedAt < end).length;
+        const won = opportunities.filter((deal) => deal.stage.toLowerCase() === "won" && (deal.closedAt ?? deal.updatedAt) >= start && (deal.closedAt ?? deal.updatedAt) < end);
+        return {
+          leadsAssigned: assigned,
+          leadsConverted: converted,
+          dealsWon: won.length,
+          revenue: won.reduce((sum, deal) => sum + Number(deal.amount), 0),
+        };
+      };
+      const current = monthStats(currentStart, nextStart);
+      const previous = monthStats(previousStart, currentStart);
+      const trend = Array.from({ length: 6 }, (_, index) => {
+        const start = monthStart(now, index - 5);
+        const end = monthStart(now, index - 4);
+        return { month: monthLabel(start), ...monthStats(start, end) };
+      });
+      const wonDeals = opportunities.filter((deal) => deal.stage.toLowerCase() === "won");
+      const currentVisits = visits.filter((visit) => visit.checkInTime >= currentStart && visit.checkInTime < nextStart);
+      const completedVisits = currentVisits.filter((visit) => visit.status === "COMPLETED");
+      const target = territories.reduce((result, item) => {
+        const row = item.territory.targets[0];
+        if (!row) return result;
+        result.revenueTarget += Number(row.monthlyTarget);
+        result.revenueAchieved += Number(row.monthlyAchieved);
+        result.visitTarget += row.visitTarget;
+        result.visitAchieved += row.visitAchieved;
+        result.newBusinessTarget += row.newBusinessTarget;
+        result.newBusinessAchieved += row.newBusinessAchieved;
+        result.hasData = true;
+        return result;
+      }, { revenueTarget: 0, revenueAchieved: 0, visitTarget: 0, visitAchieved: 0, newBusinessTarget: 0, newBusinessAchieved: 0, hasData: false });
+
+      const sourceCounts = new Map<string, number>();
+      for (const lead of leads) {
+        const source = lead.sourceValue?.name ?? "Not specified";
+        sourceCounts.set(source, (sourceCounts.get(source) ?? 0) + 1);
+      }
+      const routeDays = new Map<string, typeof visits>();
+      for (const visit of visits) {
+        const key = visit.checkInTime.toISOString().slice(0, 10);
+        routeDays.set(key, [...(routeDays.get(key) ?? []), visit]);
+      }
+      const attendanceCounts = new Map<string, number>();
+      for (const item of attendance) attendanceCounts.set(item.status, (attendanceCounts.get(item.status) ?? 0) + 1);
+      const attendanceMinutes = attendance.reduce((sum, item) => sum + item.totalWorkMinutes, 0);
+      const activity = [
+        ...communications.map((item) => ({
+          id: item.id, type: `${item.channel} logged`, description: item.subject || item.details || "Communication recorded",
+          occurredAt: item.timestamp, tag: "Communication",
+        })),
+        ...histories.map((item) => ({
+          id: item.id, type: item.eventType.replaceAll("_", " "), description: item.message || item.note || "Lead activity recorded",
+          occurredAt: item.createdAt, tag: "Lead",
+        })),
+        ...visits.slice(0, 8).map((item) => ({
+          id: item.id, type: `Visit ${item.status.toLowerCase()}`, description: `${item.targetName} - ${item.purpose}`,
+          occurredAt: item.checkOutTime ?? item.checkInTime, tag: "Visit",
+        })),
+      ].sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime()).slice(0, 8);
+
+      const joinedAt = membership.joinedAt ?? membership.user.joinedAt;
+      const teamName = membership.team?.tenantId === tenantId || membership.team?.tenantId === null
+        ? membership.team.name : null;
+      const manager = membership.managerMembership?.tenantId === tenantId ? membership.managerMembership : null;
+      const address = membership.user.officeAddress
+        ?? territories.map((item) => item.territory.city || item.territory.regionArea).find(Boolean)
+        ?? null;
+      const totalAssigned = leads.length;
+      const totalConverted = leads.filter((lead) => lead.convertedAt !== null).length;
+      const conversionRate = totalAssigned ? Math.round((totalConverted / totalAssigned) * 10_000) / 100 : 0;
+      const currentAttendanceWorkingDays = attendance.length;
+      const presentDays = (attendanceCounts.get("PRESENT") ?? 0) + (attendanceCounts.get("LATE") ?? 0) + (attendanceCounts.get("HALF_DAY") ?? 0);
+
       return {
-        ...ownerOption(membership),
+        id: membership.id,
+        employeeCode: membership.employeeCode ?? membership.user.employeeCode,
+        displayName: membership.user.fullName,
+        avatarUrl: membership.user.avatarUrl,
+        role: membership.designation ?? membership.tenantRole?.name ?? membership.user.role.replaceAll("_", " ").toLowerCase().replace(/(^|\s)\S/g, (letter) => letter.toUpperCase()),
         department: membership.department,
         status: membership.status,
         email: membership.user.email,
         mobile: membership.user.mobile,
-        teamName:
-          membership.team?.tenantId === policy.scope.tenantId ||
-          membership.team?.tenantId === null
-            ? membership.team.name
-            : null,
-        managerName:
-          membership.managerMembership?.tenantId === policy.scope.tenantId
-            ? membership.managerMembership.user.fullName
-            : null,
-        joinedAt: (membership.joinedAt ?? membership.user.joinedAt).toISOString(),
+        address,
+        teamName,
+        managerName: manager?.user.fullName ?? null,
+        managerEmployeeCode: manager?.employeeCode ?? manager?.user.employeeCode ?? null,
+        joinedAt: joinedAt.toISOString(),
+        employmentType: null,
+        overview: {
+          totals: {
+            leadsAssigned: totalAssigned,
+            leadsConverted: totalConverted,
+            dealsWon: wonDeals.length,
+            revenue: wonDeals.reduce((sum, deal) => sum + Number(deal.amount), 0),
+            conversionRate,
+          },
+          changes: {
+            leadsAssigned: percentChange(current.leadsAssigned, previous.leadsAssigned),
+            leadsConverted: percentChange(current.leadsConverted, previous.leadsConverted),
+            dealsWon: percentChange(current.dealsWon, previous.dealsWon),
+            revenue: percentChange(current.revenue, previous.revenue),
+          },
+          target: target.hasData ? {
+            period: monthLabel(currentStart),
+            target: target.revenueTarget,
+            achieved: target.revenueAchieved,
+            percentage: target.revenueTarget ? Math.round((target.revenueAchieved / target.revenueTarget) * 10_000) / 100 : 0,
+          } : null,
+          trend,
+          recentActivity: activity.map((item) => ({ ...item, occurredAt: item.occurredAt.toISOString() })),
+        },
+        performance: {
+          period: monthLabel(currentStart),
+          targets: target.hasData ? [
+            { label: "Revenue Target", achieved: target.revenueAchieved, target: target.revenueTarget, kind: "currency" },
+            { label: "Visit Target", achieved: target.visitAchieved, target: target.visitTarget, kind: "number" },
+            { label: "New Business Target", achieved: target.newBusinessAchieved, target: target.newBusinessTarget, kind: "number" },
+          ] : [],
+          trend,
+          leadsBySource: Array.from(sourceCounts, ([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value),
+          visitCompletionRate: currentVisits.length ? Math.round((completedVisits.length / currentVisits.length) * 10_000) / 100 : 0,
+        },
+        routeHistory: {
+          totalDays: routeDays.size,
+          totalVisits: visits.length,
+          completedVisits: visits.filter((visit) => visit.status === "COMPLETED").length,
+          totalDurationMinutes: visits.reduce((sum, visit) => sum + (visit.durationMinutes || minutesBetween(visit.checkInTime, visit.checkOutTime)), 0),
+          days: Array.from(routeDays, ([date, dayVisits]) => ({
+            date,
+            firstCheckIn: dayVisits.at(-1)?.checkInTime.toISOString() ?? null,
+            lastCheckOut: dayVisits.find((visit) => visit.checkOutTime)?.checkOutTime?.toISOString() ?? null,
+            visits: dayVisits.length,
+            completed: dayVisits.filter((visit) => visit.status === "COMPLETED").length,
+            durationMinutes: dayVisits.reduce((sum, visit) => sum + (visit.durationMinutes || minutesBetween(visit.checkInTime, visit.checkOutTime)), 0),
+          })).sort((a, b) => b.date.localeCompare(a.date)),
+          points: visits.filter((visit) => visit.latitude !== null && visit.longitude !== null).slice(0, 100).map((visit) => ({
+            id: visit.id, name: visit.targetName, location: visit.location,
+            latitude: visit.latitude as number, longitude: visit.longitude as number,
+            timestamp: visit.checkInTime.toISOString(), status: visit.status,
+          })),
+        },
+        attendance: {
+          period: monthLabel(currentStart),
+          summary: {
+            present: presentDays,
+            absent: attendanceCounts.get("ABSENT") ?? 0,
+            late: attendanceCounts.get("LATE") ?? 0,
+            halfDay: attendanceCounts.get("HALF_DAY") ?? 0,
+            workingDays: currentAttendanceWorkingDays,
+            percentage: currentAttendanceWorkingDays ? Math.round((presentDays / currentAttendanceWorkingDays) * 10_000) / 100 : 0,
+            averageWorkMinutes: currentAttendanceWorkingDays ? Math.round(attendanceMinutes / currentAttendanceWorkingDays) : 0,
+          },
+          days: attendance.map((item) => ({
+            id: item.id, date: item.date.toISOString().slice(0, 10), status: item.status,
+            punchInTime: item.punchInTime?.toISOString() ?? null,
+            punchOutTime: item.punchOutTime?.toISOString() ?? null,
+            totalWorkMinutes: item.totalWorkMinutes, lateMinutes: item.lateMinutes, remarks: item.remarks,
+          })),
+        },
+        visits: {
+          summary: {
+            total: currentVisits.length,
+            completed: completedVisits.length,
+            scheduled: currentVisits.filter((visit) => visit.status === "SCHEDULED").length,
+            cancelled: currentVisits.filter((visit) => visit.status === "CANCELLED").length,
+            productive: completedVisits.filter((visit) => Boolean(visit.outcome?.trim())).length,
+          },
+          items: currentVisits.map((visit) => ({
+            id: visit.id, targetName: visit.targetName, targetType: visit.targetType,
+            location: visit.location, purpose: visit.purpose, visitType: visit.visitType,
+            status: visit.status, outcome: visit.outcome, checkInTime: visit.checkInTime.toISOString(),
+            checkOutTime: visit.checkOutTime?.toISOString() ?? null, durationMinutes: visit.durationMinutes,
+          })),
+        },
+        sales: {
+          summary: { ...current, pipelineValue: opportunities.filter((deal) => !["won", "lost"].includes(deal.stage.toLowerCase())).reduce((sum, deal) => sum + Number(deal.amount), 0) },
+          trend,
+          stages: Array.from(opportunities.reduce((map, deal) => map.set(deal.stage, (map.get(deal.stage) ?? 0) + 1), new Map<string, number>()), ([stage, count]) => ({ stage, count })),
+          wonDeals: wonDeals.map((deal) => ({
+            id: deal.id, dealCode: deal.dealCode, title: deal.title,
+            customer: deal.account?.name ?? null, amount: Number(deal.amount),
+            wonAt: (deal.closedAt ?? deal.updatedAt).toISOString(),
+          })),
+        },
+        incentives: { available: false, message: "No incentive payout records are available for this executive." },
       };
     });
   }

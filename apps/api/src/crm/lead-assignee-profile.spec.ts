@@ -11,10 +11,10 @@ const actor: RequestPrincipal = {
   tenantId: randomUUID(),
   membershipId: randomUUID(),
   tenantRoleCode: 'tenant_admin',
-  tenantPermissions: ['crm.leads.view', 'crm.leads.access.tenant'],
+  tenantPermissions: ['crm.executives.view'],
   platformPermissions: [],
   platformRoleCodes: [],
-  permissions: ['crm.leads.view', 'crm.leads.access.tenant'],
+  permissions: ['crm.executives.view'],
   dataScope: 'TENANT',
   contextVersion: 1,
   permissionVersion: { tenant: null, platform: null },
@@ -24,10 +24,22 @@ const actor: RequestPrincipal = {
 describe('CRM employee profile', () => {
   const membershipId = randomUUID();
   const findFirst = jest.fn();
-  const visibleLead = jest.fn();
+  const leads = jest.fn();
+  const opportunities = jest.fn();
+  const visits = jest.fn();
+  const attendances = jest.fn();
+  const territories = jest.fn();
+  const communications = jest.fn();
+  const histories = jest.fn();
   const tx = {
     tenantMembership: { findFirst },
-    lead: { findFirst: visibleLead },
+    lead: { findMany: leads },
+    opportunity: { findMany: opportunities },
+    leadVisit: { findMany: visits },
+    attendance: { findMany: attendances },
+    territoryMember: { findMany: territories },
+    leadCommunication: { findMany: communications },
+    leadHistory: { findMany: histories },
   } as unknown as Prisma.TransactionClient;
   const repo = {
     run: jest.fn((principal: RequestPrincipal, _write: boolean, work: (transaction: Prisma.TransactionClient, policy: CrmPolicy) => Promise<unknown>) =>
@@ -37,13 +49,20 @@ describe('CRM employee profile', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    visibleLead.mockResolvedValue({ id: randomUUID() });
+    leads.mockResolvedValue([]);
+    opportunities.mockResolvedValue([]);
+    visits.mockResolvedValue([]);
+    attendances.mockResolvedValue([]);
+    territories.mockResolvedValue([]);
+    communications.mockResolvedValue([]);
+    histories.mockResolvedValue([]);
   });
 
   it('returns the requested tenant employee and their stored profile image', async () => {
     findFirst.mockResolvedValue({
       id: membershipId,
       status: 'ACTIVE',
+      employeeCode: 'FE-1002',
       designation: null,
       department: 'Sales',
       joinedAt: null,
@@ -56,6 +75,8 @@ describe('CRM employee profile', () => {
         role: 'FIELD_EXECUTIVE',
         email: 'vikram@example.test',
         mobile: null,
+        employeeCode: 'USR-1002',
+        officeAddress: 'Andheri East, Mumbai',
         joinedAt: new Date('2026-09-01T00:00:00.000Z'),
       },
     });
@@ -70,27 +91,13 @@ describe('CRM employee profile', () => {
     expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
       where: { id: membershipId, tenantId: actor.tenantId },
     }));
-    expect(visibleLead).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        AND: [
-          { tenantId: actor.tenantId, deletedAt: null },
-          { assignedMembershipId: membershipId },
-        ],
-      },
-    }));
   });
 
-  it('requires lead visibility and hides employees outside visible assignments', async () => {
+  it('requires executive visibility and hides missing tenant employees', async () => {
     await expect(service.getLeadAssigneeProfile({ ...actor, tenantPermissions: [] }, membershipId))
       .rejects.toMatchObject({ status: 403 });
     expect(findFirst).not.toHaveBeenCalled();
 
-    visibleLead.mockResolvedValue(null);
-    await expect(service.getLeadAssigneeProfile(actor, membershipId))
-      .rejects.toMatchObject({ status: 404 });
-    expect(findFirst).not.toHaveBeenCalled();
-
-    visibleLead.mockResolvedValue({ id: randomUUID() });
     findFirst.mockResolvedValue(null);
     await expect(service.getLeadAssigneeProfile(actor, membershipId))
       .rejects.toMatchObject({ status: 404 });

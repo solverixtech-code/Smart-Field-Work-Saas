@@ -363,6 +363,10 @@ export default function AppRouter() {
                 path="/admin/executives/:id/suspend"
                 element={<SuspendExecutivePage />}
               />
+              <Route
+                path="/admin/employees/:id"
+                element={<EmployeeProfilePage />}
+              />
             </Route>
 
             {/* Workforce, Attendance, and Payroll Routes */}
@@ -718,10 +722,6 @@ export default function AppRouter() {
             {/* Leads Management Routes (Screens 33 to 53) */}
             <Route element={<PermissionRoute permission="crm.leads.view" />}>
               <Route element={<CrmBoundary />}>
-                <Route
-                  path="/admin/employees/:id"
-                  element={<EmployeeProfilePage />}
-                />
                 <Route
                   path="/admin/leads"
                   element={<AllLeadsPage viewMode="all" />}
