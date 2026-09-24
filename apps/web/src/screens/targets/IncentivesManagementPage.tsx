@@ -16,6 +16,7 @@ import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
 import { Avatar } from '../../components/ui/Avatar';
+import { Modal } from '../../components/ui/Modal';
 import { extractErrorMessage } from '../../common/api';
 import { approveIncentives, calculateIncentives, currentPeriod, getIncentives, IncentiveCalculationItem, IncentivePayoutItem, periodLabel, shiftPeriod } from './target.api';
 
@@ -34,13 +35,15 @@ export default function IncentivesManagementPage() {
   const initialPeriod = currentPeriod();
   const [calculations, setCalculations] = useState<IncentiveCalculationItem[]>([]);
   const [payouts, setPayouts] = useState<IncentivePayoutItem[]>([]);
-  const [summary, setSummary] = useState({ total: 0, approved: 0, pending: 0, paid: 0, activeEarners: 0 });
+  const [summary, setSummary] = useState({ total: 0, approved: 0, pending: 0, paid: 0, activeEarners: 0, activeRules: 0 });
   const [selectedMonth, setSelectedMonth] = useState(initialPeriod);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
+  const [approvalSelection, setApprovalSelection] = useState<IncentiveCalculationItem[]>([]);
+  const [approvalSubmitting, setApprovalSubmitting] = useState(false);
   const monthOptions = Array.from({ length: 18 }, (_, index) => shiftPeriod(initialPeriod, 3 - index)).map((value) => ({ value, label: periodLabel(value) }));
 
   useEffect(() => {
@@ -65,18 +68,35 @@ export default function IncentivesManagementPage() {
   });
   const visiblePayouts = payouts.filter((payout) => !search || payout.executiveName.toLowerCase().includes(search) || payout.payoutId.toLowerCase().includes(search));
 
-  const handleApproveSelected = async () => {
+  const openApprovalModal = (items: IncentiveCalculationItem[]) => {
+    const payable = items.filter((item) => item.payoutStatus === 'Pending Approval' && item.totalIncentive > 0);
+    if (!payable.length) {
+      toast.error('No payable pending incentives were selected');
+      return;
+    }
+    setApprovalSelection(payable);
+  };
+
+  const handleApproveSelected = () => {
     if (selectedIds.length === 0) {
       toast.error('Please select at least one executive calculation to approve');
       return;
     }
+    openApprovalModal(calculations.filter((calculation) => selectedIds.includes(calculation.id)));
+  };
+
+  const confirmApproval = async () => {
+    setApprovalSubmitting(true);
     try {
-      await approveIncentives(selectedIds);
-      toast.success(`Approved ${selectedIds.length} incentive payout(s)!`);
+      await approveIncentives(approvalSelection.map((calculation) => calculation.id));
+      toast.success(`Approved ${approvalSelection.length} incentive payout(s)!`);
       setSelectedIds([]);
+      setApprovalSelection([]);
       setReloadToken((token) => token + 1);
     } catch (requestError: unknown) {
       toast.error(extractErrorMessage(requestError, 'Unable to approve the selected incentives.'));
+    } finally {
+      setApprovalSubmitting(false);
     }
   };
 
@@ -91,15 +111,7 @@ export default function IncentivesManagementPage() {
     toast.success('Incentive report exported.');
   };
 
-  const approveOne = async (calculation: IncentiveCalculationItem) => {
-    try {
-      await approveIncentives([calculation.id]);
-      toast.success(`Approved incentive payout of ₹${calculation.totalIncentive.toLocaleString('en-IN')} for ${calculation.executiveName}`);
-      setReloadToken((token) => token + 1);
-    } catch (requestError: unknown) {
-      toast.error(extractErrorMessage(requestError, 'Unable to approve this incentive.'));
-    }
-  };
+  const approveOne = (calculation: IncentiveCalculationItem) => openApprovalModal([calculation]);
 
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -323,7 +335,7 @@ export default function IncentivesManagementPage() {
               <tbody className="divide-y divide-slate-100">
                 {loading && <tr><td colSpan={activeTab === 'approvals' ? 10 : 9} className="py-8 text-center text-slate-500">Loading incentive calculations...</td></tr>}
                 {!loading && error && <tr><td colSpan={activeTab === 'approvals' ? 10 : 9} className="py-8 text-center text-red-600">{error}</td></tr>}
-                {!loading && !error && visibleCalculations.length === 0 && <tr><td colSpan={activeTab === 'approvals' ? 10 : 9} className="py-8 text-center text-slate-500">No incentive calculations found for this period.</td></tr>}
+                {!loading && !error && visibleCalculations.length === 0 && <tr><td colSpan={activeTab === 'approvals' ? 10 : 9} className="py-8 text-center text-slate-500">{summary.activeRules === 0 ? `No active incentive rules apply to ${periodLabel(selectedMonth)}. Create and activate a rule to calculate earnings.` : 'No earned incentives found for this period.'}</td></tr>}
                 {visibleCalculations.map((c) => (
                   <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
                     {activeTab === 'approvals' && (
@@ -372,7 +384,7 @@ export default function IncentivesManagementPage() {
                       <RowActionsMenu
                         items={[
                           { label: 'View Itemized Breakdown', icon: Eye, onClick: () => navigate(`/admin/incentives/${c.executiveId}`) },
-                          ...(c.payoutStatus === 'Pending Approval' ? [{ label: 'Approve Payout', icon: Check, onClick: () => void approveOne(c) }] : []),
+                          ...(c.payoutStatus === 'Pending Approval' && c.totalIncentive > 0 ? [{ label: 'Approve Payout', icon: Check, onClick: () => approveOne(c) }] : []),
                         ]}
                       />
                     </td>
@@ -434,6 +446,56 @@ export default function IncentivesManagementPage() {
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={approvalSelection.length > 0}
+        onClose={() => { if (!approvalSubmitting) setApprovalSelection([]); }}
+        title="Approve incentive payout"
+        maxWidth="max-w-lg"
+      >
+        <div className="space-y-4 text-left">
+          <p className="text-xs font-medium text-slate-600">
+            Review the payable incentives below. Approval creates payout records for the finance disbursement queue.
+          </p>
+
+          <div className="grid grid-cols-3 gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            <div>
+              <span className="block text-[10px] font-semibold text-slate-500">Period</span>
+              <span className="text-xs font-extrabold text-[#0D1F3D]">{periodLabel(selectedMonth)}</span>
+            </div>
+            <div>
+              <span className="block text-[10px] font-semibold text-slate-500">Executives</span>
+              <span className="text-xs font-extrabold text-[#0D1F3D]">{approvalSelection.length}</span>
+            </div>
+            <div>
+              <span className="block text-[10px] font-semibold text-slate-500">Total payout</span>
+              <span className="text-xs font-extrabold text-emerald-700">₹{approvalSelection.reduce((sum, item) => sum + item.totalIncentive, 0).toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+
+          <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+            {approvalSelection.map((calculation) => (
+              <div key={calculation.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <Avatar src={calculation.executiveAvatar} name={calculation.executiveName} sizeClassName="h-8 w-8" />
+                  <div className="min-w-0">
+                    <span className="block truncate text-xs font-extrabold text-[#0D1F3D]">{calculation.executiveName}</span>
+                    <span className="block text-[10px] font-mono font-semibold text-slate-400">{calculation.executiveId}</span>
+                  </div>
+                </div>
+                <span className="ml-3 shrink-0 text-xs font-black text-emerald-700">₹{calculation.totalIncentive.toLocaleString('en-IN')}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+            <Button type="button" variant="outline" size="sm" disabled={approvalSubmitting} onClick={() => setApprovalSelection([])}>Cancel</Button>
+            <Button type="button" variant="accent" size="sm" disabled={approvalSubmitting} onClick={() => void confirmApproval()} className="bg-[#E20613] text-white hover:bg-red-700">
+              <Check className="h-4 w-4" /> {approvalSubmitting ? 'Approving...' : `Approve ${approvalSelection.length} payout${approvalSelection.length === 1 ? '' : 's'}`}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

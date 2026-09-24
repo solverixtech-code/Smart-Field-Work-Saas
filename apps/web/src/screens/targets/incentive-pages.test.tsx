@@ -34,7 +34,7 @@ describe('Dynamic incentive pages', () => {
   it('renders persisted rules and current payout totals returned by the API', async () => {
     vi.mocked(api.get).mockImplementation((url) => Promise.resolve({ data: url === '/tenant/crm/incentive-rules'
       ? { items: [{ id: 'rule-1', ruleName: 'Live sales rule', ruleType: 'Achievement', appliesTo: 'All Executives', metric: 'Total Sales (Amount)', payoutRate: 500, payoutStructure: '₹ 500 for every ₹ 10,000 achieved', startDate: '2026-09-01', endDate: '2026-09-30', validityPeriod: '01 Sep 2026 - 30 Sep 2026', status: 'Active', revision: 1 }], summary: { total: 1, active: 1, paused: 0, inactive: 0 } }
-      : { calculations: [], payouts: [], summary: { total: 1500, approved: 0, pending: 1500, paid: 0, activeEarners: 1 } } } as AxiosResponse));
+      : { calculations: [], payouts: [], summary: { total: 1500, approved: 0, pending: 1500, paid: 0, activeEarners: 1, activeRules: 1 } } } as AxiosResponse));
 
     await act(async () => { root.render(<MemoryRouter><IncentiveRulesPage /></MemoryRouter>); await Promise.resolve(); });
     await act(async () => { await Promise.resolve(); });
@@ -47,7 +47,7 @@ describe('Dynamic incentive pages', () => {
   it('calculates and renders live executive incentives for the selected period', async () => {
     vi.mocked(api.get).mockResolvedValue({ data: {
       calculations: [{ id: 'calculation-1', membershipId: 'member-1', executiveId: 'FE-1001', executiveName: 'Vikram Singh', executiveAvatar: null, teamName: 'West Team', salesIncentive: 5000, demoIncentive: 1000, visitIncentive: 500, bonusIncentive: 0, totalIncentive: 6500, approvedAmount: 0, payoutStatus: 'Pending Approval', monthPeriod: '2026-09' }],
-      payouts: [], summary: { total: 6500, approved: 0, pending: 6500, paid: 0, activeEarners: 1 },
+      payouts: [], summary: { total: 6500, approved: 0, pending: 6500, paid: 0, activeEarners: 1, activeRules: 1 },
     } } as AxiosResponse);
 
     await act(async () => { root.render(<MemoryRouter initialEntries={['/admin/incentives']}><IncentivesManagementPage /></MemoryRouter>); await Promise.resolve(); });
@@ -57,5 +57,27 @@ describe('Dynamic incentive pages', () => {
     expect(host.textContent).toContain('Vikram Singh');
     expect(host.textContent).toContain('6,500');
     expect(host.textContent).toContain('Pending Approval');
+  });
+
+  it('reviews selected payouts in a modal before sending approval', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: {
+      calculations: [{ id: '11111111-1111-4111-8111-111111111111', membershipId: 'member-1', executiveId: 'FE-1001', executiveName: 'Vikram Singh', executiveAvatar: null, teamName: 'West Team', salesIncentive: 5000, demoIncentive: 1000, visitIncentive: 500, bonusIncentive: 0, totalIncentive: 6500, approvedAmount: 0, payoutStatus: 'Pending Approval', monthPeriod: '2026-09' }],
+      payouts: [], summary: { total: 6500, approved: 0, pending: 6500, paid: 0, activeEarners: 1, activeRules: 1 },
+    } } as AxiosResponse);
+
+    await act(async () => { root.render(<MemoryRouter initialEntries={['/admin/incentives/approvals']}><IncentivesManagementPage /></MemoryRouter>); await Promise.resolve(); await Promise.resolve(); });
+    const checkbox = host.querySelector<HTMLInputElement>('tbody input[type="checkbox"]');
+    expect(checkbox).not.toBeNull();
+    await act(async () => checkbox?.click());
+    const approveSelected = Array.from(host.querySelectorAll('button')).find((button) => button.textContent?.includes('Approve Selected'));
+    await act(async () => approveSelected?.click());
+
+    expect(document.body.textContent).toContain('Approve incentive payout');
+    expect(document.body.textContent).toContain('₹6,500');
+    expect(vi.mocked(api.post).mock.calls.filter(([url]) => url === '/tenant/crm/incentives/approve')).toHaveLength(0);
+
+    const confirm = Array.from(document.body.querySelectorAll('button')).find((button) => button.textContent?.includes('Approve 1 payout'));
+    await act(async () => { confirm?.click(); await Promise.resolve(); await Promise.resolve(); });
+    expect(api.post).toHaveBeenCalledWith('/tenant/crm/incentives/approve', { calculationIds: ['11111111-1111-4111-8111-111111111111'] });
   });
 });

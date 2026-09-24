@@ -156,7 +156,7 @@ export interface IncentivePayoutItem {
 export interface IncentivesResponse {
   calculations: IncentiveCalculationItem[];
   payouts: IncentivePayoutItem[];
-  summary: { total: number; approved: number; pending: number; paid: number; activeEarners: number };
+  summary: { total: number; approved: number; pending: number; paid: number; activeEarners: number; activeRules: number };
 }
 
 export interface IncentiveRuleInput {

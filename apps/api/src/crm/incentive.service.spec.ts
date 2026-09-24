@@ -16,6 +16,7 @@ describe('IncentiveService', () => {
   const tx = {
     incentiveCalculation: { findMany: jest.fn(), update: jest.fn() },
     incentivePayout: { count: jest.fn(), create: jest.fn() },
+    incentiveRule: { count: jest.fn() },
   };
   const repo = {
     run: jest.fn((_actor: RequestPrincipal, _write: boolean, work: (transaction: Prisma.TransactionClient, policy: CrmPolicy) => Promise<unknown>) =>
@@ -37,6 +38,7 @@ describe('IncentiveService', () => {
       payout: null,
     }]);
     tx.incentivePayout.count.mockResolvedValue(0);
+    tx.incentiveRule.count.mockResolvedValue(0);
     tx.incentiveCalculation.update.mockResolvedValue({});
     tx.incentivePayout.create.mockResolvedValue({});
   });
@@ -55,5 +57,36 @@ describe('IncentiveService', () => {
       data: expect.objectContaining({ tenantId: 'tenant-a', payoutCode: 'PAY-202609-0001', amount: new Prisma.Decimal(7500) }),
     }));
     expect(result).toEqual({ approved: 1 });
+  });
+
+  it('does not approve a zero-value calculation', async () => {
+    tx.incentiveCalculation.findMany.mockResolvedValue([{
+      id: '11111111-1111-4111-8111-111111111111',
+      membershipId: 'executive-member',
+      period: '2026-09',
+      totalIncentive: new Prisma.Decimal(0),
+      status: 'PENDING_APPROVAL',
+      payout: null,
+    }]);
+
+    await expect(service.approve(actor, { calculationIds: ['11111111-1111-4111-8111-111111111111'] }))
+      .rejects.toThrow('NO_PAYABLE_INCENTIVES_SELECTED');
+    expect(tx.incentiveCalculation.update).not.toHaveBeenCalled();
+    expect(tx.incentivePayout.create).not.toHaveBeenCalled();
+  });
+
+  it('excludes zero-value rows and reports when no active rules apply', async () => {
+    tx.incentiveCalculation.findMany.mockResolvedValue([]);
+
+    const result = await service.list(actor, { period: '2026-09' });
+
+    expect(requirePermission).toHaveBeenCalledWith('crm.incentives.view');
+    expect(tx.incentiveCalculation.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ tenantId: 'tenant-a', period: '2026-09', totalIncentive: { gt: 0 } }),
+    }));
+    expect(result).toEqual({
+      calculations: [], payouts: [],
+      summary: { total: 0, approved: 0, pending: 0, paid: 0, activeEarners: 0, activeRules: 0 },
+    });
   });
 });

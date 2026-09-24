@@ -144,8 +144,12 @@ export class IncentiveService {
           ruleSnapshot.push({ id: rule.id, name: rule.name, metric: rule.metric, payoutRate: rate, earned });
         });
         const total = breakdown.sales + breakdown.demos + breakdown.visits + breakdown.bonus;
-        const existing = await tx.incentiveCalculation.findUnique({ where: { tenantId_membershipId_period: { tenantId, membershipId: member.id, period: input.period } }, select: { id: true, status: true } });
+        const existing = await tx.incentiveCalculation.findUnique({ where: { tenantId_membershipId_period: { tenantId, membershipId: member.id, period: input.period } }, select: { id: true, status: true, payout: { select: { id: true } } } });
         if (existing && ['APPROVED', 'PAID'].includes(existing.status)) continue;
+        if (total <= 0) {
+          if (existing && !existing.payout) await tx.incentiveCalculation.delete({ where: { id: existing.id } });
+          continue;
+        }
         const data = {
           salesIncentive: new Prisma.Decimal(breakdown.sales), demoIncentive: new Prisma.Decimal(breakdown.demos),
           visitIncentive: new Prisma.Decimal(breakdown.visits), bonusIncentive: new Prisma.Decimal(breakdown.bonus),
@@ -165,20 +169,25 @@ export class IncentiveService {
     return this.repo.run(actor, false, async (tx, policy) => {
       policy.require('crm.incentives.view');
       const tenantId = policy.scope.tenantId;
-      const rows = await tx.incentiveCalculation.findMany({
-        where: {
-          tenantId, period: q.period,
-          ...(q.executiveId ? { OR: [{ membershipId: q.executiveId }, { membership: { employeeCode: q.executiveId } }] } : {}),
-          ...(q.search ? { membership: { user: { OR: [{ fullName: { contains: q.search, mode: 'insensitive' } }, { employeeCode: { contains: q.search, mode: 'insensitive' } }] } } } : {}),
-        },
-        orderBy: { membership: { user: { fullName: 'asc' } } },
-        select: {
-          id: true, membershipId: true, period: true, salesIncentive: true, demoIncentive: true, visitIncentive: true,
-          bonusIncentive: true, totalIncentive: true, approvedAmount: true, status: true,
-          membership: { select: { employeeCode: true, team: { select: { name: true } }, user: { select: { fullName: true, avatarUrl: true, employeeCode: true } } } },
-          payout: true,
-        },
-      });
+      const periodStart = new Date(`${q.period}-01T00:00:00.000Z`);
+      const periodEnd = new Date(`${nextPeriod(q.period)}-01T00:00:00.000Z`);
+      const [rows, activeRules] = await Promise.all([
+        tx.incentiveCalculation.findMany({
+          where: {
+            tenantId, period: q.period, totalIncentive: { gt: 0 },
+            ...(q.executiveId ? { OR: [{ membershipId: q.executiveId }, { membership: { employeeCode: q.executiveId } }] } : {}),
+            ...(q.search ? { membership: { user: { OR: [{ fullName: { contains: q.search, mode: 'insensitive' } }, { employeeCode: { contains: q.search, mode: 'insensitive' } }] } } } : {}),
+          },
+          orderBy: { membership: { user: { fullName: 'asc' } } },
+          select: {
+            id: true, membershipId: true, period: true, salesIncentive: true, demoIncentive: true, visitIncentive: true,
+            bonusIncentive: true, totalIncentive: true, approvedAmount: true, status: true,
+            membership: { select: { employeeCode: true, team: { select: { name: true } }, user: { select: { fullName: true, avatarUrl: true, employeeCode: true } } } },
+            payout: true,
+          },
+        }),
+        tx.incentiveRule.count({ where: { tenantId, status: 'ACTIVE', startDate: { lt: periodEnd }, endDate: { gte: periodStart } } }),
+      ]);
       const calculations = rows.map((row) => ({
         id: row.id, membershipId: row.membershipId, executiveId: row.membership.employeeCode ?? row.membership.user.employeeCode,
         executiveName: row.membership.user.fullName, executiveAvatar: row.membership.user.avatarUrl,
@@ -196,7 +205,7 @@ export class IncentiveService {
       const approved = calculations.filter((row) => ['Approved', 'Paid'].includes(row.payoutStatus)).reduce((sum, row) => sum + row.approvedAmount, 0);
       const pending = calculations.filter((row) => row.payoutStatus === 'Pending Approval').reduce((sum, row) => sum + row.totalIncentive, 0);
       const paid = payouts.filter((row) => row.status === 'Paid').reduce((sum, row) => sum + row.amount, 0);
-      return { calculations, payouts, summary: { total, approved, pending, paid, activeEarners: calculations.filter((row) => row.totalIncentive > 0).length } };
+      return { calculations, payouts, summary: { total, approved, pending, paid, activeEarners: calculations.length, activeRules } };
     });
   }
 
@@ -207,8 +216,8 @@ export class IncentiveService {
       const tenantId = policy.scope.tenantId;
       const rows = await tx.incentiveCalculation.findMany({ where: { id: { in: input.calculationIds }, tenantId }, select: { id: true, membershipId: true, period: true, totalIncentive: true, status: true, payout: { select: { id: true } } } });
       if (rows.length !== new Set(input.calculationIds).size) throw new NotFoundException('INCENTIVE_CALCULATION_NOT_FOUND');
-      const eligible = rows.filter((row) => row.status === 'PENDING_APPROVAL');
-      if (!eligible.length) throw new ConflictException('NO_PENDING_INCENTIVES_SELECTED');
+      const eligible = rows.filter((row) => row.status === 'PENDING_APPROVAL' && Number(row.totalIncentive) > 0);
+      if (!eligible.length) throw new ConflictException('NO_PAYABLE_INCENTIVES_SELECTED');
       const existingPayoutCount = await tx.incentivePayout.count({ where: { tenantId, calculation: { period: eligible[0].period } } });
       for (const [index, row] of eligible.entries()) {
         const amount = Number(row.totalIncentive);
