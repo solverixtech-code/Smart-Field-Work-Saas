@@ -15,12 +15,18 @@ export interface FollowUpRecord {
   notes: string | null;
   status: "Pending" | "Completed" | "Cancelled";
   completedAt: string | null;
+  completionNote: string | null;
   createdAt: string;
   updatedAt: string;
   assignedMembership: {
     designation: string | null;
     user: { fullName: string; avatarUrl: string | null };
     team: { name: string } | null;
+  } | null;
+  completedByMembership: {
+    id: string;
+    designation: string | null;
+    user: { fullName: string; avatarUrl: string | null };
   } | null;
   lead: {
     id: string;

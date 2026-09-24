@@ -12,7 +12,7 @@ import FollowUpRecordPage from "./FollowUpRecordPage";
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 vi.mock("../../common/api", () => ({
-  api: { get: vi.fn(), post: vi.fn() },
+  api: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
 }));
 vi.mock("../../store", () => ({
   useAppSelector: (selector: (state: unknown) => unknown) =>
@@ -76,6 +76,7 @@ beforeEach(() => {
         notes: null,
         status: "Pending",
         completedAt: null,
+        completionNote: null,
         createdAt: "2026-09-23T12:33:43.000Z",
         updatedAt: "2026-09-23T12:33:43.000Z",
         assignedMembership: {
@@ -83,6 +84,7 @@ beforeEach(() => {
           user: { fullName: "Vikram Singh", avatarUrl: "https://example.test/vikram.jpg" },
           team: { name: "West Team" },
         },
+        completedByMembership: null,
         lead: {
           id: "assigned-lead",
           leadCode: "LD-000001",
@@ -100,6 +102,7 @@ beforeEach(() => {
     throw new Error(`Unexpected GET ${url}`);
   });
   vi.mocked(api.post).mockResolvedValue({ data: { id: "follow-up-1" } } as never);
+  vi.mocked(api.patch).mockResolvedValue({ data: { id: "follow-up-1", status: "Completed" } } as never);
 });
 
 afterEach(async () => {
@@ -192,5 +195,47 @@ describe("field executive follow-ups", () => {
       }),
       expect.any(Object),
     );
+  });
+
+  it("requires a completion outcome, updates the follow-up, and opens the completed list", async () => {
+    await act(async () => root.render(
+      <MemoryRouter initialEntries={["/admin/follow-ups/follow-up-1"]}>
+        <Routes>
+          <Route element={<CrmBoundary />}>
+            <Route path="/admin/follow-ups/:followupId" element={<FollowUpRecordPage />} />
+            <Route path="/admin/follow-ups/completed" element={<p>Completed follow-ups list</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    ));
+    await flush();
+
+    const complete = Array.from(host.querySelectorAll<HTMLButtonElement>("button"))
+      .find((button) => button.textContent?.includes("Mark completed"))!;
+    await act(async () => complete.click());
+    await flush();
+
+    const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog.textContent).toContain("Outcome or completion note");
+    const submit = Array.from(dialog.querySelectorAll<HTMLButtonElement>("button"))
+      .find((button) => button.textContent === "Complete follow-up")!;
+    await act(async () => submit.click());
+    expect(dialog.textContent).toContain("Enter the outcome or a completion note.");
+    expect(api.patch).not.toHaveBeenCalled();
+
+    const note = dialog.querySelector<HTMLTextAreaElement>("#completion-note")!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value")!.set!.call(note, "Customer approved the proposal.");
+      note.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => submit.click());
+    await flush();
+
+    expect(api.patch).toHaveBeenCalledWith(
+      "/tenant/crm/leads/assigned-lead/follow-ups/follow-up-1",
+      { status: "Completed", completionNote: "Customer approved the proposal." },
+      expect.any(Object),
+    );
+    expect(host.textContent).toContain("Completed follow-ups list");
   });
 });

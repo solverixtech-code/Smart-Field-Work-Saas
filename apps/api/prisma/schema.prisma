@@ -61,6 +61,9 @@ model User {
   fullName           String
   email              String    @unique
   mobile             String?
+  dateOfBirth        DateTime?
+  officeAddress      String?
+  emailVerifiedAt    DateTime?
   passwordHash       String
   avatarUrl          String?
   role               Role
@@ -950,6 +953,7 @@ model TenantMembership {
   executiveVisits LeadVisit[] @relation("VisitExecutive")
   createdVisits LeadVisit[] @relation("VisitCreator")
   assignedFollowUps LeadFollowUp[]
+  completedFollowUps LeadFollowUp[] @relation("FollowUpCompleter")
   conductedDemos LeadDemo[]
   loggedCommunications LeadCommunication[]
   ownedAccounts Account[] @relation("AccountOwner")
@@ -1805,6 +1809,7 @@ model PlatformNotificationSettings {
   whatsappEnabled           Boolean  @default(false)
   followUpAssignedPush      Boolean  @default(false)
   followUpDuePush           Boolean  @default(false)
+  followUpCompletedPush     Boolean  @default(false)
   updatedById               String?
   updatedAt                 DateTime @updatedAt
 }
@@ -2078,10 +2083,14 @@ model LeadFollowUp {
   notes                String?
   status               String            @default("Pending") // Pending, Completed, Cancelled
   completedAt          DateTime?
+  completionNote       String?
+  completedByMembershipId String?
+  completedByMembership TenantMembership? @relation("FollowUpCompleter", fields: [completedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
   createdAt            DateTime          @default(now())
   updatedAt            DateTime          @updatedAt
 
   @@index([tenantId, leadId, status])
+  @@index([tenantId, completedByMembershipId])
 }
 
 model LeadDemo {

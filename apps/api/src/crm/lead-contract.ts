@@ -209,6 +209,7 @@ export const updateLeadFollowUp = z
     assignedMembershipId: crmId.optional(),
     notes: z.string().trim().max(2000).optional(),
     replaceNotes: z.string().trim().max(2000).nullable().optional(),
+    completionNote: z.string().trim().min(1).max(2000).optional(),
   })
   .strict().refine((value) => Object.keys(value).length > 0, 'Provide at least one follow-up change.');
 

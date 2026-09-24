@@ -19,7 +19,7 @@ export const followUpPushPayload = z.object({
   tenantId: z.string().uuid(),
   followUpId: z.string().uuid(),
   expectedUpdatedAt: z.string().datetime(),
-  trigger: z.enum(['assigned', 'due']),
+  trigger: z.enum(['assigned', 'due', 'completed']),
 }).strict();
 const registry = {
   "media.delete-object": mediaDeletePayload,
@@ -87,6 +87,25 @@ export class JobService {
       },
       select: { id: true },
     });
+  }
+  async deletePendingFollowUpPushes(
+    tx: Prisma.TransactionClient,
+    tenantId: string,
+    followUpId: string,
+  ) {
+    z.string().uuid().parse(tenantId);
+    z.string().uuid().parse(followUpId);
+    const pending = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "BackgroundJob"
+      WHERE "tenantId"=${tenantId}
+        AND type='followup.push'
+        AND status='PENDING'
+        AND payload->>'followUpId'=${followUpId}
+      FOR UPDATE`;
+    const ids = pending.map(({ id }) => id);
+    if (!ids.length) return { count: 0 };
+    await tx.backgroundJobAttempt.deleteMany({ where: { jobId: { in: ids } } });
+    return tx.backgroundJob.deleteMany({ where: { id: { in: ids } } });
   }
   async claim(workerId: string, limit = 1): Promise<ClaimedJob[]> {
     z.string().uuid().parse(workerId);

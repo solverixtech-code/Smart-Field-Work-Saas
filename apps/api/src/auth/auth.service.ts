@@ -24,6 +24,7 @@ import {
   type AuthTokens,
   type OtpRequiredResponse,
   type LoginResponse,
+  type UpdateProfileInput,
 } from '@visiblo/shared';
 
 import { PrismaService } from '../persistence/prisma.service';
@@ -741,22 +742,152 @@ export class AuthService {
 
   // ─── Profile ────────────────────────────────────────────────────────────────
 
-  async getProfile(userId: string) {
+  async getProfile(principal: RequestPrincipal) {
+    const userId = principal.userId;
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: { team: true },
+      select: {
+        id: true,
+        employeeCode: true,
+        fullName: true,
+        email: true,
+        mobile: true,
+        dateOfBirth: true,
+        officeAddress: true,
+        emailVerifiedAt: true,
+        role: true,
+        dataScope: true,
+        team: { select: { name: true } },
+        defaultTerritoryId: true,
+        avatarUrl: true,
+        preferredLanguage: true,
+        status: true,
+        joinedAt: true,
+        lastLoginAt: true,
+        lastPasswordChangeAt: true,
+        twoFactorEnabled: true,
+      },
     });
     if (!user) throw new UnauthorizedException();
 
+    const [session, membership, platformAssignments, recentActivity] =
+      await Promise.all([
+        this.prisma.userSession.findFirst({
+          where: { id: principal.sessionId, userId },
+          select: { ip: true, lastSeenAt: true },
+        }),
+        principal.membershipId
+          ? this.prisma.tenantMembership.findFirst({
+              where: { id: principal.membershipId, userId, status: 'ACTIVE' },
+              select: {
+                employeeCode: true,
+                designation: true,
+                department: true,
+                dataScope: true,
+                updatedAt: true,
+                team: { select: { name: true } },
+                tenantRole: {
+                  select: { code: true, name: true, updatedAt: true },
+                },
+                tenant: {
+                  select: {
+                    settings: { select: { timezone: true } },
+                    addresses: {
+                      select: {
+                        type: true,
+                        line1: true,
+                        line2: true,
+                        city: true,
+                        stateOrRegion: true,
+                        postalCode: true,
+                        countryCode: true,
+                        isPrimary: true,
+                      },
+                    },
+                  },
+                },
+              },
+            })
+          : Promise.resolve(null),
+        this.prisma.platformUserRoleAssignment.findMany({
+          where: { userId, status: 'ACTIVE' },
+          select: {
+            updatedAt: true,
+            platformRole: { select: { code: true, name: true } },
+            assignedByUser: { select: { fullName: true } },
+          },
+          orderBy: { updatedAt: 'desc' },
+        }),
+        this.prisma.auditLog.findMany({
+          where: {
+            actorUserId: userId,
+            action: {
+              in: [
+                'LOGIN_SUCCESS',
+                'PROFILE_UPDATED',
+                'PASSWORD_CHANGED',
+                'PASSWORD_RESET',
+                'AVATAR_UPLOADED',
+                'MEMBERSHIP_SELECTED',
+                'OTP_REQUESTED',
+              ],
+            },
+          },
+          select: { id: true, action: true, createdAt: true, ip: true },
+          orderBy: { createdAt: 'desc' },
+          take: 5,
+        }),
+      ]);
+
+    const addresses = membership?.tenant.addresses ?? [];
+    const tenantAddress =
+      addresses.find((address) => address.type === 'OFFICE' && address.isPrimary) ??
+      addresses.find((address) => address.type === 'OFFICE') ??
+      addresses.find((address) => address.isPrimary) ??
+      addresses[0];
+    const formattedTenantAddress = tenantAddress
+      ? [
+          tenantAddress.line1,
+          tenantAddress.line2,
+          tenantAddress.city,
+          tenantAddress.stateOrRegion,
+          tenantAddress.postalCode,
+          tenantAddress.countryCode,
+        ].filter(Boolean).join(', ')
+      : null;
+    const primaryPlatformAssignment = platformAssignments[0] ?? null;
+    const roleName = (
+      membership?.tenantRole?.name ??
+      platformAssignments.map(({ platformRole }) => platformRole.name).join(', ')
+    ) || user.role;
+    const roleCode =
+      membership?.tenantRole?.code ??
+      primaryPlatformAssignment?.platformRole.code ??
+      user.role;
+    const permissions = principal.tenantId
+      ? principal.tenantPermissions
+      : principal.platformPermissions;
+    const lastPermissionUpdateAt =
+      membership?.tenantRole?.updatedAt ??
+      primaryPlatformAssignment?.updatedAt ??
+      membership?.updatedAt ??
+      null;
+
     return {
       id: user.id,
-      employeeCode: user.employeeCode,
+      employeeCode: membership?.employeeCode ?? user.employeeCode,
       fullName: user.fullName,
       email: user.email,
       mobile: user.mobile,
+      dateOfBirth: user.dateOfBirth?.toISOString().slice(0, 10) ?? null,
+      officeAddress: user.officeAddress ?? formattedTenantAddress,
+      designation: membership?.designation ?? roleName,
+      department: membership?.department ?? null,
       role: user.role,
-      dataScope: user.dataScope,
-      teamName: user.team?.name ?? null,
+      roleCode,
+      roleName,
+      dataScope: principal.dataScope ?? membership?.dataScope ?? user.dataScope,
+      teamName: membership?.team?.name ?? user.team?.name ?? null,
       defaultTerritoryId: user.defaultTerritoryId,
       avatarUrl: user.avatarUrl,
       preferredLanguage: user.preferredLanguage,
@@ -765,32 +896,79 @@ export class AuthService {
       lastLoginAt: user.lastLoginAt,
       lastPasswordChangeAt: user.lastPasswordChangeAt,
       twoFactorEnabled: user.twoFactorEnabled,
+      emailVerified: Boolean(user.emailVerifiedAt),
+      username: user.email.split('@')[0],
+      timezone: membership?.tenant.settings?.timezone ?? 'UTC',
+      loginIp: session?.ip ?? null,
+      lastSessionActivityAt: session?.lastSeenAt ?? null,
+      permissionsCount: permissions.length,
+      teamAccess: membership?.team?.name ?? user.team?.name ?? null,
+      lastPermissionUpdateAt,
+      lastPermissionUpdatedBy:
+        primaryPlatformAssignment?.assignedByUser?.fullName ?? 'System Security',
+      canEditDesignation: Boolean(membership),
+      recentActivity: recentActivity.map((activity) => ({
+        ...activity,
+        ip: activity.ip ??
+          (activity.action === 'LOGIN_SUCCESS' ? session?.ip ?? null : null),
+      })),
     };
   }
 
   async updateProfile(
-    userId: string,
-    dto: { fullName?: string; mobile?: string; preferredLanguage?: string },
+    principal: RequestPrincipal,
+    dto: UpdateProfileInput,
     meta: { ip?: string; userAgent?: string },
   ) {
+    const userId = principal.userId;
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new UnauthorizedException();
+    if (dto.designation !== undefined && !principal.membershipId)
+      throw new BadRequestException('Select a workspace before updating designation.');
+
+    const membership = principal.membershipId
+      ? await this.prisma.tenantMembership.findFirst({
+          where: { id: principal.membershipId, userId, status: 'ACTIVE' },
+          select: { id: true, designation: true },
+        })
+      : null;
+    if (principal.membershipId && !membership) throw new UnauthorizedException();
 
     const beforeJson = {
       fullName: user.fullName,
       mobile: user.mobile,
       preferredLanguage: user.preferredLanguage,
+      dateOfBirth: user.dateOfBirth,
+      officeAddress: user.officeAddress,
+      designation: membership?.designation ?? null,
     };
 
-    const updated = await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(dto.fullName !== undefined && { fullName: dto.fullName }),
-        ...(dto.mobile !== undefined && { mobile: dto.mobile }),
-        ...(dto.preferredLanguage !== undefined && {
-          preferredLanguage: dto.preferredLanguage,
-        }),
-      },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const changedUser = await tx.user.update({
+        where: { id: userId },
+        data: {
+          ...(dto.fullName !== undefined && { fullName: dto.fullName }),
+          ...(dto.mobile !== undefined && { mobile: dto.mobile || null }),
+          ...(dto.preferredLanguage !== undefined && {
+            preferredLanguage: dto.preferredLanguage,
+          }),
+          ...(dto.dateOfBirth !== undefined && {
+            dateOfBirth: dto.dateOfBirth
+              ? new Date(`${dto.dateOfBirth}T00:00:00.000Z`)
+              : null,
+          }),
+          ...(dto.officeAddress !== undefined && {
+            officeAddress: dto.officeAddress || null,
+          }),
+        },
+      });
+      if (membership && dto.designation !== undefined) {
+        await tx.tenantMembership.update({
+          where: { id: membership.id },
+          data: { designation: dto.designation || null },
+        });
+      }
+      return changedUser;
     });
 
     await this.audit({
@@ -803,18 +981,22 @@ export class AuthService {
         fullName: updated.fullName,
         mobile: updated.mobile,
         preferredLanguage: updated.preferredLanguage,
+        dateOfBirth: updated.dateOfBirth,
+        officeAddress: updated.officeAddress,
+        designation: dto.designation ?? membership?.designation ?? null,
       },
       ...meta,
     });
 
-    return this.getProfile(userId);
+    return this.getProfile(principal);
   }
 
   async uploadAvatar(
-    userId: string,
+    principal: RequestPrincipal,
     file: Express.Multer.File,
     meta: { ip?: string; userAgent?: string },
   ) {
+    const userId = principal.userId;
     if (!file) {
       throw new BadRequestException('No image file provided');
     }
@@ -836,7 +1018,7 @@ export class AuthService {
 
     return {
       avatarUrl,
-      user: await this.getProfile(userId),
+      user: await this.getProfile(principal),
     };
   }
 
@@ -1153,6 +1335,9 @@ export class AuthService {
           entityId: input.entityId ?? null,
           beforeJson: input.beforeJson ?? input.metadata ?? null,
           afterJson: input.afterJson ?? null,
+          ip: input.ip ?? null,
+          userAgent: input.userAgent ?? null,
+          sessionId: input.sessionId ?? null,
       });
     } catch (error) {
       this.logger.warn('Authentication audit write failed');

@@ -21,6 +21,7 @@ import {
 import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
 import { Modal } from "../../components/ui/Modal";
+import { Textarea } from "../../components/ui/Textarea";
 import { useCrm, useCrmMutation, useCrmQuery } from "../../features/crm/CrmContext";
 import { followUpApi } from "../../features/crm/follow-up.api";
 import { leadApi } from "../../features/crm/lead.api";
@@ -77,11 +78,18 @@ export default function FollowUpRecordPage() {
   const mutation = useCrmMutation();
   const [editing, setEditing] = useState(false);
   const [action, setAction] = useState<Action | null>(null);
+  const [completionNote, setCompletionNote] = useState("");
+  const [completionNoteError, setCompletionNoteError] = useState<string | null>(null);
   const item = result.data;
   const canEdit = (can("crm.followups.manage") || can("crm.leads.update")) && !readOnly;
 
   async function confirm() {
     if (!item || !action) return;
+    const trimmedCompletionNote = completionNote.trim();
+    if (action === "complete" && !trimmedCompletionNote) {
+      setCompletionNoteError("Enter the outcome or a completion note.");
+      return;
+    }
     const changed = await mutation.run(async (_, signal) => {
       if (action === "delete") {
         await leadApi.deleteFollowUp(item.leadId, item.id, signal);
@@ -96,6 +104,7 @@ export default function FollowUpRecordPage() {
                 : action === "reopen"
                   ? "Pending"
                   : "Cancelled",
+            ...(action === "complete" ? { completionNote: trimmedCompletionNote } : {}),
           },
           signal,
         );
@@ -113,8 +122,24 @@ export default function FollowUpRecordPage() {
             : "Follow-up cancelled",
     );
     setAction(null);
+    setCompletionNote("");
+    setCompletionNoteError(null);
     if (action === "delete") navigate("/admin/follow-ups");
+    else if (action === "complete") navigate("/admin/follow-ups/completed");
     else result.reload();
+  }
+
+  function openAction(nextAction: Action) {
+    setCompletionNote("");
+    setCompletionNoteError(null);
+    setAction(nextAction);
+  }
+
+  function closeAction() {
+    if (mutation.pending) return;
+    setAction(null);
+    setCompletionNote("");
+    setCompletionNoteError(null);
   }
 
   return (
@@ -168,19 +193,19 @@ export default function FollowUpRecordPage() {
                 </Button>
                 {item.status === "Pending" ? (
                   <>
-                    <Button size="sm" variant="accent" onClick={() => setAction("complete")} className="gap-2">
+                    <Button size="sm" variant="accent" onClick={() => openAction("complete")} className="gap-2">
                       <CheckCircle2 className="h-4 w-4" /> Mark completed
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => setAction("cancel")} className="gap-2">
+                    <Button size="sm" variant="outline" onClick={() => openAction("cancel")} className="gap-2">
                       <Ban className="h-4 w-4" /> Cancel follow-up
                     </Button>
                   </>
                 ) : (
-                  <Button size="sm" variant="outline" onClick={() => setAction("reopen")} className="gap-2">
+                  <Button size="sm" variant="outline" onClick={() => openAction("reopen")} className="gap-2">
                     <CalendarCheck2 className="h-4 w-4" /> Reopen
                   </Button>
                 )}
-                <Button size="sm" variant="outline" onClick={() => setAction("delete")} className="gap-2 text-red-600 hover:bg-red-50">
+                <Button size="sm" variant="outline" onClick={() => openAction("delete")} className="gap-2 text-red-600 hover:bg-red-50">
                   <Trash2 className="h-4 w-4" /> Delete
                 </Button>
               </div>
@@ -232,6 +257,21 @@ export default function FollowUpRecordPage() {
                     <span className="text-slate-500">Unassigned</span>
                   )}
                 </DetailRow>
+                {item.status === "Completed" && item.completedByMembership && (
+                  <DetailRow icon={<CheckCircle2 className="h-4 w-4" />} label="Completed by">
+                    <Link
+                      to={`/admin/employees/${item.completedByMembership.id}`}
+                      className="text-blue-700 hover:underline"
+                    >
+                      {item.completedByMembership.user.fullName}
+                    </Link>
+                  </DetailRow>
+                )}
+                {item.completedAt && (
+                  <DetailRow icon={<Clock3 className="h-4 w-4" />} label="Completed at">
+                    <time dateTime={item.completedAt}>{formatCreatedAt(item.completedAt)}</time>
+                  </DetailRow>
+                )}
               </div>
             </section>
 
@@ -299,23 +339,46 @@ export default function FollowUpRecordPage() {
                   <p className="mt-1 text-xs text-slate-500">Use Edit to add context for this follow-up.</p>
                 </div>
               )}
+              {item.completionNote && (
+                <div className="mt-4 rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+                  <p className="text-xs font-bold text-emerald-800">Completion outcome</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-slate-700">{item.completionNote}</p>
+                </div>
+              )}
             </section>
           </div>
 
           <FollowUpFormModal isOpen={editing} onClose={() => setEditing(false)} onSuccess={result.reload} followUp={item} />
           <Modal
             isOpen={action !== null}
-            onClose={() => { if (!mutation.pending) setAction(null); }}
+            onClose={closeAction}
             title={action === "delete" ? "Delete follow-up" : action === "complete" ? "Complete follow-up" : action === "reopen" ? "Reopen follow-up" : "Cancel follow-up"}
             maxWidth="max-w-sm"
           >
             <p className="text-sm text-slate-600">
-              {action === "delete" ? "Delete this follow-up permanently?" : action === "complete" ? "Mark this follow-up as completed?" : action === "reopen" ? "Reopen this follow-up as pending? If it is overdue, a reminder may be sent when push notifications are enabled." : "Cancel this follow-up?"}
+              {action === "delete" ? "Delete this follow-up permanently?" : action === "complete" ? "Record what happened before completing this follow-up." : action === "reopen" ? "Reopen this follow-up as pending? If it is overdue, a reminder may be sent when push notifications are enabled." : "Cancel this follow-up?"}
             </p>
+            {action === "complete" && (
+              <Textarea
+                id="completion-note"
+                label="Outcome or completion note *"
+                value={completionNote}
+                onChange={(event) => {
+                  setCompletionNote(event.target.value);
+                  if (completionNoteError) setCompletionNoteError(null);
+                }}
+                error={completionNoteError ?? undefined}
+                rows={5}
+                maxLength={2000}
+                required
+                placeholder="Describe the result, decision, or next step"
+                autoFocus
+              />
+            )}
             {mutation.error && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">{mutation.error.message}</p>}
             <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" disabled={mutation.pending} onClick={() => setAction(null)}>Keep follow-up</Button>
-              <Button variant="accent" size="sm" isLoading={mutation.pending} onClick={confirm}>Confirm</Button>
+              <Button variant="outline" size="sm" disabled={mutation.pending} onClick={closeAction}>Keep follow-up</Button>
+              <Button variant="accent" size="sm" isLoading={mutation.pending} onClick={confirm}>{action === "complete" ? "Complete follow-up" : "Confirm"}</Button>
             </div>
           </Modal>
         </>

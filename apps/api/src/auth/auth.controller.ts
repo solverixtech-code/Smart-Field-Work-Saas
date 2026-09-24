@@ -259,7 +259,7 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RequestPrincipalGuard)
   @ApiBearerAuth('OAuth2PasswordBearer')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -267,12 +267,12 @@ export class AuthController {
     description: 'Fetch detailed profile information, active role, permissions, and status.',
   })
   @ApiResponse({ status: 200, description: 'User profile details returned' })
-  async getProfile(@Req() req: Request) {
-    return this.authService.getProfile(req['user'].sub);
+  async getProfile(@CurrentPrincipal() principal: RequestPrincipal) {
+    return this.authService.getProfile(principal);
   }
 
   @Patch('me')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RequestPrincipalGuard)
   @ApiBearerAuth('OAuth2PasswordBearer')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -282,17 +282,18 @@ export class AuthController {
   @ApiBody({ type: UpdateProfileSwaggerDto })
   @ApiResponse({ status: 200, description: 'Profile updated successfully' })
   async updateProfile(
+    @CurrentPrincipal() principal: RequestPrincipal,
     @Req() req: Request,
     @Body(new ZodValidationPipe(UpdateProfileSchema)) body: UpdateProfileInput,
   ) {
-    return this.authService.updateProfile(req['user'].sub, body, {
+    return this.authService.updateProfile(principal, body, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
     });
   }
 
   @Post('me/avatar')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RequestPrincipalGuard)
   @ApiBearerAuth('OAuth2PasswordBearer')
   @ApiBearerAuth('JWT-auth')
   @UseInterceptors(FileInterceptor('file'))
@@ -304,13 +305,14 @@ export class AuthController {
   @ApiBody({ type: AvatarUploadSwaggerDto })
   @ApiResponse({ status: 200, description: 'Avatar uploaded successfully; returns image URL' })
   async uploadAvatar(
+    @CurrentPrincipal() principal: RequestPrincipal,
     @Req() req: Request,
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) {
       throw new BadRequestException('Avatar image file is required');
     }
-    return this.authService.uploadAvatar(req['user'].sub, file, {
+    return this.authService.uploadAvatar(principal, file, {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
     });

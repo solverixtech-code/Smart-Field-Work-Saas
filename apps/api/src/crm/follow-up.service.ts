@@ -42,6 +42,7 @@ const followUpSelect = {
   notes: true,
   status: true,
   completedAt: true,
+  completionNote: true,
   createdAt: true,
   updatedAt: true,
   assignedMembership: {
@@ -49,6 +50,13 @@ const followUpSelect = {
       designation: true,
       user: { select: { fullName: true, avatarUrl: true } },
       team: { select: { name: true } },
+    },
+  },
+  completedByMembership: {
+    select: {
+      id: true,
+      designation: true,
+      user: { select: { fullName: true, avatarUrl: true } },
     },
   },
   lead: {

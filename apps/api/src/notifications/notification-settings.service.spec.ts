@@ -29,6 +29,7 @@ describe("NotificationSettingsService", () => {
       whatsappEnabled: false,
       followUpAssignedPush: false,
       followUpDuePush: false,
+      followUpCompletedPush: false,
     });
     await expect(settings.isFollowUpPushEnabled("due")).resolves.toBe(false);
   });
@@ -38,11 +39,13 @@ describe("NotificationSettingsService", () => {
       pushEnabled: false,
       followUpAssignedPush: true,
       followUpDuePush: true,
+      followUpCompletedPush: true,
     });
     await expect(settings.isFollowUpPushEnabled("assigned")).resolves.toBe(
       false,
     );
     await expect(settings.isFollowUpPushEnabled("due")).resolves.toBe(false);
+    await expect(settings.isFollowUpPushEnabled("completed")).resolves.toBe(false);
   });
 
   it("requires configured Firebase credentials before enabling push", async () => {
@@ -55,6 +58,7 @@ describe("NotificationSettingsService", () => {
         whatsappEnabled: false,
         followUpAssignedPush: true,
         followUpDuePush: true,
+        followUpCompletedPush: true,
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(upsert).not.toHaveBeenCalled();
@@ -67,6 +71,7 @@ describe("NotificationSettingsService", () => {
         whatsappEnabled: true,
         followUpAssignedPush: false,
         followUpDuePush: false,
+        followUpCompletedPush: false,
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(upsert).not.toHaveBeenCalled();
@@ -78,6 +83,7 @@ describe("NotificationSettingsService", () => {
       whatsappEnabled: false,
       followUpAssignedPush: true,
       followUpDuePush: true,
+      followUpCompletedPush: true,
     };
     findUnique.mockResolvedValue(input);
     upsert.mockResolvedValue(input);
@@ -85,6 +91,7 @@ describe("NotificationSettingsService", () => {
     await expect(settings.update("operator", input)).resolves.toMatchObject(
       input,
     );
+    await expect(settings.isFollowUpPushEnabled("completed")).resolves.toBe(true);
     expect(upsert).toHaveBeenCalledWith(
       expect.objectContaining({ update: expect.objectContaining(input) }),
     );

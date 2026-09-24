@@ -207,8 +207,11 @@ export type LoginResponse = z.infer<typeof LoginResponseSchema>;
 
 export const UpdateProfileSchema = z.object({
   fullName: z.string().trim().min(1).max(200).optional(),
-  mobile: z.string().trim().min(8).max(15).optional(),
+  mobile: z.string().trim().min(8).max(15).nullable().optional(),
   preferredLanguage: z.string().trim().max(10).optional(),
+  dateOfBirth: z.string().date().nullable().optional(),
+  officeAddress: z.string().trim().max(500).nullable().optional(),
+  designation: z.string().trim().max(150).nullable().optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof UpdateProfileSchema>;

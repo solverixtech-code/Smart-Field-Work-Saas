@@ -1245,6 +1245,23 @@ export class LeadService {
     );
   }
 
+  private async queueFollowUpCompletionPush(
+    tx: Prisma.TransactionClient,
+    followUp: { id: string; tenantId: string; updatedAt: Date },
+  ) {
+    await this.jobs.enqueue(
+      tx,
+      'followup.push',
+      {
+        tenantId: followUp.tenantId,
+        followUpId: followUp.id,
+        expectedUpdatedAt: followUp.updatedAt.toISOString(),
+        trigger: 'completed',
+      },
+      `${followUp.id}:${followUp.updatedAt.getTime()}:completed`,
+    );
+  }
+
   async createFollowUp(actor: RequestPrincipal, leadId: string, body: unknown) {
     crmId.parse(leadId);
     const v = dto.createLeadFollowUp.parse(body);
@@ -1307,6 +1324,16 @@ export class LeadService {
         }) : null;
       if (v.assignedMembershipId && !assignee) throw new BadRequestException('Select an active member of this workspace.');
       const status = v.status ?? followUp.status;
+      const isCompleting = status === 'Completed' && followUp.status !== 'Completed';
+      if (isCompleting && !v.completionNote)
+        throw new BadRequestException('Provide a completion outcome or note.');
+      if (isCompleting) {
+        await this.jobs.deletePendingFollowUpPushes(
+          tx,
+          p.scope.tenantId,
+          followUpId,
+        );
+      }
       const updated = await tx.leadFollowUp.update({
         where: { id: followUpId },
         data: {
@@ -1318,12 +1345,24 @@ export class LeadService {
           notes: v.replaceNotes !== undefined ? v.replaceNotes
             : v.notes ? `${followUp.notes ? followUp.notes + ' | ' : ''}${v.notes}` : followUp.notes,
           completedAt: status === 'Completed' ? followUp.completedAt ?? new Date() : null,
+          completionNote: isCompleting
+            ? v.completionNote
+            : status === 'Completed'
+              ? followUp.completionNote
+              : null,
+          completedByMembershipId: isCompleting
+            ? p.scope.membershipId
+            : status === 'Completed'
+              ? followUp.completedByMembershipId
+              : null,
         },
       });
       await this.syncNextFollowUp(tx, p.scope.tenantId, leadId, timezone);
-      await this.recordHistory(tx, p, leadId, "followup_updated", `Follow-up updated to ${status}`, v.notes || null);
+      await this.recordHistory(tx, p, leadId, "followup_updated", `Follow-up updated to ${status}`, v.completionNote || v.notes || null);
       if (status === 'Pending') {
         await this.queueFollowUpPushes(tx, updated, timezone, Boolean(v.assignedMembershipId && v.assignedMembershipId !== followUp.assignedMembershipId));
+      } else if (isCompleting) {
+        await this.queueFollowUpCompletionPush(tx, updated);
       }
       return updated;
     });

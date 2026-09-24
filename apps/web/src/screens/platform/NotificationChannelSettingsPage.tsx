@@ -12,6 +12,7 @@ interface Settings {
   whatsappEnabled: boolean;
   followUpAssignedPush: boolean;
   followUpDuePush: boolean;
+  followUpCompletedPush: boolean;
   fcmConfigured: boolean;
   whatsappConfigured: boolean;
   updatedAt: string | null;
@@ -54,7 +55,7 @@ export function NotificationChannelSettingsPage() {
   }, []);
 
   function change(
-    key: "pushEnabled" | "followUpAssignedPush" | "followUpDuePush",
+    key: "pushEnabled" | "followUpAssignedPush" | "followUpDuePush" | "followUpCompletedPush",
     checked: boolean,
   ) {
     setDraft((current) => (current ? { ...current, [key]: checked } : current));
@@ -71,6 +72,7 @@ export function NotificationChannelSettingsPage() {
         whatsappEnabled: draft.whatsappEnabled,
         followUpAssignedPush: draft.followUpAssignedPush,
         followUpDuePush: draft.followUpDuePush,
+        followUpCompletedPush: draft.followUpCompletedPush,
       });
       setSaved(response.data);
       setDraft(response.data);
@@ -87,7 +89,8 @@ export function NotificationChannelSettingsPage() {
     draft &&
     (saved.pushEnabled !== draft.pushEnabled ||
       saved.followUpAssignedPush !== draft.followUpAssignedPush ||
-      saved.followUpDuePush !== draft.followUpDuePush),
+      saved.followUpDuePush !== draft.followUpDuePush ||
+      saved.followUpCompletedPush !== draft.followUpCompletedPush),
   );
 
   return (
@@ -171,6 +174,12 @@ export function NotificationChannelSettingsPage() {
               checked={draft.followUpDuePush}
               disabled={!canManage}
               onChange={(checked) => change("followUpDuePush", checked)}
+            />
+            <Checkbox
+              label="Notify the assignee when a follow-up is completed"
+              checked={draft.followUpCompletedPush}
+              disabled={!canManage}
+              onChange={(checked) => change("followUpCompletedPush", checked)}
             />
           </section>
           <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">

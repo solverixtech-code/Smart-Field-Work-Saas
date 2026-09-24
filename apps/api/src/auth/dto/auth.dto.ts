@@ -110,6 +110,24 @@ export class UpdateProfileSwaggerDto {
     example: '+919876543210',
   })
   mobile?: string;
+
+  @ApiPropertyOptional({
+    description: 'Date of birth in YYYY-MM-DD format',
+    example: '1990-08-15',
+  })
+  dateOfBirth?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'User office address',
+    example: 'Andheri East, Mumbai, Maharashtra, India',
+  })
+  officeAddress?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Designation in the currently selected workspace',
+    example: 'Field Executive',
+  })
+  designation?: string | null;
 }
 
 export class AvatarUploadSwaggerDto {

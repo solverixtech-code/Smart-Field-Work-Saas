@@ -114,6 +114,9 @@ export interface AuditEventInput {
   readonly beforeJson?: unknown;
   readonly afterJson?: unknown;
   readonly metadata?: unknown;
+  readonly ip?: string | null;
+  readonly userAgent?: string | null;
+  readonly sessionId?: string | null;
 }
 
 /** Stateless central writer. The caller supplies its transaction, never an independent commit. */
@@ -175,6 +178,9 @@ export class AuditEventWriter {
         beforeJson: json(input.beforeJson),
         afterJson: json(input.afterJson),
         metadata: json(input.metadata),
+        ip: input.ip ?? null,
+        userAgent: input.userAgent ?? null,
+        sessionId: input.sessionId ?? null,
       },
       select: { id: true },
     });

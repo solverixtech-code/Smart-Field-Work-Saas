@@ -41,7 +41,7 @@ export class JobWorkerService {
       where: {
         id: payload.data.followUpId,
         tenantId: payload.data.tenantId,
-        status: 'Pending',
+        status: payload.data.trigger === 'completed' ? 'Completed' : 'Pending',
         updatedAt: new Date(payload.data.expectedUpdatedAt),
         lead: { deletedAt: null },
       },
@@ -60,10 +60,16 @@ export class JobWorkerService {
         membershipId: followUp.assignedMembershipId,
         actorUserId: job.actorUserId,
         sourceKey: `${payload.data.tenantId}:${followUp.id}:${payload.data.expectedUpdatedAt}:${payload.data.trigger}`,
-        title: payload.data.trigger === 'due' ? 'Follow-up due' : 'Follow-up assigned',
+        title: payload.data.trigger === 'due'
+          ? 'Follow-up due'
+          : payload.data.trigger === 'completed'
+            ? 'Follow-up completed'
+            : 'Follow-up assigned',
         body: payload.data.trigger === 'due'
           ? `${followUp.title} for ${leadName} is due now.`
-          : `${followUp.title} for ${leadName} is scheduled for ${followUp.scheduledDate} at ${followUp.scheduledTime}.`,
+          : payload.data.trigger === 'completed'
+            ? `${followUp.title} for ${leadName} was completed.`
+            : `${followUp.title} for ${leadName} is scheduled for ${followUp.scheduledDate} at ${followUp.scheduledTime}.`,
       });
     }
     await this.jobs.succeed(job, async () => {});

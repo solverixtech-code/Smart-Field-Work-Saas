@@ -10,6 +10,7 @@ const settingsInput = z
     whatsappEnabled: z.boolean(),
     followUpAssignedPush: z.boolean(),
     followUpDuePush: z.boolean(),
+    followUpCompletedPush: z.boolean(),
   })
   .strict();
 
@@ -28,6 +29,7 @@ export class NotificationSettingsService {
         whatsappEnabled: true,
         followUpAssignedPush: true,
         followUpDuePush: true,
+        followUpCompletedPush: true,
         updatedAt: true,
       },
     });
@@ -36,6 +38,7 @@ export class NotificationSettingsService {
       whatsappEnabled: settings?.whatsappEnabled ?? false,
       followUpAssignedPush: settings?.followUpAssignedPush ?? false,
       followUpDuePush: settings?.followUpDuePush ?? false,
+      followUpCompletedPush: settings?.followUpCompletedPush ?? false,
       updatedAt: settings?.updatedAt ?? null,
       fcmConfigured: !this.fcm.isInSimulationMode,
       whatsappConfigured: false,
@@ -67,6 +70,7 @@ export class NotificationSettingsService {
           whatsappEnabled: true,
           followUpAssignedPush: true,
           followUpDuePush: true,
+          followUpCompletedPush: true,
         },
       });
       await tx.platformNotificationSettings.upsert({
@@ -87,20 +91,23 @@ export class NotificationSettingsService {
     return this.get();
   }
 
-  async isFollowUpPushEnabled(trigger: "assigned" | "due") {
+  async isFollowUpPushEnabled(trigger: "assigned" | "due" | "completed") {
     const settings = await this.prisma.platformNotificationSettings.findUnique({
       where: { id: "global" },
       select: {
         pushEnabled: true,
         followUpAssignedPush: true,
         followUpDuePush: true,
+        followUpCompletedPush: true,
       },
     });
     return Boolean(
       settings?.pushEnabled &&
       (trigger === "assigned"
         ? settings.followUpAssignedPush
-        : settings.followUpDuePush),
+        : trigger === "completed"
+          ? settings.followUpCompletedPush
+          : settings.followUpDuePush),
     );
   }
 }
