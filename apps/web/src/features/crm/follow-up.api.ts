@@ -18,6 +18,7 @@ export interface FollowUpRecord {
   createdAt: string;
   updatedAt: string;
   assignedMembership: {
+    designation: string | null;
     user: { fullName: string; avatarUrl: string | null };
     team: { name: string } | null;
   } | null;

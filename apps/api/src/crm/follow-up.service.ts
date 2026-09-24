@@ -46,6 +46,7 @@ const followUpSelect = {
   updatedAt: true,
   assignedMembership: {
     select: {
+      designation: true,
       user: { select: { fullName: true, avatarUrl: true } },
       team: { select: { name: true } },
     },

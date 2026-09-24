@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../common/api";
 import { CrmBoundary } from "../../features/crm/CrmContext";
 import FollowUpsListPage from "./FollowUpsListPage";
+import FollowUpRecordPage from "./FollowUpRecordPage";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -62,6 +63,40 @@ beforeEach(() => {
         items: [{ id: "assigned-lead", name: "Acme Retail Solutions", businessName: "Acme Retail Solutions", leadCode: "LD-000001" }],
         total: 1, page: 1, limit: 50, totalPages: 1,
       } } as never;
+    if (url === "/tenant/crm/follow-ups/follow-up-1")
+      return { data: {
+        id: "follow-up-1",
+        leadId: "assigned-lead",
+        assignedMembershipId: "field-member",
+        assignedToName: "Vikram Singh",
+        title: "Product demonstration",
+        type: "IN_PERSON_MEETING",
+        scheduledDate: "2026-09-24",
+        scheduledTime: "10:30 AM",
+        notes: null,
+        status: "Pending",
+        completedAt: null,
+        createdAt: "2026-09-23T12:33:43.000Z",
+        updatedAt: "2026-09-23T12:33:43.000Z",
+        assignedMembership: {
+          designation: "Field Executive",
+          user: { fullName: "Vikram Singh", avatarUrl: "https://example.test/vikram.jpg" },
+          team: { name: "West Team" },
+        },
+        lead: {
+          id: "assigned-lead",
+          leadCode: "LD-000001",
+          name: "Acme Retail Solutions",
+          businessName: "Acme Retail Solutions Pvt Ltd",
+          contactName: "Vikram Malhotra",
+          phone: "+91 98765 43210",
+          email: "vikram@acmeretail.in",
+          addressLine1: null,
+          city: "Mumbai",
+          priority: "HIGH",
+          status: "OPEN",
+        },
+      } } as never;
     throw new Error(`Unexpected GET ${url}`);
   });
   vi.mocked(api.post).mockResolvedValue({ data: { id: "follow-up-1" } } as never);
@@ -74,6 +109,29 @@ afterEach(async () => {
 });
 
 describe("field executive follow-ups", () => {
+  it("renders the follow-up detail with the assigned employee image and no activity summary", async () => {
+    await act(async () => root.render(
+      <MemoryRouter initialEntries={["/admin/follow-ups/follow-up-1"]}>
+        <Routes>
+          <Route element={<CrmBoundary />}>
+            <Route path="/admin/follow-ups/:followupId" element={<FollowUpRecordPage />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    ));
+    await flush();
+
+    expect(host.querySelector("h1")?.textContent).toBe("Product demonstration");
+    expect(host.querySelector<HTMLImageElement>('img[alt="Vikram Singh"]')?.src)
+      .toBe("https://example.test/vikram.jpg");
+    expect(host.querySelector<HTMLAnchorElement>('a[aria-label="View Vikram Singh\'s profile"]')?.getAttribute("href"))
+      .toBe("/admin/employees/field-member");
+    expect(host.textContent).toContain("Schedule and assignment");
+    expect(host.textContent).toContain("Related lead");
+    expect(host.textContent).toContain("No notes recorded");
+    expect(host.textContent).not.toContain("Activity Summary");
+  });
+
   it("opens the shared Add follow-up modal and schedules one on an assigned lead", async () => {
     await act(async () => root.render(
       <MemoryRouter initialEntries={["/admin/follow-ups"]}>
