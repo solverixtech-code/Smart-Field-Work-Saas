@@ -22,6 +22,11 @@ import { CrmValidationFilter } from "./crm-validation.filter";
 @UseFilters(CrmValidationFilter)
 export class CrmController {
   constructor(private readonly crm: CrmService) {}
+  @Get("executives")
+  @RequirePermissions("crm.executives.view")
+  executives(@CurrentPrincipal() p: RequestPrincipal, @Query() q: unknown) {
+    return this.crm.listExecutives(p, q);
+  }
   @Get("lead-assignees/:membershipId/profile")
   @RequirePermissions("crm.executives.view")
   assigneeProfile(

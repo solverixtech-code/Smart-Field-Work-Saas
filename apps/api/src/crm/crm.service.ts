@@ -11,6 +11,7 @@ import { RequestPrincipal } from "../common/security/request-principal.interface
 import * as dto from "./crm-contract";
 import { CrmPolicy } from "./crm-policy";
 import { CrmRepository, crmConflict } from "./crm.repository";
+import { parseFollowUpSchedule } from "./follow-up-schedule";
 import {
   accountSelect,
   contactSelect,
@@ -82,6 +83,32 @@ function percentChange(current: number, previous: number) {
 function minutesBetween(start: Date | null, end: Date | null) {
   if (!start || !end) return 0;
   return Math.max(0, Math.round((end.getTime() - start.getTime()) / 60_000));
+}
+
+const executiveDirectoryQuery = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(500).default(10),
+  search: z.string().trim().max(100).optional().default(""),
+  region: z.string().trim().max(100).optional(),
+  status: z.enum(["Active", "On Field", "On Leave", "Inactive"]).optional(),
+}).strict();
+
+function localDateKey(date: Date, timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
+
+function nextDateKey(dateKey: string) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const next = new Date(Date.UTC(year, month - 1, day + 1));
+  return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}-${String(next.getUTCDate()).padStart(2, "0")}`;
 }
 
 @Injectable()
@@ -394,6 +421,197 @@ export class CrmService {
       };
     });
   }
+  async listExecutives(actor: RequestPrincipal, query: unknown) {
+    const q = executiveDirectoryQuery.parse(query);
+    return this.repo.run(actor, false, async (tx, policy) => {
+      policy.require("crm.executives.view");
+      const tenantId = policy.scope.tenantId;
+      const settings = await tx.tenantSettings.findUnique({
+        where: { tenantId },
+        select: { timezone: true },
+      });
+      const timezone = settings?.timezone ?? "Asia/Kolkata";
+      const todayKey = localDateKey(new Date(), timezone);
+      const tomorrowKey = nextDateKey(todayKey);
+      const [year, month] = todayKey.split("-").map(Number);
+      const nextMonth = new Date(Date.UTC(year, month, 1));
+      const nextMonthKey = `${nextMonth.getUTCFullYear()}-${String(nextMonth.getUTCMonth() + 1).padStart(2, "0")}-01`;
+      const todayStart = parseFollowUpSchedule(todayKey, "12:00 AM", timezone);
+      const tomorrowStart = parseFollowUpSchedule(tomorrowKey, "12:00 AM", timezone);
+      const monthStartAt = parseFollowUpSchedule(`${todayKey.slice(0, 7)}-01`, "12:00 AM", timezone);
+      const nextMonthStart = parseFollowUpSchedule(nextMonthKey, "12:00 AM", timezone);
+
+      const memberships = await tx.tenantMembership.findMany({
+        where: {
+          tenantId,
+          OR: [
+            { tenantRole: { code: { in: ["field_executive", "sales_executive", "executive"] } } },
+            { user: { role: "FIELD_EXECUTIVE" } },
+          ],
+        },
+        select: {
+          id: true,
+          status: true,
+          employeeCode: true,
+          joinedAt: true,
+          createdAt: true,
+          team: { select: { name: true } },
+          user: {
+            select: {
+              fullName: true,
+              email: true,
+              mobile: true,
+              avatarUrl: true,
+              employeeCode: true,
+              joinedAt: true,
+              status: true,
+            },
+          },
+          territoryMemberships: {
+            where: { territory: { deletedAt: null, status: "ACTIVE" } },
+            orderBy: { assignedAt: "desc" },
+            take: 1,
+            select: {
+              territory: {
+                select: { name: true, city: true, regionArea: true, state: true },
+              },
+            },
+          },
+        },
+      });
+
+      const membershipIds = memberships.map((membership) => membership.id);
+      const [todayVisits, todayLeads, monthLeads, attendances] = membershipIds.length
+        ? await Promise.all([
+            tx.leadVisit.findMany({
+              where: {
+                tenantId,
+                executiveMembershipId: { in: membershipIds },
+                checkInTime: { gte: todayStart, lt: tomorrowStart },
+                status: { not: "CANCELLED" },
+              },
+              select: { executiveMembershipId: true, status: true },
+            }),
+            tx.lead.findMany({
+              where: {
+                tenantId,
+                assignedMembershipId: { in: membershipIds },
+                deletedAt: null,
+                createdAt: { gte: todayStart, lt: tomorrowStart },
+              },
+              select: { assignedMembershipId: true },
+            }),
+            tx.lead.findMany({
+              where: {
+                tenantId,
+                assignedMembershipId: { in: membershipIds },
+                deletedAt: null,
+                createdAt: { gte: monthStartAt, lt: nextMonthStart },
+              },
+              select: { assignedMembershipId: true },
+            }),
+            tx.attendance.findMany({
+              where: {
+                tenantId,
+                tenantMembershipId: { in: membershipIds },
+                date: { gte: todayStart, lt: tomorrowStart },
+              },
+              select: {
+                tenantMembershipId: true,
+                status: true,
+                punchInTime: true,
+                punchOutTime: true,
+              },
+            }),
+          ])
+        : [[], [], [], []];
+
+      const countByMembership = (values: Array<{ assignedMembershipId: string | null }>) => {
+        const counts = new Map<string, number>();
+        values.forEach(({ assignedMembershipId }) => {
+          if (assignedMembershipId)
+            counts.set(assignedMembershipId, (counts.get(assignedMembershipId) ?? 0) + 1);
+        });
+        return counts;
+      };
+      const visitCounts = new Map<string, number>();
+      const membersOnActiveVisit = new Set<string>();
+      todayVisits.forEach((visit) => {
+        visitCounts.set(visit.executiveMembershipId, (visitCounts.get(visit.executiveMembershipId) ?? 0) + 1);
+        if (visit.status.toUpperCase() === "IN_PROGRESS") membersOnActiveVisit.add(visit.executiveMembershipId);
+      });
+      const todayLeadCounts = countByMembership(todayLeads);
+      const monthLeadCounts = countByMembership(monthLeads);
+      const attendanceByMembership = new Map(
+        attendances.flatMap((attendance) => attendance.tenantMembershipId ? [[attendance.tenantMembershipId, attendance] as const] : []),
+      );
+
+      const allItems = memberships.map((membership) => {
+        const attendance = attendanceByMembership.get(membership.id);
+        const membershipActive = membership.status === "ACTIVE" && membership.user.status.toUpperCase() === "ACTIVE";
+        const status = !membershipActive
+          ? "Inactive"
+          : attendance?.status === "ON_LEAVE"
+            ? "On Leave"
+            : membersOnActiveVisit.has(membership.id) || Boolean(attendance?.punchInTime && !attendance.punchOutTime)
+              ? "On Field"
+              : "Active";
+        const territory = membership.territoryMemberships[0]?.territory;
+        return {
+          membershipId: membership.id,
+          employeeCode: membership.employeeCode ?? membership.user.employeeCode,
+          name: membership.user.fullName,
+          email: membership.user.email,
+          mobile: membership.user.mobile,
+          avatarUrl: membership.user.avatarUrl,
+          team: membership.team?.name ?? "Not assigned",
+          region: territory?.city ?? territory?.regionArea ?? territory?.state ?? territory?.name ?? "Not assigned",
+          status,
+          visitsToday: visitCounts.get(membership.id) ?? 0,
+          leadsToday: todayLeadCounts.get(membership.id) ?? 0,
+          joinedAt: membership.joinedAt ?? membership.user.joinedAt ?? membership.createdAt,
+        };
+      }).sort((left, right) => left.name.localeCompare(right.name));
+
+      const summary = {
+        total: allItems.length,
+        active: allItems.filter((item) => item.status === "Active").length,
+        onField: allItems.filter((item) => item.status === "On Field").length,
+        onLeave: allItems.filter((item) => item.status === "On Leave").length,
+        inactive: allItems.filter((item) => item.status === "Inactive").length,
+        newThisMonth: allItems.filter((item) => item.joinedAt >= monthStartAt && item.joinedAt < nextMonthStart).length,
+      };
+      const normalizedSearch = q.search.toLocaleLowerCase();
+      const filtered = allItems.filter((item) => {
+        const matchesSearch = !normalizedSearch || [item.name, item.email, item.employeeCode, item.mobile ?? "", item.team, item.region]
+          .some((value) => value.toLocaleLowerCase().includes(normalizedSearch));
+        return matchesSearch && (!q.region || item.region === q.region) && (!q.status || item.status === q.status);
+      });
+      const start = (q.page - 1) * q.limit;
+      const topPerformers = memberships
+        .map((membership) => ({
+          membershipId: membership.id,
+          name: membership.user.fullName,
+          avatarUrl: membership.user.avatarUrl,
+          leads: monthLeadCounts.get(membership.id) ?? 0,
+        }))
+        .filter((performer) => performer.leads > 0)
+        .sort((left, right) => right.leads - left.leads || left.name.localeCompare(right.name))
+        .slice(0, 5);
+
+      return {
+        items: filtered.slice(start, start + q.limit),
+        total: filtered.length,
+        page: q.page,
+        limit: q.limit,
+        totalPages: Math.ceil(filtered.length / q.limit),
+        summary,
+        regions: [...new Set(allItems.map((item) => item.region))].sort(),
+        topPerformers,
+      };
+    });
+  }
+
   private authorize(p: CrmPolicy, resource: dto.CrmResource, action: string) {
     p.require(`crm.${resource}.${action}`);
     p.requireScope(resource);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -9,11 +9,9 @@ import {
   UserX,
   UserPlus,
   Search,
-  Filter,
   Download,
   Eye,
   MoreVertical,
-  SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
   TrendingUp,
@@ -28,158 +26,146 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
+import { Avatar } from '../../components/ui/Avatar';
+import { api, extractErrorMessage } from '../../common/api';
+import { useDebouncedSearch } from '../../features/crm/CrmContext';
 
-const teamOverviewData = [
-  { name: 'Active', value: 128, color: '#10B981' },
-  { name: 'On Field', value: 96, color: '#3B82F6' },
-  { name: 'On Leave', value: 12, color: '#F59E0B' },
-  { name: 'Inactive', value: 16, color: '#EF4444' },
-];
+type ExecutiveStatus = 'Active' | 'On Field' | 'On Leave' | 'Inactive';
 
-const mockExecutives = [
-  {
-    id: 'FE-1001',
-    name: 'Rahul Verma',
-    team: 'Mumbai North Team',
-    region: 'Mumbai',
-    mobile: '+91 98765 43210',
-    status: 'Active',
-    visits: '8 Visits',
-    leads: '3 Leads',
-    joinDate: '12 Apr 2024',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'FE-1002',
-    name: 'Priya Mehta',
-    team: 'Mumbai West Team',
-    region: 'Mumbai',
-    mobile: '+91 98765 43211',
-    status: 'Active',
-    visits: '6 Visits',
-    leads: '2 Leads',
-    joinDate: '18 Apr 2024',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'FE-1003',
-    name: 'Sanjay Yadav',
-    team: 'Mumbai East Team',
-    region: 'Mumbai',
-    mobile: '+91 98765 43212',
-    status: 'On Field',
-    visits: '10 Visits',
-    leads: '4 Leads',
-    joinDate: '02 May 2024',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'FE-1004',
-    name: 'Kavita Singh',
-    team: 'Thane Central',
-    region: 'Thane',
-    mobile: '+91 98765 43213',
-    status: 'On Leave',
-    visits: '0 Visits',
-    leads: '0 Leads',
-    joinDate: '10 Mar 2024',
-    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'FE-1005',
-    name: 'Arun Kumar',
-    team: 'Navi Mumbai Hub',
-    region: 'Navi Mumbai',
-    mobile: '+91 98765 43214',
-    status: 'Active',
-    visits: '7 Visits',
-    leads: '2 Leads',
-    joinDate: '25 Apr 2024',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'FE-1006',
-    name: 'Imran Shaikh',
-    team: 'Mumbai South',
-    region: 'Mumbai',
-    mobile: '+91 98765 43215',
-    status: 'Inactive',
-    visits: '0 Visits',
-    leads: '0 Leads',
-    joinDate: '15 Feb 2024',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'FE-1007',
-    name: 'Neha Patil',
-    team: 'Pune Central',
-    region: 'Pune',
-    mobile: '+91 98765 43216',
-    status: 'Active',
-    visits: '9 Visits',
-    leads: '3 Leads',
-    joinDate: '05 May 2024',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'FE-1008',
-    name: 'Vikram Joshi',
-    team: 'Kalyan Region',
-    region: 'Thane',
-    mobile: '+91 98765 43217',
-    status: 'On Field',
-    visits: '11 Visits',
-    leads: '5 Leads',
-    joinDate: '22 Apr 2024',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'FE-1009',
-    name: 'Pooja Sharma',
-    team: 'Borivali Team',
-    region: 'Mumbai',
-    mobile: '+91 98765 43218',
-    status: 'Active',
-    visits: '5 Visits',
-    leads: '1 Lead',
-    joinDate: '30 Apr 2024',
-    avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&auto=format&fit=crop&q=80',
-  },
-  {
-    id: 'FE-1010',
-    name: 'Dinesh Gupta',
-    team: 'Andheri West',
-    region: 'Mumbai',
-    mobile: '+91 98765 43219',
-    status: 'On Leave',
-    visits: '0 Visits',
-    leads: '0 Leads',
-    joinDate: '11 Mar 2024',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
-  },
-];
+interface ExecutiveDirectoryItem {
+  membershipId: string;
+  employeeCode: string;
+  name: string;
+  email: string;
+  mobile: string | null;
+  avatarUrl: string | null;
+  team: string;
+  region: string;
+  status: ExecutiveStatus;
+  visitsToday: number;
+  leadsToday: number;
+  joinedAt: string;
+}
+
+interface ExecutiveDirectoryResponse {
+  items: ExecutiveDirectoryItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  summary: {
+    total: number;
+    active: number;
+    onField: number;
+    onLeave: number;
+    inactive: number;
+    newThisMonth: number;
+  };
+  regions: string[];
+  topPerformers: Array<{
+    membershipId: string;
+    name: string;
+    avatarUrl: string | null;
+    leads: number;
+  }>;
+}
+
+const emptyDirectory: ExecutiveDirectoryResponse = {
+  items: [], total: 0, page: 1, limit: 10, totalPages: 0,
+  summary: { total: 0, active: 0, onField: 0, onLeave: 0, inactive: 0, newThisMonth: 0 },
+  regions: [], topPerformers: [],
+};
+
+const percent = (value: number, total: number) => total ? `${((value / total) * 100).toFixed(2)}%` : '0%';
+const plural = (value: number, singular: string) => `${value} ${singular}${value === 1 ? '' : 's'}`;
+const formatDate = (value: string) => new Intl.DateTimeFormat('en-IN', {
+  day: '2-digit', month: 'short', year: 'numeric',
+}).format(new Date(value));
 
 export default function AllExecutivesPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebouncedSearch(searchTerm.trim());
   const [regionFilter, setRegionFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [directory, setDirectory] = useState(emptyDirectory);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredExecutives = mockExecutives.filter((exec) => {
-    const matchesSearch =
-      exec.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exec.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exec.mobile.includes(searchTerm);
-    const matchesRegion = regionFilter === 'All' || exec.region === regionFilter;
-    const matchesStatus = statusFilter === 'All' || exec.status === statusFilter;
-    return matchesSearch && matchesRegion && matchesStatus;
-  });
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    api.get<ExecutiveDirectoryResponse>('/tenant/crm/executives', {
+      signal: controller.signal,
+      params: {
+        page,
+        limit: 10,
+        search: debouncedSearch || undefined,
+        region: regionFilter === 'All' ? undefined : regionFilter,
+        status: statusFilter === 'All' ? undefined : statusFilter,
+      },
+    }).then(({ data }) => {
+      setDirectory(data);
+      setSelectedIds([]);
+    }).catch((requestError: unknown) => {
+      if (!controller.signal.aborted) setError(extractErrorMessage(requestError, 'Unable to load field executives.'));
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false);
+    });
+    return () => controller.abort();
+  }, [debouncedSearch, page, regionFilter, statusFilter]);
+
+  const teamOverviewData = [
+    { name: 'Active', value: directory.summary.active, color: '#10B981' },
+    { name: 'On Field', value: directory.summary.onField, color: '#3B82F6' },
+    { name: 'On Leave', value: directory.summary.onLeave, color: '#F59E0B' },
+    { name: 'Inactive', value: directory.summary.inactive, color: '#EF4444' },
+  ];
+  const filteredExecutives = directory.items;
+
+  const exportExecutives = async () => {
+    try {
+      const params = {
+        limit: 500,
+        search: debouncedSearch || undefined,
+        region: regionFilter === 'All' ? undefined : regionFilter,
+        status: statusFilter === 'All' ? undefined : statusFilter,
+      };
+      const firstPage = await api.get<ExecutiveDirectoryResponse>('/tenant/crm/executives', { params: { ...params, page: 1 } });
+      const remainingPages = await Promise.all(
+        Array.from({ length: Math.max(0, firstPage.data.totalPages - 1) }, (_, index) =>
+          api.get<ExecutiveDirectoryResponse>('/tenant/crm/executives', { params: { ...params, page: index + 2 } })),
+      );
+      const exportItems = [firstPage.data, ...remainingPages.map(({ data }) => data)].flatMap(({ items }) => items);
+      if (!exportItems.length) {
+        toast.info('No executive records to export.');
+        return;
+      }
+      const escape = (value: string | number | null) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+      const rows = [
+        ['Executive', 'ID', 'Email', 'Team', 'Region', 'Mobile', 'Status', "Today's visits", "Today's leads", 'Join date'],
+        ...exportItems.map((item) => [item.name, item.employeeCode, item.email, item.team, item.region, item.mobile, item.status, item.visitsToday, item.leadsToday, formatDate(item.joinedAt)]),
+      ];
+      const blob = new Blob([rows.map((row) => row.map(escape).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `field-executives-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      toast.success('Executive data exported.');
+    } catch (requestError) {
+      toast.error(extractErrorMessage(requestError, 'Unable to export executive data.'));
+    }
+  };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
-      setSelectedIds(filteredExecutives.map((x) => x.id));
+      setSelectedIds(filteredExecutives.map((x) => x.membershipId));
     } else {
       setSelectedIds([]);
     }
@@ -190,6 +176,10 @@ export default function AllExecutivesPage() {
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
+  const firstResult = directory.total === 0 ? 0 : (directory.page - 1) * directory.limit + 1;
+  const lastResult = Math.min(directory.page * directory.limit, directory.total);
+  const pageNumbers = Array.from({ length: directory.totalPages }, (_, index) => index + 1)
+    .filter((number) => Math.abs(number - directory.page) <= 1);
 
   return (
     <div className="space-y-3 font-sans">
@@ -206,7 +196,7 @@ export default function AllExecutivesPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.success('Exporting Executives Data...')}
+            onClick={exportExecutives}
             className="flex items-center gap-2 border-slate-200 text-slate-700 hover:bg-slate-100 font-bold"
           >
             <Download className="h-4 w-4 text-[#0D1F3D]" /> Export Data
@@ -226,7 +216,7 @@ export default function AllExecutivesPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-6 sm:grid-cols-3">
         <KpiCard
           title="Total Executives"
-          value="156"
+          value={String(directory.summary.total)}
           subValue="Active Roster"
           timeframe=""
           icon={Users}
@@ -235,8 +225,8 @@ export default function AllExecutivesPage() {
         />
         <KpiCard
           title="Active Executives"
-          value="128"
-          subValue="82.05% Active"
+          value={String(directory.summary.active)}
+          subValue={`${percent(directory.summary.active, directory.summary.total)} Active`}
           timeframe=""
           icon={UserCheck}
           iconBgColor="bg-emerald-500/10"
@@ -244,8 +234,8 @@ export default function AllExecutivesPage() {
         />
         <KpiCard
           title="On Field"
-          value="96"
-          subValue="61.54% On Field"
+          value={String(directory.summary.onField)}
+          subValue={`${percent(directory.summary.onField, directory.summary.total)} On Field`}
           timeframe=""
           icon={MapPin}
           iconBgColor="bg-blue-500/10"
@@ -253,8 +243,8 @@ export default function AllExecutivesPage() {
         />
         <KpiCard
           title="On Leave"
-          value="12"
-          subValue="7.69% On Leave"
+          value={String(directory.summary.onLeave)}
+          subValue={`${percent(directory.summary.onLeave, directory.summary.total)} On Leave`}
           timeframe=""
           icon={Calendar}
           iconBgColor="bg-amber-500/10"
@@ -262,8 +252,8 @@ export default function AllExecutivesPage() {
         />
         <KpiCard
           title="Inactive"
-          value="16"
-          subValue="10.26% Inactive"
+          value={String(directory.summary.inactive)}
+          subValue={`${percent(directory.summary.inactive, directory.summary.total)} Inactive`}
           timeframe=""
           icon={UserX}
           iconBgColor="bg-red-500/10"
@@ -271,8 +261,8 @@ export default function AllExecutivesPage() {
         />
         <KpiCard
           title="New This Month"
-          value="8"
-          subValue="5.13% New Joins"
+          value={String(directory.summary.newThisMonth)}
+          subValue={`${percent(directory.summary.newThisMonth, directory.summary.total)} New Joins`}
           timeframe=""
           icon={UserPlus}
           iconBgColor="bg-purple-500/10"
@@ -291,7 +281,7 @@ export default function AllExecutivesPage() {
               type="text"
               placeholder="Search executives by name, email, phone..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               className="w-full rounded-sm border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
             />
           </div>
@@ -300,13 +290,10 @@ export default function AllExecutivesPage() {
           <div className="min-w-[150px]">
             <Select
               value={regionFilter}
-              onChange={(e) => setRegionFilter(e.target.value)}
+              onChange={(e) => { setRegionFilter(e.target.value); setPage(1); }}
               options={[
                 { label: 'All Regions', value: 'All' },
-                { label: 'Mumbai', value: 'Mumbai' },
-                { label: 'Thane', value: 'Thane' },
-                { label: 'Navi Mumbai', value: 'Navi Mumbai' },
-                { label: 'Pune', value: 'Pune' },
+                ...directory.regions.map((region) => ({ label: region, value: region })),
               ]}
             />
           </div>
@@ -315,7 +302,7 @@ export default function AllExecutivesPage() {
           <div className="min-w-[150px]">
             <Select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
               options={[
                 { label: 'All Statuses', value: 'All' },
                 { label: 'Active', value: 'Active' },
@@ -354,27 +341,23 @@ export default function AllExecutivesPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {filteredExecutives.map((exec) => {
-                    const isSelected = selectedIds.includes(exec.id);
+                    const isSelected = selectedIds.includes(exec.membershipId);
                     return (
-                      <tr key={exec.id} className="hover:bg-slate-50/80 transition-colors">
+                      <tr key={exec.membershipId} className="hover:bg-slate-50/80 transition-colors">
                         <td className="p-3.5 text-center">
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={() => handleSelectOne(exec.id)}
+                            onChange={() => handleSelectOne(exec.membershipId)}
                             className="rounded-sm border-slate-300 text-[#E20613] focus:ring-[#E20613]"
                           />
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-2.5">
-                            <img
-                              src={exec.avatar}
-                              alt={exec.name}
-                              className="h-8 w-8 rounded-full object-cover border border-slate-200 flex-shrink-0"
-                            />
+                            <Avatar name={exec.name} src={exec.avatarUrl} />
                             <div>
                               <NavLink
-                                to={`/admin/executives/${exec.id}`}
+                                to={`/admin/executives/${exec.membershipId}`}
                                 className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline whitespace-nowrap"
                               >
                                 {exec.name}
@@ -382,14 +365,14 @@ export default function AllExecutivesPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 font-bold text-slate-500 whitespace-nowrap">{exec.id}</td>
+                        <td className="px-4 py-3.5 font-bold text-slate-500 whitespace-nowrap">{exec.employeeCode}</td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <div>
                             <p className="font-bold text-[#0D1F3D] whitespace-nowrap">{exec.team}</p>
                             <p className="text-[10px] text-slate-400 font-medium whitespace-nowrap">{exec.region}</p>
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 font-semibold text-slate-600 whitespace-nowrap">{exec.mobile}</td>
+                        <td className="px-4 py-3.5 font-semibold text-slate-600 whitespace-nowrap">{exec.mobile ?? 'Not recorded'}</td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <span
                             className={`inline-block rounded-sm px-2.5 py-0.5 text-[10px] font-extrabold whitespace-nowrap ${
@@ -407,15 +390,15 @@ export default function AllExecutivesPage() {
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <div>
-                            <p className="font-extrabold text-[#0D1F3D] whitespace-nowrap">{exec.visits}</p>
-                            <p className="text-[10px] font-semibold text-[#E20613] whitespace-nowrap">{exec.leads}</p>
+                            <p className="font-extrabold text-[#0D1F3D] whitespace-nowrap">{plural(exec.visitsToday, 'Visit')}</p>
+                            <p className="text-[10px] font-semibold text-[#E20613] whitespace-nowrap">{plural(exec.leadsToday, 'Lead')}</p>
                           </div>
                         </td>
-                        <td className="px-4 py-3.5 text-slate-500 font-medium whitespace-nowrap">{exec.joinDate}</td>
+                        <td className="px-4 py-3.5 text-slate-500 font-medium whitespace-nowrap">{formatDate(exec.joinedAt)}</td>
                         <td className="px-4 py-3.5 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5 relative">
                             <NavLink
-                              to={`/admin/executives/${exec.id}`}
+                              to={`/admin/executives/${exec.membershipId}`}
                               title="View Executive Profile"
                               className="rounded-sm p-1.5 text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] transition duration-150"
                             >
@@ -424,29 +407,30 @@ export default function AllExecutivesPage() {
 
                             <button
                               type="button"
-                              onClick={() => setActiveMenuId(activeMenuId === exec.id ? null : exec.id)}
+                              onClick={() => setActiveMenuId(activeMenuId === exec.membershipId ? null : exec.membershipId)}
+                              aria-label={`Actions for ${exec.name}`}
                               className="rounded-sm p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                             >
                               <MoreVertical className="h-4 w-4" />
                             </button>
 
                             {/* Dropdown Quick Actions */}
-                            {activeMenuId === exec.id && (
+                            {activeMenuId === exec.membershipId && (
                               <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl space-y-0.5 text-left animate-dropdown">
                                 <NavLink
-                                  to={`/admin/executives/${exec.id}`}
+                                  to={`/admin/executives/${exec.membershipId}`}
                                   className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                                 >
                                   <Eye className="h-3.5 w-3.5 text-blue-600" /> View Profile
                                 </NavLink>
                                 <NavLink
-                                  to={`/admin/executives/${exec.id}/edit`}
+                                  to={`/admin/executives/${exec.membershipId}/edit`}
                                   className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
                                 >
                                   <Edit className="h-3.5 w-3.5 text-emerald-600" /> Edit Profile
                                 </NavLink>
                                 <NavLink
-                                  to={`/admin/executives/${exec.id}/suspend`}
+                                  to={`/admin/executives/${exec.membershipId}/suspend`}
                                   className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-[#E20613] hover:bg-red-50"
                                 >
                                   <ShieldAlert className="h-3.5 w-3.5" /> Access Control
@@ -458,6 +442,15 @@ export default function AllExecutivesPage() {
                       </tr>
                     );
                   })}
+                  {!loading && !error && filteredExecutives.length === 0 && (
+                    <tr><td colSpan={9} className="px-4 py-16 text-center text-sm font-medium text-slate-500">No field executives match these filters.</td></tr>
+                  )}
+                  {loading && (
+                    <tr><td colSpan={9} className="px-4 py-16 text-center text-sm font-medium text-slate-500">Loading field executives...</td></tr>
+                  )}
+                  {!loading && error && (
+                    <tr><td colSpan={9} className="px-4 py-16 text-center text-sm font-medium text-[#E20613]">{error}</td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -465,15 +458,34 @@ export default function AllExecutivesPage() {
 
           {/* Table Footer Pagination */}
           <div className="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-xs font-medium text-slate-500 bg-slate-50/40">
-            <span>Showing 1 to {filteredExecutives.length} of 156 results</span>
+            <span>Showing {firstResult} to {lastResult} of {directory.total} results</span>
             <div className="flex items-center gap-2">
-              <button className="rounded-sm border border-slate-200 p-1 hover:bg-slate-100 text-slate-400">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                disabled={directory.page <= 1 || loading}
+                aria-label="Previous page"
+                className="rounded-sm border border-slate-200 p-1 hover:bg-slate-100 text-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="rounded-sm bg-[#0D1F3D] px-3 py-1 font-bold text-white">1</span>
-              <span className="px-1 text-slate-400">2</span>
-              <span className="px-1 text-slate-400">3</span>
-              <button className="rounded-sm border border-slate-200 p-1 hover:bg-slate-100 text-slate-600">
+              {pageNumbers.map((number) => (
+                <button
+                  type="button"
+                  key={number}
+                  onClick={() => setPage(number)}
+                  aria-label={`Page ${number}`}
+                  aria-current={number === directory.page ? 'page' : undefined}
+                  className={number === directory.page ? 'rounded-sm bg-[#0D1F3D] px-3 py-1 font-bold text-white' : 'px-1 text-slate-400'}
+                >{number}</button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.min(directory.totalPages, current + 1))}
+                disabled={directory.page >= directory.totalPages || loading}
+                aria-label="Next page"
+                className="rounded-sm border border-slate-200 p-1 hover:bg-slate-100 text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -487,7 +499,7 @@ export default function AllExecutivesPage() {
         <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Team Overview</h3>
-            <span className="text-[11px] font-bold text-[#E20613]">156 Total</span>
+            <span className="text-[11px] font-bold text-[#E20613]">{directory.summary.total} Total</span>
           </div>
 
           <div className="h-44 w-full relative flex items-center justify-center">
@@ -514,7 +526,7 @@ export default function AllExecutivesPage() {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute flex flex-col items-center justify-center text-center">
-              <span className="text-xl font-extrabold text-[#0D1F3D]">156</span>
+              <span className="text-xl font-extrabold text-[#0D1F3D]">{directory.summary.total}</span>
               <span className="text-[10px] font-bold text-slate-400">Total Team</span>
             </div>
           </div>
@@ -541,26 +553,23 @@ export default function AllExecutivesPage() {
           </div>
 
           <div className="space-y-3">
-            {[
-              { rank: 1, name: 'Sanjay Yadav', leads: '43 Leads', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80' },
-              { rank: 2, name: 'Vikram Joshi', leads: '35 Leads', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80' },
-              { rank: 3, name: 'Rahul Verma', leads: '29 Leads', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
-              { rank: 4, name: 'Neha Patil', leads: '27 Leads', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80' },
-              { rank: 5, name: 'Arun Kumar', leads: '24 Leads', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80' },
-            ].map((perf) => (
-              <div key={perf.rank} className="flex items-center justify-between rounded-sm bg-slate-50/70 p-2.5 border border-slate-100">
+            {directory.topPerformers.map((perf, index) => (
+              <NavLink to={`/admin/executives/${perf.membershipId}`} key={perf.membershipId} className="flex items-center justify-between rounded-sm bg-slate-50/70 p-2.5 border border-slate-100">
                 <div className="flex items-center gap-3">
                   <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                    perf.rank === 1 ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-700'
+                    index === 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-700'
                   }`}>
-                    #{perf.rank}
+                    #{index + 1}
                   </span>
-                  <img src={perf.avatar} alt={perf.name} className="h-8 w-8 rounded-full object-cover border border-slate-200" />
+                  <Avatar name={perf.name} src={perf.avatarUrl} />
                   <span className="text-xs font-bold text-[#0D1F3D]">{perf.name}</span>
                 </div>
-                <span className="text-xs font-extrabold text-[#E20613]">{perf.leads}</span>
-              </div>
+                <span className="text-xs font-extrabold text-[#E20613]">{plural(perf.leads, 'Lead')}</span>
+              </NavLink>
             ))}
+            {!loading && directory.topPerformers.length === 0 && (
+              <p className="rounded-sm border border-slate-100 bg-slate-50/70 p-6 text-center text-xs font-medium text-slate-500">No lead activity recorded this month.</p>
+            )}
           </div>
         </div>
 
@@ -579,7 +588,7 @@ export default function AllExecutivesPage() {
             </button>
 
             <button
-              onClick={() => toast.info('Select Excel file for bulk executive upload...')}
+              onClick={() => toast.info('Bulk executive upload is not available yet.')}
               className="flex flex-col items-center justify-center rounded-sm border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
             >
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-sm bg-blue-500/10 text-blue-600">
@@ -599,7 +608,7 @@ export default function AllExecutivesPage() {
             </button>
 
             <button
-              onClick={() => toast.success('Exporting Data...')}
+              onClick={exportExecutives}
               className="flex flex-col items-center justify-center rounded-sm border border-slate-200 bg-slate-50/60 p-3 text-center transition-all hover:bg-slate-100"
             >
               <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-sm bg-emerald-500/10 text-emerald-600">
