@@ -20,6 +20,10 @@ import { VisitController } from "./visit.controller";
 import { VisitService } from "./visit.service";
 import { TeamController } from './team.controller';
 import { TeamService } from './team.service';
+import { TargetController } from './target.controller';
+import { TargetService } from './target.service';
+import { IncentiveController } from './incentive.controller';
+import { IncentiveService } from './incentive.service';
 
 @Module({
   imports: [PersistenceModule, MasterCoreModule, JobCoreModule],
@@ -32,6 +36,8 @@ import { TeamService } from './team.service';
     FieldDashboardController,
     VisitController,
     TeamController,
+    TargetController,
+    IncentiveController,
   ],
   providers: [
     CrmRepository,
@@ -44,6 +50,8 @@ import { TeamService } from './team.service';
     FieldDashboardService,
     VisitService,
     TeamService,
+    TargetService,
+    IncentiveService,
   ],
   exports: [OpportunityService, TerritoryService],
 })

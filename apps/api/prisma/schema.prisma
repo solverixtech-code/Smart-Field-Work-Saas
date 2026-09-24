@@ -14,13 +14,13 @@ enum RuntimeConfigScope {
 }
 
 model RuntimeConfigEpoch {
-  id String @id @default(dbgenerated("gen_random_uuid()"))
-  scope RuntimeConfigScope
-  tenantId String? @unique
-  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  industryTemplateVersionId String? @unique
-  industryTemplateVersion IndustryTemplateVersion? @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Cascade)
-  version BigInt @default(1)
+  id                        String                   @id @default(dbgenerated("gen_random_uuid()"))
+  scope                     RuntimeConfigScope
+  tenantId                  String?                  @unique
+  tenant                    Tenant?                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  industryTemplateVersionId String?                  @unique
+  industryTemplateVersion   IndustryTemplateVersion? @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Cascade)
+  version                   BigInt                   @default(1)
 }
 
 // ─── Roles ──────────────────────────────────────────────────────────────────────
@@ -52,31 +52,31 @@ enum DataScope {
 // ─── Users ──────────────────────────────────────────────────────────────────────
 
 model User {
-  privateMediaCreated MediaAsset[]
+  privateMediaCreated         MediaAsset[]
   masterLegacyReconciliations MasterLegacyReconciliation[]
-  masterValuesCreated MasterValue[] @relation("MasterValueCreator")
-  masterOverridesCreated MasterValueOverride[] @relation("MasterOverrideCreator")
-  id                 String    @id @default(uuid())
-  employeeCode       String    @unique
-  fullName           String
-  email              String    @unique
-  mobile             String?
-  dateOfBirth        DateTime?
-  officeAddress      String?
-  emailVerifiedAt    DateTime?
-  passwordHash       String
-  avatarUrl          String?
-  role               Role
-  dataScope          DataScope @default(ALL)
-  teamId             String?
-  team               Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
-  managerId          String?
-  manager            User?     @relation("UserManager", fields: [managerId], references: [id], onDelete: SetNull)
-  subordinates       User[]    @relation("UserManager")
-  defaultTerritoryId String?
-  status             String    @default("ACTIVE")
-  preferredLanguage  String    @default("en")
-  twoFactorEnabled   Boolean   @default(false)
+  masterValuesCreated         MasterValue[]                @relation("MasterValueCreator")
+  masterOverridesCreated      MasterValueOverride[]        @relation("MasterOverrideCreator")
+  id                          String                       @id @default(uuid())
+  employeeCode                String                       @unique
+  fullName                    String
+  email                       String                       @unique
+  mobile                      String?
+  dateOfBirth                 DateTime?
+  officeAddress               String?
+  emailVerifiedAt             DateTime?
+  passwordHash                String
+  avatarUrl                   String?
+  role                        Role
+  dataScope                   DataScope                    @default(ALL)
+  teamId                      String?
+  team                        Team?                        @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  managerId                   String?
+  manager                     User?                        @relation("UserManager", fields: [managerId], references: [id], onDelete: SetNull)
+  subordinates                User[]                       @relation("UserManager")
+  defaultTerritoryId          String?
+  status                      String                       @default("ACTIVE")
+  preferredLanguage           String                       @default("en")
+  twoFactorEnabled            Boolean                      @default(false)
 
   lastLoginAt            DateTime?
   lastPasswordChangeAt   DateTime?
@@ -97,20 +97,20 @@ model User {
   salaryStructures SalaryStructure[]
   payslips         Payslip[]
 
-  tenantMemberships        TenantMembership[]
-  membershipInvitesCreated TenantMembership[]           @relation("MembershipInvitedBy")
-  platformRoleAssignments  PlatformUserRoleAssignment[] @relation("UserPlatformRoleAssignments")
-  platformRolesAssigned    PlatformUserRoleAssignment[] @relation("PlatformRoleAssignedBy")
-  publishedPlanVersions    PlanVersion[]                @relation("PlanVersionPublishedBy")
-  subscriptionChanges     SubscriptionChange[]         @relation("SubscriptionChangeActor")
-  provisionedTenants       TenantProvisioning[]         @relation("TenantProvisioningActor")
-  provisioningAttempts    ProvisioningAttempt[]         @relation("ProvisioningAttemptActor")
-  publishedIndustryVersions IndustryTemplateVersion[] @relation("IndustryPublishedBy")
-  industryAssignments TenantIndustryTemplateAssignment[] @relation("IndustryAssignedBy")
-  industryAssignmentChanges TenantIndustryTemplateChange[] @relation("IndustryChangeActor")
-  devicePushTokens DevicePushToken[]
-  notificationRecordsCreated NotificationRecord[] @relation("NotificationCreatedBy")
-  notificationRecipientLogs NotificationRecipientLog[]
+  tenantMemberships          TenantMembership[]
+  membershipInvitesCreated   TenantMembership[]                 @relation("MembershipInvitedBy")
+  platformRoleAssignments    PlatformUserRoleAssignment[]       @relation("UserPlatformRoleAssignments")
+  platformRolesAssigned      PlatformUserRoleAssignment[]       @relation("PlatformRoleAssignedBy")
+  publishedPlanVersions      PlanVersion[]                      @relation("PlanVersionPublishedBy")
+  subscriptionChanges        SubscriptionChange[]               @relation("SubscriptionChangeActor")
+  provisionedTenants         TenantProvisioning[]               @relation("TenantProvisioningActor")
+  provisioningAttempts       ProvisioningAttempt[]              @relation("ProvisioningAttemptActor")
+  publishedIndustryVersions  IndustryTemplateVersion[]          @relation("IndustryPublishedBy")
+  industryAssignments        TenantIndustryTemplateAssignment[] @relation("IndustryAssignedBy")
+  industryAssignmentChanges  TenantIndustryTemplateChange[]     @relation("IndustryChangeActor")
+  devicePushTokens           DevicePushToken[]
+  notificationRecordsCreated NotificationRecord[]               @relation("NotificationCreatedBy")
+  notificationRecipientLogs  NotificationRecipientLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -132,6 +132,7 @@ model Team {
   tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   members           User[]
   tenantMemberships TenantMembership[]
+  salesTargets      SalesTarget[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
@@ -256,17 +257,17 @@ model OtpChallenge {
 // ─── Audit Logs ─────────────────────────────────────────────────────────────────
 
 model AuditLog {
-  schemaVersion Int @default(1)
-  scope String @default("LEGACY")
-  eventCode String?
-  category String?
-  outcome String?
-  actorType String @default("LEGACY")
-  requestId String?
-  correlationId String?
-  originRequestId String?
-  metadata Json?
-  redactionVersion Int?
+  schemaVersion      Int               @default(1)
+  scope              String            @default("LEGACY")
+  eventCode          String?
+  category           String?
+  outcome            String?
+  actorType          String            @default("LEGACY")
+  requestId          String?
+  correlationId      String?
+  originRequestId    String?
+  metadata           Json?
+  redactionVersion   Int?
   id                 String            @id @default(uuid())
   actorUserId        String?
   actorUser          User?             @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
@@ -295,76 +296,76 @@ model AuditLog {
 }
 
 model MediaAsset {
-  id String @id @default(uuid())
-  tenantId String
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  creatorUserId String
-  creatorUser User @relation(fields: [creatorUserId], references: [id], onDelete: Restrict)
+  id                  String           @id @default(uuid())
+  tenantId            String
+  tenant              Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  creatorUserId       String
+  creatorUser         User             @relation(fields: [creatorUserId], references: [id], onDelete: Restrict)
   creatorMembershipId String
-  creatorMembership TenantMembership @relation(fields: [creatorMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
-  provider String @default("S3")
-  bucket String
-  objectKey String
-  displayName String
-  mimeType String
-  expectedBytes Int
-  checksumSha256 String
-  etag String?
-  status String @default("UPLOAD_PENDING")
-  uploadExpiresAt DateTime
-  completedAt DateTime?
-  deletedAt DateTime?
-  revision Int @default(1)
-  createdAt DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
-  updatedAt DateTime @updatedAt
+  creatorMembership   TenantMembership @relation(fields: [creatorMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  provider            String           @default("S3")
+  bucket              String
+  objectKey           String
+  displayName         String
+  mimeType            String
+  expectedBytes       Int
+  checksumSha256      String
+  etag                String?
+  status              String           @default("UPLOAD_PENDING")
+  uploadExpiresAt     DateTime
+  completedAt         DateTime?
+  deletedAt           DateTime?
+  revision            Int              @default(1)
+  createdAt           DateTime         @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
+  updatedAt           DateTime         @updatedAt
 
   @@unique([bucket, objectKey])
   @@index([tenantId, status, createdAt])
 }
 
 model BackgroundJob {
-  id String @id @default(uuid())
-  type String
-  schemaVersion Int @default(1)
-  tenantId String?
-  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  actorUserId String?
-  membershipId String?
-  originRequestId String?
-  correlationId String
-  payload Json
-  idempotencyKey String
-  payloadHash String
-  status String @default("PENDING")
-  availableAt DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
-  attemptCount Int @default(0)
-  maxAttempts Int @default(5)
-  retryUntilAttempt Int @default(5)
-  workerId String?
-  leaseToken String?
-  leaseExpiresAt DateTime?
-  lastErrorCode String?
-  completedAt DateTime?
-  deadAt DateTime?
-  revision Int @default(1)
-  createdAt DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
-  updatedAt DateTime @updatedAt
-  attempts BackgroundJobAttempt[]
+  id                String                 @id @default(uuid())
+  type              String
+  schemaVersion     Int                    @default(1)
+  tenantId          String?
+  tenant            Tenant?                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  actorUserId       String?
+  membershipId      String?
+  originRequestId   String?
+  correlationId     String
+  payload           Json
+  idempotencyKey    String
+  payloadHash       String
+  status            String                 @default("PENDING")
+  availableAt       DateTime               @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
+  attemptCount      Int                    @default(0)
+  maxAttempts       Int                    @default(5)
+  retryUntilAttempt Int                    @default(5)
+  workerId          String?
+  leaseToken        String?
+  leaseExpiresAt    DateTime?
+  lastErrorCode     String?
+  completedAt       DateTime?
+  deadAt            DateTime?
+  revision          Int                    @default(1)
+  createdAt         DateTime               @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
+  updatedAt         DateTime               @updatedAt
+  attempts          BackgroundJobAttempt[]
 
   @@index([status, availableAt, id])
   @@index([tenantId, createdAt, id])
 }
 
 model BackgroundJobAttempt {
-  id String @id @default(uuid())
-  jobId String
-  job BackgroundJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
-  number Int
-  leaseToken String @unique
-  workerId String
-  status String @default("RUNNING")
-  errorCode String?
-  startedAt DateTime @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
+  id         String        @id @default(uuid())
+  jobId      String
+  job        BackgroundJob @relation(fields: [jobId], references: [id], onDelete: Restrict)
+  number     Int
+  leaseToken String        @unique
+  workerId   String
+  status     String        @default("RUNNING")
+  errorCode  String?
+  startedAt  DateTime      @default(dbgenerated("(CURRENT_TIMESTAMP AT TIME ZONE 'UTC')"))
   finishedAt DateTime?
 
   @@unique([jobId, number])
@@ -586,91 +587,100 @@ enum MasterSource {
   INDUSTRY
   TENANT
 }
+
 enum MasterOverrideScope {
   INDUSTRY
   TENANT
 }
+
 enum MasterSystemValuePolicy {
   OVERRIDABLE_LABEL
   LOCKED_IDENTITY
 }
+
 enum MasterDefinitionStatus {
   ACTIVE
   INACTIVE
 }
+
 model MasterDefinition {
-  id String @id @default(uuid())
-  code String @unique
-  name String
-  description String
-  moduleCode String?
-  module PlatformModule? @relation(fields: [moduleCode], references: [code], onDelete: Restrict, onUpdate: Restrict)
-  valueType String @default("LABEL")
-  metadataSchema String @default("NONE")
-  allowTenantCreate Boolean
-  allowTenantEdit Boolean
+  id                    String                  @id @default(uuid())
+  code                  String                  @unique
+  name                  String
+  description           String
+  moduleCode            String?
+  module                PlatformModule?         @relation(fields: [moduleCode], references: [code], onDelete: Restrict, onUpdate: Restrict)
+  valueType             String                  @default("LABEL")
+  metadataSchema        String                  @default("NONE")
+  allowTenantCreate     Boolean
+  allowTenantEdit       Boolean
   allowTenantDeactivate Boolean
   allowIndustryDefaults Boolean
-  systemValuePolicy MasterSystemValuePolicy
-  displayOrder Int
-  status MasterDefinitionStatus @default(ACTIVE)
-  revision Int @default(1)
-  values MasterValue[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  systemValuePolicy     MasterSystemValuePolicy
+  displayOrder          Int
+  status                MasterDefinitionStatus  @default(ACTIVE)
+  revision              Int                     @default(1)
+  values                MasterValue[]
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
   @@index([moduleCode])
 }
+
 model MasterValue {
-  leadSources Lead[] @relation("LeadSource")
-  crmBusinessTypes Account[] @relation("AccountBusinessType")
-  crmSources Account[] @relation("AccountSource")
-  crmContactRoles Contact[] @relation("ContactRole")
-  opportunityStages Opportunity[] @relation("OpportunityStage")
-  opportunitySources Opportunity[] @relation("OpportunitySource")
-  legacyReconciliation MasterLegacyReconciliation?
-  id String @id @default(uuid())
-  definitionId String
-  definition MasterDefinition @relation(fields: [definitionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  source MasterSource
-  tenantId String?
-  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  leadSources               Lead[]                      @relation("LeadSource")
+  crmBusinessTypes          Account[]                   @relation("AccountBusinessType")
+  crmSources                Account[]                   @relation("AccountSource")
+  crmContactRoles           Contact[]                   @relation("ContactRole")
+  opportunityStages         Opportunity[]               @relation("OpportunityStage")
+  opportunitySources        Opportunity[]               @relation("OpportunitySource")
+  legacyReconciliation      MasterLegacyReconciliation?
+  id                        String                      @id @default(uuid())
+  definitionId              String
+  definition                MasterDefinition            @relation(fields: [definitionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  source                    MasterSource
+  tenantId                  String?
+  tenant                    Tenant?                     @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   industryTemplateVersionId String?
-  industryTemplateVersion IndustryTemplateVersion? @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  code String
-  name String
-  description String?
-  displayColor String?
-  sortOrder Int
-  isActive Boolean @default(true)
-  revision Int @default(1)
-  createdByUserId String?
-  createdBy User? @relation("MasterValueCreator", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  overrides MasterValueOverride[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  industryTemplateVersion   IndustryTemplateVersion?    @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  code                      String
+  name                      String
+  description               String?
+  displayColor              String?
+  sortOrder                 Int
+  isActive                  Boolean                     @default(true)
+  revision                  Int                         @default(1)
+  createdByUserId           String?
+  createdBy                 User?                       @relation("MasterValueCreator", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  overrides                 MasterValueOverride[]
+  createdAt                 DateTime                    @default(now())
+  updatedAt                 DateTime                    @updatedAt
+
   // Partial source-specific uniqueness and scope checks are in M8 SQL.
   @@index([definitionId, source])
   @@index([tenantId, definitionId])
   @@index([industryTemplateVersionId, definitionId])
 }
+
 model MasterValueOverride {
-  id String @id @default(uuid())
-  inheritedMasterValueId String
-  inheritedMasterValue MasterValue @relation(fields: [inheritedMasterValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  scope MasterOverrideScope
-  tenantId String?
-  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  id                        String                   @id @default(uuid())
+  inheritedMasterValueId    String
+  inheritedMasterValue      MasterValue              @relation(fields: [inheritedMasterValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  scope                     MasterOverrideScope
+  tenantId                  String?
+  tenant                    Tenant?                  @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
   industryTemplateVersionId String?
-  industryTemplateVersion IndustryTemplateVersion? @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  displayName String?
-  displayColor String?
-  sortOrder Int?
-  isHidden Boolean @default(false)
-  revision Int @default(1)
-  createdByUserId String?
-  createdBy User? @relation("MasterOverrideCreator", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  industryTemplateVersion   IndustryTemplateVersion? @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  displayName               String?
+  displayColor              String?
+  sortOrder                 Int?
+  isHidden                  Boolean                  @default(false)
+  revision                  Int                      @default(1)
+  createdByUserId           String?
+  createdBy                 User?                    @relation("MasterOverrideCreator", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  createdAt                 DateTime                 @default(now())
+  updatedAt                 DateTime                 @updatedAt
+
   @@index([inheritedMasterValueId])
   @@index([tenantId])
   @@index([industryTemplateVersionId])
@@ -678,29 +688,29 @@ model MasterValueOverride {
 
 // Explicit reviewed legacy ownership; original rows remain retained and unchanged.
 model MasterLegacyReconciliation {
-  legacyRecordId String @id
-  legacyRecord MasterRecord @relation(fields: [legacyRecordId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  masterValueId String @unique
-  masterValue MasterValue @relation(fields: [masterValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  mappingHash String
-  actorUserId String
-  actor User @relation(fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  createdAt DateTime @default(now())
+  legacyRecordId String       @id
+  legacyRecord   MasterRecord @relation(fields: [legacyRecordId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  masterValueId  String       @unique
+  masterValue    MasterValue  @relation(fields: [masterValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  mappingHash    String
+  actorUserId    String
+  actor          User         @relation(fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  createdAt      DateTime     @default(now())
 }
 
 model MasterRecord {
-  reconciliation MasterLegacyReconciliation?
-  id              String   @id @default(uuid())
+  reconciliation  MasterLegacyReconciliation?
+  id              String                      @id @default(uuid())
   category        String // designation, team, incentive_type, allowance_type, deduction_type, shift, territory, expense_category, lead_stage, lead_source
   name            String
   code            String
   description     String?
   displayColor    String? // hex code or tailwind color class
-  sortOrder       Int      @default(0)
-  isActive        Boolean  @default(true)
-  isSystemDefault Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  sortOrder       Int                         @default(0)
+  isActive        Boolean                     @default(true)
+  isSystemDefault Boolean                     @default(false)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
 
   @@unique([category, code])
   @@index([category])
@@ -733,12 +743,12 @@ enum ModuleFeatureStatus {
 
 model PlatformModule {
   masterDefinitions MasterDefinition[]
-  id          String                 @id @default(uuid())
-  code        String                 @unique
-  name        String
-  description String
-  category    PlatformModuleCategory @default(CORE)
-  status      PlatformModuleStatus   @default(ACTIVE)
+  id                String                 @id @default(uuid())
+  code              String                 @unique
+  name              String
+  description       String
+  category          PlatformModuleCategory @default(CORE)
+  status            PlatformModuleStatus   @default(ACTIVE)
 
   requiredBySystem Boolean @default(false)
   displayOrder     Int     @default(0)
@@ -746,9 +756,9 @@ model PlatformModule {
 
   features ModuleFeature[]
 
-  dependencies ModuleDependency[] @relation("ModuleDependencies")
-  dependents   ModuleDependency[] @relation("ModuleDependents")
-  planModules  PlanModule[]
+  dependencies            ModuleDependency[]                     @relation("ModuleDependencies")
+  dependents              ModuleDependency[]                     @relation("ModuleDependents")
+  planModules             PlanModule[]
   industryRecommendations IndustryTemplateModuleRecommendation[]
 
   createdAt DateTime @default(now())
@@ -827,63 +837,67 @@ enum PlatformAssignmentStatus {
 }
 
 model Tenant {
-  devicePushTokens DevicePushToken[]
-  notificationRecords NotificationRecord[]
-  notificationTemplates NotificationTemplate[]
-  crmLeads Lead[]
-  leadHistories LeadHistory[]
-  leadConversions LeadConversionCommand[]
-  leadVisits LeadVisit[]
-  leadFollowUps LeadFollowUp[]
-  leadDemos LeadDemo[]
-  leadCommunications LeadCommunication[]
-  crmAccounts Account[]
-  crmContacts Contact[]
-  crmOpportunities Opportunity[]
-  privateMedia MediaAsset[]
-  backgroundJobs BackgroundJob[]
-  runtimeConfigEpoch RuntimeConfigEpoch?
-  masterValues MasterValue[]
-  masterOverrides MasterValueOverride[]
-  industryCode    String?
-  industry        IndustryClassification? @relation(fields: [industryCode], references: [code], onDelete: Restrict)
-  subscription    TenantSubscription?
-  provisioning    TenantProvisioning?
+  devicePushTokens           DevicePushToken[]
+  notificationRecords        NotificationRecord[]
+  notificationTemplates      NotificationTemplate[]
+  crmLeads                   Lead[]
+  leadHistories              LeadHistory[]
+  leadConversions            LeadConversionCommand[]
+  leadVisits                 LeadVisit[]
+  leadFollowUps              LeadFollowUp[]
+  leadDemos                  LeadDemo[]
+  leadCommunications         LeadCommunication[]
+  crmAccounts                Account[]
+  crmContacts                Contact[]
+  crmOpportunities           Opportunity[]
+  privateMedia               MediaAsset[]
+  backgroundJobs             BackgroundJob[]
+  runtimeConfigEpoch         RuntimeConfigEpoch?
+  masterValues               MasterValue[]
+  masterOverrides            MasterValueOverride[]
+  industryCode               String?
+  industry                   IndustryClassification?           @relation(fields: [industryCode], references: [code], onDelete: Restrict)
+  subscription               TenantSubscription?
+  provisioning               TenantProvisioning?
   industryTemplateAssignment TenantIndustryTemplateAssignment?
-  industryTemplateChanges TenantIndustryTemplateChange[]
-  id              String                  @id @default(uuid())
-  slug            String                  @unique
-  displayName     String
-  legalName       String?
-  primaryDomain   String?                 @unique
-  websiteUrl      String?
-  status          TenantStatus            @default(DRAFT)
-  companySizeCode String?
-  description     String?
+  industryTemplateChanges    TenantIndustryTemplateChange[]
+  id                         String                            @id @default(uuid())
+  slug                       String                            @unique
+  displayName                String
+  legalName                  String?
+  primaryDomain              String?                           @unique
+  websiteUrl                 String?
+  status                     TenantStatus                      @default(DRAFT)
+  companySizeCode            String?
+  description                String?
 
   activatedAt DateTime?
   suspendedAt DateTime?
   cancelledAt DateTime?
   archivedAt  DateTime?
 
-  addresses        TenantAddress[]
-  settings         TenantSettings?
-  branding         TenantBranding?
-  memberships      TenantMembership[]
-  roles            TenantRole[]
-  teams            Team[]
-  shifts           Shift[]
-  userShifts       UserShift[]
-  attendances      Attendance[]
-  punchLogs        PunchLog[]
-  salaryStructures SalaryStructure[]
-  payrollPeriods   PayrollPeriod[]
-  payslips         Payslip[]
-  auditLogs        AuditLog[]
-  territories      Territory[]
-  territoryMembers TerritoryMember[]
+  addresses               TenantAddress[]
+  settings                TenantSettings?
+  branding                TenantBranding?
+  memberships             TenantMembership[]
+  roles                   TenantRole[]
+  teams                   Team[]
+  shifts                  Shift[]
+  userShifts              UserShift[]
+  attendances             Attendance[]
+  punchLogs               PunchLog[]
+  salaryStructures        SalaryStructure[]
+  payrollPeriods          PayrollPeriod[]
+  payslips                Payslip[]
+  auditLogs               AuditLog[]
+  territories             Territory[]
+  territoryMembers        TerritoryMember[]
   territoryBoundaryPoints TerritoryBoundaryPoint[]
-  territoryTargets TerritoryTarget[]
+  territoryTargets        TerritoryTarget[]
+  salesTargets            SalesTarget[]
+  incentiveRules          IncentiveRule[]
+  incentiveCalculations   IncentiveCalculation[]
+  incentivePayouts        IncentivePayout[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -943,44 +957,51 @@ model TenantBranding {
 }
 
 model TenantMembership {
-  lead0 Lead[] @relation("LeadOwner")
-  lead1 Lead[] @relation("LeadAssignee")
-  lead2 Lead[] @relation("LeadCreator")
-  lead3 Lead[] @relation("LeadUpdater")
-  lead4 Lead[] @relation("LeadConverter")
-  leadHistoryEvents LeadHistory[]
-  leadConversionCommands LeadConversionCommand[]
-  executiveVisits LeadVisit[] @relation("VisitExecutive")
-  createdVisits LeadVisit[] @relation("VisitCreator")
-  assignedFollowUps LeadFollowUp[]
-  completedFollowUps LeadFollowUp[] @relation("FollowUpCompleter")
-  conductedDemos LeadDemo[]
-  loggedCommunications LeadCommunication[]
-  ownedAccounts Account[] @relation("AccountOwner")
-  createdAccounts Account[] @relation("AccountCreator")
-  updatedAccounts Account[] @relation("AccountUpdater")
-  ownedContacts Contact[] @relation("ContactOwner")
-  createdContacts Contact[] @relation("ContactCreator")
-  updatedContacts Contact[] @relation("ContactUpdater")
-  ownedOpportunities Opportunity[] @relation("OpportunityOwner")
-  assignedOpportunities Opportunity[] @relation("OpportunityAssignee")
-  privateMedia MediaAsset[]
-  provisioningOwnership TenantProvisioning[]
-  devicePushTokens DevicePushToken[]
-  managedTerritories Territory[] @relation("TerritoryManager")
-  createdTerritories Territory[] @relation("TerritoryCreator")
-  updatedTerritories Territory[] @relation("TerritoryUpdater")
-  territoryMemberships TerritoryMember[] @relation("TerritoryMemberMembership")
-  assignedTerritoryMemberships TerritoryMember[] @relation("TerritoryMemberAssigner")
-  id                    String                 @id @default(uuid())
-  tenantId              String
-  tenant                Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId                String
-  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenantRoleId          String?
-  tenantRole            TenantRole?            @relation(fields: [tenantRoleId], references: [id], onDelete: SetNull)
-  status                TenantMembershipStatus @default(ACTIVE)
-  isPrimary             Boolean                @default(false)
+  lead0                         Lead[]                  @relation("LeadOwner")
+  lead1                         Lead[]                  @relation("LeadAssignee")
+  lead2                         Lead[]                  @relation("LeadCreator")
+  lead3                         Lead[]                  @relation("LeadUpdater")
+  lead4                         Lead[]                  @relation("LeadConverter")
+  leadHistoryEvents             LeadHistory[]
+  leadConversionCommands        LeadConversionCommand[]
+  executiveVisits               LeadVisit[]             @relation("VisitExecutive")
+  createdVisits                 LeadVisit[]             @relation("VisitCreator")
+  assignedFollowUps             LeadFollowUp[]
+  completedFollowUps            LeadFollowUp[]          @relation("FollowUpCompleter")
+  conductedDemos                LeadDemo[]
+  loggedCommunications          LeadCommunication[]
+  ownedAccounts                 Account[]               @relation("AccountOwner")
+  createdAccounts               Account[]               @relation("AccountCreator")
+  updatedAccounts               Account[]               @relation("AccountUpdater")
+  ownedContacts                 Contact[]               @relation("ContactOwner")
+  createdContacts               Contact[]               @relation("ContactCreator")
+  updatedContacts               Contact[]               @relation("ContactUpdater")
+  ownedOpportunities            Opportunity[]           @relation("OpportunityOwner")
+  assignedOpportunities         Opportunity[]           @relation("OpportunityAssignee")
+  privateMedia                  MediaAsset[]
+  provisioningOwnership         TenantProvisioning[]
+  devicePushTokens              DevicePushToken[]
+  managedTerritories            Territory[]             @relation("TerritoryManager")
+  createdTerritories            Territory[]             @relation("TerritoryCreator")
+  updatedTerritories            Territory[]             @relation("TerritoryUpdater")
+  territoryMemberships          TerritoryMember[]       @relation("TerritoryMemberMembership")
+  assignedTerritoryMemberships  TerritoryMember[]       @relation("TerritoryMemberAssigner")
+  assignedSalesTargets          SalesTarget[]           @relation("SalesTargetAssignee")
+  createdSalesTargets           SalesTarget[]           @relation("SalesTargetCreator")
+  incentiveRulesCreated         IncentiveRule[]         @relation("IncentiveRuleCreator")
+  incentiveCalculations         IncentiveCalculation[]  @relation("IncentiveCalculationExecutive")
+  incentiveCalculationsApproved IncentiveCalculation[]  @relation("IncentiveCalculationApprover")
+  incentivePayouts              IncentivePayout[]       @relation("IncentivePayoutExecutive")
+  incentivePayoutsUpdated       IncentivePayout[]       @relation("IncentivePayoutUpdater")
+  id                            String                  @id @default(uuid())
+  tenantId                      String
+  tenant                        Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  userId                        String
+  user                          User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantRoleId                  String?
+  tenantRole                    TenantRole?             @relation(fields: [tenantRoleId], references: [id], onDelete: SetNull)
+  status                        TenantMembershipStatus  @default(ACTIVE)
+  isPrimary                     Boolean                 @default(false)
 
   employeeCode String?
   designation  String?
@@ -1314,90 +1335,94 @@ enum IndustryTemplateVersionStatus {
 }
 
 model IndustryTemplate {
-  id String @id @default(uuid())
-  code String @unique
-  classification IndustryClassification @relation(fields: [code], references: [code], onDelete: Restrict)
-  name String
-  category String
-  description String
-  status IndustryTemplateStatus @default(DRAFT)
-  revision Int @default(1)
-  currentPublishedVersionId String? @unique
-  currentPublishedVersion IndustryTemplateVersion? @relation("CurrentIndustryVersion", fields: [currentPublishedVersionId], references: [id], onDelete: Restrict)
-  versions IndustryTemplateVersion[] @relation("IndustryVersions")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  archivedAt DateTime?
+  id                        String                    @id @default(uuid())
+  code                      String                    @unique
+  classification            IndustryClassification    @relation(fields: [code], references: [code], onDelete: Restrict)
+  name                      String
+  category                  String
+  description               String
+  status                    IndustryTemplateStatus    @default(DRAFT)
+  revision                  Int                       @default(1)
+  currentPublishedVersionId String?                   @unique
+  currentPublishedVersion   IndustryTemplateVersion?  @relation("CurrentIndustryVersion", fields: [currentPublishedVersionId], references: [id], onDelete: Restrict)
+  versions                  IndustryTemplateVersion[] @relation("IndustryVersions")
+  createdAt                 DateTime                  @default(now())
+  updatedAt                 DateTime                  @updatedAt
+  archivedAt                DateTime?
 }
 
 model IndustryTemplateVersion {
   runtimeConfigEpoch RuntimeConfigEpoch?
-  masterValues MasterValue[]
-  masterOverrides MasterValueOverride[]
-  id String @id @default(uuid())
+  masterValues       MasterValue[]
+  masterOverrides    MasterValueOverride[]
+  id                 String                                 @id @default(uuid())
   industryTemplateId String
-  industryTemplate IndustryTemplate @relation("IndustryVersions", fields: [industryTemplateId], references: [id], onDelete: Restrict)
-  currentFor IndustryTemplate? @relation("CurrentIndustryVersion")
-  version Int
-  revision Int @default(1)
-  status IndustryTemplateVersionStatus @default(DRAFT)
-  schemaVersion Int @default(1)
-  terminology Json
-  masterDefaults Json
-  sourceFixtureId String?
-  sourceHash String?
-  approvalReference String?
-  publishedAt DateTime?
-  publishedByUserId String?
-  publishedBy User? @relation("IndustryPublishedBy", fields: [publishedByUserId], references: [id], onDelete: Restrict)
-  recommendations IndustryTemplateModuleRecommendation[]
-  assignments TenantIndustryTemplateAssignment[]
-  changesFrom TenantIndustryTemplateChange[] @relation("IndustryChangeFrom")
-  changesTo TenantIndustryTemplateChange[] @relation("IndustryChangeTo")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  industryTemplate   IndustryTemplate                       @relation("IndustryVersions", fields: [industryTemplateId], references: [id], onDelete: Restrict)
+  currentFor         IndustryTemplate?                      @relation("CurrentIndustryVersion")
+  version            Int
+  revision           Int                                    @default(1)
+  status             IndustryTemplateVersionStatus          @default(DRAFT)
+  schemaVersion      Int                                    @default(1)
+  terminology        Json
+  masterDefaults     Json
+  sourceFixtureId    String?
+  sourceHash         String?
+  approvalReference  String?
+  publishedAt        DateTime?
+  publishedByUserId  String?
+  publishedBy        User?                                  @relation("IndustryPublishedBy", fields: [publishedByUserId], references: [id], onDelete: Restrict)
+  recommendations    IndustryTemplateModuleRecommendation[]
+  assignments        TenantIndustryTemplateAssignment[]
+  changesFrom        TenantIndustryTemplateChange[]         @relation("IndustryChangeFrom")
+  changesTo          TenantIndustryTemplateChange[]         @relation("IndustryChangeTo")
+  createdAt          DateTime                               @default(now())
+  updatedAt          DateTime                               @updatedAt
+
   @@unique([industryTemplateId, version])
 }
 
 model IndustryTemplateModuleRecommendation {
-  id String @id @default(uuid())
+  id                        String                  @id @default(uuid())
   industryTemplateVersionId String
-  industryTemplateVersion IndustryTemplateVersion @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict)
-  moduleId String
-  module PlatformModule @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+  industryTemplateVersion   IndustryTemplateVersion @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict)
+  moduleId                  String
+  module                    PlatformModule          @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+
   @@unique([industryTemplateVersionId, moduleId])
   @@index([moduleId])
 }
 
 model TenantIndustryTemplateAssignment {
-  id String @id @default(uuid())
-  tenantId String @unique
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  id                        String                  @id @default(uuid())
+  tenantId                  String                  @unique
+  tenant                    Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   industryTemplateVersionId String
-  industryTemplateVersion IndustryTemplateVersion @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict)
-  revision Int @default(1)
-  assignedAt DateTime @default(now())
-  assignedByUserId String
-  assignedBy User @relation("IndustryAssignedBy", fields: [assignedByUserId], references: [id], onDelete: Restrict)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  industryTemplateVersion   IndustryTemplateVersion @relation(fields: [industryTemplateVersionId], references: [id], onDelete: Restrict)
+  revision                  Int                     @default(1)
+  assignedAt                DateTime                @default(now())
+  assignedByUserId          String
+  assignedBy                User                    @relation("IndustryAssignedBy", fields: [assignedByUserId], references: [id], onDelete: Restrict)
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
+
   @@index([industryTemplateVersionId])
 }
 
 model TenantIndustryTemplateChange {
-  id String @id @default(uuid())
-  tenantId String
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  id            String                   @id @default(uuid())
+  tenantId      String
+  tenant        Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   fromVersionId String?
-  fromVersion IndustryTemplateVersion? @relation("IndustryChangeFrom", fields: [fromVersionId], references: [id], onDelete: Restrict)
-  toVersionId String
-  toVersion IndustryTemplateVersion @relation("IndustryChangeTo", fields: [toVersionId], references: [id], onDelete: Restrict)
-  revision Int
-  reason String
-  actorUserId String
-  actor User @relation("IndustryChangeActor", fields: [actorUserId], references: [id], onDelete: Restrict)
-  requestId String?
-  createdAt DateTime @default(now())
+  fromVersion   IndustryTemplateVersion? @relation("IndustryChangeFrom", fields: [fromVersionId], references: [id], onDelete: Restrict)
+  toVersionId   String
+  toVersion     IndustryTemplateVersion  @relation("IndustryChangeTo", fields: [toVersionId], references: [id], onDelete: Restrict)
+  revision      Int
+  reason        String
+  actorUserId   String
+  actor         User                     @relation("IndustryChangeActor", fields: [actorUserId], references: [id], onDelete: Restrict)
+  requestId     String?
+  createdAt     DateTime                 @default(now())
+
   @@unique([tenantId, revision])
   @@index([fromVersionId])
   @@index([toVersionId])
@@ -1405,9 +1430,9 @@ model TenantIndustryTemplateChange {
 
 model IndustryClassification {
   template IndustryTemplate?
-  code     String   @id
+  code     String            @id
   name     String
-  isActive Boolean  @default(true)
+  isActive Boolean           @default(true)
   tenants  Tenant[]
 }
 
@@ -1434,26 +1459,26 @@ enum ProvisioningEventStatus {
 }
 
 model TenantSubscription {
-  id                 String               @id @default(uuid())
-  tenantId           String               @unique
-  tenant             Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  planVersionId      String
-  planVersion        PlanVersion          @relation(fields: [planVersionId], references: [id], onDelete: Restrict)
-  billingCycle       BillingCycle
-  seatQuantity       Int
-  status             SubscriptionStatus
-  revision           Int                  @default(1)
-  startedAt          DateTime
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  trialEndsAt        DateTime?
-  graceEndsAt        DateTime?
-  cancelledAt        DateTime?
+  id                  String               @id @default(uuid())
+  tenantId            String               @unique
+  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  planVersionId       String
+  planVersion         PlanVersion          @relation(fields: [planVersionId], references: [id], onDelete: Restrict)
+  billingCycle        BillingCycle
+  seatQuantity        Int
+  status              SubscriptionStatus
+  revision            Int                  @default(1)
+  startedAt           DateTime
+  currentPeriodStart  DateTime
+  currentPeriodEnd    DateTime
+  trialEndsAt         DateTime?
+  graceEndsAt         DateTime?
+  cancelledAt         DateTime?
   suspendedFromStatus SubscriptionStatus?
-  changes            SubscriptionChange[]
-  provisioning       TenantProvisioning?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
+  changes             SubscriptionChange[]
+  provisioning        TenantProvisioning?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   @@unique([id, tenantId])
 }
@@ -1552,44 +1577,45 @@ enum CrmRecordStatus {
 }
 
 model Account {
-  currentLeads Lead[] @relation("LeadAccount")
-  convertedLeads Lead[] @relation("LeadConvertedAccount")
+  currentLeads           Lead[]                  @relation("LeadAccount")
+  convertedLeads         Lead[]                  @relation("LeadConvertedAccount")
   leadConversionCommands LeadConversionCommand[]
-  scheduledVisits LeadVisit[] @relation("AccountVisits")
-  id String @id @default(uuid())
-  tenantId String
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  name String
-  businessTypeValueId String?
-  businessTypeValue MasterValue? @relation("AccountBusinessType", fields: [businessTypeValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  sourceValueId String?
-  sourceValue MasterValue? @relation("AccountSource", fields: [sourceValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  categoryLabel String?
-  status CrmRecordStatus @default(ACTIVE)
-  ownerMembershipId String
-  ownerMembership TenantMembership @relation("AccountOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  addressLine1 String?
-  addressLine2 String?
-  city String?
-  state String?
-  postalCode String?
-  countryCode String?
-  website String?
-  gstin String?
-  establishedYear Int?
-  description String?
-  revision Int @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-  createdByMembershipId String
-  createdByMembership TenantMembership @relation("AccountCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  updatedByMembershipId String
-  updatedByMembership TenantMembership @relation("AccountUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  contacts Contact[]
-  opportunities Opportunity[]
-  territoryId String?
-  territory Territory? @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
+  scheduledVisits        LeadVisit[]             @relation("AccountVisits")
+  id                     String                  @id @default(uuid())
+  tenantId               String
+  tenant                 Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  name                   String
+  businessTypeValueId    String?
+  businessTypeValue      MasterValue?            @relation("AccountBusinessType", fields: [businessTypeValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  sourceValueId          String?
+  sourceValue            MasterValue?            @relation("AccountSource", fields: [sourceValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  categoryLabel          String?
+  status                 CrmRecordStatus         @default(ACTIVE)
+  ownerMembershipId      String
+  ownerMembership        TenantMembership        @relation("AccountOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  addressLine1           String?
+  addressLine2           String?
+  city                   String?
+  state                  String?
+  postalCode             String?
+  countryCode            String?
+  website                String?
+  gstin                  String?
+  establishedYear        Int?
+  description            String?
+  revision               Int                     @default(1)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  deletedAt              DateTime?
+  createdByMembershipId  String
+  createdByMembership    TenantMembership        @relation("AccountCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  updatedByMembershipId  String
+  updatedByMembership    TenantMembership        @relation("AccountUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  contacts               Contact[]
+  opportunities          Opportunity[]
+  territoryId            String?
+  territory              Territory?              @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
+
   @@unique([id, tenantId])
   @@index([tenantId, deletedAt, createdAt, id])
   @@index([tenantId, ownerMembershipId, deletedAt])
@@ -1597,37 +1623,37 @@ model Account {
 }
 
 model Contact {
-  currentLeads Lead[] @relation("LeadContact")
-  convertedLeads Lead[] @relation("LeadConvertedContact")
+  currentLeads           Lead[]                  @relation("LeadContact")
+  convertedLeads         Lead[]                  @relation("LeadConvertedContact")
   leadConversionCommands LeadConversionCommand[]
-  id String @id @default(uuid())
-  tenantId String
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  accountId String?
-  account Account? @relation(fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  name String
-  phone String?
-  email String?
-  roleValueId String?
-  roleValue MasterValue? @relation("ContactRole", fields: [roleValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  status CrmRecordStatus @default(ACTIVE)
-  ownerMembershipId String?
-  ownerMembership TenantMembership? @relation("ContactOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  isPrimary Boolean @default(false)
-  revision Int @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-  createdByMembershipId String
-  createdByMembership TenantMembership @relation("ContactCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  updatedByMembershipId String
-  updatedByMembership TenantMembership @relation("ContactUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  opportunities Opportunity[]
+  id                     String                  @id @default(uuid())
+  tenantId               String
+  tenant                 Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  accountId              String?
+  account                Account?                @relation(fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  name                   String
+  phone                  String?
+  email                  String?
+  roleValueId            String?
+  roleValue              MasterValue?            @relation("ContactRole", fields: [roleValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  status                 CrmRecordStatus         @default(ACTIVE)
+  ownerMembershipId      String?
+  ownerMembership        TenantMembership?       @relation("ContactOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  isPrimary              Boolean                 @default(false)
+  revision               Int                     @default(1)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  deletedAt              DateTime?
+  createdByMembershipId  String
+  createdByMembership    TenantMembership        @relation("ContactCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  updatedByMembershipId  String
+  updatedByMembership    TenantMembership        @relation("ContactUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  opportunities          Opportunity[]
+
   @@unique([id, tenantId])
   @@index([tenantId, accountId, deletedAt, createdAt, id])
   @@index([tenantId, ownerMembershipId, deletedAt])
 }
-
 
 enum LeadLifecycle {
   OPEN
@@ -1636,77 +1662,81 @@ enum LeadLifecycle {
   DISQUALIFIED
   DUPLICATE
 }
+
 enum LeadPriority {
   LOW
   MEDIUM
   HIGH
   URGENT
 }
+
 enum LeadKind {
   BUSINESS
   INDIVIDUAL
 }
+
 model Lead {
-  id String @id @default(uuid())
-  tenantId String
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  leadCode String
-  kind LeadKind @default(BUSINESS)
-  name String
-  businessName String?
-  contactName String?
-  phone String?
-  email String?
-  website String?
-  addressLine1 String?
-  addressLine2 String?
-  city String?
-  state String?
-  postalCode String?
-  countryCode String?
-  description String?
-  estimatedValue Decimal? @db.Decimal(14, 2)
-  expectedClosingDate DateTime?
-  nextFollowUpAt DateTime?
-  nextActionNote String?
-  requirementNote String?
-  disqualificationReason String?
-  sourceValueId String?
-  sourceValue MasterValue? @relation("LeadSource", fields: [sourceValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  status LeadLifecycle @default(OPEN)
-  priority LeadPriority @default(MEDIUM)
-  ownerMembershipId String
-  ownerMembership TenantMembership @relation("LeadOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  assignedMembershipId String?
-  assignedMembership TenantMembership? @relation("LeadAssignee", fields: [assignedMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  accountId String?
-  account Account? @relation("LeadAccount", fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  contactId String?
-  contact Contact? @relation("LeadContact", fields: [contactId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  convertedAccountId String?
-  convertedAccount Account? @relation("LeadConvertedAccount", fields: [convertedAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  convertedContactId String?
-  convertedContact Contact? @relation("LeadConvertedContact", fields: [convertedContactId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  convertedAt DateTime?
+  id                      String                 @id @default(uuid())
+  tenantId                String
+  tenant                  Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  leadCode                String
+  kind                    LeadKind               @default(BUSINESS)
+  name                    String
+  businessName            String?
+  contactName             String?
+  phone                   String?
+  email                   String?
+  website                 String?
+  addressLine1            String?
+  addressLine2            String?
+  city                    String?
+  state                   String?
+  postalCode              String?
+  countryCode             String?
+  description             String?
+  estimatedValue          Decimal?               @db.Decimal(14, 2)
+  expectedClosingDate     DateTime?
+  nextFollowUpAt          DateTime?
+  nextActionNote          String?
+  requirementNote         String?
+  disqualificationReason  String?
+  sourceValueId           String?
+  sourceValue             MasterValue?           @relation("LeadSource", fields: [sourceValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  status                  LeadLifecycle          @default(OPEN)
+  priority                LeadPriority           @default(MEDIUM)
+  ownerMembershipId       String
+  ownerMembership         TenantMembership       @relation("LeadOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  assignedMembershipId    String?
+  assignedMembership      TenantMembership?      @relation("LeadAssignee", fields: [assignedMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  accountId               String?
+  account                 Account?               @relation("LeadAccount", fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  contactId               String?
+  contact                 Contact?               @relation("LeadContact", fields: [contactId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  convertedAccountId      String?
+  convertedAccount        Account?               @relation("LeadConvertedAccount", fields: [convertedAccountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  convertedContactId      String?
+  convertedContact        Contact?               @relation("LeadConvertedContact", fields: [convertedContactId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  convertedAt             DateTime?
   convertedByMembershipId String?
-  convertedByMembership TenantMembership? @relation("LeadConverter", fields: [convertedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  revision Int @default(1)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
-  createdByMembershipId String
-  createdByMembership TenantMembership @relation("LeadCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  updatedByMembershipId String
-  updatedByMembership TenantMembership @relation("LeadUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  histories LeadHistory[]
-  visits LeadVisit[]
-  followUps LeadFollowUp[]
-  demos LeadDemo[]
-  communications LeadCommunication[]
-  conversion LeadConversionCommand?
-  opportunity Opportunity?
-  territoryId String?
-  territory Territory? @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
+  convertedByMembership   TenantMembership?      @relation("LeadConverter", fields: [convertedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  revision                Int                    @default(1)
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  deletedAt               DateTime?
+  createdByMembershipId   String
+  createdByMembership     TenantMembership       @relation("LeadCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  updatedByMembershipId   String
+  updatedByMembership     TenantMembership       @relation("LeadUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  histories               LeadHistory[]
+  visits                  LeadVisit[]
+  followUps               LeadFollowUp[]
+  demos                   LeadDemo[]
+  communications          LeadCommunication[]
+  conversion              LeadConversionCommand?
+  opportunity             Opportunity?
+  territoryId             String?
+  territory               Territory?             @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
+
   @@unique([id, tenantId])
   @@unique([tenantId, leadCode])
   @@index([tenantId, deletedAt, createdAt, id])
@@ -1720,39 +1750,43 @@ model Lead {
   @@index([tenantId, convertedContactId])
   @@index([tenantId, territoryId, deletedAt])
 }
+
 model LeadHistory {
-  id String @id @default(uuid())
-  tenantId String
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  leadId String
-  lead Lead @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  eventType String
-  message String
-  note String?
+  id                String           @id @default(uuid())
+  tenantId          String
+  tenant            Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  leadId            String
+  lead              Lead             @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  eventType         String
+  message           String
+  note              String?
   actorMembershipId String
-  actorMembership TenantMembership @relation(fields: [actorMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  metadata Json?
-  createdAt DateTime @default(now())
+  actorMembership   TenantMembership @relation(fields: [actorMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  metadata          Json?
+  createdAt         DateTime         @default(now())
+
   @@index([tenantId, leadId, createdAt])
   @@index([tenantId, eventType, createdAt])
 }
+
 model LeadConversionCommand {
-  id String @id @default(uuid())
-  tenantId String
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  leadId String
-  lead Lead @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  idempotencyKey String
-  payloadHash String
-  resultRevision Int
-  accountId String?
-  account Account? @relation(fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  contactId String?
-  contact Contact? @relation(fields: [contactId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  id                String           @id @default(uuid())
+  tenantId          String
+  tenant            Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  leadId            String
+  lead              Lead             @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  idempotencyKey    String
+  payloadHash       String
+  resultRevision    Int
+  accountId         String?
+  account           Account?         @relation(fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  contactId         String?
+  contact           Contact?         @relation(fields: [contactId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
   actorMembershipId String
-  actorMembership TenantMembership @relation(fields: [actorMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  actorMembership   TenantMembership @relation(fields: [actorMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @default(now())
+
   @@unique([id, tenantId])
   @@unique([leadId, tenantId])
   @@unique([tenantId, leadId, idempotencyKey])
@@ -1760,40 +1794,40 @@ model LeadConversionCommand {
 
 // ─── Opportunity / Deal Model (Sales Pipeline) ─────────────────────────────────
 model Opportunity {
-  id                    String            @id @default(uuid())
-  tenantId              String
-  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  dealCode              String
-  title                 String
-  amount                Decimal           @default(0) @db.Decimal(14, 2)
-  stageValueId          String?
-  stageValue            MasterValue?      @relation("OpportunityStage", fields: [stageValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  stage                 String            @default("new")
-  priority              LeadPriority      @default(MEDIUM)
-  sourceValueId         String?
-  sourceValue           MasterValue?      @relation("OpportunitySource", fields: [sourceValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  
-  leadId                String?
-  lead                  Lead?             @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
-  accountId             String?
-  account               Account?          @relation(fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  contactId             String?
-  contact               Contact?          @relation(fields: [contactId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
-  
-  assignedMembershipId  String?
-  assignedMembership    TenantMembership? @relation("OpportunityAssignee", fields: [assignedMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  ownerMembershipId     String
-  ownerMembership       TenantMembership  @relation("OpportunityOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  
-  expectedClosingDate   DateTime?
-  closedAt              DateTime?
-  lostReason            String?
-  description           String?
-  
-  revision              Int               @default(1)
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
-  deletedAt             DateTime?
+  id            String       @id @default(uuid())
+  tenantId      String
+  tenant        Tenant       @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  dealCode      String
+  title         String
+  amount        Decimal      @default(0) @db.Decimal(14, 2)
+  stageValueId  String?
+  stageValue    MasterValue? @relation("OpportunityStage", fields: [stageValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  stage         String       @default("new")
+  priority      LeadPriority @default(MEDIUM)
+  sourceValueId String?
+  sourceValue   MasterValue? @relation("OpportunitySource", fields: [sourceValueId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  leadId    String?
+  lead      Lead?    @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
+  accountId String?
+  account   Account? @relation(fields: [accountId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  contactId String?
+  contact   Contact? @relation(fields: [contactId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
+
+  assignedMembershipId String?
+  assignedMembership   TenantMembership? @relation("OpportunityAssignee", fields: [assignedMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  ownerMembershipId    String
+  ownerMembership      TenantMembership  @relation("OpportunityOwner", fields: [ownerMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+
+  expectedClosingDate DateTime?
+  closedAt            DateTime?
+  lostReason          String?
+  description         String?
+
+  revision  Int       @default(1)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@unique([id, tenantId])
   @@unique([tenantId, dealCode])
@@ -1804,34 +1838,34 @@ model Opportunity {
 
 // ─── Push Notification Device Tokens ──────────────────────────────────────────
 model PlatformNotificationSettings {
-  id                        String   @id
-  pushEnabled               Boolean  @default(false)
-  whatsappEnabled           Boolean  @default(false)
-  followUpAssignedPush      Boolean  @default(false)
-  followUpDuePush           Boolean  @default(false)
-  followUpCompletedPush     Boolean  @default(false)
-  updatedById               String?
-  updatedAt                 DateTime @updatedAt
+  id                    String   @id
+  pushEnabled           Boolean  @default(false)
+  whatsappEnabled       Boolean  @default(false)
+  followUpAssignedPush  Boolean  @default(false)
+  followUpDuePush       Boolean  @default(false)
+  followUpCompletedPush Boolean  @default(false)
+  updatedById           String?
+  updatedAt             DateTime @updatedAt
 }
 
 model DevicePushToken {
-  id               String            @id @default(uuid())
-  userId           String
-  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenantId         String
-  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  membershipId     String?
-  membership       TenantMembership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
-  token            String            @unique
-  platform         String            // ANDROID, IOS, WEB
-  deviceModel      String?
-  appVersion       String?
-  isActive         Boolean           @default(true)
-  lastSeenAt       DateTime          @default(now())
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id           String            @id @default(uuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenantId     String
+  tenant       Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membershipId String?
+  membership   TenantMembership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  token        String            @unique
+  platform     String // ANDROID, IOS, WEB
+  deviceModel  String?
+  appVersion   String?
+  isActive     Boolean           @default(true)
+  lastSeenAt   DateTime          @default(now())
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
-  recipientLogs    NotificationRecipientLog[]
+  recipientLogs NotificationRecipientLog[]
 
   @@index([userId, isActive])
   @@index([tenantId, isActive])
@@ -1840,31 +1874,31 @@ model DevicePushToken {
 
 // ─── Notification Broadcast / Campaign Record ─────────────────────────────────
 model NotificationRecord {
-  id               String            @id @default(uuid())
-  sourceKey        String?           @unique
-  tenantId         String
-  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  title            String
-  description      String
-  type             String            // ANNOUNCEMENT, ALERT, REMINDER, PROMOTION, UPDATE, SYSTEM
-  channels         String[]          // PUSH, IN_APP, EMAIL, WHATSAPP, SMS
-  targetAudience   String            // ALL_USERS, FIELD_EXECUTIVES, MANAGERS, CUSTOMERS, INDIVIDUAL
-  targetFilter     Json?             // Optional segment filter
-  dataPayload      Json?             // Custom key-value pairs
-  imageUrl         String?
-  priority         String            @default("NORMAL") // NORMAL, HIGH, URGENT
-  status           String            @default("SENT")   // DRAFT, SCHEDULED, SENDING, SENT, FAILED, CANCELLED
-  scheduledAt      DateTime?
-  sentAt           DateTime?
-  totalRecipients  Int               @default(0)
-  successCount     Int               @default(0)
-  failureCount     Int               @default(0)
-  createdById      String
-  createdBy        User              @relation("NotificationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id              String    @id @default(uuid())
+  sourceKey       String?   @unique
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  title           String
+  description     String
+  type            String // ANNOUNCEMENT, ALERT, REMINDER, PROMOTION, UPDATE, SYSTEM
+  channels        String[] // PUSH, IN_APP, EMAIL, WHATSAPP, SMS
+  targetAudience  String // ALL_USERS, FIELD_EXECUTIVES, MANAGERS, CUSTOMERS, INDIVIDUAL
+  targetFilter    Json? // Optional segment filter
+  dataPayload     Json? // Custom key-value pairs
+  imageUrl        String?
+  priority        String    @default("NORMAL") // NORMAL, HIGH, URGENT
+  status          String    @default("SENT") // DRAFT, SCHEDULED, SENDING, SENT, FAILED, CANCELLED
+  scheduledAt     DateTime?
+  sentAt          DateTime?
+  totalRecipients Int       @default(0)
+  successCount    Int       @default(0)
+  failureCount    Int       @default(0)
+  createdById     String
+  createdBy       User      @relation("NotificationCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  recipients       NotificationRecipientLog[]
+  recipients NotificationRecipientLog[]
 
   @@index([tenantId, status])
   @@index([tenantId, createdAt])
@@ -1872,19 +1906,19 @@ model NotificationRecord {
 
 // ─── Individual Recipient Delivery Log ─────────────────────────────────────────
 model NotificationRecipientLog {
-  id               String              @id @default(uuid())
-  notificationId   String
-  notification     NotificationRecord  @relation(fields: [notificationId], references: [id], onDelete: Cascade)
-  userId           String
-  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deviceTokenId    String?
-  deviceToken      DevicePushToken?    @relation(fields: [deviceTokenId], references: [id], onDelete: SetNull)
-  channel          String              // PUSH, IN_APP, EMAIL, WHATSAPP, SMS
-  status           String              @default("PENDING") // PENDING, DELIVERED, READ, FAILED
-  errorMessage     String?
-  deliveredAt      DateTime?
-  readAt           DateTime?
-  createdAt        DateTime            @default(now())
+  id             String             @id @default(uuid())
+  notificationId String
+  notification   NotificationRecord @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceTokenId  String?
+  deviceToken    DevicePushToken?   @relation(fields: [deviceTokenId], references: [id], onDelete: SetNull)
+  channel        String // PUSH, IN_APP, EMAIL, WHATSAPP, SMS
+  status         String             @default("PENDING") // PENDING, DELIVERED, READ, FAILED
+  errorMessage   String?
+  deliveredAt    DateTime?
+  readAt         DateTime?
+  createdAt      DateTime           @default(now())
 
   @@index([notificationId, status])
   @@index([userId, status])
@@ -1892,18 +1926,18 @@ model NotificationRecipientLog {
 
 // ─── Notification Templates ───────────────────────────────────────────────────
 model NotificationTemplate {
-  id               String            @id @default(uuid())
-  tenantId         String
-  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  code             String            // e.g. LEAD_ASSIGNED, VISIT_REMINDER, PAYMENT_COLLECTED
-  name             String
-  category         String            // Operations, Sales, Billing, Security
-  subject          String
-  body             String
-  channels         String[]          // PUSH, IN_APP, EMAIL, WHATSAPP, SMS
-  isActive         Boolean           @default(true)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id        String   @id @default(uuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  code      String // e.g. LEAD_ASSIGNED, VISIT_REMINDER, PAYMENT_COLLECTED
+  name      String
+  category  String // Operations, Sales, Billing, Security
+  subject   String
+  body      String
+  channels  String[] // PUSH, IN_APP, EMAIL, WHATSAPP, SMS
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([tenantId, code])
   @@index([tenantId, category])
@@ -1911,47 +1945,47 @@ model NotificationTemplate {
 
 // ─── Territory Management ───────────────────────────────────────────────────
 model Territory {
-  id                    String            @id @default(uuid())
-  tenantId              String
-  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  code                  String
-  name                  String
-  regionArea            String?
-  city                  String?
-  country               String?           @default("India")
-  state                 String?           @default("Maharashtra")
-  zone                  String?
-  area                  String?
-  pincode               String?
-  microTerritory        String?
-  description           String?
-  notes                 String?
-  color                 String            @default("#2563EB")
-  status                CrmRecordStatus   @default(ACTIVE)
+  id             String          @id @default(uuid())
+  tenantId       String
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  code           String
+  name           String
+  regionArea     String?
+  city           String?
+  country        String?         @default("India")
+  state          String?         @default("Maharashtra")
+  zone           String?
+  area           String?
+  pincode        String?
+  microTerritory String?
+  description    String?
+  notes          String?
+  color          String          @default("#2563EB")
+  status         CrmRecordStatus @default(ACTIVE)
 
-  managerMembershipId   String?
-  managerMembership     TenantMembership? @relation("TerritoryManager", fields: [managerMembershipId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
+  managerMembershipId String?
+  managerMembership   TenantMembership? @relation("TerritoryManager", fields: [managerMembershipId, tenantId], references: [id, tenantId], onDelete: SetNull, onUpdate: Restrict)
 
-  areaKm2               Decimal?          @db.Decimal(10, 2)
-  perimeterKm           Decimal?          @db.Decimal(10, 2)
-  estBusinesses         Int?              @default(0)
-  estPopulation         String?
+  areaKm2       Decimal? @db.Decimal(10, 2)
+  perimeterKm   Decimal? @db.Decimal(10, 2)
+  estBusinesses Int?     @default(0)
+  estPopulation String?
 
-  revision              Int               @default(1)
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
-  deletedAt             DateTime?
+  revision  Int       @default(1)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   createdByMembershipId String
-  createdByMembership   TenantMembership  @relation("TerritoryCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  createdByMembership   TenantMembership @relation("TerritoryCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
   updatedByMembershipId String
-  updatedByMembership   TenantMembership  @relation("TerritoryUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  updatedByMembership   TenantMembership @relation("TerritoryUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
 
-  members               TerritoryMember[]
-  boundaryPoints        TerritoryBoundaryPoint[]
-  targets               TerritoryTarget[]
-  accounts              Account[]
-  leads                 Lead[]
+  members        TerritoryMember[]
+  boundaryPoints TerritoryBoundaryPoint[]
+  targets        TerritoryTarget[]
+  accounts       Account[]
+  leads          Lead[]
 
   @@unique([id, tenantId])
   @@unique([tenantId, code])
@@ -1962,17 +1996,17 @@ model Territory {
 }
 
 model TerritoryMember {
-  id                    String            @id @default(uuid())
-  tenantId              String
-  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  territoryId           String
-  territory             Territory         @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
-  membershipId          String
-  membership            TenantMembership  @relation("TerritoryMemberMembership", fields: [membershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  role                  String            @default("FIELD_EXECUTIVE")
-  assignedAt            DateTime          @default(now())
+  id                     String           @id @default(uuid())
+  tenantId               String
+  tenant                 Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  territoryId            String
+  territory              Territory        @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
+  membershipId           String
+  membership             TenantMembership @relation("TerritoryMemberMembership", fields: [membershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  role                   String           @default("FIELD_EXECUTIVE")
+  assignedAt             DateTime         @default(now())
   assignedByMembershipId String
-  assignedByMembership  TenantMembership  @relation("TerritoryMemberAssigner", fields: [assignedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  assignedByMembership   TenantMembership @relation("TerritoryMemberAssigner", fields: [assignedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
 
   @@unique([id, tenantId])
   @@unique([territoryId, membershipId])
@@ -1981,39 +2015,39 @@ model TerritoryMember {
 }
 
 model TerritoryBoundaryPoint {
-  id                    String            @id @default(uuid())
-  tenantId              String
-  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  territoryId           String
-  territory             Territory         @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
-  sequence              Int
-  latitude              Float
-  longitude             Float
+  id          String    @id @default(uuid())
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  territoryId String
+  territory   Territory @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
+  sequence    Int
+  latitude    Float
+  longitude   Float
 
   @@unique([territoryId, sequence])
   @@index([tenantId, territoryId, sequence])
 }
 
 model TerritoryTarget {
-  id                    String            @id @default(uuid())
-  tenantId              String
-  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
-  territoryId           String
-  territory             Territory         @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
-  period                String
-  monthlyTarget         Decimal           @default(0) @db.Decimal(14, 2)
-  monthlyAchieved       Decimal           @default(0) @db.Decimal(14, 2)
-  visitTarget           Int               @default(0)
-  visitAchieved         Int               @default(0)
-  newBusinessTarget     Int               @default(0)
-  newBusinessAchieved   Int               @default(0)
-  activeBusinessTarget  Int               @default(0)
-  retentionTarget       Int               @default(0)
-  collectionTarget      Decimal           @default(0) @db.Decimal(14, 2)
-  collectionAchieved    Decimal           @default(0) @db.Decimal(14, 2)
-  revision              Int               @default(1)
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  id                   String    @id @default(uuid())
+  tenantId             String
+  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  territoryId          String
+  territory            Territory @relation(fields: [territoryId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
+  period               String
+  monthlyTarget        Decimal   @default(0) @db.Decimal(14, 2)
+  monthlyAchieved      Decimal   @default(0) @db.Decimal(14, 2)
+  visitTarget          Int       @default(0)
+  visitAchieved        Int       @default(0)
+  newBusinessTarget    Int       @default(0)
+  newBusinessAchieved  Int       @default(0)
+  activeBusinessTarget Int       @default(0)
+  retentionTarget      Int       @default(0)
+  collectionTarget     Decimal   @default(0) @db.Decimal(14, 2)
+  collectionAchieved   Decimal   @default(0) @db.Decimal(14, 2)
+  revision             Int       @default(1)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@unique([territoryId, period])
   @@index([tenantId, territoryId, period])
@@ -2022,46 +2056,46 @@ model TerritoryTarget {
 // ─── Lead Sub-Resources (Visits, Follow-ups, Demos, Communications) ────────────
 
 model LeadVisit {
-  id                    String            @id @default(uuid())
+  id                    String           @id @default(uuid())
   tenantId              String
-  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant                Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   leadId                String?
-  lead                  Lead?             @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  lead                  Lead?            @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
   accountId             String?
-  account               Account?          @relation("AccountVisits", fields: [accountId, tenantId], references: [id, tenantId], onDelete: Cascade)
-  targetType            String            @default("LEAD")
+  account               Account?         @relation("AccountVisits", fields: [accountId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  targetType            String           @default("LEAD")
   targetName            String
   contactName           String?
   contactPhone          String?
   contactEmail          String?
   executiveMembershipId String
-  executiveMembership   TenantMembership  @relation("VisitExecutive", fields: [executiveMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  executiveMembership   TenantMembership @relation("VisitExecutive", fields: [executiveMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
   createdByMembershipId String
-  createdByMembership   TenantMembership  @relation("VisitCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  createdByMembership   TenantMembership @relation("VisitCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
   executiveName         String
   executiveAvatar       String?
-  checkInTime           DateTime          @default(now())
+  checkInTime           DateTime         @default(now())
   checkOutTime          DateTime?
   scheduledEndTime      DateTime?
-  durationMinutes       Int               @default(30)
+  durationMinutes       Int              @default(30)
   location              String
   latitude              Float?
   longitude             Float?
   purpose               String
-  visitType             String            @default("Sales Visit")
-  priority              String            @default("Medium")
-  recurrence            String            @default("None")
+  visitType             String           @default("Sales Visit")
+  priority              String           @default("Medium")
+  recurrence            String           @default("None")
   routeArea             String?
   travelMode            String?
-  geofenceRadiusMeters  Int               @default(100)
-  allowManualCheckIn    Boolean           @default(false)
+  geofenceRadiusMeters  Int              @default(100)
+  allowManualCheckIn    Boolean          @default(false)
   instructions          String?
   checklist             String[]
   outcome               String?
   photos                String[]
-  status                String            @default("COMPLETED") // COMPLETED, SCHEDULED, CANCELLED
-  createdAt             DateTime          @default(now())
-  updatedAt             DateTime          @updatedAt
+  status                String           @default("COMPLETED") // COMPLETED, SCHEDULED, CANCELLED
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
   @@index([tenantId, leadId, createdAt])
   @@index([tenantId, accountId, createdAt])
@@ -2069,72 +2103,171 @@ model LeadVisit {
 }
 
 model LeadFollowUp {
-  id                   String            @id @default(uuid())
-  tenantId             String
-  tenant               Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  leadId               String
-  lead                 Lead              @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
-  assignedMembershipId String
-  assignedMembership   TenantMembership  @relation(fields: [assignedMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
-  assignedToName       String
-  title                String
-  scheduledDate        String // e.g. "2026-09-25"
-  scheduledTime        String // e.g. "11:30 AM"
-  notes                String?
-  status               String            @default("Pending") // Pending, Completed, Cancelled
-  completedAt          DateTime?
-  completionNote       String?
-  completedByMembershipId String?
-  completedByMembership TenantMembership? @relation("FollowUpCompleter", fields: [completedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-
-  @@index([tenantId, leadId, status])
-  @@index([tenantId, completedByMembershipId])
-}
-
-model LeadDemo {
   id                      String            @id @default(uuid())
   tenantId                String
   tenant                  Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   leadId                  String
   lead                    Lead              @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  assignedMembershipId    String
+  assignedMembership      TenantMembership  @relation(fields: [assignedMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  assignedToName          String
+  title                   String
+  scheduledDate           String // e.g. "2026-09-25"
+  scheduledTime           String // e.g. "11:30 AM"
+  notes                   String?
+  status                  String            @default("Pending") // Pending, Completed, Cancelled
+  completedAt             DateTime?
+  completionNote          String?
+  completedByMembershipId String?
+  completedByMembership   TenantMembership? @relation("FollowUpCompleter", fields: [completedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  @@index([tenantId, leadId, status])
+  @@index([tenantId, completedByMembershipId])
+}
+
+model SalesTarget {
+  id                    String            @id @default(uuid())
+  tenantId              String
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  teamId                String?
+  team                  Team?             @relation(fields: [teamId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  membershipId          String?
+  membership            TenantMembership? @relation("SalesTargetAssignee", fields: [membershipId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
+  createdByMembershipId String
+  createdByMembership   TenantMembership  @relation("SalesTargetCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  title                 String
+  period                String
+  metric                String
+  targetValue           Decimal           @db.Decimal(14, 2)
+  thresholdPct          Decimal           @default(80) @db.Decimal(5, 2)
+  revision              Int               @default(1)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  @@unique([tenantId, teamId, period, metric])
+  @@unique([tenantId, membershipId, period, metric])
+  @@index([tenantId, period, metric])
+  @@index([teamId])
+  @@index([membershipId])
+}
+
+model IncentiveRule {
+  id                    String           @id @default(uuid())
+  tenantId              String
+  tenant                Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  createdByMembershipId String
+  createdByMembership   TenantMembership @relation("IncentiveRuleCreator", fields: [createdByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  name                  String
+  ruleType              String
+  appliesTo             String
+  metric                String
+  payoutRate            Decimal          @db.Decimal(14, 2)
+  startDate             DateTime
+  endDate               DateTime
+  status                String           @default("ACTIVE")
+  revision              Int              @default(1)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+
+  @@index([tenantId, status, startDate, endDate])
+}
+
+model IncentiveCalculation {
+  id                     String            @id @default(uuid())
+  tenantId               String
+  tenant                 Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  membershipId           String
+  membership             TenantMembership  @relation("IncentiveCalculationExecutive", fields: [membershipId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
+  period                 String
+  salesIncentive         Decimal           @default(0) @db.Decimal(14, 2)
+  demoIncentive          Decimal           @default(0) @db.Decimal(14, 2)
+  visitIncentive         Decimal           @default(0) @db.Decimal(14, 2)
+  bonusIncentive         Decimal           @default(0) @db.Decimal(14, 2)
+  totalIncentive         Decimal           @default(0) @db.Decimal(14, 2)
+  approvedAmount         Decimal           @default(0) @db.Decimal(14, 2)
+  status                 String            @default("PENDING_APPROVAL")
+  ruleSnapshot           Json
+  metricSnapshot         Json
+  approvedByMembershipId String?
+  approvedByMembership   TenantMembership? @relation("IncentiveCalculationApprover", fields: [approvedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  approvedAt             DateTime?
+  revision               Int               @default(1)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  payout                 IncentivePayout?
+
+  @@unique([tenantId, membershipId, period])
+  @@index([tenantId, period, status])
+  @@index([membershipId])
+}
+
+model IncentivePayout {
+  id                    String               @id @default(uuid())
+  tenantId              String
+  tenant                Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  calculationId         String               @unique
+  calculation           IncentiveCalculation @relation(fields: [calculationId], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  membershipId          String
+  membership            TenantMembership     @relation("IncentivePayoutExecutive", fields: [membershipId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
+  payoutCode            String
+  amount                Decimal              @db.Decimal(14, 2)
+  paymentMode           String               @default("Bank Transfer")
+  accountReference      String?
+  transactionReference  String?
+  status                String               @default("PROCESSING")
+  payoutDate            DateTime?
+  updatedByMembershipId String
+  updatedByMembership   TenantMembership     @relation("IncentivePayoutUpdater", fields: [updatedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict, onUpdate: Restrict)
+  revision              Int                  @default(1)
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  @@unique([tenantId, payoutCode])
+  @@index([tenantId, status, createdAt])
+  @@index([membershipId])
+}
+
+model LeadDemo {
+  id                      String           @id @default(uuid())
+  tenantId                String
+  tenant                  Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leadId                  String
+  lead                    Lead             @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
   conductedByMembershipId String
-  conductedByMembership   TenantMembership  @relation(fields: [conductedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  conductedByMembership   TenantMembership @relation(fields: [conductedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
   conductedByName         String
   conductedByAvatar       String?
   demoTitle               String
   demoDate                String // e.g. "2026-09-22"
-  demoMode                String            @default("Virtual Google Meet") // Virtual, In-Person
-  attendeesCount          Int               @default(3)
-  feedbackRating          Float             @default(5.0)
+  demoMode                String           @default("Virtual Google Meet") // Virtual, In-Person
+  attendeesCount          Int              @default(3)
+  feedbackRating          Float            @default(5.0)
   keyQuestions            String?
-  status                  String            @default("COMPLETED") // COMPLETED, SCHEDULED
-  createdAt               DateTime          @default(now())
-  updatedAt               DateTime          @updatedAt
+  status                  String           @default("COMPLETED") // COMPLETED, SCHEDULED
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
 
   @@index([tenantId, leadId, createdAt])
 }
 
 model LeadCommunication {
-  id                  String            @id @default(uuid())
-  tenantId            String
-  tenant              Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  leadId              String
-  lead                Lead              @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
+  id                   String           @id @default(uuid())
+  tenantId             String
+  tenant               Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leadId               String
+  lead                 Lead             @relation(fields: [leadId, tenantId], references: [id, tenantId], onDelete: Cascade)
   loggedByMembershipId String
-  loggedByMembership  TenantMembership  @relation(fields: [loggedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
-  loggedByName        String
-  loggedByAvatar      String?
-  channel             String            // Call, Email, WhatsApp
-  direction           String            @default("Outbound") // Inbound, Outbound
-  subject             String
-  details             String?
-  timestamp           DateTime          @default(now())
-  createdAt           DateTime          @default(now())
+  loggedByMembership   TenantMembership @relation(fields: [loggedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
+  loggedByName         String
+  loggedByAvatar       String?
+  channel              String // Call, Email, WhatsApp
+  direction            String           @default("Outbound") // Inbound, Outbound
+  subject              String
+  details              String?
+  timestamp            DateTime         @default(now())
+  createdAt            DateTime         @default(now())
 
   @@index([tenantId, leadId, timestamp])
 }
-
-
-

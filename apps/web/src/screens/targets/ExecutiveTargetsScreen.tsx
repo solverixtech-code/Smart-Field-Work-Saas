@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -17,25 +17,60 @@ import {
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
-import { mockExecutiveTargets, ExecutiveTargetItem } from './targetsData';
+import { Avatar } from '../../components/ui/Avatar';
+import { extractErrorMessage } from '../../common/api';
 import { SetTargetModal } from './SetTargetModal';
+import { currentPeriod, ExecutiveTargetSummary, getTargetDashboard, periodLabel, shiftPeriod, TargetDashboardResponse } from './target.api';
 
 export default function ExecutiveTargetsScreen() {
   const navigate = useNavigate();
 
-  const [selectedMonth, setSelectedMonth] = useState('May 2025');
+  const initialPeriod = currentPeriod();
+  const [selectedMonth, setSelectedMonth] = useState(initialPeriod);
   const [selectedTeam, setSelectedTeam] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSetTargetModalOpen, setIsSetTargetModalOpen] = useState(false);
+  const [editingExecutive, setEditingExecutive] = useState<ExecutiveTargetSummary | null>(null);
+  const [dashboard, setDashboard] = useState<TargetDashboardResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+  const monthOptions = Array.from({ length: 18 }, (_, index) => shiftPeriod(initialPeriod, 3 - index)).map((value) => ({ value, label: periodLabel(value) }));
+  const executives = dashboard?.executives ?? [];
+  const teams = dashboard?.options.teams ?? [];
 
-  const filteredExecs = mockExecutiveTargets.filter((e) => {
+  const filteredExecs = executives.filter((e) => {
     const matchesSearch =
       !searchQuery.trim() ||
       e.executiveName.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
       e.executiveId.toLowerCase().includes(searchQuery.toLowerCase().trim());
-    const matchesTeam = selectedTeam === 'all' || e.teamName.toLowerCase() === selectedTeam.toLowerCase();
+    const matchesTeam = selectedTeam === 'all' || e.teamId === selectedTeam;
     return matchesSearch && matchesTeam;
   });
+  const statusCount = (status: ExecutiveTargetSummary['status']) => executives.filter((executive) => executive.status === status).length;
+  const statusValue = (status: ExecutiveTargetSummary['status']) => {
+    const count = statusCount(status);
+    return `${count} (${executives.length ? ((count / executives.length) * 100).toFixed(1) : '0.0'}%)`;
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true); setError(null);
+    getTargetDashboard(selectedMonth, shiftPeriod(selectedMonth, -1), controller.signal)
+      .then(({ data }) => setDashboard(data))
+      .catch((requestError: unknown) => { if (!controller.signal.aborted) setError(extractErrorMessage(requestError, 'Unable to load executive targets.')); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [reloadToken, selectedMonth]);
+
+  const exportTargets = () => {
+    if (!filteredExecs.length) { toast.info('No executive target records to export.'); return; }
+    const escape = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
+    const rows = [['Executive', 'Employee ID', 'Team', 'Sales target', 'Sales achieved', 'Sales %', 'Demos', 'Visits', 'Incentive', 'Status'], ...filteredExecs.map((executive) => [executive.executiveName, executive.executiveId, executive.teamName, executive.salesTarget, executive.salesAchieved, executive.salesPct, `${executive.demosAchieved}/${executive.demosTarget}`, `${executive.visitsAchieved}/${executive.visitsTarget}`, executive.incentiveEarned, executive.status])];
+    const url = URL.createObjectURL(new Blob([rows.map((row) => row.map(escape).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url; link.download = `executive-targets-${selectedMonth}.csv`; link.click(); URL.revokeObjectURL(url);
+    toast.success('Executive targets exported.');
+  };
 
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">

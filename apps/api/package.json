@@ -25,6 +25,7 @@
     "db:sync:field-executive": "ts-node -r dotenv/config prisma/sync-field-dashboard-permission.ts",
     "db:sync:follow-up-management": "ts-node -r dotenv/config prisma/sync-follow-up-management-permission.ts",
     "db:sync:visit-scheduling": "ts-node -r dotenv/config prisma/sync-visit-scheduling-permission.ts",
+    "db:sync:target-management": "ts-node -r dotenv/config prisma/sync-target-management-permission.ts",
     "db:reconcile:subscriptions": "ts-node prisma/backfills/reconcile-subscriptions.ts",
     "db:reconcile:industries": "ts-node prisma/backfills/reconcile-industries.ts",
     "db:reconcile:masters": "ts-node prisma/backfills/reconcile-masters.ts"
