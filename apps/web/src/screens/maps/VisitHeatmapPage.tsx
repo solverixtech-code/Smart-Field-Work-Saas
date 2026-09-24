@@ -19,12 +19,27 @@ import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { MapKpiCard } from '../../components/maps/MapKpiCard';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockVisitHeatmapPoints } from './mapsData';
+import { useMapSnapshot } from './useMapSnapshot';
 
 export default function VisitHeatmapPage() {
   const navigate = useNavigate();
+  const { data, range } = useMapSnapshot(30);
   const [selectedTerritory, setSelectedTerritory] = useState('All');
-  const [dateRange, setDateRange] = useState('May 24 – Jun 7, 2025');
+  const [showAllAreas, setShowAllAreas] = useState(false);
+  const heatmapPoints = (data?.visitHeatmap ?? []).filter((point) => selectedTerritory === 'All' || point.areaName.toLowerCase().includes(selectedTerritory.toLowerCase()));
+  const rankedAreas = [...heatmapPoints].sort((a, b) => b.count - a.count);
+  const topAreas = rankedAreas.slice(0, showAllAreas ? undefined : 5);
+  const highest = rankedAreas[0];
+  const dayCount = Math.max(1, Math.round((Date.parse(`${range.endDate}T00:00:00Z`) - Date.parse(`${range.startDate}T00:00:00Z`)) / 86_400_000) + 1);
+  const timeBuckets = [0, 6, 12, 18].map((startHour) => Array.from({ length: 7 }, (_, weekday) => (data?.visitHeatmap ?? []).filter((point) => {
+    if (!point.occurredAt) return false;
+    const date = new Date(point.occurredAt);
+    const hour = date.getHours();
+    const mondayIndex = (date.getDay() + 6) % 7;
+    return mondayIndex === weekday && hour >= startHour && hour < startHour + 6;
+  }).reduce((sum, point) => sum + point.count, 0)));
+  const maxBucket = Math.max(1, ...timeBuckets.flat());
+  const rangeLabel = `${new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(`${range.startDate}T00:00:00`))} – ${new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${range.endDate}T00:00:00`))}`;
 
   return (
     <div className="space-y-4 font-sans pb-8 text-left">
@@ -45,12 +60,12 @@ export default function VisitHeatmapPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D]">
             <Calendar className="h-3.5 w-3.5 text-slate-400" />
-            <span>{dateRange}</span>
+            <span>{rangeLabel}</span>
           </div>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Filters drawer opened')}
+            onClick={() => setSelectedTerritory('All')}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <Filter className="h-3.5 w-3.5" /> Filters
@@ -58,7 +73,11 @@ export default function VisitHeatmapPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.success('Exporting visit heatmap data...')}
+            onClick={() => {
+              const rows = [['Area', 'Visits', 'Latitude', 'Longitude'], ...heatmapPoints.map((row) => [row.areaName, String(row.count), String(row.lat), String(row.lng)])];
+              const blob = new Blob([rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
+              const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `visit-heatmap-${range.endDate}.csv`; link.click(); URL.revokeObjectURL(link.href);
+            }}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <Download className="h-3.5 w-3.5" /> Export
@@ -70,7 +89,7 @@ export default function VisitHeatmapPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <MapKpiCard
           title="Total Visits"
-          value="1,248"
+          value={String(data?.summary.visits ?? 0)}
           subValue="This period"
           icon={MapPin}
           iconBgColor="bg-blue-50"
@@ -78,8 +97,8 @@ export default function VisitHeatmapPage() {
         />
         <MapKpiCard
           title="Avg. Visits / Day"
-          value="178"
-          change="12%"
+          value={String(Math.round((data?.summary.visits ?? 0) / dayCount))}
+          change="0%"
           changeType="positive"
           subValue="vs last period"
           icon={Target}
@@ -88,23 +107,23 @@ export default function VisitHeatmapPage() {
         />
         <MapKpiCard
           title="Highest Density Area"
-          value="Andheri East"
-          subValue="857 visits"
+          value={highest?.areaName ?? 'No data'}
+          subValue={`${highest?.count ?? 0} visits`}
           icon={Flame}
           iconBgColor="bg-amber-50"
           iconTextColor="text-amber-600"
         />
         <MapKpiCard
           title="Active Executives"
-          value="28"
-          subValue="87% active"
+          value={String(data?.summary.activeExecutives ?? 0)}
+          subValue={`${data?.summary.totalExecutives ? Math.round((data.summary.activeExecutives / data.summary.totalExecutives) * 100) : 0}% active`}
           icon={Users}
           iconBgColor="bg-purple-50"
           iconTextColor="text-purple-600"
         />
         <MapKpiCard
           title="Total Duration"
-          value="2,486h"
+          value={`${Math.round((data?.summary.visitMinutes ?? 0) / 60)}h`}
           subValue="This period"
           icon={Clock}
           iconBgColor="bg-sky-50"
@@ -112,8 +131,8 @@ export default function VisitHeatmapPage() {
         />
         <MapKpiCard
           title="Completion Rate"
-          value="63%"
-          change="8%"
+          value={`${data?.summary.visits ? Math.round((data.summary.completedVisits / data.summary.visits) * 100) : 0}%`}
+          change="0%"
           changeType="positive"
           subValue="vs last period"
           icon={TrendingUp}
@@ -128,7 +147,7 @@ export default function VisitHeatmapPage() {
         <div className="relative lg:col-span-8">
           <InteractiveMap
             mode="visit-heatmap"
-            heatmapPoints={mockVisitHeatmapPoints}
+            heatmapPoints={heatmapPoints}
             heightClassName="h-[650px]"
           >
             {/* Territory Overlay Selector */}
@@ -136,13 +155,7 @@ export default function VisitHeatmapPage() {
               <Select
                 value={selectedTerritory}
                 onChange={(e) => setSelectedTerritory(e.target.value)}
-                options={[
-                  { label: 'All Territories', value: 'All' },
-                  { label: 'Andheri Region', value: 'Andheri' },
-                  { label: 'Western Suburbs', value: 'Western' },
-                  { label: 'Eastern Suburbs', value: 'Eastern' },
-                  { label: 'Thane Region', value: 'Thane' },
-                ]}
+                options={[{ label: 'All Territories', value: 'All' }, ...(data?.territories ?? []).map((territory) => ({ label: territory.name, value: territory.name }))]}
               />
             </div>
           </InteractiveMap>
@@ -157,54 +170,24 @@ export default function VisitHeatmapPage() {
             </h3>
 
             <div className="space-y-2 text-xs font-semibold">
-              <div className="flex items-center justify-between rounded-sm bg-slate-50 p-2 border border-slate-100">
-                <span className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-white font-extrabold text-[10px]">1</span>
-                  <span className="text-[#0D1F3D]">Andheri East</span>
-                </span>
-                <span className="font-extrabold text-slate-700">857 visits</span>
-              </div>
-
-              <div className="flex items-center justify-between rounded-sm bg-slate-50 p-2 border border-slate-100">
-                <span className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-white font-extrabold text-[10px]">2</span>
-                  <span className="text-[#0D1F3D]">Malad West</span>
-                </span>
-                <span className="font-extrabold text-slate-700">642 visits</span>
-              </div>
-
-              <div className="flex items-center justify-between rounded-sm bg-slate-50 p-2 border border-slate-100">
-                <span className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-slate-900 font-extrabold text-[10px]">3</span>
-                  <span className="text-[#0D1F3D]">Powai</span>
-                </span>
-                <span className="font-extrabold text-slate-700">532 visits</span>
-              </div>
-
-              <div className="flex items-center justify-between rounded-sm bg-slate-50 p-2 border border-slate-100">
-                <span className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white font-extrabold text-[10px]">4</span>
-                  <span className="text-[#0D1F3D]">Vikhroli West</span>
-                </span>
-                <span className="font-extrabold text-slate-700">418 visits</span>
-              </div>
-
-              <div className="flex items-center justify-between rounded-sm bg-slate-50 p-2 border border-slate-100">
-                <span className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-400 text-white font-extrabold text-[10px]">5</span>
-                  <span className="text-[#0D1F3D]">Goregaon East</span>
-                </span>
-                <span className="font-extrabold text-slate-700">376 visits</span>
-              </div>
+              {topAreas.map((area, index) => (
+                <div key={area.id} className="flex items-center justify-between rounded-sm bg-slate-50 p-2 border border-slate-100">
+                  <span className="flex items-center gap-2">
+                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-white font-extrabold text-[10px] ${index === 0 ? 'bg-red-600' : index === 1 ? 'bg-amber-500' : index === 2 ? 'bg-amber-400' : index === 3 ? 'bg-blue-500' : 'bg-slate-400'}`}>{index + 1}</span>
+                    <span className="text-[#0D1F3D]">{area.areaName}</span>
+                  </span>
+                  <span className="font-extrabold text-slate-700">{area.count} visits</span>
+                </div>
+              ))}
             </div>
 
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Viewing all density areas')}
+              onClick={() => setShowAllAreas((value) => !value)}
               className="w-full text-xs font-bold justify-between shadow-xs border-slate-200 text-[#0D1F3D]"
             >
-              <span>View All Areas</span>
+              <span>{showAllAreas ? 'Show Top Areas' : 'View All Areas'}</span>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -230,7 +213,8 @@ export default function VisitHeatmapPage() {
               {['12 AM', '6 AM', '12 PM', '6 PM'].map((tRow, rIdx) => (
                 <div key={tRow} className="grid grid-cols-8 gap-1 items-center text-center">
                   <span className="text-left font-semibold text-slate-400">{tRow}</span>
-                  {[0.1, 0.4, 0.9, 0.8, 0.7, 0.6, 0.2].map((val, cIdx) => {
+                  {timeBuckets[rIdx].map((value, cIdx) => {
+                    const val = value / maxBucket;
                     const bgClass =
                       rIdx === 2
                         ? val > 0.7
@@ -266,15 +250,15 @@ export default function VisitHeatmapPage() {
             <div className="space-y-2 text-[11px] text-slate-600 font-medium">
               <div className="flex items-start gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 mt-1 shrink-0" />
-                <p>Visits are <strong className="text-emerald-700 font-extrabold">12% higher</strong> compared to May 10 – May 24, 2025.</p>
+                <p><strong className="text-emerald-700 font-extrabold">{data?.summary.completedVisits ?? 0}</strong> of {data?.summary.visits ?? 0} visits were completed in this period.</p>
               </div>
               <div className="flex items-start gap-2">
                 <span className="h-2 w-2 rounded-full bg-blue-500 mt-1 shrink-0" />
-                <p><strong className="text-[#0D1F3D] font-extrabold">Andheri East</strong> shows the highest visit concentration.</p>
+                <p><strong className="text-[#0D1F3D] font-extrabold">{highest?.areaName ?? 'No area'}</strong> shows the highest visit concentration.</p>
               </div>
               <div className="flex items-start gap-2">
                 <span className="h-2 w-2 rounded-full bg-amber-500 mt-1 shrink-0" />
-                <p>Most visits are happening between <strong className="text-slate-800 font-extrabold">10 AM – 2 PM</strong>.</p>
+                <p>The heatmap contains <strong className="text-slate-800 font-extrabold">{heatmapPoints.length} mapped areas</strong> with recorded GPS coordinates.</p>
               </div>
             </div>
 

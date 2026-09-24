@@ -19,7 +19,7 @@ import {
   HeatmapPoint,
   TerritoryPolygon,
   RouteStop,
-} from '../../screens/maps/mapsData';
+} from '../../screens/maps/maps.api';
 
 // Function to resolve Mapbox style
 export function getMapboxStyle(mapType: 'map' | 'satellite' | 'terrain'): string {
@@ -333,7 +333,7 @@ export function InteractiveMap({
     if (!mapRef.current || !selectedExecutiveId) return;
 
     const exec = executives.find((e) => e.id === selectedExecutiveId);
-    if (exec) {
+    if (exec && exec.lat != null && exec.lng != null) {
       setSelectedMarkerId(exec.id);
       try {
         mapRef.current.flyTo({
@@ -845,8 +845,8 @@ export function InteractiveMap({
 
       {/* MAPBOX MARKERS: EXECUTIVE LOCATIONS */}
       {(mode === 'live-executives' || mode === 'executives-only') &&
-        executives.map((exec) => {
-          const pt = getPixelPoint(exec.lat, exec.lng);
+        executives.filter((exec) => exec.lat != null && exec.lng != null).map((exec) => {
+          const pt = getPixelPoint(exec.lat!, exec.lng!);
           const isSelected = selectedMarkerId === exec.id;
 
           const ringColor =
@@ -877,7 +877,7 @@ export function InteractiveMap({
               <div
                 className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 border-white shadow-lg ring-4 transition-transform hover:scale-110 ${ringColor}`}
               >
-                <img src={exec.avatar} alt={exec.name} className="h-full w-full rounded-full object-cover" />
+                <img src={exec.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(exec.name)}&background=E2E8F0&color=0D1F3D`} alt={exec.name} className="h-full w-full rounded-full object-cover" />
                 <span className={`absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-white ${ringColor}`} />
               </div>
 
@@ -885,7 +885,7 @@ export function InteractiveMap({
               {isSelected && (
                 <div className="absolute left-1/2 bottom-full mb-3 -translate-x-1/2 z-30 w-64 rounded-sm border border-slate-200 bg-white p-3 shadow-2xl animate-fadeIn space-y-2 text-left">
                   <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-                    <img src={exec.avatar} alt={exec.name} className="h-8 w-8 rounded-full object-cover border" />
+                    <img src={exec.avatar ?? `https://ui-avatars.com/api/?name=${encodeURIComponent(exec.name)}&background=E2E8F0&color=0D1F3D`} alt={exec.name} className="h-8 w-8 rounded-full object-cover border" />
                     <div>
                       <h4 className="font-extrabold text-[#0D1F3D] text-xs">{exec.name}</h4>
                       <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
@@ -901,8 +901,8 @@ export function InteractiveMap({
                       {exec.currentLocation}
                     </p>
                     <div className="flex justify-between pt-1 font-bold text-slate-700">
-                      <span>Time: {exec.lastUpdated}</span>
-                      <span className="text-emerald-600 font-mono">{exec.batteryLevel}% 🔋</span>
+                      <span>Time: {exec.lastUpdatedAt ? new Intl.DateTimeFormat('en-IN', { hour: '2-digit', minute: '2-digit' }).format(new Date(exec.lastUpdatedAt)) : 'Not reported'}</span>
+                      <span className="text-emerald-600 font-mono">{exec.batteryLevel == null ? 'Not reported' : `${exec.batteryLevel}% 🔋`}</span>
                     </div>
                   </div>
                   <button
@@ -1018,8 +1018,8 @@ export function InteractiveMap({
                 <span className="rounded-sm px-2 py-0.5 text-[10px] font-bold bg-indigo-50 text-indigo-700 inline-block border border-indigo-200">
                   {terr.executivesCount} Executives
                 </span>
-                <p className="text-[10px] text-slate-500 font-medium mt-1">Target: {terr.targetAmount}</p>
-                <p className="text-[10px] font-bold text-emerald-700">Achieved: {terr.achievedAmount}</p>
+                <p className="text-[10px] text-slate-500 font-medium mt-1">Target: {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(terr.targetAmount)}</p>
+                <p className="text-[10px] font-bold text-emerald-700">Achieved: {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(terr.achievedAmount)}</p>
               </div>
             </div>
           );

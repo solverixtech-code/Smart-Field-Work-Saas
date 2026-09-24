@@ -24,6 +24,8 @@ import { TargetController } from './target.controller';
 import { TargetService } from './target.service';
 import { IncentiveController } from './incentive.controller';
 import { IncentiveService } from './incentive.service';
+import { MapController } from './map.controller';
+import { MapService } from './map.service';
 
 @Module({
   imports: [PersistenceModule, MasterCoreModule, JobCoreModule],
@@ -38,6 +40,7 @@ import { IncentiveService } from './incentive.service';
     TeamController,
     TargetController,
     IncentiveController,
+    MapController,
   ],
   providers: [
     CrmRepository,
@@ -52,6 +55,7 @@ import { IncentiveService } from './incentive.service';
     TeamService,
     TargetService,
     IncentiveService,
+    MapService,
   ],
   exports: [OpportunityService, TerritoryService],
 })

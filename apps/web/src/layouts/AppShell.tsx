@@ -416,7 +416,6 @@ const navCategories: NavCategory[] = [
         to: "/admin/map/live",
         permission: "crm.map.view",
         moduleCode: "field_visits",
-        badge: "28 Live",
       },
       {
         label: "Executive Locations",
@@ -431,7 +430,6 @@ const navCategories: NavCategory[] = [
         to: "/admin/map/businesses",
         permission: "crm.map.view",
         moduleCode: "field_visits",
-        badge: "248 Pins",
       },
       {
         label: "Visit Heatmap",
@@ -457,7 +455,7 @@ const navCategories: NavCategory[] = [
       {
         label: "Route Playback",
         icon: Clock,
-        to: "/admin/map/routes/FE-1009",
+        to: "/admin/map/routes",
         permission: "crm.map.view",
         moduleCode: "field_visits",
       },
@@ -831,6 +829,18 @@ function getBreadcrumbTrail(pathname: string) {
       '/admin/reports/categories': 'Category ROI Report',
     };
     items.push({ label: reportPageNames[pathname] ?? 'Report Details', to: pathname });
+  } else if (pathname.startsWith('/admin/map/')) {
+    items.push({ label: 'Live Tracking & Maps', to: '/admin/map/live' });
+    const mapPageNames: Record<string, string> = {
+      '/admin/map/live': 'Live Field Map',
+      '/admin/map/executives': 'Executive Locations',
+      '/admin/map/businesses': 'Business Prospect Map',
+      '/admin/map/visits': 'Visit Heatmap',
+      '/admin/map/sales': 'Sales Heatmap',
+      '/admin/map/territories': 'Territory Map',
+      '/admin/map/routes': 'Route Playback',
+    };
+    items.push({ label: mapPageNames[pathname] ?? (pathname.startsWith('/admin/map/routes/') ? 'Route Playback' : 'Map'), to: pathname });
   } else if (pathname === "/admin/territories") {
     items.push({ label: "Territory Management", to: "/admin/territories" });
     items.push({ label: "Territories", to: "/admin/territories" });
@@ -969,6 +979,10 @@ export default function AppShell() {
     ruleCount: number;
     targetAchievement: number;
     incentiveEarned: number;
+  } | null>(null);
+  const [mapNavigationSummary, setMapNavigationSummary] = useState<{
+    activeExecutives: number;
+    prospects: number;
   } | null>(null);
 
   useEffect(() => {
@@ -1131,13 +1145,24 @@ export default function AppShell() {
     return () => controller.abort();
   }, [isExecutiveRole, tenantId]);
 
+  useEffect(() => {
+    if (isExecutiveRole) return;
+    const controller = new AbortController();
+    api.get<{ summary: { activeExecutives: number; prospects: number } }>("/tenant/crm/maps/snapshot", { signal: controller.signal })
+      .then(({ data }) => setMapNavigationSummary(data.summary))
+      .catch(() => {
+        // Navigation remains usable without live badges when map access is unavailable.
+      });
+    return () => controller.abort();
+  }, [isExecutiveRole, tenantId]);
+
   const compactCurrency = (value: number) => new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     notation: "compact",
     maximumFractionDigits: 2,
   }).format(value);
-  const dynamicAdminNavCategories = targetNavigationSummary
+  const targetAwareNavCategories = targetNavigationSummary
     ? navCategories.map((category) => category.title !== "Targets & Incentives" ? category : {
         ...category,
         items: category.items.map((item) => ({
@@ -1151,6 +1176,17 @@ export default function AppShell() {
         })),
       })
     : navCategories;
+  const dynamicAdminNavCategories = mapNavigationSummary
+    ? targetAwareNavCategories.map((category) => category.title !== "Live Tracking & Maps" ? category : {
+        ...category,
+        items: category.items.map((item) => ({
+          ...item,
+          badge: item.label === "Live Field Map" ? `${mapNavigationSummary.activeExecutives} Live`
+            : item.label === "Business Prospect Map" ? `${mapNavigationSummary.prospects} Pins`
+            : item.badge,
+        })),
+      })
+    : targetAwareNavCategories;
   const displayedNavCategories = isExecutiveRole ? executiveNavCategories : dynamicAdminNavCategories;
   const showBigLogo = !collapsed || isHovered;
 

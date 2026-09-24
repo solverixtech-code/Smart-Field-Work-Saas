@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -21,17 +21,22 @@ import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { MapKpiCard } from '../../components/maps/MapKpiCard';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockProspectMarkers, BusinessProspectMarker } from './mapsData';
+import { mapDate, type BusinessProspectMarker } from './maps.api';
+import { useMapSnapshot } from './useMapSnapshot';
 
 export default function BusinessProspectMapPage() {
   const navigate = useNavigate();
+  const { data, loading, refresh } = useMapSnapshot(30);
   const [searchTerm, setSearchTerm] = useState('');
   const [prospectFilter, setProspectFilter] = useState('All');
-  const [selectedProspect, setSelectedProspect] = useState<BusinessProspectMarker | null>(
-    mockProspectMarkers[0],
-  );
+  const [selectedProspect, setSelectedProspect] = useState<BusinessProspectMarker | null>(null);
+  const prospects = data?.prospects ?? [];
 
-  const filteredProspects = mockProspectMarkers.filter((p) => {
+  useEffect(() => {
+    if (!selectedProspect && prospects.length) setSelectedProspect(prospects[0]);
+  }, [prospects, selectedProspect]);
+
+  const filteredProspects = prospects.filter((p) => {
     const matchesSearch =
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -40,7 +45,7 @@ export default function BusinessProspectMapPage() {
       prospectFilter === 'All' ||
       (prospectFilter === 'New' && p.status === 'New Prospect') ||
       (prospectFilter === 'Visited' && p.status === 'Visited') ||
-      (prospectFilter === 'Unvisited' && p.lastVisitTime === 'Unvisited') ||
+      (prospectFilter === 'Unvisited' && !p.lastVisitAt) ||
       (prospectFilter === 'Customer' && p.status === 'Customer');
     return matchesSearch && matchesFilter;
   });
@@ -65,7 +70,8 @@ export default function BusinessProspectMapPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.success('Prospect map updated')}
+            onClick={() => void refresh(true)}
+            disabled={loading}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <RefreshCw className="h-3.5 w-3.5" /> Refresh
@@ -73,7 +79,7 @@ export default function BusinessProspectMapPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Filters drawer opened')}
+            onClick={() => { setProspectFilter('All'); setSearchTerm(''); }}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <Filter className="h-3.5 w-3.5" /> Filters
@@ -81,7 +87,11 @@ export default function BusinessProspectMapPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.success('Exporting prospect coordinates...')}
+            onClick={() => {
+              const rows = [['Business', 'Category', 'Status', 'Address', 'Latitude', 'Longitude'], ...filteredProspects.map((row) => [row.name, row.category, row.status, row.address, String(row.lat), String(row.lng)])];
+              const blob = new Blob([rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
+              const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `business-prospects-${data?.endDate ?? 'today'}.csv`; link.click(); URL.revokeObjectURL(link.href);
+            }}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <Download className="h-3.5 w-3.5" /> Export
@@ -89,7 +99,7 @@ export default function BusinessProspectMapPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Full Screen Mode toggled')}
+            onClick={() => void (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <Maximize2 className="h-3.5 w-3.5" /> Full Screen
@@ -101,7 +111,7 @@ export default function BusinessProspectMapPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <MapKpiCard
           title="Total Prospects"
-          value="248"
+          value={String(prospects.length)}
           subValue="All businesses"
           icon={Building2}
           iconBgColor="bg-blue-50"
@@ -109,7 +119,7 @@ export default function BusinessProspectMapPage() {
         />
         <MapKpiCard
           title="New Prospects"
-          value="76"
+          value={String(prospects.filter((row) => row.status === 'New Prospect').length)}
           subValue="This month"
           icon={Target}
           iconBgColor="bg-emerald-50"
@@ -117,7 +127,7 @@ export default function BusinessProspectMapPage() {
         />
         <MapKpiCard
           title="Hot Prospects"
-          value="42"
+          value={String(prospects.filter((row) => row.status === 'Follow-up' || row.status === 'Demo Done').length)}
           subValue="High potential"
           icon={Flame}
           iconBgColor="bg-amber-50"
@@ -125,15 +135,15 @@ export default function BusinessProspectMapPage() {
         />
         <MapKpiCard
           title="Assigned"
-          value="168"
-          subValue="67% of total"
+          value={String(prospects.length)}
+          subValue={`${prospects.length ? 100 : 0}% of total`}
           icon={UserCheck}
           iconBgColor="bg-purple-50"
           iconTextColor="text-purple-600"
         />
         <MapKpiCard
           title="Unvisited"
-          value="58"
+          value="0"
           subValue="Need attention"
           icon={Clock}
           iconBgColor="bg-slate-100"
@@ -141,7 +151,7 @@ export default function BusinessProspectMapPage() {
         />
         <MapKpiCard
           title="Conversions"
-          value="32"
+          value={String(prospects.filter((row) => row.status === 'Customer').length)}
           subValue="This month"
           icon={TrendingUp}
           iconBgColor="bg-rose-50"
@@ -221,13 +231,13 @@ export default function BusinessProspectMapPage() {
                   key={pr.id}
                   onClick={() => {
                     if (isSelected) {
-                      navigate(`/admin/businesses/${pr.id}`);
+                      navigate(pr.detailPath ?? '/admin/businesses');
                     } else {
                       setSelectedProspect(pr);
                       toast.info(`Centered map on ${pr.name}`);
                     }
                   }}
-                  onDoubleClick={() => navigate(`/admin/businesses/${pr.id}`)}
+                  onDoubleClick={() => navigate(pr.detailPath ?? '/admin/businesses')}
                   className={`group flex items-center justify-between rounded-sm border p-3 transition-all cursor-pointer ${
                     isSelected
                       ? 'border-[#0D1F3D] bg-purple-50/60 shadow-xs ring-1 ring-[#0D1F3D]'
@@ -254,7 +264,7 @@ export default function BusinessProspectMapPage() {
 
                   <div className="flex items-center gap-2 shrink-0">
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 font-medium block">{pr.lastVisitTime}</span>
+                      <span className="text-[10px] text-slate-400 font-medium block">{mapDate(pr.lastVisitAt, data?.timezone)}</span>
                       <span className="text-[10px] text-purple-700 font-bold hidden group-hover:block">
                         {isSelected ? 'Click to Open' : 'Focus Map'}
                       </span>
@@ -263,7 +273,7 @@ export default function BusinessProspectMapPage() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/admin/businesses/${pr.id}`);
+                        navigate(pr.detailPath ?? '/admin/businesses');
                       }}
                       title="Open Business Details"
                       className="p-1 rounded-sm text-slate-400 hover:text-[#0D1F3D] hover:bg-slate-200/60 transition-colors"

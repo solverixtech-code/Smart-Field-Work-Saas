@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, type FormEvent } from 'react';
+import { useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Calendar,
@@ -18,7 +19,7 @@ import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import { extractErrorMessage } from '../../common/api';
 import { useAppSelector } from '../../store';
 import { fieldDashboardApi, type FieldDashboardData } from '../dashboard/field-dashboard.api';
-import { mockArjunMehtaRoute, type ExecutiveRoute, type RouteStop } from './mapsData';
+import { mapsApi, type ExecutiveRoute, type RouteStop } from './maps.api';
 
 interface RouteActivity {
   id: string;
@@ -60,6 +61,7 @@ function liveActivities(data: FieldDashboardData): RouteActivity[] {
 }
 
 export default function RoutePlaybackPage() {
+  const { executiveId } = useParams<{ executiveId?: string }>();
   const tenant = useAppSelector((state) => state.authorization.tenant);
   const user = useAppSelector((state) => state.auth.user);
   const isOwnRoute = isExecutiveRole(tenant?.roleCode);
@@ -71,6 +73,7 @@ export default function RoutePlaybackPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [completedOnly, setCompletedOnly] = useState(false);
   const [fieldData, setFieldData] = useState<FieldDashboardData | null>(null);
+  const [adminRoute, setAdminRoute] = useState<ExecutiveRoute | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
@@ -93,6 +96,24 @@ export default function RoutePlaybackPage() {
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [isOwnRoute, selectedDate, refresh]);
+
+  useEffect(() => {
+    if (isOwnRoute) return;
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+    setAdminRoute(null);
+    const resolveRoute = async () => {
+      const membershipId = executiveId ?? (await mapsApi.snapshot()).executives[0]?.id;
+      if (!membershipId) throw new Error('No field executive is available for route playback.');
+      return mapsApi.route(membershipId, selectedDate ?? undefined);
+    };
+    void resolveRoute()
+      .then((result) => { if (!controller.signal.aborted) setAdminRoute(result); })
+      .catch((reason: unknown) => { if (!controller.signal.aborted) setError(extractErrorMessage(reason, 'Could not load this route.')); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [executiveId, isOwnRoute, refresh, selectedDate]);
 
   const timezone = fieldData?.timezone ?? 'Asia/Kolkata';
   const allActivities = useMemo(() => isOwnRoute && fieldData ? liveActivities(fieldData) : [], [isOwnRoute, fieldData]);
@@ -125,7 +146,12 @@ export default function RoutePlaybackPage() {
     totalVisitsCompleted: fieldData?.summary.completedVisits ?? 0,
     avgSpeedKmh: 0,
     stops: liveStops,
-  } : mockArjunMehtaRoute;
+  } : adminRoute ?? {
+    executiveId: executiveId ?? '', executiveName: 'Field executive', executiveAvatar: null,
+    status: 'Route history', date: selectedDate ?? new Date().toISOString().slice(0, 10),
+    startTime: null, endTime: null, totalDurationText: '—', totalDistanceKm: 0,
+    totalVisitsPlanned: 0, totalVisitsCompleted: 0, avgSpeedKmh: 0, stops: [],
+  };
   const timelineActivities: RouteActivity[] = isOwnRoute ? visibleActivities : route.stops.map((stop) => ({
     id: stop.id, type: stop.type, title: stop.locationName,
     address: stop.address, timestamp: stop.timestamp,
@@ -140,7 +166,7 @@ export default function RoutePlaybackPage() {
   }, [selectedDate, completedOnly]);
 
   function exportActivities() {
-    if (!fieldData || !timelineActivities.length) return;
+    if (!timelineActivities.length) return;
     const escape = (value: string) => `"${(/^[=+\-@]/.test(value) ? "'" : '') + value.replace(/"/g, '""')}"`;
     const rows = [['Time', 'Activity', 'Location', 'Status'], ...timelineActivities.map((activity) => [
       formatTime(activity.timestamp, timezone), activity.title, activity.address, activity.status,
@@ -149,7 +175,7 @@ export default function RoutePlaybackPage() {
     const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }));
     const link = document.createElement('a');
     link.href = url;
-    link.download = `route-activities-${fieldData.startDate}.csv`;
+    link.download = `route-activities-${selectedDate ?? fieldData?.startDate ?? route.date}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   }
@@ -215,7 +241,7 @@ export default function RoutePlaybackPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-extrabold text-[#0D1F3D]">Route Playback</h1>
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-700 border border-emerald-200">
-              <span className="h-2 w-2 rounded-full bg-emerald-500" /> {isOwnRoute ? 'Live Data' : 'Sample Data'}
+              <span className="h-2 w-2 rounded-full bg-emerald-500" /> Live Data
             </span>
           </div>
           <p className="text-xs font-semibold text-slate-500 mt-0.5">
@@ -224,24 +250,21 @@ export default function RoutePlaybackPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {isOwnRoute ? <DatePicker value={selectedDate ?? fieldData?.today ?? new Date().toISOString().slice(0, 10)} onChange={setSelectedDate} /> :
-            <div className="flex items-center gap-1 rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D]">
-              <Calendar className="h-3.5 w-3.5 text-slate-400" /><span>{route.date}</span>
-            </div>}
+          <DatePicker value={selectedDate ?? fieldData?.today ?? route.date ?? new Date().toISOString().slice(0, 10)} onChange={setSelectedDate} />
           <Button
             variant="outline"
             size="sm"
-            onClick={() => isOwnRoute ? setCompletedOnly((value) => !value) : toast.info('Route filter opened')}
-            aria-pressed={isOwnRoute ? completedOnly : undefined}
+            onClick={() => setCompletedOnly((value) => !value)}
+            aria-pressed={completedOnly}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
-            <Filter className="h-3.5 w-3.5" /> {isOwnRoute && completedOnly ? 'Completed only' : 'Filters'}
+            <Filter className="h-3.5 w-3.5" /> {completedOnly ? 'Completed only' : 'Filters'}
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => isOwnRoute ? exportActivities() : toast.success('Exporting GPS route log GPX...')}
-            disabled={isOwnRoute && !timelineActivities.length}
+            onClick={exportActivities}
+            disabled={!timelineActivities.length}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <Download className="h-3.5 w-3.5" /> Export
@@ -249,8 +272,8 @@ export default function RoutePlaybackPage() {
         </div>
       </div>
 
-      {isOwnRoute && loading && <p role="status" className="text-xs font-semibold text-slate-600">Loading your route…</p>}
-      {isOwnRoute && error && <div role="alert" className="flex items-center gap-3 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+      {loading && <p role="status" className="text-xs font-semibold text-slate-600">Loading your route…</p>}
+      {error && <div role="alert" className="flex items-center gap-3 rounded-md border border-red-200 bg-red-50 p-3 text-xs text-red-800">
         <span>{error}</span><Button variant="outline" size="sm" onClick={() => setRefresh((value) => value + 1)}>Retry</Button>
       </div>}
 
@@ -258,7 +281,7 @@ export default function RoutePlaybackPage() {
       <div className="rounded-sm border border-slate-200/80 bg-white p-4 shadow-sm flex flex-wrap items-center justify-between gap-4 text-xs font-semibold">
         {/* Profile Card */}
         <div className="flex items-center gap-3">
-          <Avatar name={route.executiveName} src={route.executiveAvatar} sizeClassName="h-12 w-12" />
+          <Avatar name={route.executiveName} src={route.executiveAvatar ?? undefined} sizeClassName="h-12 w-12" />
           <div>
             <h3 className="font-extrabold text-[#0D1F3D] text-sm">{route.executiveName}</h3>
             <p className="text-[11px] text-slate-500 font-medium">Field Executive</p>
@@ -272,17 +295,17 @@ export default function RoutePlaybackPage() {
         <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 sm:gap-6 text-left border-t sm:border-t-0 sm:border-l border-slate-100 pt-3 sm:pt-0 sm:pl-6">
           <div>
             <span className="text-[10px] text-slate-400 font-medium block">Date</span>
-            <span className="font-extrabold text-[#0D1F3D]">{route.date}</span>
+            <span className="font-extrabold text-[#0D1F3D]">{isOwnRoute ? route.date : new Date(`${route.date}T00:00:00Z`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })}</span>
           </div>
 
           <div>
             <span className="text-[10px] text-slate-400 font-medium block">Start Time</span>
-            <span className="font-extrabold text-[#0D1F3D]">{route.startTime}</span>
+            <span className="font-extrabold text-[#0D1F3D]">{isOwnRoute ? route.startTime : formatTime(route.startTime, timezone)}</span>
           </div>
 
           <div>
             <span className="text-[10px] text-slate-400 font-medium block">End Time</span>
-            <span className="font-extrabold text-[#0D1F3D]">{route.endTime}</span>
+            <span className="font-extrabold text-[#0D1F3D]">{isOwnRoute ? route.endTime : formatTime(route.endTime, timezone)}</span>
           </div>
 
           <div>
@@ -292,7 +315,7 @@ export default function RoutePlaybackPage() {
 
           <div>
             <span className="text-[10px] text-slate-400 font-medium block">Total Distance</span>
-            <span className="font-extrabold text-[#0D1F3D] font-mono">{isOwnRoute ? 'Not recorded' : `${route.totalDistanceKm} km`}</span>
+            <span className="font-extrabold text-[#0D1F3D] font-mono">{route.totalDistanceKm ? `${route.totalDistanceKm} km` : 'Not recorded'}</span>
           </div>
 
           <div>
@@ -311,7 +334,7 @@ export default function RoutePlaybackPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Left Map Area & Playback Controller */}
         <div className="lg:col-span-8 flex flex-col space-y-3">
-          {isOwnRoute && (!route.stops.length || !import.meta.env.VITE_MAPBOX_ACCESS_TOKEN) ?
+          {!route.stops.length || !import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ?
             <div className="flex h-[580px] items-center justify-center rounded-md border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-600">
               {loading ? 'Loading route locations…' : error ? 'Route locations are unavailable. Retry to load them.' :
                 route.stops.length ? 'Mapbox is not configured for this workspace.' : 'No geotagged visits or mobile attendance locations for this date.'}
@@ -323,7 +346,7 @@ export default function RoutePlaybackPage() {
               playbackActiveStopIndex={activeStopIndex}
               heightClassName="h-[580px]"
             />}
-          {isOwnRoute && route.stops.length > 1 && <p className="text-xs text-slate-500">Mapbox connects assigned visit locations and mobile punch coordinates with a suggested road route. This is not a GPS trace; travel distance and speed are not tracked here.</p>}
+          {route.stops.length > 1 && <p className="text-xs text-slate-500">Mapbox connects assigned visit locations and mobile punch coordinates with a suggested road route. This is not a continuous GPS trace.</p>}
 
           {/* BOTTOM FLOATING ROUTE PLAYBACK PLAYER BAR */}
           <div className="rounded-sm border border-slate-200/90 bg-white p-3 shadow-md flex items-center justify-between gap-4 text-xs font-semibold">
@@ -393,9 +416,9 @@ export default function RoutePlaybackPage() {
             <div className="space-y-1 text-[11px]">
               <div className="flex justify-between"><span className="text-slate-500">Planned Visits</span><span className="font-extrabold text-[#0D1F3D]">{route.totalVisitsPlanned}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Completed Visits</span><span className="font-extrabold text-emerald-700">{route.totalVisitsCompleted}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Missed Visits</span><span className="font-extrabold text-slate-700">{isOwnRoute ? 'Not recorded' : '0'}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Total Distance</span><span className="font-extrabold text-[#0D1F3D] font-mono">{isOwnRoute ? 'Not recorded' : `${route.totalDistanceKm} km`}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Avg. Speed</span><span className="font-extrabold text-[#0D1F3D] font-mono">{isOwnRoute ? 'Not recorded' : `${route.avgSpeedKmh} km/h`}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Missed Visits</span><span className="font-extrabold text-slate-700">{Math.max(0, route.totalVisitsPlanned - route.totalVisitsCompleted)}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Total Distance</span><span className="font-extrabold text-[#0D1F3D] font-mono">{route.totalDistanceKm ? `${route.totalDistanceKm} km` : 'Not recorded'}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Avg. Speed</span><span className="font-extrabold text-[#0D1F3D] font-mono">{route.avgSpeedKmh ? `${route.avgSpeedKmh} km/h` : 'Not recorded'}</span></div>
               <div className="flex justify-between"><span className="text-slate-500">Total Duration</span><span className="font-extrabold text-[#0D1F3D]">{route.totalDurationText}</span></div>
             </div>
           </div>
@@ -416,7 +439,7 @@ export default function RoutePlaybackPage() {
                 activeTab === 'visits' ? 'border-[#0D1F3D] text-[#0D1F3D]' : 'border-transparent text-slate-400 hover:text-slate-600'
               }`}
             >
-              Visit List ({isOwnRoute ? fieldData?.summary.visitCount ?? 0 : route.stops.length})
+              Visit List ({route.totalVisitsPlanned})
             </button>
           </div>
 
@@ -424,7 +447,7 @@ export default function RoutePlaybackPage() {
           <div className="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-1 text-xs">
             <div className="text-[10px] font-bold text-slate-400">{route.date}</div>
 
-            {isOwnRoute && !loading && !error && listedActivities.length === 0 &&
+            {!loading && !error && listedActivities.length === 0 &&
               <p className="rounded-md border border-slate-200 bg-slate-50 p-4 text-center text-xs text-slate-600">No {activeTab === 'visits' ? 'assigned visits' : 'route activities'} for this date.</p>}
             {isOwnRoute && fieldData && fieldData.summary.visitCount > fieldData.visits.length &&
               <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Showing the first {fieldData.visits.length} of {fieldData.summary.visitCount} assigned visits.</p>}
@@ -454,7 +477,7 @@ export default function RoutePlaybackPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <h4 className="font-extrabold text-[#0D1F3D] text-xs truncate">{st.title}</h4>
-                    <span className="text-[10px] font-medium text-slate-400 shrink-0">{isOwnRoute ? formatTime(st.timestamp, timezone) : st.timestamp}</span>
+                    <span className="text-[10px] font-medium text-slate-400 shrink-0">{formatTime(st.timestamp, timezone)}</span>
                   </div>
                   <p className="text-[11px] font-medium text-slate-500 truncate">{st.address}</p>
 
@@ -481,7 +504,7 @@ export default function RoutePlaybackPage() {
           {!isOwnRoute && <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Viewing full historical timeline')}
+            onClick={() => { setActiveTab('timeline'); setActiveStopIndex(0); }}
             className="w-full text-xs font-bold justify-between shadow-xs border-slate-200 text-[#0D1F3D]"
           >
             <span>View Full History</span>

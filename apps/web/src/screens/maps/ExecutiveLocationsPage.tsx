@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -20,17 +20,23 @@ import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { MapKpiCard } from '../../components/maps/MapKpiCard';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockExecutiveLocations, ExecutiveLocation } from './mapsData';
+import { mapAvatar, mapDate, type ExecutiveLocation } from './maps.api';
+import { useMapSnapshot } from './useMapSnapshot';
 
 export default function ExecutiveLocationsPage() {
   const navigate = useNavigate();
+  const { data, loading, refresh } = useMapSnapshot();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [selectedExec, setSelectedExec] = useState<ExecutiveLocation | null>(
-    mockExecutiveLocations[0],
-  );
+  const [selectedExec, setSelectedExec] = useState<ExecutiveLocation | null>(null);
+  const executives = data?.executives ?? [];
+  const summary = data?.summary;
 
-  const filteredExecutives = mockExecutiveLocations.filter((e) => {
+  useEffect(() => {
+    if (!selectedExec && executives.length) setSelectedExec(executives[0]);
+  }, [executives, selectedExec]);
+
+  const filteredExecutives = executives.filter((e) => {
     const matchesSearch =
       e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       e.currentLocation.toLowerCase().includes(searchTerm.toLowerCase());
@@ -58,7 +64,8 @@ export default function ExecutiveLocationsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.success('Executive locations updated')}
+            onClick={() => void refresh(true)}
+            disabled={loading}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <RefreshCw className="h-3.5 w-3.5" /> Refresh
@@ -66,7 +73,7 @@ export default function ExecutiveLocationsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Filters drawer opened')}
+            onClick={() => { setStatusFilter('All'); setSearchTerm(''); }}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <Filter className="h-3.5 w-3.5" /> Filters
@@ -74,7 +81,11 @@ export default function ExecutiveLocationsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.success('Exporting executive location logs...')}
+            onClick={() => {
+              const rows = [['Executive', 'Code', 'Status', 'Location', 'Last updated', 'Team', 'Distance (km)'], ...filteredExecutives.map((row) => [row.name, row.code ?? '', row.status, row.currentLocation, row.lastUpdatedAt ?? '', row.team, String(row.distanceKmToday)])];
+              const blob = new Blob([rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
+              const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `executive-locations-${data?.endDate ?? 'today'}.csv`; link.click(); URL.revokeObjectURL(link.href);
+            }}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <Download className="h-3.5 w-3.5" /> Export
@@ -82,7 +93,7 @@ export default function ExecutiveLocationsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Full Screen Mode toggled')}
+            onClick={() => void (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <Maximize2 className="h-3.5 w-3.5" /> Full Screen
@@ -94,7 +105,7 @@ export default function ExecutiveLocationsPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <MapKpiCard
           title="Total Executives"
-          value="32"
+          value={String(summary?.totalExecutives ?? 0)}
           subValue="All field executives"
           icon={Users}
           iconBgColor="bg-blue-50"
@@ -102,15 +113,15 @@ export default function ExecutiveLocationsPage() {
         />
         <MapKpiCard
           title="On Field"
-          value="24"
-          subValue="75% of total"
+          value={String(summary?.onField ?? 0)}
+          subValue={`${summary?.totalExecutives ? Math.round((summary.onField / summary.totalExecutives) * 100) : 0}% of total`}
           icon={MapPin}
           iconBgColor="bg-emerald-50"
           iconTextColor="text-emerald-600"
         />
         <MapKpiCard
           title="In Transit"
-          value="3"
+          value={String(summary?.inTransit ?? 0)}
           subValue="Travelling"
           icon={Truck}
           iconBgColor="bg-amber-50"
@@ -118,7 +129,7 @@ export default function ExecutiveLocationsPage() {
         />
         <MapKpiCard
           title="Break"
-          value="1"
+          value={String(summary?.onBreak ?? 0)}
           subValue="On break"
           icon={Coffee}
           iconBgColor="bg-purple-50"
@@ -126,7 +137,7 @@ export default function ExecutiveLocationsPage() {
         />
         <MapKpiCard
           title="Offline"
-          value="4"
+          value={String(summary?.offline ?? 0)}
           subValue="Not reporting"
           icon={UserX}
           iconBgColor="bg-slate-100"
@@ -134,7 +145,7 @@ export default function ExecutiveLocationsPage() {
         />
         <MapKpiCard
           title="Distance Covered"
-          value="512 km"
+          value={`${summary?.distanceKm ?? 0} km`}
           subValue="Today"
           icon={Navigation}
           iconBgColor="bg-rose-50"
@@ -204,7 +215,7 @@ export default function ExecutiveLocationsPage() {
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <img src={exec.avatar} alt={exec.name} className="h-9 w-9 rounded-full object-cover border shrink-0" />
+                  <img src={mapAvatar(exec.name, exec.avatar)} alt={exec.name} className="h-9 w-9 rounded-full object-cover border shrink-0" />
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <h4 className="font-extrabold text-[#0D1F3D] text-xs truncate">{exec.name}</h4>
@@ -221,9 +232,9 @@ export default function ExecutiveLocationsPage() {
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="text-right">
                     <span className="text-[10px] font-mono font-extrabold text-emerald-600 block">
-                      {exec.batteryLevel}% 🔋
+                      {exec.batteryLevel == null ? 'Not reported' : `${exec.batteryLevel}% 🔋`}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-medium">{exec.lastUpdated}</span>
+                    <span className="text-[10px] text-slate-400 font-medium">{mapDate(exec.lastUpdatedAt, data?.timezone)}</span>
                   </div>
                   <button
                     onClick={(e) => {

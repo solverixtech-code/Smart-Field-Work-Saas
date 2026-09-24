@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -20,17 +20,31 @@ import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { MapKpiCard } from '../../components/maps/MapKpiCard';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
-import { mockTerritoryPolygons, TerritoryPolygon } from './mapsData';
+import { mapCurrency, type TerritoryPolygon } from './maps.api';
+import { useMapSnapshot } from './useMapSnapshot';
 
 export default function TerritoryMapPage() {
   const navigate = useNavigate();
+  const { data, range } = useMapSnapshot(30);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dateRange, setDateRange] = useState('May 24 – Jun 7, 2025');
-  const [selectedTerritory, setSelectedTerritory] = useState<TerritoryPolygon | null>(
-    mockTerritoryPolygons[0],
-  );
+  const [selectedTerritory, setSelectedTerritory] = useState<TerritoryPolygon | null>(null);
+  const territories = data?.territories ?? [];
+  const rangeLabel = `${new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(new Date(`${range.startDate}T00:00:00`))} – ${new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(`${range.endDate}T00:00:00`))}`;
+  const performance = {
+    high: territories.filter((row) => row.achievementPercentage >= 80).length,
+    good: territories.filter((row) => row.achievementPercentage >= 60 && row.achievementPercentage < 80).length,
+    average: territories.filter((row) => row.achievementPercentage >= 40 && row.achievementPercentage < 60).length,
+    low: territories.filter((row) => row.achievementPercentage < 40).length,
+  };
+  const best = [...territories].sort((a, b) => b.achievementPercentage - a.achievementPercentage)[0];
+  const highestTarget = [...territories].sort((a, b) => b.targetAmount - a.targetAmount)[0];
+  const attention = [...territories].sort((a, b) => a.achievementPercentage - b.achievementPercentage)[0];
 
-  const filteredTerritories = mockTerritoryPolygons.filter((t) =>
+  useEffect(() => {
+    if (!selectedTerritory && territories.length) setSelectedTerritory(territories[0]);
+  }, [selectedTerritory, territories]);
+
+  const filteredTerritories = territories.filter((t) =>
     t.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
@@ -53,12 +67,12 @@ export default function TerritoryMapPage() {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-[#0D1F3D]">
             <Calendar className="h-3.5 w-3.5 text-slate-400" />
-            <span>{dateRange}</span>
+            <span>{rangeLabel}</span>
           </div>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Filters drawer opened')}
+            onClick={() => setSearchTerm('')}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <Filter className="h-3.5 w-3.5" /> Filters
@@ -66,7 +80,11 @@ export default function TerritoryMapPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.success('Exporting territory allocation data...')}
+            onClick={() => {
+              const rows = [['Territory', 'Executives', 'Target', 'Achieved', 'Achievement %'], ...filteredTerritories.map((row) => [row.name, String(row.executivesCount), String(row.targetAmount), String(row.achievedAmount), String(row.achievementPercentage)])];
+              const blob = new Blob([rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' });
+              const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `territories-${range.endDate}.csv`; link.click(); URL.revokeObjectURL(link.href);
+            }}
             className="font-bold flex items-center gap-1.5 shadow-xs"
           >
             <Download className="h-3.5 w-3.5" /> Export
@@ -78,7 +96,7 @@ export default function TerritoryMapPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
         <MapKpiCard
           title="Total Territories"
-          value="12"
+          value={String(data?.summary.territories ?? 0)}
           subValue="Active territories"
           icon={Map}
           iconBgColor="bg-blue-50"
@@ -86,7 +104,7 @@ export default function TerritoryMapPage() {
         />
         <MapKpiCard
           title="Total Executives"
-          value="128"
+          value={String(data?.summary.territoryExecutives ?? 0)}
           subValue="Across all territories"
           icon={Users}
           iconBgColor="bg-emerald-50"
@@ -94,7 +112,7 @@ export default function TerritoryMapPage() {
         />
         <MapKpiCard
           title="Target (This Period)"
-          value="₹ 95,00,000"
+          value={mapCurrency(data?.summary.territoryTarget ?? 0)}
           subValue="Total target"
           icon={Target}
           iconBgColor="bg-amber-50"
@@ -102,16 +120,16 @@ export default function TerritoryMapPage() {
         />
         <MapKpiCard
           title="Achieved (This Period)"
-          value="₹ 63,45,200"
-          subValue="66.8% of target"
+          value={mapCurrency(data?.summary.territoryAchieved ?? 0)}
+          subValue={`${data?.summary.territoryAchievement ?? 0}% of target`}
           icon={ShoppingBag}
           iconBgColor="bg-purple-50"
           iconTextColor="text-purple-600"
         />
         <MapKpiCard
           title="Growth"
-          value="18%"
-          change="18%"
+          value="0%"
+          change="0%"
           changeType="positive"
           subValue="vs last period"
           icon={TrendingUp}
@@ -120,7 +138,7 @@ export default function TerritoryMapPage() {
         />
         <MapKpiCard
           title="Avg. Performance"
-          value="72%"
+          value={`${data?.summary.territoryAchievement ?? 0}%`}
           subValue="Across territories"
           icon={PieChartIcon}
           iconBgColor="bg-rose-50"
@@ -134,7 +152,7 @@ export default function TerritoryMapPage() {
         <div className="relative lg:col-span-8">
           <InteractiveMap
             mode="territories"
-            territories={mockTerritoryPolygons}
+            territories={territories}
             heightClassName="h-[650px]"
           >
             {/* Territory Overlay Selector */}
@@ -157,7 +175,7 @@ export default function TerritoryMapPage() {
           <div className="rounded-sm border border-slate-200/90 bg-white p-4 shadow-sm space-y-3">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="font-extrabold text-[#0D1F3D] text-xs">
-                Territories (12)
+                Territories ({territories.length})
               </h3>
               <span className="text-[10px] font-bold text-slate-400">Team Allocation</span>
             </div>
@@ -213,7 +231,7 @@ export default function TerritoryMapPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Viewing all 12 territories')}
+              onClick={() => setSearchTerm('')}
               className="w-full text-xs font-bold justify-between shadow-xs border-slate-200 text-[#0D1F3D]"
             >
               <span>View All Territories</span>
@@ -228,10 +246,10 @@ export default function TerritoryMapPage() {
             </h3>
 
             <div className="space-y-2 text-[11px] font-bold text-slate-600">
-              <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-emerald-500" /> High (≥80%)</span> <span className="text-slate-800 font-extrabold">3 (25%)</span></div>
-              <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-lime-500" /> Good (60–79%)</span> <span className="text-slate-800 font-extrabold">6 (50%)</span></div>
-              <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-amber-400" /> Average (40–59%)</span> <span className="text-slate-800 font-extrabold">2 (16%)</span></div>
-              <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-red-500" /> Low (&lt;40%)</span> <span className="text-slate-800 font-extrabold">1 (9%)</span></div>
+              <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-emerald-500" /> High (≥80%)</span> <span className="text-slate-800 font-extrabold">{performance.high} ({territories.length ? Math.round(performance.high / territories.length * 100) : 0}%)</span></div>
+              <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-lime-500" /> Good (60–79%)</span> <span className="text-slate-800 font-extrabold">{performance.good} ({territories.length ? Math.round(performance.good / territories.length * 100) : 0}%)</span></div>
+              <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-amber-400" /> Average (40–59%)</span> <span className="text-slate-800 font-extrabold">{performance.average} ({territories.length ? Math.round(performance.average / territories.length * 100) : 0}%)</span></div>
+              <div className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-red-500" /> Low (&lt;40%)</span> <span className="text-slate-800 font-extrabold">{performance.low} ({territories.length ? Math.round(performance.low / territories.length * 100) : 0}%)</span></div>
             </div>
           </div>
 
@@ -244,22 +262,22 @@ export default function TerritoryMapPage() {
             <div className="space-y-2 text-[11px] text-slate-600 font-medium">
               <div className="flex items-start gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 mt-1 shrink-0" />
-                <p><strong className="text-[#0D1F3D] font-extrabold">Ghatkopar territory</strong> is performing the best this period (77%).</p>
+                <p><strong className="text-[#0D1F3D] font-extrabold">{best?.name ?? 'No territory'}</strong> is performing the best this period ({best?.achievementPercentage ?? 0}%).</p>
               </div>
               <div className="flex items-start gap-2">
                 <span className="h-2 w-2 rounded-full bg-amber-500 mt-1 shrink-0" />
-                <p><strong className="text-[#0D1F3D] font-extrabold">Andheri East</strong> has highest revenue (₹ 14,00,000).</p>
+                <p><strong className="text-[#0D1F3D] font-extrabold">{highestTarget?.name ?? 'No territory'}</strong> has the highest target ({mapCurrency(highestTarget?.targetAmount ?? 0)}).</p>
               </div>
               <div className="flex items-start gap-2">
                 <span className="h-2 w-2 rounded-full bg-red-500 mt-1 shrink-0" />
-                <p><strong className="text-red-700 font-extrabold">Vikhroli territory</strong> needs attention (58% achievement).</p>
+                <p><strong className="text-red-700 font-extrabold">{attention?.name ?? 'No territory'}</strong> needs attention ({attention?.achievementPercentage ?? 0}% achievement).</p>
               </div>
             </div>
 
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Navigating to territory analytics')}
+              onClick={() => selectedTerritory && navigate(`/admin/territories/${selectedTerritory.id}/performance`)}
               className="w-full text-xs font-bold justify-between shadow-xs border-slate-200 text-[#0D1F3D] mt-2"
             >
               <span>View Full Analytics</span>
