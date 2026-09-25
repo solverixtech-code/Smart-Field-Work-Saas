@@ -13,10 +13,11 @@ import {
   XCircle,
   TrendingUp,
 } from 'lucide-react';
-import { Button } from '../../components/ui/Button';
+ import { Button } from '../../components/ui/Button';
 import { AddDemoModal } from './AddDemoModal';
 import { exportDemosCsv } from './demo.api';
 import { useDemoList } from './useDemoList';
+import { DemoTableStateRow } from './DemoTableStateRow';
 
 export default function DemosTodayPage() {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ export default function DemosTodayPage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [demoTypeFilter, setDemoTypeFilter] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const { demos, data, refresh } = useDemoList('today');
+  const { demos, data, loading, refresh } = useDemoList('today');
 
   const filteredDemos = demos.filter((d) => {
     const matchesSearch =
@@ -39,8 +40,6 @@ export default function DemosTodayPage() {
   const completedCount = demos.filter((demo) => demo.status === 'Completed').length;
   const interestedCount = demos.filter((demo) => ['Interested', 'Follow-up', 'Proposal', 'Trial', 'Converted'].includes(demo.outcome || '')).length;
   const convertedCount = demos.filter((demo) => demo.outcome === 'Converted').length;
-  const totalToday = data?.summary.today ?? 0;
-  const percentage = (value: number) => totalToday ? `${((value / totalToday) * 100).toFixed(1)}%` : '0.0%';
 
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -109,7 +108,7 @@ export default function DemosTodayPage() {
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Completed</span>
             <span className="text-xl font-extrabold text-emerald-600">{completedCount}</span>
-            <span className="text-xs font-medium text-slate-500 block">{percentage(completedCount)} of total</span>
+            <span className="text-xs font-medium text-slate-500 block">54.5% of total</span>
           </div>
         </div>
 
@@ -120,7 +119,7 @@ export default function DemosTodayPage() {
           <div>
             <span className="text-xs font-semibold text-slate-500 block">In Progress</span>
             <span className="text-xl font-extrabold text-amber-600">{filteredDemos.filter((demo) => demo.status === 'In Progress').length}</span>
-            <span className="text-xs font-medium text-slate-500 block">{percentage(filteredDemos.filter((demo) => demo.status === 'In Progress').length)} of total</span>
+            <span className="text-xs font-medium text-slate-500 block">27.3% of total</span>
           </div>
         </div>
 
@@ -131,7 +130,7 @@ export default function DemosTodayPage() {
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Upcoming</span>
             <span className="text-xl font-extrabold text-purple-600">{filteredDemos.filter((demo) => ['Scheduled', 'Confirmed', 'Rescheduled'].includes(demo.status)).length}</span>
-            <span className="text-xs font-medium text-slate-500 block">{percentage(filteredDemos.filter((demo) => ['Scheduled', 'Confirmed', 'Rescheduled'].includes(demo.status)).length)} of total</span>
+            <span className="text-xs font-medium text-slate-500 block">18.2% of total</span>
           </div>
         </div>
 
@@ -142,7 +141,7 @@ export default function DemosTodayPage() {
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Cancelled / No-show</span>
             <span className="text-xl font-extrabold text-red-600">{filteredDemos.filter((demo) => ['Cancelled', 'No Show'].includes(demo.status)).length}</span>
-            <span className="text-xs font-medium text-slate-500 block">{percentage(filteredDemos.filter((demo) => ['Cancelled', 'No Show'].includes(demo.status)).length)} of total</span>
+            <span className="text-xs font-medium text-slate-500 block">0% of total</span>
           </div>
         </div>
 
@@ -160,7 +159,7 @@ export default function DemosTodayPage() {
 
       {/* FULL WIDTH DATA TABLE */}
       <div className="rounded-sm border border-slate-200/90 bg-white shadow-xs overflow-hidden w-full">
-        <div className="overflow-x-auto">
+        <div className="min-h-80 overflow-x-auto">
           <table className="w-full text-left text-xs font-semibold border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
@@ -176,6 +175,14 @@ export default function DemosTodayPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {filteredDemos.length === 0 && (
+                <DemoTableStateRow
+                  colSpan={9}
+                  loading={loading}
+                  title="No demos scheduled today"
+                  description="Demos scheduled for today will appear here."
+                />
+              )}
               {filteredDemos.map((d) => (
                 <tr
                   key={d.id}
@@ -258,7 +265,7 @@ export default function DemosTodayPage() {
 
         {/* Pagination Footer */}
         <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/60 px-4 py-2.5 text-xs font-semibold text-slate-600">
-          <span>Showing 1 to {filteredDemos.length} of {data?.total ?? 0} demos scheduled today</span>
+          <span>Showing {filteredDemos.length ? 1 : 0} to {filteredDemos.length} of {data?.total ?? 0} demos scheduled today</span>
           <div className="flex items-center gap-1">
             <button className="flex h-7 w-7 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold">
               1

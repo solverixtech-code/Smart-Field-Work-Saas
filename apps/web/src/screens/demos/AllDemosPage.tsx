@@ -31,6 +31,7 @@ import { EditDemoModal } from './EditDemoModal';
 import { demoApi, DemoOptions, exportDemosCsv } from './demo.api';
 import { useDemoList } from './useDemoList';
 import { useDebouncedSearch } from '../../features/crm/CrmContext';
+import { DemoTableStateRow } from './DemoTableStateRow';
 
 const statusValues: Record<string, string> = {
   Completed: 'COMPLETED',
@@ -63,7 +64,7 @@ export default function AllDemosPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingDemo, setEditingDemo] = useState<DemoItem | undefined>(undefined);
-  const { demos, data, refresh } = useDemoList('all', {
+  const { demos, data, loading, refresh } = useDemoList('all', {
     page,
     limit: 25,
     search: debouncedSearch || undefined,
@@ -343,7 +344,7 @@ export default function AllDemosPage() {
 
       {/* FULL WIDTH DATA TABLE */}
       <div className="rounded-sm border border-slate-200/90 bg-white shadow-xs overflow-hidden w-full">
-        <div className="overflow-x-auto">
+        <div className="min-h-80 overflow-x-auto">
           <table className="w-full text-left text-xs font-semibold border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
@@ -369,6 +370,14 @@ export default function AllDemosPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {filteredDemos.length === 0 && (
+                <DemoTableStateRow
+                  colSpan={11}
+                  loading={loading}
+                  title="No demos found"
+                  description="Demos matching the selected filters will appear here."
+                />
+              )}
               {filteredDemos.map((d) => {
                 const isChecked = selectedRows.includes(d.id);
                 return (

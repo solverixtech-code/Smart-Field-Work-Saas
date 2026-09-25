@@ -15,11 +15,12 @@ import { Button } from '../../components/ui/Button';
 import { AddDemoModal } from './AddDemoModal';
 import { exportDemosCsv } from './demo.api';
 import { useDemoList } from './useDemoList';
+import { DemoTableStateRow } from './DemoTableStateRow';
 
 export default function ScheduledDemosPage() {
   const navigate = useNavigate();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const { demos: scheduledDemos, data, refresh } = useDemoList('scheduled');
+  const { demos: scheduledDemos, data, loading, refresh } = useDemoList('scheduled');
   const today = data?.today || new Date().toISOString().slice(0, 10);
   const daysFromToday = (date?: string) => date ? Math.round((new Date(`${date}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) / 86_400_000) : Number.POSITIVE_INFINITY;
   const todayCount = scheduledDemos.filter((demo) => demo.demoDateIso === today).length;
@@ -143,7 +144,7 @@ export default function ScheduledDemosPage() {
 
       {/* FULL WIDTH DATA TABLE */}
       <div className="rounded-sm border border-slate-200/90 bg-white shadow-xs overflow-hidden w-full">
-        <div className="overflow-x-auto">
+        <div className="min-h-80 overflow-x-auto">
           <table className="w-full text-left text-xs font-semibold border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
@@ -159,6 +160,14 @@ export default function ScheduledDemosPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {scheduledDemos.length === 0 && (
+                <DemoTableStateRow
+                  colSpan={9}
+                  loading={loading}
+                  title="No scheduled demos"
+                  description="Upcoming demos will appear here once they are scheduled."
+                />
+              )}
               {scheduledDemos.map((d) => (
                 <tr
                   key={d.id}
@@ -230,7 +239,7 @@ export default function ScheduledDemosPage() {
 
         {/* Pagination Footer */}
         <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/60 px-4 py-2.5 text-xs font-semibold text-slate-600">
-          <span>Showing 1 to {scheduledDemos.length} of {data?.total ?? 0} scheduled demos</span>
+          <span>Showing {scheduledDemos.length ? 1 : 0} to {scheduledDemos.length} of {data?.total ?? 0} scheduled demos</span>
           <div className="flex items-center gap-1">
             <button className="flex h-7 w-7 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold">
               1

@@ -17,6 +17,7 @@ import { DateRange, DateRangePicker } from '../../components/ui/DateRangePicker'
 import { AddDemoModal } from './AddDemoModal';
 import { exportDemosCsv } from './demo.api';
 import { useDemoList } from './useDemoList';
+import { DemoTableStateRow } from './DemoTableStateRow';
 
 export default function CompletedDemosPage() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function CompletedDemosPage() {
     const key = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     return { startDate: key(new Date(today.getFullYear(), today.getMonth(), 1)), endDate: key(today), label: 'This month' };
   });
-  const { demos: completedDemos, data, refresh } = useDemoList('completed', { from: dateRange.startDate, to: dateRange.endDate });
+  const { demos: completedDemos, data, loading, refresh } = useDemoList('completed', { from: dateRange.startDate, to: dateRange.endDate });
   const converted = completedDemos.filter((demo) => demo.outcome === 'Converted');
   const interested = completedDemos.filter((demo) => ['Interested', 'Follow-up', 'Proposal', 'Trial', 'Converted'].includes(demo.outcome || ''));
   const totalValue = converted.reduce((sum, demo) => sum + (demo.revenueValue || 0), 0);
@@ -153,7 +154,7 @@ export default function CompletedDemosPage() {
 
       {/* FULL-WIDTH DATA TABLE (100% width, no side-by-side squeezing) */}
       <div className="rounded-sm border border-slate-200/90 bg-white shadow-xs overflow-hidden w-full">
-        <div className="overflow-x-auto">
+        <div className="min-h-80 overflow-x-auto">
           <table className="w-full text-left text-xs font-semibold border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600">
@@ -170,6 +171,14 @@ export default function CompletedDemosPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
+              {completedDemos.length === 0 && (
+                <DemoTableStateRow
+                  colSpan={10}
+                  loading={loading}
+                  title="No completed demos"
+                  description="Completed demos in the selected date range will appear here."
+                />
+              )}
               {completedDemos.map((d) => (
                 <tr
                   key={d.id}
@@ -244,7 +253,7 @@ export default function CompletedDemosPage() {
 
         {/* Pagination Footer */}
         <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/60 px-4 py-2.5 text-xs font-semibold text-slate-600">
-          <span>Showing 1 to {completedDemos.length} of {data?.total ?? 0} completed demos</span>
+          <span>Showing {completedDemos.length ? 1 : 0} to {completedDemos.length} of {data?.total ?? 0} completed demos</span>
           <div className="flex items-center gap-1">
             <button className="flex h-7 w-7 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold">
               1
