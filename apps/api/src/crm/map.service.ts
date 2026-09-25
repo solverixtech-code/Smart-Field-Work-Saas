@@ -66,7 +66,7 @@ export class MapService {
       const end = parseFollowUpSchedule(nextDateKey(endDate), "12:00 AM", timezone);
       const period = endDate.slice(0, 7);
 
-      const [memberships, visits, punches, territories, opportunities] = await Promise.all([
+      const [memberships, visits, prospectVisits, punches, territories, opportunities] = await Promise.all([
         tx.tenantMembership.findMany({
           where: {
             tenantId, status: "ACTIVE",
@@ -93,6 +93,40 @@ export class MapService {
             status: true, outcome: true, routeArea: true,
             lead: { select: { status: true, priority: true, territory: { select: { name: true } } } },
             account: { select: { status: true, categoryLabel: true, territory: { select: { name: true } } } },
+          },
+        }),
+        tx.leadVisit.findMany({
+          where: {
+            tenantId,
+            status: { not: "CANCELLED" },
+            latitude: { not: null },
+            longitude: { not: null },
+          },
+          orderBy: { checkInTime: "desc" },
+          take: 5000,
+          select: {
+            id: true, leadId: true, accountId: true, targetType: true, targetName: true,
+            contactName: true, contactPhone: true, executiveMembershipId: true,
+            checkInTime: true, location: true, latitude: true, longitude: true,
+            status: true, outcome: true, routeArea: true, createdAt: true,
+            lead: {
+              select: {
+                status: true, priority: true, createdAt: true, convertedAt: true,
+                assignedMembershipId: true, territory: { select: { name: true } },
+              },
+            },
+            account: {
+              select: {
+                status: true, categoryLabel: true, createdAt: true, ownerMembershipId: true,
+                territory: { select: { name: true } },
+                convertedLeads: {
+                  where: { convertedAt: { not: null } },
+                  orderBy: { convertedAt: "desc" },
+                  take: 1,
+                  select: { convertedAt: true },
+                },
+              },
+            },
           },
         }),
         tx.punchLog.findMany({
@@ -165,19 +199,49 @@ export class MapService {
       });
 
       const geotaggedVisits = visits.filter((visit) => visit.latitude != null && visit.longitude != null);
-      const prospectsByTarget = new Map<string, typeof geotaggedVisits[number]>();
-      geotaggedVisits.forEach((visit) => prospectsByTarget.set(visit.accountId ?? visit.leadId ?? visit.id, visit));
+      const targetKey = (visit: { accountId: string | null; leadId: string | null; id: string }) =>
+        visit.accountId ? `account:${visit.accountId}` : visit.leadId ? `lead:${visit.leadId}` : `visit:${visit.id}`;
+      const visitedTargets = new Set(geotaggedVisits.map(targetKey));
+      const prospectsByTarget = new Map<string, typeof prospectVisits[number]>();
+      prospectVisits.forEach((visit) => {
+        const key = targetKey(visit);
+        if (!prospectsByTarget.has(key)) prospectsByTarget.set(key, visit);
+      });
+      const monthStart = parseFollowUpSchedule(`${endDate.slice(0, 7)}-01`, "12:00 AM", timezone);
+      const monthAfter = new Date(`${endDate.slice(0, 7)}-01T00:00:00Z`);
+      monthAfter.setUTCMonth(monthAfter.getUTCMonth() + 1);
+      const monthEnd = parseFollowUpSchedule(monthAfter.toISOString().slice(0, 10), "12:00 AM", timezone);
       const prospects = [...prospectsByTarget.entries()].map(([id, visit]) => {
         const isCustomer = Boolean(visit.accountId) || visit.lead?.status === "CONVERTED";
-        const status = isCustomer ? "Customer" : visit.lead?.status === "DISQUALIFIED" ? "Not Interested" : visit.status === "COMPLETED" ? "Visited" : "Follow-up";
+        const createdAt = visit.account?.createdAt ?? visit.lead?.createdAt ?? visit.createdAt;
+        const convertedAt = visit.lead?.convertedAt ?? visit.account?.convertedLeads[0]?.convertedAt ?? null;
+        const isNew = createdAt >= monthStart && createdAt < monthEnd;
+        const visitedInRange = visitedTargets.has(id);
+        const hot = visit.lead?.priority === "HIGH" || visit.lead?.priority === "URGENT";
+        const assigned = visit.accountId
+          ? Boolean(visit.account?.ownerMembershipId)
+          : visit.leadId
+            ? Boolean(visit.lead?.assignedMembershipId)
+            : Boolean(visit.executiveMembershipId);
+        const convertedThisMonth = Boolean(convertedAt && convertedAt >= monthStart && convertedAt < monthEnd);
+        const status = isCustomer
+          ? "Customer"
+          : visit.lead?.status === "DISQUALIFIED"
+            ? "Not Interested"
+            : isNew
+              ? "New Prospect"
+              : visitedInRange
+                ? "Visited"
+                : "Follow-up";
         return {
           id, name: visit.targetName, category: visit.account?.categoryLabel ?? visit.targetType,
           address: visit.location, status,
-          markerColor: status === "Customer" ? "star" : status === "Visited" ? "green" : status === "Not Interested" ? "red" : "yellow",
+          markerColor: status === "Customer" ? "star" : status === "New Prospect" ? "blue" : status === "Visited" ? "green" : status === "Not Interested" ? "red" : hot ? "purple" : "yellow",
           contactPerson: visit.contactName ?? "Not provided", phone: visit.contactPhone ?? "Not provided",
           lastVisitAt: visit.checkInTime, lat: visit.latitude!, lng: visit.longitude!,
           region: visit.account?.territory?.name ?? visit.lead?.territory?.name ?? visit.routeArea ?? "Unassigned",
           detailPath: visit.accountId ? `/admin/businesses/${visit.accountId}` : visit.leadId ? `/admin/leads/${visit.leadId}` : "/admin/businesses",
+          assigned, visitedInRange, hot, convertedThisMonth,
         };
       });
 

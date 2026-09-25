@@ -38,7 +38,12 @@ describe('MapService', () => {
       contactName: 'Asha', contactPhone: '9000000000', executiveMembershipId: 'exec-1', executiveName: 'Asha Rao', executiveAvatar: null,
       checkInTime: new Date('2026-09-24T05:00:00Z'), checkOutTime: null, durationMinutes: 30,
       location: 'Andheri East', latitude: 19.1, longitude: 72.8, status: 'IN_PROGRESS', outcome: null, routeArea: 'West',
-      lead: { status: 'OPEN', priority: 'HIGH', territory: { name: 'Andheri' } }, account: null,
+      createdAt: new Date('2026-09-01T05:00:00Z'),
+      lead: {
+        status: 'OPEN', priority: 'HIGH', createdAt: new Date('2026-09-01T05:00:00Z'), convertedAt: null,
+        assignedMembershipId: 'exec-1', territory: { name: 'Andheri' },
+      },
+      account: null,
     }]);
     tx.punchLog.findMany.mockResolvedValue([{
       id: 'punch-1', tenantMembershipId: 'exec-1', type: 'PUNCH_IN', timestamp: new Date('2026-09-24T04:00:00Z'),
@@ -59,7 +64,10 @@ describe('MapService', () => {
     expect(tx.leadVisit.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-a' }) }));
     expect(result.summary).toMatchObject({ totalExecutives: 1, activeExecutives: 1, onField: 1, visits: 1, territories: 1, territoryAchievement: 75 });
     expect(result.executives[0]).toMatchObject({ id: 'exec-1', currentLocation: 'Andheri East', batteryLevel: null });
-    expect(result.prospects[0]).toMatchObject({ name: 'Asha Stores', detailPath: '/admin/leads/lead-1' });
+    expect(result.prospects[0]).toMatchObject({
+      name: 'Asha Stores', detailPath: '/admin/leads/lead-1', status: 'New Prospect',
+      assigned: true, visitedInRange: true, hot: true, convertedThisMonth: false,
+    });
   });
 
   it('builds route distance from recorded attendance and visit coordinates', async () => {

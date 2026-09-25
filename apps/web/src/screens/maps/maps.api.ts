@@ -47,6 +47,10 @@ export interface BusinessProspectMarker {
   lng: number;
   region: string;
   detailPath?: string;
+  assigned?: boolean;
+  visitedInRange?: boolean;
+  hot?: boolean;
+  convertedThisMonth?: boolean;
 }
 
 export interface HeatmapPoint {

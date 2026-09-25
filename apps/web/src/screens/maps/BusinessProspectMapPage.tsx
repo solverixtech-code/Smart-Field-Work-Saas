@@ -31,9 +31,21 @@ export default function BusinessProspectMapPage() {
   const [prospectFilter, setProspectFilter] = useState('All');
   const [selectedProspect, setSelectedProspect] = useState<BusinessProspectMarker | null>(null);
   const prospects = data?.prospects ?? [];
+  const assignedProspects = prospects.filter((prospect) => prospect.assigned).length;
+  const newProspects = prospects.filter((prospect) => prospect.status === 'New Prospect').length;
+  const hotProspects = prospects.filter((prospect) => prospect.hot).length;
+  const unvisitedProspects = prospects.filter((prospect) => !prospect.visitedInRange).length;
+  const conversions = prospects.filter((prospect) => prospect.convertedThisMonth).length;
 
   useEffect(() => {
-    if (!selectedProspect && prospects.length) setSelectedProspect(prospects[0]);
+    if (!prospects.length) {
+      if (selectedProspect) setSelectedProspect(null);
+      return;
+    }
+    const currentProspect = selectedProspect
+      ? prospects.find((prospect) => prospect.id === selectedProspect.id)
+      : undefined;
+    if (currentProspect !== selectedProspect) setSelectedProspect(currentProspect ?? prospects[0]);
   }, [prospects, selectedProspect]);
 
   const filteredProspects = prospects.filter((p) => {
@@ -45,7 +57,7 @@ export default function BusinessProspectMapPage() {
       prospectFilter === 'All' ||
       (prospectFilter === 'New' && p.status === 'New Prospect') ||
       (prospectFilter === 'Visited' && p.status === 'Visited') ||
-      (prospectFilter === 'Unvisited' && !p.lastVisitAt) ||
+      (prospectFilter === 'Unvisited' && !p.visitedInRange) ||
       (prospectFilter === 'Customer' && p.status === 'Customer');
     return matchesSearch && matchesFilter;
   });
@@ -58,7 +70,7 @@ export default function BusinessProspectMapPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-extrabold text-[#0D1F3D]">Business Prospect Map</h1>
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-700 border border-emerald-200">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Live
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> {loading ? 'Syncing' : 'Live'}
             </span>
           </div>
           <p className="text-xs font-semibold text-slate-500 mt-0.5">
@@ -119,7 +131,7 @@ export default function BusinessProspectMapPage() {
         />
         <MapKpiCard
           title="New Prospects"
-          value={String(prospects.filter((row) => row.status === 'New Prospect').length)}
+          value={String(newProspects)}
           subValue="This month"
           icon={Target}
           iconBgColor="bg-emerald-50"
@@ -127,7 +139,7 @@ export default function BusinessProspectMapPage() {
         />
         <MapKpiCard
           title="Hot Prospects"
-          value={String(prospects.filter((row) => row.status === 'Follow-up' || row.status === 'Demo Done').length)}
+          value={String(hotProspects)}
           subValue="High potential"
           icon={Flame}
           iconBgColor="bg-amber-50"
@@ -135,15 +147,15 @@ export default function BusinessProspectMapPage() {
         />
         <MapKpiCard
           title="Assigned"
-          value={String(prospects.length)}
-          subValue={`${prospects.length ? 100 : 0}% of total`}
+          value={String(assignedProspects)}
+          subValue={`${prospects.length ? Math.round((assignedProspects / prospects.length) * 100) : 0}% of total`}
           icon={UserCheck}
           iconBgColor="bg-purple-50"
           iconTextColor="text-purple-600"
         />
         <MapKpiCard
           title="Unvisited"
-          value="0"
+          value={String(unvisitedProspects)}
           subValue="Need attention"
           icon={Clock}
           iconBgColor="bg-slate-100"
@@ -151,7 +163,7 @@ export default function BusinessProspectMapPage() {
         />
         <MapKpiCard
           title="Conversions"
-          value={String(prospects.filter((row) => row.status === 'Customer').length)}
+          value={String(conversions)}
           subValue="This month"
           icon={TrendingUp}
           iconBgColor="bg-rose-50"
@@ -210,6 +222,11 @@ export default function BusinessProspectMapPage() {
 
           {/* Prospects List */}
           <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-1">
+            {filteredProspects.length === 0 && (
+              <div className="flex h-full items-center justify-center px-4 text-center text-xs font-semibold text-slate-500">
+                {loading ? 'Loading business prospects...' : 'No business prospects match the selected filters.'}
+              </div>
+            )}
             {filteredProspects.map((pr) => {
               const isSelected = selectedProspect?.id === pr.id;
               const initials = pr.name
