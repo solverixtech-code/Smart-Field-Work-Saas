@@ -17,9 +17,7 @@ import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
 import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
-import { mockTerritoryExecutives } from '../territories/territoriesData';
-import { mockBusinesses } from '../businesses/businessesData';
-import { mockDemosList } from './demosData';
+import { demoApi, DemoLeadOption, DemoOptions } from './demo.api';
 
 interface AddDemoModalProps {
   isOpen: boolean;
@@ -27,49 +25,35 @@ interface AddDemoModalProps {
   onSuccess?: () => void;
 }
 
-// Consolidate businesses list from businessesData & demosData
-const allAvailableBusinesses = [
-  ...mockBusinesses.map((b) => ({
-    name: b.name,
-    contactPerson: b.contactPerson,
-    contactRole: b.contactRole,
-    phone: b.phone,
-    email: b.email,
-    address: b.address,
-    city: b.city,
-    category: b.category,
-  })),
-  ...mockDemosList.map((d) => ({
-    name: d.businessName,
-    contactPerson: d.contactPerson,
-    contactRole: d.contactRole,
-    phone: d.phone,
-    email: d.email,
-    address: d.businessAddress,
-    city: 'Mumbai',
-    category: d.productService,
-  })),
-].filter((b, idx, self) => idx === self.findIndex((t) => t.name === b.name));
-
 export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) {
   const [rendered, setRendered] = useState(false);
   const [visible, setVisible] = useState(false);
 
-  const [selectedBusinessName, setSelectedBusinessName] = useState(
-    allAvailableBusinesses[0]?.name || ''
-  );
-
-  const matchedBusiness =
-    allAvailableBusinesses.find((b) => b.name === selectedBusinessName) ||
-    allAvailableBusinesses[0];
-
-  const [phoneNumber, setPhoneNumber] = useState(matchedBusiness?.phone || '');
+  const [options, setOptions] = useState<DemoOptions>({ leads: [], executives: [] });
+  const [selectedLeadId, setSelectedLeadId] = useState('');
+  const matchedBusiness: DemoLeadOption | undefined = options.leads.find((lead) => lead.id === selectedLeadId);
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [demoType, setDemoType] = useState('Product Demo');
-  const [assignedTo, setAssignedTo] = useState('Arjun Mehta');
-  const [demoDate, setDemoDate] = useState('2025-05-20');
+  const [assignedTo, setAssignedTo] = useState('');
+  const [demoDate, setDemoDate] = useState(new Date().toISOString().slice(0, 10));
   const [demoTime, setDemoTime] = useState('11:00');
   const [productService, setProductService] = useState('Smart Field ERP & Mobile App');
   const [notes, setNotes] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    demoApi.options(controller.signal).then((result) => {
+      setOptions(result);
+      setSelectedLeadId((current) => current || result.leads[0]?.id || '');
+      setAssignedTo((current) => current || result.executives[0]?.id || '');
+      setPhoneNumber((current) => current || result.leads[0]?.phone || '');
+    }).catch((error: unknown) => {
+      if (!controller.signal.aborted) toast.error(error instanceof Error ? error.message : 'Unable to load demo options');
+    });
+    return () => controller.abort();
+  }, [isOpen]);
 
   // Smooth two-stage portal animation setup
   useEffect(() => {
@@ -98,22 +82,31 @@ export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) 
 
   const handleBusinessSelect = (e: { target: { value: string } }) => {
     const val = e.target.value;
-    setSelectedBusinessName(val);
-    const found = allAvailableBusinesses.find((b) => b.name === val);
+    setSelectedLeadId(val);
+    const found = options.leads.find((lead) => lead.id === val);
     if (found) {
-      setPhoneNumber(found.phone);
+      setPhoneNumber(found.phone || '');
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedBusinessName || !phoneNumber) {
+    if (!selectedLeadId || !phoneNumber || !assignedTo) {
       toast.error('Please fill in required fields');
       return;
     }
-    toast.success(`New Product Demo scheduled for ${selectedBusinessName}!`);
-    onSuccess?.();
-    onClose();
+    const controller = new AbortController();
+    setSaving(true);
+    try {
+      await demoApi.create({ leadId: selectedLeadId, demoTitle: productService || `${demoType} - ${matchedBusiness?.displayName || 'Lead'}`, demoDate, demoTime, demoType: demoType as 'Product Demo' | 'Live Demo' | 'Online Demo' | 'POC / Pilot', demoMode: demoType === 'Online Demo' ? 'Virtual' : 'In-Person', productService, attendeesCount: 1, keyQuestions: notes, conductedByMembershipId: assignedTo }, controller.signal);
+      toast.success(`New Product Demo scheduled for ${matchedBusiness?.displayName || 'lead'}!`);
+      onSuccess?.();
+      onClose();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to schedule demo');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!rendered) return null;
@@ -167,13 +160,13 @@ export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) 
           <div className="space-y-1">
             <Select
               label="Select Target Business *"
-              value={selectedBusinessName}
+              value={selectedLeadId}
               onChange={handleBusinessSelect}
               searchable
-              options={allAvailableBusinesses.map((b) => ({
-                value: b.name,
-                label: b.name,
-                sublabel: `${b.category} • ${b.city}`,
+              options={options.leads.map((lead) => ({
+                value: lead.id,
+                label: lead.displayName,
+                sublabel: `${lead.leadCode} • ${lead.city || 'Location not set'}`,
               }))}
             />
           </div>
@@ -183,25 +176,25 @@ export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) 
             <div className="rounded-sm border border-slate-200/80 bg-slate-50/70 p-3.5 space-y-2 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-[#0D1F3D]">{matchedBusiness.name}</span>
+                  <span className="font-extrabold text-[#0D1F3D]">{matchedBusiness.displayName}</span>
                   <span className="rounded-xs bg-slate-200/60 text-slate-700 px-1.5 py-0.2 text-[10px] font-bold">
-                    {matchedBusiness.category}
+                    {matchedBusiness.leadCode}
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-slate-400">{matchedBusiness.city}</span>
+                <span className="text-[10px] font-mono text-slate-400">{matchedBusiness.city || '—'}</span>
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-200/60">
                 <div className="flex items-center gap-1.5 text-slate-700">
                   <User className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                   <span>
-                    <strong className="text-slate-900">{matchedBusiness.contactPerson}</strong> ({matchedBusiness.contactRole || 'Contact'})
+                    <strong className="text-slate-900">{matchedBusiness.contactName || matchedBusiness.name}</strong> (Contact)
                   </span>
                 </div>
 
                 <div className="flex items-center gap-1.5 text-slate-700 font-mono">
                   <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                  <span>{matchedBusiness.phone}</span>
+                  <span>{matchedBusiness.phone || '—'}</span>
                 </div>
               </div>
             </div>
@@ -255,11 +248,11 @@ export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) 
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
                 searchable={true}
-                options={mockTerritoryExecutives.map((exec) => ({
-                  value: exec.name,
+                options={options.executives.map((exec) => ({
+                  value: exec.id,
                   label: exec.name,
-                  avatar: exec.avatar,
-                  sublabel: `${exec.role || 'Field Executive'} • ${exec.team}`,
+                  avatar: exec.avatarUrl || undefined,
+                  sublabel: `${exec.role} • ${exec.team || 'No team'}`,
                 }))}
               />
             </div>
@@ -320,7 +313,7 @@ export function AddDemoModal({ isOpen, onClose, onSuccess }: AddDemoModalProps) 
               size="sm"
               className="bg-red-600 hover:bg-red-700 text-white font-bold"
             >
-              Schedule Demo
+              {saving ? 'Scheduling...' : 'Schedule Demo'}
             </Button>
           </div>
         </form>

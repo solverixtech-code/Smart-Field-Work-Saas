@@ -2239,16 +2239,31 @@ model LeadDemo {
   conductedByMembership   TenantMembership @relation(fields: [conductedByMembershipId, tenantId], references: [id, tenantId], onDelete: Restrict)
   conductedByName         String
   conductedByAvatar       String?
+  demoCode                 String
   demoTitle               String
   demoDate                String // e.g. "2026-09-22"
+  demoTime                String           @default("11:00 AM")
+  demoType                String           @default("Product Demo")
   demoMode                String           @default("Virtual Google Meet") // Virtual, In-Person
+  productService          String?
   attendeesCount          Int              @default(3)
   feedbackRating          Float            @default(5.0)
   keyQuestions            String?
-  status                  String           @default("COMPLETED") // COMPLETED, SCHEDULED
+  outcome                 String           @default("PENDING")
+  nextAction              String?
+  nextActionDate          String?
+  durationMinutes         Int?
+  probabilityPercentage   Int?
+  status                  String           @default("COMPLETED") // SCHEDULED, CONFIRMED, IN_PROGRESS, COMPLETED, RESCHEDULED, NO_SHOW, CANCELLED
+  startedAt               DateTime?
+  completedAt             DateTime?
+  cancelledAt             DateTime?
   createdAt               DateTime         @default(now())
   updatedAt               DateTime         @updatedAt
 
+  @@unique([tenantId, demoCode])
+  @@index([tenantId, status, demoDate])
+  @@index([tenantId, conductedByMembershipId, demoDate])
   @@index([tenantId, leadId, createdAt])
 }
 

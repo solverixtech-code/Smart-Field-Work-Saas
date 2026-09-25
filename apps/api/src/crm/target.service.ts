@@ -67,7 +67,7 @@ export class TargetService {
             ],
           },
           orderBy: { user: { fullName: 'asc' } },
-          select: { id: true, employeeCode: true, designation: true, teamId: true, team: { select: { name: true } }, user: { select: { fullName: true, avatarUrl: true } } },
+          select: { id: true, employeeCode: true, designation: true, teamId: true, team: { select: { name: true } }, user: { select: { fullName: true, avatarUrl: true, employeeCode: true } } },
         }),
         tx.opportunity.findMany({
           where: { tenantId, deletedAt: null, stage: { equals: 'won', mode: 'insensitive' }, OR: [
@@ -170,7 +170,7 @@ export class TargetService {
         const threshold = Number(sales?.thresholdPct ?? 80);
         return {
           id: executive.id,
-          executiveId: executive.employeeCode ?? executive.id,
+          executiveId: executive.employeeCode ?? executive.user.employeeCode,
           executiveName: executive.user.fullName,
           executiveAvatar: executive.user.avatarUrl ?? null,
           role: executive.designation ?? 'Executive',
@@ -209,7 +209,7 @@ export class TargetService {
         statusDistribution,
         options: {
           teams: teams.map((team) => ({ value: team.id, label: `${team.name} (${team.code})` })),
-          executives: executives.map((executive) => ({ value: executive.id, label: executive.user.fullName, avatar: executive.user.avatarUrl ?? undefined, sublabel: [executive.designation, executive.team?.name].filter(Boolean).join(' • ') || executive.employeeCode || 'Executive' })),
+          executives: executives.map((executive) => ({ value: executive.id, label: executive.user.fullName, avatar: executive.user.avatarUrl ?? undefined, sublabel: [executive.designation, executive.team?.name].filter(Boolean).join(' • ') || executive.employeeCode || executive.user.employeeCode })),
         },
         sourceAvailability: { incentives: true, collections: false },
       };

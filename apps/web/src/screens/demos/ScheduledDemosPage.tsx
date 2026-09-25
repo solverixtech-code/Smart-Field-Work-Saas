@@ -12,16 +12,22 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { mockDemosList } from './demosData';
 import { AddDemoModal } from './AddDemoModal';
+import { exportDemosCsv } from './demo.api';
+import { useDemoList } from './useDemoList';
 
 export default function ScheduledDemosPage() {
   const navigate = useNavigate();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-  const scheduledDemos = mockDemosList.filter(
-    (d) => d.status === 'Scheduled' || d.status === 'In Progress'
-  );
+  const { demos: scheduledDemos, data, refresh } = useDemoList('scheduled');
+  const today = data?.today || new Date().toISOString().slice(0, 10);
+  const daysFromToday = (date?: string) => date ? Math.round((new Date(`${date}T00:00:00Z`).getTime() - new Date(`${today}T00:00:00Z`).getTime()) / 86_400_000) : Number.POSITIVE_INFINITY;
+  const todayCount = scheduledDemos.filter((demo) => demo.demoDateIso === today).length;
+  const weekCount = scheduledDemos.filter((demo) => daysFromToday(demo.demoDateIso) >= 0 && daysFromToday(demo.demoDateIso) < 7).length;
+  const monthCount = scheduledDemos.filter((demo) => demo.demoDateIso?.slice(0, 7) === today.slice(0, 7)).length;
+  const confirmedCount = scheduledDemos.filter((demo) => demo.status === 'Confirmed').length;
+  const pendingCount = scheduledDemos.length - confirmedCount;
+  const percentage = (value: number) => scheduledDemos.length ? `${((value / scheduledDemos.length) * 100).toFixed(1)}%` : '0.0%';
 
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -40,7 +46,7 @@ export default function ScheduledDemosPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.success('Schedule refreshed')}
+            onClick={() => { refresh(); toast.success('Schedule refreshed'); }}
             className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
           >
             <RefreshCw className="h-3.5 w-3.5" /> Refresh
@@ -49,7 +55,7 @@ export default function ScheduledDemosPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Exporting scheduled demos...')}
+            onClick={() => { exportDemosCsv(scheduledDemos, 'scheduled-demos.csv'); toast.success('Scheduled demos exported'); }}
             className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
           >
             <Download className="h-3.5 w-3.5" /> Export
@@ -74,8 +80,8 @@ export default function ScheduledDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Total Scheduled</span>
-            <span className="text-xl font-extrabold text-purple-600">32</span>
-            <span className="text-xs font-semibold text-emerald-600 block">↑ 6.7% vs yesterday</span>
+            <span className="text-xl font-extrabold text-purple-600">{scheduledDemos.length}</span>
+            <span className="text-xs font-semibold text-emerald-600 block">Live schedule total</span>
           </div>
         </div>
 
@@ -85,8 +91,8 @@ export default function ScheduledDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Today</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">8</span>
-            <span className="text-xs font-medium text-slate-500 block">25.0% of total</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">{todayCount}</span>
+            <span className="text-xs font-medium text-slate-500 block">{percentage(todayCount)} of total</span>
           </div>
         </div>
 
@@ -96,8 +102,8 @@ export default function ScheduledDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">This Week</span>
-            <span className="text-xl font-extrabold text-amber-600">18</span>
-            <span className="text-xs font-medium text-slate-500 block">56.2% of total</span>
+            <span className="text-xl font-extrabold text-amber-600">{weekCount}</span>
+            <span className="text-xs font-medium text-slate-500 block">{percentage(weekCount)} of total</span>
           </div>
         </div>
 
@@ -107,8 +113,8 @@ export default function ScheduledDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">This Month</span>
-            <span className="text-xl font-extrabold text-indigo-600">32</span>
-            <span className="text-xs font-medium text-slate-500 block">100% of total</span>
+            <span className="text-xl font-extrabold text-indigo-600">{monthCount}</span>
+            <span className="text-xs font-medium text-slate-500 block">{percentage(monthCount)} of total</span>
           </div>
         </div>
 
@@ -118,8 +124,8 @@ export default function ScheduledDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Confirmed</span>
-            <span className="text-xl font-extrabold text-emerald-600">24</span>
-            <span className="text-xs font-medium text-slate-500 block">75.0% of total</span>
+            <span className="text-xl font-extrabold text-emerald-600">{confirmedCount}</span>
+            <span className="text-xs font-medium text-slate-500 block">{percentage(confirmedCount)} of total</span>
           </div>
         </div>
 
@@ -129,8 +135,8 @@ export default function ScheduledDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Pending Confirmation</span>
-            <span className="text-xl font-extrabold text-orange-600">8</span>
-            <span className="text-xs font-medium text-slate-500 block">25.0% of total</span>
+            <span className="text-xl font-extrabold text-orange-600">{pendingCount}</span>
+            <span className="text-xs font-medium text-slate-500 block">{percentage(pendingCount)} of total</span>
           </div>
         </div>
       </div>
@@ -202,7 +208,7 @@ export default function ScheduledDemosPage() {
                   </td>
                   <td className="p-3 text-center whitespace-nowrap">
                     <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Confirmed
+                      {d.status}
                     </span>
                   </td>
                   <td className="p-3 text-center text-slate-600 font-medium whitespace-nowrap">
@@ -224,7 +230,7 @@ export default function ScheduledDemosPage() {
 
         {/* Pagination Footer */}
         <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/60 px-4 py-2.5 text-xs font-semibold text-slate-600">
-          <span>Showing 1 to {scheduledDemos.length} of 32 scheduled demos</span>
+          <span>Showing 1 to {scheduledDemos.length} of {data?.total ?? 0} scheduled demos</span>
           <div className="flex items-center gap-1">
             <button className="flex h-7 w-7 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold">
               1
@@ -243,7 +249,7 @@ export default function ScheduledDemosPage() {
 
           <div className="relative py-2 flex flex-col items-center justify-center">
             <div className="h-20 w-20 rounded-full border-4 border-emerald-500 border-t-amber-500 flex flex-col items-center justify-center shadow-xs">
-              <span className="text-base font-extrabold text-[#0D1F3D]">32</span>
+              <span className="text-base font-extrabold text-[#0D1F3D]">{scheduledDemos.length}</span>
               <span className="text-[9px] font-bold text-slate-400">Total</span>
             </div>
           </div>
@@ -253,13 +259,13 @@ export default function ScheduledDemosPage() {
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" /> Confirmed
               </span>
-              <span className="font-extrabold">24 (75.0%)</span>
+              <span className="font-extrabold">{confirmedCount}</span>
             </div>
             <div className="flex justify-between">
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="h-2 w-2 rounded-full bg-amber-500" /> Pending Confirmation
               </span>
-              <span className="font-extrabold">8 (25.0%)</span>
+              <span className="font-extrabold">{pendingCount}</span>
             </div>
           </div>
         </div>
@@ -268,6 +274,7 @@ export default function ScheduledDemosPage() {
       <AddDemoModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        onSuccess={refresh}
       />
     </div>
   );

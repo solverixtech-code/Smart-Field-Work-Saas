@@ -6,8 +6,8 @@ import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
 import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
-import { mockTerritoryExecutives } from '../territories/territoriesData';
 import { DemoItem } from './demosData';
+import { demoApi, DemoOptions } from './demo.api';
 
 interface EditDemoModalProps {
   isOpen: boolean;
@@ -19,26 +19,37 @@ interface EditDemoModalProps {
 export function EditDemoModal({ isOpen, onClose, demo, onSuccess }: EditDemoModalProps) {
   const [rendered, setRendered] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [options, setOptions] = useState<DemoOptions>({ leads: [], executives: [] });
 
   const [demoType, setDemoType] = useState(demo?.demoType || 'Product Demo');
-  const [assignedTo, setAssignedTo] = useState(demo?.assignedToName || 'Arjun Mehta');
+  const [assignedTo, setAssignedTo] = useState(demo?.assignedToMembershipId || '');
   const [status, setStatus] = useState(demo?.status || 'Scheduled');
-  const [demoDate, setDemoDate] = useState(demo?.demoDate || '2025-05-20');
+  const [demoDate, setDemoDate] = useState(demo?.demoDateIso || new Date().toISOString().slice(0, 10));
   const [demoTime, setDemoTime] = useState(demo?.demoTime || '11:00 AM');
   const [productService, setProductService] = useState(demo?.productService || 'Smart Field ERP & Mobile App');
   const [notes, setNotes] = useState(demo?.notesSummary || '');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (demo) {
       setDemoType(demo.demoType);
-      setAssignedTo(demo.assignedToName);
+      setAssignedTo(demo.assignedToMembershipId || '');
       setStatus(demo.status);
-      setDemoDate(demo.demoDate);
+      setDemoDate(demo.demoDateIso || demo.demoDate);
       setDemoTime(demo.demoTime);
       setProductService(demo.productService);
       setNotes(demo.notesSummary || '');
     }
   }, [demo]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const controller = new AbortController();
+    demoApi.options(controller.signal).then(setOptions).catch((error: unknown) => {
+      if (!controller.signal.aborted) toast.error(error instanceof Error ? error.message : 'Unable to load demo options');
+    });
+    return () => controller.abort();
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -64,11 +75,22 @@ export function EditDemoModal({ isOpen, onClose, demo, onSuccess }: EditDemoModa
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(`Product Demo ${demo?.demoId || ''} updated successfully!`);
-    onSuccess?.();
-    onClose();
+    if (!demo) return;
+    const statusValues: Record<DemoItem['status'], string> = { Scheduled: 'SCHEDULED', Confirmed: 'CONFIRMED', 'In Progress': 'IN_PROGRESS', Completed: 'COMPLETED', Rescheduled: 'RESCHEDULED', 'No Show': 'NO_SHOW', Cancelled: 'CANCELLED' };
+    const controller = new AbortController();
+    setSaving(true);
+    try {
+      await demoApi.update(demo.id, { demoType, conductedByMembershipId: assignedTo, status: statusValues[status], demoDate, demoTime, productService, keyQuestions: notes }, controller.signal);
+      toast.success(`Product Demo ${demo.demoId} updated successfully!`);
+      onSuccess?.();
+      onClose();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to update demo');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!rendered) return null;
@@ -140,7 +162,7 @@ export function EditDemoModal({ isOpen, onClose, demo, onSuccess }: EditDemoModa
               <Select
                 label="Demo Type *"
                 value={demoType}
-                onChange={(e) => setDemoType(e.target.value as any)}
+                onChange={(e) => setDemoType(e.target.value as DemoItem['demoType'])}
                 searchable={false}
                 options={[
                   { value: 'Product Demo', label: 'Product Demo' },
@@ -156,12 +178,15 @@ export function EditDemoModal({ isOpen, onClose, demo, onSuccess }: EditDemoModa
               <Select
                 label="Status *"
                 value={status}
-                onChange={(e) => setStatus(e.target.value as any)}
+                onChange={(e) => setStatus(e.target.value as DemoItem['status'])}
                 searchable={false}
                 options={[
                   { value: 'Scheduled', label: 'Scheduled' },
+                  { value: 'Confirmed', label: 'Confirmed' },
                   { value: 'In Progress', label: 'In Progress' },
                   { value: 'Completed', label: 'Completed' },
+                  { value: 'Rescheduled', label: 'Rescheduled' },
+                  { value: 'No Show', label: 'No Show' },
                   { value: 'Cancelled', label: 'Cancelled' },
                 ]}
               />
@@ -174,11 +199,11 @@ export function EditDemoModal({ isOpen, onClose, demo, onSuccess }: EditDemoModa
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
                 searchable
-                options={mockTerritoryExecutives.map((exec) => ({
-                  value: exec.name,
+                options={options.executives.map((exec) => ({
+                  value: exec.id,
                   label: exec.name,
                   sublabel: exec.role,
-                  avatar: exec.avatar,
+                  avatar: exec.avatarUrl || undefined,
                 }))}
               />
             </div>
@@ -238,7 +263,7 @@ export function EditDemoModal({ isOpen, onClose, demo, onSuccess }: EditDemoModa
               size="sm"
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
             >
-              Save Changes
+              {saving ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
         </form>

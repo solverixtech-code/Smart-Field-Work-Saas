@@ -1,24 +1,37 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   TrendingUp,
   Download,
-  Calendar,
   DollarSign,
   Award,
   CheckCircle2,
   PieChart,
-  Users,
-  ArrowRight,
-  Filter,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
-import { DateRangePicker } from "../../components/ui/DateRangePicker";
+import { DateRange, DateRangePicker } from "../../components/ui/DateRangePicker";
 import { KpiCard } from "../../components/dashboard/KpiCard";
+import { demoApi, DemoConversionReport, exportDemoConversionCsv } from "./demo.api";
 
 export default function DemoConversionReportPage() {
-  const navigate = useNavigate();
+  const [report, setReport] = useState<DemoConversionReport | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    const today = new Date();
+    const key = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return { startDate: key(new Date(today.getFullYear(), today.getMonth(), 1)), endDate: key(today), label: 'This month' };
+  });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    demoApi.conversionReport({ from: dateRange.startDate, to: dateRange.endDate }, controller.signal).then(setReport).catch((error: unknown) => {
+      if (!controller.signal.aborted) toast.error(error instanceof Error ? error.message : 'Unable to load conversion report');
+    });
+    return () => controller.abort();
+  }, [dateRange.endDate, dateRange.startDate]);
+
+  const summary = report?.summary ?? { total: 0, completed: 0, interested: 0, proposals: 0, converted: 0, conversionRate: 0, valueConverted: 0, averageDaysToClose: 0 };
+  const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 });
+  const rate = (value: number, total: number) => total ? `${((value / total) * 100).toFixed(1)}%` : '0.0%';
 
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -36,14 +49,16 @@ export default function DemoConversionReportPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <DateRangePicker />
+          <DateRangePicker value={dateRange} onChange={setDateRange} />
 
           <Button
             variant="outline"
             size="sm"
-            onClick={() =>
-              toast.info("Exporting conversion analytics report...")
-            }
+            onClick={() => {
+              if (!report) return;
+              exportDemoConversionCsv(report, `demo-conversion-${dateRange.startDate}-${dateRange.endDate}.csv`);
+              toast.success("Conversion report exported");
+            }}
             className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
           >
             <Download className="h-3.5 w-3.5" /> Export Report
@@ -55,7 +70,7 @@ export default function DemoConversionReportPage() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <KpiCard
           title="Total Demos"
-          value="128"
+          value={String(summary.total)}
           subValue="Conducted this period"
           icon={CheckCircle2}
           iconBgColor="bg-blue-500/10"
@@ -63,7 +78,7 @@ export default function DemoConversionReportPage() {
         />
         <KpiCard
           title="Demos Converted"
-          value="61"
+          value={String(summary.converted)}
           subValue="Closed deals won"
           icon={Award}
           iconBgColor="bg-emerald-500/10"
@@ -71,7 +86,7 @@ export default function DemoConversionReportPage() {
         />
         <KpiCard
           title="Conversion Rate"
-          value="47.6%"
+          value={`${summary.conversionRate}%`}
           subValue="Demo to sale ratio"
           icon={TrendingUp}
           iconBgColor="bg-indigo-500/10"
@@ -79,7 +94,7 @@ export default function DemoConversionReportPage() {
         />
         <KpiCard
           title="Value Converted"
-          value="₹48,20,000"
+          value={currency.format(summary.valueConverted)}
           subValue="Total deal revenue"
           icon={DollarSign}
           iconBgColor="bg-teal-500/10"
@@ -87,7 +102,7 @@ export default function DemoConversionReportPage() {
         />
         <KpiCard
           title="Avg Days to Close"
-          value="6.4 Days"
+          value={`${summary.averageDaysToClose} Days`}
           subValue="Demo to closure"
           icon={PieChart}
           iconBgColor="bg-purple-500/10"
@@ -106,7 +121,7 @@ export default function DemoConversionReportPage() {
             <span className="text-[10px] text-slate-400 block uppercase">
               1. Total Demos
             </span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">128</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">{summary.total}</span>
             <span className="text-[10px] text-slate-400 font-normal block">
               100% initial pool
             </span>
@@ -116,9 +131,9 @@ export default function DemoConversionReportPage() {
             <span className="text-[10px] text-blue-600 font-bold block uppercase">
               2. Completed Demos
             </span>
-            <span className="text-xl font-extrabold text-blue-700">78</span>
+            <span className="text-xl font-extrabold text-blue-700">{summary.completed}</span>
             <span className="text-[10px] text-blue-600 font-normal block">
-              60.9% completion
+              {rate(summary.completed, summary.total)} completion
             </span>
           </div>
 
@@ -126,9 +141,9 @@ export default function DemoConversionReportPage() {
             <span className="text-[10px] text-purple-600 font-bold block uppercase">
               3. Interested Leads
             </span>
-            <span className="text-xl font-extrabold text-purple-700">52</span>
+            <span className="text-xl font-extrabold text-purple-700">{summary.interested}</span>
             <span className="text-[10px] text-purple-600 font-normal block">
-              66.7% of completed
+              {rate(summary.interested, summary.completed)} of completed
             </span>
           </div>
 
@@ -136,9 +151,9 @@ export default function DemoConversionReportPage() {
             <span className="text-[10px] text-amber-600 font-bold block uppercase">
               4. Proposals Sent
             </span>
-            <span className="text-xl font-extrabold text-amber-700">38</span>
+            <span className="text-xl font-extrabold text-amber-700">{summary.proposals}</span>
             <span className="text-[10px] text-amber-600 font-normal block">
-              73.0% of interested
+              {rate(summary.proposals, summary.interested)} of interested
             </span>
           </div>
 
@@ -146,9 +161,9 @@ export default function DemoConversionReportPage() {
             <span className="text-[10px] text-emerald-600 font-bold block uppercase">
               5. Deals Closed Won
             </span>
-            <span className="text-xl font-extrabold text-emerald-700">61</span>
+            <span className="text-xl font-extrabold text-emerald-700">{summary.converted}</span>
             <span className="text-[10px] text-emerald-600 font-normal block">
-              47.6% net rate
+              {summary.conversionRate}% net rate
             </span>
           </div>
         </div>
@@ -173,81 +188,19 @@ export default function DemoConversionReportPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <tr className="hover:bg-slate-50">
-                  <td className="p-3 font-bold text-[#0D1F3D]">Arjun Mehta</td>
-                  <td className="p-3 text-center font-mono font-bold">28</td>
-                  <td className="p-3 text-center font-mono font-bold text-emerald-600">
-                    17
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">
-                      60.7%
-                    </span>
-                  </td>
-                  <td className="p-3 text-right font-mono font-bold text-emerald-700">
-                    ₹ 14,80,000
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50">
-                  <td className="p-3 font-bold text-[#0D1F3D]">Neha Sharma</td>
-                  <td className="p-3 text-center font-mono font-bold">24</td>
-                  <td className="p-3 text-center font-mono font-bold text-emerald-600">
-                    13
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">
-                      54.1%
-                    </span>
-                  </td>
-                  <td className="p-3 text-right font-mono font-bold text-emerald-700">
-                    ₹ 11,20,000
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50">
-                  <td className="p-3 font-bold text-[#0D1F3D]">Pooja Yadav</td>
-                  <td className="p-3 text-center font-mono font-bold">20</td>
-                  <td className="p-3 text-center font-mono font-bold text-emerald-600">
-                    10
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">
-                      50.0%
-                    </span>
-                  </td>
-                  <td className="p-3 text-right font-mono font-bold text-emerald-700">
-                    ₹ 9,40,000
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50">
-                  <td className="p-3 font-bold text-[#0D1F3D]">Rakesh Patel</td>
-                  <td className="p-3 text-center font-mono font-bold">18</td>
-                  <td className="p-3 text-center font-mono font-bold text-emerald-600">
-                    8
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className="rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-[10px] font-bold border border-amber-200">
-                      44.4%
-                    </span>
-                  </td>
-                  <td className="p-3 text-right font-mono font-bold text-emerald-700">
-                    ₹ 7,50,000
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50">
-                  <td className="p-3 font-bold text-[#0D1F3D]">Kiran Jadhav</td>
-                  <td className="p-3 text-center font-mono font-bold">16</td>
-                  <td className="p-3 text-center font-mono font-bold text-emerald-600">
-                    6
-                  </td>
-                  <td className="p-3 text-center">
-                    <span className="rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-[10px] font-bold border border-amber-200">
-                      37.5%
-                    </span>
-                  </td>
-                  <td className="p-3 text-right font-mono font-bold text-emerald-700">
-                    ₹ 5,30,000
-                  </td>
-                </tr>
+                {(report?.leaderboard ?? []).map((row) => (
+                  <tr key={row.name} className="hover:bg-slate-50">
+                    <td className="p-3 font-bold text-[#0D1F3D]">{row.name}</td>
+                    <td className="p-3 text-center font-mono font-bold">{row.demos}</td>
+                    <td className="p-3 text-center font-mono font-bold text-emerald-600">{row.converted}</td>
+                    <td className="p-3 text-center">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold border ${row.conversionRate >= 50 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                        {row.conversionRate}%
+                      </span>
+                    </td>
+                    <td className="p-3 text-right font-mono font-bold text-emerald-700">{currency.format(row.revenue)}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -260,24 +213,12 @@ export default function DemoConversionReportPage() {
               Conversion Rate by Lead Source
             </h3>
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-600 font-medium">Referral</span>
-                <span className="font-extrabold text-emerald-600">62.5%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600 font-medium">Website</span>
-                <span className="font-extrabold text-blue-600">48.0%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600 font-medium">Google Ads</span>
-                <span className="font-extrabold text-amber-600">41.2%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600 font-medium">
-                  Walk-in / Trade Show
-                </span>
-                <span className="font-extrabold text-slate-700">35.0%</span>
-              </div>
+              {(report?.sources ?? []).map((source) => (
+                <div key={source.source} className="flex justify-between">
+                  <span className="text-slate-600 font-medium">{source.source}</span>
+                  <span className="font-extrabold text-emerald-600">{source.conversionRate}%</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

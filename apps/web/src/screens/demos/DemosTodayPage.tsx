@@ -14,8 +14,9 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
-import { mockDemosList } from './demosData';
 import { AddDemoModal } from './AddDemoModal';
+import { exportDemosCsv } from './demo.api';
+import { useDemoList } from './useDemoList';
 
 export default function DemosTodayPage() {
   const navigate = useNavigate();
@@ -23,8 +24,9 @@ export default function DemosTodayPage() {
   const [statusFilter, setStatusFilter] = useState('All');
   const [demoTypeFilter, setDemoTypeFilter] = useState('All');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const { demos, data, refresh } = useDemoList('today');
 
-  const filteredDemos = mockDemosList.filter((d) => {
+  const filteredDemos = demos.filter((d) => {
     const matchesSearch =
       d.demoId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.businessName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -34,6 +36,11 @@ export default function DemosTodayPage() {
 
     return matchesSearch && matchesStatus && matchesType;
   });
+  const completedCount = demos.filter((demo) => demo.status === 'Completed').length;
+  const interestedCount = demos.filter((demo) => ['Interested', 'Follow-up', 'Proposal', 'Trial', 'Converted'].includes(demo.outcome || '')).length;
+  const convertedCount = demos.filter((demo) => demo.outcome === 'Converted').length;
+  const totalToday = data?.summary.today ?? 0;
+  const percentage = (value: number) => totalToday ? `${((value / totalToday) * 100).toFixed(1)}%` : '0.0%';
 
   return (
     <div className="space-y-4 font-sans pb-16 bg-slate-50/50 min-h-screen p-1 sm:p-2 text-left">
@@ -50,14 +57,13 @@ export default function DemosTodayPage() {
 
         <div className="flex items-center gap-2">
           <select className="rounded-sm border border-slate-200 bg-white px-3 py-1.5 text-xs font-extrabold text-[#0D1F3D] shadow-xs">
-            <option value="2025-05-20">20 May 2025 (Today)</option>
-            <option value="2025-05-21">21 May 2025 (Tomorrow)</option>
+            <option value={data?.today}>{data?.today || 'Today'} (Today)</option>
           </select>
 
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.success('Demos refreshed')}
+            onClick={() => { refresh(); toast.success('Demos refreshed'); }}
             className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
           >
             <RefreshCw className="h-3.5 w-3.5" /> Refresh
@@ -66,7 +72,7 @@ export default function DemosTodayPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Exporting today demos...')}
+            onClick={() => { exportDemosCsv(filteredDemos, 'demos-today.csv'); toast.success('Today demos exported'); }}
             className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
           >
             <Download className="h-3.5 w-3.5" /> Export
@@ -91,8 +97,8 @@ export default function DemosTodayPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Total Demos Today</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">22</span>
-            <span className="text-xs font-semibold text-emerald-600 block">↑ 10% vs yesterday</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">{data?.summary.today ?? 0}</span>
+            <span className="text-xs font-semibold text-emerald-600 block">Live daily total</span>
           </div>
         </div>
 
@@ -102,8 +108,8 @@ export default function DemosTodayPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Completed</span>
-            <span className="text-xl font-extrabold text-emerald-600">12</span>
-            <span className="text-xs font-medium text-slate-500 block">54.5% of total</span>
+            <span className="text-xl font-extrabold text-emerald-600">{completedCount}</span>
+            <span className="text-xs font-medium text-slate-500 block">{percentage(completedCount)} of total</span>
           </div>
         </div>
 
@@ -113,8 +119,8 @@ export default function DemosTodayPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">In Progress</span>
-            <span className="text-xl font-extrabold text-amber-600">6</span>
-            <span className="text-xs font-medium text-slate-500 block">27.3% of total</span>
+            <span className="text-xl font-extrabold text-amber-600">{filteredDemos.filter((demo) => demo.status === 'In Progress').length}</span>
+            <span className="text-xs font-medium text-slate-500 block">{percentage(filteredDemos.filter((demo) => demo.status === 'In Progress').length)} of total</span>
           </div>
         </div>
 
@@ -124,8 +130,8 @@ export default function DemosTodayPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Upcoming</span>
-            <span className="text-xl font-extrabold text-purple-600">4</span>
-            <span className="text-xs font-medium text-slate-500 block">18.2% of total</span>
+            <span className="text-xl font-extrabold text-purple-600">{filteredDemos.filter((demo) => ['Scheduled', 'Confirmed', 'Rescheduled'].includes(demo.status)).length}</span>
+            <span className="text-xs font-medium text-slate-500 block">{percentage(filteredDemos.filter((demo) => ['Scheduled', 'Confirmed', 'Rescheduled'].includes(demo.status)).length)} of total</span>
           </div>
         </div>
 
@@ -135,8 +141,8 @@ export default function DemosTodayPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Cancelled / No-show</span>
-            <span className="text-xl font-extrabold text-red-600">0</span>
-            <span className="text-xs font-medium text-slate-500 block">0% of total</span>
+            <span className="text-xl font-extrabold text-red-600">{filteredDemos.filter((demo) => ['Cancelled', 'No Show'].includes(demo.status)).length}</span>
+            <span className="text-xs font-medium text-slate-500 block">{percentage(filteredDemos.filter((demo) => ['Cancelled', 'No Show'].includes(demo.status)).length)} of total</span>
           </div>
         </div>
 
@@ -146,7 +152,7 @@ export default function DemosTodayPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Conversion Rate</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">50.0%</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">{data?.summary.completed ? `${((data.summary.converted / data.summary.completed) * 100).toFixed(1)}%` : '0.0%'}</span>
             <span className="text-xs font-medium text-slate-500 block">From completed demos</span>
           </div>
         </div>
@@ -252,7 +258,7 @@ export default function DemosTodayPage() {
 
         {/* Pagination Footer */}
         <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/60 px-4 py-2.5 text-xs font-semibold text-slate-600">
-          <span>Showing 1 to {filteredDemos.length} of 22 demos scheduled today</span>
+          <span>Showing 1 to {filteredDemos.length} of {data?.total ?? 0} demos scheduled today</span>
           <div className="flex items-center gap-1">
             <button className="flex h-7 w-7 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold">
               1
@@ -272,31 +278,31 @@ export default function DemosTodayPage() {
           <div className="space-y-2 text-xs pt-1">
             <div className="flex items-center justify-between">
               <span className="text-slate-500 font-medium">Total Demos</span>
-              <span className="font-extrabold text-[#0D1F3D]">22</span>
+              <span className="font-extrabold text-[#0D1F3D]">{demos.length}</span>
             </div>
             <div className="h-3 w-full rounded-sm bg-blue-600 shadow-inner" />
 
             <div className="flex items-center justify-between pt-1">
               <span className="text-slate-500 font-medium">Completed Demos</span>
-              <span className="font-extrabold text-emerald-600">12</span>
+              <span className="font-extrabold text-emerald-600">{completedCount}</span>
             </div>
             <div className="h-3 w-3/4 mx-auto rounded-sm bg-emerald-500 shadow-inner" />
 
             <div className="flex items-center justify-between pt-1">
               <span className="text-slate-500 font-medium">Interested</span>
-              <span className="font-extrabold text-amber-600">10</span>
+              <span className="font-extrabold text-amber-600">{interestedCount}</span>
             </div>
             <div className="h-3 w-1/2 mx-auto rounded-sm bg-amber-500 shadow-inner" />
 
             <div className="flex items-center justify-between pt-1">
               <span className="text-slate-500 font-medium">Demo Done</span>
-              <span className="font-extrabold text-purple-600">6</span>
+              <span className="font-extrabold text-purple-600">{convertedCount}</span>
             </div>
             <div className="h-3 w-1/3 mx-auto rounded-sm bg-purple-600 shadow-inner" />
 
             <div className="flex items-center justify-between border-t border-slate-100 pt-2 font-extrabold">
               <span className="text-[#0D1F3D]">Conversion Rate</span>
-              <span className="text-emerald-600 text-sm">50.0%</span>
+              <span className="text-emerald-600 text-sm">{completedCount ? `${((convertedCount / completedCount) * 100).toFixed(1)}%` : '0.0%'}</span>
             </div>
           </div>
         </div>
@@ -305,6 +311,7 @@ export default function DemosTodayPage() {
       <AddDemoModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        onSuccess={refresh}
       />
     </div>
   );

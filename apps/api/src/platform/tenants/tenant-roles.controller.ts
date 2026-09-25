@@ -788,6 +788,7 @@ function formatPermissionActionLabel(
     case 'crm.categories.view': return 'View Categories';
     case 'crm.customers.view': return 'View Customers';
     case 'crm.demos.view': return 'View Demos';
+    case 'crm.demos.manage': return 'Manage Demos';
     case 'crm.followups.view': return 'View Follow-ups';
     case 'crm.visits.view': return 'View Visits';
     case 'crm.map.view': return 'View Maps';

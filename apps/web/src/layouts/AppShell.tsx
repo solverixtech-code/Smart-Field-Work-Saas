@@ -984,6 +984,12 @@ export default function AppShell() {
     activeExecutives: number;
     prospects: number;
   } | null>(null);
+  const [demoNavigationSummary, setDemoNavigationSummary] = useState<{
+    all: number;
+    today: number;
+    scheduled: number;
+    completed: number;
+  } | null>(null);
 
   useEffect(() => {
     const handleBizNameUpdate = () => setBizBreadcrumbVersion((v) => v + 1);
@@ -1146,6 +1152,14 @@ export default function AppShell() {
   }, [isExecutiveRole, tenantId]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    api.get<{ all: number; today: number; scheduled: number; completed: number }>("/tenant/crm/demos/navigation-summary", { signal: controller.signal })
+      .then(({ data }) => setDemoNavigationSummary(data))
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, [tenantId]);
+
+  useEffect(() => {
     if (isExecutiveRole) return;
     const controller = new AbortController();
     api.get<{ summary: { activeExecutives: number; prospects: number } }>("/tenant/crm/maps/snapshot", { signal: controller.signal })
@@ -1187,7 +1201,20 @@ export default function AppShell() {
         })),
       })
     : targetAwareNavCategories;
-  const displayedNavCategories = isExecutiveRole ? executiveNavCategories : dynamicAdminNavCategories;
+  const demoAwareNavCategories = demoNavigationSummary
+    ? dynamicAdminNavCategories.map((category) => category.title !== "Demo Management" ? category : {
+        ...category,
+        items: category.items.map((item) => ({
+          ...item,
+          badge: item.label === "All Demos" ? `${demoNavigationSummary.all} Demos`
+            : item.label === "Demos Today" ? `${demoNavigationSummary.today} Today`
+            : item.label === "Scheduled Demos" ? `${demoNavigationSummary.scheduled} Upcoming`
+            : item.label === "Demo Completed" ? `${demoNavigationSummary.completed} Done`
+            : item.badge,
+        })),
+      })
+    : dynamicAdminNavCategories;
+  const displayedNavCategories = isExecutiveRole ? executiveNavCategories : demoAwareNavCategories;
   const showBigLogo = !collapsed || isHovered;
 
   return (

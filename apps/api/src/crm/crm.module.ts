@@ -26,6 +26,8 @@ import { IncentiveController } from './incentive.controller';
 import { IncentiveService } from './incentive.service';
 import { MapController } from './map.controller';
 import { MapService } from './map.service';
+import { DemoController } from './demo.controller';
+import { DemoService } from './demo.service';
 
 @Module({
   imports: [PersistenceModule, MasterCoreModule, JobCoreModule],
@@ -41,6 +43,7 @@ import { MapService } from './map.service';
     TargetController,
     IncentiveController,
     MapController,
+    DemoController,
   ],
   providers: [
     CrmRepository,
@@ -56,6 +59,7 @@ import { MapService } from './map.service';
     TargetService,
     IncentiveService,
     MapService,
+    DemoService,
   ],
   exports: [OpportunityService, TerritoryService],
 })

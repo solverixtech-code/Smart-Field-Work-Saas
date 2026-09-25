@@ -27,7 +27,7 @@ describe('TargetService', () => {
     tx.tenantSettings.findUnique.mockResolvedValue({ timezone: 'Asia/Kolkata' });
     tx.salesTarget.findMany.mockResolvedValue([{ id: 'target-1', title: 'West revenue', period: '2026-09', metric: 'sales_amount', targetValue: 100000, thresholdPct: 80, teamId: 'team-1', membershipId: null }]);
     tx.team.findMany.mockResolvedValue([{ id: 'team-1', name: 'West Team', code: 'WEST', tenantMemberships: [{ id: 'leader-1', department: 'Sales', designation: 'Manager', tenantRole: { code: 'team_leader' }, user: { fullName: 'Vikram Singh', avatarUrl: 'vikram.jpg', role: 'TEAM_LEADER' } }] }]);
-    tx.tenantMembership.findMany.mockResolvedValue([{ id: 'exec-1', employeeCode: 'FE-1', designation: 'Field Executive', teamId: 'team-1', team: { name: 'West Team' }, user: { fullName: 'Asha Rao', avatarUrl: 'asha.jpg' } }]);
+    tx.tenantMembership.findMany.mockResolvedValue([{ id: 'exec-1', employeeCode: 'FE-1', designation: 'Field Executive', teamId: 'team-1', team: { name: 'West Team' }, user: { fullName: 'Asha Rao', avatarUrl: 'asha.jpg', employeeCode: 'USR-1' } }]);
     tx.opportunity.findMany.mockResolvedValue([{ amount: 75000, closedAt: new Date('2026-09-15T08:00:00Z'), updatedAt: new Date('2026-09-15T08:00:00Z'), assignedMembership: { id: 'exec-1', teamId: 'team-1' }, ownerMembership: { id: 'admin-member', teamId: null } }]);
     tx.leadVisit.findMany.mockResolvedValue([]);
     tx.leadDemo.findMany.mockResolvedValue([]);

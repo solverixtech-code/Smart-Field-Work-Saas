@@ -20,6 +20,7 @@ import { parseFollowUpSchedule } from './follow-up-schedule';
 import { JobService } from '../jobs/job.service';
 
 import * as dto from "./lead-contract";
+import { generateDemoCode } from "./demo-code";
 
 const data = (v: Partial<dto.LeadInput>) => ({
   kind: v.kind,
@@ -1414,6 +1415,7 @@ export class LeadService {
       const demo = await tx.leadDemo.create({
         data: {
           tenantId: p.scope.tenantId,
+          demoCode: await generateDemoCode(tx, p.scope.tenantId),
           leadId,
           conductedByMembershipId,
           conductedByName: membership?.user.fullName || "Sales Specialist",

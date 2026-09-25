@@ -303,6 +303,9 @@ async function main() {
             update: {
               tenantRoleId: tenantRole.id,
               status: 'ACTIVE',
+              employeeCode: u.employeeCode,
+              designation: tenantRole.name,
+              department: ['sales_manager', 'team_leader', 'field_executive'].includes(tenantRole.code) ? 'Sales' : undefined,
             },
             create: {
               tenantId: demoTenant.id,
@@ -310,6 +313,9 @@ async function main() {
               tenantRoleId: tenantRole.id,
               status: 'ACTIVE',
               dataScope: 'ALL',
+              employeeCode: u.employeeCode,
+              designation: tenantRole.name,
+              department: ['sales_manager', 'team_leader', 'field_executive'].includes(tenantRole.code) ? 'Sales' : undefined,
             },
           });
         }

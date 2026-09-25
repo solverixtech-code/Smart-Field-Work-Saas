@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -23,41 +23,103 @@ import {
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Checkbox } from '../../components/ui/Checkbox';
-import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { DateRange, DateRangePicker } from '../../components/ui/DateRangePicker';
 import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
-import { mockDemosList, DemoItem } from './demosData';
+import { DemoItem } from './demosData';
 import { AddDemoModal } from './AddDemoModal';
 import { EditDemoModal } from './EditDemoModal';
+import { demoApi, DemoOptions, exportDemosCsv } from './demo.api';
+import { useDemoList } from './useDemoList';
+import { useDebouncedSearch } from '../../features/crm/CrmContext';
+
+const statusValues: Record<string, string> = {
+  Completed: 'COMPLETED',
+  Scheduled: 'SCHEDULED',
+  Confirmed: 'CONFIRMED',
+  'In Progress': 'IN_PROGRESS',
+  Rescheduled: 'RESCHEDULED',
+  'No Show': 'NO_SHOW',
+  Cancelled: 'CANCELLED',
+};
+
+const currentMonthRange = (): DateRange => {
+  const today = new Date();
+  const dateKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  return { startDate: dateKey(new Date(today.getFullYear(), today.getMonth(), 1)), endDate: dateKey(today), label: 'This month' };
+};
 
 export default function AllDemosPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebouncedSearch(searchTerm.trim());
   const [statusFilter, setStatusFilter] = useState('All');
   const [demoTypeFilter, setDemoTypeFilter] = useState('All');
   const [assignedToFilter, setAssignedToFilter] = useState('All');
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange>(currentMonthRange);
+  const [page, setPage] = useState(1);
+  const [options, setOptions] = useState<DemoOptions>({ leads: [], executives: [] });
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingDemo, setEditingDemo] = useState<DemoItem | undefined>(undefined);
-
-  const filteredDemos = mockDemosList.filter((d) => {
-    const matchesSearch =
-      d.demoId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.contactPerson.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = statusFilter === 'All' || d.status === statusFilter;
-    const matchesType = demoTypeFilter === 'All' || d.demoType === demoTypeFilter;
-    const matchesAssigned = assignedToFilter === 'All' || d.assignedToName === assignedToFilter;
-
-    return matchesSearch && matchesStatus && matchesType && matchesAssigned;
+  const { demos, data, refresh } = useDemoList('all', {
+    page,
+    limit: 25,
+    search: debouncedSearch || undefined,
+    status: statusFilter === 'All' ? undefined : statusValues[statusFilter],
+    demoType: demoTypeFilter === 'All' ? undefined : demoTypeFilter,
+    executiveMembershipId: assignedToFilter === 'All' ? undefined : assignedToFilter,
+    from: dateRange.startDate,
+    to: dateRange.endDate,
   });
+  const filteredDemos = demos;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    demoApi.options(controller.signal).then(setOptions).catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => setPage(1), [debouncedSearch]);
+  const totalDemos = data?.summary.all ?? 0;
+  const percentage = (value: number) => totalDemos ? `${((value / totalDemos) * 100).toFixed(1)}%` : '0.0%';
+  const typeCount = (type: DemoItem['demoType']) => demos.filter((demo) => demo.demoType === type).length;
+  const topExecutives = Object.entries(demos.reduce<Record<string, number>>((counts, demo) => {
+    counts[demo.assignedToName] = (counts[demo.assignedToName] || 0) + 1;
+    return counts;
+  }, {})).sort((left, right) => right[1] - left[1]).slice(0, 3);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedRows(filteredDemos.map((d) => d.id));
     } else {
       setSelectedRows([]);
+    }
+  };
+
+  const exportDemos = () => {
+    exportDemosCsv(filteredDemos, 'demos.csv');
+    toast.success('Demos report exported');
+  };
+
+  const updateStatus = async (demo: DemoItem, status: string) => {
+    try {
+      await demoApi.update(demo.id, { status }, new AbortController().signal);
+      toast.success(`Demo ${demo.demoId} updated successfully!`);
+      refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to update demo');
+    }
+  };
+
+  const deleteDemo = async (demo: DemoItem) => {
+    try {
+      await demoApi.remove(demo.id, new AbortController().signal);
+      toast.success(`Demo ${demo.demoId} deleted`);
+      refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to delete demo');
     }
   };
 
@@ -74,6 +136,9 @@ export default function AllDemosPage() {
     setStatusFilter('All');
     setDemoTypeFilter('All');
     setAssignedToFilter('All');
+    setShowMoreFilters(false);
+    setDateRange(currentMonthRange());
+    setPage(1);
     toast.info('Filters reset to default');
   };
 
@@ -92,7 +157,7 @@ export default function AllDemosPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Exporting demos report...')}
+            onClick={exportDemos}
             className="bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs"
           >
             <Download className="h-3.5 w-3.5" /> Export
@@ -126,8 +191,8 @@ export default function AllDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Total Demos</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">128</span>
-            <span className="text-xs font-semibold text-emerald-600 block">↑ 18.4% vs last month</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">{data?.summary.all ?? 0}</span>
+            <span className="text-xs font-semibold text-emerald-600 block">Live organization total</span>
           </div>
         </div>
 
@@ -137,8 +202,8 @@ export default function AllDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Completed Demos</span>
-            <span className="text-xl font-extrabold text-emerald-600">78</span>
-            <span className="text-xs font-medium text-slate-500 block">60.9% of total demos</span>
+            <span className="text-xl font-extrabold text-emerald-600">{data?.summary.completed ?? 0}</span>
+            <span className="text-xs font-medium text-slate-500 block">{percentage(data?.summary.completed ?? 0)} of total demos</span>
           </div>
         </div>
 
@@ -148,7 +213,7 @@ export default function AllDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Scheduled Demos</span>
-            <span className="text-xl font-extrabold text-purple-600">32</span>
+            <span className="text-xl font-extrabold text-purple-600">{data?.summary.scheduled ?? 0}</span>
             <span className="text-xs font-medium text-slate-500 block">Upcoming demos</span>
           </div>
         </div>
@@ -159,7 +224,7 @@ export default function AllDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">In Progress</span>
-            <span className="text-xl font-extrabold text-amber-600">12</span>
+            <span className="text-xl font-extrabold text-amber-600">{data?.summary.inProgress ?? 0}</span>
             <span className="text-xs font-medium text-slate-500 block">Active demos</span>
           </div>
         </div>
@@ -170,8 +235,8 @@ export default function AllDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Cancelled / No-show</span>
-            <span className="text-xl font-extrabold text-red-600">6</span>
-            <span className="text-xs font-medium text-slate-500 block">4.7% of total demos</span>
+            <span className="text-xl font-extrabold text-red-600">{data?.summary.cancelled ?? 0}</span>
+            <span className="text-xs font-medium text-slate-500 block">{percentage(data?.summary.cancelled ?? 0)} of total demos</span>
           </div>
         </div>
 
@@ -181,7 +246,7 @@ export default function AllDemosPage() {
           </div>
           <div>
             <span className="text-xs font-semibold text-slate-500 block">Conversion Rate</span>
-            <span className="text-xl font-extrabold text-[#0D1F3D]">47.6%</span>
+            <span className="text-xl font-extrabold text-[#0D1F3D]">{percentage(data?.summary.converted ?? 0)}</span>
             <span className="text-xs font-medium text-slate-500 block">From demo to sale</span>
           </div>
         </div>
@@ -204,45 +269,64 @@ export default function AllDemosPage() {
           <div className="lg:col-span-2">
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
               className="w-full rounded-sm border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0D1F3D]"
             >
               <option value="All">Status: All</option>
               <option value="Completed">Completed</option>
               <option value="Scheduled">Scheduled</option>
+              <option value="Confirmed">Confirmed</option>
               <option value="In Progress">In Progress</option>
+              <option value="Rescheduled">Rescheduled</option>
+              <option value="No Show">No Show</option>
               <option value="Cancelled">Cancelled</option>
             </select>
           </div>
 
           <div className="lg:col-span-2">
-            <DateRangePicker />
+            <DateRangePicker value={dateRange} onChange={(range) => { setDateRange(range); setPage(1); }} />
           </div>
 
           <div className="lg:col-span-2">
             <select
               value={assignedToFilter}
-              onChange={(e) => setAssignedToFilter(e.target.value)}
+              onChange={(e) => { setAssignedToFilter(e.target.value); setPage(1); }}
               className="w-full rounded-sm border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0D1F3D]"
             >
               <option value="All">Assigned: All</option>
-              <option value="Arjun Mehta">Arjun Mehta</option>
-              <option value="Neha Sharma">Neha Sharma</option>
-              <option value="Pooja Yadav">Pooja Yadav</option>
-              <option value="Rakesh Patel">Rakesh Patel</option>
-              <option value="Kiran Jadhav">Kiran Jadhav</option>
+              {options.executives.map((executive) => <option key={executive.id} value={executive.id}>{executive.name}</option>)}
             </select>
           </div>
 
-          <div className="lg:col-span-2 flex items-center justify-end gap-1.5">
+          <div className="relative lg:col-span-2 flex items-center justify-end gap-1.5">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info('Filters drawer opened')}
+              onClick={() => setShowMoreFilters((visible) => !visible)}
+              aria-expanded={showMoreFilters}
+              aria-haspopup="dialog"
               className="text-xs font-bold border-slate-200 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-1"
             >
               <Filter className="h-3.5 w-3.5 text-slate-500" /> More Filters
             </Button>
+
+            {showMoreFilters && (
+              <div role="dialog" aria-label="Additional demo filters" className="absolute right-10 top-full z-30 mt-2 w-52 rounded-sm border border-slate-200 bg-white p-3 shadow-xl">
+                <label htmlFor="demo-type-filter" className="mb-1 block text-[11px] font-bold text-slate-600">Demo type</label>
+                <select
+                  id="demo-type-filter"
+                  value={demoTypeFilter}
+                  onChange={(event) => { setDemoTypeFilter(event.target.value); setPage(1); setShowMoreFilters(false); }}
+                  className="w-full rounded-sm border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-[#0D1F3D]"
+                >
+                  <option value="All">All demo types</option>
+                  <option value="Product Demo">Product Demo</option>
+                  <option value="Live Demo">Live Demo</option>
+                  <option value="Online Demo">Online Demo</option>
+                  <option value="POC / Pilot">POC / Pilot</option>
+                </select>
+              </div>
+            )}
 
             <Button
               variant="ghost"
@@ -334,7 +418,7 @@ export default function AllDemosPage() {
                     </td>
                     <td className="p-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <div
-                        onClick={() => navigate('/admin/executives/FE-1001')}
+                        onClick={() => navigate(`/admin/executives/${d.assignedToMembershipId}`)}
                         className="flex items-center gap-2 cursor-pointer group"
                         title={`View ${d.assignedToName}'s Profile`}
                       >
@@ -420,19 +504,22 @@ export default function AllDemosPage() {
                           {
                             label: 'Mark Completed',
                             icon: CheckCircle2,
-                            onClick: () => toast.success(`Demo ${d.demoId} marked as completed!`),
+                            onClick: () => updateStatus(d, 'COMPLETED'),
                           },
                           {
                             label: 'Reschedule',
                             icon: Calendar,
-                            onClick: () => toast.info('Reschedule demo modal opened'),
+                            onClick: () => {
+                              setEditingDemo(d);
+                              setIsEditModalOpen(true);
+                            },
                           },
                           {
                             label: 'Delete',
                             icon: Trash2,
                             danger: true,
                             divider: true,
-                            onClick: () => toast.error(`Demo ${d.demoId} deleted`),
+                            onClick: () => deleteDemo(d),
                           },
                         ]}
                       />
@@ -446,18 +533,15 @@ export default function AllDemosPage() {
 
         {/* Pagination Footer */}
         <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/60 px-4 py-2.5 text-xs font-semibold text-slate-600">
-          <span>Showing 1 to {filteredDemos.length} of 128 demos</span>
+          <span>Showing {filteredDemos.length ? (page - 1) * 25 + 1 : 0} to {(page - 1) * 25 + filteredDemos.length} of {data?.total ?? 0} demos</span>
           <div className="flex items-center gap-1">
-            <button className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-500">
+            <button type="button" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-500 disabled:opacity-40">
               <ChevronLeft className="h-3.5 w-3.5" />
             </button>
             <button className="flex h-7 w-7 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold">
-              1
+              {page}
             </button>
-            <button className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-700">
-              2
-            </button>
-            <button className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-500">
+            <button type="button" disabled={page >= (data?.totalPages ?? 1)} onClick={() => setPage((value) => Math.min(data?.totalPages ?? value, value + 1))} className="flex h-7 w-7 items-center justify-center rounded-sm border border-slate-200 bg-white text-slate-500 disabled:opacity-40">
               <ChevronRight className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -474,7 +558,7 @@ export default function AllDemosPage() {
 
           <div className="relative py-2 flex flex-col items-center justify-center">
             <div className="h-20 w-20 rounded-full border-4 border-emerald-500 border-t-blue-600 border-r-amber-500 border-b-red-500 flex flex-col items-center justify-center shadow-xs">
-              <span className="text-base font-extrabold text-[#0D1F3D]">128</span>
+              <span className="text-base font-extrabold text-[#0D1F3D]">{totalDemos}</span>
               <span className="text-[9px] font-bold text-slate-400">Total Demos</span>
             </div>
           </div>
@@ -484,25 +568,25 @@ export default function AllDemosPage() {
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" /> Completed
               </span>
-              <span className="font-extrabold">78 (60.9%)</span>
+              <span className="font-extrabold">{data?.summary.completed ?? 0} ({percentage(data?.summary.completed ?? 0)})</span>
             </div>
             <div className="flex justify-between">
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="h-2 w-2 rounded-full bg-blue-600" /> Scheduled
               </span>
-              <span className="font-extrabold">32 (25.0%)</span>
+              <span className="font-extrabold">{data?.summary.scheduled ?? 0} ({percentage(data?.summary.scheduled ?? 0)})</span>
             </div>
             <div className="flex justify-between">
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="h-2 w-2 rounded-full bg-amber-500" /> In Progress
               </span>
-              <span className="font-extrabold">12 (9.4%)</span>
+              <span className="font-extrabold">{data?.summary.inProgress ?? 0} ({percentage(data?.summary.inProgress ?? 0)})</span>
             </div>
             <div className="flex justify-between">
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="h-2 w-2 rounded-full bg-red-500" /> Cancelled
               </span>
-              <span className="font-extrabold">6 (4.7%)</span>
+              <span className="font-extrabold">{data?.summary.cancelled ?? 0} ({percentage(data?.summary.cancelled ?? 0)})</span>
             </div>
           </div>
         </div>
@@ -515,7 +599,7 @@ export default function AllDemosPage() {
 
           <div className="relative py-2 flex flex-col items-center justify-center">
             <div className="h-20 w-20 rounded-full border-4 border-purple-600 border-t-amber-500 border-r-indigo-600 flex flex-col items-center justify-center shadow-xs">
-              <span className="text-base font-extrabold text-[#0D1F3D]">128</span>
+              <span className="text-base font-extrabold text-[#0D1F3D]">{totalDemos}</span>
               <span className="text-[9px] font-bold text-slate-400">Total</span>
             </div>
           </div>
@@ -525,19 +609,19 @@ export default function AllDemosPage() {
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="h-2 w-2 rounded-full bg-purple-600" /> Product Demo
               </span>
-              <span className="font-extrabold">68 (53.1%)</span>
+              <span className="font-extrabold">{typeCount('Product Demo')} ({percentage(typeCount('Product Demo'))})</span>
             </div>
             <div className="flex justify-between">
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="h-2 w-2 rounded-full bg-amber-500" /> Live Demo
               </span>
-              <span className="font-extrabold">32 (25.0%)</span>
+              <span className="font-extrabold">{typeCount('Live Demo')} ({percentage(typeCount('Live Demo'))})</span>
             </div>
             <div className="flex justify-between">
               <span className="flex items-center gap-1.5 font-medium">
                 <span className="h-2 w-2 rounded-full bg-indigo-600" /> Online Demo
               </span>
-              <span className="font-extrabold">28 (21.9%)</span>
+              <span className="font-extrabold">{typeCount('Online Demo')} ({percentage(typeCount('Online Demo'))})</span>
             </div>
           </div>
         </div>
@@ -550,32 +634,32 @@ export default function AllDemosPage() {
 
           <div className="space-y-2.5 text-xs">
             <div className="flex items-center justify-between">
-              <span className="font-extrabold text-[#0D1F3D]">1. Arjun Mehta</span>
+              <span className="font-extrabold text-[#0D1F3D]">1. {topExecutives[0]?.[0] || '—'}</span>
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-20 rounded-full bg-slate-100 overflow-hidden">
                   <div className="h-full bg-emerald-500 rounded-full w-[85%]" />
                 </div>
-                <span className="font-mono font-bold text-slate-800">28</span>
+                <span className="font-mono font-bold text-slate-800">{topExecutives[0]?.[1] || 0}</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="font-extrabold text-[#0D1F3D]">2. Neha Sharma</span>
+              <span className="font-extrabold text-[#0D1F3D]">2. {topExecutives[1]?.[0] || '—'}</span>
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-20 rounded-full bg-slate-100 overflow-hidden">
                   <div className="h-full bg-emerald-500 rounded-full w-[75%]" />
                 </div>
-                <span className="font-mono font-bold text-slate-800">24</span>
+                <span className="font-mono font-bold text-slate-800">{topExecutives[1]?.[1] || 0}</span>
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="font-extrabold text-[#0D1F3D]">3. Pooja Yadav</span>
+              <span className="font-extrabold text-[#0D1F3D]">3. {topExecutives[2]?.[0] || '—'}</span>
               <div className="flex items-center gap-2">
                 <div className="h-1.5 w-20 rounded-full bg-slate-100 overflow-hidden">
                   <div className="h-full bg-emerald-500 rounded-full w-[65%]" />
                 </div>
-                <span className="font-mono font-bold text-slate-800">20</span>
+                <span className="font-mono font-bold text-slate-800">{topExecutives[2]?.[1] || 0}</span>
               </div>
             </div>
           </div>
@@ -594,12 +678,14 @@ export default function AllDemosPage() {
       <AddDemoModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        onSuccess={refresh}
       />
 
       <EditDemoModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         demo={editingDemo}
+        onSuccess={refresh}
       />
     </div>
   );
