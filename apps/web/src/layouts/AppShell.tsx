@@ -603,7 +603,7 @@ const navCategories: NavCategory[] = [
   },
 ];
 
-const executiveNavCategories: NavCategory[] = [
+const fieldExecutiveNavCategories: NavCategory[] = [
   {
     title: "Main",
     items: [
@@ -611,12 +611,6 @@ const executiveNavCategories: NavCategory[] = [
         label: "My Dashboard",
         icon: LayoutDashboard,
         to: "/admin/dashboard",
-        permission: "crm.dashboard.view",
-      },
-      {
-        label: "Telecaller Dashboard",
-        icon: PhoneCall,
-        to: "/admin/dashboard/telecaller",
         permission: "crm.dashboard.view",
       },
       {
@@ -638,6 +632,91 @@ const executiveNavCategories: NavCategory[] = [
         moduleCode: "field_visits",
         badge: "Today",
       },
+      {
+        label: "My Follow-ups",
+        icon: RotateCcw,
+        to: "/admin/follow-ups",
+        permission: "crm.followups.view",
+      },
+      {
+        label: "My Demos",
+        icon: Monitor,
+        to: "/admin/demos",
+        permission: "crm.demos.view",
+        moduleCode: "demo_scheduler",
+      },
+    ],
+  },
+  {
+    title: "My Sales",
+    items: [
+      {
+        label: "My Leads",
+        icon: UserPlus,
+        to: "/admin/leads",
+        permission: "crm.leads.view",
+        moduleCode: "core_crm",
+      },
+      {
+        label: "My Pipeline",
+        icon: TrendingUp,
+        to: "/admin/sales/pipeline",
+        permission: "crm.pipeline.view",
+        moduleCode: "core_crm",
+      },
+    ],
+  },
+  {
+    title: "Target & Incentives",
+    items: [
+      {
+        label: "My Target & Payouts",
+        icon: Target,
+        to: "/admin/targets/executives",
+        permission: "crm.targets.view",
+      },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      { label: "My Profile", icon: User, to: "/admin/profile" },
+      { label: "Security & 2FA", icon: Shield, to: "/admin/profile/security" },
+      {
+        label: "Active Sessions",
+        icon: Monitor,
+        to: "/admin/profile/sessions",
+      },
+    ],
+  },
+];
+
+const telecallerNavCategories: NavCategory[] = [
+  {
+    title: "Main",
+    items: [
+      {
+        label: "My Dashboard",
+        icon: LayoutDashboard,
+        to: "/admin/dashboard/telecaller",
+        permission: "crm.dashboard.view",
+      },
+    ],
+  },
+  {
+    title: "Call Center & Calls",
+    items: [
+      {
+        label: "Call Activity & Logs",
+        icon: PhoneCall,
+        to: "/admin/calls",
+        permission: "crm.calls.view",
+      },
+    ],
+  },
+  {
+    title: "My Schedule & Activities",
+    items: [
       {
         label: "My Follow-ups",
         icon: RotateCcw,
@@ -1164,13 +1243,16 @@ export default function AppShell() {
   };
 
   const userRole = (user?.role as Role) || Role.SUPER_ADMIN;
-  const isExecutiveRole =
-    (userRole as string) === "FIELD_EXECUTIVE" || (userRole as string) === "TELECALLER" || tenant?.roleCode === "telecaller" ||
+  const isTelecallerRole =
+    (userRole as string) === "TELECALLER" || tenant?.roleCode === "telecaller";
+  const isFieldExecutiveRole =
+    (userRole as string) === "FIELD_EXECUTIVE" ||
     (userRole as string) === "SALES_EXECUTIVE" ||
     (userRole as string) === "EXECUTIVE" ||
     tenant?.roleCode === "field_executive" ||
     tenant?.roleCode === "executive" ||
     tenant?.roleCode === "sales_executive";
+  const isExecutiveRole = isFieldExecutiveRole || isTelecallerRole;
 
   useEffect(() => {
     if (isExecutiveRole) return;
@@ -1263,12 +1345,16 @@ export default function AppShell() {
         })),
       })
     : dynamicAdminNavCategories;
-  const displayedNavCategories = isExecutiveRole ? executiveNavCategories : demoAwareNavCategories;
+  const displayedNavCategories = isTelecallerRole
+    ? telecallerNavCategories
+    : isFieldExecutiveRole
+    ? fieldExecutiveNavCategories
+    : demoAwareNavCategories;
   const showBigLogo = !collapsed || isHovered;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 font-sans">
-      {isExecutiveRole && tenant?.membershipId && (
+      {isFieldExecutiveRole && tenant?.membershipId && (
         <ExecutiveLocationTracker tenantId={tenantId} membershipId={tenant.membershipId} />
       )}
       {/* Refined Enterprise White Theme Sidebar */}
@@ -1520,6 +1606,7 @@ export default function AppShell() {
                   if (
                     [
                       "/admin/dashboard",
+                      "/admin/dashboard/telecaller",
                       "/admin/profile",
                       "/admin/teams",
                       "/admin/territories",
@@ -1532,7 +1619,7 @@ export default function AppShell() {
                       "/admin/leads/automation/settings",
                     ].includes(item.to)
                   ) {
-                    return location.pathname === item.to || (item.to === "/admin/dashboard" && location.pathname === "/admin/dashboard/telecaller");
+                    return location.pathname === item.to;
                   }
                   return (
                     location.pathname === item.to ||
@@ -1543,7 +1630,7 @@ export default function AppShell() {
                 return (
                   <NavLink
                     key={item.to}
-                    to={item.to === "/admin/dashboard" && (tenant?.roleCode === "telecaller" || userRole === Role.TELECALLER) ? "/admin/dashboard/telecaller" : item.to}
+                    to={item.to}
                     onClick={(e) => {
                       if (!isAllowed) {
                         e.preventDefault();
