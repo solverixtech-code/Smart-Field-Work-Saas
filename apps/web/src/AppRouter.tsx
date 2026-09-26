@@ -16,6 +16,7 @@ import FieldActivityDashboardPage from "./screens/dashboard/FieldActivityDashboa
 import RevenueDashboardPage from "./screens/dashboard/RevenueDashboardPage";
 import ConversionDashboardPage from "./screens/dashboard/ConversionDashboardPage";
 import RealTimeActivityDashboardPage from "./screens/dashboard/RealTimeActivityDashboardPage";
+import { TelecallerDashboardPage } from "./screens/telecaller/TelecallerDashboardPage";
 
 import AllExecutivesPage from "./screens/executives/AllExecutivesPage";
 import AddExecutivePage from "./screens/executives/AddExecutivePage";
@@ -328,6 +329,16 @@ export default function AppRouter() {
               <Route
                 path="/admin/dashboard/live"
                 element={<RealTimeActivityDashboardPage />}
+              />
+            </Route>
+
+            {/* Telecaller Dashboard */}
+            <Route
+              element={<PermissionRoute permission="crm.dashboard.view" />}
+            >
+              <Route
+                path="/admin/dashboard/telecaller"
+                element={<TelecallerDashboardPage />}
               />
             </Route>
 

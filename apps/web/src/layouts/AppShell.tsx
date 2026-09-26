@@ -43,6 +43,7 @@ import {
   Plug,
   Bot,
   Sparkles,
+  PhoneCall,
   FileText,
   BarChart3,
   CalendarCheck,
@@ -473,7 +474,7 @@ const navCategories: NavCategory[] = [
         badge: "8 Teams",
       },
       {
-        label: "Field Executives",
+        label: "Employee Directory",
         icon: Users,
         to: "/admin/executives",
         permission: "crm.executives.view",
@@ -591,6 +592,12 @@ const executiveNavCategories: NavCategory[] = [
         label: "My Dashboard",
         icon: LayoutDashboard,
         to: "/admin/dashboard",
+        permission: "crm.dashboard.view",
+      },
+      {
+        label: "Telecaller Dashboard",
+        icon: PhoneCall,
+        to: "/admin/dashboard/telecaller",
         permission: "crm.dashboard.view",
       },
       {
@@ -963,6 +970,9 @@ function getBreadcrumbTrail(pathname: string) {
   } else if (pathname === "/admin/dashboard/live") {
     items.push({ label: "Dashboard", to: "/admin/dashboard" });
     items.push({ label: "Live Monitoring", to: "/admin/dashboard/live" });
+  } else if (pathname === "/admin/dashboard/telecaller") {
+    items.push({ label: "Dashboard", to: "/admin/dashboard" });
+    items.push({ label: "Telecaller Dashboard", to: "/admin/dashboard/telecaller" });
   } else if (pathname.startsWith("/admin/profile")) {
     items.push({ label: "Account", to: "/admin/profile" });
     if (pathname === "/admin/profile") {

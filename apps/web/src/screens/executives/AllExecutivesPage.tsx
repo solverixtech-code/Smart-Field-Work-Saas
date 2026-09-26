@@ -186,9 +186,9 @@ export default function AllExecutivesPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-[#0D1F3D]">Field Executives Directory</h1>
+          <h1 className="text-2xl font-bold text-[#0D1F3D]">Employee Directory</h1>
           <p className="text-xs font-normal text-slate-500">
-            Manage field staff, view live statuses, performance stats, and territory teams.
+            Manage company employees, view live statuses, performance stats, and territory teams.
           </p>
         </div>
 
@@ -207,7 +207,7 @@ export default function AllExecutivesPage() {
             onClick={() => navigate('/admin/executives/new')}
             className="flex items-center gap-2 font-bold shadow-sm"
           >
-            <UserPlus className="h-4 w-4" /> Add Executive
+            <UserPlus className="h-4 w-4" /> Create Employee / User
           </Button>
         </div>
       </div>
@@ -215,7 +215,7 @@ export default function AllExecutivesPage() {
       {/* Top 6 KPI Cards Grid */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-6 sm:grid-cols-3">
         <KpiCard
-          title="Total Executives"
+          title="Total Employees"
           value={String(directory.summary.total)}
           subValue="Active Roster"
           timeframe=""
@@ -224,7 +224,7 @@ export default function AllExecutivesPage() {
           iconTextColor="text-[#0D1F3D]"
         />
         <KpiCard
-          title="Active Executives"
+          title="Active Employees"
           value={String(directory.summary.active)}
           subValue={`${percent(directory.summary.active, directory.summary.total)} Active`}
           timeframe=""
@@ -279,7 +279,7 @@ export default function AllExecutivesPage() {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search executives by name, email, phone..."
+              placeholder="Search employees by name, email, phone..."
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               className="w-full rounded-sm border border-slate-200 bg-slate-50/60 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
@@ -329,7 +329,7 @@ export default function AllExecutivesPage() {
                         className="rounded-sm border-slate-300 text-[#E20613] focus:ring-[#E20613]"
                       />
                     </th>
-                    <th className="px-4 py-3.5 whitespace-nowrap">Executive</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Employee</th>
                     <th className="px-4 py-3.5 whitespace-nowrap">ID</th>
                     <th className="px-4 py-3.5 whitespace-nowrap">Team & Region</th>
                     <th className="px-4 py-3.5 whitespace-nowrap">Mobile</th>

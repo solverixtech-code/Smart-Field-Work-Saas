@@ -18,7 +18,8 @@ export default function AddExecutivePage() {
 
   const [formData, setFormData] = useState({
     fullName: '',
-    empId: 'FE-1011',
+    empId: 'EMP-1011',
+    systemRole: 'FIELD_EXECUTIVE',
     designation: 'Field Executive',
     reportingTo: 'Sanjay Yadav (TL-1003)',
     team: 'Mumbai North Team',
@@ -64,13 +65,19 @@ export default function AddExecutivePage() {
     <form onSubmit={handleSubmit} className="space-y-6 font-sans">
       {/* Top Header CTAs */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <button
-          type="button"
-          onClick={() => navigate('/admin/executives')}
-          className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#0D1F3D] transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Executives
-        </button>
+        <div>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/executives')}
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#0D1F3D] transition-colors mb-1"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to Employee Directory
+          </button>
+          <h1 className="text-xl font-extrabold text-[#0D1F3D]">Create Employee / User</h1>
+          <p className="text-xs text-slate-500 font-medium">
+            Add a new staff member or user to your workspace, assign their role, team, and access permissions.
+          </p>
+        </div>
 
         <div className="flex items-center gap-3">
           <Button
@@ -83,7 +90,7 @@ export default function AddExecutivePage() {
             Cancel
           </Button>
           <Button type="submit" variant="accent" size="sm" className="flex items-center gap-2 font-bold shadow-sm">
-            <UserPlus className="h-4 w-4" /> Create Executive
+            <UserPlus className="h-4 w-4" /> Create Employee / User
           </Button>
         </div>
       </div>
@@ -91,7 +98,7 @@ export default function AddExecutivePage() {
       {/* Success / Error Alerts */}
       {submitted && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-extrabold text-emerald-700 animate-in fade-in">
-          ✓ New Field Executive created successfully! Redirecting...
+          ✓ New Employee / User created successfully! Redirecting...
         </div>
       )}
       {error && (
@@ -147,6 +154,21 @@ export default function AddExecutivePage() {
                   />
                 </div>
                 <div>
+                  <label className="text-slate-600 block mb-1 font-bold">System Role *</label>
+                  <select
+                    value={formData.systemRole}
+                    onChange={(e) => setFormData({ ...formData, systemRole: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
+                  >
+                    <option value="FIELD_EXECUTIVE">Field Executive (Route tracking, Visits)</option>
+                    <option value="TELECALLER">Telecaller / Inside Sales (Outbound calling, Demos)</option>
+                    <option value="TEAM_LEADER">Team Leader (Roster & Targets)</option>
+                    <option value="SALES_MANAGER">Sales Manager (Pipeline & Budgets)</option>
+                    <option value="SUPPORT">Support / Operations</option>
+                    <option value="ADMIN">Administrator</option>
+                  </select>
+                </div>
+                <div>
                   <label className="text-slate-600 block mb-1 font-bold">Designation *</label>
                   <select
                     value={formData.designation}
@@ -155,7 +177,9 @@ export default function AddExecutivePage() {
                   >
                     <option value="Field Executive">Field Executive</option>
                     <option value="Senior Field Executive">Senior Field Executive</option>
+                    <option value="Telecaller">Telecaller</option>
                     <option value="Team Leader">Team Leader</option>
+                    <option value="Sales Manager">Sales Manager</option>
                   </select>
                 </div>
                 <div>
