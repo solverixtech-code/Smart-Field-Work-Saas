@@ -1165,7 +1165,7 @@ export default function AppShell() {
 
   const userRole = (user?.role as Role) || Role.SUPER_ADMIN;
   const isExecutiveRole =
-    (userRole as string) === "FIELD_EXECUTIVE" ||
+    (userRole as string) === "FIELD_EXECUTIVE" || (userRole as string) === "TELECALLER" || tenant?.roleCode === "telecaller" ||
     (userRole as string) === "SALES_EXECUTIVE" ||
     (userRole as string) === "EXECUTIVE" ||
     tenant?.roleCode === "field_executive" ||
