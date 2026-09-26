@@ -14,6 +14,7 @@ import {
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Avatar } from '../ui/Avatar';
+import { Select } from '../ui/Select';
 import { api, extractErrorMessage } from '../../common/api';
 import { teamApi, TeamCandidate } from '../../screens/teams/teams.api';
 
@@ -205,16 +206,18 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               {/* Assigned Role */}
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Assigned Role</label>
-                <select
+                <Select
+                  label="Assigned Role"
+                  placeholder="Select role"
+                  searchable={false}
                   value={assignedRole}
                   onChange={(e) => setAssignedRole(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-bold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
-                >
-                  <option value="Field Executive">Field Executive</option>
-                  <option value="Senior Executive">Senior Executive</option>
-                  <option value="Field Specialist">Field Specialist</option>
-                </select>
+                  options={[
+                    { value: 'Field Executive', label: 'Field Executive' },
+                    { value: 'Senior Executive', label: 'Senior Executive' },
+                    { value: 'Field Specialist', label: 'Field Specialist' },
+                  ]}
+                />
               </div>
 
               {/* Monthly Deals Target */}

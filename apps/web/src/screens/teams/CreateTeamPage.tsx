@@ -14,6 +14,7 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Select } from '../../components/ui/Select';
 import { extractErrorMessage } from '../../common/api';
 import { teamApi, TeamOptions, useTeamWorkspace } from './teams.api';
 
@@ -55,6 +56,19 @@ export default function CreateTeamPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name.trim()) {
+      toast.error('Please enter a team name.');
+      return;
+    }
+    if (!formData.leader) {
+      toast.error('Please select a team leader.');
+      return;
+    }
+    if (!formData.region) {
+      toast.error('Please select a region / area.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const payload = {
@@ -138,46 +152,53 @@ export default function CreateTeamPage() {
 
               {/* Team Leader */}
               <div className="space-y-1 sm:col-span-1">
-                <label className="font-bold text-slate-700 block">Team Leader *</label>
-                <select
-                  required
+                <Select
+                  label="Team Leader *"
+                  placeholder="Select team leader"
+                  searchable={true}
                   value={formData.leader}
                   onChange={(e) => setFormData({ ...formData, leader: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:outline-none focus:border-[#0D1F3D] cursor-pointer"
-                >
-                  <option value="">Select team leader</option>
-                  {options.candidates.map((candidate) => (
-                    <option key={candidate.id} value={candidate.id}>{candidate.name} ({candidate.employeeCode ?? candidate.designation})</option>
-                  ))}
-                </select>
+                  options={options.candidates.map((candidate) => ({
+                    value: candidate.id,
+                    label: candidate.name,
+                    avatar: candidate.avatarUrl || undefined,
+                    avatarFallback: !candidate.avatarUrl,
+                    sublabel: candidate.employeeCode
+                      ? `${candidate.employeeCode} • ${candidate.designation}`
+                      : candidate.designation,
+                  }))}
+                />
               </div>
 
               {/* Department */}
               <div className="space-y-1 sm:col-span-1">
-                <label className="font-bold text-slate-700 block">Department *</label>
-                <select
+                <Select
+                  label="Department *"
+                  placeholder="Select department"
+                  searchable={false}
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:outline-none focus:border-[#0D1F3D] cursor-pointer"
-                >
-                  <option value="Sales">Sales & Business Development</option>
-                  <option value="Field Ops">Field Operations</option>
-                  <option value="Key Accounts">Key Accounts</option>
-                </select>
+                  options={[
+                    { value: 'Sales', label: 'Sales & Business Development' },
+                    { value: 'Field Ops', label: 'Field Operations' },
+                    { value: 'Key Accounts', label: 'Key Accounts' },
+                  ]}
+                />
               </div>
 
               {/* Region / Area */}
               <div className="space-y-1 sm:col-span-1">
-                <label className="font-bold text-slate-700 block">Region / Area *</label>
-                <select
-                  required
+                <Select
+                  label="Region / Area *"
+                  placeholder="Select region / area"
+                  searchable={true}
                   value={formData.region}
                   onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:outline-none focus:border-[#0D1F3D] cursor-pointer"
-                >
-                  <option value="">Select region / area</option>
-                  {options.regions.map((region) => <option key={region.id} value={region.name}>{region.name}</option>)}
-                </select>
+                  options={options.regions.map((region) => ({
+                    value: region.name,
+                    label: region.name,
+                  }))}
+                />
               </div>
 
               {/* Monthly Target */}
@@ -221,30 +242,34 @@ export default function CreateTeamPage() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Team Type */}
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Team Type *</label>
-                <select
+                <Select
+                  label="Team Type *"
+                  placeholder="Select team type"
+                  searchable={false}
                   value={formData.teamType}
                   onChange={(e) => setFormData({ ...formData, teamType: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:outline-none focus:border-[#0D1F3D] cursor-pointer"
-                >
-                  <option value="Field Sales">Field Sales</option>
-                  <option value="Inside Sales">Inside Sales</option>
-                  <option value="Key Accounts">Key Accounts</option>
-                </select>
+                  options={[
+                    { value: 'Field Sales', label: 'Field Sales' },
+                    { value: 'Inside Sales', label: 'Inside Sales' },
+                    { value: 'Key Accounts', label: 'Key Accounts' },
+                  ]}
+                />
                 <p className="text-[10px] text-slate-400 font-medium">Example: Field Sales, Operations, Support</p>
               </div>
 
               {/* Status */}
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Status *</label>
-                <select
+                <Select
+                  label="Status *"
+                  placeholder="Select status"
+                  searchable={false}
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:outline-none focus:border-[#0D1F3D] cursor-pointer"
-                >
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
+                  options={[
+                    { value: 'Active', label: 'Active' },
+                    { value: 'Inactive', label: 'Inactive' },
+                  ]}
+                />
                 <p className="text-[10px] text-slate-400 font-medium">Inactive teams cannot be assigned new work.</p>
               </div>
             </div>
