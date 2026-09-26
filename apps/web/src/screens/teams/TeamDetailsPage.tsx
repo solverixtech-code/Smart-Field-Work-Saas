@@ -35,6 +35,7 @@ import {
 } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
 import { AddMemberModal } from '../../components/teams/AddMemberModal';
 import { Avatar } from '../../components/ui/Avatar';
 import { useTeamWorkspace, teamApi } from './teams.api';
@@ -47,6 +48,8 @@ export default function TeamDetailsPage() {
   const { data, refresh } = useTeamWorkspace(teamId);
   const [activeTab, setActiveTab] = useState('Overview');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
+  const [isRemovingMember, setIsRemovingMember] = useState(false);
 
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
@@ -69,14 +72,18 @@ export default function TeamDetailsPage() {
     { stage: 'Closed Won', count: data?.summary.dealsWon ?? 0, pct: `${totalLeadsCount ? Math.round(((data?.summary.dealsWon ?? 0) / totalLeadsCount) * 100) : 0}%`, color: 'bg-emerald-600' },
   ];
 
-  const handleRemoveMember = async (memberId: string, memberName: string) => {
-    if (!teamId) return;
+  const handleConfirmRemoveMember = async () => {
+    if (!teamId || !memberToRemove) return;
+    setIsRemovingMember(true);
     try {
-      await teamApi.removeMember(teamId, memberId);
-      toast.success(`${memberName} removed from ${data?.team.name ?? 'team'}`);
+      await teamApi.removeMember(teamId, memberToRemove.id);
+      toast.success(`${memberToRemove.name} removed from ${data?.team.name ?? 'team'}`);
+      setMemberToRemove(null);
       refresh();
     } catch (err: unknown) {
       toast.error(extractErrorMessage(err, 'Failed to remove member from team.'));
+    } finally {
+      setIsRemovingMember(false);
     }
   };
   const teamMembers = (data?.members ?? []).map((member) => ({
@@ -590,7 +597,7 @@ export default function TeamDetailsPage() {
                                     icon: UserX,
                                     danger: true,
                                     divider: true,
-                                    onClick: () => handleRemoveMember(m.id, m.name),
+                                    onClick: () => setMemberToRemove({ id: m.id, name: m.name }),
                                   },
                                 ]}
                               />
@@ -701,6 +708,47 @@ export default function TeamDetailsPage() {
             ))}
           </div>
         </div>
+      )}
+
+
+      {memberToRemove && (
+        <Modal
+          isOpen={Boolean(memberToRemove)}
+          title="Remove Member from Team"
+          onClose={() => {
+            if (!isRemovingMember) setMemberToRemove(null);
+          }}
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4 font-sans text-xs">
+            <p className="text-slate-600 font-medium leading-relaxed">
+              Are you sure you want to remove <strong className="text-[#0D1F3D]">{memberToRemove.name}</strong> from <strong className="text-[#0D1F3D]">{data?.team.name ?? 'this team'}</strong>?
+            </p>
+            <div className="bg-slate-50 border border-slate-200/80 p-3 rounded-sm">
+              <p className="text-xs font-semibold text-[#0D1F3D]">
+                This executive will no longer be listed in this team&apos;s active roster or receive team targets.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isRemovingMember}
+                onClick={() => setMemberToRemove(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={isRemovingMember}
+                onClick={handleConfirmRemoveMember}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+              >
+                {isRemovingMember ? 'Removing...' : 'Remove Member'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* Add Member Modal */}

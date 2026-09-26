@@ -23,6 +23,7 @@ import {
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
 import { AddMemberModal } from '../../components/teams/AddMemberModal';
 import { Avatar } from '../../components/ui/Avatar';
 import { useTeamWorkspace, teamApi } from './teams.api';
@@ -52,6 +53,9 @@ export default function TeamMembersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [memberToRemove, setMemberToRemove] = useState<TeamMemberItem | null>(null);
+  const [isRemovingMember, setIsRemovingMember] = useState(false);
+  const [confirmBulkRemove, setConfirmBulkRemove] = useState(false);
   const membersData: TeamMemberItem[] = (data?.members ?? []).map((member) => ({
     id: member.id, name: member.name, avatar: member.avatarUrl ?? '', employeeId: member.employeeCode ?? 'Not assigned',
     role: member.designation, roleBadgeColor: member.roleCode.includes('leader') ? 'bg-purple-50 text-purple-700 border border-purple-200/60' : 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
@@ -80,26 +84,34 @@ export default function TeamMembersPage() {
     }
   };
 
-  const handleRemoveMember = async (member: TeamMemberItem) => {
-    if (!teamId) return;
+  const handleConfirmRemoveMember = async () => {
+    if (!teamId || !memberToRemove) return;
+    setIsRemovingMember(true);
     try {
-      await teamApi.removeMember(teamId, member.id);
-      toast.success(`${member.name} removed from ${data?.team.name ?? 'team'}`);
+      await teamApi.removeMember(teamId, memberToRemove.id);
+      toast.success(`${memberToRemove.name} removed from ${data?.team.name ?? 'team'}`);
+      setMemberToRemove(null);
       refresh();
     } catch (err: unknown) {
       toast.error(extractErrorMessage(err, 'Failed to remove member from team.'));
+    } finally {
+      setIsRemovingMember(false);
     }
   };
 
-  const handleBulkRemove = async () => {
+  const handleConfirmBulkRemove = async () => {
     if (!teamId || selectedIds.length === 0) return;
+    setIsRemovingMember(true);
     try {
       await Promise.all(selectedIds.map((id) => teamApi.removeMember(teamId, id)));
       toast.success(`Removed ${selectedIds.length} member(s) from ${data?.team.name ?? 'team'}`);
       setSelectedIds([]);
+      setConfirmBulkRemove(false);
       refresh();
     } catch (err: unknown) {
       toast.error(extractErrorMessage(err, 'Failed to remove selected members.'));
+    } finally {
+      setIsRemovingMember(false);
     }
   };
 
@@ -235,6 +247,16 @@ export default function TeamMembersPage() {
             />
           </div>
 
+          {selectedIds.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setConfirmBulkRemove(true)}
+              className="flex items-center gap-1.5 font-bold text-rose-600 border-rose-200 bg-rose-50 hover:bg-rose-100"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Remove Selected ({selectedIds.length})
+            </Button>
+          )}
           {/* Status Filter Tabs */}
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-sm text-xs font-extrabold">
             {(['All', 'Active', 'Inactive'] as const).map((tab) => (
@@ -362,7 +384,7 @@ export default function TeamMembersPage() {
                                   icon: UserX,
                                   danger: true,
                                   divider: true,
-                                  onClick: () => handleRemoveMember(m),
+                                  onClick: () => setMemberToRemove(m),
                                 },
                               ]}
                             />
@@ -545,6 +567,89 @@ export default function TeamMembersPage() {
           </div>
         </div>
       </div>
+
+
+      {/* Single Member Removal Modal */}
+      {memberToRemove && (
+        <Modal
+          isOpen={Boolean(memberToRemove)}
+          title="Remove Member from Team"
+          onClose={() => {
+            if (!isRemovingMember) setMemberToRemove(null);
+          }}
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4 font-sans text-xs">
+            <p className="text-slate-600 font-medium leading-relaxed">
+              Are you sure you want to remove <strong className="text-[#0D1F3D]">{memberToRemove.name}</strong> from <strong className="text-[#0D1F3D]">{data?.team.name ?? 'this team'}</strong>?
+            </p>
+            <div className="bg-slate-50 border border-slate-200/80 p-3 rounded-sm">
+              <p className="text-xs font-semibold text-[#0D1F3D]">
+                This executive will no longer be listed in this team's active roster or receive team targets.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isRemovingMember}
+                onClick={() => setMemberToRemove(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={isRemovingMember}
+                onClick={handleConfirmRemoveMember}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+              >
+                {isRemovingMember ? 'Removing...' : 'Remove Member'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Bulk Member Removal Modal */}
+      {confirmBulkRemove && (
+        <Modal
+          isOpen={confirmBulkRemove}
+          title="Bulk Remove Team Members"
+          onClose={() => {
+            if (!isRemovingMember) setConfirmBulkRemove(false);
+          }}
+          maxWidth="max-w-md"
+        >
+          <div className="space-y-4 font-sans text-xs">
+            <p className="text-slate-600 font-medium leading-relaxed">
+              Are you sure you want to remove <strong className="text-rose-600">{selectedIds.length} selected member(s)</strong> from <strong className="text-[#0D1F3D]">{data?.team.name ?? 'this team'}</strong>?
+            </p>
+            <div className="bg-rose-50 border border-rose-200/80 p-3 rounded-sm">
+              <p className="text-xs font-semibold text-rose-800">
+                This will unassign all selected executives from this team and revoke active team targets.
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isRemovingMember}
+                onClick={() => setConfirmBulkRemove(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={isRemovingMember}
+                onClick={handleConfirmBulkRemove}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-bold"
+              >
+                {isRemovingMember ? 'Removing...' : `Remove ${selectedIds.length} Members`}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Add Member Modal */}
       <AddMemberModal
