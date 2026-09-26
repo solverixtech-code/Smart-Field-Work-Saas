@@ -182,7 +182,7 @@ export class IncentiveService {
           select: {
             id: true, membershipId: true, period: true, salesIncentive: true, demoIncentive: true, visitIncentive: true,
             bonusIncentive: true, totalIncentive: true, approvedAmount: true, status: true,
-            membership: { select: { employeeCode: true, team: { select: { name: true } }, user: { select: { fullName: true, avatarUrl: true, employeeCode: true } } } },
+            membership: { select: { employeeCode: true, team: { select: { id: true, name: true } }, user: { select: { fullName: true, avatarUrl: true, employeeCode: true } } } },
             payout: true,
           },
         }),
@@ -191,7 +191,7 @@ export class IncentiveService {
       const calculations = rows.map((row) => ({
         id: row.id, membershipId: row.membershipId, executiveId: row.membership.employeeCode ?? row.membership.user.employeeCode,
         executiveName: row.membership.user.fullName, executiveAvatar: row.membership.user.avatarUrl,
-        teamName: row.membership.team?.name ?? 'Not assigned', salesIncentive: Number(row.salesIncentive),
+        teamId: row.membership.team?.id ?? null, teamName: row.membership.team?.name ?? 'Not assigned', salesIncentive: Number(row.salesIncentive),
         demoIncentive: Number(row.demoIncentive), visitIncentive: Number(row.visitIncentive), bonusIncentive: Number(row.bonusIncentive),
         totalIncentive: Number(row.totalIncentive), approvedAmount: Number(row.approvedAmount), payoutStatus: titleStatus(row.status), monthPeriod: row.period,
       }));

@@ -11,12 +11,14 @@ import {
   Building2,
   ChevronRight,
   RefreshCw,
-  Eye,
-  AlertCircle,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { DatePicker } from "../../components/ui/DatePicker";
 import { Select } from "../../components/ui/Select";
+import { Input } from "../../components/ui/Input";
+import { Textarea } from "../../components/ui/Textarea";
+import { Modal } from "../../components/ui/Modal";
 import { useCrm, useCrmQuery, useCrmMutation } from "../../features/crm/CrmContext";
 import { DealDto } from "../../features/crm/crm.types";
 import { CrmFailure } from "../../features/crm/CrmControls";
@@ -41,6 +43,14 @@ export default function SalesPipelinePage() {
   // Drag and Drop & Selection state
   const [draggedDealId, setDraggedDealId] = useState<string | null>(null);
   const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
+
+  // Victory / Won Deal Confirmation Modal State
+  const [wonModalDeal, setWonModalDeal] = useState<DealDto | null>(null);
+  const [wonDealAmount, setWonDealAmount] = useState<number | "">("");
+  const [wonDealNotes, setWonDealNotes] = useState<string>("");
+  const [wonDealDate, setWonDealDate] = useState<string>(
+    new Date().toISOString().split("T")[0],
+  );
 
   // Filter States
   const [selectedTeam, setSelectedTeam] = useState("all");
@@ -134,8 +144,18 @@ export default function SalesPipelinePage() {
 
     const foundDeal = deals.find((d) => d.id === dealId);
     if (foundDeal && foundDeal.stage.toLowerCase() !== targetStageCode.toLowerCase()) {
+      // If deal is moved to "won", trigger victory confirmation modal instead of immediate update
+      if (targetStageCode.toLowerCase() === "won") {
+        setWonModalDeal(foundDeal);
+        setWonDealAmount(foundDeal.amount || "");
+        setWonDealNotes(foundDeal.description || "");
+        setWonDealDate(new Date().toISOString().split("T")[0]);
+        setDraggedDealId(null);
+        return;
+      }
+
       const prevDeals = [...deals];
-      // 1. Instant optimistic update so card moves immediately with zero flicker:
+      // Instant optimistic update so card moves immediately with zero flicker:
       setLocalDeals((curr) =>
         curr.map((d) =>
           d.id === foundDeal.id ? { ...d, stage: targetStageCode } : d,
@@ -163,6 +183,35 @@ export default function SalesPipelinePage() {
       }
     }
     setDraggedDealId(null);
+  };
+
+  const handleConfirmWonDeal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!wonModalDeal) return;
+    const finalAmount = Number(wonDealAmount) || 0;
+
+    const outcome = await mutation.run(async (s, signal) => {
+      return s.updateDeal(
+        wonModalDeal.id,
+        {
+          stage: "won",
+          amount: finalAmount,
+          description: wonDealNotes || null,
+          expectedClosingDate: wonDealDate ? new Date(wonDealDate + "T00:00:00").toISOString() : null,
+          expectedRevision: wonModalDeal.revision,
+        },
+        signal,
+      );
+    });
+
+    if (outcome) {
+      toast.success(
+        `🎉 Victory! Deal "${wonModalDeal.title}" closed WON for ₹${finalAmount.toLocaleString("en-IN")}!`
+      );
+      setWonModalDeal(null);
+      dealsResult.reload();
+      summaryResult.reload();
+    }
   };
 
   const totalDeals = summary?.totalDeals ?? deals.length;
@@ -614,6 +663,150 @@ export default function SalesPipelinePage() {
           </div>
         </div>
       </div>
+
+      {/* DEAL WON VICTORY & VALUE CONFIRMATION MODAL */}
+      {wonModalDeal && (
+        <Modal
+          isOpen={Boolean(wonModalDeal)}
+          onClose={() => setWonModalDeal(null)}
+          maxWidth="max-w-lg"
+          panelClassName="p-0 overflow-hidden rounded-xl shadow-2xl border border-slate-200"
+        >
+          <div className="space-y-0 text-left font-sans">
+            {/* Victory Header Banner */}
+            <div className="relative bg-gradient-to-r from-[#0D1F3D] via-[#122b54] to-emerald-950 p-6 text-white overflow-hidden border-b border-emerald-500/30">
+              <div className="absolute -right-8 -bottom-8 h-36 w-36 rounded-full bg-emerald-500/10 blur-xl" />
+              <div className="absolute right-16 -top-12 h-28 w-28 rounded-full bg-blue-500/10 blur-xl" />
+
+              <div className="relative z-10 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 px-3 py-0.5 text-[11px] font-mono font-bold text-emerald-300">
+                    <Sparkles className="h-3 w-3 text-emerald-400" /> CLOSED-WON VICTORY
+                  </span>
+                  <span className="text-xs font-mono font-bold text-slate-300">
+                    {wonModalDeal.dealCode}
+                  </span>
+                </div>
+
+                <div className="flex items-start gap-3.5 pt-1">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 text-slate-950 font-black shadow-lg shrink-0 ring-4 ring-amber-400/20">
+                    <Trophy className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-extrabold text-white">
+                      🎉 Deal Closed & Won!
+                    </h2>
+                    <p className="text-xs font-medium text-slate-300 mt-0.5">
+                      Confirm the final revenue contract amount to lock this victory into sales targets & performance reports.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Form Content */}
+            <form onSubmit={handleConfirmWonDeal} className="p-6 space-y-5 bg-white">
+              {/* Deal Summary Box */}
+              <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-purple-600 shrink-0" />
+                    <span className="text-xs font-extrabold text-[#0D1F3D]">
+                      {wonModalDeal.account?.name || wonModalDeal.lead?.businessName || wonModalDeal.title}
+                    </span>
+                  </div>
+                  <span className="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-sm border border-emerald-200">
+                    Target Credit Ready
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between pt-1 text-xs border-t border-slate-200/60 font-semibold text-slate-600">
+                  <span>Assigned Executive:</span>
+                  <span className="text-[#0D1F3D] font-extrabold">
+                    {wonModalDeal.assignedMembership?.displayName || wonModalDeal.ownerMembership?.displayName || "Field Executive"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Inputs */}
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <Input
+                    id="won-deal-amount"
+                    label="Confirmed Final Contract Amount (₹) *"
+                    type="number"
+                    min="0"
+                    required
+                    value={wonDealAmount}
+                    onChange={(e) => setWonDealAmount(e.target.value ? Number(e.target.value) : "")}
+                    placeholder="e.g. 250000"
+                  />
+
+                  {/* Quick Preset Shortcut Chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+                    <span className="text-xs font-bold text-[#0D1F3D] mr-1">Quick Presets:</span>
+                    {[50000, 100000, 250000, 500000, 1000000].map((amt) => (
+                      <button
+                        type="button"
+                        key={amt}
+                        onClick={() => setWonDealAmount(amt)}
+                        className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md border transition-all ${
+                          wonDealAmount === amt
+                            ? "bg-[#0D1F3D] text-white border-[#0D1F3D] shadow-xs"
+                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-[#0D1F3D]"
+                        }`}
+                      >
+                        ₹{(amt / 1000).toFixed(0)}k
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Date Picker Reusable Component */}
+                <DatePicker
+                  label="Closing Date *"
+                  value={wonDealDate}
+                  onChange={(d) => setWonDealDate(d)}
+                />
+
+                {/* Textarea Reusable Component */}
+                <Textarea
+                  id="won-deal-notes"
+                  label="Closing Remarks / Revenue Notes"
+                  rows={3}
+                  value={wonDealNotes}
+                  onChange={(e) => setWonDealNotes(e.target.value)}
+                  placeholder="e.g. 1-year contract signed, advance payment processed via NEFT..."
+                />
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={mutation.pending}
+                  onClick={() => setWonModalDeal(null)}
+                  className="font-bold border-slate-200 text-slate-700 hover:bg-slate-50 rounded-sm"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  isLoading={mutation.pending}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-sm px-6 py-2.5 shadow-xs flex items-center gap-2 text-xs"
+                >
+                  <Sparkles className="h-4 w-4 text-white" />
+                  Confirm Victory & Lock Deal
+                </Button>
+              </div>
+            </form>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
+

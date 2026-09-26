@@ -11,6 +11,7 @@ import {
   Search,
   Eye,
   User,
+  Users,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
@@ -353,15 +354,28 @@ export default function IncentivesManagementPage() {
                       </td>
                     )}
                     <td className="py-3 px-3">
-                      <div className="flex items-center gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/admin/executives/${c.membershipId || c.executiveId}`)}
+                        className="flex items-center gap-2.5 cursor-pointer group text-left"
+                      >
                         <Avatar src={c.executiveAvatar} name={c.executiveName} sizeClassName="h-7 w-7" />
                         <div>
-                          <span className="font-extrabold text-[#0D1F3D] block">{c.executiveName}</span>
-                          <span className="text-[10px] text-slate-400 font-mono font-semibold">{c.executiveId}</span>
+                          <span className="font-extrabold text-[#0D1F3D] block group-hover:text-purple-700 transition-colors group-hover:underline">{c.executiveName}</span>
+                          <span className="text-[10px] text-slate-400 font-mono font-semibold group-hover:text-purple-600 transition-colors">{c.executiveId}</span>
                         </div>
-                      </div>
+                      </button>
                     </td>
-                    <td className="py-3 px-3 font-semibold text-slate-700">{c.teamName}</td>
+                    <td className="py-3 px-3">
+                      <button
+                        type="button"
+                        onClick={() => navigate(c.teamId ? `/admin/teams/${c.teamId}` : '/admin/teams')}
+                        className="font-bold text-slate-700 hover:text-purple-700 hover:underline cursor-pointer transition-colors inline-flex items-center gap-1 group text-left"
+                      >
+                        <Users className="h-3.5 w-3.5 text-slate-400 group-hover:text-purple-600" />
+                        <span>{c.teamName}</span>
+                      </button>
+                    </td>
                     <td className="py-3 px-3 font-mono text-slate-800">₹{c.salesIncentive.toLocaleString('en-IN')}</td>
                     <td className="py-3 px-3 font-mono text-slate-800">₹{c.demoIncentive.toLocaleString('en-IN')}</td>
                     <td className="py-3 px-3 font-mono text-slate-800">₹{c.visitIncentive.toLocaleString('en-IN')}</td>
@@ -383,6 +397,8 @@ export default function IncentivesManagementPage() {
                     <td className="py-3 px-3 text-center">
                       <RowActionsMenu
                         items={[
+                          { label: 'View Executive Profile', icon: User, onClick: () => navigate(`/admin/executives/${c.membershipId || c.executiveId}`) },
+                          { label: 'View Team Details', icon: Users, onClick: () => navigate(c.teamId ? `/admin/teams/${c.teamId}` : '/admin/teams') },
                           { label: 'View Itemized Breakdown', icon: Eye, onClick: () => navigate(`/admin/incentives/${c.executiveId}`) },
                           ...(c.payoutStatus === 'Pending Approval' && c.totalIncentive > 0 ? [{ label: 'Approve Payout', icon: Check, onClick: () => approveOne(c) }] : []),
                         ]}
@@ -419,10 +435,14 @@ export default function IncentivesManagementPage() {
                   <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-3 font-mono font-bold text-slate-800">{p.payoutId}</td>
                     <td className="py-3 px-3">
-                      <div className="flex items-center gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/admin/executives')}
+                        className="flex items-center gap-2.5 cursor-pointer group text-left"
+                      >
                         <Avatar src={p.executiveAvatar} name={p.executiveName} sizeClassName="h-7 w-7" />
-                        <span className="font-extrabold text-[#0D1F3D]">{p.executiveName}</span>
-                      </div>
+                        <span className="font-extrabold text-[#0D1F3D] group-hover:text-purple-700 transition-colors group-hover:underline">{p.executiveName}</span>
+                      </button>
                     </td>
                     <td className="py-3 px-3 font-mono text-slate-600">{p.bankAccountOrUpi}</td>
                     <td className="py-3 px-3 font-mono text-emerald-600 font-black text-sm">₹{p.amount.toLocaleString('en-IN')}</td>

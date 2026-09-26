@@ -108,10 +108,143 @@ export default function TargetDashboardPage() {
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-      <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3"><div className="flex items-center justify-between border-b border-slate-100 pb-2.5"><div className="flex items-center gap-1.5 text-xs font-extrabold text-[#0D1F3D]"><Trophy className="h-4 w-4 text-amber-500" /><span>Top Achievers</span></div><span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">This Month</span></div><div className="space-y-2 text-xs font-semibold">
-        {!dashboard.topAchievers.length && <div className="p-4 text-center text-slate-500">No individual revenue targets are set for this month.</div>}
-        {dashboard.topAchievers.map((person, index) => <div key={person.id} className={`flex items-center justify-between p-2 rounded-md ${index === 0 ? 'bg-amber-50/50 border border-amber-200/60' : 'bg-slate-50 border border-slate-100'}`}><div className="flex items-center gap-2.5"><span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${index === 0 ? 'bg-amber-500 text-white' : index === 1 ? 'bg-slate-300 text-slate-700' : 'bg-amber-700 text-white'}`}>{index + 1}</span><Avatar name={person.name} src={person.avatarUrl} sizeClassName="h-7 w-7" /><div><span className="font-extrabold text-[#0D1F3D] block">{person.name}</span><span className="text-[10px] text-slate-500 font-semibold">{person.teamName}</span></div></div><span className="font-black text-emerald-600 text-sm">{person.achievementPct}%</span></div>)}
-      </div></div>
+      {/* CARD 1: TOP ACHIEVERS DYNAMIC LEADERBOARD WIDGET */}
+      <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+          <div className="flex items-center gap-1.5 text-xs font-extrabold text-[#0D1F3D]">
+            <Trophy className="h-4 w-4 text-amber-500" />
+            <span>Top Achievers</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200">
+              This Month
+            </span>
+            <button
+              type="button"
+              onClick={() => navigate('/admin/targets/executives')}
+              className="text-[11px] font-bold text-purple-600 hover:text-purple-800 transition cursor-pointer"
+            >
+              Full Roster →
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-2.5 text-xs font-semibold">
+          {!dashboard.topAchievers.length && (
+            <div className="p-4 text-center text-slate-500 font-medium">
+              No individual revenue targets set for this month.
+            </div>
+          )}
+
+          {dashboard.topAchievers.map((person, index) => {
+            const execDetail = dashboard.executives.find(
+              (e) => e.executiveId === person.id || e.executiveName === person.name
+            );
+            const achieved = execDetail ? execDetail.salesAchieved : 0;
+            const target = execDetail ? execDetail.salesTarget : 0;
+            const pct = person.achievementPct || (execDetail ? execDetail.salesPct : 0);
+
+            const isFirst = index === 0;
+            const isSecond = index === 1;
+            const isThird = index === 2;
+
+            return (
+              <div
+                key={person.id}
+                className={`relative overflow-hidden rounded-lg p-3 transition-all ${
+                  isFirst
+                    ? "bg-gradient-to-r from-amber-50/90 via-yellow-50/50 to-white border border-amber-300/80 shadow-2xs"
+                    : isSecond
+                    ? "bg-slate-50/90 border border-slate-200/90 shadow-2xs"
+                    : "bg-white border border-slate-200/70"
+                }`}
+              >
+                {/* Top Row: Rank Badge, Avatar, Name & Achievement Pill */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    {/* Rank Podium Badge */}
+                    <div
+                      className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-black shadow-2xs shrink-0 ${
+                        isFirst
+                          ? "bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 ring-2 ring-amber-300/40"
+                          : isSecond
+                          ? "bg-slate-300 text-slate-800 border border-slate-400/30"
+                          : isThird
+                          ? "bg-amber-700 text-amber-50"
+                          : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {isFirst ? "🥇" : isSecond ? "🥈" : isThird ? "🥉" : index + 1}
+                    </div>
+
+                    <Avatar
+                      name={person.name}
+                      src={person.avatarUrl}
+                      sizeClassName="h-8 w-8"
+                    />
+
+                    <div className="truncate">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-[#0D1F3D] text-xs block truncate">
+                          {person.name}
+                        </span>
+                        {isFirst && (
+                          <span className="text-[9px] font-mono font-bold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded-xs border border-amber-300">
+                            🏆 #1 Leader
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-semibold block truncate">
+                        {person.teamName || "Field Sales Roster"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Achievement Badge */}
+                  <div className="text-right shrink-0">
+                    <span
+                      className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-black border ${
+                        pct >= 70
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : pct >= 40
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-slate-100 text-slate-600 border-slate-200"
+                      }`}
+                    >
+                      {pct}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Bottom Row: Target Progress Bar & Currency Figures */}
+                <div className="mt-2.5 pt-2 border-t border-slate-200/50 space-y-1">
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-slate-500 font-semibold">Quota Progress:</span>
+                    <span className="font-bold text-[#0D1F3D]">
+                      {inr(achieved)}{" "}
+                      <span className="text-slate-400 font-normal">/ {inr(target)}</span>
+                    </span>
+                  </div>
+
+                  {/* Mini Progress Bar */}
+                  <div className="h-1.5 w-full rounded-full bg-slate-200/70 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        pct >= 70
+                          ? "bg-gradient-to-r from-emerald-500 to-teal-600"
+                          : pct >= 40
+                          ? "bg-amber-500"
+                          : "bg-slate-400"
+                      }`}
+                      style={{ width: `${Math.max(Math.min(pct, 100), 5)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
       <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3"><h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Achievement Status Distribution</h3><div className="grid grid-cols-3 gap-2 text-center text-xs font-bold pt-1"><div className="rounded-md bg-emerald-50 p-2.5 border border-emerald-200/60"><span className="text-emerald-700 block text-xl font-black">{dashboard.statusDistribution['On Track']}</span><span className="text-[10px] text-emerald-600 font-semibold">On Track</span></div><div className="rounded-md bg-amber-50 p-2.5 border border-amber-200/60"><span className="text-amber-700 block text-xl font-black">{dashboard.statusDistribution['At Risk']}</span><span className="text-[10px] text-amber-600 font-semibold">At Risk</span></div><div className="rounded-md bg-red-50 p-2.5 border border-red-200/60"><span className="text-red-700 block text-xl font-black">{dashboard.statusDistribution.Behind}</span><span className="text-[10px] text-red-600 font-semibold">Behind</span></div></div></div>
       <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3"><h3 className="text-xs font-extrabold text-[#0D1F3D] border-b border-slate-100 pb-2">Performance Highlights</h3><div className="space-y-2 text-xs font-semibold"><div className="flex items-center justify-between"><span className="text-slate-600">Company Target Achievement</span><span className="font-extrabold text-[#0D1F3D]">{dashboard.summary.achievementPercent}% <span className={dashboard.summary.changes.achievementPercent >= 0 ? 'text-[10px] text-emerald-600' : 'text-[10px] text-red-600'}>{dashboard.summary.changes.achievementPercent >= 0 ? '▲' : '▼'} {Math.abs(dashboard.summary.changes.achievementPercent)}%</span></span></div><div className="flex items-center justify-between border-t border-slate-100 pt-2"><span className="text-slate-600">Total Incentive Earned</span><span className="font-extrabold text-[#0D1F3D]">{inr(dashboard.summary.incentiveEarned)}</span></div><div className="flex items-center justify-between border-t border-slate-100 pt-2"><span className="text-slate-600">Disbursed Payouts</span><span className="font-extrabold text-[#0D1F3D]">{inr(dashboard.summary.incentivePaid)}</span></div></div></div>
     </div>

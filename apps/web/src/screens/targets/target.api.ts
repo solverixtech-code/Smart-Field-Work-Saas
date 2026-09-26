@@ -129,6 +129,7 @@ export interface IncentiveCalculationItem {
   executiveId: string;
   executiveName: string;
   executiveAvatar: string | null;
+  teamId?: string | null;
   teamName: string;
   salesIncentive: number;
   demoIncentive: number;
