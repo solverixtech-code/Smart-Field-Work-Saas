@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Target, X, DollarSign, Trophy, Users, Percent, Phone, Sparkles } from 'lucide-react';
+import { Target, X, DollarSign, Trophy, Users, MapPin, Sparkles, TrendingUp } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { api, extractErrorMessage } from '../../common/api';
@@ -24,24 +24,31 @@ export const SetTeamTargetsModal: React.FC<SetTeamTargetsModalProps> = ({
 }) => {
   const [revenueTarget, setRevenueTarget] = useState('1500000');
   const [dealsTarget, setDealsTarget] = useState('60');
+  const [visitsTarget, setVisitsTarget] = useState('300');
   const [leadsTarget, setLeadsTarget] = useState('1500');
-  const [winRateTarget, setWinRateTarget] = useState('30');
-  const [avgDealTarget, setAvgDealTarget] = useState('25000');
-  const [callsTarget, setCallsTarget] = useState('3000');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const numRevenue = Number(revenueTarget) || 0;
+  const numDeals = Number(dealsTarget) || 0;
+  const numLeads = Number(leadsTarget) || 0;
+
+  const computedAvgDealValue = numDeals > 0 ? Math.round(numRevenue / numDeals) : 0;
+  const computedWinRate = (numLeads > 0 && numDeals > 0) ? Math.round((numDeals / numLeads) * 1000) / 10 : 0;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!teamId || !period) return;
     setIsSubmitting(true);
+
     const targets = [
-      { metric: 'sales_amount', value: Number(revenueTarget), title: `${teamName} monthly revenue` },
-      { metric: 'deals_count', value: Number(dealsTarget), title: `${teamName} monthly deals` },
-      { metric: 'leads_count', value: Number(leadsTarget), title: `${teamName} monthly leads` },
-      { metric: 'win_rate', value: Number(winRateTarget), title: `${teamName} target win rate` },
-      { metric: 'average_deal_value', value: Number(avgDealTarget), title: `${teamName} average deal value` },
-      { metric: 'calls_count', value: Number(callsTarget), title: `${teamName} monthly calls` },
+      { metric: 'sales_amount', value: numRevenue, title: `${teamName} monthly revenue` },
+      { metric: 'deals_count', value: numDeals, title: `${teamName} monthly deals` },
+      { metric: 'visits_count', value: Number(visitsTarget) || 0, title: `${teamName} monthly field visits` },
+      { metric: 'leads_count', value: numLeads, title: `${teamName} monthly leads` },
+      { metric: 'win_rate', value: computedWinRate, title: `${teamName} target win rate` },
+      { metric: 'average_deal_value', value: computedAvgDealValue, title: `${teamName} average deal value` },
     ];
+
     try {
       await Promise.all(targets.map((target) => api.post('/tenant/crm/targets', {
         targetType: 'team', scopeId: teamId, period, metric: target.metric, targetValue: target.value,
@@ -68,13 +75,13 @@ export const SetTeamTargetsModal: React.FC<SetTeamTargetsModalProps> = ({
           <div>
             <h3 className="text-lg font-extrabold text-[#0D1F3D]">Set Monthly Team Targets</h3>
             <p className="text-xs text-slate-500 font-medium">
-              Configure targets and performance thresholds for <span className="font-bold text-[#0D1F3D]">{teamName}</span>
+              Configure quotas and field activity targets for <span className="font-bold text-[#0D1F3D]">{teamName}</span>
             </p>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+          className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer"
         >
           <X className="h-5 w-5" />
         </button>
@@ -113,10 +120,25 @@ export const SetTeamTargetsModal: React.FC<SetTeamTargetsModalProps> = ({
             />
           </div>
 
+          {/* Field Visits Target */}
+          <div className="space-y-1 sm:col-span-1">
+            <label className="font-bold text-slate-700 block flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-[#E20613]" /> Field Visits Target *
+            </label>
+            <input
+              type="number"
+              required
+              value={visitsTarget}
+              onChange={(e) => setVisitsTarget(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
+              placeholder="e.g. 300"
+            />
+          </div>
+
           {/* Leads Target */}
           <div className="space-y-1 sm:col-span-1">
             <label className="font-bold text-slate-700 block flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5 text-blue-600" /> Leads Generation Target *
+              <Users className="h-3.5 w-3.5 text-blue-600" /> Leads Target *
             </label>
             <input
               type="number"
@@ -127,46 +149,26 @@ export const SetTeamTargetsModal: React.FC<SetTeamTargetsModalProps> = ({
               placeholder="e.g. 1500"
             />
           </div>
+        </div>
 
-          {/* Win Rate Target */}
-          <div className="space-y-1 sm:col-span-1">
-            <label className="font-bold text-slate-700 block flex items-center gap-1.5">
-              <Percent className="h-3.5 w-3.5 text-purple-600" /> Target Win Rate (%) *
-            </label>
-            <input
-              type="number"
-              required
-              value={winRateTarget}
-              onChange={(e) => setWinRateTarget(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-              placeholder="e.g. 30"
-            />
+        {/* Live Auto-Calculated Unit Economics Preview */}
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#0D1F3D]">
+            <TrendingUp className="h-4 w-4 text-emerald-600" /> Auto-Calculated Quota Metrics
           </div>
-
-          {/* Avg Deal Value */}
-          <div className="space-y-1 sm:col-span-1">
-            <label className="font-bold text-slate-700 block">Avg. Deal Value (₹)</label>
-            <input
-              type="number"
-              value={avgDealTarget}
-              onChange={(e) => setAvgDealTarget(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-              placeholder="e.g. 25000"
-            />
-          </div>
-
-          {/* Calls Target */}
-          <div className="space-y-1 sm:col-span-1">
-            <label className="font-bold text-slate-700 block flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5 text-slate-500" /> Calls Target
-            </label>
-            <input
-              type="number"
-              value={callsTarget}
-              onChange={(e) => setCallsTarget(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-              placeholder="e.g. 3000"
-            />
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="bg-white border border-slate-200/80 rounded-lg p-2.5">
+              <span className="text-[11px] font-semibold text-slate-500 block">Avg. Deal Value</span>
+              <span className="text-sm font-mono font-extrabold text-emerald-600">
+                ₹{computedAvgDealValue.toLocaleString('en-IN')} <span className="text-[10px] font-normal text-slate-400">/ deal</span>
+              </span>
+            </div>
+            <div className="bg-white border border-slate-200/80 rounded-lg p-2.5">
+              <span className="text-[11px] font-semibold text-slate-500 block">Implied Win Rate</span>
+              <span className="text-sm font-mono font-extrabold text-blue-600">
+                {computedWinRate}% <span className="text-[10px] font-normal text-slate-400">(Deals ÷ Leads)</span>
+              </span>
+            </div>
           </div>
         </div>
 
