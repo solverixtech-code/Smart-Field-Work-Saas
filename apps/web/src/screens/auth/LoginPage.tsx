@@ -60,7 +60,10 @@ export default function LoginPage() {
       toast.success('Welcome back! Login successful.');
       navigate(destination);
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message || 'Login failed. Please check credentials.';
+      const errorMsg =
+        typeof err === 'string'
+          ? err
+          : err.response?.data?.message || err?.message || 'Login failed. Please check credentials.';
       setHasError(true);
       toast.error(errorMsg);
     } finally {
@@ -184,7 +187,20 @@ export default function LoginPage() {
         {/* Quick Demo Login Chips */}
         <div className="space-y-2">
           <p className="text-[11px] font-semibold text-slate-500 text-center">Tap to autofill demo credentials:</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('khushwant.kaur@solverixtech.com');
+                setPassword('Solverix@2025');
+                toast.success('Telecaller credentials loaded!');
+              }}
+              className="flex flex-col items-start p-2 rounded-lg border border-emerald-200 bg-emerald-50/60 hover:bg-emerald-100/70 transition text-left cursor-pointer"
+            >
+              <span className="text-xs font-bold text-emerald-900">Telecaller</span>
+              <span className="text-[10px] text-emerald-700 font-medium truncate w-full">khushwant...</span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
@@ -194,8 +210,8 @@ export default function LoginPage() {
               }}
               className="flex flex-col items-start p-2 rounded-lg border border-blue-200 bg-blue-50/60 hover:bg-blue-100/70 transition text-left cursor-pointer"
             >
-              <span className="text-xs font-bold text-blue-900">Field Executive</span>
-              <span className="text-[10px] text-blue-700 font-medium">vikram.singh@...</span>
+              <span className="text-xs font-bold text-blue-900">Field Exec</span>
+              <span className="text-[10px] text-blue-700 font-medium truncate w-full">vikram...</span>
             </button>
 
             <button
@@ -207,8 +223,8 @@ export default function LoginPage() {
               }}
               className="flex flex-col items-start p-2 rounded-lg border border-slate-200 bg-slate-50/60 hover:bg-slate-100 transition text-left cursor-pointer"
             >
-              <span className="text-xs font-bold text-[#0D1F3D]">Tenant Admin</span>
-              <span className="text-[10px] text-slate-600 font-medium">priya.mehta@...</span>
+              <span className="text-xs font-bold text-[#0D1F3D]">Admin</span>
+              <span className="text-[10px] text-slate-600 font-medium truncate w-full">priya...</span>
             </button>
           </div>
         </div>

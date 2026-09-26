@@ -59,7 +59,7 @@ export const PerformanceTrendCard: React.FC<PerformanceTrendCardProps> = ({ data
 
           {/* Right Weekly Averages Panel */}
           <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs space-y-2.5 flex flex-col justify-center">
-            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">This Week (Avg/Day)</span>
+            <span className="text-xs font-bold text-slate-700 block">This Week (Avg / Day)</span>
 
             <div>
               <p className="text-[10px] text-slate-500 font-semibold">Calls</p>

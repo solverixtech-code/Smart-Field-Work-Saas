@@ -99,7 +99,7 @@ export const getTelecallerDashboard = async (): Promise<TelecallerDashboardData>
   } catch {
     // Fallback Mock Data matching the exact screenshot design
     return {
-      telecallerName: 'Neha Sharma',
+      telecallerName: 'Khushwant Kaur',
       role: 'Telecaller',
       status: 'Available',
       dateStr: '26 May 2025, Mon',

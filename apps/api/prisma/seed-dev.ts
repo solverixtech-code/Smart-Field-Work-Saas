@@ -77,6 +77,17 @@ async function main() {
       email: 'deepak.patel@solverixtech.com',
       role: Role.FIELD_EXECUTIVE,
       mobile: '+919876543217',
+
+    },
+    {
+      employeeCode: 'SOL-TC-001',
+      fullName: 'Khushwant Kaur',
+      email: 'khushwant.kaur@solverixtech.com',
+      role: Role.TELECALLER,
+      mobile: '+919876543219',
+
+
+
     },
     {
       employeeCode: 'SOL-FO-001',
@@ -283,6 +294,7 @@ async function main() {
         SALES_MANAGER: 'sales_manager',
         TEAM_LEADER: 'team_leader',
         FIELD_EXECUTIVE: 'field_executive',
+        TELECALLER: 'telecaller',
         FINANCE_OPS: 'finance_ops',
         SUPPORT: 'support',
       };

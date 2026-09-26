@@ -909,6 +909,18 @@ export const DEFAULT_TENANT_ROLE_GRANTS: Record<string, string[]> = {
     'crm.visits.checkin',
     'crm.visits.schedule',
   ],
+  telecaller: [
+    'attendance.self.punch',
+    'crm.dashboard.view',
+    'crm.pipeline.view',
+    'crm.leads.view',
+    'crm.leads.create',
+    'crm.leads.access.assigned',
+    'crm.demos.view',
+    'crm.demos.manage',
+    'crm.followups.view',
+    'crm.followups.manage',
+  ],
   finance_ops: [
     'payroll.salary_structure.view',
     'payroll.salary_structure.manage',

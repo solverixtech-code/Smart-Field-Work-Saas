@@ -36,7 +36,7 @@ export const PriorityCallQueueCard: React.FC<PriorityCallQueueCardProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs whitespace-nowrap">
             <thead>
-              <tr className="border-b border-slate-100 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-slate-100 text-xs font-bold text-slate-700">
                 <th className="pb-2 font-bold">Lead Name</th>
                 <th className="pb-2 font-bold">Company</th>
                 <th className="pb-2 font-bold">Priority</th>

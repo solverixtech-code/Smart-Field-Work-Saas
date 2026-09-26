@@ -13,11 +13,17 @@ export function resolvePostAuthDestination(
     return '/platform/dashboard';
   }
 
-  // 2. If tenant context exists and is populated ➔ route to Tenant Admin workspace
+  // 2. If tenant context exists and role is Telecaller ➔ route to Telecaller Dashboard
+  const roleCode = (authData?.tenant?.roleCode || '').toLowerCase();
+  if (roleCode === 'telecaller') {
+    return '/admin/dashboard/telecaller';
+  }
+
+  // 3. If tenant context exists and is populated ➔ route to Tenant Admin workspace
   if (authData?.tenant?.id) {
     return '/admin/dashboard';
   }
 
-  // 3. Fallback for accounts without active platform or tenant assignments
+  // 4. Fallback for accounts without active platform or tenant assignments
   return '/admin/profile';
 }

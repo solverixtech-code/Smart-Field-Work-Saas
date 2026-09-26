@@ -205,6 +205,7 @@ export async function syncRbac(client?: PrismaClient) {
     sales_manager: 'Sales Manager',
     team_leader: 'Team Leader',
     field_executive: 'Field Executive',
+    telecaller: 'Telecaller',
     finance_ops: 'Finance & Payroll Operations',
     support: 'Support Specialist',
   };

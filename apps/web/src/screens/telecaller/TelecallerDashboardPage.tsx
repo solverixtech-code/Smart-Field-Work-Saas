@@ -17,6 +17,8 @@ export const TelecallerDashboardPage: React.FC = () => {
   const [data, setData] = useState<TelecallerDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [selectedDate, setSelectedDate] = useState('2025-05-26');
+
   // Modals state
   const [dialerOpen, setDialerOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<PriorityQueueItem | null>(null);
@@ -63,73 +65,69 @@ export const TelecallerDashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F3F5F7] flex flex-col font-sans">
+    <div className="space-y-4 font-sans pb-12">
       {/* Top Header */}
       <TelecallerHeader
         telecallerName={data.telecallerName}
-        role={data.role}
-        status={data.status}
-        dateStr={data.dateStr}
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
       />
 
-      {/* Content Area */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 mx-auto w-full max-w-[1720px]">
-        {/* Top 8 Metric KPI Cards Row */}
-        <KpiSummaryBar kpis={data.kpis} />
+      {/* Top 8 Metric KPI Cards Row */}
+      <KpiSummaryBar kpis={data.kpis} />
 
-        {/* Middle Main Section (4 Columns Grid) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Column 1: Today's Smart Calling Plan */}
-          <SmartCallingPlanCard
-            dayPlan={data.dayPlan}
-            bestConnectingTime={data.bestConnectingTime}
+      {/* Middle Main Section (4 Columns Grid) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Column 1: Today's Smart Calling Plan */}
+        <SmartCallingPlanCard
+          dayPlan={data.dayPlan}
+          bestConnectingTime={data.bestConnectingTime}
+        />
+
+        {/* Column 2: Target Mission & AI Coach */}
+        <TargetMissionCard
+          callsCompleted={data.kpis.callsCompleted}
+          dailyCallTarget={data.kpis.dailyCallTarget}
+          bestConnectingTime={data.bestConnectingTime}
+          streakDays={data.targetStreakDays}
+          aiCoachTips={data.aiCoachTips}
+        />
+
+        {/* Column 3: Priority Call Queue */}
+        <PriorityCallQueueCard
+          queue={data.priorityQueue}
+          onStartCall={handleStartCall}
+          onOpenWhatsApp={handleWhatsApp}
+          onAddNote={handleAddNote}
+        />
+
+        {/* Column 4: Today's Follow-up Commitments */}
+        <FollowUpCommitmentsCard commitments={data.followUps} />
+      </div>
+
+      {/* Bottom Section (3 Cards Layout) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Performance Trend (Last 7 Days) - Spans 2 Columns */}
+        <div className="lg:col-span-2">
+          <PerformanceTrendCard
+            data={data.performanceTrend}
+            weeklyAvg={data.weeklyAvg}
           />
-
-          {/* Column 2: Target Mission & AI Coach */}
-          <TargetMissionCard
-            callsCompleted={data.kpis.callsCompleted}
-            dailyCallTarget={data.kpis.dailyCallTarget}
-            bestConnectingTime={data.bestConnectingTime}
-            streakDays={data.targetStreakDays}
-            aiCoachTips={data.aiCoachTips}
-          />
-
-          {/* Column 3: Priority Call Queue */}
-          <PriorityCallQueueCard
-            queue={data.priorityQueue}
-            onStartCall={handleStartCall}
-            onOpenWhatsApp={handleWhatsApp}
-            onAddNote={handleAddNote}
-          />
-
-          {/* Column 4: Today's Follow-up Commitments */}
-          <FollowUpCommitmentsCard commitments={data.followUps} />
         </div>
 
-        {/* Bottom Section (3 Cards Layout) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Performance Trend (Last 7 Days) - Spans 2 Columns */}
-          <div className="lg:col-span-2">
-            <PerformanceTrendCard
-              data={data.performanceTrend}
-              weeklyAvg={data.weeklyAvg}
-            />
-          </div>
+        {/* Quick Actions Grid */}
+        <TelecallerQuickActions
+          onStartCalling={() => handleStartCall()}
+          onOpenScript={() => setScriptOpen(true)}
+          onScheduleDemo={() => toast.info('Opening Schedule Demo modal...')}
+          onAddFollowUp={() => toast.info('Opening Add Follow-up modal...')}
+          onDownloadReport={() => toast.success('Downloading Telecaller Activity Report (PDF)...')}
+          onAddNote={() => toast.info('Opening Add Note drawer...')}
+        />
 
-          {/* Quick Actions Grid */}
-          <TelecallerQuickActions
-            onStartCalling={() => handleStartCall()}
-            onOpenScript={() => setScriptOpen(true)}
-            onScheduleDemo={() => toast.info('Opening Schedule Demo modal...')}
-            onAddFollowUp={() => toast.info('Opening Add Follow-up modal...')}
-            onDownloadReport={() => toast.success('Downloading Telecaller Activity Report (PDF)...')}
-            onAddNote={() => toast.info('Opening Add Note drawer...')}
-          />
-
-          {/* Day Completion Checklist */}
-          <DayChecklistCard initialChecklist={data.checklist} />
-        </div>
-      </main>
+        {/* Day Completion Checklist */}
+        <DayChecklistCard initialChecklist={data.checklist} />
+      </div>
 
       {/* Interactive Modals */}
       <StartCallingModal
