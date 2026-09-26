@@ -345,9 +345,30 @@ export default function TeamMembersPage() {
                             >
                               <Eye className="h-4 w-4" />
                             </button>
-                            <button title="More Actions" className="p-1.5 rounded-sm text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D]">
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
+                            <RowActionsMenu
+                              items={[
+                                {
+                                  label: 'View Profile',
+                                  icon: Eye,
+                                  onClick: () => navigate(`/admin/executives/${m.id}`),
+                                },
+                                {
+                                  label: 'Edit Executive',
+                                  icon: Edit,
+                                  onClick: () => navigate(`/admin/executives/${m.id}/edit`),
+                                },
+                                {
+                                  label: 'Remove from Team',
+                                  icon: UserX,
+                                  danger: true,
+                                  divider: true,
+                                  onClick: () => handleRemoveMember(m),
+                                },
+                              ]}
+                            />
+
+
+
                           </div>
                         </td>
                       </tr>

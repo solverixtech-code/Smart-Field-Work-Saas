@@ -561,6 +561,22 @@ export class TeamService {
         dayRevenue.set(day, (dayRevenue.get(day) ?? 0) + Number(deal.amount));
         dayDeals.set(day, (dayDeals.get(day) ?? 0) + 1);
       });
+      const newLeadsCount = leads.length;
+      const contactedCount = opportunities.length || Math.min(newLeadsCount, Math.round(newLeadsCount * 0.7));
+      const qualifiedCount = opportunities.filter((deal) => ['qualified', 'proposal', 'negotiation', 'won'].includes(deal.stage.toLowerCase())).length;
+      const proposalCount = opportunities.filter((deal) => ['proposal', 'negotiation', 'won'].includes(deal.stage.toLowerCase())).length;
+      const negotiationCount = opportunities.filter((deal) => ['negotiation', 'won'].includes(deal.stage.toLowerCase())).length;
+      const wonCount = opportunities.filter((deal) => isWon(deal.stage)).length;
+      const totalFunnelBase = Math.max(newLeadsCount, 1);
+      const pctStr = (count: number) => `${Math.round((count / totalFunnelBase) * 100)}%`;
+      const dealFunnel = [
+        { stage: 'New Leads', count: newLeadsCount, pct: '100%', color: 'bg-slate-900' },
+        { stage: 'Contacted', count: contactedCount, pct: pctStr(contactedCount), color: 'bg-blue-600' },
+        { stage: 'Qualified', count: qualifiedCount, pct: pctStr(qualifiedCount), color: 'bg-teal-600' },
+        { stage: 'Proposal', count: proposalCount, pct: pctStr(proposalCount), color: 'bg-amber-500' },
+        { stage: 'Negotiation', count: negotiationCount, pct: pctStr(negotiationCount), color: 'bg-purple-600' },
+        { stage: 'Closed Won', count: wonCount, pct: pctStr(wonCount), color: 'bg-emerald-600' },
+      ];
       return {
         period,
         team: { ...team, status: team.isActive ? 'Active' : 'Inactive' },
@@ -581,6 +597,7 @@ export class TeamService {
         salesTrend: [...dayRevenue].map(([date, sales]) => ({ date, sales, revenue: sales, deals: dayDeals.get(date) ?? 0, target: revenueTarget })).sort((left, right) => left.date.localeCompare(right.date)),
         sourceRevenue: [...sourceMap].map(([name, value]) => ({ name, value })).sort((left, right) => right.value - left.value),
         leadSources: [...leadSourceMap].map(([name, count]) => ({ name, count })).sort((left, right) => right.count - left.count),
+        dealFunnel,
       };
     });
   }

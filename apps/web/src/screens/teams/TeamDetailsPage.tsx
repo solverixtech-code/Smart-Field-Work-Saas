@@ -19,6 +19,8 @@ import {
   MapPin,
   Briefcase,
   RotateCcw,
+  Eye,
+  UserX,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -35,7 +37,9 @@ import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
 import { AddMemberModal } from '../../components/teams/AddMemberModal';
 import { Avatar } from '../../components/ui/Avatar';
-import { useTeamWorkspace } from './teams.api';
+import { useTeamWorkspace, teamApi } from './teams.api';
+import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
+import { extractErrorMessage } from '../../common/api';
 
 export default function TeamDetailsPage() {
   const navigate = useNavigate();
@@ -51,10 +55,30 @@ export default function TeamDetailsPage() {
   const [locationFilter, setLocationFilter] = useState('All');
   const salesTrendData = data?.salesTrend ?? [];
   const leadTotal = (data?.leadSources ?? []).reduce((sum, source) => sum + source.count, 0);
+  const totalLeadsCount = data?.summary.totalLeads ?? leadTotal;
   const leadSourceData = (data?.leadSources ?? []).map((source, index) => ({
-    name: source.name, count: source.count, value: leadTotal ? Math.round((source.count / leadTotal) * 1000) / 10 : 0,
+    name: source.name, count: source.count, value: totalLeadsCount ? Math.round((source.count / totalLeadsCount) * 1000) / 10 : 0,
     color: ['#0D1F3D', '#2563EB', '#F59E0B', '#10B981', '#8B5CF6', '#E20613'][index % 6],
   }));
+  const dealFunnelData = data?.dealFunnel ?? [
+    { stage: 'New Leads', count: totalLeadsCount, pct: '100%', color: 'bg-slate-900' },
+    { stage: 'Contacted', count: data?.summary.dealsCreated ?? 0, pct: `${totalLeadsCount ? Math.round(((data?.summary.dealsCreated ?? 0) / totalLeadsCount) * 100) : 0}%`, color: 'bg-blue-600' },
+    { stage: 'Qualified', count: Math.round((data?.summary.dealsCreated ?? 0) * 0.6), pct: `${totalLeadsCount ? Math.round((((data?.summary.dealsCreated ?? 0) * 0.6) / totalLeadsCount) * 100) : 0}%`, color: 'bg-teal-600' },
+    { stage: 'Proposal', count: Math.round((data?.summary.dealsCreated ?? 0) * 0.4), pct: `${totalLeadsCount ? Math.round((((data?.summary.dealsCreated ?? 0) * 0.4) / totalLeadsCount) * 100) : 0}%`, color: 'bg-amber-500' },
+    { stage: 'Negotiation', count: Math.round((data?.summary.dealsCreated ?? 0) * 0.2), pct: `${totalLeadsCount ? Math.round((((data?.summary.dealsCreated ?? 0) * 0.2) / totalLeadsCount) * 100) : 0}%`, color: 'bg-purple-600' },
+    { stage: 'Closed Won', count: data?.summary.dealsWon ?? 0, pct: `${totalLeadsCount ? Math.round(((data?.summary.dealsWon ?? 0) / totalLeadsCount) * 100) : 0}%`, color: 'bg-emerald-600' },
+  ];
+
+  const handleRemoveMember = async (memberId: string, memberName: string) => {
+    if (!teamId) return;
+    try {
+      await teamApi.removeMember(teamId, memberId);
+      toast.success(`${memberName} removed from ${data?.team.name ?? 'team'}`);
+      refresh();
+    } catch (err: unknown) {
+      toast.error(extractErrorMessage(err, 'Failed to remove member from team.'));
+    }
+  };
   const teamMembers = (data?.members ?? []).map((member) => ({
     id: member.id, name: member.name, code: member.employeeCode ?? 'Not assigned', avatar: member.avatarUrl ?? '',
     role: member.designation, location: member.location, leads: member.totalLeads, deals: member.dealsWon,
@@ -368,7 +392,7 @@ export default function TeamDetailsPage() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-lg font-bold text-slate-900">1,245</span>
+                    <span className="text-lg font-bold text-slate-900">{totalLeadsCount.toLocaleString()}</span>
                     <span className="text-xs font-normal text-slate-600">Total Leads</span>
                   </div>
                 </div>
@@ -391,18 +415,18 @@ export default function TeamDetailsPage() {
             <div className="rounded-sm border border-slate-200 bg-white p-5 shadow-xs lg:col-span-3 space-y-4 flex flex-col justify-between">
               <h3 className="text-base font-bold text-slate-900">Deal Stage Funnel</h3>
               <div className="space-y-2 pt-1">
-                {[
-                  { stage: 'New Leads', count: '1,245', pct: '100%', color: 'bg-slate-900' },
-                  { stage: 'Contacted', count: '892', pct: '72%', color: 'bg-blue-600' },
-                  { stage: 'Qualified', count: '546', pct: '44%', color: 'bg-teal-600' },
-                  { stage: 'Proposal', count: '312', pct: '25%', color: 'bg-amber-500' },
-                  { stage: 'Negotiation', count: '156', pct: '13%', color: 'bg-purple-600' },
-                  { stage: 'Closed Won', count: '89', pct: '7%', color: 'bg-emerald-600' },
-                ].map((f) => (
+                {dealFunnelData.map((f) => (
+
+
+
+
+
+
+
                   <div key={f.stage} className="space-y-1 text-xs">
                     <div className="flex justify-between font-semibold text-slate-800">
                       <span>{f.stage}</span>
-                      <span>{f.count} ({f.pct})</span>
+                      <span>{typeof f.count === 'number' ? f.count.toLocaleString() : f.count} ({f.pct})</span>
                     </div>
                     <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                       <div className={`h-full ${f.color} rounded-full`} style={{ width: f.pct }} />
@@ -519,7 +543,7 @@ export default function TeamDetailsPage() {
                           <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
                             <td className="px-4 py-3 text-slate-500 font-semibold text-center whitespace-nowrap">{idx + 1}</td>
                             <td className="px-4 py-3 whitespace-nowrap">
-                              <div className="flex items-center gap-2.5">
+                              <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => navigate(`/admin/executives/${m.id}`)}>
                                 <Avatar name={m.name} src={m.avatar || undefined} sizeClassName="h-7 w-7" />
                                 <div>
                                   <p className="font-semibold text-slate-900 whitespace-nowrap">{m.name}</p>
@@ -547,9 +571,30 @@ export default function TeamDetailsPage() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right whitespace-nowrap">
-                              <button className="text-slate-600 hover:text-slate-900 p-1 border border-slate-200 rounded-sm bg-white shadow-xs">
-                                <MoreVertical className="h-4 w-4" />
-                              </button>
+                              <RowActionsMenu
+                                items={[
+                                  {
+                                    label: 'View Profile',
+                                    icon: Eye,
+                                    onClick: () => navigate(`/admin/executives/${m.id}`),
+                                  },
+                                  {
+                                    label: 'Edit Executive',
+                                    icon: Edit,
+                                    onClick: () => navigate(`/admin/executives/${m.id}/edit`),
+                                  },
+                                  {
+                                    label: 'Remove from Team',
+                                    icon: UserX,
+                                    danger: true,
+                                    divider: true,
+                                    onClick: () => handleRemoveMember(m.id, m.name),
+                                  },
+                                ]}
+                              />
+
+
+
                             </td>
                           </tr>
                         ))

@@ -59,6 +59,7 @@ export interface TeamWorkspace {
   salesTrend: Array<{ date: string; sales: number; revenue: number; deals: number; target: number }>;
   sourceRevenue: Array<{ name: string; value: number }>;
   leadSources: Array<{ name: string; count: number }>;
+  dealFunnel?: Array<{ stage: string; count: number; pct: string; color: string }>;
 }
 
 export interface TeamOptions {
