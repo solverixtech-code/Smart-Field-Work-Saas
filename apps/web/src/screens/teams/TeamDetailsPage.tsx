@@ -34,40 +34,13 @@ import {
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
 import { AddMemberModal } from '../../components/teams/AddMemberModal';
-
-const salesTrendData = [
-  { date: '14 May', sales: 620000, target: 1125000 },
-  { date: '15 May', sales: 750000, target: 1125000 },
-  { date: '16 May', sales: 920000, target: 1125000 },
-  { date: '17 May', sales: 880000, target: 1125000 },
-  { date: '18 May', sales: 980000, target: 1125000 },
-  { date: '19 May', sales: 1150000, target: 1125000 },
-  { date: '20 May', sales: 1245000, target: 1125000 },
-];
-
-const leadSourceData = [
-  { name: 'Website', value: 32, count: 398, color: '#0D1F3D' },
-  { name: 'Meta Ads', value: 24, count: 299, color: '#2563EB' },
-  { name: 'Cold Calling', value: 18, count: 224, color: '#F59E0B' },
-  { name: 'Referral', value: 12, count: 149, color: '#10B981' },
-  { name: 'Justdial', value: 8, count: 100, color: '#8B5CF6' },
-  { name: 'Others', value: 6, count: 75, color: '#E20613' },
-];
-
-const teamMembers = [
-  { id: '1', name: 'Rahul Sharma', code: 'FE-1001', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80', role: 'Field Executive', location: 'Andheri', leads: 189, deals: 18, sales: 285000, achv: 95, status: 'Active' },
-  { id: '2', name: 'Priya Mehta', code: 'FE-1002', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80', role: 'Field Executive', location: 'Borivali', leads: 165, deals: 14, sales: 245000, achv: 87, status: 'Active' },
-  { id: '3', name: 'Amit Patil', code: 'FE-1003', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80', role: 'Field Executive', location: 'Malad', leads: 158, deals: 12, sales: 220000, achv: 82, status: 'Active' },
-  { id: '4', name: 'Neha Singh', code: 'FE-1004', avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80', role: 'Field Executive', location: 'Kandivali', leads: 142, deals: 11, sales: 198000, achv: 79, status: 'Active' },
-  { id: '5', name: 'Rohit Gupta', code: 'FE-1005', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80', role: 'Field Executive', location: 'Goregaon', leads: 136, deals: 10, sales: 185000, achv: 77, status: 'Active' },
-  { id: '6', name: 'Karan Desai', code: 'FE-1006', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&q=80', role: 'Field Executive', location: 'Andheri', leads: 128, deals: 9, sales: 165000, achv: 73, status: 'Active' },
-  { id: '7', name: 'Sneha Kulkarni', code: 'FE-1007', avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=120&q=80', role: 'Field Executive', location: 'Malad', leads: 112, deals: 8, sales: 145000, achv: 69, status: 'Active' },
-  { id: '8', name: 'Vishal More', code: 'FE-1008', avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=120&q=80', role: 'Field Executive', location: 'Borivali', leads: 115, deals: 7, sales: 132000, achv: 66, status: 'On Leave' },
-];
+import { Avatar } from '../../components/ui/Avatar';
+import { useTeamWorkspace } from './teams.api';
 
 export default function TeamDetailsPage() {
   const navigate = useNavigate();
   const { teamId } = useParams();
+  const { data, refresh } = useTeamWorkspace(teamId);
   const [activeTab, setActiveTab] = useState('Overview');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -76,6 +49,17 @@ export default function TeamDetailsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState('All');
   const [locationFilter, setLocationFilter] = useState('All');
+  const salesTrendData = data?.salesTrend ?? [];
+  const leadTotal = (data?.leadSources ?? []).reduce((sum, source) => sum + source.count, 0);
+  const leadSourceData = (data?.leadSources ?? []).map((source, index) => ({
+    name: source.name, count: source.count, value: leadTotal ? Math.round((source.count / leadTotal) * 1000) / 10 : 0,
+    color: ['#0D1F3D', '#2563EB', '#F59E0B', '#10B981', '#8B5CF6', '#E20613'][index % 6],
+  }));
+  const teamMembers = (data?.members ?? []).map((member) => ({
+    id: member.id, name: member.name, code: member.employeeCode ?? 'Not assigned', avatar: member.avatarUrl ?? '',
+    role: member.designation, location: member.location, leads: member.totalLeads, deals: member.dealsWon,
+    sales: member.revenue, achv: member.achievementPercent, status: member.status,
+  }));
 
   const filteredMembers = useMemo(() => {
     return teamMembers.filter((m) => {
@@ -90,7 +74,7 @@ export default function TeamDetailsPage() {
 
       return matchesSearch && matchesStatus && matchesLocation;
     });
-  }, [searchTerm, statusFilter, locationFilter]);
+  }, [teamMembers, searchTerm, statusFilter, locationFilter]);
 
   const handleResetFilters = () => {
     setSearchTerm('');
@@ -119,7 +103,7 @@ export default function TeamDetailsPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `Mumbai_North_Team_Members_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `${(data?.team.name ?? 'Team').replace(/\s+/g, '_')}_Members_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -140,16 +124,16 @@ export default function TeamDetailsPage() {
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <h1 className="text-2xl font-bold text-slate-900">Mumbai North Team</h1>
+            <h1 className="text-2xl font-bold text-slate-900">{data?.team.name ?? 'Loading team...'}</h1>
             <span className="rounded-sm bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-              Active
+              {data?.team.status ?? 'Active'}
             </span>
             <span className="font-mono text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-sm border border-slate-200">
-              MN-001
+              {data?.team.code ?? '—'}
             </span>
           </div>
           <p className="mt-1 text-sm font-normal text-slate-600">
-            Sales & business development for North Mumbai region (Andheri, Borivali, Malad).
+            {data?.team.description || `${data?.team.teamType ?? 'Sales team'} for ${data?.team.region ?? 'an unassigned region'}.`}
           </p>
         </div>
 
@@ -157,7 +141,7 @@ export default function TeamDetailsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Opening team edit form...')}
+            onClick={() => navigate(`/admin/teams/${teamId ?? ''}/edit`)}
             className="flex items-center gap-2 font-semibold text-slate-800 border-slate-300 shadow-none hover:bg-slate-50"
           >
             <Edit className="h-4 w-4 text-slate-700" /> Edit Team
@@ -165,7 +149,7 @@ export default function TeamDetailsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/members`)}
+            onClick={() => navigate(`/admin/teams/${teamId ?? ''}/members`)}
             className="flex items-center gap-2 font-semibold text-slate-800 border-slate-300 shadow-none hover:bg-slate-50"
           >
             <Users className="h-4 w-4" /> Manage Members
@@ -202,31 +186,27 @@ export default function TeamDetailsPage() {
               <span className="inline-block text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-sm mb-1">
                 Sales Manager
               </span>
-              <p className="text-xs font-bold text-[#0D1F3D] truncate">Amit Sharma</p>
-              <p className="text-[11px] text-slate-600 font-medium">Regional Sales Head</p>
+              <p className="text-xs font-bold text-[#0D1F3D] truncate">{data?.manager?.name ?? 'Not assigned'}</p>
+              <p className="text-[11px] text-slate-600 font-medium">{data?.manager?.designation ?? 'Sales Manager'}</p>
             </div>
           </div>
 
           {/* Level 2: Team Leader */}
           <div className="flex items-center gap-3 rounded-sm border border-slate-200 bg-slate-50/80 p-3.5">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-              alt="Team Leader"
-              className="h-10 w-10 rounded-sm object-cover shrink-0 border border-slate-200 shadow-xs"
-            />
+            <Avatar name={data?.leader?.name ?? 'Unassigned'} src={data?.leader?.avatarUrl} sizeClassName="h-10 w-10" />
             <div className="min-w-0 flex-1">
               <span className="inline-block text-[11px] font-bold text-[#E20613] bg-red-50 border border-red-200/80 px-2 py-0.5 rounded-sm mb-1">
                 Team Leader
               </span>
               <p className="text-xs font-bold text-[#0D1F3D] truncate">
-                Sanjay Yadav <span className="font-mono text-[11px] text-slate-600">(TL-1003)</span>
+                {data?.leader?.name ?? 'Not assigned'} <span className="font-mono text-[11px] text-slate-600">({data?.leader?.employeeCode ?? 'No code'})</span>
               </p>
-              <p className="text-[11px] text-slate-600 font-medium">North Mumbai Territory</p>
+              <p className="text-[11px] text-slate-600 font-medium">{data?.team.region ?? 'No territory assigned'}</p>
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/leader`)}
+              onClick={() => navigate(`/admin/teams/${teamId ?? ''}/leader`)}
               className="!px-2.5 !py-1 text-xs font-semibold text-slate-800 border-slate-300 shrink-0 hover:bg-slate-100"
             >
               Reassign
@@ -236,19 +216,19 @@ export default function TeamDetailsPage() {
           {/* Level 3: Field Executives */}
           <div className="flex items-center gap-3 rounded-sm border border-slate-200 bg-slate-50/80 p-3.5">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-emerald-700 text-white font-bold text-xs shadow-xs">
-              8 FE
+              {data?.summary.totalMembers ?? 0} FE
             </div>
             <div className="min-w-0 flex-1">
               <span className="inline-block text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-sm mb-1">
                 Field Executives
               </span>
-              <p className="text-xs font-bold text-[#0D1F3D] truncate">8 Active Executives</p>
-              <p className="text-[11px] text-slate-600 font-medium">100% Territory Coverage</p>
+              <p className="text-xs font-bold text-[#0D1F3D] truncate">{data?.summary.activeMembers ?? 0} Active Executives</p>
+              <p className="text-[11px] text-slate-600 font-medium">{data?.team.region ?? 'No territory assigned'}</p>
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/members`)}
+              onClick={() => navigate(`/admin/teams/${teamId ?? ''}/members`)}
               className="!px-2.5 !py-1 text-xs font-semibold text-slate-800 border-slate-300 shrink-0 hover:bg-slate-100"
             >
               Members
@@ -261,34 +241,32 @@ export default function TeamDetailsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Team Members"
-          value="8 Staff"
-          subValue="7 Active Field Execs"
+          value={`${data?.summary.totalMembers ?? 0} Staff`}
+          subValue={`${data?.summary.activeMembers ?? 0} Active Field Execs`}
           icon={Users}
           iconBgColor="bg-slate-100"
           iconTextColor="text-slate-800"
         />
         <KpiCard
           title="Monthly Target"
-          value="₹15,00,000"
-          subValue="83% Target Achieved"
+          value={`₹${(data?.summary.revenueTarget ?? 0).toLocaleString('en-IN')}`}
+          subValue={`${data?.summary.achievementPercent ?? 0}% Target Achieved`}
           icon={Target}
           iconBgColor="bg-blue-50"
           iconTextColor="text-blue-700"
         />
         <KpiCard
           title="Total Sales Achieved"
-          value="₹12,45,000"
-          change="+22%"
-          changeType="positive"
-          timeframe="vs last month"
+          value={`₹${(data?.summary.revenue ?? 0).toLocaleString('en-IN')}`}
+          timeframe="Current period"
           icon={TrendingUp}
           iconBgColor="bg-emerald-50"
           iconTextColor="text-emerald-700"
         />
         <KpiCard
           title="Deals Closed"
-          value="89 Deals"
-          subValue="1,245 Total Leads"
+          value={`${data?.summary.dealsWon ?? 0} Deals`}
+          subValue={`${data?.summary.totalLeads ?? 0} Total Leads`}
           icon={CheckCircle2}
           iconBgColor="bg-amber-50"
           iconTextColor="text-amber-700"
@@ -350,7 +328,7 @@ export default function TeamDetailsPage() {
                       contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                       labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                       itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                      formatter={(val: any, name: any) => [`₹${Number(val || 0).toLocaleString()}`, name]}
+                      formatter={(val, name) => [`₹${Number(val ?? 0).toLocaleString()}`, name ?? 'Value']}
                     />
                     <Area type="monotone" dataKey="sales" name="Team Sales" stroke="#2563EB" strokeWidth={3} fillOpacity={1} fill="url(#teamSalesGrad)" />
                     <Area type="monotone" dataKey="target" name="Target" stroke="#94A3B8" strokeWidth={2} strokeDasharray="3 3" fillOpacity={0} />
@@ -385,7 +363,7 @@ export default function TeamDetailsPage() {
                         contentStyle={{ backgroundColor: '#0D1F3D', borderRadius: '4px', border: 'none' }}
                         labelStyle={{ color: '#E20613', fontWeight: 700, fontSize: '12px' }}
                         itemStyle={{ color: '#FFFFFF', fontWeight: 600, fontSize: '12px' }}
-                        formatter={(val: any) => [`${val}%`, 'Share']}
+                        formatter={(val) => [`${val ?? 0}%`, 'Share']}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -490,7 +468,6 @@ export default function TeamDetailsPage() {
                       >
                         <option value="All">All Statuses</option>
                         <option value="Active">Active</option>
-                        <option value="On Leave">On Leave</option>
                         <option value="Inactive">Inactive</option>
                       </select>
                     </div>
@@ -503,11 +480,7 @@ export default function TeamDetailsPage() {
                         className="w-full rounded-sm border border-slate-300 bg-white p-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-slate-800"
                       >
                         <option value="All">All Locations</option>
-                        <option value="Andheri">Andheri</option>
-                        <option value="Borivali">Borivali</option>
-                        <option value="Malad">Malad</option>
-                        <option value="Kandivali">Kandivali</option>
-                        <option value="Goregaon">Goregaon</option>
+                        {[...new Set(teamMembers.map((member) => member.location))].map((location) => <option key={location} value={location}>{location}</option>)}
                       </select>
                     </div>
 
@@ -547,7 +520,7 @@ export default function TeamDetailsPage() {
                             <td className="px-4 py-3 text-slate-500 font-semibold text-center whitespace-nowrap">{idx + 1}</td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <div className="flex items-center gap-2.5">
-                                <img src={m.avatar} alt={m.name} className="h-7 w-7 rounded-full object-cover border border-slate-200 shrink-0" />
+                                <Avatar name={m.name} src={m.avatar || undefined} sizeClassName="h-7 w-7" />
                                 <div>
                                   <p className="font-semibold text-slate-900 whitespace-nowrap">{m.name}</p>
                                   <p className="text-xs font-mono font-semibold text-slate-600 whitespace-nowrap">{m.code}</p>
@@ -568,8 +541,6 @@ export default function TeamDetailsPage() {
                               <span className={`inline-block rounded-sm px-2.5 py-0.5 text-xs font-semibold border whitespace-nowrap ${
                                 m.status === 'Active'
                                   ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                  : m.status === 'On Leave'
-                                  ? 'bg-amber-50 text-amber-800 border-amber-200'
                                   : 'bg-slate-100 text-slate-700 border-slate-300'
                               }`}>
                                 {m.status}
@@ -599,7 +570,7 @@ export default function TeamDetailsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/members`)}
+                  onClick={() => navigate(`/admin/teams/${teamId ?? ''}/members`)}
                   className="font-semibold text-slate-800 border-slate-300 flex items-center gap-1"
                 >
                   View All Members <ChevronRight className="h-3.5 w-3.5" />
@@ -622,7 +593,7 @@ export default function TeamDetailsPage() {
                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-800 border border-slate-200">
                           {idx + 1}
                         </span>
-                        <img src={m.avatar} alt={m.name} className="h-7 w-7 rounded-full object-cover border border-slate-200" />
+                        <Avatar name={m.name} src={m.avatar || undefined} sizeClassName="h-7 w-7" />
                         <div>
                           <p className="font-semibold text-slate-900">{m.name}</p>
                           <p className="text-xs text-slate-600 font-normal">{m.role}</p>
@@ -647,12 +618,12 @@ export default function TeamDetailsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-base font-bold text-slate-900">Team Roster</h3>
-              <p className="text-xs text-slate-600">All field executives assigned to Mumbai North Team</p>
+              <p className="text-xs text-slate-600">All field executives assigned to {data?.team.name ?? 'this team'}</p>
             </div>
             <Button
               variant="accent"
               size="sm"
-              onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}/members`)}
+              onClick={() => navigate(`/admin/teams/${teamId ?? ''}/members`)}
               className="flex items-center gap-1.5 font-semibold"
             >
               <Plus className="h-4 w-4" /> Add Executive
@@ -663,7 +634,7 @@ export default function TeamDetailsPage() {
             {filteredMembers.map((m) => (
               <div key={m.id} className="rounded-sm border border-slate-200 bg-slate-50 p-4 space-y-3">
                 <div className="flex items-center gap-3">
-                  <img src={m.avatar} alt={m.name} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
+                  <Avatar name={m.name} src={m.avatar || undefined} sizeClassName="h-10 w-10" />
                   <div>
                     <p className="font-semibold text-slate-900">{m.name}</p>
                     <p className="text-xs text-slate-600 font-mono">{m.code}</p>
@@ -689,7 +660,10 @@ export default function TeamDetailsPage() {
       <AddMemberModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        teamName="Mumbai North Team"
+        teamId={teamId}
+        teamName={data?.team.name ?? 'Team'}
+        candidates={data?.candidates ?? []}
+        onMembersAdded={refresh}
       />
     </div>
   );

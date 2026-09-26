@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -13,6 +13,9 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Avatar } from '../../components/ui/Avatar';
+import { extractErrorMessage } from '../../common/api';
+import { teamApi, useTeamWorkspace } from './teams.api';
 
 interface LeaderCandidate {
   id: string;
@@ -26,95 +29,45 @@ interface LeaderCandidate {
   isCurrentLeader: boolean;
 }
 
-const candidatesData: LeaderCandidate[] = [
-  {
-    id: 'TL-1003',
-    name: 'Sanjay Yadav',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
-    role: 'Team Leader',
-    employeeId: 'TL-1003',
-    joinedOn: '12 Apr 2024',
-    dealsThisMonth: 8,
-    winRate: 81,
-    isCurrentLeader: true,
-  },
-  {
-    id: 'TL-1007',
-    name: 'Priya Mehta',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
-    role: 'Senior Executive',
-    employeeId: 'TL-1007',
-    joinedOn: '15 Apr 2024',
-    dealsThisMonth: 6,
-    winRate: 92,
-    isCurrentLeader: false,
-  },
-  {
-    id: 'TL-1011',
-    name: 'Rohit Singh',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
-    role: 'Field Executive',
-    employeeId: 'TL-1011',
-    joinedOn: '16 Apr 2024',
-    dealsThisMonth: 5,
-    winRate: 70,
-    isCurrentLeader: false,
-  },
-  {
-    id: 'TL-1009',
-    name: 'Karan Patil',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
-    role: 'Field Executive',
-    employeeId: 'TL-1009',
-    joinedOn: '17 Apr 2024',
-    dealsThisMonth: 4,
-    winRate: 64,
-    isCurrentLeader: false,
-  },
-  {
-    id: 'TL-1014',
-    name: 'Neha Deshpande',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80',
-    role: 'Field Executive',
-    employeeId: 'TL-1014',
-    joinedOn: '18 Apr 2024',
-    dealsThisMonth: 3,
-    winRate: 62,
-    isCurrentLeader: false,
-  },
-  {
-    id: 'TL-1017',
-    name: 'Vishal Shah',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=120&q=80',
-    role: 'Field Executive',
-    employeeId: 'TL-1017',
-    joinedOn: '19 Apr 2024',
-    dealsThisMonth: 2,
-    winRate: 58,
-    isCurrentLeader: false,
-  },
-];
-
 export default function AssignTeamLeaderPage() {
   const navigate = useNavigate();
   const { teamId } = useParams();
+  const { data } = useTeamWorkspace(teamId);
 
-  const [selectedLeaderId, setSelectedLeaderId] = useState<string>('TL-1003');
+  const [selectedLeaderId, setSelectedLeaderId] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const selectedCandidate = candidatesData.find((c) => c.id === selectedLeaderId);
+  const dynamicCandidates: LeaderCandidate[] = data ? [...data.members, ...data.candidates]
+    .filter((candidate, index, rows) => rows.findIndex((row) => row.id === candidate.id) === index)
+    .map((candidate) => {
+      const member = data.members.find((row) => row.id === candidate.id);
+      return {
+        id: candidate.id, name: candidate.name, avatar: candidate.avatarUrl ?? '', role: candidate.designation,
+        employeeId: candidate.employeeCode ?? 'Not assigned',
+        joinedOn: member ? new Date(member.joinedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Available',
+        dealsThisMonth: member?.dealsWon ?? 0, winRate: member?.winRate ?? 0,
+        isCurrentLeader: data.leader?.id === candidate.id,
+      };
+    }) : [];
+  useEffect(() => { if (data?.leader?.id) setSelectedLeaderId(data.leader.id); }, [data?.leader?.id]);
+  const selectedCandidate = dynamicCandidates.find((c) => c.id === selectedLeaderId);
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
+    if (!teamId || !selectedLeaderId) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await teamApi.assignLeader(teamId, selectedLeaderId);
       toast.success(`Team leader successfully assigned to ${selectedCandidate?.name || 'selected executive'}!`);
-      navigate(`/admin/teams/${teamId || 'MN-001'}`);
-    }, 800);
+      navigate(`/admin/teams/${teamId}`);
+    } catch (error: unknown) {
+      toast.error(extractErrorMessage(error, 'Unable to assign the team leader.'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const filteredCandidates = candidatesData.filter(
+  const filteredCandidates = dynamicCandidates.filter(
     (c) =>
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.employeeId.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -125,7 +78,7 @@ export default function AssignTeamLeaderPage() {
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Assign Team Leader — Mumbai North Team</h1>
+          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Assign Team Leader — {data?.team.name ?? 'Team'}</h1>
           <p className="text-xs font-medium text-slate-500">
             Reassign team leadership permissions, task overview rights, and reporting authority.
           </p>
@@ -134,7 +87,7 @@ export default function AssignTeamLeaderPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}`)}
+          onClick={() => navigate(`/admin/teams/${teamId ?? ''}`)}
           className="flex items-center gap-2 font-bold"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Team Details
@@ -146,35 +99,35 @@ export default function AssignTeamLeaderPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700 text-lg font-extrabold">
-              MN
+              {(data?.team.name ?? 'Team').split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-extrabold text-[#0D1F3D]">Mumbai North Team</h2>
+                <h2 className="text-lg font-extrabold text-[#0D1F3D]">{data?.team.name ?? 'Loading team...'}</h2>
                 <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold text-emerald-600">
-                  Active
+                  {data?.team.status ?? 'Active'}
                 </span>
               </div>
-              <p className="text-xs font-medium text-slate-400">Team Code: MN-001</p>
+              <p className="text-xs font-medium text-slate-400">Team Code: {data?.team.code ?? '—'}</p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-6 text-xs font-semibold text-slate-600">
             <div>
               <span className="text-xs font-semibold text-slate-500 block mb-0.5">Team Type</span>
-              <span className="font-extrabold text-[#0D1F3D]">Sales Team</span>
+              <span className="font-extrabold text-[#0D1F3D]">{data?.team.teamType ?? '—'}</span>
             </div>
             <div>
               <span className="text-xs font-semibold text-slate-500 block mb-0.5">Department</span>
-              <span className="font-extrabold text-[#0D1F3D]">Sales</span>
+              <span className="font-extrabold text-[#0D1F3D]">{data?.team.department ?? '—'}</span>
             </div>
             <div>
               <span className="text-xs font-semibold text-slate-500 block mb-0.5">Region / Area</span>
-              <span className="font-extrabold text-[#0D1F3D]">North Mumbai Region</span>
+              <span className="font-extrabold text-[#0D1F3D]">{data?.team.region ?? 'Not assigned'}</span>
             </div>
             <div>
               <span className="text-xs font-semibold text-slate-500 block mb-0.5">Total Members</span>
-              <span className="font-extrabold text-[#0D1F3D]">8 Executive Staff</span>
+              <span className="font-extrabold text-[#0D1F3D]">{data?.summary.totalMembers ?? 0} Executive Staff</span>
             </div>
           </div>
         </div>
@@ -196,20 +149,16 @@ export default function AssignTeamLeaderPage() {
 
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
               <div className="flex items-center gap-3">
-                <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80"
-                  alt="Sanjay Yadav"
-                  className="h-12 w-12 rounded-full object-cover border-2 border-white shadow-xs"
-                />
+                <Avatar name={data?.leader?.name ?? 'Unassigned'} src={data?.leader?.avatarUrl} sizeClassName="h-12 w-12" />
                 <div>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-extrabold text-[#0D1F3D]">Sanjay Yadav</p>
+                    <p className="text-sm font-extrabold text-[#0D1F3D]">{data?.leader?.name ?? 'No leader assigned'}</p>
                     <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-extrabold text-emerald-600">
                       Active Leader
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 font-medium mt-0.5">
-                    Employee ID: <span className="font-mono text-slate-600">TL-1003</span> • Team Leader Since: <span className="font-bold text-slate-700">12 Apr 2024</span>
+                    Employee ID: <span className="font-mono text-slate-600">{data?.leader?.employeeCode ?? 'Not assigned'}</span>
                   </p>
                 </div>
               </div>
@@ -218,15 +167,15 @@ export default function AssignTeamLeaderPage() {
               <div className="flex items-center gap-4 text-xs font-semibold">
                 <div className="text-center px-3 border-r border-slate-200">
                   <span className="text-xs font-semibold text-slate-500 block mb-0.5">Deals (This Month)</span>
-                  <span className="text-sm font-extrabold text-[#0D1F3D]">8</span>
+                  <span className="text-sm font-extrabold text-[#0D1F3D]">{data?.members.find((member) => member.id === data.leader?.id)?.dealsWon ?? 0}</span>
                 </div>
                 <div className="text-center px-3 border-r border-slate-200">
                   <span className="text-xs font-semibold text-slate-500 block mb-0.5">Achieved</span>
-                  <span className="text-sm font-extrabold text-emerald-600">₹3,25,000</span>
+                  <span className="text-sm font-extrabold text-emerald-600">₹{(data?.members.find((member) => member.id === data.leader?.id)?.revenue ?? 0).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="text-center px-3">
                   <span className="text-xs font-semibold text-slate-500 block mb-0.5">Win Rate</span>
-                  <span className="text-sm font-extrabold text-blue-600">81%</span>
+                  <span className="text-sm font-extrabold text-blue-600">{data?.members.find((member) => member.id === data.leader?.id)?.winRate ?? 0}%</span>
                 </div>
               </div>
             </div>
@@ -289,7 +238,7 @@ export default function AssignTeamLeaderPage() {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
-                            <img src={c.avatar} alt={c.name} className="h-8 w-8 rounded-full object-cover border border-slate-200" />
+                            <Avatar name={c.name} src={c.avatar || undefined} sizeClassName="h-8 w-8" />
                             <div>
                               <p className="font-extrabold text-[#0D1F3D]">{c.name}</p>
                               {c.isCurrentLeader && (
@@ -316,12 +265,12 @@ export default function AssignTeamLeaderPage() {
 
             {/* Bottom Actions Bar */}
             <div className="p-4 border-t border-slate-100 flex items-center justify-between bg-slate-50/40">
-              <span className="text-xs text-slate-500 font-semibold">Showing 1 to {filteredCandidates.length} of {candidatesData.length} members</span>
+              <span className="text-xs text-slate-500 font-semibold">Showing 1 to {filteredCandidates.length} of {dynamicCandidates.length} members</span>
               <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/admin/teams/${teamId || 'MN-001'}`)}
+                  onClick={() => navigate(`/admin/teams/${teamId ?? ''}`)}
                   className="font-bold"
                 >
                   Cancel
@@ -374,11 +323,7 @@ export default function AssignTeamLeaderPage() {
             </div>
 
             <div className="space-y-4 text-xs">
-              {[
-                { name: 'Sanjay Yadav', badge: 'Current Leader', date: '12 Apr 2024, 10:30 AM', by: 'Amit Sharma', current: true },
-                { name: 'Priya Mehta', badge: 'Was team leader', date: '10 Mar 2024, 09:15 AM', by: 'Amit Sharma', current: false },
-                { name: 'Rohit Singh', badge: 'Was team leader', date: '05 Feb 2024, 11:20 AM', by: 'Amit Sharma', current: false },
-              ].map((h, idx) => (
+              {(data?.leader ? [{ name: data.leader.name, badge: 'Current Leader', date: new Date(data.team.updatedAt).toLocaleString('en-IN'), by: 'Workspace administrator', current: true }] : []).map((h, idx) => (
                 <div key={idx} className="flex items-start gap-3 border-b border-slate-100 pb-3 last:border-0 last:pb-0">
                   <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full ${h.current ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
                     <UserCheck className="h-4 w-4" />
@@ -394,6 +339,7 @@ export default function AssignTeamLeaderPage() {
                   </div>
                 </div>
               ))}
+              {!data?.leader && <p className="text-xs font-medium text-slate-500">No team leader has been assigned.</p>}
             </div>
           </div>
         </div>

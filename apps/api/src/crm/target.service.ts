@@ -98,6 +98,7 @@ export class TargetService {
         const member = opportunity.assignedMembership ?? opportunity.ownerMembership;
         const occurredAt = opportunity.closedAt ?? opportunity.updatedAt;
         activities.push({ period: this.localPeriod(occurredAt, timezone), metric: 'sales_amount', value: Number(opportunity.amount), teamId: member.teamId, membershipId: member.id });
+        activities.push({ period: this.localPeriod(occurredAt, timezone), metric: 'deals_count', value: 1, teamId: member.teamId, membershipId: member.id });
       });
       visits.forEach((visit) => activities.push({ period: this.localPeriod(visit.checkInTime, timezone), metric: 'visits_count', value: 1, teamId: visit.executiveMembership.teamId, membershipId: visit.executiveMembership.id }));
       demos.forEach((demo) => activities.push({ period: demo.demoDate.slice(0, 7), metric: 'demos_count', value: 1, teamId: demo.conductedByMembership.teamId, membershipId: demo.conductedByMembership.id }));

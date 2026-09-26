@@ -3,17 +3,22 @@ import { toast } from 'sonner';
 import { Edit3, X, CheckCircle2 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { api, extractErrorMessage } from '../../common/api';
 
 interface EditSingleTargetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  metricItem?: { id: string; metric: string; target: string; sub?: string } | null;
-  onTargetUpdated?: (metricId: string, newValue: string) => void;
+  teamId?: string;
+  period?: string;
+  metricItem?: { id: string; backendMetric: string; metric: string; target: string; targetValue: number; sub?: string } | null;
+  onTargetUpdated?: () => void;
 }
 
 export const EditSingleTargetModal: React.FC<EditSingleTargetModalProps> = ({
   isOpen,
   onClose,
+  teamId,
+  period,
   metricItem,
   onTargetUpdated,
 }) => {
@@ -21,19 +26,24 @@ export const EditSingleTargetModal: React.FC<EditSingleTargetModalProps> = ({
 
   useEffect(() => {
     if (metricItem) {
-      setTargetValue(metricItem.target);
+      setTargetValue(String(metricItem.targetValue));
     }
   }, [metricItem]);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!metricItem) return;
-
-    toast.success(`Updated ${metricItem.metric} target to ${targetValue}`);
-    if (onTargetUpdated) {
-      onTargetUpdated(metricItem.id, targetValue);
+    if (!metricItem || !teamId || !period) return;
+    try {
+      await api.post('/tenant/crm/targets', {
+        targetType: 'team', scopeId: teamId, period, metric: metricItem.backendMetric,
+        targetValue: Number(targetValue), thresholdPct: 80, title: metricItem.metric,
+      });
+      toast.success(`Updated ${metricItem.metric} target to ${targetValue}`);
+      onTargetUpdated?.();
+      onClose();
+    } catch (error: unknown) {
+      toast.error(extractErrorMessage(error, 'Unable to update the target.'));
     }
-    onClose();
   };
 
   if (!metricItem) return null;

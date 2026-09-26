@@ -66,7 +66,12 @@ type CrmAuditAction =
   | "opportunity.created"
   | "opportunity.updated"
   | "opportunity.stage_changed"
-  | "opportunity.deleted";
+  | "opportunity.deleted"
+  | "team.created"
+  | "team.updated"
+  | "team.leader.changed"
+  | "team.members.assigned"
+  | "team.member.removed";
 
 export const crmConflict = (code: string): never => {
   throw new ConflictException({
@@ -240,7 +245,7 @@ export class CrmRepository {
     tx: Prisma.TransactionClient,
     p: CrmPolicy,
     action: CrmAuditAction,
-    entityType: "Account" | "Contact" | "Lead" | "Opportunity" | "LeadVisit",
+    entityType: "Account" | "Contact" | "Lead" | "Opportunity" | "LeadVisit" | "Team",
     id: string,
     metadata: CrmAuditMetadata,
   ) {

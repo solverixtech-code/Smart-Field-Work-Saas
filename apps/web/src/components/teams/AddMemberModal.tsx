@@ -13,6 +13,9 @@ import {
 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { Avatar } from '../ui/Avatar';
+import { api, extractErrorMessage } from '../../common/api';
+import { teamApi, TeamCandidate } from '../../screens/teams/teams.api';
 
 export interface UnassignedExecutive {
   id: string;
@@ -21,75 +24,26 @@ export interface UnassignedExecutive {
   code: string;
   location: string;
   experience: string;
-  rating: number;
-  pastDeals: number;
+  rating?: number;
+  pastDeals?: number;
 }
-
-const candidatePool: UnassignedExecutive[] = [
-  {
-    id: 'cand-1',
-    name: 'Sunil Kadam',
-    code: 'FE-1019',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
-    location: 'Andheri East, Mumbai',
-    experience: '2.5 Yrs Exp',
-    rating: 4.9,
-    pastDeals: 38,
-  },
-  {
-    id: 'cand-2',
-    name: 'Rohan Varma',
-    code: 'FE-1020',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
-    location: 'Goregaon East, Mumbai',
-    experience: '3 Yrs Exp',
-    rating: 4.8,
-    pastDeals: 42,
-  },
-  {
-    id: 'cand-3',
-    name: 'Pooja Sharma',
-    code: 'FE-1021',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
-    location: 'Borivali West, Mumbai',
-    experience: '1.8 Yrs Exp',
-    rating: 4.7,
-    pastDeals: 29,
-  },
-  {
-    id: 'cand-4',
-    name: 'Deepak Nair',
-    code: 'FE-1022',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
-    location: 'Malad West, Mumbai',
-    experience: '4 Yrs Exp',
-    rating: 4.9,
-    pastDeals: 56,
-  },
-  {
-    id: 'cand-5',
-    name: 'Manish Chawla',
-    code: 'FE-1023',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=120&q=80',
-    location: 'Kandivali East, Mumbai',
-    experience: '2 Yrs Exp',
-    rating: 4.6,
-    pastDeals: 31,
-  },
-];
 
 interface AddMemberModalProps {
   isOpen: boolean;
   onClose: () => void;
+  teamId?: string;
   teamName?: string;
-  onMemberAdded?: (newMember: any) => void;
+  candidates?: TeamCandidate[];
+  onMembersAdded?: () => void;
 }
 
 export const AddMemberModal: React.FC<AddMemberModalProps> = ({
   isOpen,
   onClose,
-  teamName = 'Mumbai North Team',
-  onMemberAdded,
+  teamId,
+  teamName = 'Team',
+  candidates = [],
+  onMembersAdded,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCandidate, setSelectedCandidate] = useState<UnassignedExecutive | null>(null);
@@ -98,6 +52,10 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
   const [amountTarget, setAmountTarget] = useState('250000');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const candidatePool: UnassignedExecutive[] = candidates.map((candidate) => ({
+    id: candidate.id, name: candidate.name, code: candidate.employeeCode ?? 'Not assigned', avatar: candidate.avatarUrl ?? '',
+    location: candidate.department ?? 'Available executive', experience: candidate.designation,
+  }));
   const filteredCandidates = candidatePool.filter(
     (c) =>
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -105,34 +63,34 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
       c.location.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const handleAddMember = () => {
-    if (!selectedCandidate) {
+  const handleAddMember = async () => {
+    if (!selectedCandidate || !teamId) {
       toast.error('Please select an unassigned executive to add');
       return;
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      await teamApi.assignMembers(teamId, [selectedCandidate.id], assignedRole);
+      const period = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit' }).format(new Date());
+      const targets = [
+        { metric: 'deals_count', value: Number(dealsTarget), title: `${selectedCandidate.name} monthly deals` },
+        { metric: 'sales_amount', value: Number(amountTarget), title: `${selectedCandidate.name} monthly revenue` },
+      ].filter((target) => target.value > 0);
+      await Promise.all(targets.map((target) => api.post('/tenant/crm/targets', {
+        targetType: 'individual', scopeId: selectedCandidate.id, period, metric: target.metric,
+        targetValue: target.value, thresholdPct: 80, title: target.title,
+      })));
       toast.success(`${selectedCandidate.name} has been added to ${teamName}!`);
-      if (onMemberAdded) {
-        onMemberAdded({
-          id: selectedCandidate.id,
-          name: selectedCandidate.name,
-          code: selectedCandidate.code,
-          avatar: selectedCandidate.avatar,
-          role: assignedRole,
-          location: selectedCandidate.location,
-          dealsTarget: Number(dealsTarget),
-          amountTarget: Number(amountTarget),
-          status: 'Active',
-        });
-      }
-      // Reset form & close
+      onMembersAdded?.();
       setSelectedCandidate(null);
       setSearchQuery('');
       onClose();
-    }, 600);
+    } catch (error: unknown) {
+      toast.error(extractErrorMessage(error, 'Unable to add the team member.'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -191,11 +149,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <img
-                      src={cand.avatar}
-                      alt={cand.name}
-                      className="h-10 w-10 rounded-full object-cover border border-slate-200 shadow-xs"
-                    />
+                    <Avatar name={cand.name} src={cand.avatar || undefined} sizeClassName="h-10 w-10" />
                     <div>
                       <div className="flex items-center gap-2">
                         <h4 className="text-xs font-bold text-[#0D1F3D]">{cand.name}</h4>
@@ -214,9 +168,9 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
                       <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
                         {cand.experience}
                       </span>
-                      <p className="text-[10px] font-semibold text-slate-400 mt-1">
-                        ★ {cand.rating} • {cand.pastDeals} Deals
-                      </p>
+                      {cand.rating !== undefined && cand.pastDeals !== undefined && (
+                        <p className="text-[10px] font-semibold text-slate-400 mt-1">★ {cand.rating} • {cand.pastDeals} Deals</p>
+                      )}
                     </div>
 
                     <div

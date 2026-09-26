@@ -389,7 +389,6 @@ export default function AppRouter() {
             {/* Teams & Hierarchy Management Routes */}
             <Route element={<PermissionRoute permission="crm.teams.view" />}>
               <Route path="/admin/teams" element={<SalesTeamsPage />} />
-              <Route path="/admin/teams/create" element={<CreateTeamPage />} />
               <Route
                 path="/admin/teams/targets"
                 element={<TeamTargetsPage />}
@@ -431,6 +430,12 @@ export default function AppRouter() {
                 path="/admin/targets/create"
                 element={<TargetDashboardPage />}
               />
+            </Route>
+            <Route element={<PermissionRoute permission="crm.teams.create" />}>
+              <Route path="/admin/teams/create" element={<CreateTeamPage />} />
+            </Route>
+            <Route element={<PermissionRoute permission="crm.teams.update" />}>
+              <Route path="/admin/teams/:teamId/edit" element={<CreateTeamPage />} />
             </Route>
             <Route element={<PermissionRoute permission="crm.incentives.view" />}>
               <Route

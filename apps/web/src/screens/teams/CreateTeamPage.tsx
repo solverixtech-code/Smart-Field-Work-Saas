@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -14,9 +14,14 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { extractErrorMessage } from '../../common/api';
+import { teamApi, TeamOptions, useTeamWorkspace } from './teams.api';
 
 export default function CreateTeamPage() {
   const navigate = useNavigate();
+  const { teamId } = useParams();
+  const { data } = useTeamWorkspace(teamId);
+  const isEditing = Boolean(teamId);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -33,16 +38,46 @@ export default function CreateTeamPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [options, setOptions] = useState<TeamOptions>({ candidates: [], regions: [] });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    teamApi.options().then(setOptions).catch((error: unknown) => toast.error(extractErrorMessage(error, 'Unable to load team options.')));
+  }, []);
+
+  useEffect(() => {
+    if (!data) return;
+    setFormData({
+      name: data.team.name, code: data.team.code, leader: data.leader?.id ?? '', department: data.team.department,
+      region: data.team.region ?? '', monthlyTarget: String(data.summary.revenueTarget), description: data.team.description ?? '',
+      teamType: data.team.teamType, status: data.team.status, dealAssignment: data.team.dealAssignment, visibility: data.team.visibility,
+    });
+  }, [data]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
-    setTimeout(() => {
+    try {
+      const payload = {
+        name: formData.name,
+        ...(formData.code.trim() ? { code: formData.code.trim() } : {}),
+        leaderMembershipId: formData.leader,
+        department: formData.department,
+        region: formData.region,
+        monthlyTarget: Number(formData.monthlyTarget),
+        description: formData.description || null,
+        teamType: formData.teamType,
+        status: formData.status,
+        dealAssignment: formData.dealAssignment,
+        visibility: formData.visibility,
+      };
+      const destinationId = isEditing && teamId ? (await teamApi.update(teamId, payload), teamId) : (await teamApi.create(payload)).id;
+      toast.success(`Team "${formData.name}" has been ${isEditing ? 'updated' : 'created'} successfully!`);
+      navigate(`/admin/teams/${destinationId}`);
+    } catch (error: unknown) {
+      toast.error(extractErrorMessage(error, `Unable to ${isEditing ? 'update' : 'create'} the team.`));
+    } finally {
       setIsSubmitting(false);
-      toast.success(`Team "${formData.name || 'New Team'}" has been created successfully!`);
-      navigate('/admin/teams');
-    }, 800);
+    }
   };
 
   return (
@@ -50,7 +85,7 @@ export default function CreateTeamPage() {
       {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">Create New Sales Team</h1>
+          <h1 className="text-2xl font-extrabold text-[#0D1F3D]">{isEditing ? 'Edit Sales Team' : 'Create New Sales Team'}</h1>
           <p className="text-xs font-medium text-slate-500">
             Define team hierarchy, assign team leader, set monthly targets, and configure security visibility.
           </p>
@@ -111,10 +146,9 @@ export default function CreateTeamPage() {
                   className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:outline-none focus:border-[#0D1F3D] cursor-pointer"
                 >
                   <option value="">Select team leader</option>
-                  <option value="Sanjay Yadav">Sanjay Yadav (TL-1003)</option>
-                  <option value="Priya Mehta">Priya Mehta (TL-1007)</option>
-                  <option value="Rohit Singh">Rohit Singh (TL-1011)</option>
-                  <option value="Karan Patil">Karan Patil (TL-1009)</option>
+                  {options.candidates.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>{candidate.name} ({candidate.employeeCode ?? candidate.designation})</option>
+                  ))}
                 </select>
               </div>
 
@@ -142,11 +176,7 @@ export default function CreateTeamPage() {
                   className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 font-bold text-[#0D1F3D] focus:outline-none focus:border-[#0D1F3D] cursor-pointer"
                 >
                   <option value="">Select region / area</option>
-                  <option value="North Mumbai Region">North Mumbai Region</option>
-                  <option value="Western Suburbs">Western Suburbs</option>
-                  <option value="Thane & Navi Mumbai">Thane & Navi Mumbai</option>
-                  <option value="Pune City & PCMC">Pune City & PCMC</option>
-                  <option value="Nagpur Region">Nagpur Region</option>
+                  {options.regions.map((region) => <option key={region.id} value={region.name}>{region.name}</option>)}
                 </select>
               </div>
 
@@ -305,7 +335,7 @@ export default function CreateTeamPage() {
                 isLoading={isSubmitting}
                 className="font-bold shadow-xs"
               >
-                Create Team
+                {isEditing ? 'Save Team' : 'Create Team'}
               </Button>
             </div>
           </div>
@@ -334,7 +364,7 @@ export default function CreateTeamPage() {
             <div className="w-full space-y-2.5 border-t border-slate-100 pt-4 text-xs text-left font-semibold text-slate-600">
               <div className="flex justify-between">
                 <span className="text-slate-400 font-medium">Team Leader</span>
-                <span className="font-extrabold text-[#0D1F3D]">{formData.leader || '—'}</span>
+                <span className="font-extrabold text-[#0D1F3D]">{options.candidates.find((candidate) => candidate.id === formData.leader)?.name || '—'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400 font-medium">Department</span>

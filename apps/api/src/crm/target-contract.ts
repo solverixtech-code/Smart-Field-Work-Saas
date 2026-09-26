@@ -2,6 +2,12 @@ import { z } from 'zod';
 
 export const targetMetricSchema = z.enum([
   'sales_amount',
+  'deals_count',
+  'leads_count',
+  'win_rate',
+  'average_deal_value',
+  'calls_count',
+  'meetings_count',
   'demos_count',
   'visits_count',
   'collections_amount',

@@ -687,6 +687,15 @@ function getBusinessBreadcrumbName(businessId?: string): string {
   return `BIZ-${clean.slice(-6)}`;
 }
 
+function getTeamBreadcrumbName(teamId?: string): string {
+  if (!teamId) return "Team Details";
+  try {
+    return sessionStorage.getItem(`visiblo_team_name_${teamId}`) || teamId;
+  } catch {
+    return teamId;
+  }
+}
+
 function getBreadcrumbTrail(pathname: string) {
   const items: { label: string; to: string }[] = [];
 
@@ -752,7 +761,8 @@ function getBreadcrumbTrail(pathname: string) {
     });
   } else if (pathname.startsWith("/admin/teams/")) {
     items.push({ label: "Teams & Hierarchy", to: "/admin/teams" });
-    items.push({ label: "Mumbai North Team", to: "/admin/teams/MN-001" });
+    const teamId = pathname.split("/")[3];
+    items.push({ label: getTeamBreadcrumbName(teamId), to: `/admin/teams/${teamId}` });
     if (pathname.endsWith("/leader")) {
       items.push({ label: "Assign Team Leader", to: pathname });
     } else if (pathname.endsWith("/members")) {
@@ -761,6 +771,8 @@ function getBreadcrumbTrail(pathname: string) {
       items.push({ label: "Team Performance", to: pathname });
     } else if (pathname.endsWith("/targets")) {
       items.push({ label: "Team Targets", to: pathname });
+    } else if (pathname.endsWith("/edit")) {
+      items.push({ label: "Edit Team", to: pathname });
     }
   } else if (pathname === '/admin/categories') {
     items.push({ label: 'Business Categories', to: '/admin/categories' });
@@ -974,6 +986,7 @@ export default function AppShell() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const [, setBizBreadcrumbVersion] = useState(0);
+  const [, setTeamBreadcrumbVersion] = useState(0);
   const [targetNavigationSummary, setTargetNavigationSummary] = useState<{
     teamCount: number;
     executiveCount: number;
@@ -996,6 +1009,12 @@ export default function AppShell() {
     const handleBizNameUpdate = () => setBizBreadcrumbVersion((v) => v + 1);
     window.addEventListener("visiblo:business-name-updated", handleBizNameUpdate);
     return () => window.removeEventListener("visiblo:business-name-updated", handleBizNameUpdate);
+  }, []);
+
+  useEffect(() => {
+    const handleTeamNameUpdate = () => setTeamBreadcrumbVersion((version) => version + 1);
+    window.addEventListener("visiblo:team-name-updated", handleTeamNameUpdate);
+    return () => window.removeEventListener("visiblo:team-name-updated", handleTeamNameUpdate);
   }, []);
 
   const { user } = useAppSelector((s) => s.auth);

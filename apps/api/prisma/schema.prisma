@@ -127,16 +127,24 @@ model Team {
   name              String
   code              String             @unique
   description       String?
+  department        String             @default("Sales")
+  region            String?
+  teamType          String             @default("Field Sales")
+  dealAssignment    String             @default("Both Manual & Auto")
+  visibility        String             @default("Private")
   isActive          Boolean            @default(true)
   tenantId          String?
   tenant            Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   members           User[]
   tenantMemberships TenantMembership[]
+  leaderMembershipId String?
+  leaderMembership   TenantMembership? @relation("TeamLeader", fields: [leaderMembershipId], references: [id], onDelete: SetNull)
   salesTargets      SalesTarget[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
   @@index([tenantId])
+  @@index([leaderMembershipId])
 }
 
 enum PermissionScope {
@@ -1036,6 +1044,7 @@ model TenantMembership {
 
   teamId String?
   team   Team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  ledTeams Team[] @relation("TeamLeader")
 
   managerMembershipId    String?
   managerMembership      TenantMembership?  @relation("MembershipManager", fields: [managerMembershipId], references: [id], onDelete: SetNull)

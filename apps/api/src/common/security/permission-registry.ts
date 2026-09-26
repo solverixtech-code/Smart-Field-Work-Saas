@@ -677,6 +677,18 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
     moduleKey: 'crm_teams',
   },
   {
+    code: 'crm.teams.create', scope: PermissionScope.TENANT, domain: 'crm', resource: 'teams', action: 'create',
+    description: 'Create sales teams', moduleKey: 'crm_teams',
+  },
+  {
+    code: 'crm.teams.update', scope: PermissionScope.TENANT, domain: 'crm', resource: 'teams', action: 'update',
+    description: 'Update sales team configuration', moduleKey: 'crm_teams',
+  },
+  {
+    code: 'crm.teams.assign', scope: PermissionScope.TENANT, domain: 'crm', resource: 'teams', action: 'assign',
+    description: 'Assign team leaders and members', moduleKey: 'crm_teams',
+  },
+  {
     code: 'crm.executives.view',
     scope: PermissionScope.TENANT,
     domain: 'crm',
@@ -846,6 +858,9 @@ export const DEFAULT_TENANT_ROLE_GRANTS: Record<string, string[]> = {
     'crm.visits.schedule',
     'crm.map.view',
     'crm.teams.view',
+    'crm.teams.create',
+    'crm.teams.update',
+    'crm.teams.assign',
     'crm.executives.view',
     'system.masters.view',
   ],

@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
-import { Target, X, DollarSign, Trophy, Users, Percent, Phone, Calendar, Sparkles } from 'lucide-react';
+import { Target, X, DollarSign, Trophy, Users, Percent, Phone, Sparkles } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { api, extractErrorMessage } from '../../common/api';
 
 interface SetTeamTargetsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  teamId?: string;
+  period?: string;
   teamName?: string;
-  onTargetsSaved?: (targets: any) => void;
+  onTargetsSaved?: () => void;
 }
 
 export const SetTeamTargetsModal: React.FC<SetTeamTargetsModalProps> = ({
   isOpen,
   onClose,
-  teamName = 'Mumbai North Team',
+  teamId,
+  period,
+  teamName = 'Team',
   onTargetsSaved,
 }) => {
   const [revenueTarget, setRevenueTarget] = useState('1500000');
@@ -23,28 +28,33 @@ export const SetTeamTargetsModal: React.FC<SetTeamTargetsModalProps> = ({
   const [winRateTarget, setWinRateTarget] = useState('30');
   const [avgDealTarget, setAvgDealTarget] = useState('25000');
   const [callsTarget, setCallsTarget] = useState('3000');
-  const [meetingsTarget, setMeetingsTarget] = useState('120');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!teamId || !period) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    const targets = [
+      { metric: 'sales_amount', value: Number(revenueTarget), title: `${teamName} monthly revenue` },
+      { metric: 'deals_count', value: Number(dealsTarget), title: `${teamName} monthly deals` },
+      { metric: 'leads_count', value: Number(leadsTarget), title: `${teamName} monthly leads` },
+      { metric: 'win_rate', value: Number(winRateTarget), title: `${teamName} target win rate` },
+      { metric: 'average_deal_value', value: Number(avgDealTarget), title: `${teamName} average deal value` },
+      { metric: 'calls_count', value: Number(callsTarget), title: `${teamName} monthly calls` },
+    ];
+    try {
+      await Promise.all(targets.map((target) => api.post('/tenant/crm/targets', {
+        targetType: 'team', scopeId: teamId, period, metric: target.metric, targetValue: target.value,
+        thresholdPct: 80, title: target.title,
+      })));
       toast.success(`Targets updated for ${teamName}!`);
-      if (onTargetsSaved) {
-        onTargetsSaved({
-          revenue: Number(revenueTarget),
-          deals: Number(dealsTarget),
-          leads: Number(leadsTarget),
-          winRate: Number(winRateTarget),
-          avgDeal: Number(avgDealTarget),
-          calls: Number(callsTarget),
-          meetings: Number(meetingsTarget),
-        });
-      }
+      onTargetsSaved?.();
       onClose();
-    }, 600);
+    } catch (error: unknown) {
+      toast.error(extractErrorMessage(error, 'Unable to save team targets.'));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
