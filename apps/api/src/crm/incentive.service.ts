@@ -19,9 +19,11 @@ const nextPeriod = (period: string) => {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
 };
 const titleStatus = (status: string) => status.split('_').map((part) => `${part[0]}${part.slice(1).toLowerCase()}`).join(' ');
-const payoutStructure = (metric: string, rate: number) => metric.includes('(Amount)')
-  ? `₹ ${rate.toLocaleString('en-IN')} for every ₹ 10,000 achieved`
-  : `₹ ${rate.toLocaleString('en-IN')} per ${metric.replace(/ \(Count\)$/, '').replace(/^Total /, '')}`;
+const payoutStructure = (metric: string, rate: number, mode = 'SLAB', step = 10000) => {
+  if (mode === 'PERCENTAGE') return `${rate}% of revenue achieved`;
+  if (mode === 'SLAB' || metric.includes('(Amount)')) return `₹ ${rate.toLocaleString('en-IN')} for every ₹ ${step.toLocaleString('en-IN')} achieved`;
+  return `₹ ${rate.toLocaleString('en-IN')} per ${metric.replace(/ \(Count\)$/, '').replace(/^Total /, '')}`;
+};
 const applies = (appliesTo: string, member: { designation: string | null; tenantRole: { code: string } | null; user: { role: string } }) => {
   if (appliesTo === 'All Executives') return true;
   const designation = member.designation?.toLowerCase() ?? '';
@@ -54,7 +56,9 @@ export class IncentiveService {
       return {
         items: rows.map((row) => ({
           id: row.id, ruleName: row.name, ruleType: row.ruleType, appliesTo: row.appliesTo, metric: row.metric,
-          payoutRate: Number(row.payoutRate), payoutStructure: payoutStructure(row.metric, Number(row.payoutRate)),
+          payoutMode: row.payoutMode ?? (row.metric.includes('(Amount)') ? 'SLAB' : 'PER_UNIT'),
+          payoutRate: Number(row.payoutRate), slabStep: Number(row.slabStep ?? 10000),
+          payoutStructure: payoutStructure(row.metric, Number(row.payoutRate), row.payoutMode ?? (row.metric.includes('(Amount)') ? 'SLAB' : 'PER_UNIT'), Number(row.slabStep ?? 10000)),
           startDate: row.startDate.toISOString().slice(0, 10), endDate: row.endDate.toISOString().slice(0, 10),
           validityPeriod: `${row.startDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })} - ${row.endDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}`,
           status: titleStatus(row.status), revision: row.revision,
@@ -71,7 +75,8 @@ export class IncentiveService {
       const row = await tx.incentiveRule.create({ data: {
         tenantId: policy.scope.tenantId, createdByMembershipId: policy.scope.membershipId,
         name: input.name, ruleType: input.ruleType, appliesTo: input.appliesTo, metric: input.metric,
-        payoutRate: new Prisma.Decimal(input.payoutRate), startDate: new Date(`${input.startDate}T00:00:00.000Z`), endDate: new Date(`${input.endDate}T23:59:59.999Z`),
+        payoutMode: input.payoutMode, payoutRate: new Prisma.Decimal(input.payoutRate), slabStep: new Prisma.Decimal(input.slabStep),
+        startDate: new Date(`${input.startDate}T00:00:00.000Z`), endDate: new Date(`${input.endDate}T23:59:59.999Z`),
       } });
       return { id: row.id, revision: row.revision };
     });
@@ -85,7 +90,8 @@ export class IncentiveService {
       if (!existing) throw new NotFoundException('INCENTIVE_RULE_NOT_FOUND');
       const row = await tx.incentiveRule.update({ where: { id }, data: {
         name: input.name, ruleType: input.ruleType, appliesTo: input.appliesTo, metric: input.metric,
-        payoutRate: new Prisma.Decimal(input.payoutRate), startDate: new Date(`${input.startDate}T00:00:00.000Z`), endDate: new Date(`${input.endDate}T23:59:59.999Z`), revision: { increment: 1 },
+        payoutMode: input.payoutMode, payoutRate: new Prisma.Decimal(input.payoutRate), slabStep: new Prisma.Decimal(input.slabStep),
+        startDate: new Date(`${input.startDate}T00:00:00.000Z`), endDate: new Date(`${input.endDate}T23:59:59.999Z`), revision: { increment: 1 },
       } });
       return { id: row.id, revision: row.revision };
     });
@@ -136,7 +142,16 @@ export class IncentiveService {
         applicableRules.forEach((rule) => {
           const actual = metrics[rule.metric] ?? 0;
           const rate = Number(rule.payoutRate);
-          const earned = rule.metric.includes('(Amount)') ? Math.floor(actual / 10000) * rate : actual * rate;
+          const mode = rule.payoutMode ?? (rule.metric.includes('(Amount)') ? 'SLAB' : 'PER_UNIT');
+          const step = Number(rule.slabStep ?? 10000);
+          let earned = 0;
+          if (mode === 'PERCENTAGE') {
+            earned = Math.round(((actual * rate) / 100) * 100) / 100;
+          } else if (mode === 'SLAB') {
+            earned = Math.floor(actual / (step || 10000)) * rate;
+          } else {
+            earned = actual * rate;
+          }
           if (rule.metric === 'Total Sales (Amount)') breakdown.sales += earned;
           else if (rule.metric === 'Demos (Count)') breakdown.demos += earned;
           else if (rule.metric === 'Total Visits (Count)') breakdown.visits += earned;

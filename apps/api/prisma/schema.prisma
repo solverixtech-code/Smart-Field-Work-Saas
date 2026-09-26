@@ -2203,7 +2203,9 @@ model IncentiveRule {
   ruleType              String
   appliesTo             String
   metric                String
+  payoutMode            String           @default("SLAB")
   payoutRate            Decimal          @db.Decimal(14, 2)
+  slabStep              Decimal          @default(10000) @db.Decimal(14, 2)
   startDate             DateTime
   endDate               DateTime
   status                String           @default("ACTIVE")

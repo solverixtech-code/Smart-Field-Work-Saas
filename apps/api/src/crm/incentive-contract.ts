@@ -6,7 +6,9 @@ export const incentiveRuleInputSchema = z.object({
   ruleType: z.enum(['Achievement', 'Performance', 'Activity', 'Ranking', 'Retention']),
   appliesTo: z.enum(['All Executives', 'Field Executives', 'Telecallers', 'Sales Managers']),
   metric: z.enum(['Total Sales (Amount)', 'New Customers (Count)', 'Total Visits (Count)', 'Demos (Count)', 'Collections (Amount)']),
+  payoutMode: z.enum(['PERCENTAGE', 'SLAB', 'PER_UNIT']).optional().default('SLAB'),
   payoutRate: z.coerce.number().min(0).max(999999999999.99),
+  slabStep: z.coerce.number().min(1).max(999999999999.99).optional().default(10000),
   startDate: z.string().date(),
   endDate: z.string().date(),
 }).strict().refine((value) => value.endDate >= value.startDate, { message: 'End date must be on or after start date', path: ['endDate'] });

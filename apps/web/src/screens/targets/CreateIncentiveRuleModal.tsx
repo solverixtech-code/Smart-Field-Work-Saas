@@ -30,7 +30,9 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
   const [ruleType, setRuleType] = useState<IncentiveRuleItem['ruleType']>('Achievement');
   const [appliesTo, setAppliesTo] = useState<IncentiveRuleItem['appliesTo']>('All Executives');
   const [metric, setMetric] = useState<IncentiveRuleItem['metric']>('Total Sales (Amount)');
+  const [payoutMode, setPayoutMode] = useState<'PERCENTAGE' | 'SLAB' | 'PER_UNIT'>('SLAB');
   const [payoutRate, setPayoutRate] = useState('500');
+  const [slabStep, setSlabStep] = useState('10000');
   const [startDate, setStartDate] = useState(monthBounds().start);
   const [endDate, setEndDate] = useState(monthBounds().end);
   const [saving, setSaving] = useState(false);
@@ -41,8 +43,11 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
     setRuleName(initialRule?.ruleName ?? '');
     setRuleType(initialRule?.ruleType ?? 'Achievement');
     setAppliesTo(initialRule?.appliesTo ?? 'All Executives');
-    setMetric(initialRule?.metric ?? 'Total Sales (Amount)');
-    setPayoutRate(String(initialRule?.payoutRate ?? 500));
+    const initialMetric = initialRule?.metric ?? 'Total Sales (Amount)';
+    setMetric(initialMetric);
+    setPayoutMode(initialRule?.payoutMode ?? (initialMetric.includes('(Amount)') ? 'SLAB' : 'PER_UNIT'));
+    setPayoutRate(String(initialRule?.payoutRate ?? (initialMetric.includes('(Amount)') ? 500 : 100)));
+    setSlabStep(String(initialRule?.slabStep ?? 10000));
     setStartDate(initialRule?.startDate ?? bounds.start);
     setEndDate(initialRule?.endDate ?? bounds.end);
   }, [initialRule, isOpen]);
@@ -80,10 +85,26 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
     }
     if (startDate > endDate) { toast.error('Validity end date must be on or after the start date'); return; }
     const amount = Number(payoutRate);
-    if (!Number.isFinite(amount) || amount <= 0) { toast.error('Payout amount must be greater than zero'); return; }
+    if (!Number.isFinite(amount) || amount <= 0) { toast.error('Payout rate must be greater than zero'); return; }
+    const step = Number(slabStep);
+    if (metric.includes('(Amount)') && payoutMode === 'SLAB' && (!Number.isFinite(step) || step <= 0)) {
+      toast.error('Slab step amount must be greater than zero');
+      return;
+    }
     setSaving(true);
     try {
-      const input = { name: ruleName.trim(), ruleType, appliesTo, metric, payoutRate: amount, startDate, endDate };
+      const activeMode = metric.includes('(Amount)') ? payoutMode : 'PER_UNIT';
+      const input = {
+        name: ruleName.trim(),
+        ruleType,
+        appliesTo,
+        metric,
+        payoutMode: activeMode,
+        payoutRate: amount,
+        slabStep: activeMode === 'SLAB' ? step : 10000,
+        startDate,
+        endDate,
+      };
       if (initialRule) await updateIncentiveRule(initialRule.id, input);
       else await createIncentiveRule(input);
       toast.success(`Incentive rule "${ruleName.trim()}" ${initialRule ? 'updated' : 'created'} successfully!`);
@@ -182,7 +203,15 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
             <Select
               label="Target Metric *"
               value={metric}
-              onChange={(e) => setMetric(e.target.value as IncentiveRuleItem['metric'])}
+              onChange={(e) => {
+                const newMetric = e.target.value as IncentiveRuleItem['metric'];
+                setMetric(newMetric);
+                if (newMetric.includes('(Amount)')) {
+                  if (payoutMode === 'PER_UNIT') setPayoutMode('SLAB');
+                } else {
+                  setPayoutMode('PER_UNIT');
+                }
+              }}
               options={[
                 { value: 'Total Sales (Amount)', label: 'Total Sales Revenue (₹)' },
                 { value: 'New Customers (Count)', label: 'New Customers Acquired' },
@@ -193,18 +222,102 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
               searchable={false}
             />
 
-            <div className="space-y-1">
-              <label className="text-slate-700 font-bold block">Payout Amount (₹) *</label>
-              <input
-                type="number"
-                required
-                placeholder="e.g. 500"
-                value={payoutRate}
-                onChange={(e) => setPayoutRate(e.target.value)}
-                className="w-full rounded-md border border-slate-200 p-2.5 text-xs text-[#0D1F3D] focus:border-purple-600 focus:outline-none font-bold"
+            {metric.includes('(Amount)') ? (
+              <Select
+                label="Payout Calculation Mode *"
+                value={payoutMode}
+                onChange={(e) => setPayoutMode(e.target.value as 'PERCENTAGE' | 'SLAB')}
+                options={[
+                  { value: 'SLAB', label: 'Fixed Rupee Slab (e.g. ₹500 per ₹10,000)' },
+                  { value: 'PERCENTAGE', label: 'Percentage of Revenue (%)' },
+                ]}
+                searchable={false}
               />
-            </div>
+            ) : (
+              <div className="space-y-1">
+                <label className="text-slate-700 font-bold block">Payout Per Activity (₹) *</label>
+                <input
+                  type="number"
+                  required
+                  placeholder="e.g. 100"
+                  value={payoutRate}
+                  onChange={(e) => setPayoutRate(e.target.value)}
+                  className="w-full rounded-md border border-slate-200 p-2.5 text-xs text-[#0D1F3D] focus:border-purple-600 focus:outline-none font-bold"
+                />
+              </div>
+            )}
           </div>
+
+          {/* DYNAMIC SECOND ROW FOR MONETARY METRICS */}
+          {metric.includes('(Amount)') && (
+            <div>
+              {payoutMode === 'PERCENTAGE' ? (
+                <div className="space-y-1">
+                  <label className="text-slate-700 font-bold block">Commission Rate (%) *</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      required
+                      step="0.1"
+                      placeholder="e.g. 5"
+                      value={payoutRate}
+                      onChange={(e) => setPayoutRate(e.target.value)}
+                      className="w-full rounded-md border border-slate-200 p-2.5 pr-8 text-xs text-[#0D1F3D] focus:border-purple-600 focus:outline-none font-bold"
+                    />
+                    <span className="absolute right-3 top-2.5 text-slate-400 font-bold text-xs">%</span>
+                  </div>
+                  <p className="text-[11px] text-purple-700 font-medium pt-0.5">
+                    Executive earns <strong className="font-extrabold">{payoutRate || '0'}%</strong> of total achieved {metric.toLowerCase().replace(/ \(amount\)$/, '')} revenue.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-slate-700 font-bold block">Payout Amount (₹) *</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="e.g. 500"
+                        value={payoutRate}
+                        onChange={(e) => setPayoutRate(e.target.value)}
+                        className="w-full rounded-md border border-slate-200 p-2.5 text-xs text-[#0D1F3D] focus:border-purple-600 focus:outline-none font-bold"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-slate-700 font-bold block">Every Revenue Step (₹) *</label>
+                      <input
+                        type="number"
+                        required
+                        placeholder="e.g. 10000"
+                        value={slabStep}
+                        onChange={(e) => setSlabStep(e.target.value)}
+                        className="w-full rounded-md border border-slate-200 p-2.5 text-xs text-[#0D1F3D] focus:border-purple-600 focus:outline-none font-bold"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-purple-700 font-medium">
+                    Executive earns <strong className="font-extrabold">₹{payoutRate || '0'}</strong> for every <strong className="font-extrabold">₹{Number(slabStep || 0).toLocaleString('en-IN')}</strong> of achieved {metric.toLowerCase().replace(/ \(amount\)$/, '')} revenue.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {!metric.includes('(Amount)') && (
+            <p className="text-[11px] text-purple-700 font-medium">
+              Executive earns <strong className="font-extrabold">₹{payoutRate || '0'}</strong> for every completed {metric.toLowerCase().replace(/ \(count\)$/, '')}.
+            </p>
+          )}
+
+
+
+
+
+
+
+
+
 
           <div className="grid grid-cols-2 gap-3">
             <DatePicker

@@ -109,7 +109,9 @@ export interface IncentiveRuleItem {
   ruleType: 'Achievement' | 'Performance' | 'Activity' | 'Ranking' | 'Retention';
   appliesTo: 'All Executives' | 'Field Executives' | 'Telecallers' | 'Sales Managers';
   metric: 'Total Sales (Amount)' | 'New Customers (Count)' | 'Total Visits (Count)' | 'Demos (Count)' | 'Collections (Amount)';
+  payoutMode?: 'PERCENTAGE' | 'SLAB' | 'PER_UNIT';
   payoutRate: number;
+  slabStep?: number;
   payoutStructure: string;
   startDate: string;
   endDate: string;
@@ -165,7 +167,9 @@ export interface IncentiveRuleInput {
   ruleType: IncentiveRuleItem['ruleType'];
   appliesTo: IncentiveRuleItem['appliesTo'];
   metric: IncentiveRuleItem['metric'];
+  payoutMode?: 'PERCENTAGE' | 'SLAB' | 'PER_UNIT';
   payoutRate: number;
+  slabStep?: number;
   startDate: string;
   endDate: string;
 }
