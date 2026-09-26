@@ -15,7 +15,8 @@ describe('MapService', () => {
   const tx = {
     tenantSettings: { findUnique: jest.fn() },
     tenantMembership: { findMany: jest.fn(), findFirst: jest.fn() },
-    leadVisit: { findMany: jest.fn() },
+    leadVisit: { findMany: jest.fn(), count: jest.fn() },
+    leadDemo: { findMany: jest.fn() },
     punchLog: { findMany: jest.fn() },
     territory: { findMany: jest.fn() },
     opportunity: { findMany: jest.fn() },
@@ -30,7 +31,7 @@ describe('MapService', () => {
     jest.clearAllMocks();
     tx.tenantSettings.findUnique.mockResolvedValue({ timezone: 'Asia/Kolkata' });
     tx.tenantMembership.findMany.mockResolvedValue([{
-      id: 'exec-1', employeeCode: 'FE-1', team: { name: 'West' },
+      id: 'exec-1', employeeCode: 'FE-1', designation: 'Field Executive', team: { name: 'West' }, territoryMemberships: [],
       user: { fullName: 'Asha Rao', avatarUrl: null, mobile: '9000000000' },
     }]);
     tx.leadVisit.findMany.mockResolvedValue([{
@@ -55,15 +56,25 @@ describe('MapService', () => {
       _count: { members: 1 }, targets: [{ monthlyTarget: 100000, monthlyAchieved: 75000 }],
     }]);
     tx.opportunity.findMany.mockResolvedValue([]);
+    tx.leadVisit.count.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+    tx.leadDemo.findMany.mockResolvedValue([{ conductedByMembershipId: 'exec-1' }]);
     tx.tenantMembership.findFirst.mockResolvedValue({ id: 'exec-1', employeeCode: 'FE-1', user: { fullName: 'Asha Rao', avatarUrl: null } });
   });
 
   it('returns tenant-scoped persisted locations and territory performance', async () => {
     const result = await service.snapshot(actor, { startDate: '2026-09-24', endDate: '2026-09-24' });
     expect(requirePermission).toHaveBeenCalledWith('crm.map.view');
-    expect(tx.leadVisit.findMany).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ tenantId: 'tenant-a' }) }));
-    expect(result.summary).toMatchObject({ totalExecutives: 1, activeExecutives: 1, onField: 1, visits: 1, territories: 1, territoryAchievement: 75 });
-    expect(result.executives[0]).toMatchObject({ id: 'exec-1', currentLocation: 'Andheri East', batteryLevel: null });
+    expect(tx.leadVisit.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        tenantId: 'tenant-a',
+        AND: expect.arrayContaining([
+          { OR: [{ leadId: null }, { lead: { is: { deletedAt: null } } }] },
+          { OR: [{ accountId: null }, { account: { is: { deletedAt: null } } }] },
+        ]),
+      }),
+    }));
+    expect(result.summary).toMatchObject({ totalExecutives: 1, activeExecutives: 1, onField: 1, visits: 1, todayVisits: 1, todayCompletedVisits: 0, geofenceAlerts: 0, territories: 1, territoryAchievement: 75 });
+    expect(result.executives[0]).toMatchObject({ id: 'exec-1', currentLocation: 'Andheri East', designation: 'Field Executive', batteryLevel: null, demoCompletedToday: true });
     expect(result.prospects[0]).toMatchObject({
       name: 'Asha Stores', detailPath: '/admin/leads/lead-1', status: 'New Prospect',
       assigned: true, visitedInRange: true, hot: true, convertedThisMonth: false,

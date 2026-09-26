@@ -1,136 +1,109 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import {
-  Users,
-  MapPin,
-  CheckCircle2,
-  Clock,
-  Globe,
-  Layers,
-  Search,
-  Battery,
-  Navigation,
-  RefreshCw,
-  Download,
-  PhoneCall,
-  MessageSquare,
-  AlertCircle,
-} from 'lucide-react';
+import { Users, MapPin, Globe, Search, Battery, Navigation, RefreshCw, Download, AlertCircle } from 'lucide-react';
 import { KpiCard } from '../../components/dashboard/KpiCard';
-import { DateRangePicker } from '../../components/ui/DateRangePicker';
+import { DateRange, DateRangePicker } from '../../components/ui/DateRangePicker';
 import { Button } from '../../components/ui/Button';
 import { InteractiveMap } from '../../components/maps/InteractiveMap';
+import { mapAvatar, type ExecutiveLocation } from '../maps/maps.api';
+import { useMapSnapshot } from '../maps/useMapSnapshot';
+
+type TrackingStatus = 'Checked-in' | 'In Transit' | 'Demo Completed' | 'On Break' | 'Offline';
 
 interface FieldExecutive {
   id: string;
   name: string;
   avatar: string;
-  role: string;
-  status: 'Checked-in' | 'In Transit' | 'Demo Completed' | 'On Break';
+  status: TrackingStatus;
   area: string;
-  lat: number;
-  lng: number;
   battery: string;
   speed: string;
   lastUpdated: string;
-  phone: string;
 }
 
-const executivesData: FieldExecutive[] = [
-  {
-    id: 'ex-1',
-    name: 'Amit Verma',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80',
-    role: 'Sr. Field Executive',
-    status: 'Checked-in',
-    area: 'Andheri West, Mumbai',
-    lat: 19.1197,
-    lng: 72.8464,
-    battery: '88%',
-    speed: '0 km/h',
-    lastUpdated: 'Just now',
-    phone: '+91 98765 43210',
-  },
-  {
-    id: 'ex-2',
-    name: 'Neha Singh',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80',
-    role: 'Field Specialist',
-    status: 'In Transit',
-    area: 'Bandra West, Mumbai',
-    lat: 19.0596,
-    lng: 72.8295,
-    battery: '74%',
-    speed: '28 km/h',
-    lastUpdated: '1 min ago',
-    phone: '+91 98765 43211',
-  },
-  {
-    id: 'ex-3',
-    name: 'Vikram Patil',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&q=80',
-    role: 'Field Lead',
-    status: 'Demo Completed',
-    area: 'BKC, Mumbai',
-    lat: 19.0657,
-    lng: 72.8687,
-    battery: '92%',
-    speed: '0 km/h',
-    lastUpdated: '3 mins ago',
-    phone: '+91 98765 43212',
-  },
-  {
-    id: 'ex-4',
-    name: 'Prakash Yadav',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=80',
-    role: 'Field Officer',
-    status: 'On Break',
-    area: 'Powai, Mumbai',
-    lat: 19.1176,
-    lng: 72.906,
-    battery: '65%',
-    speed: '0 km/h',
-    lastUpdated: '5 mins ago',
-    phone: '+91 98765 43213',
-  },
-  {
-    id: 'ex-5',
-    name: 'Anita Kumari',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=120&q=80',
-    role: 'Sr. Field Executive',
-    status: 'Checked-in',
-    area: 'Lower Parel, Mumbai',
-    lat: 18.9953,
-    lng: 72.8288,
-    battery: '81%',
-    speed: '0 km/h',
-    lastUpdated: 'Just now',
-    phone: '+91 98765 43214',
-  },
-];
+const dateKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+
+function initialRange(): DateRange {
+  const today = new Date();
+  return { startDate: dateKey(new Date(today.getFullYear(), today.getMonth(), 1)), endDate: dateKey(today), label: 'This month' };
+}
+
+function relativeTime(value?: string | null) {
+  if (!value) return 'Not reported';
+  const elapsedSeconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
+  if (elapsedSeconds < 60) return 'Just now';
+  const minutes = Math.floor(elapsedSeconds / 60);
+  if (minutes < 60) return `${minutes} min${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hr${hours === 1 ? '' : 's'} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
+
+function trackingStatus(executive: ExecutiveLocation): TrackingStatus {
+  if (executive.status === 'On Field') return 'Checked-in';
+  if (executive.status === 'In Transit') return 'In Transit';
+  if (executive.status === 'Break') return 'On Break';
+  if (executive.demoCompletedToday) return 'Demo Completed';
+  return 'Offline';
+}
+
+function exportGpsLog(executives: ExecutiveLocation[], range: DateRange) {
+  const escape = (value: string | number | null | undefined) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+  const rows = [
+    ['Executive', 'Employee Code', 'Status', 'Current Location', 'Last Updated', 'Latitude', 'Longitude', 'Distance (km)'],
+    ...executives.map((executive) => [
+      executive.name, executive.code ?? '', trackingStatus(executive), executive.currentLocation,
+      executive.lastUpdatedAt ?? '', executive.lat, executive.lng, executive.distanceKmToday,
+    ]),
+  ];
+  const csv = rows.map((row) => row.map(escape).join(',')).join('\n');
+  const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `gps-log-${range.startDate}-${range.endDate}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function FieldActivityDashboardPage() {
-  const [mapType, setMapType] = useState<'roadmap' | 'satellite'>('roadmap');
-  const [selectedExec, setSelectedExec] = useState<FieldExecutive>(executivesData[0]);
+  const [dateRange, setDateRange] = useState<DateRange>(initialRange);
+  const { data, loading, refresh } = useMapSnapshot(dateRange, 30_000);
+  const [selectedExecId, setSelectedExecId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [mapSearchQuery, setMapSearchQuery] = useState('');
-  const [showMapSearchResults, setShowMapSearchResults] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('All');
+  const executives = data?.executives ?? [];
+  const summary = data?.summary;
 
-  const filteredExecutives = executivesData.filter((e) => {
-    const matchesSearch = e.name.toLowerCase().includes(searchQuery.toLowerCase()) || e.area.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = selectedFilter === 'All' || e.status === selectedFilter;
-    return matchesSearch && matchesFilter;
+  useEffect(() => {
+    if (!executives.length) {
+      setSelectedExecId(null);
+      return;
+    }
+    if (!selectedExecId || !executives.some((executive) => executive.id === selectedExecId)) {
+      setSelectedExecId(executives[0].id);
+    }
+  }, [executives, selectedExecId]);
+
+  const executiveRows: FieldExecutive[] = executives.map((executive) => ({
+    id: executive.id,
+    name: executive.name,
+    avatar: mapAvatar(executive.name, executive.avatar),
+    status: trackingStatus(executive),
+    area: executive.currentLocation,
+    battery: executive.batteryLevel == null ? 'Not reported' : `${executive.batteryLevel}%`,
+    speed: executive.speedKmh == null ? 'Not reported' : `${executive.speedKmh} km/h`,
+    lastUpdated: relativeTime(executive.lastUpdatedAt),
+  }));
+
+  const filteredExecutives = executiveRows.filter((executive) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query || executive.name.toLowerCase().includes(query) || executive.area.toLowerCase().includes(query);
+    return matchesSearch && (selectedFilter === 'All' || executive.status === selectedFilter);
   });
-
-  const matchingMapExecs = executivesData.filter((e) =>
-    e.name.toLowerCase().includes(mapSearchQuery.toLowerCase()) ||
-    e.area.toLowerCase().includes(mapSearchQuery.toLowerCase()),
-  );
 
   return (
     <div className="space-y-4 font-sans pb-12">
-      {/* Page Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
         <div>
           <div className="flex items-center gap-3">
@@ -145,11 +118,14 @@ export default function FieldActivityDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <DateRangePicker />
+          <DateRangePicker value={dateRange} onChange={setDateRange} />
           <Button
             variant="accent"
             size="sm"
-            onClick={() => toast.success('Exporting Live GPS Tracking Logs...')}
+            onClick={() => {
+              exportGpsLog(executives, dateRange);
+              toast.success('GPS tracking log exported');
+            }}
             className="flex items-center gap-2 font-semibold shadow-xs"
           >
             <Download className="h-4 w-4" /> Export GPS Log
@@ -157,12 +133,11 @@ export default function FieldActivityDashboardPage() {
         </div>
       </div>
 
-      {/* 4 Top KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           title="Executives Online"
-          value="42 / 56"
-          subValue="75% Active Now"
+          value={`${summary?.activeExecutives ?? 0} / ${summary?.totalExecutives ?? 0}`}
+          subValue={`${summary?.totalExecutives ? Math.round((summary.activeExecutives / summary.totalExecutives) * 100) : 0}% Active Now`}
           timeframe=""
           icon={Users}
           iconBgColor="bg-emerald-500/10"
@@ -170,8 +145,8 @@ export default function FieldActivityDashboardPage() {
         />
         <KpiCard
           title="Field Visits Today"
-          value="184 Visits"
-          subValue="128 Verified"
+          value={`${summary?.todayVisits ?? 0} Visits`}
+          subValue={`${summary?.todayCompletedVisits ?? 0} Verified`}
           timeframe=""
           icon={MapPin}
           iconBgColor="bg-blue-500/10"
@@ -179,7 +154,7 @@ export default function FieldActivityDashboardPage() {
         />
         <KpiCard
           title="Total Distance Covered"
-          value="482 km"
+          value={`${summary?.distanceKm ?? 0} km`}
           subValue="Citywide Total"
           timeframe=""
           icon={Navigation}
@@ -188,7 +163,7 @@ export default function FieldActivityDashboardPage() {
         />
         <KpiCard
           title="Geofence Alerts"
-          value="3 Alerts"
+          value={`${summary?.geofenceAlerts ?? 0} Alerts`}
           subValue="Out of Bounds"
           timeframe=""
           icon={AlertCircle}
@@ -197,117 +172,88 @@ export default function FieldActivityDashboardPage() {
         />
       </div>
 
-      {/* MAIN LIVE TRACKING SECTION: Executive List Sidebar (Left) + Google Maps Canvas with Profile Pins (Right) */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 items-stretch">
-        {/* Left 4 Cols: Executives Selection & Filter Panel */}
         <div className="rounded-sm border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-4 space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Field Executives</h3>
               <button
-                onClick={() => toast.info('Refreshing live GPS coordinates...')}
-                className="flex items-center gap-1 text-xs font-bold text-[#E20613] hover:underline"
+                type="button"
+                onClick={() => void refresh(true)}
+                disabled={loading}
+                className="flex items-center gap-1 text-xs font-bold text-[#E20613] hover:underline disabled:opacity-50"
               >
-                <RefreshCw className="h-3.5 w-3.5" /> Refresh
+                <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
               </button>
             </div>
 
-            {/* Search Input */}
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search executive or location..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(event) => setSearchQuery(event.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 py-2 text-xs font-medium text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
               />
             </div>
 
-            {/* Filter Tabs */}
             <div className="flex items-center gap-1.5 overflow-x-auto custom-scrollbar pb-1 text-xs font-bold">
-              {['All', 'Checked-in', 'In Transit', 'Demo Completed', 'On Break'].map((st) => (
+              {['All', 'Checked-in', 'In Transit', 'Demo Completed', 'On Break'].map((status) => (
                 <button
-                  key={st}
-                  onClick={() => setSelectedFilter(st)}
-                  className={`rounded-lg px-2.5 py-1 transition-all whitespace-nowrap ${
-                    selectedFilter === st
-                      ? 'bg-[#0D1F3D] text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
+                  type="button"
+                  key={status}
+                  onClick={() => setSelectedFilter(status)}
+                  className={`rounded-lg px-2.5 py-1 transition-all whitespace-nowrap ${selectedFilter === status ? 'bg-[#0D1F3D] text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
-                  {st}
+                  {status}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Executive Items List */}
           <div className="space-y-2.5 max-h-[460px] overflow-y-auto custom-scrollbar pr-1">
-            {filteredExecutives.map((exec) => {
-              const isSelected = selectedExec.id === exec.id;
+            {filteredExecutives.length === 0 && (
+              <div className="flex min-h-32 items-center justify-center px-4 text-center text-xs font-semibold text-slate-500">
+                {loading ? 'Loading live locations...' : 'No executives match the selected filter.'}
+              </div>
+            )}
+            {filteredExecutives.map((executive) => {
+              const isSelected = selectedExecId === executive.id;
               return (
                 <div
-                  key={exec.id}
-                  onClick={() => setSelectedExec(exec)}
-                  className={`flex items-center justify-between rounded-xl border p-3 cursor-pointer transition-all ${
-                    isSelected
-                      ? 'border-[#E20613] bg-red-50/40 shadow-xs'
-                      : 'border-slate-100 bg-slate-50/60 hover:bg-slate-100/80'
-                  }`}
+                  key={executive.id}
+                  onClick={() => setSelectedExecId(executive.id)}
+                  className={`flex items-center justify-between rounded-xl border p-3 cursor-pointer transition-all ${isSelected ? 'border-[#E20613] bg-red-50/40 shadow-xs' : 'border-slate-100 bg-slate-50/60 hover:bg-slate-100/80'}`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="relative shrink-0">
-                      <img
-                        src={exec.avatar}
-                        alt={exec.name}
-                        className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-xs"
-                      />
-                      <span
-                        className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white ${
-                          exec.status === 'Checked-in'
-                            ? 'bg-emerald-500'
-                            : exec.status === 'In Transit'
-                            ? 'bg-blue-500'
-                            : exec.status === 'Demo Completed'
-                            ? 'bg-purple-500'
-                            : 'bg-amber-500'
-                        }`}
-                      />
+                      <img src={executive.avatar} alt={executive.name} className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-xs" />
+                      <span className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white ${
+                        executive.status === 'Checked-in' ? 'bg-emerald-500' : executive.status === 'In Transit' ? 'bg-blue-500' : executive.status === 'Demo Completed' ? 'bg-purple-500' : executive.status === 'Offline' ? 'bg-slate-400' : 'bg-amber-500'
+                      }`} />
                     </div>
 
-                    <div>
-                      <h4 className="font-extrabold text-[#0D1F3D] text-xs">{exec.name}</h4>
-                      <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
-                        <MapPin className="h-3 w-3 text-slate-400" /> {exec.area}
+                    <div className="min-w-0">
+                      <h4 className="font-extrabold text-[#0D1F3D] text-xs truncate">{executive.name}</h4>
+                      <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1 truncate">
+                        <MapPin className="h-3 w-3 text-slate-400 shrink-0" /> {executive.area}
                       </p>
                       <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 mt-0.5">
-                        <span className="flex items-center gap-0.5 text-slate-600">
-                          <Battery className="h-3 w-3 text-emerald-600" /> {exec.battery}
-                        </span>
+                        <span className="flex items-center gap-0.5 text-slate-600"><Battery className="h-3 w-3 text-emerald-600" /> {executive.battery}</span>
                         <span>•</span>
-                        <span className="flex items-center gap-0.5 text-blue-600">
-                          <Navigation className="h-3 w-3" /> {exec.speed}
-                        </span>
+                        <span className="flex items-center gap-0.5 text-blue-600"><Navigation className="h-3 w-3" /> {executive.speed}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <span
-                      className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-extrabold border ${
-                        exec.status === 'Checked-in'
-                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          : exec.status === 'In Transit'
-                          ? 'bg-blue-50 text-blue-700 border-blue-200'
-                          : exec.status === 'Demo Completed'
-                          ? 'bg-purple-50 text-purple-700 border-purple-200'
-                          : 'bg-amber-50 text-amber-700 border-amber-200'
-                      }`}
-                    >
-                      {exec.status}
+                  <div className="text-right shrink-0">
+                    <span className={`inline-block rounded-md px-2 py-0.5 text-[10px] font-extrabold border ${
+                      executive.status === 'Checked-in' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : executive.status === 'In Transit' ? 'bg-blue-50 text-blue-700 border-blue-200' : executive.status === 'Demo Completed' ? 'bg-purple-50 text-purple-700 border-purple-200' : executive.status === 'Offline' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {executive.status}
                     </span>
-                    <p className="text-[9px] text-slate-400 font-medium mt-1">{exec.lastUpdated}</p>
+                    <p className="text-[9px] text-slate-400 font-medium mt-1">{executive.lastUpdated}</p>
                   </div>
                 </div>
               );
@@ -315,7 +261,6 @@ export default function FieldActivityDashboardPage() {
           </div>
         </div>
 
-        {/* Right 8 Cols: Interactive Mapbox Map Canvas */}
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm lg:col-span-8 flex flex-col justify-between">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -331,23 +276,9 @@ export default function FieldActivityDashboardPage() {
             <InteractiveMap
               mode="live-executives"
               heightClassName="h-full"
-              selectedExecutiveId={selectedExec.id}
-              executives={executivesData.map((e) => ({
-                id: e.id,
-                name: e.name,
-                avatar: e.avatar,
-                status: (e.status === 'Checked-in' ? 'On Field' : e.status === 'In Transit' ? 'In Transit' : 'On Field') as any,
-                currentLocation: e.area,
-                lastUpdated: e.lastUpdated,
-                batteryLevel: parseInt(e.battery),
-                lat: e.lat,
-                lng: e.lng,
-                phone: e.phone,
-                team: 'Field Team',
-                visitsTodayCompleted: 4,
-                visitsTodayTotal: 8,
-                distanceKmToday: 24.2,
-              }))}
+              selectedExecutiveId={selectedExecId ?? undefined}
+              executives={executives}
+              onSelectExecutive={(executive) => setSelectedExecId(executive.id)}
             />
           </div>
         </div>

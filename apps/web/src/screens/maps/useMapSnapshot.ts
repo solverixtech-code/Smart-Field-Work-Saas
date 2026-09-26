@@ -15,10 +15,17 @@ export function mapRange(days: number) {
   return { startDate: dateKey(start), endDate: dateKey(end) };
 }
 
-export function useMapSnapshot(days = 1) {
+interface MapSnapshotRange {
+  startDate: string;
+  endDate: string;
+}
+
+export function useMapSnapshot(rangeOrDays: number | MapSnapshotRange = 1, refreshIntervalMs?: number) {
   const [data, setData] = useState<MapSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
-  const range = mapRange(days);
+  const range = typeof rangeOrDays === 'number'
+    ? mapRange(rangeOrDays)
+    : { startDate: rangeOrDays.startDate, endDate: rangeOrDays.endDate };
 
   const refresh = useCallback(async (showToast = false) => {
     setLoading(true);
@@ -35,7 +42,10 @@ export function useMapSnapshot(days = 1) {
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+    if (!refreshIntervalMs) return;
+    const interval = window.setInterval(() => void refresh(), refreshIntervalMs);
+    return () => window.clearInterval(interval);
+  }, [refresh, refreshIntervalMs]);
 
   return { data, loading, refresh, range };
 }

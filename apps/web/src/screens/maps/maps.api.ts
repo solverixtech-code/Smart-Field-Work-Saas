@@ -7,6 +7,7 @@ export interface ExecutiveLocation {
   code?: string;
   name: string;
   avatar: string | null;
+  designation?: string | null;
   status: ExecutiveMapStatus;
   currentLocation: string;
   lastUpdatedAt?: string | null;
@@ -20,6 +21,8 @@ export interface ExecutiveLocation {
   visitsTodayTotal: number;
   distanceKmToday: number;
   speedKmh?: number | null;
+  demoCompletedToday?: boolean;
+  geofenceAlert?: boolean;
 }
 
 export interface MapActivity {
@@ -93,8 +96,11 @@ export interface MapSnapshot {
     offline: number;
     visits: number;
     completedVisits: number;
+    todayVisits: number;
+    todayCompletedVisits: number;
     visitMinutes: number;
     distanceKm: number;
+    geofenceAlerts: number;
     prospects: number;
     salesAmount: number;
     salesOrders: number;

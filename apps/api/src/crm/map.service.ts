@@ -39,6 +39,19 @@ function haversineKm(a: { latitude: number; longitude: number }, b: { latitude: 
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
+function pointInPolygon(latitude: number, longitude: number, polygon: Array<{ latitude: number; longitude: number }>) {
+  let inside = false;
+  for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index++) {
+    const currentPoint = polygon[index];
+    const previousPoint = polygon[previous];
+    const intersects = currentPoint.latitude > latitude !== previousPoint.latitude > latitude
+      && longitude < ((previousPoint.longitude - currentPoint.longitude) * (latitude - currentPoint.latitude))
+        / (previousPoint.latitude - currentPoint.latitude) + currentPoint.longitude;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
 function formatDuration(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const remainder = minutes % 60;
@@ -64,9 +77,11 @@ export class MapService {
       if (rangeDays > 366) throw new BadRequestException("Choose a date range of 366 days or fewer.");
       const start = parseFollowUpSchedule(startDate, "12:00 AM", timezone);
       const end = parseFollowUpSchedule(nextDateKey(endDate), "12:00 AM", timezone);
+      const todayStart = parseFollowUpSchedule(today, "12:00 AM", timezone);
+      const todayEnd = parseFollowUpSchedule(nextDateKey(today), "12:00 AM", timezone);
       const period = endDate.slice(0, 7);
 
-      const [memberships, visits, prospectVisits, punches, territories, opportunities] = await Promise.all([
+      const [memberships, visits, prospectVisits, punches, territories, opportunities, todayVisits, todayCompletedVisits, completedDemos] = await Promise.all([
         tx.tenantMembership.findMany({
           where: {
             tenantId, status: "ACTIVE",
@@ -77,12 +92,33 @@ export class MapService {
           },
           orderBy: { user: { fullName: "asc" } },
           select: {
-            id: true, employeeCode: true, team: { select: { name: true } },
+            id: true, employeeCode: true, designation: true, team: { select: { name: true } },
             user: { select: { fullName: true, avatarUrl: true, mobile: true } },
+            territoryMemberships: {
+              where: { territory: { deletedAt: null, status: "ACTIVE" } },
+              select: {
+                territory: {
+                  select: {
+                    boundaryPoints: {
+                      orderBy: { sequence: "asc" },
+                      select: { latitude: true, longitude: true },
+                    },
+                  },
+                },
+              },
+            },
           },
         }),
         tx.leadVisit.findMany({
-          where: { tenantId, checkInTime: { gte: start, lt: end }, status: { not: "CANCELLED" } },
+          where: {
+            tenantId,
+            checkInTime: { gte: start, lt: end },
+            status: { not: "CANCELLED" },
+            AND: [
+              { OR: [{ leadId: null }, { lead: { is: { deletedAt: null } } }] },
+              { OR: [{ accountId: null }, { account: { is: { deletedAt: null } } }] },
+            ],
+          },
           orderBy: { checkInTime: "asc" },
           take: 5000,
           select: {
@@ -101,6 +137,10 @@ export class MapService {
             status: { not: "CANCELLED" },
             latitude: { not: null },
             longitude: { not: null },
+            AND: [
+              { OR: [{ leadId: null }, { lead: { is: { deletedAt: null } } }] },
+              { OR: [{ accountId: null }, { account: { is: { deletedAt: null } } }] },
+            ],
           },
           orderBy: { checkInTime: "desc" },
           take: 5000,
@@ -152,7 +192,31 @@ export class MapService {
           },
           select: { id: true, amount: true, closedAt: true, updatedAt: true, leadId: true, accountId: true },
         }),
+        tx.leadVisit.count({
+          where: {
+            tenantId, checkInTime: { gte: todayStart, lt: todayEnd }, status: { not: "CANCELLED" },
+            AND: [
+              { OR: [{ leadId: null }, { lead: { is: { deletedAt: null } } }] },
+              { OR: [{ accountId: null }, { account: { is: { deletedAt: null } } }] },
+            ],
+          },
+        }),
+        tx.leadVisit.count({
+          where: {
+            tenantId, checkInTime: { gte: todayStart, lt: todayEnd }, status: "COMPLETED",
+            AND: [
+              { OR: [{ leadId: null }, { lead: { is: { deletedAt: null } } }] },
+              { OR: [{ accountId: null }, { account: { is: { deletedAt: null } } }] },
+            ],
+          },
+        }),
+        tx.leadDemo.findMany({
+          where: { tenantId, demoDate: today, status: "COMPLETED", lead: { is: { deletedAt: null } } },
+          select: { conductedByMembershipId: true },
+        }),
       ]);
+
+      const completedDemoMembers = new Set(completedDemos.map((demo) => demo.conductedByMembershipId));
 
       const visitsByMember = new Map<string, typeof visits>();
       visits.forEach((visit) => visitsByMember.set(visit.executiveMembershipId, [...(visitsByMember.get(visit.executiveMembershipId) ?? []), visit]));
@@ -178,23 +242,34 @@ export class MapService {
           ...locatedVisits.map((point) => ({ latitude: point.latitude!, longitude: point.longitude!, at: point.checkInTime })),
         ].sort((a, b) => a.at.getTime() - b.at.getTime());
         const distanceKmToday = points.slice(1).reduce((total, point, index) => total + haversineKm(points[index], point), 0);
+        const latestLatitude = useVisit ? lastVisit?.latitude : lastPunch?.latitude;
+        const latestLongitude = useVisit ? lastVisit?.longitude : lastPunch?.longitude;
+        const assignedBoundaries = member.territoryMemberships
+          .map((assignment) => assignment.territory.boundaryPoints)
+          .filter((boundary) => boundary.length >= 3);
+        const geofenceAlert = latestLatitude != null && latestLongitude != null && assignedBoundaries.length > 0
+          ? assignedBoundaries.every((boundary) => !pointInPolygon(latestLatitude, latestLongitude, boundary))
+          : false;
         return {
           id: member.id,
           code: member.employeeCode ?? member.id,
           name: member.user.fullName,
           avatar: member.user.avatarUrl,
+          designation: member.designation,
           status,
           currentLocation: useVisit ? lastVisit?.location : lastPunch?.locationName ?? "Location not reported",
           lastUpdatedAt: latestAt ?? null,
           batteryLevel: null,
-          lat: useVisit ? lastVisit?.latitude : lastPunch?.latitude,
-          lng: useVisit ? lastVisit?.longitude : lastPunch?.longitude,
+          lat: latestLatitude,
+          lng: latestLongitude,
           phone: member.user.mobile,
           team: member.team?.name ?? "Not assigned",
           visitsTodayCompleted: memberVisits.filter((visit) => visit.status === "COMPLETED").length,
           visitsTodayTotal: memberVisits.length,
           distanceKmToday: Math.round(distanceKmToday * 10) / 10,
           speedKmh: null,
+          demoCompletedToday: completedDemoMembers.has(member.id),
+          geofenceAlert,
         };
       });
 
@@ -313,8 +388,10 @@ export class MapService {
           onBreak: 0,
           offline: executives.filter((row) => row.status === "Offline").length,
           visits: visits.length, completedVisits,
+          todayVisits, todayCompletedVisits,
           visitMinutes: visits.reduce((sum, visit) => sum + visit.durationMinutes, 0),
           distanceKm: Math.round(totalDistance * 10) / 10,
+          geofenceAlerts: executives.filter((row) => row.geofenceAlert).length,
           prospects: prospects.length,
           salesAmount: opportunities.reduce((sum, opportunity) => sum + Number(opportunity.amount), 0),
           salesOrders: opportunities.length,

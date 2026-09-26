@@ -3,17 +3,21 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function seedCrmLeads() {
+  const tenantId = process.env.CRM_SEED_TENANT_ID?.trim();
+  if (!tenantId) {
+    throw new Error('CRM_SEED_TENANT_ID is required. Sample CRM data must be assigned to an explicit demo tenant.');
+  }
+
   const membership = await prisma.tenantMembership.findFirst({
-    where: { status: 'ACTIVE' },
+    where: { tenantId, status: 'ACTIVE' },
     select: { id: true, tenantId: true },
   });
 
   if (!membership) {
-    console.error('No active tenant membership found');
-    return;
+    throw new Error(`No active tenant membership found for CRM_SEED_TENANT_ID=${tenantId}`);
   }
 
-  const { tenantId, id: membershipId } = membership;
+  const { id: membershipId } = membership;
 
   const sources = await prisma.masterValue.findMany({
     where: { definition: { code: 'lead_source' } },
@@ -285,4 +289,3 @@ seedCrmLeads()
     process.exit(1);
   })
   .finally(() => prisma.$disconnect());
-
