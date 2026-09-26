@@ -81,7 +81,7 @@ export class MapService {
       const todayEnd = parseFollowUpSchedule(nextDateKey(today), "12:00 AM", timezone);
       const period = endDate.slice(0, 7);
 
-      const [memberships, visits, prospectVisits, punches, territories, opportunities, todayVisits, todayCompletedVisits, completedDemos] = await Promise.all([
+      const [memberships, visits, prospectVisits, punches, locationSamples, territories, opportunities, todayVisits, todayCompletedVisits, completedDemos] = await Promise.all([
         tx.tenantMembership.findMany({
           where: {
             tenantId, status: "ACTIVE",
@@ -175,6 +175,15 @@ export class MapService {
           take: 5000,
           select: { id: true, tenantMembershipId: true, type: true, timestamp: true, latitude: true, longitude: true, locationName: true },
         }),
+        tx.executiveLocationSample.findMany({
+          where: { tenantId, capturedAt: { gte: start, lt: end }, isUsable: true },
+          orderBy: { capturedAt: "asc" },
+          take: 20000,
+          select: {
+            membershipId: true, capturedAt: true, latitude: true, longitude: true,
+            speedKmh: true, batteryPercentage: true,
+          },
+        }),
         tx.territory.findMany({
           where: { tenantId, deletedAt: null, status: "ACTIVE" },
           orderBy: { name: "asc" },
@@ -225,25 +234,33 @@ export class MapService {
         if (!punch.tenantMembershipId) return;
         punchesByMember.set(punch.tenantMembershipId, [...(punchesByMember.get(punch.tenantMembershipId) ?? []), punch]);
       });
+      const samplesByMember = new Map<string, typeof locationSamples>();
+      locationSamples.forEach((sample) => samplesByMember.set(sample.membershipId, [...(samplesByMember.get(sample.membershipId) ?? []), sample]));
 
       const executives = memberships.map((member) => {
         const memberVisits = visitsByMember.get(member.id) ?? [];
         const memberPunches = punchesByMember.get(member.id) ?? [];
+        const memberSamples = samplesByMember.get(member.id) ?? [];
+        const lastSample = memberSamples.at(-1);
         const locatedVisits = memberVisits.filter((visit) => visit.latitude != null && visit.longitude != null);
         const lastVisit = locatedVisits.at(-1);
         const lastPunch = memberPunches.at(-1);
         const useVisit = lastVisit && (!lastPunch || lastVisit.checkInTime >= lastPunch.timestamp);
-        const latestAt = useVisit ? lastVisit?.checkInTime : lastPunch?.timestamp;
+        const fallbackAt = useVisit ? lastVisit?.checkInTime : lastPunch?.timestamp;
+        const useSample = lastSample && (!fallbackAt || lastSample.capturedAt >= fallbackAt);
+        const latestAt = useSample ? lastSample.capturedAt : fallbackAt;
         const openAttendance = memberPunches.length > 0 && memberPunches.at(-1)?.type === "PUNCH_IN";
         const activeVisit = [...memberVisits].reverse().find((visit) => visit.status === "IN_PROGRESS");
         const status = activeVisit ? "On Field" : openAttendance ? "In Transit" : "Offline";
-        const points = [
-          ...memberPunches.map((point) => ({ latitude: point.latitude, longitude: point.longitude, at: point.timestamp })),
-          ...locatedVisits.map((point) => ({ latitude: point.latitude!, longitude: point.longitude!, at: point.checkInTime })),
-        ].sort((a, b) => a.at.getTime() - b.at.getTime());
+        const points = memberSamples.length
+          ? memberSamples.map((point) => ({ latitude: point.latitude, longitude: point.longitude, at: point.capturedAt }))
+          : [
+              ...memberPunches.map((point) => ({ latitude: point.latitude, longitude: point.longitude, at: point.timestamp })),
+              ...locatedVisits.map((point) => ({ latitude: point.latitude!, longitude: point.longitude!, at: point.checkInTime })),
+            ].sort((a, b) => a.at.getTime() - b.at.getTime());
         const distanceKmToday = points.slice(1).reduce((total, point, index) => total + haversineKm(points[index], point), 0);
-        const latestLatitude = useVisit ? lastVisit?.latitude : lastPunch?.latitude;
-        const latestLongitude = useVisit ? lastVisit?.longitude : lastPunch?.longitude;
+        const latestLatitude = useSample ? lastSample.latitude : useVisit ? lastVisit?.latitude : lastPunch?.latitude;
+        const latestLongitude = useSample ? lastSample.longitude : useVisit ? lastVisit?.longitude : lastPunch?.longitude;
         const assignedBoundaries = member.territoryMemberships
           .map((assignment) => assignment.territory.boundaryPoints)
           .filter((boundary) => boundary.length >= 3);
@@ -259,7 +276,7 @@ export class MapService {
           status,
           currentLocation: useVisit ? lastVisit?.location : lastPunch?.locationName ?? "Location not reported",
           lastUpdatedAt: latestAt ?? null,
-          batteryLevel: null,
+          batteryLevel: useSample ? lastSample.batteryPercentage : null,
           lat: latestLatitude,
           lng: latestLongitude,
           phone: member.user.mobile,
@@ -267,7 +284,7 @@ export class MapService {
           visitsTodayCompleted: memberVisits.filter((visit) => visit.status === "COMPLETED").length,
           visitsTodayTotal: memberVisits.length,
           distanceKmToday: Math.round(distanceKmToday * 10) / 10,
-          speedKmh: null,
+          speedKmh: useSample ? lastSample.speedKmh : null,
           demoCompletedToday: completedDemoMembers.has(member.id),
           geofenceAlert,
         };
@@ -407,9 +424,18 @@ export class MapService {
   }
 
   async route(actor: RequestPrincipal, membershipId: string, input: unknown) {
+    return this.routeFor(actor, membershipId, input, "crm.map.view");
+  }
+
+  async ownRoute(actor: RequestPrincipal, input: unknown) {
+    if (!actor.membershipId) throw new NotFoundException("Executive membership not found.");
+    return this.routeFor(actor, actor.membershipId, input, "crm.location.track");
+  }
+
+  private async routeFor(actor: RequestPrincipal, membershipId: string, input: unknown, permission: string) {
     const query = routeQuery.parse(input);
     return this.repo.run(actor, false, async (tx, policy) => {
-      policy.require("crm.map.view");
+      policy.require(permission);
       const tenantId = policy.scope.tenantId;
       const settings = await tx.tenantSettings.findUnique({ where: { tenantId }, select: { timezone: true } });
       const timezone = settings?.timezone ?? "Asia/Kolkata";
@@ -421,7 +447,7 @@ export class MapService {
         select: { id: true, employeeCode: true, user: { select: { fullName: true, avatarUrl: true } } },
       });
       if (!member) throw new NotFoundException("Executive not found.");
-      const [visits, punches] = await Promise.all([
+      const [visits, punches, samples, unusableSamples] = await Promise.all([
         tx.leadVisit.findMany({
           where: { tenantId, executiveMembershipId: membershipId, checkInTime: { gte: start, lt: end }, status: { not: "CANCELLED" }, latitude: { not: null }, longitude: { not: null } },
           orderBy: { checkInTime: "asc" },
@@ -432,19 +458,54 @@ export class MapService {
           orderBy: { timestamp: "asc" },
           select: { id: true, type: true, timestamp: true, latitude: true, longitude: true, locationName: true },
         }),
+        tx.executiveLocationSample.findMany({
+          where: { tenantId, membershipId, capturedAt: { gte: start, lt: end }, isUsable: true },
+          orderBy: { capturedAt: "asc" },
+          take: 20000,
+          select: {
+            id: true, capturedAt: true, latitude: true, longitude: true,
+            accuracyMeters: true, speedKmh: true, headingDegrees: true,
+          },
+        }),
+        tx.executiveLocationSample.count({
+          where: { tenantId, membershipId, capturedAt: { gte: start, lt: end }, isUsable: false },
+        }),
       ]);
-      const points = [
-        ...punches.map((punch) => ({ id: `punch:${punch.id}`, type: punch.type === "PUNCH_IN" ? "start" as const : "end" as const, title: punch.type === "PUNCH_IN" ? "Start location" : "End location", locationName: punch.locationName ?? "Attendance location", address: punch.locationName ?? "Location not reported", at: punch.timestamp, durationSpentMinutes: undefined, lat: punch.latitude, lng: punch.longitude, statusText: punch.type === "PUNCH_IN" ? "Punched in" : "Punched out" })),
-        ...visits.map((visit) => ({ id: `visit:${visit.id}`, type: "visit" as const, title: "Field visit", locationName: visit.targetName, address: visit.location, at: visit.checkInTime, durationSpentMinutes: visit.durationMinutes, lat: visit.latitude!, lng: visit.longitude!, statusText: visit.status })),
-      ].sort((a, b) => a.at.getTime() - b.at.getTime());
       let runningDistance = 0;
-      const stops = points.map((point, index) => {
-        if (index > 0) runningDistance += haversineKm({ latitude: points[index - 1].lat, longitude: points[index - 1].lng }, { latitude: point.lat, longitude: point.lng });
-        return { ...point, stopNumber: index + 1, timestamp: point.at, distanceKm: Math.round(runningDistance * 10) / 10 };
+      const allTrackPoints = samples.map((sample, index) => {
+        const previous = samples[index - 1];
+        const segmentKm = previous ? haversineKm(previous, sample) : 0;
+        if (segmentKm >= 0.005) runningDistance += segmentKm;
+        const elapsedHours = previous ? Math.max((sample.capturedAt.getTime() - previous.capturedAt.getTime()) / 3_600_000, 1 / 3600) : 0;
+        return {
+          id: sample.id,
+          capturedAt: sample.capturedAt,
+          lat: sample.latitude,
+          lng: sample.longitude,
+          accuracyMeters: sample.accuracyMeters,
+          speedKmh: sample.speedKmh ?? (elapsedHours ? Math.round(segmentKm / elapsedHours * 10) / 10 : 0),
+          headingDegrees: sample.headingDegrees,
+          cumulativeDistanceKm: Math.round(runningDistance * 100) / 100,
+        };
       });
-      const firstAt = points[0]?.at ?? null;
-      const lastAt = points.at(-1)?.at ?? null;
+      const downsample = allTrackPoints.length <= 5000 ? allTrackPoints : allTrackPoints.filter((_, index) =>
+        index === 0 || index === allTrackPoints.length - 1 || index % Math.ceil(allTrackPoints.length / 4998) === 0);
+      const events = [
+        ...punches.map((punch) => ({ id: `punch:${punch.id}`, type: punch.type === "PUNCH_IN" ? "start" as const : "end" as const, title: punch.type === "PUNCH_IN" ? "Start location" : "End location", locationName: punch.locationName ?? "Attendance location", address: punch.locationName ?? "Location not reported", at: punch.timestamp, durationSpentMinutes: undefined, lat: punch.latitude, lng: punch.longitude, statusText: punch.type === "PUNCH_IN" ? "Punched in" : "Punched out", visitId: undefined })),
+        ...visits.map((visit) => ({ id: `visit:${visit.id}`, type: "visit" as const, title: "Field visit", locationName: visit.targetName, address: visit.location, at: visit.checkInTime, durationSpentMinutes: visit.durationMinutes, lat: visit.latitude!, lng: visit.longitude!, statusText: visit.status, visitId: visit.id })),
+      ].sort((a, b) => a.at.getTime() - b.at.getTime());
+      const stops = events.map((event, index) => {
+        const preceding = [...allTrackPoints].reverse().find((point) => point.capturedAt <= event.at);
+        return { ...event, stopNumber: index + 1, timestamp: event.at, distanceKm: preceding?.cumulativeDistanceKm ?? 0 };
+      });
+      const punchIn = punches.find((punch) => punch.type === "PUNCH_IN")?.timestamp;
+      const punchOut = [...punches].reverse().find((punch) => punch.type === "PUNCH_OUT")?.timestamp;
+      const firstAt = punchIn ?? allTrackPoints[0]?.capturedAt ?? events[0]?.at ?? null;
+      const lastAt = punchOut ?? allTrackPoints.at(-1)?.capturedAt ?? events.at(-1)?.at ?? null;
       const minutes = firstAt && lastAt ? Math.max(0, Math.round((lastAt.getTime() - firstAt.getTime()) / 60_000)) : 0;
+      const compatibilityPath = downsample.length
+        ? downsample.map((point) => [point.lat, point.lng] as [number, number])
+        : events.map((point) => [point.lat, point.lng] as [number, number]);
       return {
         executiveId: member.id, executiveCode: member.employeeCode ?? member.id,
         executiveName: member.user.fullName, executiveAvatar: member.user.avatarUrl,
@@ -453,7 +514,12 @@ export class MapService {
         totalDistanceKm: Math.round(runningDistance * 10) / 10,
         totalVisitsPlanned: visits.length, totalVisitsCompleted: visits.filter((visit) => visit.status === "COMPLETED").length,
         avgSpeedKmh: minutes > 0 ? Math.round((runningDistance / (minutes / 60)) * 10) / 10 : 0,
-        stops, detailedRoadPath: points.map((point) => [point.lat, point.lng] as [number, number]),
+        coverageStartedAt: allTrackPoints[0]?.capturedAt ?? null,
+        coverageEndedAt: allTrackPoints.at(-1)?.capturedAt ?? null,
+        usableSampleCount: allTrackPoints.length,
+        rejectedSampleCount: unusableSamples,
+        trackPoints: downsample,
+        stops, detailedRoadPath: compatibilityPath,
       };
     });
   }

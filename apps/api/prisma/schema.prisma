@@ -489,6 +489,31 @@ model PunchLog {
   @@index([timestamp])
 }
 
+model ExecutiveLocationSample {
+  id                 String           @id @default(uuid())
+  tenantId           String
+  tenant             Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  membershipId       String
+  membership         TenantMembership @relation(fields: [membershipId, tenantId], references: [id, tenantId], onDelete: Cascade, onUpdate: Restrict)
+  clientSampleId     String
+  capturedAt         DateTime
+  receivedAt         DateTime         @default(now())
+  latitude           Float
+  longitude          Float
+  accuracyMeters     Float?
+  speedKmh           Float?
+  headingDegrees     Float?
+  batteryPercentage  Int?
+  source             String           @default("WEB")
+  isUsable           Boolean          @default(true)
+  qualityReason      String?
+
+  @@unique([tenantId, membershipId, clientSampleId])
+  @@index([tenantId, membershipId, capturedAt])
+  @@index([tenantId, capturedAt])
+  @@index([tenantId, membershipId, isUsable, capturedAt])
+}
+
 // ─── Payroll & Payslips ─────────────────────────────────────────────────────────
 
 enum PayrollStatus {
@@ -844,6 +869,7 @@ model Tenant {
   leadHistories              LeadHistory[]
   leadConversions            LeadConversionCommand[]
   leadVisits                 LeadVisit[]
+  executiveLocationSamples  ExecutiveLocationSample[]
   leadFollowUps              LeadFollowUp[]
   leadDemos                  LeadDemo[]
   leadCommunications         LeadCommunication[]
@@ -1027,6 +1053,7 @@ model TenantMembership {
   userShifts       UserShift[]
   attendances      Attendance[]
   punchLogs        PunchLog[]
+  locationSamples  ExecutiveLocationSample[]
   salaryStructures SalaryStructure[]
   payslips         Payslip[]
   auditLogs        AuditLog[]

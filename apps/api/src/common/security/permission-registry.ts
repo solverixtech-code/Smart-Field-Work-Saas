@@ -10,7 +10,7 @@ export interface PermissionDefinition {
   moduleKey: string;
 }
 
-export const PERMISSION_REGISTRY_VERSION = '1.6.0';
+export const PERMISSION_REGISTRY_VERSION = '1.7.0';
 
 export const CRM_PHASE_1_1_PERMISSIONS: PermissionDefinition[] = [
   ...(
@@ -659,6 +659,15 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
     moduleKey: 'crm_map',
   },
   {
+    code: 'crm.location.track',
+    scope: PermissionScope.TENANT,
+    domain: 'crm',
+    resource: 'location',
+    action: 'track',
+    description: 'Upload the authenticated executive GPS location stream',
+    moduleKey: 'crm_map',
+  },
+  {
     code: 'crm.teams.view',
     scope: PermissionScope.TENANT,
     domain: 'crm',
@@ -871,6 +880,7 @@ export const DEFAULT_TENANT_ROLE_GRANTS: Record<string, string[]> = {
   ],
   field_executive: [
     'attendance.self.punch',
+    'crm.location.track',
     'crm.dashboard.view',
     'crm.pipeline.view',
     'crm.leads.view',

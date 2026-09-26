@@ -132,6 +132,18 @@ export interface RouteStop {
   lat: number;
   lng: number;
   statusText?: string;
+  visitId?: string;
+}
+
+export interface RouteTrackPoint {
+  id: string;
+  capturedAt: string;
+  lat: number;
+  lng: number;
+  accuracyMeters: number | null;
+  speedKmh: number;
+  headingDegrees: number | null;
+  cumulativeDistanceKm: number;
 }
 
 export interface ExecutiveRoute {
@@ -148,6 +160,11 @@ export interface ExecutiveRoute {
   totalVisitsPlanned: number;
   totalVisitsCompleted: number;
   avgSpeedKmh: number;
+  coverageStartedAt?: string | null;
+  coverageEndedAt?: string | null;
+  usableSampleCount?: number;
+  rejectedSampleCount?: number;
+  trackPoints?: RouteTrackPoint[];
   stops: RouteStop[];
   detailedRoadPath?: [number, number][];
 }
@@ -158,6 +175,9 @@ export const mapsApi = {
   },
   route(membershipId: string, date?: string) {
     return api.get<ExecutiveRoute>(`/tenant/crm/maps/routes/${membershipId}`, { params: date ? { date } : undefined }).then(({ data }) => data);
+  },
+  ownRoute(date?: string) {
+    return api.get<ExecutiveRoute>('/tenant/crm/maps/routes/me', { params: date ? { date } : undefined }).then(({ data }) => data);
   },
 };
 

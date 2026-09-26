@@ -21,13 +21,20 @@ export const followUpPushPayload = z.object({
   expectedUpdatedAt: z.string().datetime(),
   trigger: z.enum(['assigned', 'due', 'completed']),
 }).strict();
+export const gpsRetentionCleanupPayload = z.object({
+  tenantId: z.string().uuid(),
+  retentionDays: z.number().int().min(1).max(3650),
+}).strict();
 const registry = {
   "media.delete-object": mediaDeletePayload,
   'followup.push': followUpPushPayload,
+  'gps.retention-cleanup': gpsRetentionCleanupPayload,
 } as const;
 export type JobType = keyof typeof registry;
 export const jobMetricOperation = (type: string) =>
-  type === 'followup.push' ? 'followup.push' as const : 'media.delete-object' as const;
+  type === 'followup.push' ? 'followup.push' as const
+    : type === 'gps.retention-cleanup' ? 'gps.retention-cleanup' as const
+      : 'media.delete-object' as const;
 export const JOB_LEASE_MS = 60000;
 export const JOB_TIMEOUT_MS = 20000;
 export class PermanentJobError extends Error {

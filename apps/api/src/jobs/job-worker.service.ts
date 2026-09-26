@@ -13,6 +13,7 @@ import {
   JOB_TIMEOUT_MS,
   mediaDeletePayload,
   followUpPushPayload,
+  gpsRetentionCleanupPayload,
   jobMetricOperation,
   PermanentJobError,
 } from "./job.service";
@@ -93,6 +94,20 @@ export class JobWorkerService {
       async () => {
         const start = performance.now();
         try {
+          if (job.type === 'gps.retention-cleanup') {
+            const parsed = gpsRetentionCleanupPayload.safeParse(job.payload);
+            if (!parsed.success || parsed.data.tenantId !== job.tenantId) {
+              throw new PermanentJobError('JOB_PAYLOAD_INVALID');
+            }
+            const cutoff = new Date(Date.now() - parsed.data.retentionDays * 86_400_000);
+            await this.jobs.succeed(job, async (tx) => {
+              await tx.executiveLocationSample.deleteMany({
+                where: { tenantId: parsed.data.tenantId, capturedAt: { lt: cutoff } },
+              });
+            });
+            this.logger.write('job.succeeded', { jobId: job.id, type: job.type });
+            return;
+          }
           if (job.type === 'followup.push') {
             await this.deliverFollowUpPush(job);
             this.logger.write('job.succeeded', { jobId: job.id, type: job.type });

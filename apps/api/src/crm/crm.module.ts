@@ -26,6 +26,7 @@ import { IncentiveController } from './incentive.controller';
 import { IncentiveService } from './incentive.service';
 import { MapController } from './map.controller';
 import { MapService } from './map.service';
+import { LocationTrackingService } from './location-tracking.service';
 import { DemoController } from './demo.controller';
 import { DemoService } from './demo.service';
 
@@ -59,6 +60,7 @@ import { DemoService } from './demo.service';
     TargetService,
     IncentiveService,
     MapService,
+    LocationTrackingService,
     DemoService,
   ],
   exports: [OpportunityService, TerritoryService],

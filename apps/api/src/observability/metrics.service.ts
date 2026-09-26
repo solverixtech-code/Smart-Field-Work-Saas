@@ -34,6 +34,7 @@ export const METRIC_LABELS = {
     "delete",
     "media.delete-object",
     "followup.push",
+    "gps.retention-cleanup",
     "provision",
     "owner",
     "tenant",

@@ -63,6 +63,7 @@ import { Button } from "../components/ui/Button";
 import { Role, getUserRoleLabel } from "@visiblo/shared";
 import { HeaderNotificationBell } from "../components/notifications/HeaderNotificationBell";
 import { HeaderSearchBar, recordRecentSearch } from "../components/navigation/HeaderSearchBar";
+import { ExecutiveLocationTracker } from "../features/tracking/ExecutiveLocationTracker";
 
 const bigLogo = "/assets/sfw-logo.png";
 const smallLogo = "/assets/sfw-icon.png";
@@ -1219,6 +1220,9 @@ export default function AppShell() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 font-sans">
+      {isExecutiveRole && tenant?.membershipId && (
+        <ExecutiveLocationTracker tenantId={tenantId} membershipId={tenant.membershipId} />
+      )}
       {/* Refined Enterprise White Theme Sidebar */}
       <aside
         className={`fixed top-0 bottom-0 left-0 z-50 flex flex-col border-r border-slate-200 bg-white text-slate-700 shadow-xs transition-all duration-300 ease-in-out overflow-x-hidden ${
