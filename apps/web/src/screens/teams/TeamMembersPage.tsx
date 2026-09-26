@@ -292,7 +292,7 @@ export default function TeamMembersPage() {
                           />
                         </td>
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate(`/admin/executives/${m.id}`)}>
                             <Avatar name={m.name} src={m.avatar || undefined} sizeClassName="h-8 w-8" />
                             <p className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline cursor-pointer whitespace-nowrap">{m.name}</p>
                           </div>
@@ -337,7 +337,12 @@ export default function TeamMembersPage() {
                         </td>
                         <td className="px-4 py-3.5 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1">
-                            <button title="View Profile" className="p-1.5 rounded-sm text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D]">
+                            <button
+                              type="button"
+                              title="View Profile"
+                              onClick={() => navigate(`/admin/executives/${m.id}`)}
+                              className="p-1.5 rounded-sm text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D] cursor-pointer"
+                            >
                               <Eye className="h-4 w-4" />
                             </button>
                             <button title="More Actions" className="p-1.5 rounded-sm text-slate-400 hover:bg-slate-100 hover:text-[#0D1F3D]">
