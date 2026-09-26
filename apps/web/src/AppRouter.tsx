@@ -17,6 +17,7 @@ import RevenueDashboardPage from "./screens/dashboard/RevenueDashboardPage";
 import ConversionDashboardPage from "./screens/dashboard/ConversionDashboardPage";
 import RealTimeActivityDashboardPage from "./screens/dashboard/RealTimeActivityDashboardPage";
 import { TelecallerDashboardPage } from "./screens/telecaller/TelecallerDashboardPage";
+import CallsPage from "./screens/telecaller/CallsPage";
 
 import AllExecutivesPage from "./screens/executives/AllExecutivesPage";
 import AddExecutivePage from "./screens/executives/AddExecutivePage";
@@ -339,6 +340,10 @@ export default function AppRouter() {
               <Route
                 path="/admin/dashboard/telecaller"
                 element={<TelecallerDashboardPage />}
+              />
+              <Route
+                path="/admin/calls"
+                element={<CallsPage />}
               />
             </Route>
 

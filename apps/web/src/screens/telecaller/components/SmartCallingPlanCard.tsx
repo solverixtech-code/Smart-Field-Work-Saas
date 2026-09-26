@@ -43,7 +43,7 @@ export const SmartCallingPlanCard: React.FC<SmartCallingPlanCardProps> = ({ dayP
         </div>
 
         {/* Time Slots List */}
-        <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+        <div className="space-y-2.5 max-h-[380px] overflow-y-auto overflow-x-hidden custom-scrollbar pr-1">
           {dayPlan.map((slot) => (
             <div
               key={slot.id}
@@ -55,39 +55,31 @@ export const SmartCallingPlanCard: React.FC<SmartCallingPlanCardProps> = ({ dayP
                   : 'bg-white border-slate-100 hover:border-slate-200'
               }`}
             >
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-slate-800 text-[11px] w-24">
+              {/* Top Row: Time Slot & Status Badge */}
+              <div className="flex items-center justify-between text-xs mb-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono font-bold text-slate-800 text-[11px]">
                     {slot.timeSlot}
                   </span>
-                  <div className="p-1 rounded bg-slate-100 flex items-center justify-center">
-                    {renderIcon(slot.iconType)}
-                  </div>
-                  <span className="font-semibold text-slate-800 truncate max-w-[170px] sm:max-w-[200px]" title={slot.title}>
-                    {slot.title}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3">
                   {slot.plannedCalls !== undefined && (
-                    <span className="text-[10px] font-medium text-slate-500">
-                      Planned: <strong className="text-slate-800 font-mono">{slot.plannedCalls}</strong>{' '}
-                      Done: <strong className="text-slate-800 font-mono">{slot.doneCalls || 0}</strong>
+                    <span className="text-[10px] font-semibold text-slate-500">
+                      • {slot.plannedCalls} Calls ({slot.doneCalls || 0} Done)
                     </span>
                   )}
-
                   {slot.plannedCalls === undefined && (
-                    <span className="text-[10px] font-semibold text-slate-500">{slot.durationMins} mins</span>
+                    <span className="text-[10px] font-semibold text-slate-500">• {slot.durationMins} mins</span>
                   )}
+                </div>
 
-                  {/* Status Badge */}
+                {/* Status Badge */}
+                <div>
                   {slot.status === 'Completed' && (
                     <span className="bg-emerald-50 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" /> Completed
                     </span>
                   )}
                   {slot.status === 'In Progress' && (
-                    <span className="bg-red-600 text-white font-extrabold text-[10px] px-2.5 py-0.5 rounded-md animate-pulse shadow-2xs">
+                    <span className="bg-red-600 text-white font-extrabold text-[10px] px-2 py-0.5 rounded-md animate-pulse shadow-2xs">
                       In Progress
                     </span>
                   )}
@@ -97,6 +89,16 @@ export const SmartCallingPlanCard: React.FC<SmartCallingPlanCardProps> = ({ dayP
                     </span>
                   )}
                 </div>
+              </div>
+
+              {/* Bottom Row: Icon + Title */}
+              <div className="flex items-center gap-2">
+                <div className="p-1 rounded bg-slate-100 flex items-center justify-center shrink-0">
+                  {renderIcon(slot.iconType)}
+                </div>
+                <span className="font-bold text-[#0D1F3D] text-xs truncate" title={slot.title}>
+                  {slot.title}
+                </span>
               </div>
             </div>
           ))}

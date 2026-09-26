@@ -187,3 +187,93 @@ export const getTelecallerDashboard = async (): Promise<TelecallerDashboardData>
     };
   }
 };
+
+export interface CallLogItem {
+  id: string;
+  leadName: string;
+  company: string;
+  phone: string;
+  callType: 'Outbound Sales' | 'Inbound Lead' | 'Follow-up Call' | 'Demo Booking' | 'Payment Reminder';
+  status: 'Connected' | 'Missed' | 'Busy / No Answer' | 'Voicemail' | 'Scheduled';
+  durationSeconds: number;
+  timeCaptured: string;
+  loggedBy: string;
+  disposition: string;
+  notes: string;
+  hasRecording: boolean;
+}
+
+export const getCallLogs = async (): Promise<CallLogItem[]> => {
+  return [
+    {
+      id: 'CALL-1089',
+      leadName: 'Ramesh Verma',
+      company: 'Veema Solutions',
+      phone: '+91 98765 43210',
+      callType: 'Outbound Sales',
+      status: 'Connected',
+      durationSeconds: 245,
+      timeCaptured: 'Today, 02:45 PM',
+      loggedBy: 'Khushwant Kaur',
+      disposition: 'Interested - Demo Scheduled',
+      notes: 'Customer interested in enterprise tier. Scheduled demo for tomorrow 11 AM.',
+      hasRecording: true,
+    },
+    {
+      id: 'CALL-1088',
+      leadName: 'Anjali Mehta',
+      company: 'Mehta & Co.',
+      phone: '+91 98765 43211',
+      callType: 'Follow-up Call',
+      status: 'Connected',
+      durationSeconds: 180,
+      timeCaptured: 'Today, 01:20 PM',
+      loggedBy: 'Khushwant Kaur',
+      disposition: 'Price Discussion',
+      notes: 'Requested 10% discount quote for 25 seats.',
+      hasRecording: true,
+    },
+    {
+      id: 'CALL-1087',
+      leadName: 'Vikram Singh',
+      company: 'Singh Traders',
+      phone: '+91 98765 43212',
+      callType: 'Outbound Sales',
+      status: 'Busy / No Answer',
+      durationSeconds: 0,
+      timeCaptured: 'Today, 11:45 AM',
+      loggedBy: 'Khushwant Kaur',
+      disposition: 'No Answer - Callback',
+      notes: 'Phone busy. Scheduled auto retry for 4:30 PM.',
+      hasRecording: false,
+    },
+    {
+      id: 'CALL-1086',
+      leadName: 'Priya Nair',
+      company: 'Nair Enterprises',
+      phone: '+91 98765 43213',
+      callType: 'Inbound Lead',
+      status: 'Connected',
+      durationSeconds: 310,
+      timeCaptured: 'Today, 10:15 AM',
+      loggedBy: 'Khushwant Kaur',
+      disposition: 'Qualified - High Intent',
+      notes: 'Inquired about live location tracking & beat scheduling.',
+      hasRecording: true,
+    },
+    {
+      id: 'CALL-1085',
+      leadName: 'Arjun Patel',
+      company: 'Patel Industries',
+      phone: '+91 98765 43214',
+      callType: 'Demo Booking',
+      status: 'Connected',
+      durationSeconds: 412,
+      timeCaptured: 'Yesterday, 05:10 PM',
+      loggedBy: 'Khushwant Kaur',
+      disposition: 'Demo Booked',
+      notes: 'Demo booked with Sales Manager Rohit on Friday.',
+      hasRecording: true,
+    },
+  ];
+};

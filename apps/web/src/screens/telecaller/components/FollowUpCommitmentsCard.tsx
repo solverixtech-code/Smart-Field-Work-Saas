@@ -29,7 +29,7 @@ export const FollowUpCommitmentsCard: React.FC<FollowUpCommitmentsCardProps> = (
         </div>
 
         {/* Commitments List */}
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 max-h-[380px] overflow-y-auto overflow-x-hidden custom-scrollbar pr-1">
           {commitments.map((item) => (
             <div
               key={item.id}

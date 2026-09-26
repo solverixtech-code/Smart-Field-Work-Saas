@@ -32,78 +32,65 @@ export const PriorityCallQueueCard: React.FC<PriorityCallQueueCardProps> = ({
           </button>
         </div>
 
-        {/* Table Content */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs whitespace-nowrap">
-            <thead>
-              <tr className="border-b border-slate-100 text-xs font-bold text-slate-700">
-                <th className="pb-2 font-bold">Lead Name</th>
-                <th className="pb-2 font-bold">Company</th>
-                <th className="pb-2 font-bold">Priority</th>
-                <th className="pb-2 font-bold">Last Contact</th>
-                <th className="pb-2 font-bold text-center">Next Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {queue.map((item) => (
-                <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-2.5 font-bold text-[#0D1F3D] text-xs">{item.leadName}</td>
-                  <td className="py-2.5 text-slate-500 font-medium text-xs">{item.company}</td>
-                  <td className="py-2.5">
-                    {item.priority === 'High' && (
-                      <span className="bg-red-50 text-red-600 font-extrabold text-[10px] px-2 py-0.5 rounded border border-red-200">
-                        High
-                      </span>
-                    )}
-                    {item.priority === 'Medium' && (
-                      <span className="bg-amber-50 text-amber-600 font-extrabold text-[10px] px-2 py-0.5 rounded border border-amber-200">
-                        Medium
-                      </span>
-                    )}
-                    {item.priority === 'Low' && (
-                      <span className="bg-blue-50 text-blue-600 font-extrabold text-[10px] px-2 py-0.5 rounded border border-blue-200">
-                        Low
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-2.5 text-slate-400 font-medium text-[11px]">{item.lastContact}</td>
-                  <td className="py-2.5">
-                    <div className="flex items-center justify-center gap-1.5">
-                      {/* Call Button */}
-                      <button
-                        type="button"
-                        onClick={() => onStartCall?.(item)}
-                        className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-2xs"
-                        title="Start Call"
-                      >
-                        <PhoneCall className="w-3.5 h-3.5" />
-                      </button>
+        {/* Responsive Queue Item Cards List */}
+        <div className="space-y-2 max-h-[380px] overflow-y-auto overflow-x-hidden custom-scrollbar pr-1">
+          {queue.map((item) => (
+            <div
+              key={item.id}
+              className="p-2.5 rounded-xl border border-slate-100 hover:border-slate-200 bg-white hover:bg-slate-50/50 transition-all flex items-center justify-between gap-2 shadow-2xs"
+            >
+              {/* Left Details */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <h4 className="font-extrabold text-xs text-[#0D1F3D] truncate">{item.leadName}</h4>
+                  <span
+                    className={`px-1.5 py-0.2 font-extrabold text-[9px] rounded border shrink-0 ${
+                      item.priority === 'High'
+                        ? 'bg-red-50 text-red-600 border-red-200'
+                        : item.priority === 'Medium'
+                        ? 'bg-amber-50 text-amber-600 border-amber-200'
+                        : 'bg-blue-50 text-blue-600 border-blue-200'
+                    }`}
+                  >
+                    {item.priority}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+                  {item.company} • <span className="text-slate-400">{item.lastContact}</span>
+                </p>
+              </div>
 
-                      {/* WhatsApp Button */}
-                      <button
-                        type="button"
-                        onClick={() => onOpenWhatsApp?.(item.phone)}
-                        className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-2xs"
-                        title="Open WhatsApp"
-                      >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                      </button>
+              {/* Right Action Buttons */}
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => onStartCall?.(item)}
+                  className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-2xs"
+                  title="Start Call"
+                >
+                  <PhoneCall className="w-3.5 h-3.5" />
+                </button>
 
-                      {/* Add Note Button */}
-                      <button
-                        type="button"
-                        onClick={() => onAddNote?.(item)}
-                        className="p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-all shadow-2xs"
-                        title="Add Note"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                <button
+                  type="button"
+                  onClick={() => onOpenWhatsApp?.(item.phone)}
+                  className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-2xs"
+                  title="Open WhatsApp"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onAddNote?.(item)}
+                  className="p-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-800 hover:text-white transition-all shadow-2xs"
+                  title="Add Note"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

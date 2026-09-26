@@ -389,6 +389,25 @@ const navCategories: NavCategory[] = [
     ],
   },
   {
+    title: "Call Center & Calls",
+    items: [
+      {
+        label: "Call Activity & Logs",
+        icon: PhoneCall,
+        to: "/admin/calls",
+        permission: "crm.dashboard.view",
+        badge: "Call Center",
+      },
+      {
+        label: "Call Queue & Dialer",
+        icon: Clock,
+        to: "/admin/dashboard/telecaller",
+        permission: "crm.dashboard.view",
+        badge: "Live Queue",
+      },
+    ],
+  },
+  {
     title: "Visit Management",
     items: [
       {
@@ -1513,7 +1532,7 @@ export default function AppShell() {
                       "/admin/leads/automation/settings",
                     ].includes(item.to)
                   ) {
-                    return location.pathname === item.to;
+                    return location.pathname === item.to || (item.to === "/admin/dashboard" && location.pathname === "/admin/dashboard/telecaller");
                   }
                   return (
                     location.pathname === item.to ||
@@ -1524,7 +1543,7 @@ export default function AppShell() {
                 return (
                   <NavLink
                     key={item.to}
-                    to={item.to}
+                    to={item.to === "/admin/dashboard" && (tenant?.roleCode === "telecaller" || userRole === Role.TELECALLER) ? "/admin/dashboard/telecaller" : item.to}
                     onClick={(e) => {
                       if (!isAllowed) {
                         e.preventDefault();
