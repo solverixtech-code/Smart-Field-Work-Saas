@@ -1,0 +1,11 @@
+leadType,businessName,contactName,phone,email,priority,city,state,nextFollowUpAt,nextActionNote,requirementNote
+BUSINESS,Acme Distribution Pvt Ltd,Anita Shah,+919876543210,anita@acmedist.com,HIGH,Mumbai,Maharashtra,2026-09-28T10:00:00.000Z,Schedule on-site product demo,Interested in 50 field tracking licenses & GPS attendance
+BUSINESS,Apex Logistics Hub,Vikram Malhotra,+919812345678,vikram@apexlogistics.com,URGENT,Mumbai,Maharashtra,2026-09-27T14:30:00.000Z,Send commercial quotation,Requires route tracking & automated visit check-ins
+BUSINESS,Zenith Pharma Pvt Ltd,Dr. Ananya Roy,+919765432109,ananya@zenithpharma.in,HIGH,Pune,Maharashtra,2026-09-29T11:00:00.000Z,Follow up with procurement team,Needs doctor visit mapping & medical rep reporting
+INDIVIDUAL,,Rahul Mehta,+919654088990,rahul.mehta@example.com,MEDIUM,Pune,Maharashtra,2026-09-30T16:00:00.000Z,Call for preliminary consultation,Individual franchise consultant looking for 5 executive seats
+BUSINESS,Horizon Health Corp,Siddharth Verma,+919543210987,siddharth@horizonhealth.co.in,HIGH,Bengaluru,Karnataka,2026-09-28T15:00:00.000Z,Conduct technical review,Requires POS terminal & order collection integration
+BUSINESS,Global Tech Distributors,Meera Nair,+919876501234,meera@globaltechdist.com,MEDIUM,Delhi,Delhi,2026-10-01T10:30:00.000Z,Send product catalog,Wants territory management & daily shift logs
+INDIVIDUAL,,Priya Sharma,+919812309876,priya.sharma@example.com,LOW,Ahmedabad,Gujarat,,,Looking for standalone field executive app
+BUSINESS,Starlight Enterprises,Rajesh Kulkarni,+919765412390,rajesh@starlight.co.in,URGENT,Nagpur,Maharashtra,2026-09-27T11:30:00.000Z,Finalize contract terms,Emergency setup for 30 sales executives in Vidarbha region
+BUSINESS,Trident Security Services,Captain Suresh Rao,+919654012987,suresh@tridentsecurity.in,HIGH,Hyderabad,Telangana,2026-09-29T16:30:00.000Z,Arrange manager presentation,Security guard patrol check-ins & QR code verification
+INDIVIDUAL,,Amit Patel,+919543298710,amit.patel@example.com,MEDIUM,Surat,Gujarat,2026-09-30T12:00:00.000Z,Call after Diwali,Wants software demo for textile distribution team

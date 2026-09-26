@@ -468,35 +468,13 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                   onChange={(e) => set("contactName", e.target.value || null)}
                 />
 
-                {/* Mobile Number with +91 Prefix Mask */}
-                <div className="space-y-1.5">
-                  <label htmlFor="lead-phone" className="block text-[#0D1F3D] font-bold text-xs font-sans">
-                    Mobile Number *
-                  </label>
-                  <div className="flex rounded-lg border border-slate-200 bg-white overflow-hidden focus-within:border-[#0D1F3D] shadow-xs">
-                    <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-2 border-r border-slate-200 text-slate-700 font-bold text-xs shrink-0">
-                      <span>🇮🇳</span>
-                      <span>+91</span>
-                    </div>
-                    <input
-                      id="lead-phone"
-                      type="tel"
-                      placeholder="98765 43210"
-                      maxLength={10}
-                      value={(draft.phone ?? "").replace(/^\+91\s?/, "")}
-                      onKeyDown={(e) => {
-                        if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
-                        if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) return;
-                        if (!/[0-9]/.test(e.key)) e.preventDefault();
-                      }}
-                      onChange={(e) => {
-                        const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
-                        set("phone", digits ? `+91 ${digits}` : null);
-                      }}
-                      className="w-full px-3.5 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none"
-                    />
-                  </div>
-                </div>
+                <PhoneInput
+                  id="lead-phone"
+                  label="Mobile Number"
+                  required
+                  value={draft.phone ?? ""}
+                  onChange={(val) => set("phone", val ? `+91 ${val.trim()}` : null)}
+                />
 
                 <Input
                   id="lead-email"
