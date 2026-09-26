@@ -5,12 +5,13 @@ import { X, Gift } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
 import { DatePicker } from '../../components/ui/DatePicker';
-import { createIncentiveRule, IncentiveRuleItem, updateIncentiveRule } from './target.api';
+import { createIncentiveRule, IncentiveRuleItem, TargetOption, updateIncentiveRule } from './target.api';
 
 interface CreateIncentiveRuleModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialRule?: IncentiveRuleItem | null;
+  scopeOptions?: { roles: TargetOption[]; teams: TargetOption[] };
   onSaved?: () => void;
 }
 
@@ -22,27 +23,41 @@ const monthBounds = () => {
   return { start: format(new Date(year, month, 1)), end: format(new Date(year, month + 1, 0)) };
 };
 
-export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> = ({ isOpen, onClose, initialRule = null, onSaved }) => {
+export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> = ({ isOpen, onClose, initialRule = null, scopeOptions, onSaved }) => {
   const [rendered, setRendered] = useState(false);
   const [visible, setVisible] = useState(false);
 
   const [ruleName, setRuleName] = useState('');
   const [ruleType, setRuleType] = useState<IncentiveRuleItem['ruleType']>('Achievement');
-  const [appliesTo, setAppliesTo] = useState<IncentiveRuleItem['appliesTo']>('All Executives');
+  const [appliesTo, setAppliesTo] = useState<string>('ALL');
   const [metric, setMetric] = useState<IncentiveRuleItem['metric']>('Total Sales (Amount)');
   const [payoutMode, setPayoutMode] = useState<'PERCENTAGE' | 'SLAB' | 'PER_UNIT'>('SLAB');
   const [payoutRate, setPayoutRate] = useState('500');
   const [slabStep, setSlabStep] = useState('10000');
+  const [saving, setSaving] = useState(false);
   const [startDate, setStartDate] = useState(monthBounds().start);
   const [endDate, setEndDate] = useState(monthBounds().end);
-  const [saving, setSaving] = useState(false);
+  const defaultRoleOptions: TargetOption[] = [
+    { value: 'ALL', label: 'All Sales Staff' },
+    { value: 'ROLE:field_executive', label: 'Field Executives Only' },
+    { value: 'ROLE:sales_manager', label: 'Sales Managers / TLs Only' },
+    { value: 'ROLE:telecaller', label: 'Telecallers Only' },
+  ];
+
+  const roleOptions = scopeOptions?.roles?.length ? scopeOptions.roles : defaultRoleOptions;
+  const teamOptions = scopeOptions?.teams ?? [];
+
+  const combinedAppliesToOptions: TargetOption[] = [
+    ...roleOptions,
+    ...teamOptions,
+  ];
 
   useEffect(() => {
     if (!isOpen) return;
     const bounds = monthBounds();
     setRuleName(initialRule?.ruleName ?? '');
     setRuleType(initialRule?.ruleType ?? 'Achievement');
-    setAppliesTo(initialRule?.appliesTo ?? 'All Executives');
+    setAppliesTo(initialRule?.appliesTo ?? 'ALL');
     const initialMetric = initialRule?.metric ?? 'Total Sales (Amount)';
     setMetric(initialMetric);
     setPayoutMode(initialRule?.payoutMode ?? (initialMetric.includes('(Amount)') ? 'SLAB' : 'PER_UNIT'));
@@ -182,20 +197,20 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
                 { value: 'Ranking', label: 'Ranking (Top Performers slab)' },
                 { value: 'Retention', label: 'Retention (Renewal %)' },
               ]}
-              searchable={false}
+              searchable={true}
             />
 
             <Select
               label="Applies To *"
               value={appliesTo}
-              onChange={(e) => setAppliesTo(e.target.value as IncentiveRuleItem['appliesTo'])}
-              options={[
-                { value: 'All Executives', label: 'All Sales Executives' },
-                { value: 'Field Executives', label: 'Field Executives Only' },
-                { value: 'Telecallers', label: 'Telecallers Only' },
-                { value: 'Sales Managers', label: 'Sales Managers / TLs' },
-              ]}
-              searchable={false}
+              onChange={(e) => setAppliesTo(e.target.value)}
+              options={combinedAppliesToOptions}
+
+
+
+
+
+              searchable={true}
             />
           </div>
 
@@ -219,7 +234,7 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
                 { value: 'Demos (Count)', label: 'Demos Completed' },
                 { value: 'Collections (Amount)', label: 'Collections Collected (₹)' },
               ]}
-              searchable={false}
+              searchable={true}
             />
 
             {metric.includes('(Amount)') ? (
@@ -231,7 +246,7 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
                   { value: 'SLAB', label: 'Fixed Rupee Slab (e.g. ₹500 per ₹10,000)' },
                   { value: 'PERCENTAGE', label: 'Percentage of Revenue (%)' },
                 ]}
-                searchable={false}
+                searchable={true}
               />
             ) : (
               <div className="space-y-1">
@@ -267,7 +282,7 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
                     <span className="absolute right-3 top-2.5 text-slate-400 font-bold text-xs">%</span>
                   </div>
                   <p className="text-[11px] text-purple-700 font-medium pt-0.5">
-                    Executive earns <strong className="font-extrabold">{payoutRate || '0'}%</strong> of total achieved {metric.toLowerCase().replace(/ \(amount\)$/, '')} revenue.
+                    Executive earns <strong className="font-extrabold">{payoutRate || '0'}%</strong> of achieved {metric.toLowerCase().replace(/^total /, '').replace(/ \(amount\)$/, '')} revenue.
                   </p>
                 </div>
               ) : (
@@ -297,7 +312,7 @@ export const CreateIncentiveRuleModal: React.FC<CreateIncentiveRuleModalProps> =
                     </div>
                   </div>
                   <p className="text-[11px] text-purple-700 font-medium">
-                    Executive earns <strong className="font-extrabold">₹{payoutRate || '0'}</strong> for every <strong className="font-extrabold">₹{Number(slabStep || 0).toLocaleString('en-IN')}</strong> of achieved {metric.toLowerCase().replace(/ \(amount\)$/, '')} revenue.
+                    Executive earns <strong className="font-extrabold">₹{payoutRate || '0'}</strong> for every <strong className="font-extrabold">₹{Number(slabStep || 0).toLocaleString('en-IN')}</strong> of achieved {metric.toLowerCase().replace(/^total /, '').replace(/ \(amount\)$/, '')} revenue.
                   </p>
                 </div>
               )}

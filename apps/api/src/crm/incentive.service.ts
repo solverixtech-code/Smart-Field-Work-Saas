@@ -24,12 +24,18 @@ const payoutStructure = (metric: string, rate: number, mode = 'SLAB', step = 100
   if (mode === 'SLAB' || metric.includes('(Amount)')) return `₹ ${rate.toLocaleString('en-IN')} for every ₹ ${step.toLocaleString('en-IN')} achieved`;
   return `₹ ${rate.toLocaleString('en-IN')} per ${metric.replace(/ \(Count\)$/, '').replace(/^Total /, '')}`;
 };
-const applies = (appliesTo: string, member: { designation: string | null; tenantRole: { code: string } | null; user: { role: string } }) => {
-  if (appliesTo === 'All Executives') return true;
+const applies = (appliesTo: string, member: { designation: string | null; teamId: string | null; tenantRole: { code: string } | null; user: { role: string } }) => {
+  if (!appliesTo || appliesTo === 'ALL' || appliesTo === 'All Executives' || appliesTo === 'All Sales Executives') return true;
+  if (appliesTo.startsWith('TEAM:')) return member.teamId === appliesTo.slice(5);
+  if (appliesTo.startsWith('ROLE:')) {
+    const targetCode = appliesTo.slice(5).toLowerCase();
+    const roleCode = (member.tenantRole?.code ?? member.user.role).toLowerCase();
+    return roleCode === targetCode;
+  }
   const designation = member.designation?.toLowerCase() ?? '';
-  const role = member.tenantRole?.code ?? member.user.role.toLowerCase();
-  if (appliesTo === 'Field Executives') return role === 'field_executive' || member.user.role === 'FIELD_EXECUTIVE';
-  if (appliesTo === 'Telecallers') return designation.includes('telecall');
+  const role = (member.tenantRole?.code ?? member.user.role).toLowerCase();
+  if (appliesTo.includes('Field Executives')) return role === 'field_executive' || member.user.role === 'FIELD_EXECUTIVE';
+  if (appliesTo.includes('Telecallers')) return designation.includes('telecall') || role === 'telecaller';
   return ['sales_manager', 'team_leader'].includes(role) || ['SALES_MANAGER', 'TEAM_LEADER'].includes(member.user.role);
 };
 
@@ -42,16 +48,20 @@ export class IncentiveService {
     return this.repo.run(actor, false, async (tx, policy) => {
       policy.require('crm.incentives.view');
       const tenantId = policy.scope.tenantId;
-      const rows = await tx.incentiveRule.findMany({
-        where: {
-          tenantId,
-          ...(q.status ? { status: q.status } : {}),
-          ...(q.ruleType ? { ruleType: q.ruleType } : {}),
-          ...(q.search ? { OR: [{ name: { contains: q.search, mode: 'insensitive' } }, { metric: { contains: q.search, mode: 'insensitive' } }] } : {}),
-        },
-        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
-      });
-      const counts = await tx.incentiveRule.groupBy({ by: ['status'], where: { tenantId }, _count: { _all: true } });
+      const [rows, counts, tenantRoles, tenantTeams] = await Promise.all([
+        tx.incentiveRule.findMany({
+          where: {
+            tenantId,
+            ...(q.status ? { status: q.status } : {}),
+            ...(q.ruleType ? { ruleType: q.ruleType } : {}),
+            ...(q.search ? { OR: [{ name: { contains: q.search, mode: 'insensitive' } }, { metric: { contains: q.search, mode: 'insensitive' } }] } : {}),
+          },
+          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        }),
+        tx.incentiveRule.groupBy({ by: ['status'], where: { tenantId }, _count: { _all: true } }),
+        tx.tenantRole.findMany({ where: { tenantId }, select: { id: true, name: true, code: true } }),
+        tx.team.findMany({ where: { tenantId, isActive: true }, select: { id: true, name: true } }),
+      ]);
       const count = (status: string) => counts.find((item) => item.status === status)?._count._all ?? 0;
       return {
         items: rows.map((row) => ({
@@ -64,6 +74,18 @@ export class IncentiveService {
           status: titleStatus(row.status), revision: row.revision,
         })),
         summary: { total: counts.reduce((sum, item) => sum + item._count._all, 0), active: count('ACTIVE'), paused: count('PAUSED'), inactive: count('INACTIVE') },
+        options: {
+          roles: [
+            { value: 'ALL', label: 'All Sales Staff' },
+            { value: 'ROLE:field_executive', label: 'Field Executives Only' },
+            { value: 'ROLE:sales_manager', label: 'Sales Managers / TLs Only' },
+            { value: 'ROLE:telecaller', label: 'Telecallers Only' },
+            ...tenantRoles
+              .filter((r) => !['field_executive', 'sales_manager', 'team_leader', 'telecaller'].includes(r.code))
+              .map((r) => ({ value: `ROLE:${r.code}`, label: `${r.name} Only` })),
+          ],
+          teams: tenantTeams.map((t) => ({ value: `TEAM:${t.id}`, label: `Team: ${t.name}` })),
+        },
       };
     });
   }
@@ -120,7 +142,7 @@ export class IncentiveService {
         tx.tenantMembership.findMany({ where: { tenantId, status: 'ACTIVE', OR: [
           { tenantRole: { code: { in: ['field_executive', 'sales_manager', 'team_leader'] } } },
           { user: { role: { in: ['FIELD_EXECUTIVE', 'SALES_MANAGER', 'TEAM_LEADER'] } } },
-        ] }, select: { id: true, designation: true, tenantRole: { select: { code: true } }, user: { select: { role: true } } } }),
+        ] }, select: { id: true, teamId: true, designation: true, tenantRole: { select: { code: true } }, user: { select: { role: true } } } }),
         tx.incentiveRule.findMany({ where: { tenantId, status: 'ACTIVE', startDate: { lt: end }, endDate: { gte: start } }, orderBy: { createdAt: 'asc' } }),
         tx.opportunity.findMany({ where: { tenantId, deletedAt: null, stage: { equals: 'won', mode: 'insensitive' }, OR: [{ closedAt: { gte: start, lt: end } }, { closedAt: null, updatedAt: { gte: start, lt: end } }] }, select: { amount: true, assignedMembershipId: true, ownerMembershipId: true } }),
         tx.leadVisit.findMany({ where: { tenantId, status: { equals: 'COMPLETED', mode: 'insensitive' }, checkInTime: { gte: start, lt: end } }, select: { executiveMembershipId: true } }),

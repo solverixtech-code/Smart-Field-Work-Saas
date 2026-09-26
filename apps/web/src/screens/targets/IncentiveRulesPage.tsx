@@ -17,7 +17,7 @@ import {
 import { Button } from '../../components/ui/Button';
 import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
 import { CreateIncentiveRuleModal } from './CreateIncentiveRuleModal';
-import { currentPeriod, getIncentiveRules, getIncentives, IncentiveRuleItem, updateIncentiveRuleStatus } from './target.api';
+import { currentPeriod, getIncentiveRules, getIncentives, IncentiveRuleItem, TargetOption, updateIncentiveRuleStatus } from './target.api';
 import { extractErrorMessage } from '../../common/api';
 
 export default function IncentiveRulesPage() {
@@ -29,6 +29,7 @@ export default function IncentiveRulesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isRuleModalOpen, setIsRuleModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<IncentiveRuleItem | null>(null);
+  const [scopeOptions, setScopeOptions] = useState<{ roles: TargetOption[]; teams: TargetOption[] } | undefined>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
@@ -41,6 +42,7 @@ export default function IncentiveRulesPage() {
       getIncentives(currentPeriod(), {}, controller.signal),
     ]).then(([rulesResponse, incentivesResponse]) => {
       setRules(rulesResponse.data.items);
+      if (rulesResponse.data.options) setScopeOptions(rulesResponse.data.options);
       setPayout(incentivesResponse.data.summary.total);
     }).catch((requestError: unknown) => {
       if (!controller.signal.aborted) setError(extractErrorMessage(requestError, 'Unable to load incentive rules.'));
@@ -307,6 +309,7 @@ export default function IncentiveRulesPage() {
         isOpen={isRuleModalOpen}
         onClose={() => { setIsRuleModalOpen(false); setEditingRule(null); }}
         initialRule={editingRule}
+        scopeOptions={scopeOptions}
         onSaved={() => setReloadToken((token) => token + 1)}
       />
     </div>
