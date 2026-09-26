@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
+import { PhoneInput } from "../../components/ui/PhoneInput";
 import { Select } from "../../components/ui/Select";
 import { Textarea } from "../../components/ui/Textarea";
 import { Card } from "../../components/ui/Card";
@@ -481,9 +482,17 @@ export function LeadForm({ initial }: { initial?: LeadDto }) {
                       id="lead-phone"
                       type="tel"
                       placeholder="98765 43210"
-                      maxLength={30}
-                      value={draft.phone ?? ""}
-                      onChange={(e) => set("phone", e.target.value || null)}
+                      maxLength={10}
+                      value={(draft.phone ?? "").replace(/^\+91\s?/, "")}
+                      onKeyDown={(e) => {
+                        if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+                        if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) return;
+                        if (!/[0-9]/.test(e.key)) e.preventDefault();
+                      }}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                        set("phone", digits ? `+91 ${digits}` : null);
+                      }}
                       className="w-full px-3.5 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none"
                     />
                   </div>

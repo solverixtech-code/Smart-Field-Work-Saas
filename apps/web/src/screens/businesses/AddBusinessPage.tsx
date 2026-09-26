@@ -13,6 +13,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { PhoneInput } from '../../components/ui/PhoneInput';
 import { Select } from '../../components/ui/Select';
 import { ClockTimePickerModal } from '../../components/ui/ClockTimePickerModal';
 import { GoogleMapPicker } from '../../components/ui/GoogleMapPicker';
@@ -665,7 +666,7 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
                     pattern="[0-9]*"
                     placeholder="10-digit mobile number"
                     value={formData.mobile}
-                    onChange={(e) => handleInputChange('mobile', e.target.value)}
+                    onChange={(e) => handleInputChange('mobile', e.target.value.replace(/\D/g, ''))}
                     className="w-full rounded-r-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
                   />
                 </div>
@@ -694,7 +695,7 @@ export default function AddBusinessPage({ isEdit = false }: AddBusinessPageProps
                     type="tel"
                     placeholder="Enter alternate number"
                     value={formData.altPhone}
-                    onChange={(e) => handleInputChange('altPhone', e.target.value)}
+                    onChange={(e) => handleInputChange('altPhone', e.target.value.replace(/\D/g, ''))}
                     className="w-full rounded-r-sm border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:outline-none"
                   />
                 </div>
