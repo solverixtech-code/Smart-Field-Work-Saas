@@ -1049,6 +1049,11 @@ export function LeadConversionModal({
           );
           if (result) {
             onSaved();
+            if (result.accountId) {
+              navigate(`/admin/businesses/${result.accountId}/edit`);
+            } else {
+              navigate("/admin/businesses");
+            }
           }
         }}
       >
