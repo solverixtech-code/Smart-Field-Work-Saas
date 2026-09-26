@@ -47,7 +47,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCandidate, setSelectedCandidate] = useState<UnassignedExecutive | null>(null);
-  const [dealsTarget, setDealsTarget] = useState('5');
+  const [demosTarget, setDemosTarget] = useState('5');
   const [amountTarget, setAmountTarget] = useState('250000');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,7 +73,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
       await teamApi.assignMembers(teamId, [selectedCandidate.id]);
       const period = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit' }).format(new Date());
       const targets = [
-        { metric: 'deals_count', value: Number(dealsTarget), title: `${selectedCandidate.name} monthly deals` },
+        { metric: 'demos_count', value: Number(demosTarget), title: `${selectedCandidate.name} monthly demos` },
         { metric: 'sales_amount', value: Number(amountTarget), title: `${selectedCandidate.name} monthly revenue` },
       ].filter((target) => target.value > 0);
       await Promise.all(targets.map((target) => api.post('/tenant/crm/targets', {
@@ -202,13 +202,13 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              {/* Monthly Deals Target */}
+              {/* Monthly Demos Target */}
               <div className="space-y-1">
-                <label className="font-bold text-slate-700 block">Deals Target (Monthly)</label>
+                <label className="font-bold text-slate-700 block">Demos Target (Monthly)</label>
                 <input
                   type="number"
-                  value={dealsTarget}
-                  onChange={(e) => setDealsTarget(e.target.value)}
+                  value={demosTarget}
+                  onChange={(e) => setDemosTarget(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 font-bold text-[#0D1F3D] focus:border-[#0D1F3D] focus:outline-none"
                   placeholder="e.g. 5"
                 />

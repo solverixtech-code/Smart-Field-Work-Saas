@@ -17,13 +17,17 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { KpiCard } from '../../components/dashboard/KpiCard';
 import { Button } from '../../components/ui/Button';
 import { AddMemberModal } from '../../components/teams/AddMemberModal';
 import { Avatar } from '../../components/ui/Avatar';
-import { useTeamWorkspace } from './teams.api';
+import { useTeamWorkspace, teamApi } from './teams.api';
+import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
+import { extractErrorMessage } from '../../common/api';
 
 interface TeamMemberItem {
   id: string;
@@ -73,6 +77,29 @@ export default function TeamMembersPage() {
       setSelectedIds(filteredMembers.map((m) => m.id));
     } else {
       setSelectedIds([]);
+    }
+  };
+
+  const handleRemoveMember = async (member: TeamMemberItem) => {
+    if (!teamId) return;
+    try {
+      await teamApi.removeMember(teamId, member.id);
+      toast.success(`${member.name} removed from ${data?.team.name ?? 'team'}`);
+      refresh();
+    } catch (err: unknown) {
+      toast.error(extractErrorMessage(err, 'Failed to remove member from team.'));
+    }
+  };
+
+  const handleBulkRemove = async () => {
+    if (!teamId || selectedIds.length === 0) return;
+    try {
+      await Promise.all(selectedIds.map((id) => teamApi.removeMember(teamId, id)));
+      toast.success(`Removed ${selectedIds.length} member(s) from ${data?.team.name ?? 'team'}`);
+      setSelectedIds([]);
+      refresh();
+    } catch (err: unknown) {
+      toast.error(extractErrorMessage(err, 'Failed to remove selected members.'));
     }
   };
 
