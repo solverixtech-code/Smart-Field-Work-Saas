@@ -139,12 +139,15 @@ model Team {
   tenantMemberships TenantMembership[]
   leaderMembershipId String?
   leaderMembership   TenantMembership? @relation("TeamLeader", fields: [leaderMembershipId], references: [id], onDelete: SetNull)
+  managerMembershipId String?
+  managerMembership   TenantMembership? @relation("TeamManager", fields: [managerMembershipId], references: [id], onDelete: SetNull)
   salesTargets      SalesTarget[]
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
 
   @@index([tenantId])
   @@index([leaderMembershipId])
+  @@index([managerMembershipId])
 }
 
 enum PermissionScope {
@@ -1045,6 +1048,7 @@ model TenantMembership {
   teamId String?
   team   Team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
   ledTeams Team[] @relation("TeamLeader")
+  managedTeams Team[] @relation("TeamManager")
 
   managerMembershipId    String?
   managerMembership      TenantMembership?  @relation("MembershipManager", fields: [managerMembershipId], references: [id], onDelete: SetNull)

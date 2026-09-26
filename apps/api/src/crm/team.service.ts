@@ -349,17 +349,22 @@ export class TeamService {
         throw new ConflictException('CRM_TEAM_CODE_EXISTS');
       }
       if (input.leaderMembershipId) await this.ensureAssignableMembership(tx, tenantId, input.leaderMembershipId);
+      if (input.managerMembershipId) await this.ensureAssignableMembership(tx, tenantId, input.managerMembershipId);
       const team = await tx.team.create({
         data: {
           tenantId, name: input.name, code, description: input.description,
           department: input.department, region: input.region, teamType: input.teamType,
           dealAssignment: input.dealAssignment, visibility: input.visibility,
           isActive: input.status === 'Active', leaderMembershipId: input.leaderMembershipId,
+          managerMembershipId: input.managerMembershipId,
         },
         select: { id: true, name: true, code: true },
       });
       if (input.leaderMembershipId) {
         await tx.tenantMembership.update({ where: { id: input.leaderMembershipId }, data: { teamId: team.id } });
+      }
+      if (input.managerMembershipId) {
+        await tx.tenantMembership.update({ where: { id: input.managerMembershipId }, data: { teamId: team.id } });
       }
       if (input.monthlyTarget > 0) {
         const period = await this.currentPeriod(tx, tenantId);
@@ -387,6 +392,7 @@ export class TeamService {
         if (duplicate) throw new ConflictException('CRM_TEAM_CODE_EXISTS');
       }
       if (input.leaderMembershipId) await this.ensureAssignableMembership(tx, tenantId, input.leaderMembershipId);
+      if (input.managerMembershipId) await this.ensureAssignableMembership(tx, tenantId, input.managerMembershipId);
       const updated = await tx.team.update({
         where: { id: teamId },
         data: {
@@ -400,10 +406,12 @@ export class TeamService {
           ...(input.visibility !== undefined ? { visibility: input.visibility } : {}),
           ...(input.status !== undefined ? { isActive: input.status === 'Active' } : {}),
           ...(input.leaderMembershipId !== undefined ? { leaderMembershipId: input.leaderMembershipId } : {}),
+          ...(input.managerMembershipId !== undefined ? { managerMembershipId: input.managerMembershipId } : {}),
         },
         select: { id: true, name: true, code: true },
       });
       if (input.leaderMembershipId) await tx.tenantMembership.update({ where: { id: input.leaderMembershipId }, data: { teamId } });
+      if (input.managerMembershipId) await tx.tenantMembership.update({ where: { id: input.managerMembershipId }, data: { teamId } });
       if (input.monthlyTarget !== undefined && input.monthlyTarget > 0) {
         const period = await this.currentPeriod(tx, tenantId);
         const existing = await tx.salesTarget.findFirst({ where: { tenantId, teamId, period, metric: 'sales_amount' }, select: { id: true } });
@@ -476,8 +484,9 @@ export class TeamService {
         select: {
           id: true, name: true, code: true, description: true, department: true, region: true,
           teamType: true, dealAssignment: true, visibility: true, isActive: true, createdAt: true, updatedAt: true,
-          leaderMembershipId: true,
+          leaderMembershipId: true, managerMembershipId: true,
           leaderMembership: { select: { id: true, employeeCode: true, user: { select: { fullName: true, employeeCode: true, avatarUrl: true } } } },
+          managerMembership: { select: { id: true, employeeCode: true, designation: true, user: { select: { fullName: true, employeeCode: true, avatarUrl: true } } } },
           tenantMemberships: {
             orderBy: { user: { fullName: 'asc' } },
             select: {
@@ -581,7 +590,7 @@ export class TeamService {
         period,
         team: { ...team, status: team.isActive ? 'Active' : 'Inactive' },
         leader: team.leaderMembership ? { id: team.leaderMembership.id, name: team.leaderMembership.user.fullName, employeeCode: team.leaderMembership.employeeCode ?? team.leaderMembership.user.employeeCode, avatarUrl: team.leaderMembership.user.avatarUrl } : null,
-        manager: manager ? { id: manager.id, name: manager.user.fullName, employeeCode: manager.employeeCode ?? manager.user.employeeCode, designation: manager.designation ?? 'Sales Manager', avatarUrl: manager.user.avatarUrl } : null,
+        manager: team.managerMembership ? { id: team.managerMembership.id, name: team.managerMembership.user.fullName, employeeCode: team.managerMembership.employeeCode ?? team.managerMembership.user.employeeCode, designation: team.managerMembership.designation ?? 'Sales Manager', avatarUrl: team.managerMembership.user.avatarUrl } : (manager ? { id: manager.id, name: manager.user.fullName, employeeCode: manager.employeeCode ?? manager.user.employeeCode, designation: manager.designation ?? 'Sales Manager', avatarUrl: manager.user.avatarUrl } : null),
         members,
         candidates: candidates.map((candidate) => ({ id: candidate.id, name: candidate.user.fullName, employeeCode: candidate.employeeCode ?? candidate.user.employeeCode, avatarUrl: candidate.user.avatarUrl, designation: candidate.designation ?? this.roleLabel(candidate.user.role) })),
         targets: targetDtos,

@@ -196,12 +196,13 @@ export default function TeamDetailsPage() {
             Team Operational Hierarchy
           </h3>
           <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 rounded-sm px-2.5 py-1">
-            Sales Manager → Team Leader → Field Executives
+            {data?.manager ? 'Sales Manager → Team Leader → Field Executives' : 'Team Leader → Field Executives'}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+        <div className={`grid grid-cols-1 ${data?.manager ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-4 items-center`}>
           {/* Level 1: Sales Manager */}
+          {data?.manager && (
           <div className="flex items-center gap-3 rounded-sm border border-slate-200 bg-slate-50/80 p-3.5">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-[#0D1F3D] text-white font-bold text-xs shadow-xs">
               SM
@@ -214,6 +215,7 @@ export default function TeamDetailsPage() {
               <p className="text-[11px] text-slate-600 font-medium">{data?.manager?.designation ?? 'Sales Manager'}</p>
             </div>
           </div>
+          )}
 
           {/* Level 2: Team Leader */}
           <div className="flex items-center gap-3 rounded-sm border border-slate-200 bg-slate-50/80 p-3.5">

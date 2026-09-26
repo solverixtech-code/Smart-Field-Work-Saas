@@ -44,7 +44,7 @@ export interface TeamWorkspace {
   team: {
     id: string; name: string; code: string; description: string | null; department: string;
     region: string | null; teamType: string; dealAssignment: string; visibility: string;
-    status: 'Active' | 'Inactive'; createdAt: string; updatedAt: string; leaderMembershipId: string | null;
+    status: 'Active' | 'Inactive'; createdAt: string; updatedAt: string; leaderMembershipId: string | null; managerMembershipId: string | null;
   };
   leader: { id: string; name: string; employeeCode: string | null; avatarUrl: string | null } | null;
   manager: { id: string; name: string; employeeCode: string | null; designation: string; avatarUrl: string | null } | null;

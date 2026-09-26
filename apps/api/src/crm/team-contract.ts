@@ -4,6 +4,7 @@ const teamConfiguration = {
   name: z.string().trim().min(2).max(120),
   code: z.string().trim().min(2).max(30).regex(/^[A-Za-z0-9_-]+$/).optional(),
   leaderMembershipId: z.string().uuid().nullable().optional(),
+  managerMembershipId: z.string().uuid().nullable().optional(),
   department: z.string().trim().min(1).max(80).default('Sales'),
   region: z.string().trim().max(120).nullable().optional(),
   monthlyTarget: z.coerce.number().min(0).max(999999999999.99).default(0),

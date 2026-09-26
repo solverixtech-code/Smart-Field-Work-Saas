@@ -28,6 +28,7 @@ export default function CreateTeamPage() {
     name: '',
     code: '',
     leader: '',
+    manager: '',
     department: 'Sales',
     region: '',
     monthlyTarget: '',
@@ -48,7 +49,7 @@ export default function CreateTeamPage() {
   useEffect(() => {
     if (!data) return;
     setFormData({
-      name: data.team.name, code: data.team.code, leader: data.leader?.id ?? '', department: data.team.department,
+      name: data.team.name, code: data.team.code, leader: data.leader?.id ?? '', manager: data.manager?.id ?? '', department: data.team.department,
       region: data.team.region ?? '', monthlyTarget: String(data.summary.revenueTarget), description: data.team.description ?? '',
       teamType: data.team.teamType, status: data.team.status, dealAssignment: data.team.dealAssignment, visibility: data.team.visibility,
     });
@@ -75,6 +76,7 @@ export default function CreateTeamPage() {
         name: formData.name,
         ...(formData.code.trim() ? { code: formData.code.trim() } : {}),
         leaderMembershipId: formData.leader || null,
+        managerMembershipId: formData.manager || null,
         department: formData.department,
         region: formData.region || null,
         monthlyTarget: Number(formData.monthlyTarget) || 0,
@@ -167,6 +169,29 @@ export default function CreateTeamPage() {
                       ? `${candidate.employeeCode} • ${candidate.designation}`
                       : candidate.designation,
                   }))}
+                />
+              </div>
+
+              {/* Reporting Sales Manager */}
+              <div className="space-y-1 sm:col-span-1">
+                <Select
+                  label="Reporting Sales Manager (Optional)"
+                  placeholder="Select reporting manager"
+                  searchable={true}
+                  value={formData.manager}
+                  onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
+                  options={[
+                    { value: '', label: 'None (Direct to Team Leader)' },
+                    ...options.candidates.map((candidate) => ({
+                      value: candidate.id,
+                      label: candidate.name,
+                      avatar: candidate.avatarUrl || undefined,
+                      avatarFallback: !candidate.avatarUrl,
+                      sublabel: candidate.employeeCode
+                        ? `${candidate.employeeCode} • ${candidate.designation}`
+                        : candidate.designation,
+                    })),
+                  ]}
                 />
               </div>
 
