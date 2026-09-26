@@ -74,10 +74,10 @@ export default function CreateTeamPage() {
       const payload = {
         name: formData.name,
         ...(formData.code.trim() ? { code: formData.code.trim() } : {}),
-        leaderMembershipId: formData.leader,
+        leaderMembershipId: formData.leader || null,
         department: formData.department,
-        region: formData.region,
-        monthlyTarget: Number(formData.monthlyTarget),
+        region: formData.region || null,
+        monthlyTarget: Number(formData.monthlyTarget) || 0,
         description: formData.description || null,
         teamType: formData.teamType,
         status: formData.status,
