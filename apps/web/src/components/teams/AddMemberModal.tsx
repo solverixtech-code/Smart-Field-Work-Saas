@@ -14,7 +14,6 @@ import {
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Avatar } from '../ui/Avatar';
-import { Select } from '../ui/Select';
 import { api, extractErrorMessage } from '../../common/api';
 import { teamApi, TeamCandidate } from '../../screens/teams/teams.api';
 
@@ -48,7 +47,6 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCandidate, setSelectedCandidate] = useState<UnassignedExecutive | null>(null);
-  const [assignedRole, setAssignedRole] = useState('Field Executive');
   const [dealsTarget, setDealsTarget] = useState('5');
   const [amountTarget, setAmountTarget] = useState('250000');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,7 +70,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      await teamApi.assignMembers(teamId, [selectedCandidate.id], assignedRole);
+      await teamApi.assignMembers(teamId, [selectedCandidate.id]);
       const period = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit' }).format(new Date());
       const targets = [
         { metric: 'deals_count', value: Number(dealsTarget), title: `${selectedCandidate.name} monthly deals` },
@@ -190,36 +188,20 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
           </div>
         </div>
 
-        {/* Selected Executive Role & Target Settings Card */}
+        {/* Selected Executive Target Settings Card */}
         {selectedCandidate && (
           <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3.5 animate-fadeIn">
             <div className="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
               <div className="flex items-center gap-2 text-xs font-bold text-[#0D1F3D]">
                 <Sparkles className="h-4 w-4 text-[#E20613]" />
-                <span>Configure Member Role & Monthly Target</span>
+                <span>Configure Member Monthly Target</span>
               </div>
               <span className="text-[11px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
                 {selectedCandidate.name} ({selectedCandidate.code})
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-              {/* Assigned Role */}
-              <div className="space-y-1">
-                <Select
-                  label="Assigned Role"
-                  placeholder="Select role"
-                  searchable={false}
-                  value={assignedRole}
-                  onChange={(e) => setAssignedRole(e.target.value)}
-                  options={[
-                    { value: 'Field Executive', label: 'Field Executive' },
-                    { value: 'Senior Executive', label: 'Senior Executive' },
-                    { value: 'Field Specialist', label: 'Field Specialist' },
-                  ]}
-                />
-              </div>
-
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               {/* Monthly Deals Target */}
               <div className="space-y-1">
                 <label className="font-bold text-slate-700 block">Deals Target (Monthly)</label>
