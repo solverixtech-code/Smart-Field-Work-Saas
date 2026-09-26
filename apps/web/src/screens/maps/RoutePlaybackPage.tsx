@@ -18,7 +18,7 @@ import { InteractiveMap } from '../../components/maps/InteractiveMap';
 import { extractErrorMessage } from '../../common/api';
 import { useAppSelector } from '../../store';
 import { fieldDashboardApi, type FieldDashboardData } from '../dashboard/field-dashboard.api';
-import { mapsApi, type ExecutiveRoute, type RouteStop } from './maps.api';
+import { mapsApi, type ExecutiveRoute, type RouteStop, type RouteTrackPoint } from './maps.api';
 
 interface RouteActivity {
   id: string;
@@ -62,12 +62,11 @@ function liveActivities(data: FieldDashboardData): RouteActivity[] {
 export default function RoutePlaybackPage() {
   const { executiveId } = useParams<{ executiveId?: string }>();
   const tenant = useAppSelector((state) => state.authorization.tenant);
-  const user = useAppSelector((state) => state.auth.user);
   const isOwnRoute = isExecutiveRole(tenant?.roleCode);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<'1x' | '2x' | '5x'>('1x');
-  const [activeStopIndex, setActiveStopIndex] = useState(0);
+  const [playbackProgress, setPlaybackProgress] = useState(0);
   const [activeTab, setActiveTab] = useState<'timeline' | 'visits'>('timeline');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [completedOnly, setCompletedOnly] = useState(false);
@@ -97,12 +96,12 @@ export default function RoutePlaybackPage() {
   }, [isOwnRoute, selectedDate, refresh]);
 
   useEffect(() => {
-    if (isOwnRoute) return;
     const controller = new AbortController();
     setLoading(true);
     setError(null);
     setAdminRoute(null);
     const resolveRoute = async () => {
+      if (isOwnRoute) return mapsApi.ownRoute(selectedDate ?? undefined);
       const membershipId = executiveId ?? (await mapsApi.snapshot()).executives[0]?.id;
       if (!membershipId) throw new Error('No field executive is available for route playback.');
       return mapsApi.route(membershipId, selectedDate ?? undefined);
@@ -116,51 +115,28 @@ export default function RoutePlaybackPage() {
 
   const timezone = fieldData?.timezone ?? 'Asia/Kolkata';
   const allActivities = useMemo(() => isOwnRoute && fieldData ? liveActivities(fieldData) : [], [isOwnRoute, fieldData]);
-  const visibleActivities = useMemo(() => completedOnly
-    ? allActivities.filter((activity) => activity.type !== 'visit' || activity.status === 'COMPLETED')
-    : allActivities, [allActivities, completedOnly]);
-  const liveStops: RouteStop[] = useMemo(() => visibleActivities.flatMap((activity, index) =>
-    activity.latitude === null || activity.longitude === null ? [] : [{
-      id: activity.id, stopNumber: index + 1, type: activity.type,
-      title: activity.title, locationName: activity.title, address: activity.address,
-      timestamp: formatTime(activity.timestamp, timezone), distanceKm: 0,
-      lat: activity.latitude, lng: activity.longitude, statusText: activity.status,
-    }]), [visibleActivities, timezone]);
-  const punchIn = fieldData?.punches.find((punch) => punch.type === 'PUNCH_IN')?.timestamp ?? null;
-  const punchOut = fieldData?.punches.slice().reverse().find((punch) => punch.type === 'PUNCH_OUT')?.timestamp ?? null;
-  const workedMinutes = punchIn && punchOut
-    ? Math.max(0, Math.floor((new Date(punchOut).getTime() - new Date(punchIn).getTime()) / 60000)) : null;
-  const route: ExecutiveRoute = isOwnRoute ? {
-    executiveId: tenant?.membershipId ?? '',
-    executiveName: fieldData?.executive.name ?? user?.fullName ?? 'Field executive',
-    executiveAvatar: fieldData?.executive.avatarUrl ?? '',
-    status: fieldData?.startDate === fieldData?.today && punchIn && !punchOut ? 'On duty' : 'Off duty',
-    date: new Date(`${selectedDate ?? fieldData?.today ?? new Date().toISOString().slice(0, 10)}T00:00:00Z`)
-      .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }),
-    startTime: formatTime(punchIn, timezone),
-    endTime: formatTime(punchOut, timezone),
-    totalDurationText: workedMinutes === null ? '—' : `${Math.floor(workedMinutes / 60)}h ${workedMinutes % 60}m`,
-    totalDistanceKm: 0,
-    totalVisitsPlanned: fieldData?.summary.visitCount ?? 0,
-    totalVisitsCompleted: fieldData?.summary.completedVisits ?? 0,
-    avgSpeedKmh: 0,
-    stops: liveStops,
-  } : adminRoute ?? {
+  const route: ExecutiveRoute = adminRoute ?? {
     executiveId: executiveId ?? '', executiveName: 'Field executive', executiveAvatar: null,
     status: 'Route history', date: selectedDate ?? new Date().toISOString().slice(0, 10),
     startTime: null, endTime: null, totalDurationText: '—', totalDistanceKm: 0,
     totalVisitsPlanned: 0, totalVisitsCompleted: 0, avgSpeedKmh: 0, stops: [],
   };
-  const timelineActivities: RouteActivity[] = isOwnRoute ? visibleActivities : route.stops.map((stop) => ({
+  const routeActivities: RouteActivity[] = isOwnRoute && fieldData ? allActivities : route.stops.map((stop) => ({
     id: stop.id, type: stop.type, title: stop.locationName,
     address: stop.address, timestamp: stop.timestamp,
     status: stop.statusText ?? '', latitude: stop.lat, longitude: stop.lng,
   }));
+  const timelineActivities = completedOnly
+    ? routeActivities.filter((activity) => activity.type !== 'visit' || activity.status === 'COMPLETED')
+    : routeActivities;
+  const visibleStops = completedOnly
+    ? route.stops.filter((stop) => stop.type !== 'visit' || stop.statusText === 'COMPLETED')
+    : route.stops;
   const listedActivities = activeTab === 'visits'
     ? timelineActivities.filter((activity) => activity.type === 'visit') : timelineActivities;
 
   useEffect(() => {
-    setActiveStopIndex(0);
+    setPlaybackProgress(0);
     setIsPlaying(false);
   }, [selectedDate, completedOnly]);
 
@@ -214,23 +190,57 @@ export default function RoutePlaybackPage() {
     setOutcome('');
   }
 
-  // Playback steps through recorded locations and assigned visit locations.
-  useEffect(() => {
-    let timer: ReturnType<typeof setInterval> | undefined;
-    if (isPlaying && route.stops.length > 0) {
-      const speedMs = playbackSpeed === '5x' ? 600 : playbackSpeed === '2x' ? 1200 : 2500;
-      timer = setInterval(() => {
-        setActiveStopIndex((prev) => {
-          if (prev >= route.stops.length - 1) {
-            setIsPlaying(false);
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, speedMs);
+  const playbackTrack = useMemo(() => route.trackPoints?.length
+    ? route.trackPoints
+    : route.stops.map((stop): RouteTrackPoint => ({
+        id: stop.id, capturedAt: stop.timestamp, lat: stop.lat, lng: stop.lng,
+        accuracyMeters: null, speedKmh: 0, headingDegrees: null, cumulativeDistanceKm: stop.distanceKm,
+      })), [route.stops, route.trackPoints]);
+  const trackStartMs = playbackTrack.length ? Date.parse(playbackTrack[0].capturedAt) : 0;
+  const trackEndMs = playbackTrack.length ? Date.parse(playbackTrack.at(-1)!.capturedAt) : trackStartMs;
+  const trackDurationMs = Math.max(0, trackEndMs - trackStartMs);
+  const playbackTimestampMs = trackStartMs + trackDurationMs * playbackProgress;
+  const playbackPosition = useMemo(() => {
+    if (!playbackTrack.length) return undefined;
+    const nextIndex = playbackTrack.findIndex((point) => Date.parse(point.capturedAt) >= playbackTimestampMs);
+    if (nextIndex <= 0) return { lat: playbackTrack[0].lat, lng: playbackTrack[0].lng };
+    if (nextIndex < 0) {
+      const last = playbackTrack.at(-1)!;
+      return { lat: last.lat, lng: last.lng };
     }
-    return () => { if (timer) clearInterval(timer); };
-  }, [isPlaying, playbackSpeed, route.stops.length]);
+    const previous = playbackTrack[nextIndex - 1];
+    const next = playbackTrack[nextIndex];
+    const previousMs = Date.parse(previous.capturedAt);
+    const nextMs = Date.parse(next.capturedAt);
+    const ratio = nextMs === previousMs ? 1 : (playbackTimestampMs - previousMs) / (nextMs - previousMs);
+    return { lat: previous.lat + (next.lat - previous.lat) * ratio, lng: previous.lng + (next.lng - previous.lng) * ratio };
+  }, [playbackTimestampMs, playbackTrack]);
+  const activeStopIndex = visibleStops.reduce((active, stop, index) =>
+    Date.parse(stop.timestamp) <= playbackTimestampMs ? index : active, 0);
+  const progressForTimestamp = (timestamp: string) => trackDurationMs
+    ? Math.min(1, Math.max(0, (Date.parse(timestamp) - trackStartMs) / trackDurationMs))
+    : 0;
+
+  useEffect(() => {
+    if (!isPlaying || playbackTrack.length < 2) return;
+    const speed = playbackSpeed === '5x' ? 5 : playbackSpeed === '2x' ? 2 : 1;
+    const compressedDurationMs = Math.max(1000, Math.min(trackDurationMs, 120_000));
+    const startedAt = performance.now();
+    const initialProgress = playbackProgress;
+    let frame = 0;
+    const animate = (now: number) => {
+      const next = initialProgress + ((now - startedAt) * speed) / compressedDurationMs;
+      if (next >= 1) {
+        setPlaybackProgress(1);
+        setIsPlaying(false);
+        return;
+      }
+      setPlaybackProgress(next);
+      frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [isPlaying, playbackSpeed, playbackTrack.length, trackDurationMs]);
 
   return (
     <div className="space-y-4 font-sans pb-8 text-left">
@@ -333,19 +343,20 @@ export default function RoutePlaybackPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         {/* Left Map Area & Playback Controller */}
         <div className="lg:col-span-8 flex flex-col space-y-3">
-          {!route.stops.length || !import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ?
+          {!playbackTrack.length || !import.meta.env.VITE_MAPBOX_ACCESS_TOKEN ?
             <div className="flex h-[580px] items-center justify-center rounded-md border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-600">
               {loading ? 'Loading route locations…' : error ? 'Route locations are unavailable. Retry to load them.' :
-                route.stops.length ? 'Mapbox is not configured for this workspace.' : 'No geotagged visits or mobile attendance locations for this date.'}
+                playbackTrack.length ? 'Mapbox is not configured for this workspace.' : 'No recorded GPS locations for this date.'}
             </div> :
             <InteractiveMap
               mode="route-playback"
-              routeStops={route.stops}
-              routePath={route.detailedRoadPath}
+              routeStops={visibleStops}
+              routePath={playbackTrack.map((point) => [point.lat, point.lng])}
               playbackActiveStopIndex={activeStopIndex}
+              playbackPosition={playbackPosition}
               heightClassName="h-[580px]"
             />}
-          {route.stops.length > 1 && <p className="text-xs text-slate-500">Mapbox connects assigned visit locations and mobile punch coordinates with a suggested road route. This is not a continuous GPS trace.</p>}
+          {playbackTrack.length > 1 && <p className="text-xs text-slate-500">The route, distance, speed, and playback marker use the same recorded GPS samples.</p>}
 
           {/* BOTTOM FLOATING ROUTE PLAYBACK PLAYER BAR */}
           <div className="rounded-sm border border-slate-200/90 bg-white p-3 shadow-md flex items-center justify-between gap-4 text-xs font-semibold">
@@ -353,7 +364,7 @@ export default function RoutePlaybackPage() {
               <button
                 type="button"
                 onClick={() => setIsPlaying(!isPlaying)}
-                disabled={!route.stops.length}
+                disabled={playbackTrack.length < 2}
                 aria-label={isPlaying ? 'Pause playback' : 'Play playback'}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0D1F3D] text-white hover:bg-slate-800 transition-colors shadow-xs cursor-pointer"
               >
@@ -380,21 +391,21 @@ export default function RoutePlaybackPage() {
               <input
                 type="range"
                 min={0}
-                max={Math.max(route.stops.length - 1, 0)}
-                value={activeStopIndex}
-                onChange={(e) => setActiveStopIndex(Number(e.target.value))}
-                disabled={!route.stops.length}
+                max={1000}
+                value={Math.round(playbackProgress * 1000)}
+                onChange={(e) => setPlaybackProgress(Number(e.target.value) / 1000)}
+                disabled={playbackTrack.length < 2}
                 aria-label="Route playback position"
                 className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#0D1F3D]"
               />
               <span className="text-[11px] font-mono font-bold text-slate-600 shrink-0">
-                Stop {route.stops.length ? activeStopIndex + 1 : 0} / {route.stops.length}
+                {playbackTrack.length ? formatTime(new Date(playbackTimestampMs).toISOString(), timezone) : '—'}
               </span>
             </div>
 
             <button
               onClick={() => {
-                setActiveStopIndex(0);
+                setPlaybackProgress(0);
                 setIsPlaying(false);
               }}
               className="p-1.5 text-slate-400 hover:text-[#0D1F3D] transition-colors"
@@ -451,11 +462,11 @@ export default function RoutePlaybackPage() {
             {isOwnRoute && fieldData && fieldData.summary.visitCount > fieldData.visits.length &&
               <p className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">Showing the first {fieldData.visits.length} of {fieldData.summary.visitCount} assigned visits.</p>}
             {listedActivities.map((st) => {
-              const mapIndex = route.stops.findIndex((stop) => stop.id === st.id);
+              const mapIndex = visibleStops.findIndex((stop) => stop.id === st.id || stop.visitId === st.id);
               return <div key={st.id} className="space-y-1">
                 <button
                   type="button"
-                  onClick={() => mapIndex >= 0 && setActiveStopIndex(mapIndex)}
+                  onClick={() => setPlaybackProgress(progressForTimestamp(st.timestamp))}
                   disabled={mapIndex < 0}
                   className={`flex w-full items-start gap-3 p-2.5 rounded-sm border text-left transition-all ${
                     activeStopIndex === mapIndex && mapIndex >= 0
@@ -503,7 +514,7 @@ export default function RoutePlaybackPage() {
           {!isOwnRoute && <Button
             variant="outline"
             size="sm"
-            onClick={() => { setActiveTab('timeline'); setActiveStopIndex(0); }}
+            onClick={() => { setActiveTab('timeline'); setPlaybackProgress(0); }}
             className="w-full text-xs font-bold justify-between shadow-xs border-slate-200 text-[#0D1F3D]"
           >
             <span>View Full History</span>

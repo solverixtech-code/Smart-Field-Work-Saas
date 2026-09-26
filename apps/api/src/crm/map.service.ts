@@ -58,6 +58,61 @@ function formatDuration(minutes: number) {
   return hours ? `${hours}h ${remainder}m` : `${remainder}m`;
 }
 
+interface TrackPointForRendering {
+  capturedAt: Date;
+  lat: number;
+  lng: number;
+}
+
+function nearestPointIndex(points: TrackPointForRendering[], timestamp: Date) {
+  let low = 0;
+  let high = points.length - 1;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (points[middle].capturedAt < timestamp) low = middle + 1;
+    else high = middle;
+  }
+  if (low === 0) return 0;
+  const before = points[low - 1].capturedAt.getTime();
+  const after = points[low].capturedAt.getTime();
+  return timestamp.getTime() - before <= after - timestamp.getTime() ? low - 1 : low;
+}
+
+function downsampleTrack<T extends TrackPointForRendering>(points: T[], eventTimes: Date[], limit = 5000): T[] {
+  if (points.length <= limit) return points;
+  const retained = new Set<number>([0, points.length - 1]);
+  eventTimes.forEach((timestamp) => retained.add(nearestPointIndex(points, timestamp)));
+
+  const remaining = Math.max(0, limit - retained.size);
+  const turnBudget = Math.min(1500, Math.floor(remaining * 0.35));
+  const turns: Array<{ index: number; angle: number }> = [];
+  for (let index = 1; index < points.length - 1; index += 1) {
+    if (retained.has(index)) continue;
+    const previous = points[index - 1];
+    const current = points[index];
+    const next = points[index + 1];
+    const first = Math.atan2(current.lat - previous.lat, current.lng - previous.lng);
+    const second = Math.atan2(next.lat - current.lat, next.lng - current.lng);
+    const angle = Math.abs(Math.atan2(Math.sin(second - first), Math.cos(second - first)));
+    if (angle >= Math.PI / 6) turns.push({ index, angle });
+  }
+  turns.sort((a, b) => b.angle - a.angle || a.index - b.index)
+    .slice(0, turnBudget)
+    .forEach(({ index }) => retained.add(index));
+
+  const slots = Math.max(0, limit - retained.size);
+  if (slots) {
+    const step = (points.length - 1) / (slots + 1);
+    for (let slot = 1; slot <= slots; slot += 1) retained.add(Math.round(slot * step));
+  }
+  if (retained.size > limit) {
+    const removable = [...retained].filter((index) => index !== 0 && index !== points.length - 1)
+      .sort((a, b) => a - b);
+    while (retained.size > limit && removable.length) retained.delete(removable.shift()!);
+  }
+  return [...retained].sort((a, b) => a - b).map((index) => points[index]);
+}
+
 @Injectable()
 export class MapService {
   constructor(private readonly repo: CrmRepository) {}
@@ -461,7 +516,6 @@ export class MapService {
         tx.executiveLocationSample.findMany({
           where: { tenantId, membershipId, capturedAt: { gte: start, lt: end }, isUsable: true },
           orderBy: { capturedAt: "asc" },
-          take: 20000,
           select: {
             id: true, capturedAt: true, latitude: true, longitude: true,
             accuracyMeters: true, speedKmh: true, headingDegrees: true,
@@ -472,7 +526,7 @@ export class MapService {
         }),
       ]);
       let runningDistance = 0;
-      const allTrackPoints = samples.map((sample, index) => {
+      const baseTrackPoints = samples.map((sample, index) => {
         const previous = samples[index - 1];
         const segmentKm = previous ? haversineKm(previous, sample) : 0;
         if (segmentKm >= 0.005) runningDistance += segmentKm;
@@ -488,12 +542,34 @@ export class MapService {
           cumulativeDistanceKm: Math.round(runningDistance * 100) / 100,
         };
       });
-      const downsample = allTrackPoints.length <= 5000 ? allTrackPoints : allTrackPoints.filter((_, index) =>
-        index === 0 || index === allTrackPoints.length - 1 || index % Math.ceil(allTrackPoints.length / 4998) === 0);
       const events = [
         ...punches.map((punch) => ({ id: `punch:${punch.id}`, type: punch.type === "PUNCH_IN" ? "start" as const : "end" as const, title: punch.type === "PUNCH_IN" ? "Start location" : "End location", locationName: punch.locationName ?? "Attendance location", address: punch.locationName ?? "Location not reported", at: punch.timestamp, durationSpentMinutes: undefined, lat: punch.latitude, lng: punch.longitude, statusText: punch.type === "PUNCH_IN" ? "Punched in" : "Punched out", visitId: undefined })),
         ...visits.map((visit) => ({ id: `visit:${visit.id}`, type: "visit" as const, title: "Field visit", locationName: visit.targetName, address: visit.location, at: visit.checkInTime, durationSpentMinutes: visit.durationMinutes, lat: visit.latitude!, lng: visit.longitude!, statusText: visit.status, visitId: visit.id })),
       ].sort((a, b) => a.at.getTime() - b.at.getTime());
+      const eventByPointIndex = new Map<number, typeof events[number]>();
+      events.forEach((event) => {
+        if (!baseTrackPoints.length) return;
+        const index = nearestPointIndex(baseTrackPoints, event.at);
+        const existing = eventByPointIndex.get(index);
+        const pointAt = baseTrackPoints[index].capturedAt.getTime();
+        if (!existing || Math.abs(event.at.getTime() - pointAt) < Math.abs(existing.at.getTime() - pointAt)) {
+          eventByPointIndex.set(index, event);
+        }
+      });
+      const allTrackPoints = baseTrackPoints.map((point, index) => {
+        const event = eventByPointIndex.get(index);
+        return {
+          ...point,
+          nearestEvent: event ? {
+            id: event.id,
+            type: event.type,
+            title: event.title,
+            timestamp: event.at,
+            visitId: event.visitId,
+          } : null,
+        };
+      });
+      const downsample = downsampleTrack(allTrackPoints, events.map((event) => event.at));
       const stops = events.map((event, index) => {
         const preceding = [...allTrackPoints].reverse().find((point) => point.capturedAt <= event.at);
         return { ...event, stopNumber: index + 1, timestamp: event.at, distanceKm: preceding?.cumulativeDistanceKm ?? 0 };

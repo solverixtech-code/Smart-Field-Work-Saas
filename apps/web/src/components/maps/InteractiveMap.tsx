@@ -95,6 +95,7 @@ export interface InteractiveMapProps {
   routeStops?: RouteStop[];
   routePath?: [number, number][];
   playbackActiveStopIndex?: number;
+  playbackPosition?: { lat: number; lng: number };
   selectedExecutiveId?: string;
   selectedProspectId?: string;
   onSelectExecutive?: (exec: ExecutiveLocation) => void;
@@ -121,6 +122,7 @@ export function InteractiveMap({
   routeStops = [],
   routePath = emptyRoutePath,
   playbackActiveStopIndex,
+  playbackPosition,
   selectedExecutiveId,
   selectedProspectId,
   onSelectExecutive,
@@ -372,52 +374,6 @@ export function InteractiveMap({
     }
   }, [selectedProspectId, prospects]);
 
-  const [fetchedRealRoadPath, setFetchedRealRoadPath] = useState<[number, number][]>([]);
-
-  // Fetch real-world driving route geometry from Mapbox / OSRM routing API
-  useEffect(() => {
-    if ((mode !== 'route-playback' && routeStops.length === 0) || routeStops.length < 2) {
-      setFetchedRealRoadPath([]);
-      return;
-    }
-
-    setFetchedRealRoadPath([]);
-    let isMounted = true;
-    const fetchRealRoadRoute = async () => {
-      try {
-        const customToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
-        const coordinatesString = routeStops
-          .slice(0, 25)
-          .map((st) => `${st.lng},${st.lat}`)
-          .join(';');
-
-        let url = `https://router.project-osrm.org/route/v1/driving/${coordinatesString}?overview=full&geometries=geojson`;
-
-        if (customToken) {
-          url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordinatesString}?overview=full&geometries=geojson&access_token=${customToken}`;
-        }
-
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (isMounted && data.routes && data.routes[0] && data.routes[0].geometry) {
-          const realCoords: [number, number][] = data.routes[0].geometry.coordinates.map(
-            ([lng, lat]: [number, number]) => [lat, lng],
-          );
-          setFetchedRealRoadPath(realCoords);
-        }
-      } catch (err) {
-        console.warn('Real road routing API notice:', err);
-      }
-    };
-
-    fetchRealRoadRoute();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [routeStops, mode]);
-
   // Sync Native Mapbox GL GeoJSON Route Line Layer
   useEffect(() => {
     if (!mapRef.current) return;
@@ -427,10 +383,7 @@ export function InteractiveMap({
       try {
         if (!map || !map.getStyle() || !map.isStyleLoaded()) return;
 
-        const activeCoords =
-          fetchedRealRoadPath.length > 0
-            ? fetchedRealRoadPath
-            : routePath.length > 0
+        const activeCoords = routePath.length > 0
             ? routePath
             : routeStops.map((st) => [st.lat, st.lng] as [number, number]);
 
@@ -494,7 +447,7 @@ export function InteractiveMap({
     return () => {
       map.off('idle', updateRouteNativeLayer);
     };
-  }, [fetchedRealRoadPath, routePath, routeStops, mapType]);
+  }, [routePath, routeStops, mapType]);
 
   // Sync Native Mapbox GL GPU Heatmap Shader Layer
   useEffect(() => {
@@ -710,13 +663,11 @@ export function InteractiveMap({
 
 
           {/* ROUTE PLAYBACK MAPBOX POLYLINE LAYER */}
-          {(mode === 'route-playback' || routeStops.length > 0 || routePath.length > 0 || fetchedRealRoadPath.length > 0) && (
+          {(mode === 'route-playback' || routeStops.length > 0 || routePath.length > 0) && (
             <g>
               {/* Outer Glow Halo */}
               <polyline
-                points={(fetchedRealRoadPath.length > 0
-                  ? fetchedRealRoadPath
-                  : routePath.length > 0
+                points={(routePath.length > 0
                   ? routePath
                   : routeStops.map((st) => [st.lat, st.lng] as [number, number])
                 )
@@ -734,9 +685,7 @@ export function InteractiveMap({
               />
               {/* Core Road Line */}
               <polyline
-                points={(fetchedRealRoadPath.length > 0
-                  ? fetchedRealRoadPath
-                  : routePath.length > 0
+                points={(routePath.length > 0
                   ? routePath
                   : routeStops.map((st) => [st.lat, st.lng] as [number, number])
                 )
@@ -969,6 +918,19 @@ export function InteractiveMap({
             </div>
           );
         })}
+
+      {mode === 'route-playback' && playbackPosition && (() => {
+        const point = getPixelPoint(playbackPosition.lat, playbackPosition.lng);
+        return <div
+          aria-label="Current playback position"
+          style={{ transform: `translate3d(${point.x}px, ${point.y}px, 0)`, left: 0, top: 0 }}
+          className="absolute z-30 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-[#0D1F3D] text-white shadow-md ring-4 ring-blue-300/70">
+            <Navigation className="h-5 w-5" />
+          </div>
+        </div>;
+      })()}
 
       {/* MAPBOX MARKERS: ROUTE PLAYBACK WAYPOINTS */}
       {mode === 'route-playback' &&

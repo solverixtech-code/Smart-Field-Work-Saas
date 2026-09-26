@@ -1,13 +1,22 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
+import { z } from "zod";
 import { RequestPrincipal } from "../common/security/request-principal.interface";
 import { JobService } from "../jobs/job.service";
 import { CrmRepository } from "./crm.repository";
-import { locationSampleBatch, type LocationSampleInput } from "./location-tracking-contract";
+import { locationSample, locationSampleBatch, type LocationSampleInput } from "./location-tracking-contract";
 
 const SAMPLE_INTERVAL_SECONDS = 30;
 const SAMPLE_DISTANCE_METERS = 10;
 const MAX_ACCURACY_METERS = 100;
 const MAX_SPEED_KMH = 180;
+
+function localDateKey(value: Date, timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(value);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}`;
+}
 
 function distanceKm(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) {
   const radians = (value: number) => value * Math.PI / 180;
@@ -26,12 +35,15 @@ export class LocationTrackingService {
   async session(actor: RequestPrincipal) {
     return this.repo.run(actor, false, async (tx, policy) => {
       policy.require("crm.location.track");
+      const settings = await tx.tenantSettings.findUnique({ where: { tenantId: policy.scope.tenantId }, select: { timezone: true } });
+      const timezone = settings?.timezone ?? "Asia/Kolkata";
       const attendance = await tx.attendance.findFirst({
         where: {
           tenantId: policy.scope.tenantId,
           tenantMembershipId: policy.scope.membershipId,
           punchInTime: { not: null },
           punchOutTime: null,
+          date: new Date(`${localDateKey(new Date(), timezone)}T00:00:00Z`),
         },
         orderBy: { date: "desc" },
         select: { id: true, punchInTime: true, punchOutTime: true },
@@ -55,11 +67,35 @@ export class LocationTrackingService {
       policy.require("crm.location.track");
       const now = new Date();
       const futureLimit = new Date(now.getTime() + 5 * 60_000);
-      const ordered = [...batch.samples].sort((a, b) => Date.parse(a.capturedAt) - Date.parse(b.capturedAt));
+      const rejectedIds: string[] = [];
+      const parsedSamples: LocationSampleInput[] = [];
+      for (const raw of batch.samples) {
+        const parsed = locationSample.safeParse(raw);
+        if (parsed.success) parsedSamples.push(parsed.data);
+        else {
+          const id = raw && typeof raw === "object" && "clientSampleId" in raw
+            ? z.string().min(1).max(200).safeParse(raw.clientSampleId)
+            : null;
+          if (!id?.success) throw new BadRequestException("Every location sample must include a client sample ID.");
+          rejectedIds.push(id.data);
+        }
+      }
+      const rejectedSet = new Set(rejectedIds);
+      const duplicateIds = new Set<string>();
+      const uniqueSamples = new Map<string, LocationSampleInput>();
+      parsedSamples.forEach((sample) => {
+        if (rejectedSet.has(sample.clientSampleId) || uniqueSamples.has(sample.clientSampleId)) duplicateIds.add(sample.clientSampleId);
+        else uniqueSamples.set(sample.clientSampleId, sample);
+      });
+      const ordered = [...uniqueSamples.values()].sort((a, b) => Date.parse(a.capturedAt) - Date.parse(b.capturedAt));
+      if (!ordered.length) return {
+        acceptedIds: [], duplicateIds: [...duplicateIds], rejectedIds,
+        accepted: 0, duplicates: duplicateIds.size, rejected: rejectedIds.length, unusable: 0,
+      };
       const earliest = new Date(ordered[0].capturedAt);
       const latest = new Date(ordered.at(-1)!.capturedAt);
-      if (latest > futureLimit) throw new BadRequestException("Location samples cannot be more than five minutes in the future.");
-
+      const settings = await tx.tenantSettings.findUnique({ where: { tenantId: policy.scope.tenantId }, select: { timezone: true } });
+      const timezone = settings?.timezone ?? "Asia/Kolkata";
       const attendances = await tx.attendance.findMany({
         where: {
           tenantId: policy.scope.tenantId,
@@ -67,10 +103,11 @@ export class LocationTrackingService {
           punchInTime: { lte: latest },
           OR: [{ punchOutTime: null }, { punchOutTime: { gte: earliest } }],
         },
-        select: { punchInTime: true, punchOutTime: true },
+        select: { date: true, punchInTime: true, punchOutTime: true },
       });
       const insideAttendance = (capturedAt: Date) => attendances.some((attendance) =>
-        attendance.punchInTime != null && capturedAt >= attendance.punchInTime && capturedAt <= (attendance.punchOutTime ?? futureLimit));
+        localDateKey(capturedAt, timezone) === attendance.date.toISOString().slice(0, 10)
+        && attendance.punchInTime != null && capturedAt >= attendance.punchInTime && capturedAt <= (attendance.punchOutTime ?? futureLimit));
 
       const existing = await tx.executiveLocationSample.findMany({
         where: {
@@ -80,8 +117,7 @@ export class LocationTrackingService {
         },
         select: { clientSampleId: true },
       });
-      const duplicateIds = new Set(existing.map((sample) => sample.clientSampleId));
-      const rejectedIds: string[] = [];
+      existing.forEach((sample) => duplicateIds.add(sample.clientSampleId));
       const candidates: LocationSampleInput[] = [];
       for (const sample of ordered) {
         if (duplicateIds.has(sample.clientSampleId)) continue;
@@ -106,9 +142,13 @@ export class LocationTrackingService {
           isUsable = false;
           qualityReason = "IMPOSSIBLE_SPEED";
         } else if (previous) {
+          const movementKm = distanceKm(previous, sample);
           const hours = Math.max((capturedAt.getTime() - previous.capturedAt.getTime()) / 3_600_000, 1 / 3600);
-          const calculatedSpeed = distanceKm(previous, sample) / hours;
-          if (calculatedSpeed > MAX_SPEED_KMH) {
+          const calculatedSpeed = movementKm / hours;
+          if (movementKm < 0.003) {
+            isUsable = false;
+            qualityReason = "STATIONARY_NOISE";
+          } else if (calculatedSpeed > MAX_SPEED_KMH) {
             isUsable = false;
             qualityReason = "GPS_JUMP";
           }

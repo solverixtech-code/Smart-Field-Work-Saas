@@ -144,6 +144,13 @@ export interface RouteTrackPoint {
   speedKmh: number;
   headingDegrees: number | null;
   cumulativeDistanceKm: number;
+  nearestEvent?: {
+    id: string;
+    type: 'start' | 'visit' | 'end';
+    title: string;
+    timestamp: string;
+    visitId?: string;
+  } | null;
 }
 
 export interface ExecutiveRoute {

@@ -4,12 +4,15 @@ import { createRoot, type Root } from 'react-dom/client';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FieldDashboardData } from '../dashboard/field-dashboard.api';
+import type { ExecutiveRoute } from './maps.api';
 import RoutePlaybackPage from './RoutePlaybackPage';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const apiMock = vi.hoisted(() => ({ get: vi.fn(), checkIn: vi.fn(), complete: vi.fn() }));
+const mapsMock = vi.hoisted(() => ({ ownRoute: vi.fn(), route: vi.fn(), snapshot: vi.fn() }));
 vi.mock('../dashboard/field-dashboard.api', () => ({ fieldDashboardApi: apiMock }));
+vi.mock('./maps.api', async (importOriginal) => ({ ...(await importOriginal<typeof import('./maps.api')>()), mapsApi: mapsMock }));
 vi.mock('../../store', () => ({
   useAppSelector: (selector: (state: {
     authorization: { tenant: { roleCode: string; membershipId: string; permissions: string[] } };
@@ -44,6 +47,20 @@ const routeData: FieldDashboardData = {
   }],
   attendance: { punchInTime: '2026-09-21T04:00:00Z', punchOutTime: null, totalWorkMinutes: 0, shift: null },
 };
+const playbackRoute: ExecutiveRoute = {
+  executiveId: 'member-1', executiveName: 'Vikram Singh', executiveAvatar: null,
+  status: 'On Field', date: '2026-09-21', startTime: '2026-09-21T04:00:00Z', endTime: '2026-09-21T06:00:00Z',
+  totalDurationText: '2h 0m', totalDistanceKm: 2.4, totalVisitsPlanned: 1, totalVisitsCompleted: 1, avgSpeedKmh: 1.2,
+  usableSampleCount: 2, rejectedSampleCount: 0,
+  trackPoints: [
+    { id: 'gps-1', capturedAt: '2026-09-21T04:00:00Z', lat: 19.10, lng: 72.85, accuracyMeters: 8, speedKmh: 0, headingDegrees: 90, cumulativeDistanceKm: 0 },
+    { id: 'gps-2', capturedAt: '2026-09-21T06:00:00Z', lat: 19.11, lng: 72.86, accuracyMeters: 7, speedKmh: 2, headingDegrees: 95, cumulativeDistanceKm: 2.4 },
+  ],
+  stops: [
+    { id: 'punch:punch-1', stopNumber: 1, type: 'start', title: 'Start location', locationName: 'Depot', address: 'Depot', timestamp: '2026-09-21T04:00:00Z', distanceKm: 0, lat: 19.10, lng: 72.85, statusText: 'Punched in' },
+    { id: 'visit:visit-1', visitId: 'visit-1', stopNumber: 2, type: 'visit', title: 'Field visit', locationName: 'Assigned Store', address: 'Andheri East', timestamp: '2026-09-21T05:00:00Z', distanceKm: 1.2, lat: 19.11, lng: 72.86, statusText: 'COMPLETED' },
+  ],
+};
 
 let host: HTMLDivElement;
 let root: Root;
@@ -53,6 +70,7 @@ beforeEach(() => {
   apiMock.get.mockResolvedValue(routeData);
   apiMock.checkIn.mockResolvedValue(undefined);
   apiMock.complete.mockResolvedValue(undefined);
+  mapsMock.ownRoute.mockResolvedValue(playbackRoute);
   host = document.createElement('div');
   document.body.append(host);
   root = createRoot(host);
@@ -72,15 +90,16 @@ describe('field executive route playback', () => {
     expect(host.textContent).toContain('Vikram Singh');
     expect(host.textContent).toContain('Assigned Store');
     expect(host.textContent).toContain('Attendance punch in');
-    expect(host.querySelector('[data-testid="route-map"]')?.getAttribute('data-stops')).toBe('punch-1,visit-1');
+    expect(host.querySelector('[data-testid="route-map"]')?.getAttribute('data-stops')).toBe('punch:punch-1,visit:visit-1');
     expect(host.textContent).not.toContain('Arjun Mehta');
     expect(host.querySelector('button[aria-label="Punch In"]')).toBeNull();
   });
 
   it('shows an honest empty route when no records exist', async () => {
     apiMock.get.mockResolvedValue({ ...routeData, visits: [], punches: [], summary: { ...routeData.summary, visitCount: 0, completedVisits: 0 } });
+    mapsMock.ownRoute.mockResolvedValue({ ...playbackRoute, stops: [], trackPoints: [], totalDistanceKm: 0, totalVisitsPlanned: 0, totalVisitsCompleted: 0 });
     await act(async () => root.render(<MemoryRouter><RoutePlaybackPage /></MemoryRouter>));
-    expect(host.textContent).toContain('No geotagged visits or mobile attendance locations');
+    expect(host.textContent).toContain('No recorded GPS locations');
     expect(host.textContent).toContain('No route activities for this date.');
     expect(host.textContent).not.toContain('28.6 km');
   });

@@ -238,14 +238,16 @@ export async function syncRbac(client?: PrismaClient) {
 
       const activeRole = tenantRole;
 
-      // Safe guard: Do NOT rewrite non-admin grants if customized (permissionsVersion > 1) and not brand new.
-      // Workspace Administrator (tenant_admin) must always inherit all TENANT-scoped permissions.
-      if (roleCode !== 'tenant_admin' && !isNewRole && activeRole.permissionsVersion > 1) {
-        continue;
-      }
+      // Safe guard: do not rewrite customized non-admin roles. Mandatory self-service
+      // permissions remain additive so existing executive roles can use newly deployed APIs.
+      const isCustomizedRole = roleCode !== 'tenant_admin' && !isNewRole && activeRole.permissionsVersion > 1;
+      const effectiveGrantCodes = isCustomizedRole
+        ? roleCode === 'field_executive' ? ['crm.location.track'] : []
+        : grantCodes;
+      if (!effectiveGrantCodes.length) continue;
 
       const missingPermIds: string[] = [];
-      for (const pCode of grantCodes) {
+      for (const pCode of effectiveGrantCodes) {
         const perm = permMapByCode.get(pCode);
         if (!perm || perm.scope !== 'TENANT') continue;
 

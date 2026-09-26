@@ -1,8 +1,8 @@
 CREATE TABLE "ExecutiveLocationSample" (
-  "id" UUID NOT NULL,
-  "tenantId" UUID NOT NULL,
-  "membershipId" UUID NOT NULL,
-  "clientSampleId" UUID NOT NULL,
+  "id" TEXT NOT NULL,
+  "tenantId" TEXT NOT NULL,
+  "membershipId" TEXT NOT NULL,
+  "clientSampleId" TEXT NOT NULL,
   "capturedAt" TIMESTAMP(3) NOT NULL,
   "receivedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "latitude" DOUBLE PRECISION NOT NULL,

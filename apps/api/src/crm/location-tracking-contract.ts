@@ -13,7 +13,7 @@ export const locationSample = z.object({
 }).strict();
 
 export const locationSampleBatch = z.object({
-  samples: z.array(locationSample).min(1).max(200),
+  samples: z.array(z.unknown()).min(1).max(200),
 }).strict();
 
 export type LocationSampleInput = z.infer<typeof locationSample>;
