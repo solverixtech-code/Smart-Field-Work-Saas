@@ -113,7 +113,7 @@ export const Modal: React.FC<ModalProps> = ({
         aria-labelledby={title ? titleId : undefined}
         aria-label={title ? undefined : "Dialog"}
         tabIndex={-1}
-        className={`relative w-full ${maxWidth} rounded-xl bg-white p-6 shadow-sm space-y-5 my-8 z-10 transition-all duration-250 ease-out overflow-hidden ${panelClassName} ${
+        className={`relative w-full ${maxWidth} rounded-xl bg-white p-6 shadow-sm space-y-5 my-8 z-10 transition-all duration-250 ease-out overflow-visible ${panelClassName} ${
           visible
             ? "scale-100 translate-y-0 opacity-100"
             : "scale-95 translate-y-4 opacity-0"

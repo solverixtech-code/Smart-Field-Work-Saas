@@ -47,6 +47,20 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     isNaN(initialDate.getTime()) ? 2025 : initialDate.getFullYear()
   );
 
+  const [popDirection, setPopDirection] = useState<'down' | 'up'>('down');
+
+  useEffect(() => {
+    if (isOpen && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      if (spaceBelow < 280 && rect.top > 280) {
+        setPopDirection('up');
+      } else {
+        setPopDirection('down');
+      }
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     setSelectedDate(value);
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -104,7 +118,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         </button>
 
         {isOpen && (
-          <div className="absolute left-0 top-full mt-1.5 z-[9999] w-72 rounded-sm border border-slate-200 bg-white p-3 shadow-2xl space-y-3">
+          <div
+            className={`absolute left-0 z-[999999] w-72 rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xl space-y-3 ${
+              popDirection === 'up' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
+            }`}
+          >
             {/* Header with Month Navigation */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <button

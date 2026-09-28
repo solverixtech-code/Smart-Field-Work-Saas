@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   AlertTriangle,
   Building2,
@@ -9,20 +10,26 @@ import {
   Clock,
   Clock3,
   Edit3,
+  ExternalLink,
   Filter,
   Info,
   Laptop,
   MapPin,
   Plus,
   RefreshCw,
+  Search,
   Settings2,
+  ShieldAlert,
   ShieldCheck,
   Sparkles,
   Tag,
   Trash2,
+  UserCheck,
   UserCog,
+  UserX,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Avatar } from "../../components/ui/Avatar";
 import { Button } from "../../components/ui/Button";
 import { DatePicker } from "../../components/ui/DatePicker";
 import { GoogleMapPicker } from "../../components/ui/GoogleMapPicker";
@@ -196,6 +203,7 @@ const defaultSampleHolidays: AttendanceHolidayRecord[] = [
 ];
 
 export default function AttendanceAdministrationPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabId>("sites");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -206,6 +214,8 @@ export default function AttendanceAdministrationPage() {
   const [memberships, setMemberships] = useState<AttendanceAdminMembership[]>(
     [],
   );
+  const [ruleSearch, setRuleSearch] = useState<string>("");
+  const [ruleFilter, setRuleFilter] = useState<"ALL" | "OFFICE" | "FIELD" | "INHERIT">("ALL");
   const [devices, setDevices] = useState<AttendanceAdminDevice[]>([]);
   const [exceptions, setExceptions] = useState<AttendanceAdminException[]>([]);
   const [siteEditor, setSiteEditor] = useState<{
@@ -1182,125 +1192,240 @@ export default function AttendanceAdministrationPage() {
               </section>
             )}
 
-            {activeTab === "rules" && (
-              <section className="space-y-4">
-                <div>
-                  <h2 className="text-base font-extrabold text-[#0D1F3D]">
-                    Employee mobility rules
-                  </h2>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Choose whether each employee must use an office site or may
-                    punch from field locations.
-                  </p>
-                </div>
-                {memberships.length === 0 ? (
-                  <EmptyRow message="No active employees found." />
-                ) : (
-                  <div className="overflow-x-auto rounded-sm border border-slate-200">
-                    <table className="w-full min-w-[720px] text-left text-xs">
-                      <thead className="bg-slate-50 text-[11px] text-slate-600">
-                        <tr>
-                          <th className="px-4 py-3">Employee</th>
-                          <th className="px-4 py-3">Role</th>
-                          <th className="px-4 py-3">Punch location rule</th>
-                          <th className="px-4 py-3">Effective behavior</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {memberships.map((membership) => {
-                          const mode =
-                            membership.attendanceOverride?.mobilityMode ||
-                            "INHERIT";
-                          const roleIsField = membership.tenantRole?.code
-                            .toLowerCase()
-                            .includes("executive");
-                          return (
-                            <tr
-                              key={membership.id}
-                              className="border-t border-slate-100"
-                            >
-                              <td className="px-4 py-3">
-                                <div className="flex items-center gap-2.5">
-                                  {membership.user.avatarUrl ? (
-                                    <img
-                                      src={membership.user.avatarUrl}
-                                      alt=""
-                                      className="h-8 w-8 rounded-sm object-cover"
-                                    />
-                                  ) : (
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-slate-100 text-[10px] font-bold text-slate-600">
-                                      {personName(membership)
-                                        .slice(0, 2)
-                                        .toUpperCase()}
-                                    </div>
-                                  )}
-                                  <div>
-                                    <p className="font-bold text-[#0D1F3D]">
-                                      {personName(membership)}
-                                    </p>
-                                    <p className="text-[10px] text-slate-400">
-                                      {membership.employeeCode ||
-                                        membership.user.email}
-                                    </p>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-slate-600">
-                                {membership.tenantRole?.name ||
-                                  membership.designation ||
-                                  "Employee"}
-                              </td>
-                              <td className="w-64 px-4 py-3">
-                                <Select
-                                  native
-                                  searchable={false}
-                                  value={mode}
-                                  options={[
-                                    {
-                                      value: "INHERIT",
-                                      label: "Use role default",
-                                    },
-                                    {
-                                      value: "OFFICE_ONLY",
-                                      label: "Office only",
-                                    },
-                                    {
-                                      value: "FIELD_REMOTE",
-                                      label: "Field remote",
-                                    },
-                                  ]}
-                                  onChange={(event) =>
-                                    void withSaving(
-                                      () =>
-                                        event.target.value === "INHERIT"
-                                          ? attendanceApi.admin.deleteOverride(
-                                              membership.id,
-                                            )
-                                          : attendanceApi.admin.setOverride(
-                                              membership.id,
-                                              event.target.value as
-                                                "OFFICE_ONLY" | "FIELD_REMOTE",
-                                            ),
-                                      "Employee rule updated",
-                                    )
-                                  }
-                                />
-                              </td>
-                              <td className="px-4 py-3 text-[11px] font-semibold text-slate-600">
-                                {mode === "OFFICE_ONLY" ||
-                                (mode === "INHERIT" && !roleIsField)
-                                  ? "Must punch inside an office"
-                                  : "May punch from field locations"}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+            {activeTab === "rules" && (() => {
+              const filteredMemberships = memberships.filter((m) => {
+                const name = personName(m).toLowerCase();
+                const code = (m.employeeCode || "").toLowerCase();
+                const email = (m.user.email || "").toLowerCase();
+                const q = ruleSearch.toLowerCase();
+                const matchesSearch = !q || name.includes(q) || code.includes(q) || email.includes(q);
+
+                const mode = m.attendanceOverride?.mobilityMode || "INHERIT";
+                if (ruleFilter === "OFFICE") return matchesSearch && mode === "OFFICE_ONLY";
+                if (ruleFilter === "FIELD") return matchesSearch && mode === "FIELD_REMOTE";
+                if (ruleFilter === "INHERIT") return matchesSearch && mode === "INHERIT";
+                return matchesSearch;
+              });
+
+              const counts = {
+                total: memberships.length,
+                office: memberships.filter((m) => m.attendanceOverride?.mobilityMode === "OFFICE_ONLY").length,
+                field: memberships.filter((m) => m.attendanceOverride?.mobilityMode === "FIELD_REMOTE").length,
+                inherit: memberships.filter((m) => !m.attendanceOverride || m.attendanceOverride.mobilityMode === "INHERIT").length,
+              };
+
+              return (
+                <section className="space-y-6 font-sans">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
+                      <p className="text-xs font-bold text-slate-600">Total Workspace Staff</p>
+                      <p className="mt-1 text-2xl font-extrabold text-[#0D1F3D]">{counts.total}</p>
+                    </div>
+                    <div className="rounded-2xl border border-blue-200/80 bg-blue-50/60 p-4 shadow-sm">
+                      <p className="text-xs font-bold text-blue-800">Office-Only Enforced</p>
+                      <p className="mt-1 text-2xl font-extrabold text-blue-900">{counts.office}</p>
+                    </div>
+                    <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4 shadow-sm">
+                      <p className="text-xs font-bold text-emerald-800">Field / Remote Allowed</p>
+                      <p className="mt-1 text-2xl font-extrabold text-emerald-900">{counts.field}</p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 shadow-sm">
+                      <p className="text-xs font-bold text-slate-700">Role Default Inherited</p>
+                      <p className="mt-1 text-2xl font-extrabold text-[#0D1F3D]">{counts.inherit}</p>
+                    </div>
                   </div>
-                )}
-              </section>
-            )}
+
+                  <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-5">
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                      <div>
+                        <h2 className="text-lg font-extrabold text-[#0D1F3D] flex items-center gap-2">
+                          <UserCog className="h-5 w-5 text-[#E20613]" /> Employee Mobility & Punch Rules
+                        </h2>
+                        <p className="mt-0.5 text-xs text-slate-600 font-medium">
+                          Configure mobility permissions per employee. Click an employee's name to view their full profile.
+                        </p>
+                      </div>
+
+                      <div className="w-full sm:w-72">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                          <input
+                            type="text"
+                            placeholder="Search by name, code, or email..."
+                            value={ruleSearch}
+                            onChange={(e) => setRuleSearch(e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:bg-white focus:border-[#0D1F3D] focus:outline-none transition-colors"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-extrabold">
+                      <span className="text-[#0D1F3D] font-extrabold mr-1 flex items-center gap-1">
+                        <Filter className="h-3.5 w-3.5 text-[#E20613]" /> Filter Rule:
+                      </span>
+                      {[
+                        { id: "ALL", label: `All (${memberships.length})` },
+                        { id: "OFFICE", label: `Office Only (${counts.office})` },
+                        { id: "FIELD", label: `Field Remote (${counts.field})` },
+                        { id: "INHERIT", label: `Inherited (${counts.inherit})` },
+                      ].map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => setRuleFilter(tab.id as any)}
+                          className={`rounded-full px-3 py-1 text-xs transition ${
+                            ruleFilter === tab.id
+                              ? "bg-[#0D1F3D] text-white shadow-xs"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                          }`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {filteredMemberships.length === 0 ? (
+                      <EmptyRow message="No employees match your filter criteria." />
+                    ) : (
+                      <div className="overflow-x-auto rounded-xl border border-slate-100">
+                        <table className="w-full min-w-[780px] text-left text-xs font-semibold">
+                          <thead className="bg-slate-50/80 text-[11px] font-extrabold text-[#0D1F3D] uppercase border-b border-slate-100">
+                            <tr>
+                              <th className="px-4 py-3">Employee</th>
+                              <th className="px-4 py-3">Role / Designation</th>
+                              <th className="px-4 py-3">Punch Location Rule</th>
+                              <th className="px-4 py-3">Effective Behavior</th>
+                              <th className="px-4 py-3 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-slate-700">
+                            {filteredMemberships.map((membership) => {
+                              const mode =
+                                membership.attendanceOverride?.mobilityMode ||
+                                "INHERIT";
+                              const roleIsField = membership.tenantRole?.code
+                                .toLowerCase()
+                                .includes("executive");
+                              const isOfficeOnly =
+                                mode === "OFFICE_ONLY" ||
+                                (mode === "INHERIT" && !roleIsField);
+
+                              return (
+                                <tr
+                                  key={membership.id}
+                                  className="hover:bg-slate-50/80 transition"
+                                >
+                                  <td className="px-4 py-3">
+                                    <div
+                                      onClick={() =>
+                                        navigate(`/admin/executives/${encodeURIComponent(membership.id)}`)
+                                      }
+                                      className="flex items-center gap-3 cursor-pointer group"
+                                    >
+                                      <Avatar
+                                        name={personName(membership)}
+                                        src={membership.user.avatarUrl}
+                                        sizeClassName="h-9 w-9"
+                                        className="border border-slate-200 shadow-xs"
+                                      />
+                                      <div>
+                                        <p className="font-extrabold text-[#0D1F3D] group-hover:text-[#E20613] transition flex items-center gap-1">
+                                          {personName(membership)}
+                                          <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition text-[#E20613]" />
+                                        </p>
+                                        <p className="text-[10px] text-slate-500 font-medium">
+                                          {membership.employeeCode || membership.user.email}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 text-slate-700 font-bold">
+                                    {membership.tenantRole?.name ||
+                                      membership.designation ||
+                                      "Employee"}
+                                  </td>
+                                  <td className="w-72 px-4 py-3">
+                                    <Select
+                                      searchable={false}
+                                      value={mode}
+                                      options={[
+                                        {
+                                          value: "INHERIT",
+                                          label: "Use role default",
+                                          sublabel: "Inherits standard role policy",
+                                        },
+                                        {
+                                          value: "OFFICE_ONLY",
+                                          label: "Office only (Site Geofenced)",
+                                          sublabel: "Must punch inside office geofence",
+                                        },
+                                        {
+                                          value: "FIELD_REMOTE",
+                                          label: "Field / Remote allowed",
+                                          sublabel: "Permits mobile field punches",
+                                        },
+                                      ]}
+                                      onChange={(event) =>
+                                        void withSaving(
+                                          () =>
+                                            event.target.value === "INHERIT"
+                                              ? attendanceApi.admin.deleteOverride(
+                                                  membership.id,
+                                                )
+                                              : attendanceApi.admin.setOverride(
+                                                  membership.id,
+                                                  event.target.value as
+                                                    "OFFICE_ONLY" | "FIELD_REMOTE",
+                                                ),
+                                          "Employee rule updated",
+                                        )
+                                      }
+                                    />
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <span
+                                      className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-extrabold ${
+                                        isOfficeOnly
+                                          ? "bg-blue-50 border-blue-200 text-blue-800"
+                                          : "bg-emerald-50 border-emerald-200 text-emerald-800"
+                                      }`}
+                                    >
+                                      {isOfficeOnly ? (
+                                        <>
+                                          <Building2 className="h-3.5 w-3.5 text-blue-600" /> Must punch inside an office
+                                        </>
+                                      ) : (
+                                        <>
+                                          <MapPin className="h-3.5 w-3.5 text-emerald-600" /> May punch from field locations
+                                        </>
+                                      )}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3 text-right">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() =>
+                                        navigate(`/admin/executives/${encodeURIComponent(membership.id)}`)
+                                      }
+                                      className="text-slate-600 hover:text-[#0D1F3D] font-bold gap-1 rounded-xl text-xs"
+                                    >
+                                      <ExternalLink className="h-3.5 w-3.5" /> Open
+                                    </Button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              );
+            })()}
 
             {activeTab === "devices" && (
               <section className="space-y-4">
