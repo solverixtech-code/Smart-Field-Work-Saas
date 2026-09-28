@@ -1641,5 +1641,337 @@ export class CrmService {
     });
   }
 
+  async getExecutive(actor: RequestPrincipal, membershipId: string) {
+    return this.repo.run(actor, false, async (tx, policy) => {
+      policy.require("crm.executives.view");
+      const tenantId = policy.scope.tenantId;
+
+      const membership = await tx.tenantMembership.findFirst({
+        where: { id: membershipId, tenantId },
+        include: {
+          user: true,
+          team: true,
+          tenantRole: true,
+          managerMembership: {
+            include: {
+              user: true,
+            },
+          },
+          territoryMemberships: {
+            where: { territory: { deletedAt: null } },
+            include: {
+              territory: true,
+            },
+            take: 1,
+            orderBy: { assignedAt: "desc" },
+          },
+          userShifts: {
+            include: {
+              shift: true,
+            },
+            take: 1,
+            orderBy: { createdAt: "desc" },
+          },
+          salaryStructures: {
+            take: 1,
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      });
+
+      if (!membership) {
+        throw new NotFoundException("Executive not found");
+      }
+
+      const territory = membership.territoryMemberships[0]?.territory;
+      const userShift = membership.userShifts[0]?.shift;
+      const salaryStructure = membership.salaryStructures[0];
+
+      return {
+        id: membership.id,
+        userId: membership.userId,
+        fullName: membership.user.fullName,
+        empId: membership.employeeCode || membership.user.employeeCode,
+        systemRole: membership.tenantRole?.code || membership.user.role,
+        designation: membership.designation || membership.tenantRole?.name || "Field Executive",
+        reportingTo: membership.managerMembership
+          ? `${membership.managerMembership.user.fullName}${membership.managerMembership.employeeCode ? ` (${membership.managerMembership.employeeCode})` : ""}`
+          : "",
+        reportingToId: membership.managerMembershipId || "",
+        team: membership.team?.name || "",
+        teamId: membership.teamId || "",
+        employmentType: "Full Time",
+        dob: membership.user.dateOfBirth ? membership.user.dateOfBirth.toISOString().split("T")[0] : "",
+        gender: "Male",
+        mobile: membership.user.mobile || "",
+        altMobile: "",
+        email: membership.user.email,
+        address: membership.user.officeAddress || "",
+        joinDate: membership.joinedAt ? membership.joinedAt.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+        experience: "",
+        region: territory?.name || territory?.city || "Mumbai",
+        shiftTiming: userShift ? `${userShift.name} (${userShift.startTime} - ${userShift.endTime})` : "General Shift (09:30 AM - 06:30 PM)",
+        salary: salaryStructure?.baseSalary ? String(salaryStructure.baseSalary) : "",
+        mobileAccess: true,
+        webAccess: true,
+        avatarUrl: membership.user.avatarUrl || null,
+        status: membership.status,
+      };
+    });
+  }
+
+  async updateExecutive(actor: RequestPrincipal, membershipId: string, body: any) {
+    return this.repo.run(actor, true, async (tx, policy) => {
+      policy.require("crm.executives.view");
+      const tenantId = policy.scope.tenantId;
+
+      const membership = await tx.tenantMembership.findFirst({
+        where: { id: membershipId, tenantId },
+        include: { user: true },
+      });
+
+      if (!membership) {
+        throw new NotFoundException("Executive not found");
+      }
+
+      if (!body.fullName || !body.fullName.trim()) {
+        throw new BadRequestException("Full name is required");
+      }
+      if (!body.email || !body.email.trim()) {
+        throw new BadRequestException("Email is required");
+      }
+      if (!body.mobile || !body.mobile.trim()) {
+        throw new BadRequestException("Mobile number is required");
+      }
+
+      const cleanEmail = body.email.trim().toLowerCase();
+      const cleanFullName = body.fullName.trim();
+      const cleanMobile = body.mobile.trim();
+      const cleanEmpCode = (body.empId || body.employeeCode || membership.employeeCode || "").trim();
+
+      // Check if email changed and is taken by another user
+      if (cleanEmail !== membership.user.email.toLowerCase()) {
+        const otherUser = await tx.user.findUnique({
+          where: { email: cleanEmail },
+        });
+        if (otherUser && otherUser.id !== membership.userId) {
+          throw new ConflictException("Another user already exists with this email address.");
+        }
+      }
+
+      // Map role enum
+      let roleEnum: Role = Role.FIELD_EXECUTIVE;
+      const rawRole = (body.systemRole || body.role || membership.user.role).toUpperCase().replace(/[\s-]+/g, "_");
+      if (rawRole in Role) {
+        roleEnum = Role[rawRole as keyof typeof Role];
+      }
+
+      // Find tenant role
+      const tenantRole = await tx.tenantRole.findFirst({
+        where: {
+          tenantId,
+          isActive: true,
+          OR: [
+            { code: body.systemRole },
+            { name: body.systemRole },
+            { code: rawRole.toLowerCase() },
+            { name: body.designation },
+          ],
+        },
+      });
+
+      // Update User
+      await tx.user.update({
+        where: { id: membership.userId },
+        data: {
+          fullName: cleanFullName,
+          email: cleanEmail,
+          mobile: cleanMobile,
+          role: roleEnum,
+          officeAddress: body.address?.trim() || null,
+          dateOfBirth: body.dob ? new Date(body.dob) : null,
+          ...(body.avatar ? { avatarUrl: body.avatar } : {}),
+        },
+      });
+
+      // Resolve team
+      let teamId: string | null = null;
+      if (body.team && body.team.trim()) {
+        const team = await tx.team.findFirst({
+          where: {
+            tenantId,
+            OR: [{ id: body.team.trim() }, { name: body.team.trim() }],
+          },
+        });
+        if (team) {
+          teamId = team.id;
+        }
+      }
+
+      // Resolve manager
+      let managerMembershipId: string | null = null;
+      if (body.reportingTo && body.reportingTo.trim()) {
+        const candidateKey = body.reportingTo.trim();
+        const managerMem = await tx.tenantMembership.findFirst({
+          where: {
+            tenantId,
+            id: { not: membership.id },
+            OR: [
+              { id: candidateKey },
+              { employeeCode: candidateKey },
+              { user: { fullName: candidateKey } },
+              { user: { employeeCode: candidateKey } },
+            ],
+          },
+        });
+        if (managerMem) {
+          managerMembershipId = managerMem.id;
+        }
+      }
+
+      // Update TenantMembership
+      const updatedMembership = await tx.tenantMembership.update({
+        where: { id: membership.id },
+        data: {
+          employeeCode: cleanEmpCode,
+          designation: body.designation?.trim() || tenantRole?.name || membership.designation,
+          tenantRoleId: tenantRole?.id ?? membership.tenantRoleId,
+          department: body.team?.trim() || membership.department || "Sales",
+          teamId,
+          managerMembershipId,
+          joinedAt: body.joinDate ? new Date(body.joinDate) : membership.joinedAt,
+        },
+      });
+
+      // Update User manager and team
+      const mgrUser = managerMembershipId
+        ? await tx.tenantMembership.findUnique({
+            where: { id: managerMembershipId },
+            select: { userId: true },
+          })
+        : null;
+
+      await tx.user.update({
+        where: { id: membership.userId },
+        data: {
+          teamId,
+          managerId: mgrUser?.userId || null,
+        },
+      });
+
+      // Territory
+      if (body.region && body.region.trim()) {
+        const regionQuery = body.region.trim();
+        const territory = await tx.territory.findFirst({
+          where: {
+            tenantId,
+            deletedAt: null,
+            OR: [
+              { name: { equals: regionQuery, mode: "insensitive" } },
+              { city: { equals: regionQuery, mode: "insensitive" } },
+            ],
+          },
+        });
+        if (territory) {
+          const existingTerritoryMember = await tx.territoryMember.findFirst({
+            where: { tenantId, membershipId: membership.id },
+          });
+          if (existingTerritoryMember) {
+            await tx.territoryMember.update({
+              where: { id: existingTerritoryMember.id },
+              data: {
+                territoryId: territory.id,
+                role: roleEnum === Role.TEAM_LEADER ? "TEAM_LEADER" : "FIELD_EXECUTIVE",
+              },
+            });
+          } else {
+            await tx.territoryMember.create({
+              data: {
+                tenantId,
+                territoryId: territory.id,
+                membershipId: membership.id,
+                role: roleEnum === Role.TEAM_LEADER ? "TEAM_LEADER" : "FIELD_EXECUTIVE",
+                assignedByMembershipId: actor.membershipId || membership.id,
+              },
+            });
+          }
+        }
+      }
+
+      // Shift
+      if (body.shiftTiming && body.shiftTiming.trim()) {
+        const shiftPrefix = body.shiftTiming.split(" ")[0].trim();
+        const shift = await tx.shift.findFirst({
+          where: {
+            OR: [{ tenantId }, { tenantId: null }],
+            name: { contains: shiftPrefix, mode: "insensitive" },
+          },
+        });
+        if (shift) {
+          const existingShift = await tx.userShift.findFirst({
+            where: { tenantId, tenantMembershipId: membership.id },
+          });
+          if (existingShift) {
+            await tx.userShift.update({
+              where: { id: existingShift.id },
+              data: { shiftId: shift.id },
+            });
+          } else {
+            await tx.userShift.create({
+              data: {
+                tenantId,
+                tenantMembershipId: membership.id,
+                userId: membership.userId,
+                shiftId: shift.id,
+                startDate: body.joinDate ? new Date(body.joinDate) : new Date(),
+              },
+            });
+          }
+        }
+      }
+
+      // Salary Structure
+      if (body.salary) {
+        const numSalary = parseFloat(String(body.salary).replace(/[^0-9.]/g, ""));
+        if (!isNaN(numSalary) && numSalary > 0) {
+          const existingSalary = await tx.salaryStructure.findFirst({
+            where: { tenantId, tenantMembershipId: membership.id },
+          });
+          if (existingSalary) {
+            await tx.salaryStructure.update({
+              where: { id: existingSalary.id },
+              data: {
+                baseSalary: numSalary,
+                netSalary: numSalary,
+              },
+            });
+          } else {
+            await tx.salaryStructure.create({
+              data: {
+                tenantId,
+                tenantMembershipId: membership.id,
+                userId: membership.userId,
+                baseSalary: numSalary,
+                netSalary: numSalary,
+              },
+            });
+          }
+        }
+      }
+
+      return {
+        success: true,
+        membership: {
+          id: updatedMembership.id,
+          employeeCode: updatedMembership.employeeCode,
+          name: cleanFullName,
+          email: cleanEmail,
+          designation: updatedMembership.designation,
+          status: updatedMembership.status,
+        },
+      };
+    });
+  }
+
 }
 

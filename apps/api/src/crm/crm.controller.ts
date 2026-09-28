@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UseFilters,
 } from "@nestjs/common";
@@ -34,6 +35,23 @@ export class CrmController {
     @Body() body: any,
   ) {
     return this.crm.createExecutive(p, body);
+  }
+  @Get("executives/:membershipId")
+  @RequirePermissions("crm.executives.view")
+  getExecutive(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("membershipId") membershipId: string,
+  ) {
+    return this.crm.getExecutive(p, membershipId);
+  }
+  @Put("executives/:membershipId")
+  @RequirePermissions("crm.executives.view")
+  updateExecutive(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("membershipId") membershipId: string,
+    @Body() body: any,
+  ) {
+    return this.crm.updateExecutive(p, membershipId, body);
   }
   @Get("lead-assignees/:membershipId/profile")
   @RequirePermissions("crm.executives.view")
