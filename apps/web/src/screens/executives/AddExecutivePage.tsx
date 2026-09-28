@@ -177,19 +177,32 @@ export default function AddExecutivePage() {
       })
       .catch(() => {});
 
-    // 2. Fetch live teams options & manager candidates
+    // 2. Fetch live teams options & manager candidates for Reporting To (Sales Managers & Team Leaders only)
     api.get('/tenant/crm/teams/options', { signal: controller.signal })
       .then(({ data }: any) => {
         if (!controller.signal.aborted && data) {
           if (Array.isArray(data.candidates) && data.candidates.length > 0) {
-            const liveReporting: SelectOption[] = data.candidates.map((c: any) => ({
-              value: `${c.name} (${c.employeeCode ?? 'EMP'})`,
-              label: c.name,
-              sublabel: `${c.designation ?? 'Team Lead'} • ${c.teamName ?? 'General'} (${c.employeeCode})`,
-              avatar: c.avatarUrl || undefined,
-            }));
-            setReportingToOptions(liveReporting);
-            setFormData((prev) => ({ ...prev, reportingTo: liveReporting[0].value }));
+            // Strictly filter out Field Executives & Telecallers from Reporting To dropdown
+            const managerCandidates = data.candidates.filter((c: any) => {
+              const desig = (c.designation || '').toLowerCase();
+              return desig.includes('manager') || desig.includes('lead') || desig.includes('admin') || desig.includes('head') || desig.includes('director');
+            });
+
+            const targetCandidates = managerCandidates.length > 0 ? managerCandidates : data.candidates.filter((c: any) => {
+              const desig = (c.designation || '').toLowerCase();
+              return !desig.includes('field executive') && !desig.includes('telecaller');
+            });
+
+            if (targetCandidates.length > 0) {
+              const liveReporting: SelectOption[] = targetCandidates.map((c: any) => ({
+                value: `${c.name} (${c.employeeCode ?? 'EMP'})`,
+                label: c.name,
+                sublabel: `${c.designation ?? 'Sales Manager'} • ${c.teamName ?? 'General'} (${c.employeeCode})`,
+                avatar: c.avatarUrl || undefined,
+              }));
+              setReportingToOptions(liveReporting);
+              setFormData((prev) => ({ ...prev, reportingTo: liveReporting[0].value }));
+            }
           }
           if (Array.isArray(data.regions) && data.regions.length > 0) {
             const liveRegions: SelectOption[] = data.regions.map((r: any) => ({
@@ -198,6 +211,29 @@ export default function AddExecutivePage() {
             }));
             setRegionOptions(liveRegions);
             setFormData((prev) => ({ ...prev, region: liveRegions[0].value }));
+          }
+        }
+      })
+      .catch(() => {});
+
+    // Also fetch live executives directory to search specifically for Managers & Team Leaders
+    api.get('/tenant/crm/executives', { signal: controller.signal, params: { limit: 100 } })
+      .then(({ data }: any) => {
+        if (!controller.signal.aborted && data && Array.isArray(data.items) && data.items.length > 0) {
+          const managerItems = data.items.filter((item: any) => {
+            const role = (item.roleName || item.designation || '').toLowerCase();
+            return role.includes('manager') || role.includes('lead') || role.includes('admin') || role.includes('head');
+          });
+
+          if (managerItems.length > 0) {
+            const managerOptions: SelectOption[] = managerItems.map((m: any) => ({
+              value: `${m.name} (${m.employeeCode ?? 'EMP'})`,
+              label: m.name,
+              sublabel: `${m.roleName ?? 'Sales Manager'} • ${m.team ?? 'General'} (${m.employeeCode})`,
+              avatar: m.avatarUrl || undefined,
+            }));
+            setReportingToOptions(managerOptions);
+            setFormData((prev) => ({ ...prev, reportingTo: managerOptions[0].value }));
           }
         }
       })
