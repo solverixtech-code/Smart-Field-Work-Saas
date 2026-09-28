@@ -11,6 +11,12 @@ import {
   Camera,
   Clock,
   RefreshCw,
+  Crop,
+  ZoomIn,
+  ZoomOut,
+  RotateCw,
+  Check,
+  Move,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -19,6 +25,7 @@ import { Checkbox } from '../../components/ui/Checkbox';
 import { DatePicker } from '../../components/ui/DatePicker';
 import { PhoneInput } from '../../components/ui/PhoneInput';
 import { Textarea } from '../../components/ui/Textarea';
+import { Modal } from '../../components/ui/Modal';
 import { api } from '../../common/api';
 
 const DEFAULT_SHIFTS: SelectOption[] = [
@@ -120,51 +127,19 @@ function generateRandomEmpId(): string {
   return `EMP-${num}`;
 }
 
-function compressImageFile(file: File, maxSide: number = 300, quality: number = 0.85): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Failed to read file'));
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('Failed to load image object'));
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxSide) {
-            height = Math.round((height * maxSide) / width);
-            width = maxSide;
-          }
-        } else {
-          if (height > maxSide) {
-            width = Math.round((width * maxSide) / height);
-            height = maxSide;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(event.target?.result as string);
-          return;
-        }
-        ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/jpeg', quality);
-        resolve(dataUrl);
-      };
-      img.src = event.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
 export default function AddExecutivePage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  // Image Cropper Modal State
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   const [shiftOptions, setShiftOptions] = useState<SelectOption[]>(DEFAULT_SHIFTS);
   const [systemRoleOptionsState, setSystemRoleOptions] = useState<SelectOption[]>(systemRoleOptions);
@@ -202,17 +177,60 @@ export default function AddExecutivePage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      try {
-        const compressedDataUrl = await compressImageFile(file, 300, 0.85);
-        setAvatarPreview(compressedDataUrl);
-        toast.success(`Photo ${file.name} uploaded & auto-compressed!`);
-      } catch (err) {
-        toast.error('Unable to process photo file.');
-      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        setRawImageSrc(result);
+        setZoom(1);
+        setRotation(0);
+        setPanOffset({ x: 0, y: 0 });
+        setIsCropModalOpen(true);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleApplyCrop = () => {
+    if (!rawImageSrc) return;
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const size = 300;
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, size, size);
+
+      ctx.save();
+      ctx.translate(size / 2, size / 2);
+      ctx.rotate((rotation * Math.PI) / 180);
+      ctx.scale(zoom, zoom);
+
+      const drawWidth = size;
+      const drawHeight = (img.height * size) / img.width;
+
+      ctx.drawImage(
+        img,
+        -drawWidth / 2 + panOffset.x / zoom,
+        -drawHeight / 2 + panOffset.y / zoom,
+        drawWidth,
+        drawHeight
+      );
+
+      ctx.restore();
+
+      const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+      setAvatarPreview(croppedDataUrl);
+      setIsCropModalOpen(false);
+      toast.success('✓ Profile photo cropped & saved!');
+    };
+    img.src = rawImageSrc;
   };
 
   // Fetch real live backend options for Shifts, Teams, Reporting Managers, System Roles, and Regions
@@ -711,6 +729,131 @@ export default function AddExecutivePage() {
           </div>
         </div>
       </div>
+
+      {/* Image Cropper Modal */}
+      <Modal
+        isOpen={isCropModalOpen}
+        onClose={() => setIsCropModalOpen(false)}
+        maxWidth="max-w-xl"
+        title={
+          <div className="flex items-center gap-2 text-base font-extrabold text-[#0D1F3D]">
+            <Crop className="h-5 w-5 text-[#E20613]" /> Crop & Frame Profile Photo
+          </div>
+        }
+      >
+        <div className="space-y-5 font-sans">
+          <p className="text-xs text-slate-500 font-medium">
+            Drag photo to adjust position, use zoom slider or rotation controls to frame employee face inside the circle.
+          </p>
+
+          {/* Main Cropper Container */}
+          <div
+            className="relative flex flex-col items-center justify-center rounded-2xl bg-slate-900 p-6 overflow-hidden select-none cursor-move min-h-[300px]"
+            onMouseDown={(e) => {
+              setIsDragging(true);
+              setDragStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+            }}
+            onMouseMove={(e) => {
+              if (!isDragging) return;
+              setPanOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+            }}
+            onMouseUp={() => setIsDragging(false)}
+            onMouseLeave={() => setIsDragging(false)}
+          >
+            {/* Background Image Transformation Container */}
+            {rawImageSrc && (
+              <div
+                className="transition-transform duration-75"
+                style={{
+                  transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom}) rotate(${rotation}deg)`,
+                }}
+              >
+                <img
+                  src={rawImageSrc}
+                  alt="Crop Target"
+                  className="max-h-[260px] max-w-[260px] object-contain pointer-events-none"
+                />
+              </div>
+            )}
+
+            {/* Circular Mask Guide */}
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div className="h-56 w-56 rounded-full border-2 border-[#E20613] shadow-[0_0_0_9999px_rgba(15,23,42,0.65)]" />
+            </div>
+
+            <span className="absolute bottom-3 left-4 text-[10px] font-bold text-slate-400 flex items-center gap-1">
+              <Move className="h-3 w-3 text-slate-300" /> Click & Drag to reposition
+            </span>
+          </div>
+
+          {/* Controls Bar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-slate-50 p-4 border border-slate-200/80">
+            {/* Zoom Slider */}
+            <div className="flex items-center gap-3 min-w-[220px]">
+              <ZoomOut className="h-4 w-4 text-slate-500 shrink-0" />
+              <input
+                type="range"
+                min="0.8"
+                max="3"
+                step="0.05"
+                value={zoom}
+                onChange={(e) => setZoom(parseFloat(e.target.value))}
+                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#E20613]"
+              />
+              <ZoomIn className="h-4 w-4 text-slate-500 shrink-0" />
+              <span className="text-xs font-bold text-[#0D1F3D] min-w-[36px]">{zoom.toFixed(1)}x</span>
+            </div>
+
+            {/* Rotation & Reset Buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setRotation((prev) => (prev + 90) % 360)}
+                className="text-xs font-bold flex items-center gap-1.5 border-slate-200 bg-white text-slate-700"
+              >
+                <RotateCw className="h-3.5 w-3.5 text-slate-500" /> Rotate
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setZoom(1);
+                  setRotation(0);
+                  setPanOffset({ x: 0, y: 0 });
+                }}
+                className="text-xs font-bold border-slate-200 bg-white text-slate-500"
+              >
+                Reset
+              </Button>
+            </div>
+          </div>
+
+          {/* Modal Footer CTAs */}
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsCropModalOpen(false)}
+              className="border-slate-200 text-slate-700 font-bold"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="accent"
+              size="sm"
+              onClick={handleApplyCrop}
+              className="font-bold flex items-center gap-2 shadow-sm"
+            >
+              <Check className="h-4 w-4" /> Crop & Save Photo
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </form>
   );
 }
