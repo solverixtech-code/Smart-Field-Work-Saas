@@ -125,6 +125,21 @@ export default function AllExecutivesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [systemRoles, setSystemRoles] = useState<string[]>([]);
+
+  useEffect(() => {
+    api
+      .get("/tenant/roles")
+      .then(({ data }: any) => {
+        const rolesList = Array.isArray(data) ? data : data?.roles || data?.items;
+        if (Array.isArray(rolesList) && rolesList.length > 0) {
+          const names = rolesList.map((r: any) => r.name || r.code).filter(Boolean);
+          setSystemRoles(names);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -434,10 +449,13 @@ export default function AllExecutivesPage() {
               }}
               options={[
                 { label: "All Roles", value: "All" },
-                ...(directory.roles ?? []).map((r) => ({
-                  label: r,
-                  value: r,
-                })),
+                ...[...new Set([...systemRoles, ...(directory.roles ?? [])])]
+                  .filter(Boolean)
+                  .sort()
+                  .map((r) => ({
+                    label: r,
+                    value: r,
+                  })),
               ]}
             />
           </div>

@@ -442,43 +442,53 @@ export class CrmService {
       const monthStartAt = parseFollowUpSchedule(`${todayKey.slice(0, 7)}-01`, "12:00 AM", timezone);
       const nextMonthStart = parseFollowUpSchedule(nextMonthKey, "12:00 AM", timezone);
 
-      const memberships = await tx.tenantMembership.findMany({
-        where: {
-          tenantId,
-        },
-        select: {
-          id: true,
-          status: true,
-          employeeCode: true,
-          designation: true,
-          joinedAt: true,
-          createdAt: true,
-          tenantRole: { select: { code: true, name: true } },
-          team: { select: { name: true } },
-          user: {
-            select: {
-              fullName: true,
-              email: true,
-              mobile: true,
-              avatarUrl: true,
-              employeeCode: true,
-              joinedAt: true,
-              status: true,
-              role: true,
-            },
+      const [memberships, systemRoles, roleTemplates] = await Promise.all([
+        tx.tenantMembership.findMany({
+          where: {
+            tenantId,
           },
-          territoryMemberships: {
-            where: { territory: { deletedAt: null, status: "ACTIVE" } },
-            orderBy: { assignedAt: "desc" },
-            take: 1,
-            select: {
-              territory: {
-                select: { name: true, city: true, regionArea: true, state: true },
+          select: {
+            id: true,
+            status: true,
+            employeeCode: true,
+            designation: true,
+            joinedAt: true,
+            createdAt: true,
+            tenantRole: { select: { code: true, name: true } },
+            team: { select: { name: true } },
+            user: {
+              select: {
+                fullName: true,
+                email: true,
+                mobile: true,
+                avatarUrl: true,
+                employeeCode: true,
+                joinedAt: true,
+                status: true,
+                role: true,
+              },
+            },
+            territoryMemberships: {
+              where: { territory: { deletedAt: null, status: "ACTIVE" } },
+              orderBy: { assignedAt: "desc" },
+              take: 1,
+              select: {
+                territory: {
+                  select: { name: true, city: true, regionArea: true, state: true },
+                },
               },
             },
           },
-        },
-      });
+        }),
+        tx.tenantRole.findMany({
+          where: { tenantId, isActive: true },
+          select: { name: true, code: true },
+        }),
+        tx.tenantRoleTemplate.findMany({
+          where: { isActive: true },
+          select: { name: true, code: true },
+        }),
+      ]);
 
       const membershipIds = memberships.map((membership) => membership.id);
       const [todayVisits, todayLeads, monthLeads, attendances] = membershipIds.length
@@ -616,6 +626,13 @@ export class CrmService {
         .sort((left, right) => right.leads - left.leads || left.name.localeCompare(right.name))
         .slice(0, 5);
 
+      const systemRoleNames = [
+        ...systemRoles.map((r) => r.name),
+        ...roleTemplates.map((r) => r.name),
+      ];
+      const memberRoleNames = allItems.map((item) => item.roleName).filter(Boolean);
+      const allRoles = [...new Set([...systemRoleNames, ...memberRoleNames])].filter(Boolean).sort();
+
       return {
         items: filtered.slice(start, start + q.limit),
         total: filtered.length,
@@ -624,7 +641,7 @@ export class CrmService {
         totalPages: Math.ceil(filtered.length / q.limit),
         summary,
         regions: [...new Set(allItems.map((item) => item.region))].sort(),
-        roles: [...new Set(allItems.map((item) => item.roleName))].sort(),
+        roles: allRoles,
         topPerformers,
       };
     });
