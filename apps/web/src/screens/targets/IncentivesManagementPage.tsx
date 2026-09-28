@@ -908,7 +908,7 @@ export default function IncentivesManagementPage() {
             navigate("/admin/incentives");
           }
         }}
-        maxWidth="max-w-2xl"
+        maxWidth="max-w-3xl"
       >
         {selectedBreakdownItem && (
           <div className="flex flex-col max-h-[80vh] text-left font-sans -m-2 sm:-m-1">
@@ -985,7 +985,10 @@ export default function IncentivesManagementPage() {
               </div>
 
               {/* Total Earned Incentive Hero Banner */}
-              <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#200B4A] via-[#141246] to-[#0D1F3D] p-4 text-white shadow-md border border-purple-900/40 space-y-3">
+              <div
+                className="relative overflow-hidden rounded-xl p-4 text-white shadow-md border border-purple-900/40 space-y-3 bg-cover bg-center bg-no-repeat"
+                style={{ backgroundImage: `url('/assets/trophy-banner-bg.png')` }}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-[10px] font-extrabold tracking-wider text-purple-200 flex items-center gap-1 uppercase">
@@ -1191,16 +1194,26 @@ export default function IncentivesManagementPage() {
                       </div>
                     </div>
 
-                    {/* Formula Strip */}
-                    <div className="bg-purple-100/60 rounded-md px-3 py-1.5 text-[11px] text-slate-700 font-semibold font-mono border border-purple-200/30">
-                      <strong className="text-purple-900">Formula:</strong> Math.floor(Achieved / 10,000) × ₹500 = 11 × ₹500 = ₹5,500
+                    {/* Calculation Summary Strip */}
+                    <div className="bg-purple-100/70 border border-purple-200/50 rounded-lg px-3.5 py-2 text-[11px] flex flex-wrap items-center justify-between gap-2 text-slate-800">
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-purple-900 bg-purple-200/80 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider">
+                          Payout Summary
+                        </span>
+                        <span className="font-semibold text-slate-700">
+                          11 Completed ₹10,000 Sales Milestones × ₹500 per Milestone
+                        </span>
+                      </div>
+                      <span className="font-mono font-black text-purple-900 text-xs bg-white/80 px-2 py-0.5 rounded border border-purple-200/50">
+                        = ₹5,500
+                      </span>
                     </div>
 
                     {/* Note Strip */}
                     <div className="flex items-start gap-1.5 text-[11px] text-slate-600 leading-normal pt-0.5">
                       <Info className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
-                      <p className="italic">
-                        <strong className="not-italic text-slate-700 font-bold">Note:</strong> The remaining unearned balance of ₹5,000 is below the required ₹10,000 step threshold. (If calculated as flat 5% pro-rata, payout would be ₹5,750).
+                      <p className="font-medium text-slate-600">
+                        <strong className="text-slate-700 font-bold">Unearned Balance:</strong> The remaining sales balance of ₹5,000 is below the ₹10,000 milestone threshold required for the next ₹500 payout increment.
                       </p>
                     </div>
                   </div>
