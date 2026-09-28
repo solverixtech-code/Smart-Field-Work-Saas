@@ -115,14 +115,10 @@ export default function ExecutiveTargetsScreen() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-            <div className="w-36">
-              <Select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                options={monthOptions}
-                searchable={false}
-              />
-            </div>
+            <MonthPicker
+              value={selectedMonth}
+              onChange={(newMonth) => setSelectedMonth(newMonth)}
+            />
 
             <Button
               variant="outline"

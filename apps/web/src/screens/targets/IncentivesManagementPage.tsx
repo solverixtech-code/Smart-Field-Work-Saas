@@ -70,6 +70,8 @@ export default function IncentivesManagementPage() {
   });
   const [selectedMonth, setSelectedMonth] = useState(initialPeriod);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -130,18 +132,44 @@ export default function IncentivesManagementPage() {
     return () => controller.abort();
   }, [params.executiveId, reloadToken, selectedMonth]);
 
+  const teamsOptions = Array.from(
+    new Map(
+      calculations
+        .filter((c) => c.teamId)
+        .map((c) => [c.teamId!, { value: c.teamId!, label: c.teamName }]),
+    ).values(),
+  );
+
   const search = searchQuery.toLowerCase().trim();
   const visibleCalculations = calculations.filter((calculation) => {
     const matchesSearch =
       !search ||
       calculation.executiveName.toLowerCase().includes(search) ||
       calculation.executiveId.toLowerCase().includes(search);
+    const matchesTeam =
+      selectedTeam === "all" || calculation.teamId === selectedTeam;
+    const matchesStatus =
+      statusFilter === "all" || calculation.payoutStatus === statusFilter;
+
     return (
       matchesSearch &&
+      matchesTeam &&
+      matchesStatus &&
       (activeTab !== "approvals" ||
         calculation.payoutStatus === "Pending Approval")
     );
   });
+
+  const hasActiveFilters =
+    selectedTeam !== "all" ||
+    statusFilter !== "all" ||
+    searchQuery.trim() !== "";
+
+  const handleResetFilters = () => {
+    setSelectedTeam("all");
+    setStatusFilter("all");
+    setSearchQuery("");
+  };
   const visiblePayouts = payouts.filter(
     (payout) =>
       !search ||
@@ -474,22 +502,118 @@ export default function IncentivesManagementPage() {
 
       {/* TAB CONTENT TABLES */}
       <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 className="text-sm font-extrabold text-[#0D1F3D]">
-            {activeTab === "payouts"
-              ? "Payout Disbursements Log"
-              : "Calculated Executive Incentives"}
-          </h3>
+        {/* SEARCH & FILTERS TOOLBAR */}
+        <div className="space-y-3 border-b border-slate-100 pb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Status Pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setStatusFilter("all")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors cursor-pointer ${
+                  statusFilter === "all"
+                    ? "bg-[#0D1F3D] text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                All ({calculations.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("Pending Approval")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  statusFilter === "Pending Approval"
+                    ? "bg-amber-600 text-white shadow-xs"
+                    : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200/60"
+                }`}
+              >
+                <Clock className="h-3.5 w-3.5" /> Pending Approval (
+                {
+                  calculations.filter(
+                    (c) => c.payoutStatus === "Pending Approval",
+                  ).length
+                }
+                )
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("Approved")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  statusFilter === "Approved"
+                    ? "bg-emerald-600 text-white shadow-xs"
+                    : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60"
+                }`}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" /> Approved (
+                {
+                  calculations.filter((c) => c.payoutStatus === "Approved")
+                    .length
+                }
+                )
+              </button>
+            </div>
 
-          <div className="relative w-64">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search executive name or ID..."
-              className="w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-purple-600 focus:outline-none"
-            />
+            <div className="text-xs font-semibold text-slate-500">
+              Showing{" "}
+              <span className="font-extrabold text-[#0D1F3D]">
+                {visibleCalculations.length}
+              </span>{" "}
+              of {calculations.length} executive calculations
+            </div>
+          </div>
+
+          {/* Search & Team Filter Input Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end pt-1">
+            <div className="sm:col-span-1">
+              <label className="text-xs font-semibold text-slate-500 block mb-1">
+                Search Executive
+              </label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by name or employee ID..."
+                  className="w-full h-10 min-h-[40px] rounded-md border border-slate-200 bg-white pl-9 pr-8 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-purple-600 focus:outline-none transition-colors"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-500 block mb-1">
+                Filter by Team
+              </label>
+              <Select
+                value={selectedTeam}
+                onChange={(e) => setSelectedTeam(e.target.value)}
+                options={[{ value: "all", label: "All Teams" }, ...teamsOptions]}
+                searchable={true}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              {hasActiveFilters && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResetFilters}
+                  className="h-10 min-h-[40px] bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center gap-1.5 shadow-xs border-slate-200"
+                >
+                  <X className="h-3.5 w-3.5" /> Reset Filters
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 

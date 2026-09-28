@@ -192,7 +192,7 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({
 
           {/* Month Selection Grid */}
           <div>
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">Target Month</span>
+            <span className="text-xs font-semibold text-slate-500 block mb-1.5">Target Month</span>
             <div className="grid grid-cols-4 gap-1.5">
               {MONTH_SHORT_NAMES.map((mName, idx) => {
                 const monthNum = idx + 1;
@@ -219,7 +219,7 @@ export const MonthPicker: React.FC<MonthPickerProps> = ({
           {/* Comparison Baseline Section */}
           {showComparison && (
             <div className="border-t border-slate-100 pt-3 space-y-2">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Compare Baseline Against</span>
+              <span className="text-xs font-semibold text-slate-500 block mb-1.5">Compare Baseline Against</span>
               <div className="space-y-1.5">
                 <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 hover:text-[#0D1F3D]">
                   <input
