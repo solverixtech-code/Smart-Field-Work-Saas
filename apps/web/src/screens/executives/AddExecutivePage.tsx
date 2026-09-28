@@ -120,6 +120,47 @@ function generateRandomEmpId(): string {
   return `EMP-${num}`;
 }
 
+function compressImageFile(file: File, maxSide: number = 300, quality: number = 0.85): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Failed to load image object'));
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxSide) {
+            height = Math.round((height * maxSide) / width);
+            width = maxSide;
+          }
+        } else {
+          if (height > maxSide) {
+            width = Math.round((width * maxSide) / height);
+            height = maxSide;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(event.target?.result as string);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function AddExecutivePage() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -161,20 +202,16 @@ export default function AddExecutivePage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error('File size exceeds 2MB limit.');
-        return;
+      try {
+        const compressedDataUrl = await compressImageFile(file, 300, 0.85);
+        setAvatarPreview(compressedDataUrl);
+        toast.success(`Photo ${file.name} uploaded & auto-compressed!`);
+      } catch (err) {
+        toast.error('Unable to process photo file.');
       }
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        setAvatarPreview(result);
-        toast.success(`Photo ${file.name} loaded successfully!`);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -443,7 +480,7 @@ export default function AddExecutivePage() {
                     Remove
                   </button>
                 )}
-                <span className="text-[10px] text-slate-400 font-medium">JPG, PNG (Max 2MB)</span>
+                <span className="text-[10px] text-slate-400 font-medium">Auto-compressed • JPG, PNG, WEBP</span>
               </div>
             </div>
 
