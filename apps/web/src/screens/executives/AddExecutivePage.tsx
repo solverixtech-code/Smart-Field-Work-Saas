@@ -62,40 +62,9 @@ const designationOptions: SelectOption[] = [
   { value: 'Sales Manager', label: 'Sales Manager' },
 ];
 
-const reportingToOptions: SelectOption[] = [
-  {
-    value: 'Sanjay Yadav (TL-1003)',
-    label: 'Sanjay Yadav',
-    sublabel: 'Team Leader • Mumbai North (TL-1003)',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-  },
-  {
-    value: 'Amit Sharma (Manager)',
-    label: 'Amit Sharma',
-    sublabel: 'Sales Manager • Western Region (MGR-1001)',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-  },
-  {
-    value: 'Priya Mehta (TL-1004)',
-    label: 'Priya Mehta',
-    sublabel: 'Team Leader • Mumbai West (TL-1004)',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-  },
-  {
-    value: 'Vikram Patil (MGR-1002)',
-    label: 'Vikram Patil',
-    sublabel: 'Operations Manager • Central Hub (MGR-1002)',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-  },
-];
+const reportingToOptions: SelectOption[] = [];
 
-const teamOptions: SelectOption[] = [
-  { value: 'Mumbai North Team', label: 'Mumbai North Team', sublabel: 'North Region • 24 Staff' },
-  { value: 'Mumbai West Team', label: 'Mumbai West Team', sublabel: 'West Region • 18 Staff' },
-  { value: 'Thane Central', label: 'Thane Central', sublabel: 'Central Region • 14 Staff' },
-  { value: 'Navi Mumbai Hub', label: 'Navi Mumbai Hub', sublabel: 'Navi Mumbai • 12 Staff' },
-  { value: 'Pune Central', label: 'Pune Central', sublabel: 'Pune Hub • 10 Staff' },
-];
+const teamOptions: SelectOption[] = [];
 
 const employmentTypeOptions: SelectOption[] = [
   { value: 'Full Time', label: 'Full Time' },
@@ -133,9 +102,10 @@ export default function AddExecutivePage() {
   const [shiftOptions, setShiftOptions] = useState<SelectOption[]>(DEFAULT_SHIFTS);
   const [systemRoleOptionsState, setSystemRoleOptions] = useState<SelectOption[]>(systemRoleOptions);
   const [designationOptionsState, setDesignationOptions] = useState<SelectOption[]>(designationOptions);
-  const [reportingToOptionsState, setReportingToOptions] = useState<SelectOption[]>(reportingToOptions);
-  const [teamOptionsState, setTeamOptions] = useState<SelectOption[]>(teamOptions);
+  const [reportingToOptionsState, setReportingToOptions] = useState<SelectOption[]>([]);
+  const [teamOptionsState, setTeamOptions] = useState<SelectOption[]>([]);
   const [regionOptionsState, setRegionOptions] = useState<SelectOption[]>(regionOptions);
+  const [allCandidates, setAllCandidates] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -186,6 +156,72 @@ export default function AddExecutivePage() {
     reader.readAsDataURL(croppedBlob);
   };
 
+  // Dynamically filter Reporting To dropdown based on selected employee role hierarchy
+  useEffect(() => {
+    const roleLower = (formData.systemRole || '').toLowerCase();
+    const desigLower = (formData.designation || '').toLowerCase();
+
+    const isSalesManager = roleLower.includes('sales_manager') || desigLower.includes('sales manager') || (desigLower.includes('manager') && !desigLower.includes('team'));
+    const isTeamLeader = roleLower.includes('team_leader') || desigLower.includes('team leader') || desigLower.includes('lead');
+
+    let filtered: any[] = [];
+
+    if (isSalesManager) {
+      // Sales Managers report to Admin, Workspace Owner, Regional Supervisor, Director
+      filtered = allCandidates.filter((c: any) => {
+        const d = (c.designation || '').toLowerCase();
+        const r = (c.role || c.roleName || '').toLowerCase();
+        return (
+          d.includes('admin') || d.includes('owner') || d.includes('supervisor') || d.includes('director') || d.includes('regional') || d.includes('head') ||
+          r.includes('admin') || r.includes('owner') || r.includes('supervisor') || r.includes('director') || r.includes('regional')
+        );
+      });
+      // Fallback: If no dedicated supervisor/admin candidate returned, include any non-executive senior manager
+      if (filtered.length === 0) {
+        filtered = allCandidates.filter((c: any) => {
+          const d = (c.designation || '').toLowerCase();
+          return !d.includes('field executive') && !d.includes('telecaller') && !d.includes('sales manager');
+        });
+      }
+    } else if (isTeamLeader) {
+      // Team Leaders report to Sales Manager, Administrator, Regional Supervisor
+      filtered = allCandidates.filter((c: any) => {
+        const d = (c.designation || '').toLowerCase();
+        const r = (c.role || c.roleName || '').toLowerCase();
+        return (
+          d.includes('manager') || d.includes('admin') || d.includes('supervisor') || d.includes('director') || d.includes('owner') ||
+          r.includes('manager') || r.includes('admin') || r.includes('supervisor') || r.includes('director')
+        );
+      });
+    } else {
+      // Field Executives & Telecallers report to Sales Manager, Team Leader, Administrator
+      filtered = allCandidates.filter((c: any) => {
+        const d = (c.designation || '').toLowerCase();
+        const r = (c.role || c.roleName || '').toLowerCase();
+        return (
+          d.includes('manager') || d.includes('lead') || d.includes('admin') || d.includes('supervisor') || d.includes('head') ||
+          r.includes('manager') || r.includes('lead') || r.includes('admin') || r.includes('supervisor')
+        );
+      });
+    }
+
+    if (filtered.length > 0) {
+      const options: SelectOption[] = filtered.map((c: any) => ({
+        value: `${c.name} (${c.employeeCode ?? 'EMP'})`,
+        label: c.name,
+        sublabel: `${c.designation ?? c.roleName ?? 'Reporting Officer'} • ${c.teamName ?? c.team ?? 'General'} (${c.employeeCode ?? 'EMP'})`,
+        avatar: c.avatarUrl || undefined,
+      }));
+      setReportingToOptions(options);
+      if (!options.some((o) => o.value === formData.reportingTo)) {
+        setFormData((prev) => ({ ...prev, reportingTo: options[0].value }));
+      }
+    } else {
+      setReportingToOptions([]);
+      setFormData((prev) => ({ ...prev, reportingTo: '' }));
+    }
+  }, [formData.systemRole, formData.designation, allCandidates]);
+
   // Fetch real live backend options for Shifts, Teams, Reporting Managers, System Roles, and Regions
   useEffect(() => {
     const controller = new AbortController();
@@ -205,32 +241,16 @@ export default function AddExecutivePage() {
       })
       .catch(() => {});
 
-    // 2. Fetch live teams options & manager candidates for Reporting To (Sales Managers & Team Leaders only)
+    // 2. Fetch live teams options & manager candidates for Reporting To
     api.get('/tenant/crm/teams/options', { signal: controller.signal })
       .then(({ data }: any) => {
         if (!controller.signal.aborted && data) {
           if (Array.isArray(data.candidates) && data.candidates.length > 0) {
-            // Strictly filter out Field Executives & Telecallers from Reporting To dropdown
-            const managerCandidates = data.candidates.filter((c: any) => {
-              const desig = (c.designation || '').toLowerCase();
-              return desig.includes('manager') || desig.includes('lead') || desig.includes('admin') || desig.includes('head') || desig.includes('director');
+            setAllCandidates((prev) => {
+              const existingIds = new Set(prev.map((p) => p.id || p.employeeCode));
+              const newCandidates = data.candidates.filter((c: any) => !existingIds.has(c.id || c.employeeCode));
+              return [...prev, ...newCandidates];
             });
-
-            const targetCandidates = managerCandidates.length > 0 ? managerCandidates : data.candidates.filter((c: any) => {
-              const desig = (c.designation || '').toLowerCase();
-              return !desig.includes('field executive') && !desig.includes('telecaller');
-            });
-
-            if (targetCandidates.length > 0) {
-              const liveReporting: SelectOption[] = targetCandidates.map((c: any) => ({
-                value: `${c.name} (${c.employeeCode ?? 'EMP'})`,
-                label: c.name,
-                sublabel: `${c.designation ?? 'Sales Manager'} • ${c.teamName ?? 'General'} (${c.employeeCode})`,
-                avatar: c.avatarUrl || undefined,
-              }));
-              setReportingToOptions(liveReporting);
-              setFormData((prev) => ({ ...prev, reportingTo: liveReporting[0].value }));
-            }
           }
           if (Array.isArray(data.regions) && data.regions.length > 0) {
             const liveRegions: SelectOption[] = data.regions.map((r: any) => ({
@@ -244,25 +264,25 @@ export default function AddExecutivePage() {
       })
       .catch(() => {});
 
-    // Also fetch live executives directory to search specifically for Managers & Team Leaders
+    // Also fetch live executives directory for candidate pool
     api.get('/tenant/crm/executives', { signal: controller.signal, params: { limit: 100 } })
       .then(({ data }: any) => {
         if (!controller.signal.aborted && data && Array.isArray(data.items) && data.items.length > 0) {
-          const managerItems = data.items.filter((item: any) => {
-            const role = (item.roleName || item.designation || '').toLowerCase();
-            return role.includes('manager') || role.includes('lead') || role.includes('admin') || role.includes('head');
-          });
+          const mappedItems = data.items.map((m: any) => ({
+            id: m.id,
+            name: m.name,
+            employeeCode: m.employeeCode,
+            designation: m.role || m.roleName || m.designation,
+            roleName: m.roleName,
+            teamName: m.team,
+            avatarUrl: m.avatarUrl,
+          }));
 
-          if (managerItems.length > 0) {
-            const managerOptions: SelectOption[] = managerItems.map((m: any) => ({
-              value: `${m.name} (${m.employeeCode ?? 'EMP'})`,
-              label: m.name,
-              sublabel: `${m.roleName ?? 'Sales Manager'} • ${m.team ?? 'General'} (${m.employeeCode})`,
-              avatar: m.avatarUrl || undefined,
-            }));
-            setReportingToOptions(managerOptions);
-            setFormData((prev) => ({ ...prev, reportingTo: managerOptions[0].value }));
-          }
+          setAllCandidates((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id || p.employeeCode));
+            const newItems = mappedItems.filter((c: any) => !existingIds.has(c.id || c.employeeCode));
+            return [...prev, ...newItems];
+          });
         }
       })
       .catch(() => {});

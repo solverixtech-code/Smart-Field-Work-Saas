@@ -496,12 +496,17 @@ export default function AllExecutivesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {filteredExecutives.map((exec) => {
+                  {filteredExecutives.map((exec, index) => {
                     const isSelected = selectedIds.includes(exec.membershipId);
+                    const isMenuOpen = activeMenuId === exec.membershipId;
+                    const isNearBottom = index >= filteredExecutives.length - 2 && filteredExecutives.length > 2;
+
                     return (
                       <tr
                         key={exec.membershipId}
-                        className="hover:bg-slate-50/80 transition-colors"
+                        className={`hover:bg-slate-50/80 transition-colors ${
+                          isMenuOpen ? "relative z-30 bg-slate-50/90" : ""
+                        }`}
                       >
                         <td className="p-3.5 text-center">
                           <input
@@ -571,7 +576,7 @@ export default function AllExecutivesPage() {
                         <td className="px-4 py-3.5 text-slate-500 font-medium whitespace-nowrap">
                           {formatDate(exec.joinedAt)}
                         </td>
-                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        <td className="px-4 py-3.5 text-right whitespace-nowrap relative">
                           <div className="flex items-center justify-end gap-1.5 relative">
                             <NavLink
                               to={`/admin/executives/${exec.membershipId}`}
@@ -597,8 +602,14 @@ export default function AllExecutivesPage() {
                             </button>
 
                             {/* Dropdown Quick Actions */}
-                            {activeMenuId === exec.membershipId && (
-                              <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-sm border border-slate-200 bg-white p-1.5 shadow-xl space-y-0.5 text-left animate-dropdown">
+                            {isMenuOpen && (
+                              <div
+                                className={`absolute right-0 z-50 w-44 rounded-md border border-slate-200 bg-white p-1.5 shadow-2xl space-y-0.5 text-left animate-dropdown ${
+                                  isNearBottom
+                                    ? "bottom-full mb-1 origin-bottom-right"
+                                    : "top-full mt-1 origin-top-right"
+                                }`}
+                              >
                                 <NavLink
                                   to={`/admin/executives/${exec.membershipId}`}
                                   className="flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"

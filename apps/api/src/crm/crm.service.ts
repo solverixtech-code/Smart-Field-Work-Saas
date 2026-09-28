@@ -445,12 +445,6 @@ export class CrmService {
       const memberships = await tx.tenantMembership.findMany({
         where: {
           tenantId,
-          NOT: {
-            OR: [
-              { tenantRole: { code: "tenant_admin" } },
-              { user: { role: "SUPER_ADMIN" } },
-            ],
-          },
         },
         select: {
           id: true,
@@ -1264,25 +1258,59 @@ export class CrmService {
         throw new NotFoundException("Executive membership not found");
       }
 
-      await tx.territoryMember.deleteMany({ where: { membershipId: membership.id } });
-      await tx.userShift.deleteMany({ where: { tenantMembershipId: membership.id } });
-
+      // 1. Unassign non-converted, active leads (converted leads have DB trigger constraint)
       await tx.lead.updateMany({
-        where: { assignedMembershipId: membership.id },
+        where: {
+          assignedMembershipId: membership.id,
+          status: { not: "CONVERTED" },
+          deletedAt: null,
+        },
         data: { assignedMembershipId: null },
       });
+
+      // 2. Unassign opportunities
       await tx.opportunity.updateMany({
         where: { assignedMembershipId: membership.id },
         data: { assignedMembershipId: null },
       });
 
-      await tx.tenantMembership.delete({ where: { id: membership.id } });
+      // 3. Clear manager references from subordinates
+      await tx.tenantMembership.updateMany({
+        where: { managerMembershipId: membership.id },
+        data: { managerMembershipId: null },
+      });
+
+      // 4. Delete territory memberships & shifts
+      await tx.territoryMember.deleteMany({ where: { membershipId: membership.id } });
+      await tx.userShift.deleteMany({ where: { tenantMembershipId: membership.id } });
+
+      // 5. Delete tenant membership with graceful fallback to DEACTIVATED
+      try {
+        await tx.tenantMembership.delete({ where: { id: membership.id } });
+      } catch {
+        await tx.tenantMembership.update({
+          where: { id: membership.id },
+          data: { status: "DEACTIVATED" },
+        });
+        await tx.user.update({
+          where: { id: membership.userId },
+          data: { status: "INACTIVE" },
+        });
+        return { success: true, deactivated: true };
+      }
 
       const remainingMemberships = await tx.tenantMembership.count({
         where: { userId: membership.userId },
       });
       if (remainingMemberships === 0) {
-        await tx.user.delete({ where: { id: membership.userId } });
+        try {
+          await tx.user.delete({ where: { id: membership.userId } });
+        } catch {
+          await tx.user.update({
+            where: { id: membership.userId },
+            data: { status: "INACTIVE" },
+          });
+        }
       }
 
       return { success: true };
