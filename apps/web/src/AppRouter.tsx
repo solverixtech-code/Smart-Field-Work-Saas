@@ -342,10 +342,7 @@ export default function AppRouter() {
                 path="/admin/dashboard/telecaller"
                 element={<TelecallerDashboardPage />}
               />
-              <Route
-                path="/admin/calls"
-                element={<CallsPage />}
-              />
+              <Route path="/admin/calls" element={<CallsPage />} />
             </Route>
 
             {/* Account Profile Routes */}
@@ -402,8 +399,17 @@ export default function AppRouter() {
                 element={<AttendanceMonitoringPage />}
               />
             </Route>
-            <Route element={<PermissionRoute permission="attendance.self.punch" />}>
-              <Route path="/admin/my-attendance" element={<MobileAttendancePage />} />
+            <Route
+              element={<PermissionRoute permission="attendance.self.punch" />}
+            >
+              <Route
+                path="/employee/attendance"
+                element={<MobileAttendancePage />}
+              />
+              <Route
+                path="/admin/my-attendance"
+                element={<Navigate to="/employee/attendance" replace />}
+              />
             </Route>
 
             {/* Teams & Hierarchy Management Routes */}
@@ -455,9 +461,14 @@ export default function AppRouter() {
               <Route path="/admin/teams/create" element={<CreateTeamPage />} />
             </Route>
             <Route element={<PermissionRoute permission="crm.teams.update" />}>
-              <Route path="/admin/teams/:teamId/edit" element={<CreateTeamPage />} />
+              <Route
+                path="/admin/teams/:teamId/edit"
+                element={<CreateTeamPage />}
+              />
             </Route>
-            <Route element={<PermissionRoute permission="crm.incentives.view" />}>
+            <Route
+              element={<PermissionRoute permission="crm.incentives.view" />}
+            >
               <Route
                 path="/admin/incentives/rules"
                 element={<IncentiveRulesPage />}
@@ -722,7 +733,10 @@ export default function AppRouter() {
               element={<PermissionRoute permission="crm.followups.view" />}
             >
               <Route element={<CrmBoundary />}>
-                <Route path="/admin/follow-ups" element={<FollowUpsListPage view="all" />} />
+                <Route
+                  path="/admin/follow-ups"
+                  element={<FollowUpsListPage view="all" />}
+                />
                 <Route
                   path="/admin/follow-ups/today"
                   element={<FollowUpsListPage view="today" />}
@@ -922,7 +936,9 @@ export default function AppRouter() {
                   path="/admin/visits"
                   element={<AllVisitsPage viewMode="all" />}
                 />
-                <Route element={<PermissionRoute permission="crm.visits.schedule" />}>
+                <Route
+                  element={<PermissionRoute permission="crm.visits.schedule" />}
+                >
                   <Route
                     path="/admin/visits/schedule"
                     element={<ScheduleVisitPage />}
@@ -979,13 +995,19 @@ export default function AppRouter() {
                   path="/admin/map/businesses"
                   element={<BusinessProspectMapPage />}
                 />
-                <Route path="/admin/map/visits" element={<VisitHeatmapPage />} />
+                <Route
+                  path="/admin/map/visits"
+                  element={<VisitHeatmapPage />}
+                />
                 <Route path="/admin/map/sales" element={<SalesHeatmapPage />} />
                 <Route
                   path="/admin/map/territories"
                   element={<TerritoryMapPage />}
                 />
-                <Route path="/admin/map/routes" element={<RoutePlaybackPage />} />
+                <Route
+                  path="/admin/map/routes"
+                  element={<RoutePlaybackPage />}
+                />
                 <Route
                   path="/admin/map/routes/:executiveId"
                   element={<RoutePlaybackPage />}
@@ -1227,8 +1249,15 @@ export default function AppRouter() {
                 element={<PlatformPlaceholderPage title="Platform Operators" />}
               />
               <Route path="/platform/roles" element={<TenantRolesPage />} />
-              <Route element={<PlatformAccessGuard requiredPermission="platform.notifications.settings.view" />}>
-                <Route path="/platform/notifications/settings" element={<NotificationChannelSettingsPage />} />
+              <Route
+                element={
+                  <PlatformAccessGuard requiredPermission="platform.notifications.settings.view" />
+                }
+              >
+                <Route
+                  path="/platform/notifications/settings"
+                  element={<NotificationChannelSettingsPage />}
+                />
               </Route>
               <Route
                 element={

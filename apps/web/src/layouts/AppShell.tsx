@@ -56,14 +56,23 @@ import {
 } from "lucide-react";
 import { useAppSelector, useAppDispatch } from "../store";
 import { clearCredentials } from "../store/slices/authSlice";
-import { clearAuthorization, fetchAuthorizationBootstrap } from "../store/slices/authorizationSlice";
+import {
+  clearAuthorization,
+  fetchAuthorizationBootstrap,
+} from "../store/slices/authorizationSlice";
 import { useRuntimeBootstrap } from "../features/runtime/context/RuntimeBootstrapContext";
-import { clearStoredRefreshToken, getStoredRefreshToken } from "../common/authSession";
+import {
+  clearStoredRefreshToken,
+  getStoredRefreshToken,
+} from "../common/authSession";
 import { api } from "../common/api";
 import { Button } from "../components/ui/Button";
 import { Role, getUserRoleLabel } from "@visiblo/shared";
 import { HeaderNotificationBell } from "../components/notifications/HeaderNotificationBell";
-import { HeaderSearchBar, recordRecentSearch } from "../components/navigation/HeaderSearchBar";
+import {
+  HeaderSearchBar,
+  recordRecentSearch,
+} from "../components/navigation/HeaderSearchBar";
 import { ExecutiveLocationTracker } from "../features/tracking/ExecutiveLocationTracker";
 
 const bigLogo = "/assets/sfw-logo.png";
@@ -268,27 +277,108 @@ const navCategories: NavCategory[] = [
   {
     title: "Notifications",
     items: [
-      { label: "Notification Center", icon: Bell, to: "/admin/notifications", permission: "crm.notifications.view" },
-      { label: "Create Notification", icon: PlusCircle, to: "/admin/notifications/create", permission: "crm.notifications.view" },
-      { label: "Push Notifications", icon: Send, to: "/admin/notifications/push", permission: "crm.notifications.view" },
-      { label: "Executive Alerts", icon: ShieldAlert, to: "/admin/notifications/executives", permission: "crm.notifications.view" },
-      { label: "Notification Templates", icon: ClipboardCopy, to: "/admin/notifications/templates", permission: "crm.notifications.view" },
+      {
+        label: "Notification Center",
+        icon: Bell,
+        to: "/admin/notifications",
+        permission: "crm.notifications.view",
+      },
+      {
+        label: "Create Notification",
+        icon: PlusCircle,
+        to: "/admin/notifications/create",
+        permission: "crm.notifications.view",
+      },
+      {
+        label: "Push Notifications",
+        icon: Send,
+        to: "/admin/notifications/push",
+        permission: "crm.notifications.view",
+      },
+      {
+        label: "Executive Alerts",
+        icon: ShieldAlert,
+        to: "/admin/notifications/executives",
+        permission: "crm.notifications.view",
+      },
+      {
+        label: "Notification Templates",
+        icon: ClipboardCopy,
+        to: "/admin/notifications/templates",
+        permission: "crm.notifications.view",
+      },
     ],
   },
   {
     title: "Reports & Analytics",
     items: [
-      { label: "Reports Dashboard", icon: FileText, to: "/admin/reports", permission: "crm.reports.view", badge: "11 Reports" },
-      { label: "Daily Sales Report", icon: TrendingUp, to: "/admin/reports/daily-sales", permission: "crm.reports.view" },
-      { label: "Executive Report", icon: Users, to: "/admin/reports/executives", permission: "crm.reports.view" },
-      { label: "Visit Report", icon: MapPin, to: "/admin/reports/visits", permission: "crm.reports.view" },
-      { label: "Territory Report", icon: Layers, to: "/admin/reports/territories", permission: "crm.reports.view" },
-      { label: "Lead Conversion Report", icon: Filter, to: "/admin/reports/conversions", permission: "crm.reports.view" },
-      { label: "Revenue Report", icon: BarChart3, to: "/admin/reports/revenue", permission: "crm.reports.view" },
-      { label: "Payment Report", icon: CreditCard, to: "/admin/reports/payments", permission: "crm.reports.view" },
-      { label: "Attendance Report", icon: CalendarCheck, to: "/admin/reports/attendance", permission: "crm.reports.view" },
-      { label: "Incentive Report", icon: Award, to: "/admin/reports/incentives", permission: "crm.reports.view" },
-      { label: "Category ROI Report", icon: PieChart, to: "/admin/reports/categories", permission: "crm.reports.view" },
+      {
+        label: "Reports Dashboard",
+        icon: FileText,
+        to: "/admin/reports",
+        permission: "crm.reports.view",
+        badge: "11 Reports",
+      },
+      {
+        label: "Daily Sales Report",
+        icon: TrendingUp,
+        to: "/admin/reports/daily-sales",
+        permission: "crm.reports.view",
+      },
+      {
+        label: "Executive Report",
+        icon: Users,
+        to: "/admin/reports/executives",
+        permission: "crm.reports.view",
+      },
+      {
+        label: "Visit Report",
+        icon: MapPin,
+        to: "/admin/reports/visits",
+        permission: "crm.reports.view",
+      },
+      {
+        label: "Territory Report",
+        icon: Layers,
+        to: "/admin/reports/territories",
+        permission: "crm.reports.view",
+      },
+      {
+        label: "Lead Conversion Report",
+        icon: Filter,
+        to: "/admin/reports/conversions",
+        permission: "crm.reports.view",
+      },
+      {
+        label: "Revenue Report",
+        icon: BarChart3,
+        to: "/admin/reports/revenue",
+        permission: "crm.reports.view",
+      },
+      {
+        label: "Payment Report",
+        icon: CreditCard,
+        to: "/admin/reports/payments",
+        permission: "crm.reports.view",
+      },
+      {
+        label: "Attendance Report",
+        icon: CalendarCheck,
+        to: "/admin/reports/attendance",
+        permission: "crm.reports.view",
+      },
+      {
+        label: "Incentive Report",
+        icon: Award,
+        to: "/admin/reports/incentives",
+        permission: "crm.reports.view",
+      },
+      {
+        label: "Category ROI Report",
+        icon: PieChart,
+        to: "/admin/reports/categories",
+        permission: "crm.reports.view",
+      },
     ],
   },
   {
@@ -627,7 +717,7 @@ const fieldExecutiveNavCategories: NavCategory[] = [
       {
         label: "Mobile Attendance",
         icon: Smartphone,
-        to: "/admin/my-attendance",
+        to: "/employee/attendance",
         permission: "attendance.self.punch",
         moduleCode: "attendance",
       },
@@ -783,7 +873,6 @@ const telecallerNavCategories: NavCategory[] = [
   },
 ];
 
-
 function getBusinessBreadcrumbName(businessId?: string): string {
   if (!businessId) return "Business Details";
   try {
@@ -792,7 +881,10 @@ function getBusinessBreadcrumbName(businessId?: string): string {
       localStorage.getItem(`visiblo_biz_name_${businessId}`);
     if (cached) return cached;
   } catch {}
-  if (businessId.startsWith("BIZ-") || (businessId.length <= 8 && !businessId.includes("-"))) {
+  if (
+    businessId.startsWith("BIZ-") ||
+    (businessId.length <= 8 && !businessId.includes("-"))
+  ) {
     return businessId;
   }
   const clean = businessId.replace(/-/g, "").toUpperCase();
@@ -874,7 +966,10 @@ function getBreadcrumbTrail(pathname: string) {
   } else if (pathname.startsWith("/admin/teams/")) {
     items.push({ label: "Teams & Hierarchy", to: "/admin/teams" });
     const teamId = pathname.split("/")[3];
-    items.push({ label: getTeamBreadcrumbName(teamId), to: `/admin/teams/${teamId}` });
+    items.push({
+      label: getTeamBreadcrumbName(teamId),
+      to: `/admin/teams/${teamId}`,
+    });
     if (pathname.endsWith("/leader")) {
       items.push({ label: "Assign Team Leader", to: pathname });
     } else if (pathname.endsWith("/members")) {
@@ -886,86 +981,103 @@ function getBreadcrumbTrail(pathname: string) {
     } else if (pathname.endsWith("/edit")) {
       items.push({ label: "Edit Team", to: pathname });
     }
-  } else if (pathname === '/admin/categories') {
-    items.push({ label: 'Business Categories', to: '/admin/categories' });
-    items.push({ label: 'All Categories', to: '/admin/categories' });
-  } else if (pathname === '/admin/categories/create') {
-    items.push({ label: 'Categories', to: '/admin/categories' });
-    items.push({ label: 'Add Category', to: '/admin/categories/create' });
-  } else if (pathname.startsWith('/admin/categories/')) {
-    items.push({ label: 'Categories', to: '/admin/categories' });
-    if (pathname.endsWith('/performance')) {
-      items.push({ label: 'Retail Business', to: '/admin/categories/cat-1' });
-      items.push({ label: 'Category Performance', to: pathname });
+  } else if (pathname === "/admin/categories") {
+    items.push({ label: "Business Categories", to: "/admin/categories" });
+    items.push({ label: "All Categories", to: "/admin/categories" });
+  } else if (pathname === "/admin/categories/create") {
+    items.push({ label: "Categories", to: "/admin/categories" });
+    items.push({ label: "Add Category", to: "/admin/categories/create" });
+  } else if (pathname.startsWith("/admin/categories/")) {
+    items.push({ label: "Categories", to: "/admin/categories" });
+    if (pathname.endsWith("/performance")) {
+      items.push({ label: "Retail Business", to: "/admin/categories/cat-1" });
+      items.push({ label: "Category Performance", to: pathname });
     } else {
-      items.push({ label: 'Category Details', to: pathname });
+      items.push({ label: "Category Details", to: pathname });
     }
-  } else if (pathname === '/admin/leads/sources') {
-    items.push({ label: 'Lead Sources', to: '/admin/leads/sources' });
-    items.push({ label: 'All Lead Sources', to: '/admin/leads/sources' });
-  } else if (pathname === '/admin/leads/sources/create') {
-    items.push({ label: 'Lead Sources', to: '/admin/leads/sources' });
-    items.push({ label: 'Create Source', to: '/admin/leads/sources/create' });
-  } else if (pathname.startsWith('/admin/leads/sources/')) {
-    items.push({ label: 'Lead Sources', to: '/admin/leads/sources' });
-    items.push({ label: 'Source Performance', to: pathname });
-  } else if (pathname === '/admin/leads/integrations') {
-    items.push({ label: 'Lead Automation', to: '/admin/leads/automation' });
-    items.push({ label: 'Integrations', to: '/admin/leads/integrations' });
-  } else if (pathname === '/admin/leads/automation') {
-    items.push({ label: 'Lead Automation', to: '/admin/leads/automation' });
-    items.push({ label: 'Automation Center', to: '/admin/leads/automation' });
-  } else if (pathname === '/admin/leads/automation/activity') {
-    items.push({ label: 'Lead Automation', to: '/admin/leads/automation' });
-    items.push({ label: 'Live Lead Activity', to: '/admin/leads/automation/activity' });
-  } else if (pathname === '/admin/leads/automation/settings') {
-    items.push({ label: 'Lead Automation', to: '/admin/leads/automation' });
-    items.push({ label: 'Automation Settings', to: '/admin/leads/automation/settings' });
-  } else if (pathname.startsWith('/admin/leads/integrations/')) {
-    items.push({ label: 'Integrations', to: '/admin/leads/integrations' });
-    items.push({ label: 'Platform Connector', to: pathname });
-  } else if (pathname === '/admin/notifications') {
-    items.push({ label: 'Notifications', to: '/admin/notifications' });
-    items.push({ label: 'Notification Center', to: pathname });
-  } else if (pathname.startsWith('/admin/notifications/')) {
-    items.push({ label: 'Notifications', to: '/admin/notifications' });
+  } else if (pathname === "/admin/leads/sources") {
+    items.push({ label: "Lead Sources", to: "/admin/leads/sources" });
+    items.push({ label: "All Lead Sources", to: "/admin/leads/sources" });
+  } else if (pathname === "/admin/leads/sources/create") {
+    items.push({ label: "Lead Sources", to: "/admin/leads/sources" });
+    items.push({ label: "Create Source", to: "/admin/leads/sources/create" });
+  } else if (pathname.startsWith("/admin/leads/sources/")) {
+    items.push({ label: "Lead Sources", to: "/admin/leads/sources" });
+    items.push({ label: "Source Performance", to: pathname });
+  } else if (pathname === "/admin/leads/integrations") {
+    items.push({ label: "Lead Automation", to: "/admin/leads/automation" });
+    items.push({ label: "Integrations", to: "/admin/leads/integrations" });
+  } else if (pathname === "/admin/leads/automation") {
+    items.push({ label: "Lead Automation", to: "/admin/leads/automation" });
+    items.push({ label: "Automation Center", to: "/admin/leads/automation" });
+  } else if (pathname === "/admin/leads/automation/activity") {
+    items.push({ label: "Lead Automation", to: "/admin/leads/automation" });
+    items.push({
+      label: "Live Lead Activity",
+      to: "/admin/leads/automation/activity",
+    });
+  } else if (pathname === "/admin/leads/automation/settings") {
+    items.push({ label: "Lead Automation", to: "/admin/leads/automation" });
+    items.push({
+      label: "Automation Settings",
+      to: "/admin/leads/automation/settings",
+    });
+  } else if (pathname.startsWith("/admin/leads/integrations/")) {
+    items.push({ label: "Integrations", to: "/admin/leads/integrations" });
+    items.push({ label: "Platform Connector", to: pathname });
+  } else if (pathname === "/admin/notifications") {
+    items.push({ label: "Notifications", to: "/admin/notifications" });
+    items.push({ label: "Notification Center", to: pathname });
+  } else if (pathname.startsWith("/admin/notifications/")) {
+    items.push({ label: "Notifications", to: "/admin/notifications" });
     const notificationPageNames: Record<string, string> = {
-      '/admin/notifications/create': 'Create Notification',
-      '/admin/notifications/push': 'Push Notifications',
-      '/admin/notifications/executives': 'Executive Alerts',
-      '/admin/notifications/templates': 'Notification Templates',
+      "/admin/notifications/create": "Create Notification",
+      "/admin/notifications/push": "Push Notifications",
+      "/admin/notifications/executives": "Executive Alerts",
+      "/admin/notifications/templates": "Notification Templates",
     };
-    items.push({ label: notificationPageNames[pathname] ?? 'Notifications', to: pathname });
-  } else if (pathname === '/admin/reports') {
-    items.push({ label: 'Reports & Analytics', to: '/admin/reports' });
-    items.push({ label: 'Reports Dashboard', to: pathname });
-  } else if (pathname.startsWith('/admin/reports/')) {
-    items.push({ label: 'Reports & Analytics', to: '/admin/reports' });
+    items.push({
+      label: notificationPageNames[pathname] ?? "Notifications",
+      to: pathname,
+    });
+  } else if (pathname === "/admin/reports") {
+    items.push({ label: "Reports & Analytics", to: "/admin/reports" });
+    items.push({ label: "Reports Dashboard", to: pathname });
+  } else if (pathname.startsWith("/admin/reports/")) {
+    items.push({ label: "Reports & Analytics", to: "/admin/reports" });
     const reportPageNames: Record<string, string> = {
-      '/admin/reports/daily-sales': 'Daily Sales Report',
-      '/admin/reports/executives': 'Executive Performance Report',
-      '/admin/reports/visits': 'Field Visit Report',
-      '/admin/reports/territories': 'Territory & Zone Report',
-      '/admin/reports/conversions': 'Lead Conversion Report',
-      '/admin/reports/revenue': 'Revenue & Growth Report',
-      '/admin/reports/payments': 'Payment Collection Report',
-      '/admin/reports/attendance': 'Executive Attendance Report',
-      '/admin/reports/incentives': 'Incentive & Payout Report',
-      '/admin/reports/categories': 'Category ROI Report',
+      "/admin/reports/daily-sales": "Daily Sales Report",
+      "/admin/reports/executives": "Executive Performance Report",
+      "/admin/reports/visits": "Field Visit Report",
+      "/admin/reports/territories": "Territory & Zone Report",
+      "/admin/reports/conversions": "Lead Conversion Report",
+      "/admin/reports/revenue": "Revenue & Growth Report",
+      "/admin/reports/payments": "Payment Collection Report",
+      "/admin/reports/attendance": "Executive Attendance Report",
+      "/admin/reports/incentives": "Incentive & Payout Report",
+      "/admin/reports/categories": "Category ROI Report",
     };
-    items.push({ label: reportPageNames[pathname] ?? 'Report Details', to: pathname });
-  } else if (pathname.startsWith('/admin/map/')) {
-    items.push({ label: 'Live Tracking & Maps', to: '/admin/map/live' });
+    items.push({
+      label: reportPageNames[pathname] ?? "Report Details",
+      to: pathname,
+    });
+  } else if (pathname.startsWith("/admin/map/")) {
+    items.push({ label: "Live Tracking & Maps", to: "/admin/map/live" });
     const mapPageNames: Record<string, string> = {
-      '/admin/map/live': 'Live Field Map',
-      '/admin/map/executives': 'Executive Locations',
-      '/admin/map/businesses': 'Business Prospect Map',
-      '/admin/map/visits': 'Visit Heatmap',
-      '/admin/map/sales': 'Sales Heatmap',
-      '/admin/map/territories': 'Territory Map',
-      '/admin/map/routes': 'Route Playback',
+      "/admin/map/live": "Live Field Map",
+      "/admin/map/executives": "Executive Locations",
+      "/admin/map/businesses": "Business Prospect Map",
+      "/admin/map/visits": "Visit Heatmap",
+      "/admin/map/sales": "Sales Heatmap",
+      "/admin/map/territories": "Territory Map",
+      "/admin/map/routes": "Route Playback",
     };
-    items.push({ label: mapPageNames[pathname] ?? (pathname.startsWith('/admin/map/routes/') ? 'Route Playback' : 'Map'), to: pathname });
+    items.push({
+      label:
+        mapPageNames[pathname] ??
+        (pathname.startsWith("/admin/map/routes/") ? "Route Playback" : "Map"),
+      to: pathname,
+    });
   } else if (pathname === "/admin/territories") {
     items.push({ label: "Territory Management", to: "/admin/territories" });
     items.push({ label: "Territories", to: "/admin/territories" });
@@ -992,7 +1104,10 @@ function getBreadcrumbTrail(pathname: string) {
   } else if (pathname === "/admin/businesses") {
     items.push({ label: "Businesses & Data", to: "/admin/businesses" });
     items.push({ label: "All Businesses", to: "/admin/businesses" });
-  } else if (pathname === "/admin/businesses/create" || pathname === "/admin/businesses/add") {
+  } else if (
+    pathname === "/admin/businesses/create" ||
+    pathname === "/admin/businesses/add"
+  ) {
     items.push({ label: "Businesses & Data", to: "/admin/businesses" });
     items.push({ label: "Add Business", to: pathname });
   } else if (pathname.startsWith("/admin/businesses/")) {
@@ -1051,8 +1166,8 @@ function getBreadcrumbTrail(pathname: string) {
       label: "Attendance & Mobile GPS Punches",
       to: "/admin/attendance",
     });
-  } else if (pathname === "/admin/my-attendance") {
-    items.push({ label: "Account", to: "/admin/profile" });
+  } else if (pathname === "/employee/attendance") {
+    items.push({ label: "My Workspace", to: "/admin/dashboard" });
     items.push({ label: "Mobile Attendance", to: pathname });
   } else if (pathname === "/admin/payroll") {
     items.push({ label: "Payroll & Finance", to: "/admin/payroll" });
@@ -1080,7 +1195,10 @@ function getBreadcrumbTrail(pathname: string) {
     items.push({ label: "Live Monitoring", to: "/admin/dashboard/live" });
   } else if (pathname === "/admin/dashboard/telecaller") {
     items.push({ label: "Dashboard", to: "/admin/dashboard" });
-    items.push({ label: "Telecaller Dashboard", to: "/admin/dashboard/telecaller" });
+    items.push({
+      label: "Telecaller Dashboard",
+      to: "/admin/dashboard/telecaller",
+    });
   } else if (pathname.startsWith("/admin/profile")) {
     items.push({ label: "Account", to: "/admin/profile" });
     if (pathname === "/admin/profile") {
@@ -1125,19 +1243,40 @@ export default function AppShell() {
 
   useEffect(() => {
     const handleBizNameUpdate = () => setBizBreadcrumbVersion((v) => v + 1);
-    window.addEventListener("visiblo:business-name-updated", handleBizNameUpdate);
-    return () => window.removeEventListener("visiblo:business-name-updated", handleBizNameUpdate);
+    window.addEventListener(
+      "visiblo:business-name-updated",
+      handleBizNameUpdate,
+    );
+    return () =>
+      window.removeEventListener(
+        "visiblo:business-name-updated",
+        handleBizNameUpdate,
+      );
   }, []);
 
   useEffect(() => {
-    const handleTeamNameUpdate = () => setTeamBreadcrumbVersion((version) => version + 1);
+    const handleTeamNameUpdate = () =>
+      setTeamBreadcrumbVersion((version) => version + 1);
     window.addEventListener("visiblo:team-name-updated", handleTeamNameUpdate);
-    return () => window.removeEventListener("visiblo:team-name-updated", handleTeamNameUpdate);
+    return () =>
+      window.removeEventListener(
+        "visiblo:team-name-updated",
+        handleTeamNameUpdate,
+      );
   }, []);
 
   const { user } = useAppSelector((s) => s.auth);
-  const { platform, tenant, loaded: authzLoaded, loading: authzLoading } = useAppSelector((s) => s.authorization);
-  const { bootstrap: runtimeBootstrap, hasPermission: hasBootstrapPermission, hasModule } = useRuntimeBootstrap();
+  const {
+    platform,
+    tenant,
+    loaded: authzLoaded,
+    loading: authzLoading,
+  } = useAppSelector((s) => s.authorization);
+  const {
+    bootstrap: runtimeBootstrap,
+    hasPermission: hasBootstrapPermission,
+    hasModule,
+  } = useRuntimeBootstrap();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -1188,7 +1327,10 @@ export default function AppShell() {
     } catch {
       /* ignore */
     }
-    const bootstrapLogo = (runtimeBootstrap?.tenant as any)?.logoUrl || (tenant as any)?.logoUrl || "";
+    const bootstrapLogo =
+      (runtimeBootstrap?.tenant as any)?.logoUrl ||
+      (tenant as any)?.logoUrl ||
+      "";
     setBranding({
       logoUrl: bootstrapLogo,
       collapsedLogoUrl: "",
@@ -1205,12 +1347,18 @@ export default function AppShell() {
   useEffect(() => {
     loadBranding();
     window.addEventListener("workspace_branding_updated", loadBranding);
-    return () => window.removeEventListener("workspace_branding_updated", loadBranding);
+    return () =>
+      window.removeEventListener("workspace_branding_updated", loadBranding);
   }, [loadBranding]);
 
-  const hasCustomLogo = Boolean(branding.logoUrl && branding.logoUrl.trim() !== "");
-  const hasCollapsedLogo = Boolean(branding.collapsedLogoUrl && branding.collapsedLogoUrl.trim() !== "");
-  const canRenderCustomLogoInSidebar = (hasCustomLogo || hasCollapsedLogo) && branding.showLogoInSidebar;
+  const hasCustomLogo = Boolean(
+    branding.logoUrl && branding.logoUrl.trim() !== "",
+  );
+  const hasCollapsedLogo = Boolean(
+    branding.collapsedLogoUrl && branding.collapsedLogoUrl.trim() !== "",
+  );
+  const canRenderCustomLogoInSidebar =
+    (hasCustomLogo || hasCollapsedLogo) && branding.showLogoInSidebar;
 
   useEffect(() => {
     if (!authzLoaded && !authzLoading) {
@@ -1267,24 +1415,44 @@ export default function AppShell() {
   useEffect(() => {
     if (isExecutiveRole) return;
     const controller = new AbortController();
-    api.get<{
-      teamCount: number;
-      executiveCount: number;
-      ruleCount: number;
-      targetAchievement: number;
-      incentiveEarned: number;
-    }>("/tenant/crm/targets/navigation-summary", { signal: controller.signal })
+    api
+      .get<{
+        teamCount: number;
+        executiveCount: number;
+        ruleCount: number;
+        targetAchievement: number;
+        incentiveEarned: number;
+      }>("/tenant/crm/targets/navigation-summary", {
+        signal: controller.signal,
+      })
       .then(({ data }) => setTargetNavigationSummary(data))
       .catch(async () => {
         if (controller.signal.aborted) return;
-        const dateParts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit" }).formatToParts(new Date());
-        const value = (type: Intl.DateTimeFormatPartTypes) => dateParts.find((part) => part.type === type)?.value ?? "";
+        const dateParts = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Asia/Kolkata",
+          year: "numeric",
+          month: "2-digit",
+        }).formatToParts(new Date());
+        const value = (type: Intl.DateTimeFormatPartTypes) =>
+          dateParts.find((part) => part.type === type)?.value ?? "";
         try {
           const [rules, incentives] = await Promise.all([
-            api.get<{ summary: { total: number } }>("/tenant/crm/incentive-rules", { signal: controller.signal }),
-            api.get<{ summary: { total: number } }>("/tenant/crm/incentives", { params: { period: `${value("year")}-${value("month")}` }, signal: controller.signal }),
+            api.get<{ summary: { total: number } }>(
+              "/tenant/crm/incentive-rules",
+              { signal: controller.signal },
+            ),
+            api.get<{ summary: { total: number } }>("/tenant/crm/incentives", {
+              params: { period: `${value("year")}-${value("month")}` },
+              signal: controller.signal,
+            }),
           ]);
-          setTargetNavigationSummary({ teamCount: 0, executiveCount: 0, ruleCount: rules.data.summary.total, targetAchievement: 0, incentiveEarned: incentives.data.summary.total });
+          setTargetNavigationSummary({
+            teamCount: 0,
+            executiveCount: 0,
+            ruleCount: rules.data.summary.total,
+            targetAchievement: 0,
+            incentiveEarned: incentives.data.summary.total,
+          });
         } catch {
           // Navigation remains usable without badges when summary access is unavailable.
         }
@@ -1294,7 +1462,13 @@ export default function AppShell() {
 
   useEffect(() => {
     const controller = new AbortController();
-    api.get<{ all: number; today: number; scheduled: number; completed: number }>("/tenant/crm/demos/navigation-summary", { signal: controller.signal })
+    api
+      .get<{
+        all: number;
+        today: number;
+        scheduled: number;
+        completed: number;
+      }>("/tenant/crm/demos/navigation-summary", { signal: controller.signal })
       .then(({ data }) => setDemoNavigationSummary(data))
       .catch(() => undefined);
     return () => controller.abort();
@@ -1303,7 +1477,11 @@ export default function AppShell() {
   useEffect(() => {
     if (isExecutiveRole) return;
     const controller = new AbortController();
-    api.get<{ summary: { activeExecutives: number; prospects: number } }>("/tenant/crm/maps/snapshot", { signal: controller.signal })
+    api
+      .get<{ summary: { activeExecutives: number; prospects: number } }>(
+        "/tenant/crm/maps/snapshot",
+        { signal: controller.signal },
+      )
       .then(({ data }) => setMapNavigationSummary(data.summary))
       .catch(() => {
         // Navigation remains usable without live badges when map access is unavailable.
@@ -1311,61 +1489,93 @@ export default function AppShell() {
     return () => controller.abort();
   }, [isExecutiveRole, tenantId]);
 
-  const compactCurrency = (value: number) => new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    notation: "compact",
-    maximumFractionDigits: 2,
-  }).format(value);
+  const compactCurrency = (value: number) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      notation: "compact",
+      maximumFractionDigits: 2,
+    }).format(value);
   const targetAwareNavCategories = targetNavigationSummary
-    ? navCategories.map((category) => category.title !== "Targets & Incentives" ? category : {
-        ...category,
-        items: category.items.map((item) => ({
-          ...item,
-          badge: item.label === "Target Dashboard" ? `${targetNavigationSummary.targetAchievement}%`
-            : item.label === "Team Targets" ? `${targetNavigationSummary.teamCount} Teams`
-            : item.label === "Executive Targets" ? `${targetNavigationSummary.executiveCount} Staff`
-            : item.label === "Incentive Rules" ? `${targetNavigationSummary.ruleCount} Rules`
-            : item.label === "Incentives & Payouts" ? compactCurrency(targetNavigationSummary.incentiveEarned)
-            : item.badge,
-        })),
-      })
+    ? navCategories.map((category) =>
+        category.title !== "Targets & Incentives"
+          ? category
+          : {
+              ...category,
+              items: category.items.map((item) => ({
+                ...item,
+                badge:
+                  item.label === "Target Dashboard"
+                    ? `${targetNavigationSummary.targetAchievement}%`
+                    : item.label === "Team Targets"
+                      ? `${targetNavigationSummary.teamCount} Teams`
+                      : item.label === "Executive Targets"
+                        ? `${targetNavigationSummary.executiveCount} Staff`
+                        : item.label === "Incentive Rules"
+                          ? `${targetNavigationSummary.ruleCount} Rules`
+                          : item.label === "Incentives & Payouts"
+                            ? compactCurrency(
+                                targetNavigationSummary.incentiveEarned,
+                              )
+                            : item.badge,
+              })),
+            },
+      )
     : navCategories;
   const dynamicAdminNavCategories = mapNavigationSummary
-    ? targetAwareNavCategories.map((category) => category.title !== "Live Tracking & Maps" ? category : {
-        ...category,
-        items: category.items.map((item) => ({
-          ...item,
-          badge: item.label === "Live Field Map" ? `${mapNavigationSummary.activeExecutives} Live`
-            : item.label === "Business Prospect Map" ? `${mapNavigationSummary.prospects} Pins`
-            : item.badge,
-        })),
-      })
+    ? targetAwareNavCategories.map((category) =>
+        category.title !== "Live Tracking & Maps"
+          ? category
+          : {
+              ...category,
+              items: category.items.map((item) => ({
+                ...item,
+                badge:
+                  item.label === "Live Field Map"
+                    ? `${mapNavigationSummary.activeExecutives} Live`
+                    : item.label === "Business Prospect Map"
+                      ? `${mapNavigationSummary.prospects} Pins`
+                      : item.badge,
+              })),
+            },
+      )
     : targetAwareNavCategories;
   const demoAwareNavCategories = demoNavigationSummary
-    ? dynamicAdminNavCategories.map((category) => category.title !== "Demo Management" ? category : {
-        ...category,
-        items: category.items.map((item) => ({
-          ...item,
-          badge: item.label === "All Demos" ? `${demoNavigationSummary.all} Demos`
-            : item.label === "Demos Today" ? `${demoNavigationSummary.today} Today`
-            : item.label === "Scheduled Demos" ? `${demoNavigationSummary.scheduled} Upcoming`
-            : item.label === "Demo Completed" ? `${demoNavigationSummary.completed} Done`
-            : item.badge,
-        })),
-      })
+    ? dynamicAdminNavCategories.map((category) =>
+        category.title !== "Demo Management"
+          ? category
+          : {
+              ...category,
+              items: category.items.map((item) => ({
+                ...item,
+                badge:
+                  item.label === "All Demos"
+                    ? `${demoNavigationSummary.all} Demos`
+                    : item.label === "Demos Today"
+                      ? `${demoNavigationSummary.today} Today`
+                      : item.label === "Scheduled Demos"
+                        ? `${demoNavigationSummary.scheduled} Upcoming`
+                        : item.label === "Demo Completed"
+                          ? `${demoNavigationSummary.completed} Done`
+                          : item.badge,
+              })),
+            },
+      )
     : dynamicAdminNavCategories;
   const displayedNavCategories = isTelecallerRole
     ? telecallerNavCategories
     : isFieldExecutiveRole
-    ? fieldExecutiveNavCategories
-    : demoAwareNavCategories;
+      ? fieldExecutiveNavCategories
+      : demoAwareNavCategories;
   const showBigLogo = !collapsed || isHovered;
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 font-sans">
       {isFieldExecutiveRole && tenant?.membershipId && (
-        <ExecutiveLocationTracker tenantId={tenantId} membershipId={tenant.membershipId} />
+        <ExecutiveLocationTracker
+          tenantId={tenantId}
+          membershipId={tenant.membershipId}
+        />
       )}
       {/* Refined Enterprise White Theme Sidebar */}
       <aside
@@ -1392,8 +1602,8 @@ export default function AppShell() {
                   branding.sidebarLogoAlign === "center"
                     ? "justify-center"
                     : branding.sidebarLogoAlign === "right"
-                    ? "justify-end"
-                    : "justify-start"
+                      ? "justify-end"
+                      : "justify-start"
                 }`}
               >
                 {canRenderCustomLogoInSidebar && branding.logoUrl ? (
@@ -1402,18 +1612,25 @@ export default function AppShell() {
                       branding.sidebarLogoAlign === "center"
                         ? "justify-center"
                         : branding.sidebarLogoAlign === "right"
-                        ? "justify-end"
-                        : "justify-start"
+                          ? "justify-end"
+                          : "justify-start"
                     }`}
                     style={{
                       backgroundColor: branding.sidebarLogoBg,
                       borderRadius: `${branding.sidebarLogoRadius}px`,
-                      padding: branding.sidebarLogoBg !== "transparent" ? "4px 8px" : "0px",
+                      padding:
+                        branding.sidebarLogoBg !== "transparent"
+                          ? "4px 8px"
+                          : "0px",
                     }}
                   >
                     <img
                       src={branding.logoUrl}
-                      alt={runtimeBootstrap?.tenant?.displayName || (tenant as any)?.companyName || "Company Logo"}
+                      alt={
+                        runtimeBootstrap?.tenant?.displayName ||
+                        (tenant as any)?.companyName ||
+                        "Company Logo"
+                      }
                       style={{
                         height: `${branding.sidebarLogoHeight}px`,
                         maxHeight: "56px",
@@ -1459,17 +1676,24 @@ export default function AppShell() {
                   style={{
                     backgroundColor: branding.sidebarLogoBg,
                     borderRadius: `${branding.sidebarLogoRadius}px`,
-                    padding: branding.sidebarLogoBg !== "transparent" ? "2px 4px" : "0px",
+                    padding:
+                      branding.sidebarLogoBg !== "transparent"
+                        ? "2px 4px"
+                        : "0px",
                   }}
                 >
                   <img
                     src={branding.collapsedLogoUrl || branding.logoUrl}
                     alt="Company Logo"
                     style={{
-                      height: branding.collapsedLogoUrl ? "38px" : `${Math.min(branding.sidebarLogoHeight, 40)}px`,
+                      height: branding.collapsedLogoUrl
+                        ? "38px"
+                        : `${Math.min(branding.sidebarLogoHeight, 40)}px`,
                       maxHeight: "44px",
                       maxWidth: "48px",
-                      objectFit: branding.collapsedLogoUrl ? "contain" : branding.sidebarLogoObjectFit,
+                      objectFit: branding.collapsedLogoUrl
+                        ? "contain"
+                        : branding.sidebarLogoObjectFit,
                     }}
                     onError={(e) => {
                       (e.currentTarget as HTMLElement).style.display = "none";
@@ -1480,7 +1704,11 @@ export default function AppShell() {
                 <img
                   src={smallLogo}
                   alt="Smart Field Work Favicon"
-                  style={{ width: "60px", height: "60px", objectFit: "contain" }}
+                  style={{
+                    width: "60px",
+                    height: "60px",
+                    objectFit: "contain",
+                  }}
                 />
               )}
             </button>
@@ -1512,7 +1740,8 @@ export default function AppShell() {
                   ) {
                     return true;
                   }
-                  const isPlatformScope = item.permission.startsWith("platform.");
+                  const isPlatformScope =
+                    item.permission.startsWith("platform.");
                   const permissionsList = isPlatformScope
                     ? platform?.permissions
                     : tenant?.permissions;
