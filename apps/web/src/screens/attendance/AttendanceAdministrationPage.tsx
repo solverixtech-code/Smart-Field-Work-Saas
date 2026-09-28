@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "../../components/ui/Button";
+import { DatePicker } from "../../components/ui/DatePicker";
 import { GoogleMapPicker } from "../../components/ui/GoogleMapPicker";
 import { Input } from "../../components/ui/Input";
 import { Modal } from "../../components/ui/Modal";
@@ -1665,36 +1666,36 @@ export default function AttendanceAdministrationPage() {
 
           {holidayEditor.durationMode === "RANGE" ? (
             <div className="grid grid-cols-2 gap-3">
-              <Input
+              <DatePicker
                 id="holiday-start-date"
-                type="date"
-                label="Start Date (From) *"
+                label="Start Date (From)"
+                required
                 value={holidayEditor.startDate}
-                onChange={(event) =>
-                  setHolidayEditor({ ...holidayEditor, startDate: event.target.value })
+                onChange={(val) =>
+                  setHolidayEditor({ ...holidayEditor, startDate: val })
                 }
               />
-              <Input
+              <DatePicker
                 id="holiday-end-date"
-                type="date"
-                label="End Date (To) *"
+                label="End Date (To)"
+                required
                 value={holidayEditor.endDate}
-                onChange={(event) =>
-                  setHolidayEditor({ ...holidayEditor, endDate: event.target.value })
+                onChange={(val) =>
+                  setHolidayEditor({ ...holidayEditor, endDate: val })
                 }
               />
             </div>
           ) : (
-            <Input
+            <DatePicker
               id="holiday-date"
-              type="date"
-              label="Holiday Date *"
+              label="Holiday Date"
+              required
               value={holidayEditor.startDate}
-              onChange={(event) =>
+              onChange={(val) =>
                 setHolidayEditor({
                   ...holidayEditor,
-                  startDate: event.target.value,
-                  endDate: event.target.value,
+                  startDate: val,
+                  endDate: val,
                 })
               }
             />
@@ -1737,7 +1738,7 @@ export default function AttendanceAdministrationPage() {
         title={leaveEditor?.id ? "Edit approved leave" : "Add approved leave"}
       >
         {leaveEditor ? (
-          <div className="space-y-4">
+          <div className="space-y-4 font-sans">
             <Select
               label="Employee"
               value={leaveEditor.membershipId}
@@ -1767,27 +1768,27 @@ export default function AttendanceAdministrationPage() {
               }
             />
             <div className="grid grid-cols-2 gap-3">
-              <Input
+              <DatePicker
                 id="leave-start"
-                type="date"
                 label="Start date"
+                required
                 value={leaveEditor.startDate}
-                onChange={(event) =>
+                onChange={(val) =>
                   setLeaveEditor({
                     ...leaveEditor,
-                    startDate: event.target.value,
+                    startDate: val,
                   })
                 }
               />
-              <Input
+              <DatePicker
                 id="leave-end"
-                type="date"
                 label="End date"
+                required
                 value={leaveEditor.endDate}
-                onChange={(event) =>
+                onChange={(val) =>
                   setLeaveEditor({
                     ...leaveEditor,
-                    endDate: event.target.value,
+                    endDate: val,
                   })
                 }
               />
