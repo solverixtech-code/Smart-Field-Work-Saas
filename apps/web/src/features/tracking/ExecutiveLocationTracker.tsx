@@ -82,8 +82,10 @@ export function ExecutiveLocationTracker({ tenantId, membershipId }: Props) {
     };
     const onVisible = () => { if (document.visibilityState === 'visible') void refreshSession(); else void flush(); };
     const onOnline = () => void flush();
+    const onAttendanceChanged = () => void refreshSession();
     document.addEventListener('visibilitychange', onVisible);
     window.addEventListener('online', onOnline);
+    window.addEventListener('visiblo:attendance-changed', onAttendanceChanged);
     void refreshSession();
     const interval = window.setInterval(() => void refreshSession(), 60_000);
     return () => {
@@ -91,6 +93,7 @@ export function ExecutiveLocationTracker({ tenantId, membershipId }: Props) {
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('online', onOnline);
+      window.removeEventListener('visiblo:attendance-changed', onAttendanceChanged);
       stop();
     };
   }, [membershipId, tenantId]);

@@ -53,6 +53,7 @@ import { DependencyMapPage } from "./screens/platform/modules/DependencyMapPage"
 
 import ShiftManagementPage from "./screens/shifts/ShiftManagementPage";
 import AttendanceMonitoringPage from "./screens/attendance/AttendanceMonitoringPage";
+import MobileAttendancePage from "./screens/attendance/MobileAttendancePage";
 import PayrollManagementPage from "./screens/payroll/PayrollManagementPage";
 import PayrollSettingsPage from "./screens/payroll/PayrollSettingsPage";
 
@@ -400,6 +401,9 @@ export default function AppRouter() {
                 path="/admin/attendance"
                 element={<AttendanceMonitoringPage />}
               />
+            </Route>
+            <Route element={<PermissionRoute permission="attendance.self.punch" />}>
+              <Route path="/admin/my-attendance" element={<MobileAttendancePage />} />
             </Route>
 
             {/* Teams & Hierarchy Management Routes */}

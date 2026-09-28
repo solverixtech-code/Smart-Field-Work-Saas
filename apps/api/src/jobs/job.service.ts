@@ -15,26 +15,41 @@ import { MetricsService } from "../observability/metrics.service";
 export const mediaDeletePayload = z
   .object({ assetId: z.string().uuid(), tenantId: z.string().uuid() })
   .strict();
-export const followUpPushPayload = z.object({
-  tenantId: z.string().uuid(),
-  followUpId: z.string().uuid(),
-  expectedUpdatedAt: z.string().datetime(),
-  trigger: z.enum(['assigned', 'due', 'completed']),
-}).strict();
-export const gpsRetentionCleanupPayload = z.object({
-  tenantId: z.string().uuid(),
-  retentionDays: z.number().int().min(1).max(3650),
-}).strict();
+export const followUpPushPayload = z
+  .object({
+    tenantId: z.string().uuid(),
+    followUpId: z.string().uuid(),
+    expectedUpdatedAt: z.string().datetime(),
+    trigger: z.enum(["assigned", "due", "completed"]),
+  })
+  .strict();
+export const gpsRetentionCleanupPayload = z
+  .object({
+    tenantId: z.string().uuid(),
+    retentionDays: z.number().int().min(1).max(3650),
+  })
+  .strict();
+export const attendanceFinalizePayload = z
+  .object({
+    tenantId: z.string().uuid(),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  })
+  .strict();
 const registry = {
   "media.delete-object": mediaDeletePayload,
-  'followup.push': followUpPushPayload,
-  'gps.retention-cleanup': gpsRetentionCleanupPayload,
+  "followup.push": followUpPushPayload,
+  "gps.retention-cleanup": gpsRetentionCleanupPayload,
+  "attendance.finalize-day": attendanceFinalizePayload,
 } as const;
 export type JobType = keyof typeof registry;
 export const jobMetricOperation = (type: string) =>
-  type === 'followup.push' ? 'followup.push' as const
-    : type === 'gps.retention-cleanup' ? 'gps.retention-cleanup' as const
-      : 'media.delete-object' as const;
+  type === "followup.push"
+    ? ("followup.push" as const)
+    : type === "gps.retention-cleanup"
+      ? ("gps.retention-cleanup" as const)
+      : type === "attendance.finalize-day"
+        ? ("attendance.finalize-day" as const)
+        : ("media.delete-object" as const);
 export const JOB_LEASE_MS = 60000;
 export const JOB_TIMEOUT_MS = 20000;
 export class PermanentJobError extends Error {
@@ -46,10 +61,24 @@ export class PermanentJobError extends Error {
   }
 }
 const clearedLease = { workerId: null, leaseToken: null, leaseExpiresAt: null };
-const claimSelect = { id: true, type: true, tenantId: true, actorUserId: true, membershipId: true,
-  originRequestId: true, correlationId: true, payload: true, leaseToken: true, leaseExpiresAt: true,
-  status: true, attemptCount: true, retryUntilAttempt: true } satisfies Prisma.BackgroundJobSelect;
-export type ClaimedJob = Prisma.BackgroundJobGetPayload<{ select: typeof claimSelect }>;
+const claimSelect = {
+  id: true,
+  type: true,
+  tenantId: true,
+  actorUserId: true,
+  membershipId: true,
+  originRequestId: true,
+  correlationId: true,
+  payload: true,
+  leaseToken: true,
+  leaseExpiresAt: true,
+  status: true,
+  attemptCount: true,
+  retryUntilAttempt: true,
+} satisfies Prisma.BackgroundJobSelect;
+export type ClaimedJob = Prisma.BackgroundJobGetPayload<{
+  select: typeof claimSelect;
+}>;
 
 @Injectable()
 export class JobService {
@@ -127,7 +156,10 @@ export class JobService {
         Array<{ now: Date }>
       >`SELECT (clock_timestamp() AT TIME ZONE 'UTC') AS now`;
       const results: ClaimedJob[] = [];
-      const selected = await tx.backgroundJob.findMany({ where: { id: { in: rows.map((row) => row.id) } }, select: claimSelect });
+      const selected = await tx.backgroundJob.findMany({
+        where: { id: { in: rows.map((row) => row.id) } },
+        select: claimSelect,
+      });
       for (const job of selected) {
         const id = job.id;
         if (job.status === "RUNNING" && job.leaseToken)
@@ -195,7 +227,10 @@ export class JobService {
       Array<{ id: string }>
     >`SELECT id FROM "BackgroundJob" WHERE id=${id} AND status='RUNNING' AND "leaseToken"=${token} AND "leaseExpiresAt">(clock_timestamp() AT TIME ZONE 'UTC') FOR UPDATE`;
     if (!matches.length) throw new ConflictException("JOB_LEASE_LOST");
-    return tx.backgroundJob.findUniqueOrThrow({ where: { id }, select: { attemptCount: true, retryUntilAttempt: true } });
+    return tx.backgroundJob.findUniqueOrThrow({
+      where: { id },
+      select: { attemptCount: true, retryUntilAttempt: true },
+    });
   }
   async succeed(
     job: ClaimedJob,
@@ -212,7 +247,14 @@ export class JobService {
       if (changed !== 1) throw new ConflictException("JOB_LEASE_LOST");
       await tx.backgroundJobAttempt.update({
         where: { leaseToken: token },
-        data: { status: "SUCCEEDED", finishedAt: (await tx.$queryRaw<Array<{ now: Date }>>`SELECT (clock_timestamp() AT TIME ZONE 'UTC') AS now`)[0].now },
+        data: {
+          status: "SUCCEEDED",
+          finishedAt: (
+            await tx.$queryRaw<
+              Array<{ now: Date }>
+            >`SELECT (clock_timestamp() AT TIME ZONE 'UTC') AS now`
+          )[0].now,
+        },
       });
     });
     this.metrics.observe("jobs", {
@@ -236,13 +278,16 @@ export class JobService {
         where: { leaseToken: token },
         data: { status: "FAILED", errorCode: code, finishedAt: now },
       });
-      const delaySeconds = Math.min(300, 2 ** Math.min(current.attemptCount, 8));
+      const delaySeconds = Math.min(
+        300,
+        2 ** Math.min(current.attemptCount, 8),
+      );
       const changed = await tx.$executeRaw`UPDATE "BackgroundJob" SET
-        status=${terminal ? 'DEAD' : 'PENDING'}, "deadAt"=CASE WHEN ${terminal} THEN (clock_timestamp() AT TIME ZONE 'UTC') ELSE NULL END,
+        status=${terminal ? "DEAD" : "PENDING"}, "deadAt"=CASE WHEN ${terminal} THEN (clock_timestamp() AT TIME ZONE 'UTC') ELSE NULL END,
         "availableAt"=(clock_timestamp() AT TIME ZONE 'UTC')+make_interval(secs=>${delaySeconds}),
         "workerId"=NULL,"leaseToken"=NULL,"leaseExpiresAt"=NULL,"lastErrorCode"=${code},"revision"="revision"+1,"updatedAt"=(clock_timestamp() AT TIME ZONE 'UTC')
         WHERE id=${job.id} AND status='RUNNING' AND "leaseToken"=${token} AND "leaseExpiresAt">(clock_timestamp() AT TIME ZONE 'UTC')`;
-      if (changed !== 1) throw new ConflictException('JOB_LEASE_LOST');
+      if (changed !== 1) throw new ConflictException("JOB_LEASE_LOST");
       return terminal;
     });
     this.metrics.observe("jobs", {
@@ -261,7 +306,16 @@ export class JobService {
       .parse(input);
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "BackgroundJob" WHERE id=${id} FOR UPDATE`;
-      const job = await tx.backgroundJob.findUnique({ where: { id }, select: { id: true, status: true, revision: true, attemptCount: true, maxAttempts: true } });
+      const job = await tx.backgroundJob.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          status: true,
+          revision: true,
+          attemptCount: true,
+          maxAttempts: true,
+        },
+      });
       if (!job) throw new NotFoundException("Job not found");
       if (job.status !== "DEAD" || job.revision !== expectedRevision)
         throw new ConflictException("JOB_RETRY_CONFLICT");

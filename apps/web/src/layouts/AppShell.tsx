@@ -625,6 +625,13 @@ const fieldExecutiveNavCategories: NavCategory[] = [
     title: "My Field Schedule",
     items: [
       {
+        label: "Mobile Attendance",
+        icon: Smartphone,
+        to: "/admin/my-attendance",
+        permission: "attendance.self.punch",
+        moduleCode: "attendance",
+      },
+      {
         label: "My Visits",
         icon: MapPin,
         to: "/admin/visits",
@@ -1044,6 +1051,9 @@ function getBreadcrumbTrail(pathname: string) {
       label: "Attendance & Mobile GPS Punches",
       to: "/admin/attendance",
     });
+  } else if (pathname === "/admin/my-attendance") {
+    items.push({ label: "Account", to: "/admin/profile" });
+    items.push({ label: "Mobile Attendance", to: pathname });
   } else if (pathname === "/admin/payroll") {
     items.push({ label: "Payroll & Finance", to: "/admin/payroll" });
     items.push({ label: "Payroll & Payslip Management", to: "/admin/payroll" });

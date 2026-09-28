@@ -317,6 +317,9 @@ export class TenantRolesController {
           { action: 'create_shifts', label: 'Create Shifts', code: 'workforce.shifts.create', granted: grantedCodes.has('workforce.shifts.create') },
           { action: 'self_punch', label: 'Self Punch', code: 'attendance.self.punch', granted: grantedCodes.has('attendance.self.punch') },
           { action: 'monitoring', label: 'Monitor Punches', code: 'attendance.monitoring.view', granted: grantedCodes.has('attendance.monitoring.view') },
+          { action: 'settings', label: 'Manage Attendance Settings', code: 'attendance.settings.manage', granted: grantedCodes.has('attendance.settings.manage') },
+          { action: 'exceptions', label: 'Review Exceptions', code: 'attendance.exceptions.manage', granted: grantedCodes.has('attendance.exceptions.manage') },
+          { action: 'devices', label: 'Manage Devices', code: 'attendance.devices.manage', granted: grantedCodes.has('attendance.devices.manage') },
         ],
         scopes: [],
       },
@@ -803,6 +806,9 @@ function formatPermissionActionLabel(
     case 'workforce.shifts.assign': return 'Assign Shifts';
     case 'attendance.self.punch': return 'Self Punch';
     case 'attendance.monitoring.view': return 'Monitor Punches';
+    case 'attendance.settings.manage': return 'Manage Attendance Settings';
+    case 'attendance.exceptions.manage': return 'Review Exceptions';
+    case 'attendance.devices.manage': return 'Manage Devices';
 
     // Payroll
     case 'payroll.payslips.view': return 'View Payslips';

@@ -225,7 +225,7 @@ export class MapService {
           },
         }),
         tx.punchLog.findMany({
-          where: { tenantId, timestamp: { gte: start, lt: end }, tenantMembershipId: { not: null } },
+          where: { tenantId, timestamp: { gte: start, lt: end } },
           orderBy: { timestamp: "asc" },
           take: 5000,
           select: { id: true, tenantMembershipId: true, type: true, timestamp: true, latitude: true, longitude: true, locationName: true },

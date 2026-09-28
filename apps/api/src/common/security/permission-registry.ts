@@ -10,7 +10,7 @@ export interface PermissionDefinition {
   moduleKey: string;
 }
 
-export const PERMISSION_REGISTRY_VERSION = '1.7.0';
+export const PERMISSION_REGISTRY_VERSION = '1.8.0';
 
 export const CRM_PHASE_1_1_PERMISSIONS: PermissionDefinition[] = [
   ...(
@@ -383,6 +383,33 @@ export const PERMISSION_REGISTRY: PermissionDefinition[] = [
     action: 'view',
     description: 'View team and workspace attendance logs',
     moduleKey: 'attendance_monitoring',
+  },
+  {
+    code: 'attendance.settings.manage',
+    scope: PermissionScope.TENANT,
+    domain: 'attendance',
+    resource: 'settings',
+    action: 'manage',
+    description: 'Manage attendance policies, sites, calendars, leave, and mobility overrides',
+    moduleKey: 'attendance_settings',
+  },
+  {
+    code: 'attendance.exceptions.manage',
+    scope: PermissionScope.TENANT,
+    domain: 'attendance',
+    resource: 'exceptions',
+    action: 'manage',
+    description: 'Review attendance exceptions',
+    moduleKey: 'attendance_exceptions',
+  },
+  {
+    code: 'attendance.devices.manage',
+    scope: PermissionScope.TENANT,
+    domain: 'attendance',
+    resource: 'devices',
+    action: 'manage',
+    description: 'Approve and revoke attendance browser installations',
+    moduleKey: 'attendance_devices',
   },
 
   // Payroll & Payslips
@@ -832,6 +859,9 @@ export const DEFAULT_TENANT_ROLE_GRANTS: Record<string, string[]> = {
     'workforce.shifts.assign',
     'attendance.self.punch',
     'attendance.monitoring.view',
+    'attendance.settings.manage',
+    'attendance.exceptions.manage',
+    'attendance.devices.manage',
     'crm.dashboard.view',
     'crm.leads.view',
     'crm.leads.create',
