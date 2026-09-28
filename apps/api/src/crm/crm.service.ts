@@ -91,7 +91,8 @@ const executiveDirectoryQuery = z.object({
   search: z.string().trim().max(100).optional().default(""),
   region: z.string().trim().max(100).optional(),
   status: z.enum(["Active", "On Field", "On Leave", "Inactive"]).optional(),
-}).strict();
+  role: z.string().trim().max(100).optional(),
+});
 
 function localDateKey(date: Date, timezone: string) {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -444,17 +445,21 @@ export class CrmService {
       const memberships = await tx.tenantMembership.findMany({
         where: {
           tenantId,
-          OR: [
-            { tenantRole: { code: { in: ["field_executive", "sales_executive", "executive"] } } },
-            { user: { role: "FIELD_EXECUTIVE" } },
-          ],
+          NOT: {
+            OR: [
+              { tenantRole: { code: "tenant_admin" } },
+              { user: { role: "SUPER_ADMIN" } },
+            ],
+          },
         },
         select: {
           id: true,
           status: true,
           employeeCode: true,
+          designation: true,
           joinedAt: true,
           createdAt: true,
+          tenantRole: { select: { code: true, name: true } },
           team: { select: { name: true } },
           user: {
             select: {
@@ -465,6 +470,7 @@ export class CrmService {
               employeeCode: true,
               joinedAt: true,
               status: true,
+              role: true,
             },
           },
           territoryMemberships: {
@@ -557,6 +563,9 @@ export class CrmService {
               ? "On Field"
               : "Active";
         const territory = membership.territoryMemberships[0]?.territory;
+        const roleName = membership.tenantRole?.name ?? membership.designation ?? (membership.user.role ? membership.user.role.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') : "Field Executive");
+        const roleCode = membership.tenantRole?.code ?? membership.user.role?.toLowerCase() ?? "field_executive";
+
         return {
           membershipId: membership.id,
           employeeCode: membership.employeeCode ?? membership.user.employeeCode,
@@ -564,6 +573,8 @@ export class CrmService {
           email: membership.user.email,
           mobile: membership.user.mobile,
           avatarUrl: membership.user.avatarUrl,
+          roleCode,
+          roleName,
           team: membership.team?.name ?? "Not assigned",
           region: territory?.city ?? territory?.regionArea ?? territory?.state ?? territory?.name ?? "Not assigned",
           status,
@@ -583,9 +594,21 @@ export class CrmService {
       };
       const normalizedSearch = q.search.toLocaleLowerCase();
       const filtered = allItems.filter((item) => {
-        const matchesSearch = !normalizedSearch || [item.name, item.email, item.employeeCode, item.mobile ?? "", item.team, item.region]
-          .some((value) => value.toLocaleLowerCase().includes(normalizedSearch));
-        return matchesSearch && (!q.region || item.region === q.region) && (!q.status || item.status === q.status);
+        const matchesSearch = !normalizedSearch || [
+          item.name,
+          item.email,
+          item.employeeCode,
+          item.mobile ?? "",
+          item.team,
+          item.region,
+          item.roleName,
+        ].some((value) => value.toLocaleLowerCase().includes(normalizedSearch));
+
+        const matchesRegion = !q.region || item.region === q.region;
+        const matchesStatus = !q.status || item.status === q.status;
+        const matchesRole = !q.role || item.roleCode === q.role || item.roleName === q.role;
+
+        return matchesSearch && matchesRegion && matchesStatus && matchesRole;
       });
       const start = (q.page - 1) * q.limit;
       const topPerformers = memberships
@@ -607,6 +630,7 @@ export class CrmService {
         totalPages: Math.ceil(filtered.length / q.limit),
         summary,
         regions: [...new Set(allItems.map((item) => item.region))].sort(),
+        roles: [...new Set(allItems.map((item) => item.roleName))].sort(),
         topPerformers,
       };
     });

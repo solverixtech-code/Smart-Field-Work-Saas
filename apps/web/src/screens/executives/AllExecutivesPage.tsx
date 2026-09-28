@@ -41,6 +41,8 @@ interface ExecutiveDirectoryItem {
   email: string;
   mobile: string | null;
   avatarUrl: string | null;
+  roleCode?: string;
+  roleName?: string;
   team: string;
   region: string;
   status: ExecutiveStatus;
@@ -64,6 +66,7 @@ interface ExecutiveDirectoryResponse {
     newThisMonth: number;
   };
   regions: string[];
+  roles?: string[];
   topPerformers: Array<{
     membershipId: string;
     name: string;
@@ -87,6 +90,7 @@ const emptyDirectory: ExecutiveDirectoryResponse = {
     newThisMonth: 0,
   },
   regions: [],
+  roles: [],
   topPerformers: [],
 };
 
@@ -106,6 +110,7 @@ export default function AllExecutivesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebouncedSearch(searchTerm.trim());
   const [regionFilter, setRegionFilter] = useState("All");
+  const [roleFilter, setRoleFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -132,6 +137,7 @@ export default function AllExecutivesPage() {
           limit: 10,
           search: debouncedSearch || undefined,
           region: regionFilter === "All" ? undefined : regionFilter,
+          role: roleFilter === "All" ? undefined : roleFilter,
           status: statusFilter === "All" ? undefined : statusFilter,
         },
       })
@@ -152,7 +158,7 @@ export default function AllExecutivesPage() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [debouncedSearch, page, regionFilter, statusFilter]);
+  }, [debouncedSearch, page, regionFilter, roleFilter, statusFilter]);
 
   const teamOverviewData = [
     { name: "Active", value: directory.summary.active, color: "#10B981" },
@@ -418,6 +424,24 @@ export default function AllExecutivesPage() {
             />
           </div>
 
+          {/* Role Dropdown */}
+          <div className="min-w-[160px]">
+            <Select
+              value={roleFilter}
+              onChange={(e) => {
+                setRoleFilter(e.target.value);
+                setPage(1);
+              }}
+              options={[
+                { label: "All Roles", value: "All" },
+                ...(directory.roles ?? []).map((r) => ({
+                  label: r,
+                  value: r,
+                })),
+              ]}
+            />
+          </div>
+
           {/* Status Dropdown */}
           <div className="min-w-[150px]">
             <Select
@@ -493,10 +517,13 @@ export default function AllExecutivesPage() {
                             <div>
                               <NavLink
                                 to={`/admin/executives/${exec.membershipId}`}
-                                className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline whitespace-nowrap"
+                                className="font-extrabold text-[#0D1F3D] hover:text-[#E20613] hover:underline whitespace-nowrap block"
                               >
                                 {exec.name}
                               </NavLink>
+                              <p className="text-[10px] font-semibold text-slate-500 whitespace-nowrap">
+                                {exec.roleName ?? "Field Executive"}
+                              </p>
                             </div>
                           </div>
                         </td>
