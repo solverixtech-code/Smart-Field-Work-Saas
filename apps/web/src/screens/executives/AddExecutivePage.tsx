@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -122,6 +122,9 @@ function generateRandomEmpId(): string {
 
 export default function AddExecutivePage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
   const [shiftOptions, setShiftOptions] = useState<SelectOption[]>(DEFAULT_SHIFTS);
   const [systemRoleOptionsState, setSystemRoleOptions] = useState<SelectOption[]>(systemRoleOptions);
   const [designationOptionsState, setDesignationOptions] = useState<SelectOption[]>(designationOptions);
@@ -157,6 +160,23 @@ export default function AddExecutivePage() {
 
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('File size exceeds 2MB limit.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        setAvatarPreview(result);
+        toast.success(`Photo ${file.name} loaded successfully!`);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // Fetch real live backend options for Shifts, Teams, Reporting Managers, System Roles, and Regions
   useEffect(() => {
@@ -369,25 +389,60 @@ export default function AddExecutivePage() {
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Personal Information</h3>
             </div>
 
+            {/* Hidden Photo File Input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png, image/jpeg, image/jpg, image/webp"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
             {/* Photo Avatar Header Banner */}
             <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-slate-50/80 p-4 border border-slate-200/60">
               <div className="flex items-center gap-3.5">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0D1F3D]/10 text-xl font-extrabold text-[#0D1F3D] border-2 border-slate-200 shadow-xs shrink-0">
-                  {formData.fullName ? formData.fullName.charAt(0).toUpperCase() : 'FE'}
-                </div>
+                {avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt="Employee Avatar"
+                    className="h-14 w-14 rounded-full object-cover border-2 border-[#0D1F3D] shadow-xs shrink-0"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0D1F3D]/10 text-xl font-extrabold text-[#0D1F3D] border-2 border-slate-200 shadow-xs shrink-0">
+                    {formData.fullName ? formData.fullName.charAt(0).toUpperCase() : 'FE'}
+                  </div>
+                )}
                 <div>
                   <p className="text-xs font-extrabold text-[#0D1F3D]">
                     {formData.fullName || 'New Employee Profile Photo'}
                   </p>
                   <p className="text-[11px] text-slate-500 font-medium">
-                    Upload high-resolution profile photo for employee directory badge and avatar display.
+                    {avatarPreview ? 'Custom profile photo loaded successfully' : 'Upload high-resolution profile photo for employee directory badge and avatar display.'}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" type="button" className="text-xs font-bold flex items-center gap-1.5 border-slate-200 bg-white">
-                  <Camera className="h-3.5 w-3.5 text-[#E20613]" /> Upload Photo
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="text-xs font-bold flex items-center gap-1.5 border-slate-200 bg-white hover:border-[#E20613] hover:text-[#E20613] transition-colors cursor-pointer"
+                >
+                  <Camera className="h-3.5 w-3.5 text-[#E20613]" /> {avatarPreview ? 'Change Photo' : 'Upload Photo'}
                 </Button>
+                {avatarPreview && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAvatarPreview(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    className="text-[11px] font-bold text-rose-600 hover:underline cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                )}
                 <span className="text-[10px] text-slate-400 font-medium">JPG, PNG (Max 2MB)</span>
               </div>
             </div>
