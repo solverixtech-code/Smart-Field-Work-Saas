@@ -35,6 +35,24 @@ export class CrmController {
   ) {
     return this.crm.getLeadAssigneeProfile(p, membershipId);
   }
+  @Patch("executives/:membershipId/status")
+  @RequirePermissions("crm.executives.view")
+  updateExecutiveStatus(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("membershipId") membershipId: string,
+    @Body() body: { status: string; reason?: string; notes?: string },
+  ) {
+    return this.crm.updateExecutiveStatus(p, membershipId, body);
+  }
+  @Delete("executives/:membershipId")
+  @HttpCode(204)
+  @RequirePermissions("crm.executives.view")
+  deleteExecutive(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Param("membershipId") membershipId: string,
+  ) {
+    return this.crm.deleteExecutive(p, membershipId);
+  }
   @Get("accounts")
   @RequirePermissions("crm.businesses.view")
   accounts(@CurrentPrincipal() p: RequestPrincipal, @Query() q: unknown) {

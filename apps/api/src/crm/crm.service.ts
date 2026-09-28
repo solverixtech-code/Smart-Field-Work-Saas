@@ -1184,4 +1184,85 @@ export class CrmService {
       );
     });
   }
+
+  async updateExecutiveStatus(
+    actor: RequestPrincipal,
+    membershipId: string,
+    body: { status: string; reason?: string; notes?: string },
+  ) {
+    return this.repo.run(actor, true, async (tx, policy) => {
+      policy.require("crm.executives.view");
+      const tenantId = policy.scope.tenantId;
+
+      const membership = await tx.tenantMembership.findFirst({
+        where: { id: membershipId, tenantId },
+        select: { id: true, userId: true, status: true },
+      });
+
+      if (!membership) {
+        throw new NotFoundException("Executive membership not found");
+      }
+
+      const targetStatus =
+        body.status.toUpperCase() === "SUSPENDED" || body.status.toUpperCase() === "INACTIVE"
+          ? "SUSPENDED"
+          : "ACTIVE";
+
+      await tx.tenantMembership.update({
+        where: { id: membership.id },
+        data: { status: targetStatus as any },
+      });
+
+      await tx.user.update({
+        where: { id: membership.userId },
+        data: { status: targetStatus === "SUSPENDED" ? "INACTIVE" : "ACTIVE" },
+      });
+
+      return {
+        success: true,
+        membershipId: membership.id,
+        status: targetStatus === "SUSPENDED" ? "Inactive" : "Active",
+      };
+    });
+  }
+
+  async deleteExecutive(actor: RequestPrincipal, membershipId: string) {
+    return this.repo.run(actor, true, async (tx, policy) => {
+      policy.require("crm.executives.view");
+      const tenantId = policy.scope.tenantId;
+
+      const membership = await tx.tenantMembership.findFirst({
+        where: { id: membershipId, tenantId },
+        select: { id: true, userId: true },
+      });
+
+      if (!membership) {
+        throw new NotFoundException("Executive membership not found");
+      }
+
+      await tx.territoryMember.deleteMany({ where: { membershipId: membership.id } });
+      await tx.userShift.deleteMany({ where: { tenantMembershipId: membership.id } });
+
+      await tx.lead.updateMany({
+        where: { assignedMembershipId: membership.id },
+        data: { assignedMembershipId: null },
+      });
+      await tx.opportunity.updateMany({
+        where: { assignedMembershipId: membership.id },
+        data: { assignedMembershipId: null },
+      });
+
+      await tx.tenantMembership.delete({ where: { id: membership.id } });
+
+      const remainingMemberships = await tx.tenantMembership.count({
+        where: { userId: membership.userId },
+      });
+      if (remainingMemberships === 0) {
+        await tx.user.delete({ where: { id: membership.userId } });
+      }
+
+      return { success: true };
+    });
+  }
+
 }

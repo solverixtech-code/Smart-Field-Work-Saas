@@ -8,10 +8,12 @@ import {
   Lock,
   Unlock,
   History,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select, SelectOption } from '../../components/ui/Select';
 import { Textarea } from '../../components/ui/Textarea';
+import { Modal } from '../../components/ui/Modal';
 import { api, extractErrorMessage } from '../../common/api';
 
 const REASON_OPTIONS: SelectOption[] = [
@@ -48,11 +50,9 @@ const DEFAULT_EXEC_INFO: ExecutiveInfo = {
   lastLogin: '19 May 2025 06:15 PM',
 };
 
-// Helper function to sanitize employee code (Strictly NO raw UUIDs on UI)
 function formatEmployeeCode(rawId?: string, loadedCode?: string): string {
   if (loadedCode && !loadedCode.includes('-')) return loadedCode;
   if (!rawId) return 'FE-1001';
-  // Check if string is a raw UUID (contains hyphens and length > 20)
   if (rawId.includes('-') && rawId.length > 20) {
     return 'FE-1001';
   }
@@ -67,19 +67,20 @@ export default function SuspendExecutivePage() {
   const [action, setAction] = useState<'suspend' | 'reactivate'>('suspend');
   const [reason, setReason] = useState('Violation of Policy');
   const [notes, setNotes] = useState('');
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
 
   // Fetch executive profile details on mount
   useEffect(() => {
     if (!id) return;
     const controller = new AbortController();
-    setLoading(true);
 
     api.get(`/tenant/crm/lead-assignees/${encodeURIComponent(id)}/profile`, { signal: controller.signal })
       .then(({ data }: any) => {
         if (!controller.signal.aborted && data) {
+          const isInactive = data.status === 'INACTIVE' || data.status === 'SUSPENDED' || data.status === 'Inactive' || data.status === 'Suspended';
           setExecInfo({
             id: data.id || id,
             employeeCode: data.employeeCode || formatEmployeeCode(id),
@@ -88,13 +89,12 @@ export default function SuspendExecutivePage() {
             team: data.teamName || 'Mumbai North Team',
             reportingTo: data.managerName || 'Sanjay Yadav',
             avatarUrl: data.avatarUrl || DEFAULT_EXEC_INFO.avatarUrl,
-            status: data.status === 'ACTIVE' || data.status === 'Active' ? 'Active' : 'Suspended',
+            status: isInactive ? 'Inactive' : 'Active',
             statusSince: data.joinedAt ? new Date(data.joinedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '12 Apr 2024',
             lastLogin: '19 May 2025 06:15 PM',
           });
 
-          // Set default action based on current status
-          if (data.status === 'INACTIVE' || data.status === 'Suspended') {
+          if (isInactive) {
             setAction('reactivate');
           } else {
             setAction('suspend');
@@ -102,14 +102,10 @@ export default function SuspendExecutivePage() {
         }
       })
       .catch(() => {
-        // Fallback to default executive state with clean code
         setExecInfo((prev) => ({
           ...prev,
           employeeCode: formatEmployeeCode(id),
         }));
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
       });
 
     return () => controller.abort();
@@ -119,34 +115,47 @@ export default function SuspendExecutivePage() {
     e.preventDefault();
     setSubmitting(true);
 
-    const newStatus = action === 'suspend' ? 'Suspended' : 'Active';
+    const targetStatusStr = action === 'suspend' ? 'SUSPENDED' : 'ACTIVE';
+    const displayStatus = action === 'suspend' ? 'Inactive' : 'Active';
     const msg = action === 'suspend'
       ? 'Executive access suspended successfully.'
       : 'Executive account reactivated successfully.';
 
     try {
       if (id) {
-        await api.post(`/tenant/crm/executives/${encodeURIComponent(id)}/status`, {
-          status: action === 'suspend' ? 'INACTIVE' : 'ACTIVE',
+        await api.patch(`/tenant/crm/executives/${encodeURIComponent(id)}/status`, {
+          status: targetStatusStr,
           reason,
           notes,
-        }).catch(() => {
-          // Soft fallback if API endpoint is standard mock
         });
       }
 
-      // Optimistic update
-      setExecInfo((prev) => ({ ...prev, status: newStatus }));
+      setExecInfo((prev) => ({ ...prev, status: displayStatus }));
       setSuccessMsg(msg);
       toast.success(msg);
 
       setTimeout(() => {
-        navigate(`/admin/executives/${id || 'FE-1001'}`);
+        navigate(`/admin/executives`);
       }, 1200);
     } catch (err: unknown) {
       toast.error(extractErrorMessage(err, 'Failed to update executive access status.'));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeletePermanent = async () => {
+    if (!id) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/tenant/crm/executives/${encodeURIComponent(id)}`);
+      toast.success(`Employee ${execInfo.name} permanently deleted.`);
+      setShowDeleteModal(false);
+      navigate('/admin/executives');
+    } catch (err: unknown) {
+      toast.error(extractErrorMessage(err, 'Failed to delete employee permanently.'));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -158,19 +167,30 @@ export default function SuspendExecutivePage() {
       <div className="flex items-center justify-between">
         <button
           type="button"
-          onClick={() => navigate(`/admin/executives/${id || 'FE-1001'}`)}
+          onClick={() => navigate(`/admin/executives`)}
           className="flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-[#0D1F3D] transition-colors"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to Details
+          <ArrowLeft className="h-4 w-4" /> Back to Employee Directory
         </button>
 
-        <h1 className="text-2xl font-bold text-[#0D1F3D]">Suspend / Reactivate Executive</h1>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDeleteModal(true)}
+            className="border-rose-200 text-[#E20613] hover:bg-rose-50 font-bold flex items-center gap-1.5"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Delete Employee Permanently
+          </Button>
+          <h1 className="text-2xl font-bold text-[#0D1F3D]">Suspend / Reactivate Executive</h1>
+        </div>
       </div>
 
       {/* Success Alert */}
       {successMsg && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-extrabold text-emerald-700 animate-in fade-in">
-          ✓ {successMsg} Redirecting...
+          ✓ {successMsg} Redirecting to directory...
         </div>
       )}
 
@@ -306,29 +326,41 @@ export default function SuspendExecutivePage() {
             />
 
             {/* Submit Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => navigate(`/admin/executives/${id || 'FE-1001'}`)}
-                className="border-slate-200 text-slate-700 hover:bg-slate-100 font-bold"
+                onClick={() => setShowDeleteModal(true)}
+                className="border-rose-200 text-[#E20613] hover:bg-rose-50 font-bold flex items-center gap-1.5"
               >
-                Cancel
+                <Trash2 className="h-3.5 w-3.5" /> Delete Employee
               </Button>
-              <Button
-                type="submit"
-                variant={action === 'suspend' ? 'accent' : 'primary'}
-                size="sm"
-                disabled={submitting}
-                className="font-bold shadow-sm"
-              >
-                {submitting
-                  ? 'Updating...'
-                  : action === 'suspend'
-                  ? 'Confirm Suspension'
-                  : 'Confirm Reactivation'}
-              </Button>
+
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/admin/executives')}
+                  className="border-slate-200 text-slate-700 hover:bg-slate-100 font-bold"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant={action === 'suspend' ? 'accent' : 'primary'}
+                  size="sm"
+                  disabled={submitting}
+                  className="font-bold shadow-sm"
+                >
+                  {submitting
+                    ? 'Updating...'
+                    : action === 'suspend'
+                    ? 'Confirm Suspension'
+                    : 'Confirm Reactivation'}
+                </Button>
+              </div>
             </div>
           </form>
         </div>
@@ -393,6 +425,45 @@ export default function SuspendExecutivePage() {
           </div>
         </div>
       </div>
+
+      {/* Permanent Delete Confirmation Modal */}
+      <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} maxWidth="max-w-md">
+        <div className="space-y-4 font-sans">
+          <div className="flex items-center gap-3 text-[#E20613]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 border border-rose-100">
+              <Trash2 className="h-5 w-5 text-[#E20613]" />
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-[#0D1F3D]">Permanent Delete Employee</h3>
+              <p className="text-xs text-slate-500 font-medium">This action cannot be undone.</p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-rose-100 bg-rose-50/60 p-3.5 text-xs text-slate-700 space-y-2">
+            <p className="font-bold text-[#0D1F3D]">
+              Are you sure you want to permanently delete <span className="text-[#E20613]">{execInfo.name}</span> ({displayEmpCode})?
+            </p>
+            <p className="text-slate-600 font-medium leading-relaxed">
+              This will permanently delete their account membership, login access, shift assignments, and remove them from active rosters.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setShowDeleteModal(false)} className="font-bold">
+              Cancel
+            </Button>
+            <Button
+              variant="accent"
+              size="sm"
+              onClick={handleDeletePermanent}
+              disabled={deleting}
+              className="font-bold bg-[#E20613] hover:bg-[#c00510]"
+            >
+              {deleting ? 'Deleting...' : 'Permanent Delete'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
