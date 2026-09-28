@@ -16,7 +16,10 @@ export const targetMetricSchema = z.enum([
 export const targetDashboardQuery = z.object({
   period: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
   comparePeriod: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
-}).strict();
+  teamId: z.string().optional(),
+  status: z.string().optional(),
+  search: z.string().optional(),
+});
 
 export const setSalesTargetSchema = z.object({
   targetType: z.enum(['team', 'individual']),

@@ -98,8 +98,21 @@ export interface SetTargetInput {
   thresholdPct: number;
 }
 
-export const getTargetDashboard = (period: string, comparePeriod: string, signal?: AbortSignal) =>
-  api.get<TargetDashboardResponse>('/tenant/crm/targets/dashboard', { params: { period, comparePeriod }, signal });
+export const getTargetDashboard = (
+  period: string,
+  comparePeriod: string,
+  optionsOrSignal?: { teamId?: string; status?: string; search?: string } | AbortSignal,
+  signal?: AbortSignal,
+) => {
+  const isSignal = Boolean(optionsOrSignal && ('aborted' in (optionsOrSignal as object) || optionsOrSignal instanceof AbortSignal));
+  const filterParams = isSignal ? {} : (optionsOrSignal as { teamId?: string; status?: string; search?: string }) ?? {};
+  const actualSignal = isSignal ? (optionsOrSignal as AbortSignal) : signal;
+
+  return api.get<TargetDashboardResponse>('/tenant/crm/targets/dashboard', {
+    params: { period, comparePeriod, ...filterParams },
+    signal: actualSignal,
+  });
+};
 
 export const setSalesTarget = (input: SetTargetInput) => api.post('/tenant/crm/targets', input);
 

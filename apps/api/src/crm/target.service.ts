@@ -189,6 +189,19 @@ export class TargetService {
           achievementPct: exec.salesPct,
         }));
 
+      const filteredTeams = teamTargets.filter((team) => {
+        const matchesTeam = !q.teamId || q.teamId === 'all' || team.teamId === q.teamId;
+        const matchesStatus = !q.status || q.status === 'all' || team.status === q.status;
+        const matchesSearch = !q.search || team.teamName.toLowerCase().includes(q.search.toLowerCase()) || team.branch.toLowerCase().includes(q.search.toLowerCase());
+        return matchesTeam && matchesStatus && matchesSearch;
+      });
+
+      const filteredExecutives = executiveTargets.filter((exec) => {
+        const matchesTeam = !q.teamId || q.teamId === 'all' || exec.teamId === q.teamId;
+        const matchesStatus = !q.status || q.status === 'all' || exec.status === q.status;
+        const matchesSearch = !q.search || exec.executiveName.toLowerCase().includes(q.search.toLowerCase()) || exec.executiveId.toLowerCase().includes(q.search.toLowerCase());
+        return matchesTeam && matchesStatus && matchesSearch;
+      });
       const statusDistribution = teamTargets.reduce((result, target) => ({ ...result, [target.status]: result[target.status] + 1 }), { 'On Track': 0, 'At Risk': 0, Behind: 0 });
 
       return {
@@ -208,8 +221,8 @@ export class TargetService {
             incentivePaid: change(currentIncentives.paid, comparisonIncentives.paid),
           },
         },
-        teams: teamTargets,
-        executives: executiveTargets,
+        teams: filteredTeams,
+        executives: filteredExecutives,
         topAchievers,
         statusDistribution,
         options: {
