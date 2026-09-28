@@ -727,24 +727,24 @@ export default function AttendanceAdministrationPage() {
                 <section className="space-y-6 font-sans">
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                     <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                      <p className="text-[11px] font-bold text-slate-400">Total Holidays ({calYear})</p>
+                      <p className="text-xs font-bold text-slate-600">Total Holidays ({calYear})</p>
                       <p className="mt-1 text-2xl font-extrabold text-[#0D1F3D]">{stats.total} Days</p>
                     </div>
                     <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4 shadow-sm">
-                      <p className="text-[11px] font-bold text-emerald-700">Full Day Holidays</p>
-                      <p className="mt-1 text-2xl font-extrabold text-emerald-800">{stats.fullDay} Days</p>
+                      <p className="text-xs font-bold text-emerald-800">Full Day Holidays</p>
+                      <p className="mt-1 text-2xl font-extrabold text-emerald-900">{stats.fullDay} Days</p>
                     </div>
                     <div className="rounded-2xl border border-purple-200/80 bg-purple-50/60 p-4 shadow-sm">
-                      <p className="text-[11px] font-bold text-purple-700">Half Day Holidays</p>
-                      <p className="mt-1 text-2xl font-extrabold text-purple-800">{stats.halfDay} Days</p>
+                      <p className="text-xs font-bold text-purple-800">Half Day Holidays</p>
+                      <p className="mt-1 text-2xl font-extrabold text-purple-900">{stats.halfDay} Days</p>
                     </div>
                     <div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 p-4 shadow-sm">
-                      <p className="text-[11px] font-bold text-amber-700">Optional / Restricted</p>
-                      <p className="mt-1 text-2xl font-extrabold text-amber-800">{stats.optional} Days</p>
+                      <p className="text-xs font-bold text-amber-800">Optional / Restricted</p>
+                      <p className="mt-1 text-2xl font-extrabold text-amber-900">{stats.optional} Days</p>
                     </div>
                     <div className="rounded-2xl border border-blue-200/80 bg-blue-50/60 p-4 shadow-sm">
-                      <p className="text-[11px] font-bold text-blue-700">Public Holidays</p>
-                      <p className="mt-1 text-2xl font-extrabold text-blue-800">{stats.public} Days</p>
+                      <p className="text-xs font-bold text-blue-800">Public Holidays</p>
+                      <p className="mt-1 text-2xl font-extrabold text-blue-900">{stats.public} Days</p>
                     </div>
                   </div>
 
@@ -756,7 +756,7 @@ export default function AttendanceAdministrationPage() {
                           <h3 className="text-lg font-extrabold text-[#0D1F3D]">
                             Attendance & Holiday Calendar - {MONTH_NAMES[calMonth]} {calYear}
                           </h3>
-                          <p className="text-xs text-slate-500 font-medium">
+                          <p className="text-xs text-slate-600 font-medium">
                             Manage workspace holidays, half days, and scheduled office closures.
                           </p>
                         </div>
@@ -767,7 +767,7 @@ export default function AttendanceAdministrationPage() {
                           <button
                             type="button"
                             onClick={handlePrevMonth}
-                            className="rounded-lg p-1 text-slate-600 hover:bg-white hover:shadow-xs transition"
+                            className="rounded-lg p-1 text-slate-700 hover:bg-white hover:shadow-xs transition"
                             title="Previous Month"
                           >
                             <ChevronLeft className="h-4 w-4" />
@@ -780,7 +780,7 @@ export default function AttendanceAdministrationPage() {
                           <button
                             type="button"
                             onClick={handleNextMonth}
-                            className="rounded-lg p-1 text-slate-600 hover:bg-white hover:shadow-xs transition"
+                            className="rounded-lg p-1 text-slate-700 hover:bg-white hover:shadow-xs transition"
                             title="Next Month"
                           >
                             <ChevronRight className="h-4 w-4" />
@@ -808,8 +808,8 @@ export default function AttendanceAdministrationPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 text-xs font-extrabold">
-                      <span className="text-slate-400 font-bold mr-1 flex items-center gap-1">
-                        <Filter className="h-3.5 w-3.5" /> Filter:
+                      <span className="text-[#0D1F3D] font-extrabold mr-1 flex items-center gap-1">
+                        <Filter className="h-3.5 w-3.5 text-[#E20613]" /> Filter:
                       </span>
                       {[
                         { id: "ALL", label: `All (${effectiveHolidays.length})` },
@@ -825,7 +825,7 @@ export default function AttendanceAdministrationPage() {
                           className={`rounded-full px-3 py-1 text-xs transition ${
                             holidayFilter === tab.id
                               ? "bg-[#0D1F3D] text-white shadow-xs"
-                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                           }`}
                         >
                           {tab.label}
@@ -833,7 +833,7 @@ export default function AttendanceAdministrationPage() {
                       ))}
                     </div>
 
-                    <div className="grid grid-cols-7 gap-2 text-center text-xs font-extrabold text-slate-500 py-2 border-b border-slate-100 bg-slate-50/60 rounded-xl">
+                    <div className="grid grid-cols-7 gap-2 text-center text-xs font-extrabold text-[#0D1F3D] py-2.5 border-b border-slate-100 bg-slate-50/80 rounded-xl">
                       {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((dayName) => (
                         <span key={dayName}>{dayName}</span>
                       ))}
@@ -915,7 +915,7 @@ export default function AttendanceAdministrationPage() {
                                 <p className="text-[11px] font-extrabold text-[#0D1F3D] line-clamp-2 leading-tight">
                                   {details?.cleanName}
                                 </p>
-                                <p className="text-[9px] font-semibold text-slate-400">
+                                <p className="text-[9px] font-bold text-slate-600">
                                   {typeLabel} Holiday
                                 </p>
                               </div>
