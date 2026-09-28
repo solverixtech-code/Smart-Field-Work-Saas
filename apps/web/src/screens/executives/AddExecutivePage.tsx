@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -7,14 +7,115 @@ import {
   Phone,
   Briefcase,
   Shield,
-  Upload,
   Camera,
-  Check,
+  Clock,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { Input } from '../../components/ui/Input';
+import { Select, SelectOption } from '../../components/ui/Select';
+import { Checkbox } from '../../components/ui/Checkbox';
+import { DatePicker } from '../../components/ui/DatePicker';
+import { PhoneInput } from '../../components/ui/PhoneInput';
+import { Textarea } from '../../components/ui/Textarea';
+import { api } from '../../common/api';
+
+const DEFAULT_SHIFTS: SelectOption[] = [
+  {
+    value: 'General Shift (09:30 AM - 06:30 PM)',
+    label: 'General Shift (09:30 AM - 06:30 PM)',
+    sublabel: 'Mon - Sat • Grace 15 mins',
+  },
+  {
+    value: 'Morning Shift (07:00 AM - 04:00 PM)',
+    label: 'Morning Shift (07:00 AM - 04:00 PM)',
+    sublabel: 'Mon - Sat • Grace 15 mins',
+  },
+  {
+    value: 'Night Shift (10:00 PM - 07:00 AM)',
+    label: 'Night Shift (10:00 PM - 07:00 AM)',
+    sublabel: 'Mon - Fri • Grace 20 mins',
+  },
+  {
+    value: 'Weekend Support (10:00 AM - 05:00 PM)',
+    label: 'Weekend Support (10:00 AM - 05:00 PM)',
+    sublabel: 'Sat - Sun • Grace 10 mins',
+  },
+];
+
+const systemRoleOptions: SelectOption[] = [
+  { value: 'FIELD_EXECUTIVE', label: 'Field Executive', sublabel: 'Route tracking, Client visits, Geofencing' },
+  { value: 'TELECALLER', label: 'Telecaller / Inside Sales', sublabel: 'Outbound calling, Virtual demos' },
+  { value: 'TEAM_LEADER', label: 'Team Leader', sublabel: 'Roster management, Team targets' },
+  { value: 'SALES_MANAGER', label: 'Sales Manager', sublabel: 'Pipeline oversight & Revenue budgets' },
+  { value: 'SUPPORT', label: 'Support / Operations', sublabel: 'Ticket resolution & Order sync' },
+  { value: 'ADMIN', label: 'Administrator', sublabel: 'Full workspace access & System settings' },
+];
+
+const designationOptions: SelectOption[] = [
+  { value: 'Field Executive', label: 'Field Executive' },
+  { value: 'Senior Field Executive', label: 'Senior Field Executive' },
+  { value: 'Telecaller', label: 'Telecaller' },
+  { value: 'Team Leader', label: 'Team Leader' },
+  { value: 'Sales Manager', label: 'Sales Manager' },
+];
+
+const reportingToOptions: SelectOption[] = [
+  {
+    value: 'Sanjay Yadav (TL-1003)',
+    label: 'Sanjay Yadav',
+    sublabel: 'Team Leader • Mumbai North (TL-1003)',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+  },
+  {
+    value: 'Amit Sharma (Manager)',
+    label: 'Amit Sharma',
+    sublabel: 'Sales Manager • Western Region (MGR-1001)',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+  },
+  {
+    value: 'Priya Mehta (TL-1004)',
+    label: 'Priya Mehta',
+    sublabel: 'Team Leader • Mumbai West (TL-1004)',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+  },
+  {
+    value: 'Vikram Patil (MGR-1002)',
+    label: 'Vikram Patil',
+    sublabel: 'Operations Manager • Central Hub (MGR-1002)',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+  },
+];
+
+const teamOptions: SelectOption[] = [
+  { value: 'Mumbai North Team', label: 'Mumbai North Team', sublabel: 'North Region • 24 Staff' },
+  { value: 'Mumbai West Team', label: 'Mumbai West Team', sublabel: 'West Region • 18 Staff' },
+  { value: 'Thane Central', label: 'Thane Central', sublabel: 'Central Region • 14 Staff' },
+  { value: 'Navi Mumbai Hub', label: 'Navi Mumbai Hub', sublabel: 'Navi Mumbai • 12 Staff' },
+  { value: 'Pune Central', label: 'Pune Central', sublabel: 'Pune Hub • 10 Staff' },
+];
+
+const employmentTypeOptions: SelectOption[] = [
+  { value: 'Full Time', label: 'Full Time' },
+  { value: 'Part Time', label: 'Part Time' },
+  { value: 'Contract', label: 'Contract' },
+];
+
+const genderOptions: SelectOption[] = [
+  { value: 'Male', label: 'Male' },
+  { value: 'Female', label: 'Female' },
+  { value: 'Other', label: 'Other' },
+];
+
+const regionOptions: SelectOption[] = [
+  { value: 'Mumbai', label: 'Mumbai' },
+  { value: 'Thane', label: 'Thane' },
+  { value: 'Navi Mumbai', label: 'Navi Mumbai' },
+  { value: 'Pune', label: 'Pune' },
+];
 
 export default function AddExecutivePage() {
   const navigate = useNavigate();
+  const [shiftOptions, setShiftOptions] = useState<SelectOption[]>(DEFAULT_SHIFTS);
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -24,9 +125,8 @@ export default function AddExecutivePage() {
     reportingTo: 'Sanjay Yadav (TL-1003)',
     team: 'Mumbai North Team',
     employmentType: 'Full Time',
-    dob: '',
+    dob: '1996-05-15',
     gender: 'Male',
-    bloodGroup: 'B+',
     mobile: '',
     altMobile: '',
     email: '',
@@ -34,8 +134,7 @@ export default function AddExecutivePage() {
     joinDate: new Date().toISOString().split('T')[0],
     experience: '',
     region: 'Mumbai',
-    shiftTiming: '09:00 AM - 06:00 PM',
-    weeklyOff: 'Sunday',
+    shiftTiming: 'General Shift (09:30 AM - 06:30 PM)',
     salary: '',
     mobileAccess: true,
     webAccess: true,
@@ -47,9 +146,29 @@ export default function AddExecutivePage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
+  // Fetch real system shifts from backend API on mount
+  useEffect(() => {
+    const controller = new AbortController();
+    api.get('/shifts', { signal: controller.signal })
+      .then(({ data }) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const fetchedShifts: SelectOption[] = data.map((s: any) => ({
+            value: `${s.name} (${s.startTime} - ${s.endTime})`,
+            label: `${s.name} (${s.startTime} - ${s.endTime})`,
+            sublabel: `Code: ${s.code || s.id} • Grace: ${s.lateGraceMinutes || 15} mins`,
+          }));
+          setShiftOptions(fetchedShifts);
+        }
+      })
+      .catch(() => {
+        // Fallback to pre-configured system shift templates
+      });
+    return () => controller.abort();
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.fullName || !formData.mobile || !formData.email) {
+    if (!formData.fullName.trim() || !formData.mobile.trim() || !formData.email.trim()) {
       setError('Please fill in all mandatory fields (Full Name, Mobile, Email).');
       return;
     }
@@ -132,114 +251,66 @@ export default function AddExecutivePage() {
 
               {/* Personal Fields */}
               <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 text-xs font-semibold">
-                <div>
-                  <label className="text-slate-600 block mb-1 font-bold">Full Name *</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Amit Sharma"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-slate-600 block mb-1 font-bold">Employee ID *</label>
-                  <input
-                    type="text"
-                    value={formData.empId}
-                    onChange={(e) => setFormData({ ...formData, empId: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-slate-600 block mb-1 font-bold">System Role *</label>
-                  <select
-                    value={formData.systemRole}
-                    onChange={(e) => setFormData({ ...formData, systemRole: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                  >
-                    <option value="FIELD_EXECUTIVE">Field Executive (Route tracking, Visits)</option>
-                    <option value="TELECALLER">Telecaller / Inside Sales (Outbound calling, Demos)</option>
-                    <option value="TEAM_LEADER">Team Leader (Roster & Targets)</option>
-                    <option value="SALES_MANAGER">Sales Manager (Pipeline & Budgets)</option>
-                    <option value="SUPPORT">Support / Operations</option>
-                    <option value="ADMIN">Administrator</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-slate-600 block mb-1 font-bold">Designation *</label>
-                  <select
-                    value={formData.designation}
-                    onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                  >
-                    <option value="Field Executive">Field Executive</option>
-                    <option value="Senior Field Executive">Senior Field Executive</option>
-                    <option value="Telecaller">Telecaller</option>
-                    <option value="Team Leader">Team Leader</option>
-                    <option value="Sales Manager">Sales Manager</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-slate-600 block mb-1 font-bold">Reporting To *</label>
-                  <select
-                    value={formData.reportingTo}
-                    onChange={(e) => setFormData({ ...formData, reportingTo: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                  >
-                    <option value="Sanjay Yadav (TL-1003)">Sanjay Yadav (TL-1003)</option>
-                    <option value="Amit Sharma (Manager)">Amit Sharma (Manager)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-slate-600 block mb-1 font-bold">Team *</label>
-                  <select
-                    value={formData.team}
-                    onChange={(e) => setFormData({ ...formData, team: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                  >
-                    <option value="Mumbai North Team">Mumbai North Team</option>
-                    <option value="Mumbai West Team">Mumbai West Team</option>
-                    <option value="Thane Central">Thane Central</option>
-                    <option value="Navi Mumbai Hub">Navi Mumbai Hub</option>
-                    <option value="Pune Central">Pune Central</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-slate-600 block mb-1 font-bold">Employment Type *</label>
-                  <select
-                    value={formData.employmentType}
-                    onChange={(e) => setFormData({ ...formData, employmentType: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                  >
-                    <option value="Full Time">Full Time</option>
-                    <option value="Part Time">Part Time</option>
-                    <option value="Contract">Contract</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-slate-600 block mb-1 font-bold">Date of Birth</label>
-                  <input
-                    type="date"
-                    value={formData.dob}
-                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-slate-600 block mb-1 font-bold">Gender</label>
-                  <select
-                    value={formData.gender}
-                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
+                <Input
+                  label="Full Name *"
+                  placeholder="e.g. Amit Sharma"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Employee ID *"
+                  value={formData.empId}
+                  onChange={(e) => setFormData({ ...formData, empId: e.target.value })}
+                  required
+                />
+                <Select
+                  label="System Role *"
+                  searchable={true}
+                  options={systemRoleOptions}
+                  value={formData.systemRole}
+                  onChange={(e) => setFormData({ ...formData, systemRole: e.target.value })}
+                />
+                <Select
+                  label="Designation *"
+                  searchable={true}
+                  options={designationOptions}
+                  value={formData.designation}
+                  onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                />
+                <Select
+                  label="Reporting To *"
+                  searchable={true}
+                  options={reportingToOptions}
+                  value={formData.reportingTo}
+                  onChange={(e) => setFormData({ ...formData, reportingTo: e.target.value })}
+                />
+                <Select
+                  label="Team *"
+                  searchable={true}
+                  options={teamOptions}
+                  value={formData.team}
+                  onChange={(e) => setFormData({ ...formData, team: e.target.value })}
+                />
+                <Select
+                  label="Employment Type *"
+                  searchable={true}
+                  options={employmentTypeOptions}
+                  value={formData.employmentType}
+                  onChange={(e) => setFormData({ ...formData, employmentType: e.target.value })}
+                />
+                <DatePicker
+                  label="Date of Birth"
+                  value={formData.dob}
+                  onChange={(val) => setFormData({ ...formData, dob: val })}
+                />
+                <Select
+                  label="Gender"
+                  searchable={true}
+                  options={genderOptions}
+                  value={formData.gender}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                />
               </div>
             </div>
           </div>
@@ -252,50 +323,34 @@ export default function AddExecutivePage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 text-xs font-semibold">
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Mobile Number *</label>
-                <input
-                  type="text"
-                  placeholder="+91 98765 00000"
-                  value={formData.mobile}
-                  onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Alternate Mobile</label>
-                <input
-                  type="text"
-                  placeholder="+91 91234 00000"
-                  value={formData.altMobile}
-                  onChange={(e) => setFormData({ ...formData, altMobile: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Email Address *</label>
-                <input
-                  type="email"
-                  placeholder="executive@company.com"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="text-xs font-semibold">
-              <label className="text-slate-600 block mb-1 font-bold">Complete Address</label>
-              <textarea
-                rows={2}
-                placeholder="Enter complete residential address, city, pin code..."
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
+              <PhoneInput
+                label="Mobile Number"
+                required={true}
+                value={formData.mobile}
+                onChange={(val) => setFormData({ ...formData, mobile: val })}
+              />
+              <PhoneInput
+                label="Alternate Mobile"
+                value={formData.altMobile}
+                onChange={(val) => setFormData({ ...formData, altMobile: val })}
+              />
+              <Input
+                type="email"
+                label="Email Address *"
+                placeholder="executive@company.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
               />
             </div>
+
+            <Textarea
+              label="Complete Address"
+              placeholder="Enter complete residential address, city, pin code..."
+              rows={2}
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            />
           </div>
 
           {/* Work Information */}
@@ -305,68 +360,44 @@ export default function AddExecutivePage() {
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Work Information</h3>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 text-xs font-semibold">
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Joining Date *</label>
-                <input
-                  type="date"
-                  value={formData.joinDate}
-                  onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Experience (years)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 2.5"
-                  value={formData.experience}
-                  onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Work Region *</label>
-                <select
-                  value={formData.region}
-                  onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Thane">Thane</option>
-                  <option value="Navi Mumbai">Navi Mumbai</option>
-                  <option value="Pune">Pune</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Shift Timing</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 09:00 AM - 06:00 PM"
-                  value={formData.shiftTiming}
-                  onChange={(e) => setFormData({ ...formData, shiftTiming: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Weekly Off</label>
-                <select
-                  value={formData.weeklyOff}
-                  onChange={(e) => setFormData({ ...formData, weeklyOff: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
-                >
-                  <option value="Sunday">Sunday</option>
-                  <option value="Saturday">Saturday</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Salary (Annual CTC)</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 3,50,000"
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-xs font-semibold">
+              <DatePicker
+                label="Joining Date *"
+                required={true}
+                value={formData.joinDate}
+                onChange={(val) => setFormData({ ...formData, joinDate: val })}
+              />
+              <Input
+                type="number"
+                allowLetters={false}
+                label="Experience (years)"
+                placeholder="e.g. 2.5"
+                value={formData.experience}
+                onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+              />
+              <Select
+                label="Work Region *"
+                searchable={true}
+                options={regionOptions}
+                value={formData.region}
+                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+              />
+              <Select
+                label="Shift Timing *"
+                searchable={true}
+                options={shiftOptions}
+                value={formData.shiftTiming}
+                onChange={(e) => setFormData({ ...formData, shiftTiming: e.target.value })}
+                leftIcon={<Clock className="h-3.5 w-3.5 text-[#E20613]" />}
+              />
+              <div className="sm:col-span-2">
+                <Input
+                  type="number"
+                  allowLetters={false}
+                  label="Salary (Annual CTC)"
+                  placeholder="e.g. 350000"
                   value={formData.salary}
                   onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] placeholder-slate-400 focus:border-[#E20613] focus:bg-white focus:outline-none"
                 />
               </div>
             </div>
@@ -375,7 +406,7 @@ export default function AddExecutivePage() {
 
         {/* Right Column: Permissions & Emergency Contacts */}
         <div className="space-y-6 lg:col-span-4">
-          {/* Access & Permissions */}
+          {/* Access Control */}
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <Shield className="h-4 w-4 text-[#E20613]" />
@@ -383,25 +414,21 @@ export default function AddExecutivePage() {
             </div>
 
             <div className="space-y-3 text-xs font-bold text-[#0D1F3D]">
-              <label className="flex items-center gap-2.5 cursor-pointer rounded-xl bg-slate-50 p-3 border border-slate-100">
-                <input
-                  type="checkbox"
+              <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                <Checkbox
+                  label="Mobile App Access"
                   checked={formData.mobileAccess}
-                  onChange={(e) => setFormData({ ...formData, mobileAccess: e.target.checked })}
-                  className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                  onChange={(val) => setFormData({ ...formData, mobileAccess: val })}
                 />
-                <span>Mobile App Access</span>
-              </label>
+              </div>
 
-              <label className="flex items-center gap-2.5 cursor-pointer rounded-xl bg-slate-50 p-3 border border-slate-100">
-                <input
-                  type="checkbox"
+              <div className="rounded-xl bg-slate-50 p-3.5 border border-slate-100">
+                <Checkbox
+                  label="Web Dashboard Access"
                   checked={formData.webAccess}
-                  onChange={(e) => setFormData({ ...formData, webAccess: e.target.checked })}
-                  className="rounded border-slate-300 text-[#E20613] focus:ring-[#E20613]"
+                  onChange={(val) => setFormData({ ...formData, webAccess: val })}
                 />
-                <span>Web Dashboard Access</span>
-              </label>
+              </div>
             </div>
           </div>
 
@@ -409,36 +436,23 @@ export default function AddExecutivePage() {
           <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm space-y-4">
             <h3 className="text-base font-extrabold text-[#0D1F3D]">Emergency Contact</h3>
             <div className="space-y-3 text-xs font-semibold">
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Contact Name</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Ramesh Sharma"
-                  value={formData.emergencyName}
-                  onChange={(e) => setFormData({ ...formData, emergencyName: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] placeholder-slate-400 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Relationship</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Father, Spouse"
-                  value={formData.emergencyRelation}
-                  onChange={(e) => setFormData({ ...formData, emergencyRelation: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] placeholder-slate-400 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Phone Number</label>
-                <input
-                  type="text"
-                  placeholder="+91 99876 00000"
-                  value={formData.emergencyPhone}
-                  onChange={(e) => setFormData({ ...formData, emergencyPhone: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] placeholder-slate-400 focus:outline-none"
-                />
-              </div>
+              <Input
+                label="Contact Name"
+                placeholder="e.g. Ramesh Sharma"
+                value={formData.emergencyName}
+                onChange={(e) => setFormData({ ...formData, emergencyName: e.target.value })}
+              />
+              <Input
+                label="Relationship"
+                placeholder="e.g. Father, Spouse"
+                value={formData.emergencyRelation}
+                onChange={(e) => setFormData({ ...formData, emergencyRelation: e.target.value })}
+              />
+              <PhoneInput
+                label="Phone Number"
+                value={formData.emergencyPhone}
+                onChange={(val) => setFormData({ ...formData, emergencyPhone: val })}
+              />
             </div>
           </div>
         </div>

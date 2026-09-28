@@ -274,7 +274,7 @@ export default function EditExecutivePage() {
               <div>
                 <label className="text-slate-600 block mb-1 font-bold">Experience (years) *</label>
                 <input
-                  type="text"
+                  type="number"
                   value={formData.experience}
                   onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:outline-none"
@@ -293,29 +293,22 @@ export default function EditExecutivePage() {
                 </select>
               </div>
               <div>
-                <label className="text-slate-600 block mb-1 font-bold">Shift Timing</label>
-                <input
-                  type="text"
+                <label className="text-slate-600 block mb-1 font-bold">Shift Timing *</label>
+                <select
                   value={formData.shiftTiming}
                   onChange={(e) => setFormData({ ...formData, shiftTiming: e.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="text-slate-600 block mb-1 font-bold">Weekly Off</label>
-                <select
-                  value={formData.weeklyOff}
-                  onChange={(e) => setFormData({ ...formData, weeklyOff: e.target.value })}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:outline-none"
                 >
-                  <option value="Sunday">Sunday</option>
-                  <option value="Saturday">Saturday</option>
+                  <option value="General Shift (09:30 AM - 06:30 PM)">General Shift (09:30 AM - 06:30 PM)</option>
+                  <option value="Morning Shift (07:00 AM - 04:00 PM)">Morning Shift (07:00 AM - 04:00 PM)</option>
+                  <option value="Night Shift (10:00 PM - 07:00 AM)">Night Shift (10:00 PM - 07:00 AM)</option>
+                  <option value="Weekend Support (10:00 AM - 05:00 PM)">Weekend Support (10:00 AM - 05:00 PM)</option>
                 </select>
               </div>
               <div>
                 <label className="text-slate-600 block mb-1 font-bold">Salary (Annual CTC)</label>
                 <input
-                  type="text"
+                  type="number"
                   value={formData.salary}
                   onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:outline-none"
