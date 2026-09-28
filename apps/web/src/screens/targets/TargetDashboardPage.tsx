@@ -95,13 +95,23 @@ export default function TargetDashboardPage() {
           {loading && <tr><td colSpan={9} className="py-8 text-center text-slate-500">Loading target records...</td></tr>}
           {!loading && !dashboard.teams.length && <tr><td colSpan={9} className="py-8 text-center text-slate-500">No team revenue targets are set for {periodLabel(selectedMonth)}.</td></tr>}
           {!loading && dashboard.teams.map((team) => <tr key={team.id} className="hover:bg-slate-50/80 transition-colors">
-            <td className="py-3 px-3"><span className="font-extrabold text-[#0D1F3D] block">{team.teamName}</span><span className="text-[10px] text-slate-500 font-semibold">{team.branch}</span></td>
+            <td className="py-3 px-3">
+              <button
+                type="button"
+                onClick={() => navigate(`/admin/teams/${team.teamId || team.id}`)}
+                className="font-extrabold text-[#0D1F3D] hover:text-purple-600 hover:underline block text-left transition-colors cursor-pointer"
+                title={`View ${team.teamName} Details`}
+              >
+                {team.teamName}
+              </button>
+              <span className="text-[10px] text-slate-500 font-semibold">{team.branch}</span>
+            </td>
             <td className="py-3 px-3"><div className="flex items-center gap-2"><Avatar name={team.teamLeaderName} src={team.teamLeaderAvatar} sizeClassName="h-6 w-6" /><div><span className="font-bold text-[#0D1F3D] block text-xs">{team.teamLeaderName}</span><span className="text-[9px] text-slate-500 font-semibold block">Sales Manager</span></div></div></td>
             <td className="py-3 px-3 font-mono text-slate-800">{inr(team.targetAmount)}</td><td className="py-3 px-3 font-mono text-slate-800">{inr(team.achievedAmount)}</td>
             <td className="py-3 px-3"><div className="space-y-1 w-28"><span className="font-extrabold text-[#0D1F3D] text-[11px]">{team.achievementPct}%</span><div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden"><div className={`h-full rounded-full ${team.achievementPct >= 70 ? 'bg-emerald-500' : team.achievementPct >= 55 ? 'bg-amber-500' : 'bg-red-500'}`} style={{ width: `${Math.min(team.achievementPct, 100)}%` }} /></div></div></td>
             <td className="py-3 px-3 font-bold text-slate-700">{team.executivesCount}</td><td className="py-3 px-3 font-mono text-emerald-600 font-bold">{inr(team.incentiveEarned)}</td>
             <td className="py-3 px-3"><span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black border ${team.status === 'On Track' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : team.status === 'At Risk' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-red-50 text-red-600 border-red-200'}`}>{team.status}</span></td>
-            <td className="py-3 px-3 text-center"><RowActionsMenu items={[{ label: 'View Team Targets', icon: Eye, onClick: () => navigate('/admin/targets/teams') }, { label: 'Edit Target Quota', icon: Edit, onClick: () => { setEditingTeam(team); setIsSetTargetModalOpen(true); } }]} /></td>
+            <td className="py-3 px-3 text-center"><RowActionsMenu items={[{ label: 'View Team Details', icon: Eye, onClick: () => navigate(`/admin/teams/${team.teamId || team.id}`) }, { label: 'Edit Target Quota', icon: Edit, onClick: () => { setEditingTeam(team); setIsSetTargetModalOpen(true); } }]} /></td>
           </tr>)}
         </tbody>
       </table></div>

@@ -221,7 +221,14 @@ export default function TeamTargetsScreen() {
                 <tr key={tt.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="py-3 px-3">
                     <div>
-                      <span className="font-extrabold text-[#0D1F3D] block">{tt.teamName}</span>
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/admin/teams/${tt.teamId || tt.id}`)}
+                        className="font-extrabold text-[#0D1F3D] hover:text-purple-600 hover:underline block text-left transition-colors cursor-pointer"
+                        title={`View ${tt.teamName} Details`}
+                      >
+                        {tt.teamName}
+                      </button>
                       <span className="text-[10px] text-slate-400 font-semibold">{tt.branch}</span>
                     </div>
                   </td>
@@ -271,6 +278,7 @@ export default function TeamTargetsScreen() {
                   <td className="py-3 px-3 text-center">
                     <RowActionsMenu
                       items={[
+                        { label: 'View Team Details', icon: Eye, onClick: () => navigate(`/admin/teams/${tt.teamId || tt.id}`) },
                         { label: 'Edit Team Target', icon: Edit, onClick: () => { setEditingTeam(tt); setIsSetTargetModalOpen(true); } },
                         { label: 'View Team Members', icon: Eye, onClick: () => navigate('/admin/targets/executives') },
                       ]}
@@ -298,7 +306,7 @@ export default function TeamTargetsScreen() {
 
           <div className="space-y-2 text-xs font-semibold">
             {!topTeams.length && <div className="p-4 text-center text-slate-500">No team performance records for this month.</div>}
-            {topTeams.map((team, index) => <div key={team.id} className={`flex items-center justify-between p-2 rounded-md ${index === 0 ? 'bg-emerald-50/50 border border-emerald-200/60' : 'bg-slate-50 border border-slate-100'}`}><div className="flex items-center gap-2"><span className="font-extrabold text-[#0D1F3D]">{index + 1}. {team.teamName}</span><span className="text-[10px] text-slate-400 font-semibold">({team.branch})</span></div><span className={`font-black ${team.achievementPct >= 70 ? 'text-emerald-600' : 'text-amber-600'}`}>{team.achievementPct}%</span></div>)}
+            {topTeams.map((team, index) => <div key={team.id} className={`flex items-center justify-between p-2 rounded-md ${index === 0 ? 'bg-emerald-50/50 border border-emerald-200/60' : 'bg-slate-50 border border-slate-100'}`}><div className="flex items-center gap-2"><button type="button" onClick={() => navigate(`/admin/teams/${team.teamId || team.id}`)} className="font-extrabold text-[#0D1F3D] hover:text-purple-600 hover:underline text-left cursor-pointer transition-colors" title={`View ${team.teamName} Details`}>{index + 1}. {team.teamName}</button><span className="text-[10px] text-slate-400 font-semibold">({team.branch})</span></div><span className={`font-black ${team.achievementPct >= 70 ? 'text-emerald-600' : 'text-amber-600'}`}>{team.achievementPct}%</span></div>)}
           </div>
         </div>
 
@@ -308,7 +316,7 @@ export default function TeamTargetsScreen() {
           </h3>
           <div className="space-y-2 text-xs font-semibold">
             {!topTeams.length && <div className="p-4 text-center text-slate-500">No target distribution is available.</div>}
-            {topTeams.map((team, index) => <div key={team.id} className={`flex justify-between text-slate-700 ${index ? 'border-t border-slate-100 pt-1.5' : ''}`}><span>{team.teamName}</span><span className="font-extrabold text-[#0D1F3D]">₹ {team.targetAmount.toLocaleString('en-IN')} ({totalTargetAmount ? ((team.targetAmount / totalTargetAmount) * 100).toFixed(1) : '0.0'}%)</span></div>)}
+            {topTeams.map((team, index) => <div key={team.id} className={`flex justify-between text-slate-700 ${index ? 'border-t border-slate-100 pt-1.5' : ''}`}><button type="button" onClick={() => navigate(`/admin/teams/${team.teamId || team.id}`)} className="hover:text-purple-600 hover:underline cursor-pointer text-left font-semibold transition-colors" title={`View ${team.teamName} Details`}>{team.teamName}</button><span className="font-extrabold text-[#0D1F3D]">₹ {team.targetAmount.toLocaleString('en-IN')} ({totalTargetAmount ? ((team.targetAmount / totalTargetAmount) * 100).toFixed(1) : '0.0'}%)</span></div>)}
           </div>
         </div>
 
