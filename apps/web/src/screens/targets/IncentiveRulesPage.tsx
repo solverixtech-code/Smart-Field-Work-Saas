@@ -191,10 +191,29 @@ export default function IncentiveRulesPage() {
         </div>
       </div>
 
+      {/* NAVIGATION TABS */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-0 text-xs font-bold">
+        {(['All Rules', 'Active Rules', 'Paused Rules', 'Inactive Rules'] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2.5 border-b-2 transition cursor-pointer ${
+              activeTab === tab
+                ? 'border-purple-600 text-purple-700 font-extrabold'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {tab} {tab === 'All Rules' ? `(${rules.length})` : tab === 'Active Rules' ? `(${count('Active')})` : tab === 'Paused Rules' ? `(${count('Paused')})` : `(${count('Inactive')})`}
+          </button>
+        ))}
+      </div>
+
       {/* RULES TABLE & FILTER TOOLBAR */}
       <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2 text-xs font-bold">
+          <h3 className="text-sm font-extrabold text-[#0D1F3D]">{activeTab} Overview</h3>
+          <div className="hidden">
             {(['All Rules', 'Active Rules', 'Paused Rules', 'Inactive Rules'] as const).map((tab) => (
               <button
                 key={tab}
@@ -212,13 +231,13 @@ export default function IncentiveRulesPage() {
           </div>
 
           <div className="relative w-64">
-            <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search rule name or metric..."
-              className="w-full rounded-md border border-slate-200 bg-white pl-9 pr-3 py-2 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-purple-600 focus:outline-none"
+              className="w-full h-10 min-h-[40px] rounded-md border border-slate-200 bg-white pl-9 pr-3 text-xs font-semibold text-[#0D1F3D] placeholder-slate-400 focus:border-purple-600 focus:outline-none"
             />
           </div>
         </div>

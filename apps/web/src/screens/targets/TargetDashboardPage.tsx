@@ -5,6 +5,7 @@ import { Target, Trophy, Users, Percent, Gift, CreditCard, Plus, Download, Filte
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Select } from '../../components/ui/Select';
+import { MonthPicker } from '../../components/ui/MonthPicker';
 import { RowActionsMenu } from '../../components/ui/RowActionsMenu';
 import { Avatar } from '../../components/ui/Avatar';
 import { extractErrorMessage } from '../../common/api';
@@ -41,12 +42,6 @@ export default function TargetDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
-  const monthOptions = Array.from({ length: 18 }, (_, index) => shiftPeriod(initialPeriod, 3 - index)).map((value) => ({ value, label: periodLabel(value) }));
-
-  const handleSelectedMonthChange = (newMonth: string) => {
-    setSelectedMonth(newMonth);
-    setCompareMonth(shiftPeriod(newMonth, -1));
-  };
 
   const handleResetFilters = () => {
     setTeamFilter('all');
@@ -86,8 +81,15 @@ export default function TargetDashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
         <div><h1 className="text-2xl font-bold text-[#0D1F3D]">Target Dashboard</h1><p className="text-xs font-normal text-slate-500">Track targets, achievements and incentives across teams and individuals.</p></div>
         <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-          <div className="w-36"><Select value={selectedMonth} onChange={(event) => handleSelectedMonthChange(event.target.value)} options={monthOptions} searchable={false} /></div>
-          <div className="w-36"><Select value={compareMonth} onChange={(event) => setCompareMonth(event.target.value)} options={monthOptions.map((option) => ({ ...option, label: `Vs ${option.label}` }))} searchable={false} /></div>
+          <MonthPicker
+            value={selectedMonth}
+            compareValue={compareMonth}
+            showComparison={true}
+            onChange={(newSelected, newCompare) => {
+              setSelectedMonth(newSelected);
+              if (newCompare) setCompareMonth(newCompare);
+            }}
+          />
           <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)} className={`h-10 min-h-[40px] bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs px-3 ${showFilters || hasActiveFilters ? 'border-purple-600 text-purple-700 bg-purple-50' : ''}`}><Filter className="h-3.5 w-3.5" /> Filters{hasActiveFilters ? ' •' : ''}</Button>
           <Button variant="outline" size="sm" onClick={exportReport} className="h-10 min-h-[40px] bg-white text-slate-700 border-slate-200 font-bold hover:bg-slate-50 flex items-center gap-1.5 shadow-xs px-3"><Download className="h-3.5 w-3.5 text-emerald-600" /> Export</Button>
           <Button variant="accent" size="sm" onClick={openCreate} className="h-10 min-h-[40px] flex items-center gap-1.5 font-bold shadow-xs bg-[#E20613] hover:bg-red-700 text-white rounded-md px-4"><Plus className="h-4 w-4" /> Set New Target</Button>
