@@ -27,6 +27,14 @@ export class CrmController {
   executives(@CurrentPrincipal() p: RequestPrincipal, @Query() q: unknown) {
     return this.crm.listExecutives(p, q);
   }
+  @Post("executives")
+  @RequirePermissions("crm.executives.view")
+  createExecutive(
+    @CurrentPrincipal() p: RequestPrincipal,
+    @Body() body: any,
+  ) {
+    return this.crm.createExecutive(p, body);
+  }
   @Get("lead-assignees/:membershipId/profile")
   @RequirePermissions("crm.executives.view")
   assigneeProfile(

@@ -1,11 +1,14 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
   UnprocessableEntityException,
 } from "@nestjs/common";
-import { Prisma } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
+import * as argon2 from "argon2";
+import { randomBytes } from "crypto";
 import { z } from "zod";
 import { RequestPrincipal } from "../common/security/request-principal.interface";
 import * as dto from "./crm-contract";
@@ -110,6 +113,23 @@ function nextDateKey(dateKey: string) {
   const [year, month, day] = dateKey.split("-").map(Number);
   const next = new Date(Date.UTC(year, month - 1, day + 1));
   return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, "0")}-${String(next.getUTCDate()).padStart(2, "0")}`;
+}
+
+function formatSafeEmployeeCode(
+  rawMembershipCode: string | null | undefined,
+  rawUserCode: string | null | undefined,
+  roleCode?: string | null,
+  roleName?: string | null,
+  membershipId?: string,
+): string {
+  const code = rawMembershipCode ?? rawUserCode;
+  if (code && !code.startsWith("OWNER_")) return code;
+  const isAdm =
+    roleCode === "tenant_admin" ||
+    roleCode === "admin" ||
+    (roleName && roleName.toLowerCase().includes("admin"));
+  if (isAdm) return "ADMIN-001";
+  return membershipId ? `FE-${membershipId.slice(0, 4).toUpperCase()}` : "FE-1001";
 }
 
 @Injectable()
@@ -308,7 +328,13 @@ export class CrmService {
 
       return {
         id: membership.id,
-        employeeCode: membership.employeeCode ?? membership.user.employeeCode,
+        employeeCode: formatSafeEmployeeCode(
+          membership.employeeCode,
+          membership.user.employeeCode,
+          membership.tenantRole?.code,
+          membership.tenantRole?.name ?? membership.designation,
+          membership.id,
+        ),
         displayName: membership.user.fullName,
         avatarUrl: membership.user.avatarUrl,
         role: membership.designation ?? membership.tenantRole?.name ?? membership.user.role.replaceAll("_", " ").toLowerCase().replace(/(^|\s)\S/g, (letter) => letter.toUpperCase()),
@@ -572,7 +598,13 @@ export class CrmService {
 
         return {
           membershipId: membership.id,
-          employeeCode: membership.employeeCode ?? membership.user.employeeCode,
+          employeeCode: formatSafeEmployeeCode(
+            membership.employeeCode,
+            membership.user.employeeCode,
+            roleCode,
+            roleName,
+            membership.id,
+          ),
           name: membership.user.fullName,
           email: membership.user.email,
           mobile: membership.user.mobile,
@@ -1268,11 +1300,29 @@ export class CrmService {
 
       const membership = await tx.tenantMembership.findFirst({
         where: { id: membershipId, tenantId },
-        select: { id: true, userId: true },
+        select: {
+          id: true,
+          userId: true,
+          isPrimary: true,
+          tenantRole: { select: { code: true } },
+          user: { select: { role: true } },
+        },
       });
 
       if (!membership) {
         throw new NotFoundException("Executive membership not found");
+      }
+
+      // Safeguard: Protect primary administrator and currently logged in actor from deletion
+      if (
+        membership.isPrimary ||
+        membership.tenantRole?.code === "tenant_admin" ||
+        membership.user?.role === "SUPER_ADMIN" ||
+        membership.userId === actor.userId
+      ) {
+        throw new BadRequestException(
+          "Primary workspace administrator cannot be deleted. Transfer workspace ownership before removing this account.",
+        );
       }
 
       // 1. Unassign non-converted, active leads (converted leads have DB trigger constraint)
@@ -1334,4 +1384,262 @@ export class CrmService {
     });
   }
 
+  async createExecutive(actor: RequestPrincipal, body: any) {
+    return this.repo.run(actor, true, async (tx, policy) => {
+      policy.require("crm.executives.view");
+      const tenantId = policy.scope.tenantId;
+
+      if (!body.fullName || !body.fullName.trim()) {
+        throw new BadRequestException("Full name is required");
+      }
+      if (!body.email || !body.email.trim()) {
+        throw new BadRequestException("Email is required");
+      }
+      if (!body.mobile || !body.mobile.trim()) {
+        throw new BadRequestException("Mobile number is required");
+      }
+
+      const cleanEmail = body.email.trim().toLowerCase();
+      const cleanFullName = body.fullName.trim();
+      const cleanMobile = body.mobile.trim();
+
+      // Check if user already exists
+      let user = await tx.user.findUnique({
+        where: { email: cleanEmail },
+      });
+
+      if (user) {
+        // Check if user already has membership in this tenant
+        const existingMembership = await tx.tenantMembership.findFirst({
+          where: { tenantId, userId: user.id },
+        });
+        if (existingMembership) {
+          throw new ConflictException("An employee with this email already exists in this workspace.");
+        }
+      }
+
+      // Map role
+      let roleEnum: Role = Role.FIELD_EXECUTIVE;
+      const rawRole = (body.systemRole || body.role || "FIELD_EXECUTIVE").toUpperCase().replace(/[\s-]+/g, "_");
+      if (rawRole in Role) {
+        roleEnum = Role[rawRole as keyof typeof Role];
+      }
+
+      // Find tenant role
+      const tenantRole = await tx.tenantRole.findFirst({
+        where: {
+          tenantId,
+          isActive: true,
+          OR: [
+            { code: body.systemRole },
+            { name: body.systemRole },
+            { code: rawRole.toLowerCase() },
+            { name: body.designation },
+          ],
+        },
+      });
+
+      // Employee code resolution
+      let cleanEmpCode = (body.empId || body.employeeCode || "").trim();
+      if (!cleanEmpCode) {
+        const count = await tx.tenantMembership.count({ where: { tenantId } });
+        cleanEmpCode = `EMP-${1001 + count}`;
+      }
+
+      // Ensure employeeCode is globally unique for User table
+      let uniqueUserEmpCode = cleanEmpCode;
+      const existingUserWithCode = await tx.user.findUnique({
+        where: { employeeCode: uniqueUserEmpCode },
+      });
+      if (existingUserWithCode && (!user || existingUserWithCode.id !== user.id)) {
+        uniqueUserEmpCode = `${cleanEmpCode}-${Math.floor(100 + Math.random() * 900)}`;
+      }
+
+      if (!user) {
+        const tempPassword = randomBytes(16).toString("hex");
+        const passwordHash = await argon2.hash(tempPassword);
+
+        user = await tx.user.create({
+          data: {
+            employeeCode: uniqueUserEmpCode,
+            fullName: cleanFullName,
+            email: cleanEmail,
+            mobile: cleanMobile,
+            dateOfBirth: body.dob ? new Date(body.dob) : null,
+            officeAddress: body.address?.trim() || null,
+            passwordHash,
+            role: roleEnum,
+            avatarUrl: body.avatar || body.avatarUrl || null,
+            status: "ACTIVE",
+            joinedAt: body.joinDate ? new Date(body.joinDate) : new Date(),
+          },
+        });
+      } else {
+        // Update user profile info if provided
+        await tx.user.update({
+          where: { id: user.id },
+          data: {
+            fullName: cleanFullName,
+            mobile: cleanMobile,
+            ...(body.avatar ? { avatarUrl: body.avatar } : {}),
+            ...(body.address ? { officeAddress: body.address.trim() } : {}),
+            ...(body.dob ? { dateOfBirth: new Date(body.dob) } : {}),
+          },
+        });
+      }
+
+      // Resolve team
+      let teamId: string | null = null;
+      if (body.team && body.team.trim()) {
+        const team = await tx.team.findFirst({
+          where: {
+            tenantId,
+            OR: [{ id: body.team.trim() }, { name: body.team.trim() }],
+          },
+        });
+        if (team) {
+          teamId = team.id;
+        }
+      }
+
+      // Resolve reporting manager
+      let managerMembershipId: string | null = null;
+      if (body.reportingTo && body.reportingTo.trim()) {
+        const candidateKey = body.reportingTo.trim();
+        const managerMem = await tx.tenantMembership.findFirst({
+          where: {
+            tenantId,
+            OR: [
+              { id: candidateKey },
+              { employeeCode: candidateKey },
+              { user: { fullName: candidateKey } },
+              { user: { employeeCode: candidateKey } },
+            ],
+          },
+        });
+        if (managerMem) {
+          managerMembershipId = managerMem.id;
+        }
+      }
+
+      // Create TenantMembership
+      const membership = await tx.tenantMembership.create({
+        data: {
+          tenantId,
+          userId: user.id,
+          tenantRoleId: tenantRole?.id || null,
+          status: "ACTIVE",
+          isPrimary: false,
+          employeeCode: cleanEmpCode,
+          designation: body.designation?.trim() || tenantRole?.name || "Field Executive",
+          department: body.team?.trim() || "Sales",
+          teamId,
+          managerMembershipId,
+          joinedAt: body.joinDate ? new Date(body.joinDate) : new Date(),
+          activatedAt: new Date(),
+        },
+        include: {
+          user: true,
+          team: true,
+          tenantRole: true,
+        },
+      });
+
+      // Update User manager and team
+      if (teamId || managerMembershipId) {
+        const mgrUser = managerMembershipId
+          ? await tx.tenantMembership.findUnique({
+              where: { id: managerMembershipId },
+              select: { userId: true },
+            })
+          : null;
+
+        await tx.user.update({
+          where: { id: user.id },
+          data: {
+            ...(teamId ? { teamId } : {}),
+            ...(mgrUser?.userId ? { managerId: mgrUser.userId } : {}),
+          },
+        });
+      }
+
+      // Assign Territory if region specified
+      if (body.region && body.region.trim()) {
+        const regionQuery = body.region.trim();
+        const territory = await tx.territory.findFirst({
+          where: {
+            tenantId,
+            deletedAt: null,
+            OR: [
+              { name: { equals: regionQuery, mode: "insensitive" } },
+              { city: { equals: regionQuery, mode: "insensitive" } },
+            ],
+          },
+        });
+        if (territory) {
+          await tx.territoryMember.create({
+            data: {
+              tenantId,
+              territoryId: territory.id,
+              membershipId: membership.id,
+              role: roleEnum === Role.TEAM_LEADER ? "TEAM_LEADER" : "FIELD_EXECUTIVE",
+              assignedByMembershipId: actor.membershipId || membership.id,
+            },
+          });
+        }
+      }
+
+      // Assign Shift if shift specified
+      if (body.shiftTiming && body.shiftTiming.trim()) {
+        const shiftPrefix = body.shiftTiming.split(" ")[0].trim();
+        const shift = await tx.shift.findFirst({
+          where: {
+            OR: [{ tenantId }, { tenantId: null }],
+            name: { contains: shiftPrefix, mode: "insensitive" },
+          },
+        });
+        if (shift) {
+          await tx.userShift.create({
+            data: {
+              tenantId,
+              tenantMembershipId: membership.id,
+              userId: user.id,
+              shiftId: shift.id,
+              startDate: body.joinDate ? new Date(body.joinDate) : new Date(),
+            },
+          });
+        }
+      }
+
+      // Create salary structure if specified
+      if (body.salary) {
+        const numSalary = parseFloat(String(body.salary).replace(/[^0-9.]/g, ""));
+        if (!isNaN(numSalary) && numSalary > 0) {
+          await tx.salaryStructure.create({
+            data: {
+              tenantId,
+              tenantMembershipId: membership.id,
+              userId: user.id,
+              baseSalary: numSalary,
+              netSalary: numSalary,
+            },
+          });
+        }
+      }
+
+      return {
+        success: true,
+        membership: {
+          id: membership.id,
+          employeeCode: membership.employeeCode,
+          name: user.fullName,
+          email: user.email,
+          designation: membership.designation,
+          status: membership.status,
+        },
+      };
+    });
+  }
+
 }
+

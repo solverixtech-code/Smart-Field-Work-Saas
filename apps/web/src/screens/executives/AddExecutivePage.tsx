@@ -11,6 +11,7 @@ import {
   Camera,
   Clock,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -134,6 +135,7 @@ export default function AddExecutivePage() {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -346,18 +348,40 @@ export default function AddExecutivePage() {
     toast.info(`Generated unique Employee ID: ${freshId}`);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.fullName.trim() || !formData.mobile.trim() || !formData.email.trim()) {
       setError('Please fill in all mandatory fields (Full Name, Mobile, Email).');
+      toast.error('Please fill in all mandatory fields (Full Name, Mobile, Email).');
       return;
     }
-    setError('');
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      navigate('/admin/executives');
-    }, 1200);
+
+    try {
+      setSubmitting(true);
+      setError('');
+
+      const payload = {
+        ...formData,
+        avatar: avatarPreview,
+      };
+
+      await api.post('/tenant/crm/executives', payload);
+      setSubmitted(true);
+      toast.success(`✓ Employee "${formData.fullName}" created successfully!`);
+      setTimeout(() => {
+        navigate('/admin/executives');
+      }, 900);
+    } catch (err: any) {
+      console.error('Failed to create employee:', err);
+      const errMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to create employee. Please check the details and try again.';
+      setError(errMsg);
+      toast.error(errMsg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -383,13 +407,28 @@ export default function AddExecutivePage() {
             type="button"
             variant="outline"
             size="sm"
+            disabled={submitting}
             onClick={() => navigate('/admin/executives')}
             className="border-slate-200 text-slate-700 hover:bg-slate-100 font-bold"
           >
             Cancel
           </Button>
-          <Button type="submit" variant="accent" size="sm" className="flex items-center gap-2 font-bold shadow-sm">
-            <UserPlus className="h-4 w-4" /> Create Employee / User
+          <Button
+            type="submit"
+            variant="accent"
+            size="sm"
+            disabled={submitting}
+            className="flex items-center gap-2 font-bold shadow-sm"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Creating...
+              </>
+            ) : (
+              <>
+                <UserPlus className="h-4 w-4" /> Create Employee / User
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -701,6 +740,37 @@ export default function AddExecutivePage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Bottom Action Footer */}
+      <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={submitting}
+          onClick={() => navigate('/admin/executives')}
+          className="border-slate-200 text-slate-700 hover:bg-slate-100 font-bold"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          variant="accent"
+          size="sm"
+          disabled={submitting}
+          className="flex items-center gap-2 font-bold shadow-sm"
+        >
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Creating...
+            </>
+          ) : (
+            <>
+              <UserPlus className="h-4 w-4" /> Create Employee / User
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Image Cropper Modal */}
