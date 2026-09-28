@@ -254,6 +254,14 @@ export class AttendanceController {
     );
   }
 
+  @Get("admin/memberships")
+  @RequirePermissions("attendance.settings.manage")
+  memberships(@CurrentPrincipal() principal: RequestPrincipal) {
+    return this.attendance.listAttendanceMemberships(
+      TenantScopeFactory.fromPrincipal(principal),
+    );
+  }
+
   @Delete("admin/memberships/:membershipId/override")
   @RequirePermissions("attendance.settings.manage")
   deleteOverride(

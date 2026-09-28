@@ -1133,6 +1133,21 @@ export class AttendanceService {
     });
   }
 
+  listAttendanceMemberships(scope: TenantScope) {
+    return this.prisma.tenantMembership.findMany({
+      where: { tenantId: scope.tenantId, status: "ACTIVE" },
+      select: {
+        id: true,
+        employeeCode: true,
+        designation: true,
+        user: { select: { fullName: true, email: true, avatarUrl: true } },
+        tenantRole: { select: { name: true, code: true } },
+        attendanceOverride: { select: { mobilityMode: true } },
+      },
+      orderBy: [{ user: { fullName: "asc" } }, { employeeCode: "asc" }],
+    });
+  }
+
   async deleteOverride(scope: TenantScope, membershipId: string) {
     return this.prisma.$transaction(async (tx) => {
       const override = await tx.attendanceMembershipOverride.findUnique({

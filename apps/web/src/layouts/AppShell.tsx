@@ -627,6 +627,13 @@ const navCategories: NavCategory[] = [
         moduleCode: "attendance",
         badge: "Live",
       },
+      {
+        label: "Attendance Settings",
+        icon: Settings,
+        to: "/admin/attendance/settings",
+        permission: "attendance.settings.manage",
+        moduleCode: "attendance",
+      },
     ],
   },
   {
@@ -1166,6 +1173,9 @@ function getBreadcrumbTrail(pathname: string) {
       label: "Attendance & Mobile GPS Punches",
       to: "/admin/attendance",
     });
+  } else if (pathname === "/admin/attendance/settings") {
+    items.push({ label: "Workforce & Operations", to: "/admin/attendance" });
+    items.push({ label: "Attendance Administration", to: pathname });
   } else if (pathname === "/employee/attendance") {
     items.push({ label: "My Workspace", to: "/admin/dashboard" });
     items.push({ label: "Mobile Attendance", to: pathname });
@@ -1792,6 +1802,12 @@ export default function AppShell() {
                           "/admin/visits/gps-exceptions",
                         ))
                     );
+                  }
+                  if (item.to === "/admin/attendance") {
+                    return location.pathname === "/admin/attendance";
+                  }
+                  if (item.to === "/admin/attendance/settings") {
+                    return location.pathname.startsWith(item.to);
                   }
                   if (item.to === "/admin/targets") {
                     return (
