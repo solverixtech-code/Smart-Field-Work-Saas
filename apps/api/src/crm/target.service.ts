@@ -145,18 +145,6 @@ export class TargetService {
           status: achievementPct >= threshold ? 'On Track' : achievementPct >= threshold * 0.75 ? 'At Risk' : 'Behind',
         } as const;
       });
-      const topAchievers = currentTargets.filter((target) => target.membershipId && target.metric === 'sales_amount')
-        .map((target) => {
-          const executive = executiveById.get(target.membershipId!);
-          return {
-            id: target.membershipId!, name: executive?.user.fullName ?? 'Unavailable executive',
-            avatarUrl: executive?.user.avatarUrl ?? null, teamName: executive?.team?.name ?? 'No team assigned',
-            achievementPct: percentage(actualFor(target), Number(target.targetValue)),
-          };
-        })
-        .sort((left, right) => right.achievementPct - left.achievementPct || left.name.localeCompare(right.name))
-        .slice(0, 3);
-      const statusDistribution = teamTargets.reduce((result, target) => ({ ...result, [target.status]: result[target.status] + 1 }), { 'On Track': 0, 'At Risk': 0, Behind: 0 });
       const executiveTargets = executives.map((executive) => {
         const targetFor = (metric: TargetMetric) => currentTargets.find((target) => target.membershipId === executive.id && target.metric === metric);
         const actualForExecutive = (metric: TargetMetric) => activities
@@ -167,8 +155,11 @@ export class TargetService {
         const visitsTarget = targetFor('visits_count');
         const salesTarget = Number(sales?.targetValue ?? 0);
         const salesAchieved = actualForExecutive('sales_amount');
-        const salesPct = percentage(salesAchieved, salesTarget);
+        const salesPct = salesTarget > 0 ? percentage(salesAchieved, salesTarget) : (salesAchieved > 0 ? 100 : 0);
         const threshold = Number(sales?.thresholdPct ?? 80);
+        const status = salesTarget > 0
+          ? (salesPct >= threshold ? 'On Track' : salesPct >= threshold * 0.75 ? 'At Risk' : 'Behind')
+          : (salesAchieved > 0 ? 'On Track' : 'Behind');
         return {
           id: executive.id,
           executiveId: executive.employeeCode ?? executive.user.employeeCode,
@@ -183,9 +174,22 @@ export class TargetService {
           visitsTarget: Number(visitsTarget?.targetValue ?? 0),
           visitsAchieved: actualForExecutive('visits_count'),
           incentiveEarned: currentIncentiveByMembership.get(executive.id) ?? 0,
-          status: salesPct >= threshold ? 'On Track' : salesPct >= threshold * 0.75 ? 'At Risk' : 'Behind',
+          status,
         } as const;
       });
+
+      const topAchievers = [...executiveTargets]
+        .sort((left, right) => right.salesAchieved - left.salesAchieved || right.salesPct - left.salesPct || left.executiveName.localeCompare(right.executiveName))
+        .slice(0, 3)
+        .map((exec) => ({
+          id: exec.id,
+          name: exec.executiveName,
+          avatarUrl: exec.executiveAvatar,
+          teamName: exec.teamName,
+          achievementPct: exec.salesPct,
+        }));
+
+      const statusDistribution = teamTargets.reduce((result, target) => ({ ...result, [target.status]: result[target.status] + 1 }), { 'On Track': 0, 'At Risk': 0, Behind: 0 });
 
       return {
         period: q.period,

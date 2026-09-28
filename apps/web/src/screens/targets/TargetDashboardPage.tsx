@@ -82,10 +82,7 @@ export default function TargetDashboardPage() {
       <Kpi title="Achievement %" value={`${dashboard.summary.achievementPercent}%`} change={dashboard.summary.changes.achievementPercent} icon={Percent} iconClass="bg-amber-50 text-amber-600 border-amber-100" />
       <Kpi title="Active Executives" value={String(dashboard.summary.activeExecutives)} change={dashboard.summary.changes.activeExecutives} changeSuffix=" vs last month" icon={Users} iconClass="bg-purple-50 text-purple-600 border-purple-100" />
       <Kpi title="Incentive Earned" value={inr(dashboard.summary.incentiveEarned)} change={dashboard.summary.changes.incentiveEarned} icon={Gift} iconClass="bg-cyan-50 text-cyan-600 border-cyan-100" />
-      <Kpi title="Incentive Paid" value={inr(dashboard.summary.incentivePaid)} change={dashboard.summary.changes.incentivePaid} icon={CreditCard} iconClass="bg-red-50 text-red-600 border-red-100" />
     </div>
-
-    <div className="flex items-center gap-2 border-b border-slate-200 pb-0 text-xs font-bold">{(['Overview', 'Team Performance', 'Individual Performance', 'Incentives Overview'] as const).map((tab) => <button key={tab} type="button" onClick={() => { setActiveTab(tab); if (tab === 'Team Performance') navigate('/admin/targets/teams'); else if (tab === 'Individual Performance') navigate('/admin/targets/executives'); else if (tab === 'Incentives Overview') navigate('/admin/incentives'); }} className={`px-4 py-2.5 border-b-2 transition cursor-pointer ${activeTab === tab ? 'border-purple-600 text-purple-700 font-extrabold' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>{tab}</button>)}</div>
 
     <div className="rounded-md border border-slate-200 bg-white p-4 shadow-xs space-y-3">
       <div className="flex items-center justify-between border-b border-slate-100 pb-2.5"><h3 className="text-sm font-extrabold text-[#0D1F3D]">Team Target Summary</h3><Button variant="outline" size="sm" onClick={() => navigate('/admin/targets/teams')} className="text-xs font-bold text-slate-700">View All Team Targets →</Button></div>
@@ -148,7 +145,7 @@ export default function TargetDashboardPage() {
 
           {dashboard.topAchievers.map((person, index) => {
             const execDetail = dashboard.executives.find(
-              (e) => e.executiveId === person.id || e.executiveName === person.name
+              (e) => e.id === person.id || e.executiveId === person.id || e.executiveName === person.name
             );
             const achieved = execDetail ? execDetail.salesAchieved : 0;
             const target = execDetail ? execDetail.salesTarget : 0;
@@ -232,7 +229,7 @@ export default function TargetDashboardPage() {
                     <span className="text-slate-500 font-semibold">Quota Progress:</span>
                     <span className="font-bold text-[#0D1F3D]">
                       {inr(achieved)}{" "}
-                      <span className="text-slate-400 font-normal">/ {inr(target)}</span>
+                      <span className="text-slate-400 font-normal">{target > 0 ? `/ ${inr(target)}` : ' (No Target Set)'}</span>
                     </span>
                   </div>
 

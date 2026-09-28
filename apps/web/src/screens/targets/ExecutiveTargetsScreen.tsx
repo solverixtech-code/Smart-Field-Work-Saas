@@ -217,7 +217,7 @@ export default function ExecutiveTargetsScreen() {
               <tr className="border-b border-slate-200 bg-slate-50/70 text-xs font-extrabold text-[#0D1F3D]">
                 <th className="py-2.5 px-3">Executive</th>
                 <th className="py-2.5 px-3">Team</th>
-                <th className="py-2.5 px-3">Sales Quota (Target / Achv)</th>
+                <th className="py-2.5 px-3">Sales Quota (Achieved / Target)</th>
                 <th className="py-2.5 px-3">Demos Quota</th>
                 <th className="py-2.5 px-3">Visits Quota</th>
                 <th className="py-2.5 px-3">Incentive (₹)</th>
@@ -257,12 +257,12 @@ export default function ExecutiveTargetsScreen() {
                   <td className="py-3 px-3">
                     <div className="space-y-1">
                       <span className="font-mono text-slate-800 text-[11px] block">
-                        ₹{et.salesAchieved.toLocaleString('en-IN')} / ₹{et.salesTarget.toLocaleString('en-IN')} ({et.salesPct}%)
+                        ₹{et.salesAchieved.toLocaleString('en-IN')} / {et.salesTarget > 0 ? `₹${et.salesTarget.toLocaleString('en-IN')} (${et.salesPct}%)` : et.salesAchieved > 0 ? '(No Target Set)' : 'Unassigned'}
                       </span>
                       <div className="h-1.5 w-36 rounded-full bg-slate-100 overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-purple-600"
-                          style={{ width: `${Math.min(et.salesPct, 100)}%` }}
+                          className={`h-full rounded-full ${et.salesPct >= 70 || (et.salesTarget === 0 && et.salesAchieved > 0) ? 'bg-emerald-500' : et.salesPct >= 50 ? 'bg-amber-500' : 'bg-purple-600'}`}
+                          style={{ width: `${Math.min(et.salesTarget > 0 ? et.salesPct : et.salesAchieved > 0 ? 100 : 0, 100)}%` }}
                         />
                       </div>
                     </div>
