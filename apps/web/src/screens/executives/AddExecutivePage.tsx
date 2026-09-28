@@ -123,14 +123,19 @@ function generateRandomEmpId(): string {
 export default function AddExecutivePage() {
   const navigate = useNavigate();
   const [shiftOptions, setShiftOptions] = useState<SelectOption[]>(DEFAULT_SHIFTS);
+  const [systemRoleOptionsState, setSystemRoleOptions] = useState<SelectOption[]>(systemRoleOptions);
+  const [designationOptionsState, setDesignationOptions] = useState<SelectOption[]>(designationOptions);
+  const [reportingToOptionsState, setReportingToOptions] = useState<SelectOption[]>(reportingToOptions);
+  const [teamOptionsState, setTeamOptions] = useState<SelectOption[]>(teamOptions);
+  const [regionOptionsState, setRegionOptions] = useState<SelectOption[]>(regionOptions);
 
   const [formData, setFormData] = useState({
     fullName: '',
     empId: generateRandomEmpId(),
     systemRole: 'FIELD_EXECUTIVE',
     designation: 'Field Executive',
-    reportingTo: 'Sanjay Yadav (TL-1003)',
-    team: 'Mumbai North Team',
+    reportingTo: '',
+    team: '',
     employmentType: 'Full Time',
     dob: '1996-05-15',
     gender: 'Male',
@@ -153,11 +158,11 @@ export default function AddExecutivePage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch real system shifts and existing executive count to auto-populate unique Employee ID
+  // Fetch real live backend options for Shifts, Teams, Reporting Managers, System Roles, and Regions
   useEffect(() => {
     const controller = new AbortController();
 
-    // Fetch real system shifts
+    // 1. Fetch real system shifts
     api.get('/shifts', { signal: controller.signal })
       .then(({ data }) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -167,13 +172,78 @@ export default function AddExecutivePage() {
             sublabel: `Code: ${s.code || s.id} • Grace: ${s.lateGraceMinutes || 15} mins`,
           }));
           setShiftOptions(fetchedShifts);
+          setFormData((prev) => ({ ...prev, shiftTiming: fetchedShifts[0].value }));
         }
       })
-      .catch(() => {
-        // Fallback to pre-configured system shift templates
-      });
+      .catch(() => {});
 
-    // Auto-populate next sequential Employee ID based on total count
+    // 2. Fetch live teams options & manager candidates
+    api.get('/tenant/crm/teams/options', { signal: controller.signal })
+      .then(({ data }: any) => {
+        if (!controller.signal.aborted && data) {
+          if (Array.isArray(data.candidates) && data.candidates.length > 0) {
+            const liveReporting: SelectOption[] = data.candidates.map((c: any) => ({
+              value: `${c.name} (${c.employeeCode ?? 'EMP'})`,
+              label: c.name,
+              sublabel: `${c.designation ?? 'Team Lead'} • ${c.teamName ?? 'General'} (${c.employeeCode})`,
+              avatar: c.avatarUrl || undefined,
+            }));
+            setReportingToOptions(liveReporting);
+            setFormData((prev) => ({ ...prev, reportingTo: liveReporting[0].value }));
+          }
+          if (Array.isArray(data.regions) && data.regions.length > 0) {
+            const liveRegions: SelectOption[] = data.regions.map((r: any) => ({
+              value: r.name,
+              label: r.name,
+            }));
+            setRegionOptions(liveRegions);
+            setFormData((prev) => ({ ...prev, region: liveRegions[0].value }));
+          }
+        }
+      })
+      .catch(() => {});
+
+    // 3. Fetch live teams list
+    api.get('/tenant/crm/teams', { signal: controller.signal })
+      .then(({ data }: any) => {
+        if (!controller.signal.aborted) {
+          const teamList = Array.isArray(data) ? data : data?.items;
+          if (Array.isArray(teamList) && teamList.length > 0) {
+            const liveTeams: SelectOption[] = teamList.map((t: any) => ({
+              value: t.name,
+              label: t.name,
+              sublabel: `${t.region ?? 'All Regions'} • ${t.tenantMemberships?.length ?? 0} Staff`,
+            }));
+            setTeamOptions(liveTeams);
+            setFormData((prev) => ({ ...prev, team: liveTeams[0].value }));
+          }
+        }
+      })
+      .catch(() => {});
+
+    // 4. Fetch live tenant roles
+    api.get('/tenant/roles', { signal: controller.signal })
+      .then(({ data }: any) => {
+        if (!controller.signal.aborted) {
+          const rolesList = Array.isArray(data) ? data : data?.roles || data?.items;
+          if (Array.isArray(rolesList) && rolesList.length > 0) {
+            const liveRoles: SelectOption[] = rolesList.map((r: any) => ({
+              value: r.code ?? r.name,
+              label: r.name ?? r.code,
+              sublabel: r.description ?? `Permissions Version ${r.permissionsVersion ?? 1}`,
+            }));
+            setSystemRoleOptions(liveRoles);
+            const liveDesignations: SelectOption[] = rolesList.map((r: any) => ({
+              value: r.name,
+              label: r.name,
+            }));
+            setDesignationOptions(liveDesignations);
+          }
+        }
+      })
+      .catch(() => {});
+
+    // 5. Auto-populate next sequential Employee ID based on total count
     api.get('/tenant/crm/executives', { signal: controller.signal, params: { limit: 1 } })
       .then(({ data }: any) => {
         if (!controller.signal.aborted && data && typeof data.total === 'number') {
@@ -181,9 +251,7 @@ export default function AddExecutivePage() {
           setFormData((prev) => ({ ...prev, empId: nextSequentialId }));
         }
       })
-      .catch(() => {
-        // Fallback to random unique EMP ID
-      });
+      .catch(() => {});
 
     return () => controller.abort();
   }, []);
@@ -265,20 +333,32 @@ export default function AddExecutivePage() {
               <h3 className="text-base font-extrabold text-[#0D1F3D]">Personal Information</h3>
             </div>
 
-            <div className="flex flex-wrap items-start gap-6 pt-2">
-              {/* Photo Avatar Placeholder */}
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex h-24 w-24 items-center justify-center rounded-full bg-[#0D1F3D]/10 text-2xl font-extrabold text-[#0D1F3D] border-2 border-slate-200 shadow-xs">
+            {/* Photo Avatar Header Banner */}
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-slate-50/80 p-4 border border-slate-200/60">
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0D1F3D]/10 text-xl font-extrabold text-[#0D1F3D] border-2 border-slate-200 shadow-xs shrink-0">
                   {formData.fullName ? formData.fullName.charAt(0).toUpperCase() : 'FE'}
                 </div>
-                <Button variant="outline" size="sm" type="button" className="text-xs font-bold flex items-center gap-1.5">
+                <div>
+                  <p className="text-xs font-extrabold text-[#0D1F3D]">
+                    {formData.fullName || 'New Employee Profile Photo'}
+                  </p>
+                  <p className="text-[11px] text-slate-500 font-medium">
+                    Upload high-resolution profile photo for employee directory badge and avatar display.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" type="button" className="text-xs font-bold flex items-center gap-1.5 border-slate-200 bg-white">
                   <Camera className="h-3.5 w-3.5 text-[#E20613]" /> Upload Photo
                 </Button>
-                <span className="text-[10px] text-slate-400 font-medium">JPG, PNG. Max 2MB</span>
+                <span className="text-[10px] text-slate-400 font-medium">JPG, PNG (Max 2MB)</span>
               </div>
+            </div>
 
-              {/* Personal Fields */}
-              <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 text-xs font-semibold">
+            {/* Personal Fields Symmetrical Grid */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 text-xs font-semibold pt-1">
+              <div className="sm:col-span-2">
                 <Input
                   label="Full Name *"
                   placeholder="e.g. Amit Sharma"
@@ -286,70 +366,78 @@ export default function AddExecutivePage() {
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   required
                 />
-                <Input
-                  label="Employee ID *"
-                  value={formData.empId}
-                  onChange={(e) => setFormData({ ...formData, empId: e.target.value })}
-                  required
-                  rightIcon={
-                    <button
-                      type="button"
-                      title="Auto-generate new unique ID"
-                      onClick={handleRegenerateEmpId}
-                      className="text-slate-400 hover:text-[#E20613] transition-colors p-0.5 cursor-pointer"
-                    >
-                      <RefreshCw className="h-3.5 w-3.5" />
-                    </button>
-                  }
-                />
-                <Select
-                  label="System Role *"
-                  searchable={true}
-                  options={systemRoleOptions}
-                  value={formData.systemRole}
-                  onChange={(e) => setFormData({ ...formData, systemRole: e.target.value })}
-                />
-                <Select
-                  label="Designation *"
-                  searchable={true}
-                  options={designationOptions}
-                  value={formData.designation}
-                  onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                />
-                <Select
-                  label="Reporting To *"
-                  searchable={true}
-                  options={reportingToOptions}
-                  value={formData.reportingTo}
-                  onChange={(e) => setFormData({ ...formData, reportingTo: e.target.value })}
-                />
-                <Select
-                  label="Team *"
-                  searchable={true}
-                  options={teamOptions}
-                  value={formData.team}
-                  onChange={(e) => setFormData({ ...formData, team: e.target.value })}
-                />
-                <Select
-                  label="Employment Type *"
-                  searchable={true}
-                  options={employmentTypeOptions}
-                  value={formData.employmentType}
-                  onChange={(e) => setFormData({ ...formData, employmentType: e.target.value })}
-                />
-                <DatePicker
-                  label="Date of Birth"
-                  value={formData.dob}
-                  onChange={(val) => setFormData({ ...formData, dob: val })}
-                />
-                <Select
-                  label="Gender"
-                  searchable={true}
-                  options={genderOptions}
-                  value={formData.gender}
-                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                />
               </div>
+
+              <Input
+                label="Employee ID *"
+                value={formData.empId}
+                onChange={(e) => setFormData({ ...formData, empId: e.target.value })}
+                required
+                rightIcon={
+                  <button
+                    type="button"
+                    title="Auto-generate new unique ID"
+                    onClick={handleRegenerateEmpId}
+                    className="text-slate-400 hover:text-[#E20613] transition-colors p-0.5 cursor-pointer"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  </button>
+                }
+              />
+
+              <Select
+                label="System Role *"
+                searchable={true}
+                options={systemRoleOptionsState}
+                value={formData.systemRole}
+                onChange={(e) => setFormData({ ...formData, systemRole: e.target.value })}
+              />
+
+              <Select
+                label="Designation *"
+                searchable={true}
+                options={designationOptionsState}
+                value={formData.designation}
+                onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+              />
+
+              <Select
+                label="Reporting To *"
+                searchable={true}
+                options={reportingToOptionsState}
+                value={formData.reportingTo}
+                onChange={(e) => setFormData({ ...formData, reportingTo: e.target.value })}
+              />
+
+              <Select
+                label="Team *"
+                searchable={true}
+                options={teamOptionsState}
+                value={formData.team}
+                onChange={(e) => setFormData({ ...formData, team: e.target.value })}
+              />
+
+              <Select
+                label="Employment Type *"
+                searchable={true}
+                options={employmentTypeOptions}
+                value={formData.employmentType}
+                onChange={(e) => setFormData({ ...formData, employmentType: e.target.value })}
+              />
+
+              <DatePicker
+                label="Date of Birth"
+                value={formData.dob}
+                onChange={(val) => setFormData({ ...formData, dob: val })}
+              />
+
+              <Select
+                label="Gender"
+                searchable={true}
+                options={genderOptions}
+                value={formData.gender}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+              />
             </div>
           </div>
 
@@ -416,7 +504,7 @@ export default function AddExecutivePage() {
               <Select
                 label="Work Region *"
                 searchable={true}
-                options={regionOptions}
+                options={regionOptionsState}
                 value={formData.region}
                 onChange={(e) => setFormData({ ...formData, region: e.target.value })}
               />
@@ -432,8 +520,8 @@ export default function AddExecutivePage() {
                 <Input
                   type="number"
                   allowLetters={false}
-                  label="Salary (Annual CTC)"
-                  placeholder="e.g. 350000"
+                  label="Monthly Salary (₹ / month)"
+                  placeholder="e.g. 35000"
                   value={formData.salary}
                   onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
                 />

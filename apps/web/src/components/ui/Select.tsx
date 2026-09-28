@@ -247,7 +247,7 @@ export const Select = React.forwardRef<HTMLDivElement, SelectProps>(
           aria-invalid={Boolean(error)}
           disabled={disabled}
           onClick={() => setIsOpen((prev) => !prev)}
-          className={`w-full flex items-center justify-between rounded-md border bg-white py-2 text-xs font-medium text-slate-800 transition-all cursor-pointer h-10 shrink-0 ${
+          className={`relative w-full flex items-center justify-between rounded-md border bg-white py-2 text-xs font-medium text-slate-800 transition-all cursor-pointer h-10 shrink-0 ${
             leftIcon ? "pl-10 pr-9" : "px-3.5"
           } ${
             error

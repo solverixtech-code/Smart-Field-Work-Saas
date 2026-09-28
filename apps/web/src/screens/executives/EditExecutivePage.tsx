@@ -306,9 +306,10 @@ export default function EditExecutivePage() {
                 </select>
               </div>
               <div>
-                <label className="text-slate-600 block mb-1 font-bold">Salary (Annual CTC)</label>
+                <label className="text-slate-600 block mb-1 font-bold">Monthly Salary (₹ / month)</label>
                 <input
                   type="number"
+                  placeholder="e.g. 35000"
                   value={formData.salary}
                   onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-extrabold text-[#0D1F3D] focus:border-[#E20613] focus:bg-white focus:outline-none"
