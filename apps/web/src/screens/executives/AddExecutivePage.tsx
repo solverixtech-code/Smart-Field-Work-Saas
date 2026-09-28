@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   UserPlus,
@@ -9,6 +10,7 @@ import {
   Shield,
   Camera,
   Clock,
+  RefreshCw,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -113,13 +115,18 @@ const regionOptions: SelectOption[] = [
   { value: 'Pune', label: 'Pune' },
 ];
 
+function generateRandomEmpId(): string {
+  const num = Math.floor(1000 + Math.random() * 9000);
+  return `EMP-${num}`;
+}
+
 export default function AddExecutivePage() {
   const navigate = useNavigate();
   const [shiftOptions, setShiftOptions] = useState<SelectOption[]>(DEFAULT_SHIFTS);
 
   const [formData, setFormData] = useState({
     fullName: '',
-    empId: 'EMP-1011',
+    empId: generateRandomEmpId(),
     systemRole: 'FIELD_EXECUTIVE',
     designation: 'Field Executive',
     reportingTo: 'Sanjay Yadav (TL-1003)',
@@ -146,9 +153,11 @@ export default function AddExecutivePage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch real system shifts from backend API on mount
+  // Fetch real system shifts and existing executive count to auto-populate unique Employee ID
   useEffect(() => {
     const controller = new AbortController();
+
+    // Fetch real system shifts
     api.get('/shifts', { signal: controller.signal })
       .then(({ data }) => {
         if (Array.isArray(data) && data.length > 0) {
@@ -163,8 +172,27 @@ export default function AddExecutivePage() {
       .catch(() => {
         // Fallback to pre-configured system shift templates
       });
+
+    // Auto-populate next sequential Employee ID based on total count
+    api.get('/tenant/crm/executives', { signal: controller.signal, params: { limit: 1 } })
+      .then(({ data }: any) => {
+        if (!controller.signal.aborted && data && typeof data.total === 'number') {
+          const nextSequentialId = `EMP-${1001 + data.total}`;
+          setFormData((prev) => ({ ...prev, empId: nextSequentialId }));
+        }
+      })
+      .catch(() => {
+        // Fallback to random unique EMP ID
+      });
+
     return () => controller.abort();
   }, []);
+
+  const handleRegenerateEmpId = () => {
+    const freshId = generateRandomEmpId();
+    setFormData((prev) => ({ ...prev, empId: freshId }));
+    toast.info(`Generated unique Employee ID: ${freshId}`);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,6 +291,16 @@ export default function AddExecutivePage() {
                   value={formData.empId}
                   onChange={(e) => setFormData({ ...formData, empId: e.target.value })}
                   required
+                  rightIcon={
+                    <button
+                      type="button"
+                      title="Auto-generate new unique ID"
+                      onClick={handleRegenerateEmpId}
+                      className="text-slate-400 hover:text-[#E20613] transition-colors p-0.5 cursor-pointer"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </button>
+                  }
                 />
                 <Select
                   label="System Role *"
