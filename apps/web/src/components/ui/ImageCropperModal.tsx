@@ -89,8 +89,23 @@ async function getCroppedImg(
     throw new Error('No cropped 2d context');
   }
 
-  croppedCanvas.width = Math.ceil(pixelCrop.width);
-  croppedCanvas.height = Math.ceil(pixelCrop.height);
+  // Downscale cropped avatar canvas to max 512x512 for optimal retina display & lightweight payload
+  const MAX_DIMENSION = 512;
+  let targetWidth = Math.ceil(pixelCrop.width);
+  let targetHeight = Math.ceil(pixelCrop.height);
+
+  if (targetWidth > MAX_DIMENSION || targetHeight > MAX_DIMENSION) {
+    if (targetWidth >= targetHeight) {
+      targetHeight = Math.round((targetHeight * MAX_DIMENSION) / targetWidth);
+      targetWidth = MAX_DIMENSION;
+    } else {
+      targetWidth = Math.round((targetWidth * MAX_DIMENSION) / targetHeight);
+      targetHeight = MAX_DIMENSION;
+    }
+  }
+
+  croppedCanvas.width = targetWidth;
+  croppedCanvas.height = targetHeight;
   croppedCtx.drawImage(
     canvas,
     pixelCrop.x,
@@ -99,8 +114,8 @@ async function getCroppedImg(
     pixelCrop.height,
     0,
     0,
-    pixelCrop.width,
-    pixelCrop.height,
+    targetWidth,
+    targetHeight,
   );
 
   return new Promise((resolve, reject) => {
