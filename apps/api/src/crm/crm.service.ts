@@ -1589,8 +1589,9 @@ export class CrmService {
         }
       }
 
-      // Assign Shift if shift specified
-      if (body.shiftTiming && body.shiftTiming.trim()) {
+      // Assign Shift if shift specified (and not flexible / not applicable)
+      const isFlexibleShift = body.shiftTiming && (body.shiftTiming.toLowerCase().includes("flexible") || body.shiftTiming.toLowerCase().includes("not applicable"));
+      if (body.shiftTiming && body.shiftTiming.trim() && !isFlexibleShift) {
         const shiftPrefix = body.shiftTiming.split(" ")[0].trim();
         const shift = await tx.shift.findFirst({
           where: {
@@ -1899,7 +1900,13 @@ export class CrmService {
       }
 
       // Shift
-      if (body.shiftTiming && body.shiftTiming.trim()) {
+      const isFlexibleShiftUpdate = body.shiftTiming && (body.shiftTiming.toLowerCase().includes("flexible") || body.shiftTiming.toLowerCase().includes("not applicable"));
+      if (isFlexibleShiftUpdate) {
+        // If switched to Flexible, remove any strict assigned user shift
+        await tx.userShift.deleteMany({
+          where: { tenantId, tenantMembershipId: membership.id },
+        });
+      } else if (body.shiftTiming && body.shiftTiming.trim()) {
         const shiftPrefix = body.shiftTiming.split(" ")[0].trim();
         const shift = await tx.shift.findFirst({
           where: {

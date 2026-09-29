@@ -25,6 +25,11 @@ import { api } from '../../common/api';
 
 const DEFAULT_SHIFTS: SelectOption[] = [
   {
+    value: 'Flexible / Not Applicable',
+    label: 'Flexible / Not Applicable',
+    sublabel: 'No shift tracking or late penalties applied',
+  },
+  {
     value: 'General Shift (09:30 AM - 06:30 PM)',
     label: 'General Shift (09:30 AM - 06:30 PM)',
     sublabel: 'Mon - Sat • Grace 15 mins',
@@ -667,7 +672,13 @@ export default function AddExecutivePage() {
                 onChange={(e) => setFormData({ ...formData, region: e.target.value })}
               />
               <Select
-                label="Shift Timing *"
+                label={
+                  (formData.systemRole || '').toLowerCase().includes('admin') ||
+                  (formData.designation || '').toLowerCase().includes('admin') ||
+                  (formData.designation || '').toLowerCase().includes('owner')
+                    ? 'Shift Timing (Optional)'
+                    : 'Shift Timing *'
+                }
                 searchable={true}
                 options={shiftOptions}
                 value={formData.shiftTiming}
