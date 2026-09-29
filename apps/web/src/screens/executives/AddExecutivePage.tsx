@@ -229,6 +229,23 @@ export default function AddExecutivePage() {
     }
   }, [formData.systemRole, formData.designation, allCandidates]);
 
+  // Auto-select 'Flexible / Not Applicable' shift timing when role is Admin or Owner
+  useEffect(() => {
+    const isAdminRole =
+      (formData.systemRole || '').toLowerCase().includes('admin') ||
+      (formData.designation || '').toLowerCase().includes('admin') ||
+      (formData.designation || '').toLowerCase().includes('owner');
+
+    if (isAdminRole) {
+      setFormData((prev) => {
+        if (!prev.shiftTiming || prev.shiftTiming.includes('General Shift')) {
+          return { ...prev, shiftTiming: 'Flexible / Not Applicable' };
+        }
+        return prev;
+      });
+    }
+  }, [formData.systemRole, formData.designation]);
+
   // Fetch real live backend options for Shifts, Teams, Reporting Managers, System Roles, and Regions
   useEffect(() => {
     const controller = new AbortController();
@@ -237,13 +254,20 @@ export default function AddExecutivePage() {
     api.get('/shifts', { signal: controller.signal })
       .then(({ data }) => {
         if (Array.isArray(data) && data.length > 0) {
-          const fetchedShifts: SelectOption[] = data.map((s: any) => ({
-            value: `${s.name} (${s.startTime} - ${s.endTime})`,
-            label: `${s.name} (${s.startTime} - ${s.endTime})`,
-            sublabel: `Code: ${s.code || s.id} • Grace: ${s.lateGraceMinutes || 15} mins`,
-          }));
+          const flexibleOption: SelectOption = {
+            value: 'Flexible / Not Applicable',
+            label: 'Flexible / Not Applicable',
+            sublabel: 'No shift tracking or late penalties applied',
+          };
+          const fetchedShifts: SelectOption[] = [
+            flexibleOption,
+            ...data.map((s: any) => ({
+              value: `${s.name} (${s.startTime} - ${s.endTime})`,
+              label: `${s.name} (${s.startTime} - ${s.endTime})`,
+              sublabel: `Code: ${s.code || s.id} • Grace: ${s.lateGraceMinutes || 15} mins`,
+            })),
+          ];
           setShiftOptions(fetchedShifts);
-          setFormData((prev) => ({ ...prev, shiftTiming: fetchedShifts[0].value }));
         }
       })
       .catch(() => {});
@@ -658,11 +682,20 @@ export default function AddExecutivePage() {
               />
               <Input
                 type="number"
+                min={0}
+                max={60}
+                step="0.5"
                 allowLetters={false}
                 label="Experience (years)"
-                placeholder="e.g. 2.5"
+                placeholder="e.g. 2.5 (Max 60)"
                 value={formData.experience}
-                onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
+                onChange={(e) => {
+                  const num = parseFloat(e.target.value);
+                  if (e.target.value !== '' && (!isNaN(num) && (num < 0 || num > 60))) {
+                    return;
+                  }
+                  setFormData({ ...formData, experience: e.target.value });
+                }}
               />
               <Select
                 label="Work Region *"

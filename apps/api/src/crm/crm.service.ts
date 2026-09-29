@@ -1399,6 +1399,13 @@ export class CrmService {
         throw new BadRequestException("Mobile number is required");
       }
 
+      if (body.experience !== undefined && body.experience !== null && body.experience !== "") {
+        const numExp = parseFloat(String(body.experience));
+        if (isNaN(numExp) || numExp < 0 || numExp > 60) {
+          throw new BadRequestException("Experience must be a valid number between 0 and 60 years.");
+        }
+      }
+
       const cleanEmail = body.email.trim().toLowerCase();
       const cleanFullName = body.fullName.trim();
       const cleanMobile = body.mobile.trim();
@@ -1743,6 +1750,13 @@ export class CrmService {
       }
       if (!body.mobile || !body.mobile.trim()) {
         throw new BadRequestException("Mobile number is required");
+      }
+
+      if (body.experience !== undefined && body.experience !== null && body.experience !== "") {
+        const numExp = parseFloat(String(body.experience));
+        if (isNaN(numExp) || numExp < 0 || numExp > 60) {
+          throw new BadRequestException("Experience must be a valid number between 0 and 60 years.");
+        }
       }
 
       const cleanEmail = body.email.trim().toLowerCase();
